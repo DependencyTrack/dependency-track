@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>dependency-track-parent</artifactId>
-        <version>5.1.0-SNAPSHOT</version>
+        <version>5.2.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>alpine-parent</artifactId>
@@ -71,13 +71,11 @@
         <!-- Maven Plugin Versions -->
         <maven.dependency.plugin.version>3.8.1</maven.dependency.plugin.version>
         <maven.shade.plugin.version>3.6.1</maven.shade.plugin.version>
-        <maven.uuidgenerator.plugin.version>1.0.1</maven.uuidgenerator.plugin.version>
 
         <!-- Dependency Versions -->
         <lib.bcrypt.version>0.4</lib.bcrypt.version>
-        <lib.h2.version>2.4.240</lib.h2.version>
         <lib.logstash-logback-encoder.version>8.1</lib.logstash-logback-encoder.version>
-        <lib.nimbus-oauth2-oidc-sdk.version>11.37.2</lib.nimbus-oauth2-oidc-sdk.version>
+        <lib.nimbus-oauth2-oidc-sdk.version>11.38.2</lib.nimbus-oauth2-oidc-sdk.version>
         <lib.owasp.security-logging.version>1.1.7</lib.owasp.security-logging.version>
         <lib.parsson.version>1.1.9</lib.parsson.version>
         <!-- Unit test libraries -->
@@ -91,12 +89,6 @@
                 <groupId>org.eclipse.parsson</groupId>
                 <artifactId>jakarta.json</artifactId>
                 <version>${lib.parsson.version}</version>
-            </dependency>
-            <!-- Persistence -->
-            <dependency>
-                <groupId>com.h2database</groupId>
-                <artifactId>h2</artifactId>
-                <version>${lib.h2.version}</version>
             </dependency>
             <!-- Authentication and Authorization -->
             <dependency>
@@ -166,16 +158,22 @@
             </plugin>
 
             <plugin>
-                <groupId>us.springett</groupId>
-                <artifactId>maven-uuid-generator</artifactId>
-                <version>${maven.uuidgenerator.plugin.version}</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>generate-uuid</id>
+                        <id>generate-build-uuid</id>
                         <phase>initialize</phase>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>bsh-property</goal>
                         </goals>
+                        <configuration>
+                            <source>
+                                project.getProperties().setProperty(
+                                    "project.build.uuid",
+                                    java.util.UUID.randomUUID().toString());
+                            </source>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

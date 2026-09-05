@@ -33,6 +33,7 @@ import org.dependencytrack.model.FindingKey;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.notification.JdbiNotificationEmitter;
+import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject;
 import org.dependencytrack.parser.dependencytrack.BovModelConverter;
@@ -103,18 +104,14 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
     private final VulnerabilityPolicyEvaluator vulnPolicyEvaluator;
 
     public ReconcileVulnAnalysisResultsActivity(
-            FileStorage fileStorage,
-            PluginManager pluginManager,
-            VulnerabilityPolicyEvaluator vulnPolicyEvaluator) {
+            FileStorage fileStorage, PluginManager pluginManager, VulnerabilityPolicyEvaluator vulnPolicyEvaluator) {
         this.fileStorage = fileStorage;
         this.pluginManager = pluginManager;
         this.vulnPolicyEvaluator = vulnPolicyEvaluator;
     }
 
     @Override
-    public @Nullable Void execute(
-            ActivityContext ctx,
-            @Nullable ReconcileVulnAnalysisResultsArg arg) throws Exception {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable ReconcileVulnAnalysisResultsArg arg) throws Exception {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -122,14 +119,13 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         final var projectUuid = UUID.fromString(arg.getProjectUuid());
 
         try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, projectUuid.toString())) {
-            LOGGER.debug(
-                    "Reconciling results from {} vulnerability analyzers",
-                    arg.getAnalyzerResultsCount());
+            LOGGER.debug("Reconciling results from {} vulnerability analyzers", arg.getAnalyzerResultsCount());
 
             final var failedAnalyzers = new HashSet<String>();
             final var reportedFindings = new ArrayList<ReportedFinding>();
             final var vulnDetailsByKey = new HashMap<VulnerabilityKey, ReportedVulnerability>();
-            final var vulnAliasAssertionsByAnalyzer = new HashMap<String, Map<VulnerabilityKey, Set<VulnerabilityKey>>>();
+            final var vulnAliasAssertionsByAnalyzer =
+                    new HashMap<String, Map<VulnerabilityKey, Set<VulnerabilityKey>>>();
 
             // Sort analyzer results by name for deterministic merge order.
             // When multiple analyzers report the same vulnerability,
@@ -166,7 +162,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                         continue;
                     }
 
-                    collectFindingsFromVdr(analyzerName, vdr, reportedFindings, vulnDetailsByKey, vulnAliasAssertionsByAnalyzer);
+                    collectFindingsFromVdr(
+                            analyzerName, vdr, reportedFindings, vulnDetailsByKey, vulnAliasAssertionsByAnalyzer);
                 }
             }
 
@@ -191,12 +188,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
             syncVulnAliasAssertions(vulnAliasAssertionsByAnalyzer);
 
-            reconcileFindings(
-                    arg,
-                    projectUuid,
-                    reportedFindings,
-                    vulnDbIdByVulnKey,
-                    failedAnalyzers);
+            reconcileFindings(arg, projectUuid, reportedFindings, vulnDbIdByVulnKey, failedAnalyzers);
         }
 
         return null;
@@ -204,15 +196,13 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
     private record ReportedVulnerability(
             org.cyclonedx.proto.v1_7.Vulnerability vdrVuln,
-            @Nullable Long internalVulnId) {
-    }
+            @Nullable Long internalVulnId) {}
 
     private record ReportedFinding(
             long componentId,
             VulnerabilityKey vulnKey,
             String analyzerName,
-            @Nullable String referenceUrl) {
-    }
+            @Nullable String referenceUrl) {}
 
     private static void collectFindingsFromVdr(
             String analyzerName,
@@ -224,8 +214,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             var source = Vulnerability.Source.ofName(vdrVuln.getSource().getName());
             if (source == null) {
                 source = requireNonNullElse(
-                        Vulnerability.Source.ofVulnId(vdrVuln.getId()),
-                        Vulnerability.Source.UNKNOWN);
+                        Vulnerability.Source.ofVulnId(vdrVuln.getId()), Vulnerability.Source.UNKNOWN);
             }
             final var vulnKey = new VulnerabilityKey(vdrVuln.getId(), source);
 
@@ -244,7 +233,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                 analyzerAssertions.computeIfAbsent(vulnKey, _ -> new HashSet<>());
 
                 for (final VulnerabilityReference vdrVulnRef : vdrVuln.getReferencesList()) {
-                    var refSource = Vulnerability.Source.ofName(vdrVulnRef.getSource().getName());
+                    var refSource =
+                            Vulnerability.Source.ofName(vdrVulnRef.getSource().getName());
                     if (refSource == null) {
                         refSource = Vulnerability.Source.ofVulnId(vdrVulnRef.getId());
                     }
@@ -261,9 +251,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             }
 
             reportedVulnByVulnKey.merge(
-                    vulnKey,
-                    new ReportedVulnerability(vdrVuln, internalVulnId),
-                    (existing, incoming) -> {
+                    vulnKey, new ReportedVulnerability(vdrVuln, internalVulnId), (existing, incoming) -> {
                         if (existing.internalVulnId() != null) {
                             return existing;
                         }
@@ -280,10 +268,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                     findings.add(new ReportedFinding(componentId, vulnKey, analyzerName, referenceUrl));
                 } catch (NumberFormatException e) {
                     LOGGER.warn(
-                            "Encountered invalid BOM ref '{}' for vulnerability '{}'",
-                            affects.getRef(),
-                            vulnKey,
-                            e);
+                            "Encountered invalid BOM ref '{}' for vulnerability '{}'", affects.getRef(), vulnKey, e);
                 }
             }
         }
@@ -314,8 +299,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         return null;
     }
 
-    private List<Vulnerability> convertVulns(
-            Map<VulnerabilityKey, ReportedVulnerability> reportedVulnByVulnKey) {
+    private List<Vulnerability> convertVulns(Map<VulnerabilityKey, ReportedVulnerability> reportedVulnByVulnKey) {
         if (reportedVulnByVulnKey.isEmpty()) {
             return List.of();
         }
@@ -351,14 +335,12 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         return converted;
     }
 
-    private Map<VulnerabilityKey, Long> syncVulns(
-            List<Vulnerability> vulns,
-            Predicate<String> canUpdatePredicate) throws InterruptedException {
+    private Map<VulnerabilityKey, Long> syncVulns(List<Vulnerability> vulns, Predicate<String> canUpdatePredicate)
+            throws InterruptedException {
         final var syncedVulns = new HashMap<VulnerabilityKey, Long>(vulns.size());
 
-        for (final var batch : (Iterable<List<Vulnerability>>) () -> vulns.stream()
-                .gather(Gatherers.windowFixed(SYNC_BATCH_SIZE))
-                .iterator()) {
+        for (final var batch : (Iterable<List<Vulnerability>>) () ->
+                vulns.stream().gather(Gatherers.windowFixed(SYNC_BATCH_SIZE)).iterator()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before synchronizing vulnerability batch");
             }
@@ -370,8 +352,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
     }
 
     private Map<VulnerabilityKey, Long> syncVulnsBatch(
-            Collection<Vulnerability> vulns,
-            Predicate<String> canUpdatePredicate) {
+            Collection<Vulnerability> vulns, Predicate<String> canUpdatePredicate) {
         if (vulns.isEmpty()) {
             return Map.of();
         }
@@ -381,7 +362,9 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         return inJdbiTransaction(handle -> new VulnerabilityDao(handle).syncAll(vulns, canUpdatePredicate));
     }
 
-    private void syncVulnAliasAssertions(Map<String, Map<VulnerabilityKey, Set<VulnerabilityKey>>> aliasAssertionsByAnalyzer) throws InterruptedException {
+    private void syncVulnAliasAssertions(
+            Map<String, Map<VulnerabilityKey, Set<VulnerabilityKey>>> aliasAssertionsByAnalyzer)
+            throws InterruptedException {
         for (final var entry : aliasAssertionsByAnalyzer.entrySet()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before synchronizing alias assertions");
@@ -391,8 +374,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             final Map<VulnerabilityKey, Set<VulnerabilityKey>> aliasAssertions = entry.getValue();
 
             LOGGER.debug("Synchronizing {} alias assertions for analyzer '{}'", aliasAssertions.size(), analyzerName);
-            useJdbiTransaction(handle -> new VulnerabilityAliasDao(handle)
-                    .syncAssertions("vuln-analyzer:" + analyzerName, aliasAssertions));
+            useJdbiTransaction(handle ->
+                    new VulnerabilityAliasDao(handle).syncAssertions("vuln-analyzer:" + analyzerName, aliasAssertions));
         }
     }
 
@@ -401,9 +384,10 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             UUID projectUuid,
             List<ReportedFinding> reportedFindings,
             Map<VulnerabilityKey, Long> vulnDbIdByVulnKey,
-            Set<String> failedAnalyzers) throws InterruptedException {
-        final Long projectId = withJdbiHandle(
-                handle -> handle.attach(ProjectDao.class).getProjectId(projectUuid));
+            Set<String> failedAnalyzers)
+            throws InterruptedException {
+        final Long projectId =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjectId(projectUuid));
         if (projectId == null) {
             throw new TerminalApplicationFailureException("Project does not exist");
         }
@@ -430,40 +414,33 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         for (final ReportedFinding reportedFinding : reportedFindings) {
             final Long vulnDbId = vulnDbIdByVulnKey.get(reportedFinding.vulnKey());
             if (vulnDbId == null) {
-                LOGGER.warn(
-                        "Vulnerability {} not found in database; Skipping",
-                        reportedFinding.vulnKey());
+                LOGGER.warn("Vulnerability {} not found in database; Skipping", reportedFinding.vulnKey());
                 continue;
             }
 
-            reportedAttributionKeys.add(
-                    new FindingAttributionKey(
-                            new FindingKey(reportedFinding.componentId(), vulnDbId),
-                            reportedFinding.analyzerName()));
+            reportedAttributionKeys.add(new FindingAttributionKey(
+                    new FindingKey(reportedFinding.componentId(), vulnDbId), reportedFinding.analyzerName()));
 
             final var findingKey = new FindingKey(reportedFinding.componentId(), vulnDbId);
             final List<FindingDao.FindingAttribution> existingFindingAttributionsForKey =
                     existingAttributionsByFindingKey.get(findingKey);
 
             final boolean findingExists =
-                    existingFindingAttributionsForKey != null
-                            && !existingFindingAttributionsForKey.isEmpty();
+                    existingFindingAttributionsForKey != null && !existingFindingAttributionsForKey.isEmpty();
             if (!findingExists) {
                 findingsToCreate.add(findingKey);
             }
 
-            final boolean hasAttribution =
-                    existingFindingAttributionsForKey != null
-                            && existingFindingAttributionsForKey.stream()
+            final boolean hasAttribution = existingFindingAttributionsForKey != null
+                    && existingFindingAttributionsForKey.stream()
                             .anyMatch(ef -> ef.analyzerName().equals(reportedFinding.analyzerName()));
             if (!hasAttribution) {
-                createAttributionCommands.add(
-                        new FindingDao.CreateAttributionCommand(
-                                vulnDbId,
-                                reportedFinding.componentId(),
-                                projectId,
-                                reportedFinding.analyzerName(),
-                                reportedFinding.referenceUrl()));
+                createAttributionCommands.add(new FindingDao.CreateAttributionCommand(
+                        vulnDbId,
+                        reportedFinding.componentId(),
+                        projectId,
+                        reportedFinding.analyzerName(),
+                        reportedFinding.referenceUrl()));
             }
         }
 
@@ -485,12 +462,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
         // Evaluate vulnerability policies, if there are any.
         // Only evaluate policies for active findings (i.e. those with >=1 attributions).
-        final Map<Long, Set<Long>> vulnDbIdsByComponentId =
-                computeActiveFindings(
-                        existingAttributionsByFindingKey,
-                        attributionIdsToDelete,
-                        findingsToCreate,
-                        createAttributionCommands);
+        final Map<Long, Set<Long>> vulnDbIdsByComponentId = computeActiveFindings(
+                existingAttributionsByFindingKey, attributionIdsToDelete, findingsToCreate, createAttributionCommands);
 
         // Determine findings that became inactive. They exist in current attributions,
         // but are not in the set of active findings (i.e. all attributions were deleted).
@@ -515,6 +488,10 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             final var notificationSubjectDao = handle.attach(NotificationSubjectDao.class);
             final var findingDao = new FindingDao(handle);
 
+            // Assembling notification subjects is expensive. Skip it for groups that no
+            // enabled rule subscribes to. The emitter would discard those notifications anyway.
+            final Set<String> subscribedGroups = notificationSubjectDao.getSubscribedNotificationGroups();
+
             final List<FindingKey> createdFindingKeys = findingDao.createFindings(findingsToCreate);
             LOGGER.debug("Created {} new finding(s)", createdFindingKeys.size());
 
@@ -532,31 +509,25 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             LOGGER.debug("Removed {} stale attribution(s)", attributionsDeleted);
 
             final List<Notification> auditChangeNotifications =
-                    applyVulnPolicyResults(handle, projectId, policyResults, vulnDbIdsByComponentId);
+                    applyVulnPolicyResults(handle, projectId, policyResults, vulnDbIdsByComponentId, subscribedGroups);
 
             final var notifications = new ArrayList<>(auditChangeNotifications);
             notifications.addAll(createAnalyzerErrorNotifications(projectUuid, failedAnalyzers));
-            notifications.addAll(
-                    createNewVulnerabilityNotifications(
-                            notificationSubjectDao,
-                            Stream
-                                    .concat(createdFindingKeys.stream(), reactivatedFindingKeys.stream())
-                                    .collect(Collectors.toSet()),
-                            arg.getAnalysisTrigger()));
-            notifications.addAll(
-                    createVulnerabilityRetractedNotifications(
-                            notificationSubjectDao,
-                            inactiveFindingKeys));
-            if (arg.hasContextFileMetadata()) {
+            notifications.addAll(createNewVulnerabilityNotifications(
+                    notificationSubjectDao,
+                    subscribedGroups,
+                    Stream.concat(createdFindingKeys.stream(), reactivatedFindingKeys.stream())
+                            .collect(Collectors.toSet()),
+                    arg.getAnalysisTrigger()));
+            notifications.addAll(createVulnerabilityRetractedNotifications(
+                    notificationSubjectDao, subscribedGroups, inactiveFindingKeys));
+            if (arg.hasContextFileMetadata()
+                    && subscribedGroups.contains(NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name())) {
                 final List<Long> newComponentIds = readNewComponentIds(arg.getContextFileMetadata());
                 if (!newComponentIds.isEmpty()) {
-                    notificationSubjectDao
-                            .getForNewVulnerableDependencies(newComponentIds)
-                            .stream()
+                    notificationSubjectDao.getForNewVulnerableDependencies(newComponentIds).stream()
                             .map(subject -> createNewVulnerableDependencyNotification(
-                                    subject.getProject(),
-                                    subject.getComponent(),
-                                    subject.getVulnerabilitiesList()))
+                                    subject.getProject(), subject.getComponent(), subject.getVulnerabilitiesList()))
                             .forEach(notifications::add);
                 }
             }
@@ -628,8 +599,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
     }
 
     private Map<Long, Map<Long, List<VulnerabilityPolicy>>> evaluateVulnPolicies(
-            long projectId,
-            Map<Long, Set<Long>> vulnIdsByComponentId) {
+            long projectId, Map<Long, Set<Long>> vulnIdsByComponentId) throws InterruptedException {
         if (vulnIdsByComponentId.isEmpty()) {
             return Map.of();
         }
@@ -679,7 +649,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             Handle handle,
             long projectId,
             Map<Long, Map<Long, List<VulnerabilityPolicy>>> policyResults,
-            Map<Long, Set<Long>> activeFindings) {
+            Map<Long, Set<Long>> activeFindings,
+            Set<String> subscribedGroups) {
         final var analysisDao = new AnalysisDao(handle);
         final var reconcileResults = new ArrayList<AnalysisReconciler.Result>();
 
@@ -687,8 +658,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         final Set<FindingKey> policyFindingKeys = policyResults.entrySet().stream()
                 .flatMap(entry -> {
                     final long componentId = entry.getKey();
-                    return entry.getValue().keySet().stream()
-                            .map(vulnDbId -> new FindingKey(componentId, vulnDbId));
+                    return entry.getValue().keySet().stream().map(vulnDbId -> new FindingKey(componentId, vulnDbId));
                 })
                 .collect(Collectors.toSet());
 
@@ -696,8 +666,10 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         if (!policyFindingKeys.isEmpty()) {
             final Map<FindingKey, Analysis> existingAnalysisByFindingKey =
                     analysisDao.getForProjectFindings(projectId, policyFindingKeys);
-            LOGGER.debug("Found {} existing analyses for {} finding(s) with policy results",
-                    existingAnalysisByFindingKey.size(), policyFindingKeys.size());
+            LOGGER.debug(
+                    "Found {} existing analyses for {} finding(s) with policy results",
+                    existingAnalysisByFindingKey.size(),
+                    policyFindingKeys.size());
 
             for (final var componentEntry : policyResults.entrySet()) {
                 final long componentId = componentEntry.getKey();
@@ -717,7 +689,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                     final Analysis existingAnalysis = existingAnalysisByFindingKey.get(findingKey);
                     LOGGER.debug("Reconciling analysis for {}", findingKey);
 
-                    final var analysisReconciler = new AnalysisReconciler(projectId, componentId, vulnDbId, existingAnalysis);
+                    final var analysisReconciler =
+                            new AnalysisReconciler(projectId, componentId, vulnDbId, existingAnalysis);
                     final AnalysisReconciler.Result reconcileResult;
                     if (triagePolicy != null) {
                         reconcileResult = analysisReconciler.reconcile(triagePolicy, mergedAnnotations);
@@ -746,7 +719,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             }
 
             LOGGER.debug("Un-applying stale policy analysis for {}", findingKey);
-            final var reconciler = new AnalysisReconciler(projectId, findingKey.componentId(), findingKey.vulnDbId(), analysis);
+            final var reconciler =
+                    new AnalysisReconciler(projectId, findingKey.componentId(), findingKey.vulnDbId(), analysis);
             final AnalysisReconciler.Result unapplyResult;
             if (analysis.vulnPolicyId() != null) {
                 unapplyResult = reconciler.reconcileForNoPolicy();
@@ -764,10 +738,9 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         }
 
         // Create or update analyses according to the reconciliation results.
-        final List<MakeAnalysisCommand> makeAnalysisCommands =
-                reconcileResults.stream()
-                        .map(AnalysisReconciler.Result::makeAnalysisCommand)
-                        .toList();
+        final List<MakeAnalysisCommand> makeAnalysisCommands = reconcileResults.stream()
+                .map(AnalysisReconciler.Result::makeAnalysisCommand)
+                .toList();
         final Map<FindingKey, Long> modifiedAnalysisIdByFindingKey = analysisDao.makeAnalyses(makeAnalysisCommands);
         LOGGER.debug("Modified {} analysis record(s)", modifiedAnalysisIdByFindingKey.size());
 
@@ -782,13 +755,16 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         final int commentsCreated = analysisDao.createComments(createCommentCommands);
         LOGGER.debug("Created {} analysis comment(s)", commentsCreated);
 
+        if (!subscribedGroups.contains(NotificationGroup.PROJECT_AUDIT_CHANGE.name())) {
+            return List.of();
+        }
+
         // Build notifications for analyses where state, suppression, or policy annotations changed.
-        final List<AnalysisReconciler.Result> auditChangeResults =
-                reconcileResults.stream()
-                        .filter(result -> result.analysisStateChanged()
-                                || result.suppressionChanged()
-                                || result.policyAnnotationsChanged())
-                        .toList();
+        final List<AnalysisReconciler.Result> auditChangeResults = reconcileResults.stream()
+                .filter(result -> result.analysisStateChanged()
+                        || result.suppressionChanged()
+                        || result.policyAnnotationsChanged())
+                .toList();
         if (auditChangeResults.isEmpty()) {
             return List.of();
         }
@@ -810,15 +786,14 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         for (int i = 0; i < subjects.size(); i++) {
             final AnalysisReconciler.Result result = auditChangeResults.get(i);
             final VulnerabilityAnalysisDecisionChangeSubject subject = subjects.get(i);
-            notifications.add(
-                    createVulnerabilityAnalysisDecisionChangeNotification(
-                            subject.getProject(),
-                            subject.getComponent(),
-                            subject.getVulnerability(),
-                            subject.getAnalysis(),
-                            result.analysisStateChanged(),
-                            result.suppressionChanged(),
-                            result.policyAnnotationsChanged()));
+            notifications.add(createVulnerabilityAnalysisDecisionChangeNotification(
+                    subject.getProject(),
+                    subject.getComponent(),
+                    subject.getVulnerability(),
+                    subject.getAnalysis(),
+                    result.analysisStateChanged(),
+                    result.suppressionChanged(),
+                    result.policyAnnotationsChanged()));
         }
 
         return notifications;
@@ -831,17 +806,16 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
         return analyzerNames.stream()
                 .map(analyzerName -> createAnalyzerErrorNotification(
-                        "Vulnerability analyzer '%s' failed for project '%s'".formatted(
-                                analyzerName, projectUuid)))
+                        "Vulnerability analyzer '%s' failed for project '%s'".formatted(analyzerName, projectUuid)))
                 .toList();
-
     }
 
     private List<Notification> createNewVulnerabilityNotifications(
             NotificationSubjectDao dao,
+            Set<String> subscribedGroups,
             Collection<FindingKey> findingKeys,
             AnalysisTrigger analysisTrigger) {
-        if (findingKeys.isEmpty()) {
+        if (findingKeys.isEmpty() || !subscribedGroups.contains(NotificationGroup.NEW_VULNERABILITY.name())) {
             return List.of();
         }
 
@@ -853,9 +827,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             vulnDbIds.add(findingKey.vulnDbId());
         });
 
-        return dao
-                .getForNewVulnerabilities(componentIds, vulnDbIds)
-                .stream()
+        return dao.getForNewVulnerabilities(componentIds, vulnDbIds).stream()
                 .map(subject -> createNewVulnerabilityNotification(
                         subject.getProject(),
                         subject.getComponent(),
@@ -865,9 +837,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
     }
 
     private List<Notification> createVulnerabilityRetractedNotifications(
-            NotificationSubjectDao dao,
-            Collection<FindingKey> findingKeys) {
-        if (findingKeys.isEmpty()) {
+            NotificationSubjectDao dao, Set<String> subscribedGroups, Collection<FindingKey> findingKeys) {
+        if (findingKeys.isEmpty() || !subscribedGroups.contains(NotificationGroup.VULNERABILITY_RETRACTED.name())) {
             return List.of();
         }
 
@@ -879,28 +850,24 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             vulnDbIds.add(findingKey.vulnDbId());
         });
 
-        return dao
-                .getForNewVulnerabilities(componentIds, vulnDbIds)
-                .stream()
+        return dao.getForNewVulnerabilities(componentIds, vulnDbIds).stream()
                 .map(subject -> createVulnerabilityRetractedNotification(
-                        subject.getProject(),
-                        subject.getComponent(),
-                        subject.getVulnerability()))
+                        subject.getProject(), subject.getComponent(), subject.getVulnerability()))
                 .toList();
     }
 
-    private static org.dependencytrack.notification.proto.v1.AnalysisTrigger convertAnalysisTrigger(AnalysisTrigger trigger) {
+    private static org.dependencytrack.notification.proto.v1.AnalysisTrigger convertAnalysisTrigger(
+            AnalysisTrigger trigger) {
         return switch (trigger) {
             case ANALYSIS_TRIGGER_BOM_UPLOAD ->
-                    org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
+                org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
             case ANALYSIS_TRIGGER_SCHEDULE ->
-                    org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_SCHEDULE;
+                org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_SCHEDULE;
             case ANALYSIS_TRIGGER_MANUAL ->
-                    org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_MANUAL;
+                org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_MANUAL;
             case ANALYSIS_TRIGGER_UNSPECIFIED ->
-                    org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_UNSPECIFIED;
+                org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_UNSPECIFIED;
             case UNRECOGNIZED -> org.dependencytrack.notification.proto.v1.AnalysisTrigger.UNRECOGNIZED;
         };
     }
-
 }

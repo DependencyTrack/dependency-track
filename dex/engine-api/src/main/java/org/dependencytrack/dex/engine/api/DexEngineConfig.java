@@ -42,8 +42,7 @@ public class DexEngineConfig {
         private Duration flushInterval = Duration.ofMillis(100);
         private int maxBatchSize = 100;
 
-        private BufferConfig() {
-        }
+        private BufferConfig() {}
 
         /**
          * @return Interval at which the buffer content is flushed.
@@ -74,7 +73,6 @@ public class DexEngineConfig {
                     .add("maxBatchSize=" + maxBatchSize)
                     .toString();
         }
-
     }
 
     public static class CacheConfig {
@@ -82,8 +80,7 @@ public class DexEngineConfig {
         private Duration evictAfterAccess = Duration.ofMinutes(5);
         private int maxSize = 1000;
 
-        private CacheConfig() {
-        }
+        private CacheConfig() {}
 
         public Duration evictAfterAccess() {
             return evictAfterAccess;
@@ -108,7 +105,6 @@ public class DexEngineConfig {
                     .add("maxSize=" + maxSize)
                     .toString();
         }
-
     }
 
     public static class LeaderElectionConfig {
@@ -117,8 +113,7 @@ public class DexEngineConfig {
         private Duration leaseDuration = Duration.ofSeconds(30);
         private Duration leaseCheckInterval = Duration.ofSeconds(15);
 
-        private LeaderElectionConfig() {
-        }
+        private LeaderElectionConfig() {}
 
         public boolean isEnabled() {
             return enabled;
@@ -158,18 +153,17 @@ public class DexEngineConfig {
                     .add("leaseCheckInterval=" + leaseCheckInterval)
                     .toString();
         }
-
     }
 
     public static class MaintenanceConfig {
 
         private Duration runRetentionDuration = Duration.ofDays(1);
         private int runDeletionBatchSize = 1000;
+        private int runDeletionMaxBatchesPerCycle = 100;
         private Duration workerInitialDelay = Duration.ofMinutes(1);
         private Duration workerInterval = Duration.ofMinutes(30);
 
-        private MaintenanceConfig() {
-        }
+        private MaintenanceConfig() {}
 
         /**
          * @return Duration to retain completed workflow runs for.
@@ -191,6 +185,17 @@ public class DexEngineConfig {
 
         public void setRunDeletionBatchSize(int runDeletionBatchSize) {
             this.runDeletionBatchSize = runDeletionBatchSize;
+        }
+
+        /**
+         * @return The maximum number of deletion batches to execute per worker cycle.
+         */
+        public int runDeletionMaxBatchesPerCycle() {
+            return runDeletionMaxBatchesPerCycle;
+        }
+
+        public void setRunDeletionMaxBatchesPerCycle(int runDeletionMaxBatchesPerCycle) {
+            this.runDeletionMaxBatchesPerCycle = runDeletionMaxBatchesPerCycle;
         }
 
         /**
@@ -220,11 +225,11 @@ public class DexEngineConfig {
             return new StringJoiner(", ", getClass().getSimpleName() + "[", "]")
                     .add("runRetentionDuration=" + runRetentionDuration)
                     .add("runDeletionBatchSize=" + runDeletionBatchSize)
+                    .add("runDeletionMaxBatchesPerCycle=" + runDeletionMaxBatchesPerCycle)
                     .add("workerInitialDelay=" + workerInitialDelay)
                     .add("workerInterval=" + workerInterval)
                     .toString();
         }
-
     }
 
     public static class MetricsConfig {
@@ -234,8 +239,7 @@ public class DexEngineConfig {
         private Duration collectorInitialDelay = Duration.ofSeconds(15);
         private Duration collectorInterval = Duration.ofSeconds(30);
 
-        private MetricsConfig() {
-        }
+        private MetricsConfig() {}
 
         public MeterRegistry meterRegistry() {
             return meterRegistry;
@@ -258,7 +262,8 @@ public class DexEngineConfig {
         }
 
         public void setCollectorInitialDelay(Duration collectorInitialDelay) {
-            this.collectorInitialDelay = requireNonNull(collectorInitialDelay, "collectorInitialDelay must not be null");
+            this.collectorInitialDelay =
+                    requireNonNull(collectorInitialDelay, "collectorInitialDelay must not be null");
         }
 
         public Duration collectorInterval() {
@@ -278,16 +283,15 @@ public class DexEngineConfig {
                     .add("collectorInterval=" + collectorInterval)
                     .toString();
         }
-
     }
 
     public static class TaskSchedulerConfig {
 
         private Duration pollInterval = Duration.ofMillis(100);
         private IntervalFunction pollBackoffFunction = ofExponentialRandomBackoff(100L, 2.0, 0.3, 3000L);
+        private Duration concurrencyKeyWakeupRepairInterval = Duration.ofSeconds(60);
 
-        private TaskSchedulerConfig() {
-        }
+        private TaskSchedulerConfig() {}
 
         public Duration pollInterval() {
             return pollInterval;
@@ -305,14 +309,28 @@ public class DexEngineConfig {
             this.pollBackoffFunction = pollBackoffFunction;
         }
 
+        /**
+         * @return Interval in which missing wakeup hints are repaired from source-of-truth state.
+         */
+        public Duration concurrencyKeyWakeupRepairInterval() {
+            return concurrencyKeyWakeupRepairInterval;
+        }
+
+        public void setConcurrencyKeyWakeupRepairInterval(Duration concurrencyKeyWakeupRepairInterval) {
+            if (concurrencyKeyWakeupRepairInterval.isNegative() || concurrencyKeyWakeupRepairInterval.isZero()) {
+                throw new IllegalArgumentException("concurrencyKeyWakeupRepairInterval must be positive");
+            }
+            this.concurrencyKeyWakeupRepairInterval = concurrencyKeyWakeupRepairInterval;
+        }
+
         @Override
         public String toString() {
             return new StringJoiner(", ", getClass().getSimpleName() + "[", "]")
                     .add("pollInterval=" + pollInterval)
                     .add("pollBackoffFunction=" + pollBackoffFunction)
+                    .add("concurrencyKeyWakeupRepairInterval=" + concurrencyKeyWakeupRepairInterval)
                     .toString();
         }
-
     }
 
     private final String instanceId;
@@ -327,7 +345,11 @@ public class DexEngineConfig {
     private final TaskSchedulerConfig workflowTaskSchedulerConfig = new TaskSchedulerConfig();
     private final TaskSchedulerConfig activityTaskSchedulerConfig = new TaskSchedulerConfig();
 
+    private Duration queryTimeout = Duration.ofSeconds(10);
+    private Duration defaultActivityLockTimeout = Duration.ofMinutes(5);
+    private Duration defaultActivityExecutionTimeout = Duration.ofHours(1);
     private PageTokenEncoder pageTokenEncoder = new SimplePageTokenEncoder();
+    private Duration activityHeartbeatInterval = Duration.ofSeconds(5);
 
     public DexEngineConfig(DataSource dataSource) {
         this.instanceId = generateInstanceId();
@@ -375,6 +397,22 @@ public class DexEngineConfig {
     }
 
     /**
+     * @return Interval at which the activity heartbeat scheduler renews locks close to expiry.
+     * Must be much smaller than the smallest activity lock timeout.
+     */
+    public Duration activityHeartbeatInterval() {
+        return activityHeartbeatInterval;
+    }
+
+    public void setActivityHeartbeatInterval(Duration activityHeartbeatInterval) {
+        requireNonNull(activityHeartbeatInterval, "activityHeartbeatInterval must not be null");
+        if (!activityHeartbeatInterval.isPositive()) {
+            throw new IllegalArgumentException("activityHeartbeatInterval must not be negative or zero");
+        }
+        this.activityHeartbeatInterval = activityHeartbeatInterval;
+    }
+
+    /**
      * @return Maintenance config.
      */
     public MaintenanceConfig maintenance() {
@@ -394,6 +432,51 @@ public class DexEngineConfig {
 
     public TaskSchedulerConfig activityTaskScheduler() {
         return activityTaskSchedulerConfig;
+    }
+
+    /**
+     * @return Timeout for database queries executed by the engine.
+     */
+    public Duration queryTimeout() {
+        return queryTimeout;
+    }
+
+    public void setQueryTimeout(Duration queryTimeout) {
+        requireNonNull(queryTimeout, "queryTimeout must not be null");
+        if (!queryTimeout.isPositive()) {
+            throw new IllegalArgumentException("queryTimeout must not be negative or zero");
+        }
+        this.queryTimeout = queryTimeout;
+    }
+
+    /**
+     * @return Lock timeout applied to activities registered without an explicit one.
+     */
+    public Duration defaultActivityLockTimeout() {
+        return defaultActivityLockTimeout;
+    }
+
+    public void setDefaultActivityLockTimeout(Duration defaultActivityLockTimeout) {
+        requireNonNull(defaultActivityLockTimeout, "defaultActivityLockTimeout must not be null");
+        if (!defaultActivityLockTimeout.isPositive()) {
+            throw new IllegalArgumentException("defaultActivityLockTimeout must not be negative or zero");
+        }
+        this.defaultActivityLockTimeout = defaultActivityLockTimeout;
+    }
+
+    /**
+     * @return Execution timeout applied to activities registered without an explicit one.
+     */
+    public Duration defaultActivityExecutionTimeout() {
+        return defaultActivityExecutionTimeout;
+    }
+
+    public void setDefaultActivityExecutionTimeout(Duration defaultActivityExecutionTimeout) {
+        requireNonNull(defaultActivityExecutionTimeout, "defaultActivityExecutionTimeout must not be null");
+        if (!defaultActivityExecutionTimeout.isPositive()) {
+            throw new IllegalArgumentException("defaultActivityExecutionTimeout must not be negative or zero");
+        }
+        this.defaultActivityExecutionTimeout = defaultActivityExecutionTimeout;
     }
 
     public PageTokenEncoder pageTokenEncoder() {
@@ -418,6 +501,9 @@ public class DexEngineConfig {
                 .add("metricsConfig=" + metricsConfig)
                 .add("workflowTaskSchedulerConfig=" + workflowTaskSchedulerConfig)
                 .add("activityTaskSchedulerConfig=" + activityTaskSchedulerConfig)
+                .add("queryTimeout=" + queryTimeout)
+                .add("defaultActivityLockTimeout=" + defaultActivityLockTimeout)
+                .add("defaultActivityExecutionTimeout=" + defaultActivityExecutionTimeout)
                 .add("pageTokenEncoder=" + pageTokenEncoder)
                 .toString();
     }
@@ -432,5 +518,4 @@ public class DexEngineConfig {
 
         return "%s-%s".formatted(hostName, UUID.randomUUID().toString().substring(0, 8));
     }
-
 }

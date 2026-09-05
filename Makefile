@@ -15,15 +15,20 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 
-BASE_REF ?= origin/main
+DEFAULT_BASE_REF := $(shell git rev-parse --verify --quiet upstream/main >/dev/null 2>&1 && echo upstream/main || echo origin/main)
+BASE_REF ?= $(DEFAULT_BASE_REF)
+BUF_FORMAT_FLAGS := --exclude-path support/cyclonedx-proto/src/main/proto/org/cyclonedx/v1_7/cyclonedx.proto
 MIGRATION_DIR := migration/src/main/resources/org/dependencytrack/migration
-SQUAWK_IMAGE := ghcr.io/sbdchd/squawk:2.58.0
+DEX_MIGRATION_DIR := dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration
+SPECTRAL_IMAGE := stoplight/spectral:6.16.3@sha256:a07aa4455367b9501b574423b684ab0ef3ee42556089013583318ec015249050
+SQUAWK_IMAGE := ghcr.io/sbdchd/squawk:2.63.0@sha256:e3b8e534994ad714ec3ca1017f7e80ecb8f8a15b161b8c6eb25303eced5da3ab
 
 MVN := $(shell command -v mvn 2>/dev/null)
 MVND := $(shell command -v mvnd 2>/dev/null)
 ifeq ($(MVND),)
 	MVND := $(MVN)
 endif
+MVN_NO_BUILDCACHE := -Dmaven.build.cache.enabled=false
 
 ifdef CI
 	MVN_FLAGS := -B
@@ -70,11 +75,11 @@ install:
 .PHONY: install
 
 lint-java:
-	$(MVND) $(MVN_FLAGS) -q -Dmaven.build.cache.enabled=false validate
+	$(MVND) $(MVN_FLAGS) $(MVN_NO_BUILDCACHE) -q validate
 .PHONY: lint-java
 
 format-java:
-	$(MVND) $(MVN_FLAGS) -q -Dmaven.build.cache.enabled=false spotless:apply
+	$(MVND) $(MVN_FLAGS) $(MVN_NO_BUILDCACHE) -q spotless:apply
 .PHONY: format-java
 
 lint-migrations:
@@ -90,7 +95,7 @@ lint-migrations:
 			git ls-files --others --exclude-standard -- '$(MIGRATION_DIR)/*.sql'; \
 		} | sort -u); \
 	if [ -z "$$changed" ]; then \
-		echo "No migration changes to lint (BASE_REF=$(BASE_REF))."; \
+		echo "No migration changes to lint in $(MIGRATION_DIR) (BASE_REF=$(BASE_REF))."; \
 		exit 0; \
 	fi; \
 	echo "Linting migrations:"; \
@@ -103,6 +108,10 @@ lint-migrations:
 		lint $$changed
 .PHONY: lint-migrations
 
+lint-dex-migration:
+	@$(MAKE) lint-migrations MIGRATION_DIR="$(DEX_MIGRATION_DIR)"
+.PHONY: lint-dex-migration
+
 lint-openapi:
 	@dups=$$(find api/src/main/openapi -path '*/schemas/*.yaml' -exec basename {} \; \
 		| sort | uniq -d); \
@@ -114,16 +123,21 @@ lint-openapi:
 	docker run --rm -i -w /work \
 		--platform linux/amd64 \
 		-v "$(CURDIR)/api:/work" \
-		stoplight/spectral lint \
+		$(SPECTRAL_IMAGE) lint \
 		--ruleset src/main/spectral/ruleset.yaml \
 		src/main/openapi/openapi.yaml
 .PHONY: lint-openapi
 
 lint-proto:
 	buf lint
+	buf format --diff --exit-code $(BUF_FORMAT_FLAGS)
 .PHONY: lint-proto
 
-lint: lint-java lint-migrations lint-openapi lint-proto
+format-proto:
+	buf format --write $(BUF_FORMAT_FLAGS)
+.PHONY: format-proto
+
+lint: lint-java lint-migrations lint-dex-migration lint-openapi lint-proto
 .PHONY: lint
 
 test:
@@ -132,7 +146,7 @@ test:
 
 test-single:
 	$(MVND) $(MVN_FLAGS) test \
-		-Dmaven.build.cache.enabled=false \
+		$(MVN_NO_BUILDCACHE) \
 		-Dspotless.check.skip \
 		-Dcyclonedx.skip \
 		-pl "$(MODULE)" \
@@ -176,15 +190,15 @@ apiserver-dev-remove-containers:
 .PHONY: apiserver-dev-remove-containers
 
 test-e2e: build-image
-	$(MVND) $(MVN_FLAGS) -pl e2e -DskipE2E=false verify
+	$(MVND) $(MVN_FLAGS) $(MVN_NO_BUILDCACHE) -pl e2e -DskipE2E=false verify
 .PHONY: test-e2e
 
 clean:
-	$(MVND) $(MVN_FLAGS) -q -Dmaven.build.cache.enabled=false clean
+	$(MVND) $(MVN_FLAGS) $(MVN_NO_BUILDCACHE) -q clean
 .PHONY: clean
 
 clean-build-cache:
-	rm -r "$${HOME}/.m2/build-cache/v1.1/org.dependencytrack/"
+	rm -rf "$${HOME}"/.m2/build-cache/*/org.dependencytrack/
 .PHONY: clean-build-cache
 
 update-distro-info:

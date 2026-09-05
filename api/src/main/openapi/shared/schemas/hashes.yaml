@@ -49,6 +49,12 @@ properties:
   blake3:
     type: string
     maxLength: 255
+  streebog_256:
+    type: string
+    maxLength: 64
+  streebog_512:
+    type: string
+    maxLength: 128
   md5:
     type: string
     maxLength: 32

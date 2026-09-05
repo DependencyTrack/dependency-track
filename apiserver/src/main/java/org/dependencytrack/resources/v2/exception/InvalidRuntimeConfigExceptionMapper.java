@@ -18,15 +18,17 @@
  */
 package org.dependencytrack.resources.v2.exception;
 
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.model.ProblemDetails;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
+
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @since 5.0.0
  */
 @Provider
-public final class InvalidRuntimeConfigExceptionMapper extends ProblemDetailsExceptionMapper<InvalidRuntimeConfigException, ProblemDetails> {
+public final class InvalidRuntimeConfigExceptionMapper
+        extends ProblemDetailsExceptionMapper<InvalidRuntimeConfigException, ProblemDetails> {
 
     @Override
     ProblemDetails map(InvalidRuntimeConfigException exception) {
@@ -36,5 +38,4 @@ public final class InvalidRuntimeConfigExceptionMapper extends ProblemDetailsExc
                 .detail(exception.getMessage())
                 .build();
     }
-
 }

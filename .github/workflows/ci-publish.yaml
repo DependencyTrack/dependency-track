@@ -38,33 +38,29 @@ jobs:
             exit 1
           fi
       - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # tag=v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
           persist-credentials: false
-
-      - name: Set up JDK
-        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # tag=v5.3.0
-        with:
-          distribution: 'temurin'
-          java-version: '25'
-          cache: 'maven'
 
       - name: Parse Version from POM
         id: parse
         run: |-
-          VERSION=$(mvn -q -Dexec.skip=true help:evaluate -Dexpression=project.version -DforceStdout)
+          VERSION=$(yq -p xml -oy '.project.version' pom.xml)
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
   call-build:
     name: Build
     needs:
       - read-version
-    uses: ./.github/workflows/_meta-build.yaml
+    uses: $/.github/workflows/_meta-build.yaml
     with:
       app-version: ${{ needs.read-version.outputs.version }}
       publish-container: true
       ref-name: ${{ github.ref_name }}
     permissions:
+      artifact-metadata: write # Required to create the artifact storage record.
+      attestations: write # Required to generate SLSA build provenance.
+      id-token: write # Required for keyless signing of SLSA build provenance.
       packages: write # Required to push images to ghcr.io
     secrets:
       registry-0-usr: ${{ github.repository_owner }}
@@ -74,13 +70,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      contents: write
+      artifact-metadata: write # Required to create the artifact storage record.
+      attestations: write # Required to generate SLSA build provenance.
+      contents: write # Required to update the release.
+      id-token: write # Required for keyless signing of SLSA build provenance.
     needs:
       - read-version
       - call-build
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # tag=v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
           persist-credentials: false
 
@@ -110,6 +109,20 @@ jobs:
           sha512sum bom.json >> checksums.txt
           popd
 
+      - name: Generate SLSA Build Provenance
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # tag=v4.2.2
+        with:
+          subject-path: |-
+            target/dependency-track-apiserver-dist.tar.gz
+            target/bom.json
+
+      - name: Prepare SLSA Build Provenance Asset
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: |-
+          cp "${BUNDLE_PATH}" target/dependency-track-apiserver-dist.tar.gz.intoto.jsonl
+
       - name: Update Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -118,6 +131,7 @@ jobs:
           gh release upload "${RELEASE_VERSION}" \
             --clobber \
             target/dependency-track-apiserver-dist.tar.gz \
+            target/dependency-track-apiserver-dist.tar.gz.intoto.jsonl \
             target/bom.json \
             target/checksums.txt
 

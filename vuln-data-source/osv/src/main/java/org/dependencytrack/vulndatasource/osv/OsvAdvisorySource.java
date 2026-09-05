@@ -20,6 +20,7 @@ package org.dependencytrack.vulndatasource.osv;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.vulndatasource.osv.schema.Osv;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,13 +55,15 @@ sealed interface OsvAdvisorySource extends Iterator<Osv>, Closeable {
         private final ZipFile zipFile;
         private final Iterator<? extends ZipEntry> entryIterator;
 
-        ZipOsvAdvisorySource(Path zipFilePath, ObjectMapper objectMapper) throws IOException {
+        ZipOsvAdvisorySource(Path zipFilePath, ObjectMapper objectMapper, @Nullable Set<String> modifiedAdvisoryIds)
+                throws IOException {
             this.zipFilePath = zipFilePath;
             this.objectMapper = objectMapper;
             this.zipFile = new ZipFile(zipFilePath.toFile());
             this.entryIterator = zipFile.stream()
                     .filter(not(ZipEntry::isDirectory))
                     .filter(entry -> entry.getName().endsWith(".json"))
+                    .filter(entry -> modifiedAdvisoryIds == null || modifiedAdvisoryIds.contains(advisoryIdOf(entry)))
                     .iterator();
         }
 
@@ -88,6 +91,11 @@ sealed interface OsvAdvisorySource extends Iterator<Osv>, Closeable {
             }
         }
 
+        private static String advisoryIdOf(ZipEntry entry) {
+            final String name = entry.getName();
+            final int lastSeparatorIndex = name.lastIndexOf('/');
+            return name.substring(lastSeparatorIndex + 1, name.length() - ".json".length());
+        }
     }
 
     final class IncrementalOsvAdvisorySource implements OsvAdvisorySource {
@@ -138,9 +146,8 @@ sealed interface OsvAdvisorySource extends Iterator<Osv>, Closeable {
                 throw new IllegalStateException("Interrupted while downloading OSV advisory " + advisoryId, e);
             }
             if (response.statusCode() != 200) {
-                throw new IllegalStateException(
-                        "Unexpected response code %d while downloading OSV advisory %s".formatted(
-                                response.statusCode(), advisoryId));
+                throw new IllegalStateException("Unexpected response code %d while downloading OSV advisory %s"
+                        .formatted(response.statusCode(), advisoryId));
             }
 
             try {
@@ -154,7 +161,5 @@ sealed interface OsvAdvisorySource extends Iterator<Osv>, Closeable {
         public void close() {
             // Nothing to do
         }
-
     }
-
 }

@@ -27,8 +27,7 @@ import java.util.function.Predicate;
  */
 public final class SpdxExpressions {
 
-    private SpdxExpressions() {
-    }
+    private SpdxExpressions() {}
 
     public static boolean allows(String expression, List<String> ids) {
         final SpdxExpression parsed = SpdxExpressionParser.getInstance().tryParse(expression);
@@ -75,8 +74,7 @@ public final class SpdxExpressions {
             }
 
             if (expr instanceof SpdxExpression.With with) {
-                return withCompounds.stream().anyMatch(
-                        allowed -> withCompoundMatches(with, allowed));
+                return withCompounds.stream().anyMatch(allowed -> withCompoundMatches(with, allowed));
             }
 
             return false;
@@ -109,8 +107,7 @@ public final class SpdxExpressions {
             }
 
             if (expr instanceof SpdxExpression.With with) {
-                return withCompounds.stream().anyMatch(
-                        allowed -> withCompoundMatches(with, allowed));
+                return withCompounds.stream().anyMatch(allowed -> withCompoundMatches(with, allowed));
             }
 
             return false;
@@ -159,5 +156,4 @@ public final class SpdxExpressions {
             case SpdxExpression.And and -> and.operands().stream().anyMatch(arg -> requires(arg, isRequired));
         };
     }
-
 }

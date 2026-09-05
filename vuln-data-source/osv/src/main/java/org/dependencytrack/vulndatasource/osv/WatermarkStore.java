@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @since 5.0.0
  */
@@ -45,10 +47,8 @@ final class WatermarkStore {
     }
 
     Map<String, WatermarkRecord> getForEcosystems(final Collection<String> ecosystems) {
-        final Map<String, String> ecosystemByKey = ecosystems.stream()
-                .collect(Collectors.toMap(
-                        WatermarkStore::getKey,
-                        Function.identity()));
+        final Map<String, String> ecosystemByKey =
+                ecosystems.stream().collect(Collectors.toMap(WatermarkStore::getKey, Function.identity()));
 
         final Map<String, KeyValueStore.Entry> kvEntryByKey = kvStore.getMany(ecosystemByKey.keySet());
         if (kvEntryByKey.isEmpty()) {
@@ -59,7 +59,7 @@ final class WatermarkStore {
         for (final Map.Entry<String, KeyValueStore.Entry> mapEntry : kvEntryByKey.entrySet()) {
             final String kvKey = mapEntry.getKey();
             final KeyValueStore.Entry kvEntry = mapEntry.getValue();
-            final String ecosystem = ecosystemByKey.get(kvKey);
+            final String ecosystem = requireNonNull(ecosystemByKey.get(kvKey), "ecosystem must not be null");
 
             final Instant watermark;
             try {
@@ -73,8 +73,7 @@ final class WatermarkStore {
                 continue;
             }
 
-            result.put(ecosystem, new WatermarkRecord(
-                    ecosystem, watermark, kvEntry.version()));
+            result.put(ecosystem, new WatermarkRecord(ecosystem, watermark, kvEntry.version()));
         }
 
         return result;
@@ -82,22 +81,18 @@ final class WatermarkStore {
 
     WatermarkRecord save(final WatermarkRecord watermark) {
         final CompareAndPutResult result = kvStore.compareAndPut(
-                getKey(watermark.ecosystem()),
-                String.valueOf(watermark.value().toEpochMilli()),
-                watermark.version());
+                getKey(watermark.ecosystem()), String.valueOf(watermark.value().toEpochMilli()), watermark.version());
 
         return switch (result) {
             case CompareAndPutResult.Success(long newVersion) ->
-                    new WatermarkRecord(watermark.ecosystem(), watermark.value(), newVersion);
+                new WatermarkRecord(watermark.ecosystem(), watermark.value(), newVersion);
             case CompareAndPutResult.Failure(CompareAndPutResult.Failure.Reason reason) ->
-                    throw new IllegalStateException(
-                            "Failed to save watermark %s to KV store: %s".formatted(
-                                    watermark, reason));
+                throw new IllegalStateException(
+                        "Failed to save watermark %s to KV store: %s".formatted(watermark, reason));
         };
     }
 
     private static String getKey(final String ecosystem) {
         return "watermark/" + ecosystem;
     }
-
 }

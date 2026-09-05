@@ -57,9 +57,8 @@ final class CpanPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String url = UrlUtils.join(repository.url(), "v1", "release", purl.getName());
@@ -93,7 +92,8 @@ final class CpanPackageMetadataResolver implements PackageMetadataResolver {
         return new PackageMetadata(latestVersion, publishedAt, resolvedAt, artifactMetadata);
     }
 
-    private static @Nullable PackageArtifactMetadata extractArtifactMetadata(JsonNode root, Instant resolvedAt, Instant publishedAt) {
+    private static @Nullable PackageArtifactMetadata extractArtifactMetadata(
+            JsonNode root, Instant resolvedAt, @Nullable Instant publishedAt) {
         final var hashes = new EnumMap<HashAlgorithm, String>(HashAlgorithm.class);
         final String sha256 = root.path("checksum_sha256").asText(null);
         if (sha256 != null && HashAlgorithm.SHA256.isValid(sha256)) {
@@ -127,5 +127,4 @@ final class CpanPackageMetadataResolver implements PackageMetadataResolver {
             throw new UncheckedIOException(e);
         }
     }
-
 }

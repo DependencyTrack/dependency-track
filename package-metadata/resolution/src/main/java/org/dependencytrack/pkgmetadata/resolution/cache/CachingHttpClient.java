@@ -25,6 +25,7 @@ import org.dependencytrack.cache.api.Cache;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
 import org.dependencytrack.pkgmetadata.resolution.cache.proto.v1.CacheEntry;
+import org.dependencytrack.support.net.TransientNetworkErrors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpTimeoutException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -81,11 +81,7 @@ public final class CachingHttpClient {
     }
 
     public CachingHttpClient(
-            HttpClient httpClient,
-            Cache cache,
-            Duration freshnessCap,
-            long maxCompressedBytes,
-            long maxDecodedBytes) {
+            HttpClient httpClient, Cache cache, Duration freshnessCap, long maxCompressedBytes, long maxDecodedBytes) {
         this(httpClient, cache, freshnessCap, maxCompressedBytes, maxDecodedBytes, Clock.systemUTC());
     }
 
@@ -120,9 +116,8 @@ public final class CachingHttpClient {
                     "maxCompressedBytes must be in (0, %d]: %d".formatted(Integer.MAX_VALUE, maxCompressedBytes));
         }
         if (maxDecodedBytes < maxCompressedBytes || maxDecodedBytes > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException(
-                    "maxDecodedBytes must be in [%d, %d]: %d".formatted(
-                            maxCompressedBytes, Integer.MAX_VALUE, maxDecodedBytes));
+            throw new IllegalArgumentException("maxDecodedBytes must be in [%d, %d]: %d"
+                    .formatted(maxCompressedBytes, Integer.MAX_VALUE, maxDecodedBytes));
         }
         this.maxCompressedBytes = maxCompressedBytes;
         this.maxDecodedBytes = maxDecodedBytes;
@@ -130,9 +125,8 @@ public final class CachingHttpClient {
         this.rateLimitGate = new RateLimitGate(clock);
     }
 
-    public byte @Nullable [] get(
-            HttpRequest.Builder requestBuilder,
-            @Nullable PackageRepository repository) throws InterruptedException {
+    public byte @Nullable [] get(HttpRequest.Builder requestBuilder, @Nullable PackageRepository repository)
+            throws InterruptedException {
         requireNonNull(requestBuilder, "requestBuilder must not be null");
 
         final HttpRequest.Builder requestBuilderCopy = requestBuilder.copy();
@@ -145,8 +139,7 @@ public final class CachingHttpClient {
             return decodedBodyOf(entry);
         }
 
-        final byte[] staleResponseBody =
-                shortCircuitIfRateLimited(uri, entry, this::staleBody);
+        final byte[] staleResponseBody = shortCircuitIfRateLimited(uri, entry, this::staleBody);
         if (staleResponseBody != null) {
             return staleResponseBody;
         }
@@ -154,17 +147,15 @@ public final class CachingHttpClient {
         applyValidators(requestBuilderCopy, entry);
 
         return sendWithStaleFallback(uri, entry, this::staleBody, () -> {
-            final HttpResponse<byte[]> response = httpClient.send(
-                    requestBuilderCopy.build(),
-                    _ -> new LimitedBodySubscriber(maxCompressedBytes));
+            final HttpResponse<byte[]> response =
+                    httpClient.send(requestBuilderCopy.build(), _ -> new LimitedBodySubscriber(maxCompressedBytes));
             return handleGetResponse(response, entry, cacheKey);
         });
     }
 
     public @Nullable HttpHeaders head(
-            HttpRequest.Builder requestBuilder,
-            @Nullable PackageRepository repository,
-            Predicate<String> headerFilter) throws InterruptedException {
+            HttpRequest.Builder requestBuilder, @Nullable PackageRepository repository, Predicate<String> headerFilter)
+            throws InterruptedException {
         requireNonNull(requestBuilder, "requestBuilder must not be null");
         requireNonNull(headerFilter, "headerFilter must not be null");
 
@@ -177,8 +168,7 @@ public final class CachingHttpClient {
             return isPositiveHeadEntry(entry) ? rebuildHeaders(entry) : null;
         }
 
-        final HttpHeaders staleResponseHeaders =
-                shortCircuitIfRateLimited(uri, entry, CachingHttpClient::staleHeaders);
+        final HttpHeaders staleResponseHeaders = shortCircuitIfRateLimited(uri, entry, CachingHttpClient::staleHeaders);
         if (staleResponseHeaders != null) {
             return staleResponseHeaders;
         }
@@ -186,31 +176,34 @@ public final class CachingHttpClient {
         applyValidators(requestBuilderCopy, entry);
 
         return sendWithStaleFallback(uri, entry, CachingHttpClient::staleHeaders, () -> {
-            final HttpResponse<Void> response = httpClient.send(
-                    requestBuilderCopy.build(),
-                    HttpResponse.BodyHandlers.discarding());
+            final HttpResponse<Void> response =
+                    httpClient.send(requestBuilderCopy.build(), HttpResponse.BodyHandlers.discarding());
             return handleHeadResponse(response, entry, cacheKey, headerFilter);
         });
     }
 
     @FunctionalInterface
     private interface NetworkCall<T> {
-        @Nullable T execute() throws IOException, InterruptedException;
+        @Nullable
+        T execute() throws IOException, InterruptedException;
     }
 
     private <T> @Nullable T sendWithStaleFallback(
-            URI uri,
-            @Nullable CacheEntry entry,
-            Function<CacheEntry, @Nullable T> staleExtractor,
-            NetworkCall<T> call) throws InterruptedException {
+            URI uri, @Nullable CacheEntry entry, Function<CacheEntry, @Nullable T> staleExtractor, NetworkCall<T> call)
+            throws InterruptedException {
         try {
             return call.execute();
-        } catch (HttpTimeoutException e) {
-            return fallbackOrRethrow(entry, staleExtractor, uri, e, () -> new RetryableResolutionException(e));
         } catch (RetryableResolutionException e) {
             return fallbackOrRethrow(entry, staleExtractor, uri, e, () -> e);
         } catch (IOException e) {
-            return fallbackOrRethrow(entry, staleExtractor, uri, e, () -> new UncheckedIOException(e));
+            return fallbackOrRethrow(
+                    entry,
+                    staleExtractor,
+                    uri,
+                    e,
+                    TransientNetworkErrors.isTransient(e)
+                            ? () -> new RetryableResolutionException(e)
+                            : () -> new UncheckedIOException(e));
         }
     }
 
@@ -232,9 +225,7 @@ public final class CachingHttpClient {
     }
 
     private <T> @Nullable T shortCircuitIfRateLimited(
-            URI uri,
-            @Nullable CacheEntry entry,
-            Function<CacheEntry, @Nullable T> staleExtractor) {
+            URI uri, @Nullable CacheEntry entry, Function<CacheEntry, @Nullable T> staleExtractor) {
         final Instant rateLimitedUntil = rateLimitGate.checkRateLimited(uri);
         if (rateLimitedUntil == null) {
             return null;
@@ -245,7 +236,8 @@ public final class CachingHttpClient {
             if (stale != null) {
                 LOGGER.debug(
                         "Host {} is rate-limited until {}; serving stale cached value",
-                        uri.getAuthority(), rateLimitedUntil);
+                        uri.getAuthority(),
+                        rateLimitedUntil);
                 return stale;
             }
         }
@@ -271,32 +263,30 @@ public final class CachingHttpClient {
     }
 
     private byte @Nullable [] handleGetResponse(
-            HttpResponse<byte[]> response,
-            @Nullable CacheEntry entry,
-            String cacheKey) {
+            HttpResponse<byte[]> response, @Nullable CacheEntry entry, String cacheKey) {
         final int status = response.statusCode();
         final var cacheControl = CacheControl.of(response);
 
         if (status == 304) {
-            requireMatchingEntry(entry, cacheKey);
+            final CacheEntry matchedEntry = requireMatchingEntry(entry, cacheKey);
 
             if (cacheControl.noStore()) {
                 cache.invalidateMany(Set.of(cacheKey));
             } else {
-                final Long effectiveMaxAge = effectiveMaxAgeSeconds(cacheControl, entry);
-                final CacheEntry.Builder refreshed = CacheEntry.newBuilder()
-                        .setFreshUntil(freshUntilTs(cacheControl, entry));
+                final Long effectiveMaxAge = effectiveMaxAgeSeconds(cacheControl, matchedEntry);
+                final CacheEntry.Builder refreshed =
+                        CacheEntry.newBuilder().setFreshUntil(freshUntilTs(cacheControl, matchedEntry));
                 if (effectiveMaxAge != null) {
                     refreshed.setMaxAge(secondsAsDuration(effectiveMaxAge));
                 }
-                if (entry.hasBody()) {
-                    refreshed.setBody(entry.getBody());
+                if (matchedEntry.hasBody()) {
+                    refreshed.setBody(matchedEntry.getBody());
                 }
-                applyRefreshedValidators(refreshed, response, entry);
+                applyRefreshedValidators(refreshed, response, matchedEntry);
                 cache.put(cacheKey, refreshed.build().toByteArray());
             }
 
-            return decodedBodyOf(entry);
+            return decodedBodyOf(matchedEntry);
         }
 
         if (status == 200) {
@@ -331,32 +321,29 @@ public final class CachingHttpClient {
     }
 
     private @Nullable HttpHeaders handleHeadResponse(
-            HttpResponse<?> response,
-            @Nullable CacheEntry entry,
-            String cacheKey,
-            Predicate<String> headerFilter) {
+            HttpResponse<?> response, @Nullable CacheEntry entry, String cacheKey, Predicate<String> headerFilter) {
         final int status = response.statusCode();
         final var cacheControl = CacheControl.of(response);
 
         if (status == 304) {
-            requireMatchingEntry(entry, cacheKey);
+            final CacheEntry matchedEntry = requireMatchingEntry(entry, cacheKey);
 
             if (cacheControl.noStore()) {
                 cache.invalidateMany(Set.of(cacheKey));
-                return rebuildHeaders(entry);
+                return rebuildHeaders(matchedEntry);
             }
 
             // Retain the cached headers map verbatim. RFC 7232 304 carries metadata only
             // (validators, Cache-Control). It does not re-send representation headers like
             // Content-Length, so overwriting would drop information.
-            final Long effectiveMaxAge = effectiveMaxAgeSeconds(cacheControl, entry);
+            final Long effectiveMaxAge = effectiveMaxAgeSeconds(cacheControl, matchedEntry);
             final var refreshedEntryBuilder = CacheEntry.newBuilder()
-                    .setFreshUntil(freshUntilTs(cacheControl, entry))
-                    .putAllHeaders(entry.getHeadersMap());
+                    .setFreshUntil(freshUntilTs(cacheControl, matchedEntry))
+                    .putAllHeaders(matchedEntry.getHeadersMap());
             if (effectiveMaxAge != null) {
                 refreshedEntryBuilder.setMaxAge(secondsAsDuration(effectiveMaxAge));
             }
-            applyRefreshedValidators(refreshedEntryBuilder, response, entry);
+            applyRefreshedValidators(refreshedEntryBuilder, response, matchedEntry);
 
             final CacheEntry refreshedEntry = refreshedEntryBuilder.build();
             cache.put(cacheKey, refreshedEntry.toByteArray());
@@ -369,8 +356,7 @@ public final class CachingHttpClient {
                 return response.headers();
             }
 
-            final CacheEntry.Builder fresh = CacheEntry.newBuilder()
-                    .setFreshUntil(freshUntilTs(cacheControl, null));
+            final CacheEntry.Builder fresh = CacheEntry.newBuilder().setFreshUntil(freshUntilTs(cacheControl, null));
             if (cacheControl.maxAgeSeconds() != null) {
                 fresh.setMaxAge(secondsAsDuration(cacheControl.maxAgeSeconds()));
             }
@@ -394,10 +380,7 @@ public final class CachingHttpClient {
         return throwUnexpected(response);
     }
 
-    private void cacheNegative(
-            @Nullable CacheEntry entry,
-            String cacheKey,
-            CacheControl cacheControl) {
+    private void cacheNegative(@Nullable CacheEntry entry, String cacheKey, CacheControl cacheControl) {
         // Negative responses are cached so that repeated lookups for the same PURL
         // do not hammer the registry.
         if (cacheControl.noStore()) {
@@ -419,20 +402,18 @@ public final class CachingHttpClient {
 
     private <T> T throwUnexpected(HttpResponse<?> response) {
         try {
-            RetryableResolutionException.throwIfRetryableError(response, clock);
+            RetryableResolutionException.throwIfRetryableHttpError(response, clock);
         } catch (RetryableResolutionException e) {
             final Duration effectiveBackoff =
-                    rateLimitGate.recordRateLimit(
-                            response.request().uri(), e.retryAfter());
-            throw new RetryableResolutionException(
-                    e.getMessage(), e.getCause(), effectiveBackoff);
+                    rateLimitGate.recordRateLimit(response.request().uri(), e.retryAfter());
+            throw new RetryableResolutionException(e.getMessage(), e.getCause(), effectiveBackoff);
         }
 
-        throw new UncheckedIOException(new IOException(
-                "Unexpected status code %d for %s".formatted(response.statusCode(), response.request().uri())));
+        throw new UncheckedIOException(new IOException("Unexpected status code %d for %s"
+                .formatted(response.statusCode(), response.request().uri())));
     }
 
-    private static void requireMatchingEntry(@Nullable CacheEntry entry, String cacheKey) {
+    private static CacheEntry requireMatchingEntry(@Nullable CacheEntry entry, String cacheKey) {
         if (entry == null) {
             // Validators are only attached when a cached entry exists, so a 304 here
             // indicates a misbehaving upstream. Surface the inconsistency so the next
@@ -440,6 +421,8 @@ public final class CachingHttpClient {
             throw new UncheckedIOException(
                     new IOException("Received 304 without a matching cached entry for " + cacheKey));
         }
+
+        return entry;
     }
 
     private static void applyResponseValidators(CacheEntry.Builder builder, HttpResponse<?> response) {
@@ -448,14 +431,13 @@ public final class CachingHttpClient {
     }
 
     private static void applyRefreshedValidators(
-            CacheEntry.Builder builder,
-            HttpResponse<?> response,
-            CacheEntry entry) {
+            CacheEntry.Builder builder, HttpResponse<?> response, CacheEntry entry) {
         // Per RFC 7232, a 304 should include an updated validator if the resource has one.
         // Fall back to the previously cached validator when the response omits it.
-        final String etag = response.headers().firstValue("ETag")
-                .orElseGet(() -> entry.hasEtag() ? entry.getEtag() : null);
-        final String lastModified = response.headers().firstValue("Last-Modified")
+        final String etag =
+                response.headers().firstValue("ETag").orElseGet(() -> entry.hasEtag() ? entry.getEtag() : null);
+        final String lastModified = response.headers()
+                .firstValue("Last-Modified")
                 .orElseGet(() -> entry.hasLastModified() ? entry.getLastModified() : null);
         if (etag != null) {
             builder.setEtag(etag);
@@ -470,7 +452,9 @@ public final class CachingHttpClient {
     }
 
     private static boolean isPositiveHeadEntry(CacheEntry entry) {
-        return entry.hasEtag() || entry.hasLastModified() || !entry.getHeadersMap().isEmpty();
+        return entry.hasEtag()
+                || entry.hasLastModified()
+                || !entry.getHeadersMap().isEmpty();
     }
 
     private static boolean isValidator(String headerName) {
@@ -485,7 +469,8 @@ public final class CachingHttpClient {
         if (cacheEntry.hasLastModified()) {
             map.put("Last-Modified", List.of(cacheEntry.getLastModified()));
         }
-        for (final Map.Entry<String, String> headersEntry : cacheEntry.getHeadersMap().entrySet()) {
+        for (final Map.Entry<String, String> headersEntry :
+                cacheEntry.getHeadersMap().entrySet()) {
             map.put(headersEntry.getKey(), List.of(headersEntry.getValue()));
         }
 
@@ -509,15 +494,11 @@ public final class CachingHttpClient {
         return isPositiveHeadEntry(entry) ? rebuildHeaders(entry) : null;
     }
 
-    private Timestamp freshUntilTs(
-            CacheControl cacheControl,
-            @Nullable CacheEntry previousEntry) {
+    private Timestamp freshUntilTs(CacheControl cacheControl, @Nullable CacheEntry previousEntry) {
         return fromInstant(computeFreshUntil(cacheControl, previousEntry));
     }
 
-    private Instant computeFreshUntil(
-            CacheControl cacheControl,
-            @Nullable CacheEntry previousEntry) {
+    private Instant computeFreshUntil(CacheControl cacheControl, @Nullable CacheEntry previousEntry) {
         if (cacheControl.noCache()) {
             // Cache the body so that validators are available, but force the next call to
             // revalidate. RFC 7234 requires servers to perform validation before
@@ -526,15 +507,13 @@ public final class CachingHttpClient {
         }
 
         final Long maxAgeSeconds = effectiveMaxAgeSeconds(cacheControl, previousEntry);
-        final long capped = maxAgeSeconds != null
-                ? Math.min(maxAgeSeconds, freshnessCap.getSeconds())
-                : freshnessCap.getSeconds();
+        final long capped =
+                maxAgeSeconds != null ? Math.min(maxAgeSeconds, freshnessCap.getSeconds()) : freshnessCap.getSeconds();
         return clock.instant().plusSeconds(capped);
     }
 
     private static @Nullable Long effectiveMaxAgeSeconds(
-            CacheControl cacheControl,
-            @Nullable CacheEntry previousEntry) {
+            CacheControl cacheControl, @Nullable CacheEntry previousEntry) {
         if (cacheControl.maxAgeSeconds() != null) {
             return cacheControl.maxAgeSeconds();
         }
@@ -616,9 +595,6 @@ public final class CachingHttpClient {
     }
 
     private static boolean looksLikeGzip(ByteString body) {
-        return body.size() >= 2
-                && body.byteAt(0) == (byte) 0x1f
-                && body.byteAt(1) == (byte) 0x8b;
+        return body.size() >= 2 && body.byteAt(0) == (byte) 0x1f && body.byteAt(1) == (byte) 0x8b;
     }
-
 }

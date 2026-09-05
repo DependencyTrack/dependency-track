@@ -23,6 +23,8 @@ import org.dependencytrack.dex.engine.persistence.model.PolledActivityTask;
 import org.dependencytrack.dex.proto.payload.v1.Payload;
 import org.jspecify.annotations.Nullable;
 
+import java.util.UUID;
+
 public final class ActivityTask implements Task {
 
     private final String activityName;
@@ -30,7 +32,8 @@ public final class ActivityTask implements Task {
     private final @Nullable Payload argument;
     private final RetryPolicy retryPolicy;
     private final int attempt;
-    private TaskLock lock;
+    private final String executionId;
+    private volatile TaskLock lock;
 
     private ActivityTask(
             final String activityName,
@@ -38,28 +41,26 @@ public final class ActivityTask implements Task {
             final @Nullable Payload argument,
             final RetryPolicy retryPolicy,
             final int attempt,
+            final String executionId,
             final TaskLock lock) {
         this.activityName = activityName;
         this.id = id;
         this.argument = argument;
         this.retryPolicy = retryPolicy;
         this.attempt = attempt;
+        this.executionId = executionId;
         this.lock = lock;
     }
 
     static ActivityTask of(final PolledActivityTask polledTask) {
         return new ActivityTask(
                 polledTask.activityName(),
-                new ActivityTaskId(
-                        polledTask.queueName(),
-                        polledTask.workflowRunId(),
-                        polledTask.createdEventId()),
+                new ActivityTaskId(polledTask.queueName(), polledTask.workflowRunId(), polledTask.createdEventId()),
                 polledTask.argument(),
                 RetryPolicy.fromProto(polledTask.retryPolicy()),
                 polledTask.attempt(),
-                new TaskLock(
-                        polledTask.lockedUntil(),
-                        polledTask.lockVersion()));
+                UUID.randomUUID().toString(),
+                new TaskLock(polledTask.lockedUntil(), polledTask.lockVersion()));
     }
 
     @Override
@@ -87,6 +88,10 @@ public final class ActivityTask implements Task {
         return attempt;
     }
 
+    public String executionId() {
+        return executionId;
+    }
+
     public TaskLock lock() {
         return lock;
     }
@@ -94,5 +99,4 @@ public final class ActivityTask implements Task {
     void setLock(final TaskLock lock) {
         this.lock = lock;
     }
-
 }

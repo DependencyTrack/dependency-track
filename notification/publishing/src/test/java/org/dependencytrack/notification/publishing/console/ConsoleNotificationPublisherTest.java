@@ -110,5 +110,4 @@ class ConsoleNotificationPublisherTest extends AbstractNotificationPublisherTest
                   -- content:   A dependency was introduced that contains 1 known vulnerability
                 """);
     }
-
 }

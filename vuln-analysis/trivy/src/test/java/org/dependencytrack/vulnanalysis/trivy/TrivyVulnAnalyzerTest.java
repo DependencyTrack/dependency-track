@@ -27,6 +27,7 @@ import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Classification;
 import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import trivy.proto.cache.v1.PutBlobRequest;
@@ -65,12 +66,7 @@ class TrivyVulnAnalyzerTest {
     @BeforeEach
     void beforeEach(WireMockRuntimeInfo wmRuntimeInfo) {
         analyzer = new TrivyVulnAnalyzer(
-                HttpClient.newHttpClient(),
-                wmRuntimeInfo.getHttpBaseUrl(),
-                "token",
-                false,
-                true,
-                false);
+                HttpClient.newHttpClient(), wmRuntimeInfo.getHttpBaseUrl(), "token", false, true, false);
     }
 
     @Test
@@ -191,9 +187,7 @@ class TrivyVulnAnalyzerTest {
 
     @Test
     void testAnalyzeWithConnectionError() {
-        stubFor(any(anyUrl())
-                .willReturn(aResponse()
-                        .withFault(CONNECTION_RESET_BY_PEER)));
+        stubFor(any(anyUrl()).willReturn(aResponse().withFault(CONNECTION_RESET_BY_PEER)));
 
         final Bom bom = Bom.newBuilder()
                 .addComponents(Component.newBuilder()
@@ -205,6 +199,7 @@ class TrivyVulnAnalyzerTest {
                 .build();
 
         assertThatThrownBy(() -> analyzer.analyze(bom))
+                .isInstanceOf(RetryableVulnAnalysisException.class)
                 .hasMessageContaining("Trivy API request");
 
         verify(exactly(1), postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
@@ -233,9 +228,9 @@ class TrivyVulnAnalyzerTest {
         analyzer.analyze(bom);
 
         verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));
-        final var requests = WireMock.findAll(
-                postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));
-        final var scanRequest = trivy.proto.scanner.v1.ScanRequest.parseFrom(requests.get(0).getBody());
+        final var requests = WireMock.findAll(postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));
+        final var scanRequest =
+                trivy.proto.scanner.v1.ScanRequest.parseFrom(requests.get(0).getBody());
 
         assertThat(scanRequest.getOptions().getPkgTypesCount()).isEqualTo(1);
         assertThat(scanRequest.getOptions().getPkgTypes(0)).isEqualTo("library");
@@ -315,7 +310,7 @@ class TrivyVulnAnalyzerTest {
                 HttpClient.newHttpClient(),
                 wmRuntimeInfo.getHttpBaseUrl(),
                 "token",
-                true,  // ignoreUnfixed
+                true, // ignoreUnfixed
                 true,
                 false);
 
@@ -328,16 +323,14 @@ class TrivyVulnAnalyzerTest {
                         .addVulnerabilities(trivy.proto.common.Vulnerability.newBuilder()
                                 .setStatus(3)
                                 .setVulnerabilityId("CVE-2022-11111")
-                                .setPkgIdentifier(PkgIdentifier.newBuilder()
-                                        .setPurl("pkg:maven/com.example/lib@1.0.0"))
+                                .setPkgIdentifier(PkgIdentifier.newBuilder().setPurl("pkg:maven/com.example/lib@1.0.0"))
                                 .setFixedVersion("2.0.0")
                                 .setSeverity(trivy.proto.common.Severity.HIGH)
                                 .build())
                         .addVulnerabilities(trivy.proto.common.Vulnerability.newBuilder()
                                 .setStatus(0)
                                 .setVulnerabilityId("CVE-2022-22222")
-                                .setPkgIdentifier(PkgIdentifier.newBuilder()
-                                        .setPurl("pkg:maven/com.example/lib@1.0.0"))
+                                .setPkgIdentifier(PkgIdentifier.newBuilder().setPurl("pkg:maven/com.example/lib@1.0.0"))
                                 .setSeverity(trivy.proto.common.Severity.MEDIUM)
                                 .build())
                         .build())
@@ -393,13 +386,21 @@ class TrivyVulnAnalyzerTest {
                         .setPurl("pkg:deb/ubuntu/libc6@2.35-0ubuntu3.4?arch=amd64&distro=ubuntu-22.04")
                         .setType(CLASSIFICATION_LIBRARY)
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcName").setValue("glibc").build())
+                                .setName("aquasecurity:trivy:SrcName")
+                                .setValue("glibc")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcVersion").setValue("2.35").build())
+                                .setName("aquasecurity:trivy:SrcVersion")
+                                .setValue("2.35")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcRelease").setValue("0ubuntu3.4").build())
+                                .setName("aquasecurity:trivy:SrcRelease")
+                                .setValue("0ubuntu3.4")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:PkgType").setValue("ubuntu").build())
+                                .setName("aquasecurity:trivy:PkgType")
+                                .setValue("ubuntu")
+                                .build())
                         .build())
                 .build();
 
@@ -450,22 +451,20 @@ class TrivyVulnAnalyzerTest {
         // Trivy. Packagist indexes composer packages as "vendor/package"
         // (slash), so DT must transmit "symfony/http-foundation" rather than
         // "symfony:http-foundation" for the Trivy server to match.
-        final var putBlobRequests = WireMock.findAll(
-                postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
+        final var putBlobRequests =
+                WireMock.findAll(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
         assertThat(putBlobRequests).hasSize(1);
 
-        final PutBlobRequest putBlobRequest = PutBlobRequest.parseFrom(putBlobRequests.get(0).getBody());
+        final PutBlobRequest putBlobRequest =
+                PutBlobRequest.parseFrom(putBlobRequests.get(0).getBody());
         assertThat(putBlobRequest.getBlobInfo().getApplicationsList())
                 .anySatisfy(app -> assertThat(app.getPackagesList())
-                        .anySatisfy(pkg -> assertThat(pkg.getName())
-                                .isEqualTo("symfony/http-foundation")));
+                        .anySatisfy(pkg -> assertThat(pkg.getName()).isEqualTo("symfony/http-foundation")));
     }
 
     private void stubTrivyEndpoints(ScanResponse scanResponse) {
         stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/protobuf")));
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/protobuf")));
 
         stubFor(post(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan"))
                 .willReturn(aResponse()
@@ -474,9 +473,7 @@ class TrivyVulnAnalyzerTest {
                         .withBody(scanResponse.toByteArray())));
 
         stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/protobuf")));
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/protobuf")));
     }
 
     private static ScanResponse buildScanResponseWithVulnerability() {
@@ -495,29 +492,33 @@ class TrivyVulnAnalyzerTest {
                                             .build())
                                     .setInstalledVersion("5.0.0")
                                     .setFixedVersion("6.4.0, 5.4.0")
-                                    .setTitle("woodstox-core: woodstox to serialise XML data was vulnerable to Denial of Service attacks")
-                                    .setDescription(
-                                            "Those using Woodstox to parse XML data may be vulnerable to "
-                                                    + "Denial of Service attacks (DOS) if DTD support is enabled. "
-                                                    + "If the parser is running on user supplied input, an attacker "
-                                                    + "may supply content that causes the parser to crash by stackoverflow. "
-                                                    + "This effect may support a denial of service attack.")
+                                    .setTitle(
+                                            "woodstox-core: woodstox to serialise XML data was vulnerable to Denial of Service attacks")
+                                    .setDescription("Those using Woodstox to parse XML data may be vulnerable to "
+                                            + "Denial of Service attacks (DOS) if DTD support is enabled. "
+                                            + "If the parser is running on user supplied input, an attacker "
+                                            + "may supply content that causes the parser to crash by stackoverflow. "
+                                            + "This effect may support a denial of service attack.")
                                     .setPublishedDate(Timestamps.parse("2022-09-16T10:15:09.877Z"))
                                     .setLastModifiedDate(Timestamps.parse("2023-02-09T01:36:03.637Z"))
                                     .setSeverity(trivy.proto.common.Severity.MEDIUM)
                                     .setSeveritySource("ghsa")
                                     .putAllCvss(Map.ofEntries(
-                                            Map.entry("ghsa", CVSS.newBuilder()
-                                                    .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H")
-                                                    .setV3Score(6.5)
-                                                    .setV40Vector("CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N")
-                                                    .setV40Score(7.1)
-                                                    .build()),
-                                            Map.entry("nvd", CVSS.newBuilder()
-                                                    .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H")
-                                                    .setV3Score(7.5)
-                                                    .build())
-                                    ))
+                                            Map.entry(
+                                                    "ghsa",
+                                                    CVSS.newBuilder()
+                                                            .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H")
+                                                            .setV3Score(6.5)
+                                                            .setV40Vector(
+                                                                    "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N")
+                                                            .setV40Score(7.1)
+                                                            .build()),
+                                            Map.entry(
+                                                    "nvd",
+                                                    CVSS.newBuilder()
+                                                            .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H")
+                                                            .setV3Score(7.5)
+                                                            .build())))
                                     .addAllCweIds(List.of("CWE-787", "CWE-121"))
                                     .addAllReferences(List.of(
                                             "https://access.redhat.com/security/cve/CVE-2022-40152",
@@ -525,7 +526,8 @@ class TrivyVulnAnalyzerTest {
                                     .setDataSource(DataSource.newBuilder()
                                             .setId("ghsa")
                                             .setName("GitHub Security Advisory Maven")
-                                            .setUrl("https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven")
+                                            .setUrl(
+                                                    "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven")
                                             .build())
                                     .build())
                             .build())
@@ -534,5 +536,4 @@ class TrivyVulnAnalyzerTest {
             throw new RuntimeException(e);
         }
     }
-
 }

@@ -31,8 +31,8 @@ public final class MirrorKevDataSourceWorkflow implements Workflow<MirrorKevData
 
     @Override
     public @Nullable Void execute(
-            WorkflowContext<@Nullable MirrorKevDataSourceArg> ctx,
-            @Nullable MirrorKevDataSourceArg arg) throws Exception {
+            WorkflowContext<@Nullable MirrorKevDataSourceArg> ctx, @Nullable MirrorKevDataSourceArg arg)
+            throws Exception {
         if (arg == null || arg.getDataSourceName().isEmpty()) {
             throw new TerminalApplicationFailureException("No argument or data source name provided");
         }
@@ -40,5 +40,4 @@ public final class MirrorKevDataSourceWorkflow implements Workflow<MirrorKevData
         ctx.activity(MirrorKevDataSourceActivity.class).call(arg).await();
         return null;
     }
-
 }

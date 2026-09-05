@@ -21,15 +21,52 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track-parent</artifactId>
+    <version>5.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <version>5.1.0-SNAPSHOT</version>
-
+    <name>Dependency-Track</name>
+    <description>Dependency-Track is an intelligent component analysis platform that allows organizations to identify
+        and reduce risk in the software supply chain.</description>
+    <url>https://dependencytrack.org/</url>
+    <inceptionYear>2013</inceptionYear>
+    <organization>
+        <name>OWASP</name>
+    </organization>
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>Steve Springett</name>
+            <email>Steve.Springett@owasp.org</email>
+            <organization>OWASP</organization>
+            <organizationUrl>https://owasp.org/</organizationUrl>
+            <roles>
+                <role>Architect</role>
+                <role>Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Niklas Düster</name>
+            <email>niklas.duester@owasp.org</email>
+            <organization>OWASP</organization>
+            <organizationUrl>https://owasp.org/</organizationUrl>
+            <roles>
+                <role>Architect</role>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
     <modules>
         <module>common</module>
         <module>support/cyclonedx-proto</module>
         <module>support/datanucleus-plugin</module>
         <module>support/flyway</module>
         <module>support/jdbi</module>
+        <module>support/net</module>
         <module>support/os-distro-metadata</module>
         <module>support/smallrye-config-secret-handler-file</module>
         <module>support/smallrye-config-source-memory</module>
@@ -54,141 +91,104 @@
         <module>e2e</module>
         <module>coverage-report</module>
     </modules>
-
-    <name>Dependency-Track</name>
-    <url>https://dependencytrack.org/</url>
-    <description>Dependency-Track is an intelligent component analysis platform that allows organizations to identify
-        and reduce risk in the software supply chain.
-    </description>
-    <inceptionYear>2013</inceptionYear>
-    <organization>
-        <name>OWASP</name>
-    </organization>
-
-    <licenses>
-        <license>
-            <name>Apache-2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <developers>
-        <developer>
-            <name>Steve Springett</name>
-            <email>Steve.Springett@owasp.org</email>
-            <organization>OWASP</organization>
-            <organizationUrl>https://owasp.org/</organizationUrl>
-            <roles>
-                <role>Architect</role>
-                <role>Developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <name>Niklas Düster</name>
-            <email>niklas.duester@owasp.org</email>
-            <organization>OWASP</organization>
-            <organizationUrl>https://owasp.org/</organizationUrl>
-            <roles>
-                <role>Architect</role>
-                <role>Developer</role>
-            </roles>
-        </developer>
-    </developers>
-
     <scm>
         <connection>${scm.connection}</connection>
         <developerConnection>${scm.developer.connection}</developerConnection>
-        <url>${scm.url}</url>
         <tag>HEAD</tag>
+        <url>${scm.url}</url>
     </scm>
-
     <issueManagement>
         <system>github</system>
         <url>https://github.com/DependencyTrack/dependency-track/issues</url>
     </issueManagement>
-
     <ciManagement>
         <system>github-actions</system>
         <url>https://github.com/DependencyTrack/dependency-track/actions</url>
     </ciManagement>
-
     <properties>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <project.parentBaseDir>.</project.parentBaseDir>
-
         <!-- Dependency versions -->
-        <lib.ae-security.version>0.156.2</lib.ae-security.version>
-        <lib.archunit.version>1.4.2</lib.archunit.version>
+        <lib.ae-security.version>0.156.6</lib.ae-security.version>
+        <lib.archunit.version>1.5.0</lib.archunit.version>
         <lib.assertj.version>3.27.7</lib.assertj.version>
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
+        <lib.byte-buddy.version>1.18.12</lib.byte-buddy.version>
         <lib.caffeine.version>3.2.4</lib.caffeine.version>
-        <lib.cel-java.version>0.13.1</lib.cel-java.version>
-        <lib.cel-extensions.version>0.4.1</lib.cel-extensions.version>
+        <lib.cel-java.version>0.14.0</lib.cel-java.version>
+        <lib.commons-codec.version>1.22.1</lib.commons-codec.version>
         <lib.commons-lang3.version>3.20.0</lib.commons-lang3.version>
+        <lib.commons-logging.version>1.4.0</lib.commons-logging.version>
         <lib.cpe-parser.version>3.0.1</lib.cpe-parser.version>
-        <lib.cyclonedx-java.version>12.2.0</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>13.2.0</lib.cyclonedx-java.version>
         <lib.datanucleus-api-jdo.version>6.0.5</lib.datanucleus-api-jdo.version>
         <lib.datanucleus-core.version>6.0.11</lib.datanucleus-core.version>
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
         <lib.datanucleus-rdbms.version>6.0.11</lib.datanucleus-rdbms.version>
         <lib.db-scheduler.version>16.12.0</lib.db-scheduler.version>
-        <lib.flyway.version>12.9.0</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
-        <lib.greenmail.version>2.1.9</lib.greenmail.version>
+        <lib.errorprone.version>2.50.0</lib.errorprone.version>
+        <lib.flyway.version>13.4.0</lib.flyway.version>
+        <lib.greenmail.version>2.1.13</lib.greenmail.version>
+        <lib.guava.version>33.7.1-jre</lib.guava.version>
+        <lib.hamcrest.version>3.0</lib.hamcrest.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
-        <lib.httpclient5.version>5.6.1</lib.httpclient5.version>
+        <lib.httpclient5.version>5.6.4</lib.httpclient5.version>
+        <lib.jackson2.version>2.22.2</lib.jackson2.version>
+        <lib.jackson3.version>3.2.2</lib.jackson3.version>
+        <lib.jakarta-activation.version>2.1.4</lib.jakarta-activation.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
+        <lib.jakarta-mail.version>2.1.5</lib.jakarta-mail.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
-        <lib.jackson.version>2.22.0</lib.jackson.version>
-        <lib.jdbi.version>3.53.0</lib.jdbi.version>
+        <lib.jboss-logging.version>3.6.3.Final</lib.jboss-logging.version>
+        <lib.jdbi.version>3.54.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
-        <lib.jetty.version>12.1.10</lib.jetty.version>
-        <lib.json-schema-validator.version>2.0.3</lib.json-schema-validator.version>
-        <lib.json-unit.version>5.1.2</lib.json-unit.version>
-        <lib.jspecify.version>1.0.0</lib.jspecify.version>
-        <lib.junit-jupiter.version>6.1.0</lib.junit-jupiter.version>
+        <lib.jetty.version>12.1.12</lib.jetty.version>
+        <lib.jimfs.version>1.3.2</lib.jimfs.version>
+        <lib.json-schema-validator.version>2.0.4</lib.json-schema-validator.version>
+        <lib.json-unit.version>6.2.0</lib.json-unit.version>
+        <lib.jspecify.version>1.0.1</lib.jspecify.version>
+        <lib.junit-jupiter.version>6.1.3</lib.junit-jupiter.version>
         <lib.kafka-clients.version>4.3.1</lib.kafka-clients.version>
-        <lib.kotlin.version>2.4.0</lib.kotlin.version>
-        <lib.logback.version>1.5.34</lib.logback.version>
-        <lib.micrometer.version>1.17.0</lib.micrometer.version>
+        <lib.kotlin.version>2.4.10</lib.kotlin.version>
+        <lib.logback.version>1.6.3</lib.logback.version>
+        <lib.micrometer.version>1.17.1</lib.micrometer.version>
         <lib.microprofile-config.version>3.1.1</lib.microprofile-config.version>
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
         <lib.minio.version>9.0.3</lib.minio.version>
         <lib.mockito.version>5.23.0</lib.mockito.version>
-        <lib.okhttp.version>5.4.0</lib.okhttp.version>
+        <lib.nullaway.version>0.14.0</lib.nullaway.version>
+        <lib.okhttp.version>5.5.0</lib.okhttp.version>
         <lib.open-feign.version>13.13</lib.open-feign.version>
-        <lib.open-vulnerability-clients.version>9.0.5</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>9.0.6</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>4.1.2</lib.pebble.version>
-        <lib.postgresql.version>42.7.11</lib.postgresql.version>
+        <lib.postgresql.version>42.7.13</lib.postgresql.version>
         <lib.prometheus.version>1.8.0</lib.prometheus.version>
-        <lib.protobuf-java.version>4.35.1</lib.protobuf-java.version>
+        <lib.protobuf-java.version>4.36.0</lib.protobuf-java.version>
         <lib.resilience4j.version>2.4.0</lib.resilience4j.version>
-        <lib.s3mock.version>5.1.0</lib.s3mock.version>
+        <lib.s3mock.version>5.2.0</lib.s3mock.version>
         <lib.slf4j.version>2.0.18</lib.slf4j.version>
-        <lib.smallrye-config.version>3.17.2</lib.smallrye-config.version>
-        <lib.swagger.version>2.2.52</lib.swagger.version>
-        <lib.system-stubs.version>2.1.8</lib.system-stubs.version>
+        <lib.smallrye-config.version>3.18.2</lib.smallrye-config.version>
+        <lib.swagger.version>2.2.54</lib.swagger.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
-        <lib.tink.version>1.22.0</lib.tink.version>
-        <lib.versatile.version>0.19.0</lib.versatile.version>
+        <lib.tink.version>1.23.0</lib.tink.version>
+        <lib.versatile.version>0.24.0</lib.versatile.version>
         <lib.wiremock.version>3.13.2</lib.wiremock.version>
-        <lib.zstd-jni.version>1.5.7-11</lib.zstd-jni.version>
+        <lib.zstd-jni.version>1.5.7-15</lib.zstd-jni.version>
+        <!-- Severity of NullAway findings. Set to OFF to disable. -->
+        <nullaway.severity>ERROR</nullaway.severity>
         <!-- Number of JVM processes to use for unit test parallelization -->
         <unitTestForkCount>1</unitTestForkCount>
-
         <!-- Log level to use for unit tests -->
         <unitTestLogLevel>WARN</unitTestLogLevel>
-
         <!-- Default SCM Properties -->
         <scm.connection>scm:git:git@github.com:DependencyTrack/dependency-track.git</scm.connection>
         <scm.developer.connection>scm:git:git@github.com:DependencyTrack/dependency-track.git</scm.developer.connection>
         <scm.url>https://github.com/DependencyTrack/dependency-track.git</scm.url>
     </properties>
-
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -196,60 +196,66 @@
                 <artifactId>ae-security</artifactId>
                 <version>${lib.ae-security.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.tngtech.archunit</groupId>
                 <artifactId>archunit-junit5</artifactId>
                 <version>${lib.archunit.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
                 <version>${lib.assertj.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.awaitility</groupId>
                 <artifactId>awaitility</artifactId>
                 <version>${lib.awaitility.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${lib.byte-buddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${lib.byte-buddy.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>
                 <version>${lib.caffeine.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-core-java</artifactId>
                 <version>${lib.cyclonedx-java.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>dev.cel</groupId>
                 <artifactId>cel</artifactId>
                 <version>${lib.cel-java.version}</version>
             </dependency>
             <dependency>
-                <groupId>dev.cel</groupId>
-                <artifactId>extensions</artifactId>
-                <version>${lib.cel-extensions.version}</version>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${lib.commons-codec.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${lib.commons-lang3.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${lib.commons-logging.version}</version>
+            </dependency>
             <dependency>
                 <groupId>us.springett</groupId>
                 <artifactId>cpe-parser</artifactId>
                 <version>${lib.cpe-parser.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.datanucleus</groupId>
                 <artifactId>datanucleus-api-jdo</artifactId>
@@ -280,157 +286,180 @@
                 <artifactId>datanucleus-rdbms</artifactId>
                 <version>${lib.datanucleus-rdbms.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.github.kagkarlsson</groupId>
                 <artifactId>db-scheduler</artifactId>
                 <version>${lib.db-scheduler.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.eclipse.angus</groupId>
                 <artifactId>angus-mail</artifactId>
                 <version>${lib.eclipse-angus.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>${lib.errorprone.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.icegreen</groupId>
                 <artifactId>greenmail-junit5</artifactId>
                 <version>${lib.greenmail.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${lib.guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest</artifactId>
+                <version>${lib.hamcrest.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-core</artifactId>
+                <version>${lib.hamcrest.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.zaxxer</groupId>
                 <artifactId>HikariCP</artifactId>
                 <version>${lib.hikaricp.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.httpcomponents.client5</groupId>
                 <artifactId>httpclient5</artifactId>
                 <version>${lib.httpclient5.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>jakarta.activation</groupId>
+                <artifactId>jakarta.activation-api</artifactId>
+                <version>${lib.jakarta-activation.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.mail</groupId>
+                <artifactId>jakarta.mail-api</artifactId>
+                <version>${lib.jakarta-mail.version}</version>
+            </dependency>
             <dependency>
                 <groupId>jakarta.platform</groupId>
                 <artifactId>jakarta.jakartaee-bom</artifactId>
                 <version>${lib.jakarta-ee.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.uuid</groupId>
                 <artifactId>java-uuid-generator</artifactId>
                 <version>${lib.java-uuid-generator.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>${lib.jackson.version}</version>
-                <scope>import</scope>
+                <version>${lib.jackson2.version}</version>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
+            <dependency>
+                <groupId>tools.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${lib.jackson3.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging</artifactId>
+                <version>${lib.jboss-logging.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.jdbi</groupId>
                 <artifactId>jdbi3-bom</artifactId>
                 <version>${lib.jdbi.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
+            <dependency>
+                <groupId>com.google.jimfs</groupId>
+                <artifactId>jimfs</artifactId>
+                <version>${lib.jimfs.version}</version>
+            </dependency>
             <dependency>
                 <groupId>io.github.openfeign</groupId>
                 <artifactId>feign-bom</artifactId>
                 <version>${lib.open-feign.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>io.dropwizard.flywaydb</groupId>
                 <artifactId>flyway-bom</artifactId>
                 <version>${lib.flyway.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.glassfish.jersey</groupId>
                 <artifactId>jersey-bom</artifactId>
                 <version>${lib.jersey.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-bom</artifactId>
                 <version>${lib.jetty.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty.ee11</groupId>
                 <artifactId>jetty-ee11-bom</artifactId>
                 <version>${lib.jetty.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>json-schema-validator</artifactId>
                 <version>${lib.json-schema-validator.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>net.javacrumbs.json-unit</groupId>
                 <artifactId>json-unit-assertj</artifactId>
                 <version>${lib.json-unit.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.jspecify</groupId>
                 <artifactId>jspecify</artifactId>
                 <version>${lib.jspecify.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
                 <version>${lib.junit-jupiter.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
                 <version>${lib.kafka-clients.version}</version>
                 <exclusions>
-                    <!--
-                        The lz4-java project is archived and has vulnerabilities.
-                        Kafka needs to move to https://github.com/yawkat/lz4-java to resolve them.
-                        Since we don't use lz4, we can safely exclude it until then.
-                    -->
+                    <!-- lz4 compression is not used. -->
                     <exclusion>
-                        <groupId>org.lz4</groupId>
+                        <groupId>at.yawk.lz4</groupId>
                         <artifactId>lz4-java</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
-
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-bom</artifactId>
                 <version>${lib.kotlin.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
@@ -441,27 +470,23 @@
                 <artifactId>logback-core</artifactId>
                 <version>${lib.logback.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-bom</artifactId>
                 <version>${lib.micrometer.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.eclipse.microprofile.config</groupId>
                 <artifactId>microprofile-config-api</artifactId>
                 <version>${lib.microprofile-config.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.eclipse.microprofile.health</groupId>
                 <artifactId>microprofile-health-api</artifactId>
                 <version>${lib.microprofile-health.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>io.minio</groupId>
                 <artifactId>minio</artifactId>
@@ -477,45 +502,38 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-bom</artifactId>
                 <version>${lib.mockito.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp-jvm</artifactId>
                 <version>${lib.okhttp.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>io.github.jeremylong</groupId>
                 <artifactId>open-vulnerability-clients</artifactId>
                 <version>${lib.open-vulnerability-clients.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.github.package-url</groupId>
                 <artifactId>packageurl-java</artifactId>
                 <version>${lib.packageurl.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>io.pebbletemplates</groupId>
                 <artifactId>pebble</artifactId>
                 <version>${lib.pebble.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${lib.postgresql.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>io.prometheus</groupId>
                 <artifactId>prometheus-metrics-bom</artifactId>
@@ -523,7 +541,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
@@ -534,37 +551,32 @@
                 <artifactId>protobuf-java-util</artifactId>
                 <version>${lib.protobuf-java.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>io.github.resilience4j</groupId>
                 <artifactId>resilience4j-bom</artifactId>
                 <version>${lib.resilience4j.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.adobe.testing</groupId>
                 <artifactId>s3mock-testcontainers</artifactId>
                 <version>${lib.s3mock.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-bom</artifactId>
                 <version>${lib.slf4j.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>io.smallrye.config</groupId>
                 <artifactId>smallrye-config-bom</artifactId>
                 <version>${lib.smallrye-config.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-annotations-jakarta</artifactId>
@@ -575,39 +587,28 @@
                 <artifactId>swagger-jaxrs2-jakarta</artifactId>
                 <version>${lib.swagger.version}</version>
             </dependency>
-
-            <dependency>
-                <groupId>uk.org.webcompere</groupId>
-                <artifactId>system-stubs-jupiter</artifactId>
-                <version>${lib.system-stubs.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
                 <version>${lib.testcontainers.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.google.crypto.tink</groupId>
                 <artifactId>tink</artifactId>
                 <version>${lib.tink.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>io.github.nscuro</groupId>
                 <artifactId>versatile-core</artifactId>
                 <version>${lib.versatile.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.wiremock</groupId>
                 <artifactId>wiremock-standalone</artifactId>
                 <version>${lib.wiremock.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.github.luben</groupId>
                 <artifactId>zstd-jni</artifactId>
@@ -615,10 +616,59 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
     <build>
         <pluginManagement>
             <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>3.6.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.11.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.6.3</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>3.1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.22.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>3.10.1</version>
+                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -631,26 +681,62 @@
                             <arg>-Xlint:-serial</arg>
                             <arg>-Xlint:-try</arg>
                             <arg>-parameters</arg>
+                            <arg>-XDcompilePolicy=simple</arg>
+                            <arg>--should-stop=ifError=FLOW</arg>
+                            <arg>-Xplugin:ErrorProne
+                                -XepDisableAllChecks
+                                -XepExcludedPaths:.*/target/generated-(test-)?sources/.*
+                                -Xep:NullAway:${nullaway.severity}
+                                -XepOpt:NullAway:OnlyNullMarked=true
+                                -XepOpt:NullAway:TreatGeneratedAsUnannotated=true</arg>
                         </compilerArgs>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>com.google.errorprone</groupId>
+                                <artifactId>error_prone_core</artifactId>
+                                <version>${lib.errorprone.version}</version>
+                            </path>
+                            <path>
+                                <groupId>com.uber.nullaway</groupId>
+                                <artifactId>nullaway</artifactId>
+                                <version>${lib.nullaway.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                         <!--
                           https://stackoverflow.com/a/76392489
                           https://issues.apache.org/jira/browse/MCOMPILER-209
                         -->
                         <useIncrementalCompilation>false</useIncrementalCompilation>
                     </configuration>
+                    <executions>
+                        <execution>
+                            <!--
+                              Do not run Error Prone on test sources. Nullness of test code is not
+                              enforced, and running the plugin there roughly doubles the Error Prone
+                              overhead for no benefit.
+                            -->
+                            <id>default-testCompile</id>
+                            <configuration>
+                                <compilerArgs>
+                                    <arg>-Xlint:all</arg>
+                                    <arg>-Xlint:-processing</arg>
+                                    <arg>-Xlint:-serial</arg>
+                                    <arg>-Xlint:-try</arg>
+                                    <arg>-parameters</arg>
+                                </compilerArgs>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
-
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.5.6</version>
                     <configuration>
-                        <argLine>
-                            @{argLine}
+                        <argLine>@{argLine}
                             -Xmx512m
                             --add-opens java.base/java.util=ALL-UNNAMED
-                            --add-opens java.base/java.lang=ALL-UNNAMED
-                        </argLine>
+                            --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                         <reuseForks>true</reuseForks>
                         <forkCount>${unitTestForkCount}</forkCount>
                         <!-- Avoid failing the whole multi-module build when a -Dtest pattern targets
@@ -659,19 +745,16 @@
                         <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                     </configuration>
                 </plugin>
-
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-report-plugin</artifactId>
                     <version>3.5.6</version>
                 </plugin>
-
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>0.8.15</version>
                 </plugin>
-
                 <plugin>
                     <groupId>org.datanucleus</groupId>
                     <artifactId>datanucleus-maven-plugin</artifactId>
@@ -688,7 +771,6 @@
                         </dependency>
                     </dependencies>
                 </plugin>
-
                 <plugin>
                     <groupId>org.jsonschema2pojo</groupId>
                     <artifactId>jsonschema2pojo-maven-plugin</artifactId>
@@ -700,7 +782,6 @@
                         </fileExtensions>
                     </configuration>
                 </plugin>
-
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
@@ -711,16 +792,15 @@
                         <pushChanges>true</pushChanges>
                         <localCheckout>true</localCheckout>
                         <releaseProfiles>quick</releaseProfiles>
-                        <preparationGoals>clean verify -Pquick</preparationGoals>
-                        <completionGoals>clean</completionGoals>
+                        <preparationGoals>clean verify spotless:apply -Pquick</preparationGoals>
+                        <completionGoals>clean spotless:apply</completionGoals>
                         <signTag>false</signTag>
                     </configuration>
                 </plugin>
-
                 <plugin>
                     <groupId>io.github.ascopes</groupId>
                     <artifactId>protobuf-maven-plugin</artifactId>
-                    <version>5.1.6</version>
+                    <version>5.1.8</version>
                     <configuration>
                         <protoc>${lib.protobuf-java.version}</protoc>
                         <sourceDirectories>
@@ -729,40 +809,91 @@
                     </configuration>
                     <executions>
                         <execution>
-                            <phase>generate-sources</phase>
                             <goals>
                                 <goal>generate</goal>
                             </goals>
+                            <phase>generate-sources</phase>
                         </execution>
                     </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
-
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <rules>
+                                <banDuplicatePomDependencyVersions/>
+                                <reactorModuleConvergence/>
+                                <requireJavaVersion>
+                                    <version>[25,)</version>
+                                </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>[3.9,)</version>
+                                </requireMavenVersion>
+                                <requireNoRepositories/>
+                                <requirePluginVersions/>
+                                <requireUpperBoundDeps/>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.7.0</version>
                 <configuration>
                     <java>
                         <licenseHeader>
                             <file>${project.parentBaseDir}/.mvn/spotless/license-header.txt</file>
                         </licenseHeader>
+                        <palantirJavaFormat>
+                            <version>2.97.0</version>
+                        </palantirJavaFormat>
+                        <importOrder>
+                            <order>,jakarta,javax|java,\#</order>
+                        </importOrder>
                         <removeUnusedImports/>
                         <forbidWildcardImports/>
+                        <forbidModuleImports/>
                     </java>
+                    <pom>
+                        <licenseHeader>
+                            <file>${project.parentBaseDir}/.mvn/spotless/license-header-xml.txt</file>
+                            <delimiter>&lt;project</delimiter>
+                        </licenseHeader>
+                        <sortPom>
+                            <nrOfIndentSpace>4</nrOfIndentSpace>
+                            <expandEmptyElements>false</expandEmptyElements>
+                            <keepBlankLines>false</keepBlankLines>
+                            <!--
+                              NB: Ordering of dependencies and plugins influences resolution
+                              and execution. Sorting them can alter behavior in unintended ways.
+                            -->
+                            <sortDependencies>none</sortDependencies>
+                            <sortPlugins>none</sortPlugins>
+                            <sortProperties>false</sortProperties>
+                            <sortModules>false</sortModules>
+                            <sortExecutions>false</sortExecutions>
+                        </sortPom>
+                    </pom>
                 </configuration>
                 <executions>
                     <execution>
-                        <phase>validate</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
+                        <phase>validate</phase>
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -774,10 +905,8 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
-
     <profiles>
         <profile>
             <id>quick</id>
@@ -787,12 +916,12 @@
                 </property>
             </activation>
             <properties>
-                <spotless.check.skip>true</spotless.check.skip>
+                <enforcer.skip>true</enforcer.skip>
                 <jacoco.skip>true</jacoco.skip>
                 <maven.test.skip>true</maven.test.skip>
+                <spotless.check.skip>true</spotless.check.skip>
             </properties>
         </profile>
-
         <profile>
             <id>github-actions</id>
             <activation>

@@ -20,6 +20,7 @@ package org.dependencytrack.common.health;
 
 import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.eclipse.microprofile.health.HealthCheckResponse.Status;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +36,7 @@ import static java.util.function.Predicate.not;
  */
 final class HealthCheckResponseBuilder extends org.eclipse.microprofile.health.HealthCheckResponseBuilder {
 
-    private String name;
+    private @Nullable String name;
     private Status status = Status.DOWN;
     private final Map<String, Object> data = new HashMap<>();
 
@@ -89,5 +90,4 @@ final class HealthCheckResponseBuilder extends org.eclipse.microprofile.health.H
 
         return new HealthCheckResponse(name, status, Optional.of(data).filter(not(Map::isEmpty)));
     }
-
 }

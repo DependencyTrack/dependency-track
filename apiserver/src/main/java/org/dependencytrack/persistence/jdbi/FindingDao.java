@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
+import org.dependencytrack.common.pagination.Page;
+import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.AppliedPolicyAnnotation;
 import org.dependencytrack.model.Finding;
@@ -42,7 +44,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.LongSupplier;
 
+import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_PAGINATE;
 import static org.dependencytrack.resources.v1.FindingResource.mapComponentLatestVersion;
 
 @RegisterColumnMapper(PolicyAnnotationsColumnMapper.class)
@@ -93,9 +98,7 @@ public interface FindingDao extends PaginationSupport {
             boolean suppressed,
             @Nullable String analysisDetail,
             @Nullable List<AppliedPolicyAnnotation> policyAnnotationsJson,
-            long totalCount
-    ) {
-    }
+            @Nullable Long totalCount) {}
 
     record GroupedFindingRow(
             Vulnerability.Source vulnSource,
@@ -112,13 +115,12 @@ public interface FindingDao extends PaginationSupport {
             List<Integer> cwes,
             String analyzerIdentity,
             int affectedProjectCount,
-            long totalCount
-    ) {
-    }
+            @Nullable Long totalCount) {}
 
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="apiOrderByClause" type="String" -->
             <#-- @ftlvariable name="apiOffsetLimitClause" type="String" -->
+            <#-- @ftlvariable name="emitTotalCount" type="boolean" -->
             <#-- @ftlvariable name="epssFrom" type="boolean" -->
             <#-- @ftlvariable name="epssTo" type="boolean" -->
             <#-- @ftlvariable name="isKev" type="boolean" -->
@@ -203,7 +205,7 @@ public interface FindingDao extends PaginationSupport {
                  , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
                  , e."SCORE" AS "epssScore"
                  , e."PERCENTILE" AS "epssPercentile"
-                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
+                 , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
                  , fa."ANALYZERIDENTITY"
                  , fa."ATTRIBUTED_ON"
                  , fa."ALT_ID"
@@ -212,41 +214,14 @@ public interface FindingDao extends PaginationSupport {
                  , a."SUPPRESSED"
                  , a."DETAILS" AS "analysisDetail"
                  , a."POLICY_ANNOTATIONS" AS "policyAnnotationsJson"
-                 , COUNT(*) OVER() AS "totalCount"
+                 , <#if emitTotalCount>COUNT(*) OVER()<#else>CAST(NULL AS BIGINT)</#if> AS "totalCount"
               FROM "COMPONENT" AS c
              INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
                 ON c."ID" = cv."COMPONENT_ID"
              INNER JOIN "VULNERABILITY" AS v
                 ON cv."VULNERABILITY_ID" = v."ID"
               LEFT JOIN LATERAL (
-                SELECT "CVE"
-                     , "SCORE"
-                     , "PERCENTILE"
-                  FROM (
-                    SELECT ee."CVE"
-                         , ee."SCORE"
-                         , ee."PERCENTILE"
-                      FROM "EPSS" AS ee
-                     WHERE v."SOURCE" = 'NVD'
-                       AND ee."CVE" = v."VULNID"
-                    UNION ALL
-                    SELECT ee."CVE"
-                         , ee."SCORE"
-                         , ee."PERCENTILE"
-                      FROM "VULNERABILITY_ALIAS" AS va
-                     INNER JOIN "VULNERABILITY_ALIAS" AS cve_a
-                        ON cve_a."GROUP_ID" = va."GROUP_ID"
-                       AND cve_a."SOURCE" = 'NVD'
-                     INNER JOIN "EPSS" AS ee
-                        ON ee."CVE" = cve_a."VULN_ID"
-                     WHERE v."SOURCE" != 'NVD'
-                       AND va."SOURCE" = v."SOURCE"
-                       AND va."VULN_ID" = v."VULNID"
-                  ) candidates
-                 ORDER BY "SCORE" DESC NULLS LAST
-                        , "PERCENTILE" DESC NULLS LAST
-                        , "CVE"
-                 LIMIT 1
+                <@sql.epssBestRow vulnSource='v."SOURCE"' vulnId='v."VULNID"'/>
               ) AS e ON TRUE
              INNER JOIN LATERAL (
                SELECT *
@@ -281,7 +256,7 @@ public interface FindingDao extends PaginationSupport {
                AND e."SCORE" <= :epssTo
             </#if>
             <#if isKev>
-               AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
+               AND <@sql.isKevFilter vulnIdColumn='cv."VULNERABILITY_ID"'/> = :isKev
             </#if>
             <#if searchText>
                AND (
@@ -300,25 +275,27 @@ public interface FindingDao extends PaginationSupport {
             </#if>
              ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""), by = {
-            @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
-            @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
-            @AllowApiOrdering.Column(name = "vulnerability.epssScore", queryName = "\"epssScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.epssPercentile", queryName = "\"epssPercentile\""),
-            @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
-            @AllowApiOrdering.Column(name = "component.group", queryName = "c.\"GROUP\""),
-            @AllowApiOrdering.Column(name = "component.name", queryName = "c.\"NAME\""),
-            @AllowApiOrdering.Column(name = "component.version", queryName = "c.\"VERSION\""),
-            @AllowApiOrdering.Column(name = "analysis.state", queryName = "a.\"STATE\""),
-            @AllowApiOrdering.Column(name = "analysis.isSuppressed", queryName = "a.\"SUPPRESSED\""),
-            @AllowApiOrdering.Column(name = "attribution.attributedOn", queryName = "fa.\"ATTRIBUTED_ON\"")
-    })
+    @AllowApiOrdering(
+            alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""),
+            by = {
+                @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
+                @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
+                @AllowApiOrdering.Column(name = "vulnerability.epssScore", queryName = "\"epssScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.epssPercentile", queryName = "\"epssPercentile\""),
+                @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
+                @AllowApiOrdering.Column(name = "component.group", queryName = "c.\"GROUP\""),
+                @AllowApiOrdering.Column(name = "component.name", queryName = "c.\"NAME\""),
+                @AllowApiOrdering.Column(name = "component.version", queryName = "c.\"VERSION\""),
+                @AllowApiOrdering.Column(name = "analysis.state", queryName = "a.\"STATE\""),
+                @AllowApiOrdering.Column(name = "analysis.isSuppressed", queryName = "a.\"SUPPRESSED\""),
+                @AllowApiOrdering.Column(name = "attribution.attributedOn", queryName = "fa.\"ATTRIBUTED_ON\"")
+            })
     @DefineNamedBindings
     @RegisterConstructorMapper(FindingRow.class)
-    List<FindingRow> getFindingsByProject(
+    List<FindingRow> selectFindingsByProject(
             @Bind long projectId,
             @Define boolean includeInactive,
             @Define boolean includeSuppressed,
@@ -327,42 +304,207 @@ public interface FindingDao extends PaginationSupport {
             @Bind String source,
             @Bind BigDecimal epssFrom,
             @Bind BigDecimal epssTo,
-            @Bind Boolean isKev);
+            @Bind Boolean isKev,
+            @Define boolean emitTotalCount,
+            @Define(ATTRIBUTE_API_PAGINATE) boolean paginate);
 
+    /// Queries the bounded count of findings for a project.
+    ///
+    /// NB:
+    /// * No ACL condition is applied here, since the REST endpoint calling this method enforces access on
+    ///   the project object before querying, and the query is naturally scoped to one project.
+    /// * The `FROM` / `WHERE` clauses **must** stay in sync with {@link #selectFindingsByProject},
+    ///   or the count will drift from the list.
+    ///
+    /// @return The total count of findings for the project, capped at `threshold + 1`,
+    ///         or exact when `threshold` is `null`.
+    @SqlQuery(/* language=InjectedFreeMarker */ """
+            <#-- @ftlvariable name="threshold" type="boolean" -->
+            <#-- @ftlvariable name="epssFrom" type="boolean" -->
+            <#-- @ftlvariable name="epssTo" type="boolean" -->
+            <#-- @ftlvariable name="isKev" type="boolean" -->
+            <#-- @ftlvariable name="includeInactive" type="boolean" -->
+            <#-- @ftlvariable name="includeSuppressed" type="boolean" -->
+            <#-- @ftlvariable name="source" type="boolean" -->
+            <#-- @ftlvariable name="searchText" type="boolean" -->
+            SELECT COUNT(*)
+              FROM (
+                SELECT 1
+                  FROM "COMPONENT" AS c
+                 INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
+                    ON c."ID" = cv."COMPONENT_ID"
+                 INNER JOIN "VULNERABILITY" AS v
+                    ON cv."VULNERABILITY_ID" = v."ID"
+            <#if epssFrom || epssTo>
+                  LEFT JOIN LATERAL (
+                    <@sql.epssBestRow vulnSource='v."SOURCE"' vulnId='v."VULNID"'/>
+                  ) AS e ON TRUE
+            </#if>
+                 INNER JOIN LATERAL (
+                   SELECT *
+                     FROM "FINDINGATTRIBUTION" AS fa
+                    WHERE c."ID" = fa."COMPONENT_ID"
+                      AND v."ID" = fa."VULNERABILITY_ID"
+            <#if !includeInactive>
+                      AND fa."DELETED_AT" IS NULL
+            </#if>
+                    ORDER BY fa."DELETED_AT" DESC NULLS FIRST
+                           , fa."ID"
+                    LIMIT 1
+                  ) AS fa ON TRUE
+                  LEFT JOIN "ANALYSIS" AS a
+                    ON c."ID" = a."COMPONENT_ID"
+                   AND v."ID" = a."VULNERABILITY_ID"
+                   AND c."PROJECT_ID" = a."PROJECT_ID"
+                 WHERE c."PROJECT_ID" = :projectId
+            <#if source>
+                   AND v."SOURCE" = :source
+            </#if>
+            <#if !includeSuppressed>
+                   AND a."SUPPRESSED" IS DISTINCT FROM TRUE
+            </#if>
+                   AND (:hasAnalysis IS NULL OR (a."ID" IS NOT NULL) = :hasAnalysis)
+            <#if epssFrom>
+                   AND e."SCORE" >= :epssFrom
+            </#if>
+            <#if epssTo>
+                   AND e."SCORE" <= :epssTo
+            </#if>
+            <#if isKev>
+                   AND <@sql.isKevFilter vulnIdColumn='cv."VULNERABILITY_ID"'/> = :isKev
+            </#if>
+            <#if searchText>
+                   AND (
+                     LOWER(c."NAME") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!'
+                     OR LOWER(c."GROUP") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!'
+                     OR LOWER(v."VULNID") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!'
+                     OR CAST(v."UUID" AS TEXT) = LOWER(:searchText)
+                     OR CAST(c."UUID" AS TEXT) = LOWER(:searchText)
+                     OR LOWER(CAST(c."UUID" AS TEXT) || ':' || CAST(v."UUID" AS TEXT)) = LOWER(:searchText)
+                   )
+            </#if>
+            <#if threshold>
+                 LIMIT (:threshold + 1)
+            </#if>
+              ) AS t
+            """)
+    @DefineNamedBindings
+    @AllowUnusedBindings
+    long selectFindingsByProjectBoundedCount(
+            @Bind long projectId,
+            @Define boolean includeInactive,
+            @Define boolean includeSuppressed,
+            @Nullable @Bind String searchText,
+            @Bind Boolean hasAnalysis,
+            @Bind String source,
+            @Bind BigDecimal epssFrom,
+            @Bind BigDecimal epssTo,
+            @Bind Boolean isKev,
+            @Nullable @Bind Integer threshold);
+
+    /// Queries a project's findings, unpaginated, for export use cases.
     default List<Finding> getFindings(long projectId, boolean includeSuppressed) {
-        // NB: JIT is disabled explicitly because it tends to take >=50% of query planning and
-        // execution time. JIT is almost always detrimental to query performance here.
-        List<FindingRow> findingRows = withJitDisabled(
-                () -> getFindingsByProject(
-                        projectId,
-                        /* includeInactive */ false,
-                        includeSuppressed,
-                        /* searchText */ null,
-                        /* hasAnalysis */ null,
-                        /* source */ null,
-                        /* epssFrom */ null,
-                        /* epssTo */ null,
-                        /* isKev */ null));
-        List<Finding> findings = findingRows.stream().map(Finding::new).toList();
-        return mapComponentLatestVersion(findings);
+        final List<FindingRow> findingRows = selectAllProjectFindings(
+                projectId,
+                includeSuppressed,
+                /* searchText */ null,
+                /* hasAnalysis */ null,
+                /* source */ null,
+                /* epssFrom */ null,
+                /* epssTo */ null,
+                /* isKev */ null);
+        return mapComponentLatestVersion(findingRows.stream().map(Finding::new).toList());
+    }
+
+    /// Queries a project's findings, unpaginated, and without a total count.
+    ///
+    /// @since 5.1.0
+    default List<FindingRow> selectAllProjectFindings(
+            long projectId,
+            boolean includeSuppressed,
+            @Nullable String searchText,
+            Boolean hasAnalysis,
+            String source,
+            BigDecimal epssFrom,
+            BigDecimal epssTo,
+            Boolean isKev) {
+        return withJitDisabled(() -> selectFindingsByProject(
+                projectId,
+                /* includeInactive */ false,
+                includeSuppressed,
+                searchText,
+                hasAnalysis,
+                source,
+                epssFrom,
+                epssTo,
+                isKev,
+                // NB: No caller reads the total, so don't pay for the window count.
+                /* emitTotalCount */ false,
+                /* paginate */ false));
+    }
+
+    /// Queries a project's findings as a page.
+    ///
+    /// @param totalCountThreshold the total count cap, or `null` for an exact count.
+    default Page<FindingRow> getFindingsByProject(
+            long projectId,
+            boolean includeSuppressed,
+            @Nullable String searchText,
+            Boolean hasAnalysis,
+            String source,
+            BigDecimal epssFrom,
+            BigDecimal epssTo,
+            Boolean isKev,
+            @Nullable Integer totalCountThreshold) {
+        return withJitDisabled(() -> {
+            final List<FindingRow> rows = selectFindingsByProject(
+                    projectId,
+                    /* includeInactive */ false,
+                    includeSuppressed,
+                    searchText,
+                    hasAnalysis,
+                    source,
+                    epssFrom,
+                    epssTo,
+                    isKev,
+                    /* emitTotalCount */ totalCountThreshold == null,
+                    /* paginate */ true);
+            final LongSupplier countQuery = () -> selectFindingsByProjectBoundedCount(
+                    projectId,
+                    /* includeInactive */ false,
+                    includeSuppressed,
+                    searchText,
+                    hasAnalysis,
+                    source,
+                    epssFrom,
+                    epssTo,
+                    isKev,
+                    totalCountThreshold);
+            if (totalCountThreshold == null) {
+                return new Page<>(rows).withTotalCount(exactTotalCount(rows, FindingRow::totalCount, countQuery));
+            }
+
+            return new Page<>(rows)
+                    .withTotalCount(boundedTotalCountOrAtLeast(
+                            countQuery, totalCountThreshold, /* returnedItems */ rows.size()));
+        });
     }
 
     /// Queries all findings across the entire portfolio.
     ///
-    /// The query is split into an inner `page` CTE that resolves only the row
-    /// identity plus the columns needed for filtering and ordering, and an outer
-    /// `SELECT` that enriches just the paginated rows with the expensive columns
-    /// (e.g. aliases, EPSS, descriptions, vectors).
+    /// The query is split into:
+    /// * an inner `page` CTE that resolves only the row identity, plus the columns needed
+    ///   for filtering and ordering
+    /// * an outer `SELECT` that enriches just the paginated rows with the expensive columns (e.g. aliases, EPSS)
+    ///
     /// This keeps `COUNT(*) OVER()` and all enrichment off the full, pre-pagination row set.
     ///
-    /// EPSS is only resolved before pagination when needed. An EPSS score filter is
-    /// pushed down as an `EXISTS`, while EPSS ordering or an EPSS percentile filter
-    /// joins a per-vulnerability `epss_dedup` CTE. Otherwise, EPSS is resolved only
-    /// during enrichment of the paginated rows.
+    /// EPSS is only resolved before pagination when needed. An EPSS score filter is pushed down as an `EXISTS`,
+    /// while EPSS ordering or an EPSS percentile filter joins a per-vulnerability `epss_dedup` CTE.
+    /// Otherwise, EPSS is resolved only during enrichment of the paginated rows.
     ///
-    /// Note: every `queryName` in [AllowApiOrdering] must resolve in **both**
-    /// the inner `page` CTE **and** the outer `SELECT`, because the ordering clause
-    /// is applied at both levels.
+    /// NB: every `queryName` in [AllowApiOrdering] must resolve in **both** the inner `page` CTE **and**
+    /// the outer `SELECT`, because the ordering clause is applied at both levels.
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
             <#-- @ftlvariable name="apiOrderByClause" type="String" -->
@@ -375,59 +517,10 @@ public interface FindingDao extends PaginationSupport {
             <#-- @ftlvariable name="epssScoreFrom" type="boolean" -->
             <#-- @ftlvariable name="epssScoreTo" type="boolean" -->
             <#-- @ftlvariable name="isKev" type="boolean" -->
-            <#macro epssCandidates vulnSource vulnId>
-                SELECT ee."CVE"
-                     , ee."SCORE"
-                     , ee."PERCENTILE"
-                  FROM "EPSS" AS ee
-                 WHERE ${vulnSource} = 'NVD'
-                   AND ee."CVE" = ${vulnId}
-                UNION ALL
-                SELECT ee."CVE"
-                     , ee."SCORE"
-                     , ee."PERCENTILE"
-                  FROM "VULNERABILITY_ALIAS" AS va
-                 INNER JOIN "VULNERABILITY_ALIAS" AS cve_a
-                    ON cve_a."GROUP_ID" = va."GROUP_ID"
-                   AND cve_a."SOURCE" = 'NVD'
-                 INNER JOIN "EPSS" AS ee
-                    ON ee."CVE" = cve_a."VULN_ID"
-                 WHERE ${vulnSource} != 'NVD'
-                   AND va."SOURCE" = ${vulnSource}
-                   AND va."VULN_ID" = ${vulnId}
-            </#macro>
-            <#macro epssBestRow vulnSource vulnId>
-                SELECT "SCORE"
-                     , "PERCENTILE"
-                  FROM (
-                    <@epssCandidates vulnSource=vulnSource vulnId=vulnId/>
-                  ) AS candidates
-                 ORDER BY "SCORE" DESC NULLS LAST
-                        , "PERCENTILE" DESC NULLS LAST
-                        , "CVE"
-                 LIMIT 1
-            </#macro>
+            <#-- @ftlvariable name="emitTotalCount" type="boolean" -->
             WITH
             <#if epssInPage>
-            epss_dedup AS (
-              SELECT dv."ID" AS "vulnerabilityId"
-                   , ep."SCORE"
-                   , ep."PERCENTILE"
-                FROM (
-                  SELECT DISTINCT
-                         v."ID"
-                       , v."SOURCE"
-                       , v."VULNID"
-                    FROM "VULNERABILITY" AS v
-                   WHERE v."ID" IN (
-                     SELECT "VULNERABILITY_ID"
-                       FROM "COMPONENTS_VULNERABILITIES"
-                   )
-                ) AS dv
-                LEFT JOIN LATERAL (
-                  <@epssBestRow vulnSource='dv."SOURCE"' vulnId='dv."VULNID"'/>
-                ) AS ep ON TRUE
-            ),
+            <@sql.epssDedup/>,
             </#if>
             page AS (
               SELECT c."ID" AS "componentId"
@@ -452,7 +545,7 @@ public interface FindingDao extends PaginationSupport {
                    , ed."SCORE" AS "epssScore"
                    , ed."PERCENTILE" AS "epssPercentile"
             </#if>
-                   , COUNT(*) OVER() AS "totalCount"
+                   , <#if emitTotalCount>COUNT(*) OVER()<#else>CAST(NULL AS BIGINT)</#if> AS "totalCount"
                 FROM "COMPONENT" AS c
                INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
                   ON c."ID" = cv."COMPONENT_ID"
@@ -491,7 +584,7 @@ public interface FindingDao extends PaginationSupport {
                  AND EXISTS (
                    SELECT 1
                      FROM (
-                       <@epssCandidates vulnSource='v."SOURCE"' vulnId='v."VULNID"'/>
+                       <@sql.epssCandidates vulnSource='v."SOURCE"' vulnId='v."VULNID"'/>
                      ) AS candidates
                    HAVING
             <#if epssScoreFrom>
@@ -509,7 +602,7 @@ public interface FindingDao extends PaginationSupport {
                  ${queryFilter}
             </#if>
             <#if isKev>
-                 AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
+                 AND <@sql.isKevFilter vulnIdColumn='cv."VULNERABILITY_ID"'/> = :isKev
             </#if>
             <#if apiOrderByClause??>
                ${apiOrderByClause}
@@ -600,7 +693,7 @@ public interface FindingDao extends PaginationSupport {
                  , ep."SCORE" AS "epssScore"
                  , ep."PERCENTILE" AS "epssPercentile"
             </#if>
-                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
+                 , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
                  , fa."ANALYZERIDENTITY"
                  , fa."ATTRIBUTED_ON"
                  , fa."ALT_ID"
@@ -635,7 +728,7 @@ public interface FindingDao extends PaginationSupport {
              ) AS fa ON TRUE
             <#if !epssInPage>
               LEFT JOIN LATERAL (
-                <@epssBestRow vulnSource='v."SOURCE"' vulnId='v."VULNID"'/>
+                <@sql.epssBestRow vulnSource='v."SOURCE"' vulnId='v."VULNID"'/>
               ) AS ep ON TRUE
             </#if>
             <#if apiOrderByClause??>
@@ -644,29 +737,33 @@ public interface FindingDao extends PaginationSupport {
               ORDER BY c."ID", v."ID"
             </#if>
             """)
-    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""), by = {
-            @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
-            @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
-            @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.epssScore", queryName = "\"epssScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.epssPercentile", queryName = "\"epssPercentile\""),
-            @AllowApiOrdering.Column(name = "vulnerability.published", queryName = "v.\"PUBLISHED\""),
-            @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
-            @AllowApiOrdering.Column(name = "component.projectName", queryName = "concat(p.\"NAME\", ' ', p.\"VERSION\")"),
-            @AllowApiOrdering.Column(name = "component.name", queryName = "c.\"NAME\""),
-            @AllowApiOrdering.Column(name = "component.version", queryName = "c.\"VERSION\""),
-            @AllowApiOrdering.Column(name = "analysis.state", queryName = "a.\"STATE\""),
-            @AllowApiOrdering.Column(name = "analysis.isSuppressed", queryName = "a.\"SUPPRESSED\""),
-            @AllowApiOrdering.Column(name = "attribution.attributedOn", queryName = "fa.\"ATTRIBUTED_ON\"")
-    })
+    @AllowApiOrdering(
+            alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""),
+            by = {
+                @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
+                @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
+                @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.epssScore", queryName = "\"epssScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.epssPercentile", queryName = "\"epssPercentile\""),
+                @AllowApiOrdering.Column(name = "vulnerability.published", queryName = "v.\"PUBLISHED\""),
+                @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
+                @AllowApiOrdering.Column(
+                        name = "component.projectName",
+                        queryName = "concat(p.\"NAME\", ' ', p.\"VERSION\")"),
+                @AllowApiOrdering.Column(name = "component.name", queryName = "c.\"NAME\""),
+                @AllowApiOrdering.Column(name = "component.version", queryName = "c.\"VERSION\""),
+                @AllowApiOrdering.Column(name = "analysis.state", queryName = "a.\"STATE\""),
+                @AllowApiOrdering.Column(name = "analysis.isSuppressed", queryName = "a.\"SUPPRESSED\""),
+                @AllowApiOrdering.Column(name = "attribution.attributedOn", queryName = "fa.\"ATTRIBUTED_ON\"")
+            })
     @DefineNamedBindings
     @AllowUnusedBindings
     @DefineApiProjectAclCondition(projectIdColumn = "p.\"ID\"")
     @RegisterConstructorMapper(FindingRow.class)
-    List<FindingRow> getAllFindings(
+    List<FindingRow> selectAllFindings(
             @Define String queryFilter,
             @Define boolean activeFilter,
             @Define boolean includeInactiveFindings,
@@ -675,54 +772,183 @@ public interface FindingDao extends PaginationSupport {
             @Bind BigDecimal epssScoreFrom,
             @Bind BigDecimal epssScoreTo,
             @Nullable @Bind Boolean isKev,
+            @BindMap Map<String, Object> params,
+            @Define boolean emitTotalCount);
+
+    /// Queries the bounded count of all findings across the entire portfolio.
+    ///
+    /// NB:
+    /// * The `epss_dedup` join is included only when `queryFilter` may reference the `ed` alias,
+    ///   i.e. for EPSS percentile filters. The join does not change which rows match.
+    ///   Notably, it is *not* included for an EPSS sort, unlike in {@link #selectAllFindings},
+    ///   because a count has no `ORDER BY`. Including it makes Postgres drive the count from
+    ///   the vulnerability side. The `EPSS` and `VULNERABILITY_ALIAS` pages are the least likely
+    ///   to be cached, so a fast count becomes a slow one.
+    /// * The `FROM` / `WHERE` clauses **must** stay in sync with {@link #selectAllFindings},
+    ///   or the count will drift from the list.
+    @SqlQuery(/* language=InjectedFreeMarker */ """
+            <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
+            <#-- @ftlvariable name="queryFilter" type="String" -->
+            <#-- @ftlvariable name="activeFilter" type="Boolean" -->
+            <#-- @ftlvariable name="includeInactiveFindings" type="Boolean" -->
+            <#-- @ftlvariable name="suppressedFilter" type="Boolean" -->
+            <#-- @ftlvariable name="epssDedupJoin" type="boolean" -->
+            <#-- @ftlvariable name="epssScoreFrom" type="boolean" -->
+            <#-- @ftlvariable name="epssScoreTo" type="boolean" -->
+            <#-- @ftlvariable name="isKev" type="boolean" -->
+            <#-- @ftlvariable name="threshold" type="boolean" -->
+            <#if epssDedupJoin>
+            WITH
+            <@sql.epssDedup/>
+            </#if>
+            SELECT COUNT(*)
+              FROM (
+                SELECT 1
+                  FROM "COMPONENT" AS c
+                 INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
+                    ON c."ID" = cv."COMPONENT_ID"
+                 INNER JOIN "VULNERABILITY" AS v
+                    ON cv."VULNERABILITY_ID" = v."ID"
+                 INNER JOIN LATERAL (
+                   SELECT *
+                     FROM "FINDINGATTRIBUTION" AS fa
+                    WHERE c."ID" = fa."COMPONENT_ID"
+                      AND v."ID" = fa."VULNERABILITY_ID"
+            <#if !includeInactiveFindings>
+                      AND fa."DELETED_AT" IS NULL
+            </#if>
+                    ORDER BY fa."DELETED_AT" DESC NULLS FIRST
+                           , fa."ID"
+                    LIMIT 1
+                  ) AS fa ON TRUE
+            <#if epssDedupJoin>
+                  LEFT JOIN epss_dedup AS ed
+                    ON ed."vulnerabilityId" = v."ID"
+            </#if>
+                  LEFT JOIN "ANALYSIS" AS a
+                    ON c."ID" = a."COMPONENT_ID"
+                   AND v."ID" = a."VULNERABILITY_ID"
+                   AND c."PROJECT_ID" = a."PROJECT_ID"
+                 INNER JOIN "PROJECT" AS p
+                    ON c."PROJECT_ID" = p."ID"
+                 WHERE ${apiProjectAclCondition}
+            <#if !activeFilter>
+                   AND p."INACTIVE_SINCE" IS NULL
+            </#if>
+            <#if !suppressedFilter>
+                   AND a."SUPPRESSED" IS DISTINCT FROM TRUE
+            </#if>
+            <#if epssScoreFrom || epssScoreTo>
+                   AND EXISTS (
+                     SELECT 1
+                       FROM (
+                         <@sql.epssCandidates vulnSource='v."SOURCE"' vulnId='v."VULNID"'/>
+                       ) AS candidates
+                     HAVING
+            <#if epssScoreFrom>
+                       MAX(candidates."SCORE") >= :epssScoreFrom
+            </#if>
+            <#if epssScoreFrom && epssScoreTo>
+                       AND
+            </#if>
+            <#if epssScoreTo>
+                       MAX(candidates."SCORE") <= :epssScoreTo
+            </#if>
+                   )
+            </#if>
+            <#if queryFilter??>
+                   ${queryFilter}
+            </#if>
+            <#if isKev>
+                   AND <@sql.isKevFilter vulnIdColumn='cv."VULNERABILITY_ID"'/> = :isKev
+            </#if>
+            <#if threshold>
+                 LIMIT (:threshold + 1)
+            </#if>
+              ) AS t
+            """)
+    @DefineNamedBindings
+    @AllowUnusedBindings
+    @DefineApiProjectAclCondition(projectIdColumn = "p.\"ID\"")
+    long selectAllFindingsBoundedCount(
+            @Define String queryFilter,
+            @Define boolean activeFilter,
+            @Define boolean includeInactiveFindings,
+            @Define boolean suppressedFilter,
+            @Define boolean epssDedupJoin,
+            @Bind BigDecimal epssScoreFrom,
+            @Bind BigDecimal epssScoreTo,
+            @Nullable @Bind Boolean isKev,
+            @Nullable @Bind Integer threshold,
             @BindMap Map<String, Object> params);
 
     /**
-     * Returns a List of all Finding objects filtered by ACL and other optional filters.
+     * Returns a page of all findings filtered by ACL and other optional filters.
      *
-     * @param filters        determines the filters to apply on the list of Finding objects
-     * @param showSuppressed determines if suppressed vulnerabilities should be included or not
-     * @param showInactive   determines if inactive projects should be included or not
-     * @param orderBy        the requested ordering field, or {@code null} for the default ordering
-     * @return a List of Finding objects
+     * @param filters             the filters to apply
+     * @param showSuppressed      whether to include suppressed vulnerabilities
+     * @param showInactive        whether to include inactive projects
+     * @param orderBy             the requested ordering field, or {@code null} for the default ordering
+     * @param totalCountThreshold the count cap, or {@code null} for an exact count
+     * @return the matching findings and their {@link TotalCount}
      */
-    default List<FindingRow> getAllFindings(
+    default Page<FindingRow> getAllFindings(
             Map<String, String> filters,
             boolean showSuppressed,
             boolean showInactive,
-            @Nullable String orderBy) {
+            @Nullable String orderBy,
+            @Nullable Integer totalCountThreshold) {
         final StringBuilder queryFilter = new StringBuilder();
         final Map<String, Object> params = new HashMap<>();
 
-        final boolean isEpssOrdering = "vulnerability.epssScore".equals(orderBy)
-                || "vulnerability.epssPercentile".equals(orderBy);
-        final boolean isEpssInPage = isEpssOrdering
-                || hasValue(filters, "epssPercentileFrom")
-                || hasValue(filters, "epssPercentileTo");
+        final boolean isEpssOrdering =
+                "vulnerability.epssScore".equals(orderBy) || "vulnerability.epssPercentile".equals(orderBy);
+        final boolean isEpssPercentileFiltered =
+                hasValue(filters, "epssPercentileFrom") || hasValue(filters, "epssPercentileTo");
+        final boolean isEpssInPage = isEpssOrdering || isEpssPercentileFiltered;
         processFilters(filters, queryFilter, params, /* epssScoreViaExists */ true);
 
         final BigDecimal epssScoreFrom = maybeParseDecimal(filters.get("epssFrom"));
         final BigDecimal epssScoreTo = maybeParseDecimal(filters.get("epssTo"));
         final Boolean isKev = maybeParseBoolean(filters.get("isKev"));
+        final String renderedQueryFilter = String.valueOf(queryFilter);
 
-        // NB: JIT is disabled explicitly because it tends to take >=50% of query planning and
-        // execution time. JIT is almost always detrimental to query performance here.
-        return withJitDisabled(
-                () -> getAllFindings(
-                        String.valueOf(queryFilter),
-                        showInactive,
-                        /* includeInactiveFindings */ false,
-                        showSuppressed,
-                        isEpssInPage,
-                        epssScoreFrom,
-                        epssScoreTo,
-                        isKev,
-                        params));
+        return withJitDisabled(() -> {
+            final List<FindingRow> rows = selectAllFindings(
+                    renderedQueryFilter,
+                    showInactive,
+                    /* includeInactiveFindings */ false,
+                    showSuppressed,
+                    isEpssInPage,
+                    epssScoreFrom,
+                    epssScoreTo,
+                    isKev,
+                    params,
+                    /* emitTotalCount */ totalCountThreshold == null);
+            final LongSupplier countQuery = () -> selectAllFindingsBoundedCount(
+                    renderedQueryFilter,
+                    showInactive,
+                    /* includeInactiveFindings */ false,
+                    showSuppressed,
+                    /* epssDedupJoin */ isEpssPercentileFiltered,
+                    epssScoreFrom,
+                    epssScoreTo,
+                    isKev,
+                    totalCountThreshold,
+                    params);
+            if (totalCountThreshold == null) {
+                return new Page<>(rows).withTotalCount(exactTotalCount(rows, FindingRow::totalCount, countQuery));
+            }
+
+            return new Page<>(rows)
+                    .withTotalCount(boundedTotalCountOrAtLeast(
+                            countQuery, totalCountThreshold, /* returnedItems */ rows.size()));
+        });
     }
 
     /// Queries all findings in the portfolio, grouped by vulnerability.
     ///
-    /// EPSS is resolved once per distinct vulnerability via the `epss_dedup` CTE rather
+    /// NB: EPSS is resolved once per distinct vulnerability via the `epss_dedup` CTE rather
     /// than per finding, since the result is grouped by vulnerability anyway.
     /// EPSS score and percentile values are functionally dependent on the vulnerability but,
     /// since they're being sourced from a join, **must** remain in the `GROUP BY`.
@@ -733,51 +959,9 @@ public interface FindingDao extends PaginationSupport {
             <#-- @ftlvariable name="includeInactiveFindings" type="Boolean" -->
             <#-- @ftlvariable name="apiOffsetLimitClause" type="String" -->
             <#-- @ftlvariable name="isKev" type="boolean" -->
-            WITH epss_dedup AS (
-              SELECT dv."ID" AS "vulnerabilityId"
-                   , ep."SCORE"
-                   , ep."PERCENTILE"
-                FROM (
-                  SELECT DISTINCT
-                         v."ID"
-                       , v."SOURCE"
-                       , v."VULNID"
-                    FROM "VULNERABILITY" AS v
-                   WHERE v."ID" IN (
-                     SELECT "VULNERABILITY_ID"
-                       FROM "COMPONENTS_VULNERABILITIES"
-                   )
-                ) AS dv
-                LEFT JOIN LATERAL (
-                  SELECT "SCORE"
-                       , "PERCENTILE"
-                    FROM (
-                      SELECT ee."CVE"
-                           , ee."SCORE"
-                           , ee."PERCENTILE"
-                        FROM "EPSS" AS ee
-                       WHERE dv."SOURCE" = 'NVD'
-                         AND ee."CVE" = dv."VULNID"
-                      UNION ALL
-                      SELECT ee."CVE"
-                           , ee."SCORE"
-                           , ee."PERCENTILE"
-                        FROM "VULNERABILITY_ALIAS" AS va
-                       INNER JOIN "VULNERABILITY_ALIAS" AS cve_a
-                          ON cve_a."GROUP_ID" = va."GROUP_ID"
-                         AND cve_a."SOURCE" = 'NVD'
-                       INNER JOIN "EPSS" AS ee
-                          ON ee."CVE" = cve_a."VULN_ID"
-                       WHERE dv."SOURCE" != 'NVD'
-                         AND va."SOURCE" = dv."SOURCE"
-                         AND va."VULN_ID" = dv."VULNID"
-                    ) AS candidates
-                   ORDER BY "SCORE" DESC NULLS LAST
-                          , "PERCENTILE" DESC NULLS LAST
-                          , "CVE"
-                   LIMIT 1
-                ) AS ep ON TRUE
-            )
+            <#-- @ftlvariable name="emitTotalCount" type="boolean" -->
+            WITH
+            <@sql.epssDedup/>
             SELECT v."SOURCE" AS "vulnSource"
                  , v."VULNID"
                  , v."TITLE" AS "vulnTitle"
@@ -799,12 +983,12 @@ public interface FindingDao extends PaginationSupport {
                    END AS "cvssV4Score"
                  , ed."SCORE" AS "epssScore"
                  , ed."PERCENTILE" AS "epssPercentile"
-                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
+                 , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
                  , v."PUBLISHED" AS "vulnPublished"
                  , CAST(STRING_TO_ARRAY(v."CWES", ',') AS INT[]) AS "CWES"
                  , fa."ANALYZERIDENTITY"
                  , COUNT(DISTINCT p."ID") AS "affectedProjectCount"
-                 , COUNT(*) OVER() AS "totalCount"
+                 , <#if emitTotalCount>COUNT(*) OVER()<#else>CAST(NULL AS BIGINT)</#if> AS "totalCount"
               FROM "COMPONENT" AS c
              INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
                 ON c."ID" = cv."COMPONENT_ID"
@@ -838,7 +1022,7 @@ public interface FindingDao extends PaginationSupport {
                 ${queryFilter}
             </#if>
             <#if isKev>
-                AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
+                AND <@sql.isKevFilter vulnIdColumn='cv."VULNERABILITY_ID"'/> = :isKev
             </#if>
             GROUP BY v."ID"
                   , v."SOURCE"
@@ -858,40 +1042,49 @@ public interface FindingDao extends PaginationSupport {
             </#if>
             <#if apiOrderByClause??>
               ${apiOrderByClause}
+            <#else>
+              ORDER BY v."ID"
             </#if>
             ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "v.\"ID\""), by = {
-            @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
-            @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
-            @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.published", queryName = "v.\"PUBLISHED\""),
-            @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
-            @AllowApiOrdering.Column(name = "vulnerability.affectedProjectCount", queryName = "COUNT(DISTINCT p.\"ID\")")
-    })
+    @AllowApiOrdering(
+            alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "v.\"ID\""),
+            by = {
+                @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
+                @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
+                @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.published", queryName = "v.\"PUBLISHED\""),
+                @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
+                @AllowApiOrdering.Column(
+                        name = "vulnerability.affectedProjectCount",
+                        queryName = "COUNT(DISTINCT p.\"ID\")")
+            })
     @AllowUnusedBindings
     @DefineNamedBindings
     @DefineApiProjectAclCondition(projectIdColumn = "p.\"ID\"")
     @RegisterConstructorMapper(GroupedFindingRow.class)
-    List<GroupedFindingRow> getGroupedFindings(
+    List<GroupedFindingRow> selectGroupedFindings(
             @Define String queryFilter,
             @Define boolean activeFilter,
             @Define boolean includeInactiveFindings,
             @Define String aggregateFilter,
             @Nullable @Bind Boolean isKev,
-            @BindMap Map<String, Object> params);
+            @BindMap Map<String, Object> params,
+            @Define boolean emitTotalCount);
 
     /**
-     * Returns a List of all Finding objects filtered by ACL and other optional filters. The resulting list is grouped by vulnerability.
+     * Returns a page of all findings filtered by ACL and other optional filters, grouped by vulnerability.
      *
-     * @param filters      determines the filters to apply on the list of Finding objects
-     * @param showInactive determines if inactive projects should be included or not
-     * @return a List of Finding objects
+     * @param filters           the filters to apply
+     * @param showInactive      whether to include inactive projects
+     * @param boundedTotalCount whether to skip the count and report what the page proves
+     * @return the matching grouped findings and their {@link TotalCount}
      */
-    default List<GroupedFindingRow> getGroupedFindings(Map<String, String> filters, boolean showInactive) {
+    default Page<GroupedFindingRow> getGroupedFindings(
+            Map<String, String> filters, boolean showInactive, boolean boundedTotalCount) {
         final StringBuilder queryFilter = new StringBuilder();
         final Map<String, Object> params = new HashMap<>();
 
@@ -899,17 +1092,29 @@ public interface FindingDao extends PaginationSupport {
         final StringBuilder aggregateFilter = new StringBuilder();
         processAggregateFilters(filters, aggregateFilter, params);
         final Boolean isKev = maybeParseBoolean(filters.get("isKev"));
+        final String renderedQueryFilter = String.valueOf(queryFilter);
+        final String renderedAggregateFilter = String.valueOf(aggregateFilter);
 
-        // NB: JIT is disabled explicitly because it tends to take >=50% of query planning and
-        // execution time. JIT is almost always detrimental to query performance here.
-        return withJitDisabled(
-                () -> getGroupedFindings(
-                        String.valueOf(queryFilter),
-                        showInactive,
-                        /* includeInactiveFindings */ false,
-                        String.valueOf(aggregateFilter),
-                        isKev,
-                        params));
+        return withJitDisabled(() -> {
+            final List<GroupedFindingRow> rows = selectGroupedFindings(
+                    renderedQueryFilter,
+                    showInactive,
+                    /* includeInactiveFindings */ false,
+                    renderedAggregateFilter,
+                    isKev,
+                    params,
+                    /* emitTotalCount */ !boundedTotalCount);
+            if (boundedTotalCount || rows.isEmpty()) {
+                return new Page<>(rows).withTotalCount(pageDerivedTotalCount(rows.size()));
+            }
+
+            return new Page<>(rows)
+                    .withTotalCount(
+                            requireNonNull(
+                                    rows.getFirst().totalCount(),
+                                    "totalCount must not be null when the window count was requested"),
+                            TotalCount.Type.EXACT);
+        });
     }
 
     private void processFilters(
@@ -920,73 +1125,140 @@ public interface FindingDao extends PaginationSupport {
         for (String filter : filters.keySet()) {
             switch (filter) {
                 case "severity" ->
-                        processArrayFilter(queryFilter, params, filter, filters.get(filter), "v.\"SEVERITY\"");
+                    processArrayFilter(queryFilter, params, filter, filters.get(filter), "v.\"SEVERITY\"");
                 case "analysisStatus" ->
-                        processArrayFilter(queryFilter, params, filter, filters.get(filter), "a.\"STATE\"");
+                    processArrayFilter(queryFilter, params, filter, filters.get(filter), "a.\"STATE\"");
                 case "vendorResponse" ->
-                        processArrayFilter(queryFilter, params, filter, filters.get(filter), "a.\"RESPONSE\"");
+                    processArrayFilter(queryFilter, params, filter, filters.get(filter), "a.\"RESPONSE\"");
                 case "publishDateFrom" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"PUBLISHED\"", true, true, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "v.\"PUBLISHED\"", true, true, false);
                 case "publishDateTo" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"PUBLISHED\"", false, true, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "v.\"PUBLISHED\"", false, true, false);
                 case "attributedOnDateFrom" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "fa.\"ATTRIBUTED_ON\"", true, true, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "fa.\"ATTRIBUTED_ON\"",
+                            true,
+                            true,
+                            false);
                 case "attributedOnDateTo" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "fa.\"ATTRIBUTED_ON\"", false, true, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "fa.\"ATTRIBUTED_ON\"",
+                            false,
+                            true,
+                            false);
                 case "textSearchField" ->
-                        processInputFilter(queryFilter, params, filter, filters.get(filter), filters.get("textSearchInput"));
+                    processInputFilter(
+                            queryFilter, params, filter, filters.get(filter), filters.get("textSearchInput"));
                 case "cvssv2From" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV2BASESCORE\"", true, false, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "v.\"CVSSV2BASESCORE\"",
+                            true,
+                            false,
+                            false);
                 case "cvssv2To" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV2BASESCORE\"", false, false, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "v.\"CVSSV2BASESCORE\"",
+                            false,
+                            false,
+                            false);
                 case "cvssv3From" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV3BASESCORE\"", true, false, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "v.\"CVSSV3BASESCORE\"",
+                            true,
+                            false,
+                            false);
                 case "cvssv3To" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV3BASESCORE\"", false, false, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "v.\"CVSSV3BASESCORE\"",
+                            false,
+                            false,
+                            false);
                 case "cvssv4From" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV4SCORE\"", true, false, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "v.\"CVSSV4SCORE\"", true, false, false);
                 case "cvssv4To" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV4SCORE\"", false, false, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "v.\"CVSSV4SCORE\"", false, false, false);
                 case "epssFrom" -> {
                     if (!epssScoreViaExists) {
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"SCORE\"", true, false, false);
+                        processRangeFilter(
+                                queryFilter, params, filter, filters.get(filter), "ed.\"SCORE\"", true, false, false);
                     }
                 }
                 case "epssTo" -> {
                     if (!epssScoreViaExists) {
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"SCORE\"", false, false, false);
+                        processRangeFilter(
+                                queryFilter, params, filter, filters.get(filter), "ed.\"SCORE\"", false, false, false);
                     }
                 }
                 case "epssPercentileFrom" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", true, false, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", true, false, false);
                 case "epssPercentileTo" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", false, false, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", false, false, false);
                 // NB: isKev is applied directly in the query templates via the shared
-                // <@sql.isKev/> macro, not as a queryFilter fragment.
+                // <@sql.isKevFilter/> macro, not as a queryFilter fragment.
             }
         }
     }
 
     private void processAggregateFilters(
-            Map<String, String> filters,
-            StringBuilder queryFilter,
-            Map<String, Object> params) {
+            Map<String, String> filters, StringBuilder queryFilter, Map<String, Object> params) {
         for (String filter : filters.keySet()) {
             switch (filter) {
                 case "occurrencesFrom" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "COUNT(DISTINCT p.\"ID\")", true, false, true);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "COUNT(DISTINCT p.\"ID\")",
+                            true,
+                            false,
+                            true);
                 case "occurrencesTo" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "COUNT(DISTINCT p.\"ID\")", false, false, true);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "COUNT(DISTINCT p.\"ID\")",
+                            false,
+                            false,
+                            true);
             }
         }
     }
 
     private void processArrayFilter(
-            StringBuilder queryFilter,
-            Map<String, Object> params,
-            String paramName,
-            String filter,
-            String column) {
+            StringBuilder queryFilter, Map<String, Object> params, String paramName, String filter, String column) {
         if (filter != null && !filter.isEmpty()) {
             queryFilter.append(" AND (");
             String[] filters = filter.split(",");
@@ -996,7 +1268,8 @@ public interface FindingDao extends PaginationSupport {
                     queryFilter.append("::SEVERITY");
                 }
                 params.put(paramName + i, filters[i].toUpperCase());
-                if (filters[i].equals("NOT_SET") && (paramName.equals("analysisStatus") || paramName.equals("vendorResponse"))) {
+                if (filters[i].equals("NOT_SET")
+                        && (paramName.equals("analysisStatus") || paramName.equals("vendorResponse"))) {
                     queryFilter.append(" OR ").append(column).append(" IS NULL");
                 }
                 if (i < length - 1) {
@@ -1037,11 +1310,7 @@ public interface FindingDao extends PaginationSupport {
     }
 
     private void processInputFilter(
-            StringBuilder queryFilter,
-            Map<String, Object> params,
-            String paramName,
-            String filter,
-            String input) {
+            StringBuilder queryFilter, Map<String, Object> params, String paramName, String filter, String input) {
         if (filter != null && !filter.isEmpty() && input != null && !input.isEmpty()) {
             queryFilter.append(" AND (");
             String[] filters = filter.split(",");
@@ -1077,5 +1346,4 @@ public interface FindingDao extends PaginationSupport {
     private static @Nullable Boolean maybeParseBoolean(@Nullable String value) {
         return value == null || value.isEmpty() ? null : Boolean.parseBoolean(value);
     }
-
 }

@@ -42,8 +42,6 @@ public final class AnalysisDao {
     private static final PolicyAnnotationsColumnMapper POLICY_ANNOTATIONS_COLUMN_MAPPER =
             new PolicyAnnotationsColumnMapper();
 
-
-
     public AnalysisDao(Handle handle) {
         this.handle = handle;
     }
@@ -65,9 +63,7 @@ public final class AnalysisDao {
             @Nullable Double cvssV4Score,
             @Nullable String owaspVector,
             @Nullable Double owaspScore,
-            @Nullable List<AppliedPolicyAnnotation> policyAnnotations
-    ) {
-    }
+            @Nullable List<AppliedPolicyAnnotation> policyAnnotations) {}
 
     private static final RowMapper<Map.Entry<FindingKey, Analysis>> FINDING_ANALYSIS_ROW_MAPPER =
             (rs, ctx) -> Map.entry(
@@ -75,9 +71,7 @@ public final class AnalysisDao {
                     new Analysis(
                             rs.getLong("ID"),
                             rs.getObject("VULNERABILITY_POLICY_ID", Long.class),
-                            rs.getString("STATE") != null
-                                    ? AnalysisState.valueOf(rs.getString("STATE"))
-                                    : null,
+                            rs.getString("STATE") != null ? AnalysisState.valueOf(rs.getString("STATE")) : null,
                             rs.getString("JUSTIFICATION") != null
                                     ? AnalysisJustification.valueOf(rs.getString("JUSTIFICATION"))
                                     : null,
@@ -86,9 +80,7 @@ public final class AnalysisDao {
                                     : null,
                             rs.getString("DETAILS"),
                             rs.getBoolean("SUPPRESSED"),
-                            rs.getString("SEVERITY") != null
-                                    ? Severity.valueOf(rs.getString("SEVERITY"))
-                                    : null,
+                            rs.getString("SEVERITY") != null ? Severity.valueOf(rs.getString("SEVERITY")) : null,
                             rs.getString("CVSSV2VECTOR"),
                             rs.getObject("CVSSV2SCORE", Double.class),
                             rs.getString("CVSSV3VECTOR"),
@@ -148,7 +140,8 @@ public final class AnalysisDao {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    public Map<FindingKey, Analysis> getForProjectWithPolicyApplied(long projectId, Collection<FindingKey> excludeFindingKeys) {
+    public Map<FindingKey, Analysis> getForProjectWithPolicyApplied(
+            long projectId, Collection<FindingKey> excludeFindingKeys) {
         final var excludeComponentIds = new long[excludeFindingKeys.size()];
         final var excludeVulnIds = new long[excludeFindingKeys.size()];
 
@@ -222,8 +215,7 @@ public final class AnalysisDao {
             @Nullable Double cvssV4Score,
             @Nullable String owaspVector,
             @Nullable Double owaspScore,
-    @Nullable List<AppliedPolicyAnnotation> policyAnnotations) {
-    }
+            @Nullable List<AppliedPolicyAnnotation> policyAnnotations) {}
 
     public Map<FindingKey, Long> makeAnalyses(Collection<MakeAnalysisCommand> commands) {
         if (commands.isEmpty()) {
@@ -262,9 +254,7 @@ public final class AnalysisDao {
             responses[i] = command.response().name();
             details[i] = command.details();
             suppressedArray[i] = command.suppressed();
-            severities[i] = command.severity() != null
-                    ? command.severity().name()
-                    : null;
+            severities[i] = command.severity() != null ? command.severity().name() : null;
             cvssV2Vectors[i] = command.cvssV2Vector();
             cvssV2Scores[i] = command.cvssV2Score();
             cvssV3Vectors[i] = command.cvssV3Vector();
@@ -448,14 +438,12 @@ public final class AnalysisDao {
                 .bind("policyAnnotationsJsons", policyAnnotationsJsons)
                 .executeAndReturnGeneratedKeys()
                 .map((rs, ctx) -> Map.entry(
-                        new FindingKey(rs.getLong("COMPONENT_ID"), rs.getLong("VULNERABILITY_ID")),
-                        rs.getLong("ID")))
+                        new FindingKey(rs.getLong("COMPONENT_ID"), rs.getLong("VULNERABILITY_ID")), rs.getLong("ID")))
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    public record CreateCommentCommand(long analysisId, String commenter, String comment) {
-    }
+    public record CreateCommentCommand(long analysisId, String commenter, String comment) {}
 
     public int createComments(Collection<CreateCommentCommand> commands) {
         if (commands.isEmpty()) {
@@ -474,8 +462,7 @@ public final class AnalysisDao {
             i++;
         }
 
-        return handle
-                .createUpdate("""
+        return handle.createUpdate("""
                         INSERT INTO "ANALYSISCOMMENT" ("ANALYSIS_ID", "COMMENTER", "COMMENT", "TIMESTAMP")
                         SELECT analysis_id
                              , commenter
@@ -490,5 +477,4 @@ public final class AnalysisDao {
                 .bind("comments", comments)
                 .execute();
     }
-
 }

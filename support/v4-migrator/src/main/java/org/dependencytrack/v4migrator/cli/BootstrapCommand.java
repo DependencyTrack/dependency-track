@@ -29,9 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 
-@Command(name = "bootstrap",
-    description = "Apply the v5 Flyway schema to a fresh target database. "
-        + "Run this once before 'extract' / 'run' against a new target.")
+@Command(
+        name = "bootstrap",
+        description = "Apply the v5 Flyway schema to a fresh target database. "
+                + "Run this once before 'extract' / 'run' against a new target.")
 public final class BootstrapCommand extends AbstractMigratorCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BootstrapCommand.class);
@@ -44,20 +45,19 @@ public final class BootstrapCommand extends AbstractMigratorCommand {
     @Override
     protected int execute(final Jdbi target) {
         LOGGER.info("Applying v5 Flyway schema up to {}", Preflight.EXPECTED_FLYWAY_HEAD);
-        new MigrationExecutor(Connections.targetDataSource(global), Preflight.EXPECTED_FLYWAY_HEAD).execute();
+        new MigrationExecutor(
+                        Connections.targetDataSource(global), Preflight.EXPECTED_FLYWAY_HEAD, /* skipRepeatable */ true)
+                .execute();
 
-        final String head = target.withHandle(h ->
-            h.createQuery("""
+        final String head = target.withHandle(
+                h -> h.createQuery("""
                     SELECT version FROM flyway_schema_history
                      WHERE success = TRUE AND version IS NOT NULL
                      ORDER BY installed_rank DESC LIMIT 1
-                    """)
-                .mapTo(String.class)
-                .findOne()
-                .orElse(null));
+                    """).mapTo(String.class).findOne().orElse(null));
         if (!Preflight.EXPECTED_FLYWAY_HEAD.equals(head)) {
-            LOGGER.error("Flyway head after bootstrap is '{}' but expected '{}'.",
-                head, Preflight.EXPECTED_FLYWAY_HEAD);
+            LOGGER.error(
+                    "Flyway head after bootstrap is '{}' but expected '{}'.", head, Preflight.EXPECTED_FLYWAY_HEAD);
             return ExitCode.SCHEMA_VERSION_MISMATCH;
         }
 

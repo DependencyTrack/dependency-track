@@ -47,18 +47,13 @@ final class AwaitableImpl<T> implements Awaitable<T> {
 
     private sealed interface State<R> {
 
-        record Pending<R>() implements State<R> {
-        }
+        record Pending<R>() implements State<R> {}
 
-        record Completed<R>(@Nullable R result) implements State<R> {
-        }
+        record Completed<R>(@Nullable R result) implements State<R> {}
 
-        record Failed<R>(FailureException exception) implements State<R> {
-        }
+        record Failed<R>(FailureException exception) implements State<R> {}
 
-        record Canceled<R>(String reason) implements State<R> {
-        }
-
+        record Canceled<R>(String reason) implements State<R> {}
     }
 
     // This error is thrown very frequently, it is used for control flow,
@@ -71,9 +66,7 @@ final class AwaitableImpl<T> implements Awaitable<T> {
     private State<T> state = new State.Pending<>();
     private @Nullable Consumer<@Nullable T> completeCallback;
 
-    AwaitableImpl(
-            final WorkflowContextImpl<?, ?> workflowContext,
-            final PayloadConverter<T> resultConverter) {
+    AwaitableImpl(final WorkflowContextImpl<?, ?> workflowContext, final PayloadConverter<T> resultConverter) {
         this.workflowContext = workflowContext;
         this.resultConverter = resultConverter;
     }
@@ -136,5 +129,4 @@ final class AwaitableImpl<T> implements Awaitable<T> {
     void onComplete(final Consumer<T> callback) {
         this.completeCallback = callback;
     }
-
 }

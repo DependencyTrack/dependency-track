@@ -45,19 +45,19 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # tag=v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up JDK
-        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # tag=v5.3.0
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # tag=v6.0.0
         with:
           distribution: 'temurin'
           java-version: '25'
           cache: 'maven'
 
       - name: Restore Maven build cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # tag=v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
         with:
           path: ~/.m2/build-cache
           key: maven-build-cache-build-${{ hashFiles('.mvn/maven-build-cache-config.xml') }}-${{ github.run_id }}
@@ -83,6 +83,16 @@ jobs:
           name: assembled-dist
           path: |-
             apiserver/target/dependency-track-apiserver-dist.tar.gz
+
+      - name: Upload Container Image Context
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        with:
+          name: container-context
+          retention-days: 1
+          path: |-
+            apiserver/target/dependency-track-apiserver.jar
+            apiserver/target/lib/
+            apiserver/target/lib-internal/
 
       - name: Upload BOM
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
@@ -115,6 +125,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      artifact-metadata: write # Required to create the artifact storage record.
+      attestations: write # Required to generate SLSA build provenance.
+      id-token: write # Required for keyless signing of SLSA build provenance.
       packages: write # Required to push images to ghcr.io
     needs:
       - build-java
@@ -124,15 +137,15 @@ jobs:
         include:
           - name: apiserver
             context: apiserver
-            artifact: assembled-dist
-            prepare-cmd: tar xzf apiserver/target/dependency-track-apiserver-dist.tar.gz -C apiserver/target
+            artifact: container-context
+            prepare-cmd: ":" # no-op
           - name: v4-migrator
             context: support/v4-migrator
             artifact: v4-migrator-jar
             prepare-cmd: ":" # no-op
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # tag=v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
           persist-credentials: false
 
@@ -146,16 +159,16 @@ jobs:
         run: ${{ matrix.prepare-cmd }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # tag=v4.1.0
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # tag=v4.2.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # tag=v4.1.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # tag=v4.3.0
         id: buildx
         with:
           install: true
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # tag=v4.2.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # tag=v4.6.0
         if: ${{ inputs.publish-container }}
         with:
           registry: ghcr.io
@@ -192,9 +205,11 @@ jobs:
             TAGS="${IMAGE_NAME}:${APP_VERSION}"
           fi
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # tag=v7.2.0
+        id: push
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # tag=v7.3.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
@@ -204,3 +219,11 @@ jobs:
           push: ${{ inputs.publish-container }}
           context: ./${{ matrix.context }}
           file: ./${{ matrix.context }}/src/main/docker/Dockerfile
+
+      - name: Generate SLSA Build Provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # tag=v4.2.2
+        if: ${{ inputs.publish-container }}
+        with:
+          subject-name: ${{ steps.tags.outputs.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true

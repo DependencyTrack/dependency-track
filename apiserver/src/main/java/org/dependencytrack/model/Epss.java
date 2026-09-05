@@ -32,8 +32,7 @@ public class Epss implements Serializable {
     private BigDecimal score;
     private BigDecimal percentile;
 
-    public Epss() {
-    }
+    public Epss() {}
 
     public Epss(final String cve, final BigDecimal score, final BigDecimal percentile) {
         this.cve = requireNonNull(cve, "cve must not be null");

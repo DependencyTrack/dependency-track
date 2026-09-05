@@ -46,8 +46,7 @@ public final class PublishNotificationWorkflow implements Workflow<PublishNotifi
 
     @Override
     public @Nullable Void execute(
-            WorkflowContext<PublishNotificationWorkflowArg> ctx,
-            @Nullable PublishNotificationWorkflowArg arg) {
+            WorkflowContext<PublishNotificationWorkflowArg> ctx, @Nullable PublishNotificationWorkflowArg arg) {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -65,10 +64,8 @@ public final class PublishNotificationWorkflow implements Workflow<PublishNotifi
                 final PublishNotificationActivityArg activityArg = createActivityArg(arg, ruleName);
 
                 ctx.logger().debug("Scheduling publish for rule '{}'", ruleName);
-                final Awaitable<?> awaitable = ctx
-                        .activity(PublishNotificationActivity.class)
-                        .call(new ActivityCallOptions<PublishNotificationActivityArg>()
-                                .withArgument(activityArg));
+                final Awaitable<?> awaitable = ctx.activity(PublishNotificationActivity.class)
+                        .call(new ActivityCallOptions<PublishNotificationActivityArg>().withArgument(activityArg));
 
                 awaitableByRuleName.put(ruleName, awaitable);
             }
@@ -93,20 +90,18 @@ public final class PublishNotificationWorkflow implements Workflow<PublishNotifi
 
             // Fail the workflow run only when *all* publishing activities failed.
             if (activitiesFailed > 0 && activitiesFailed == awaitableByRuleName.size()) {
-                throw new TerminalApplicationFailureException(
-                        "Publishing failed for all applicable rules");
+                throw new TerminalApplicationFailureException("Publishing failed for all applicable rules");
             }
         }
 
         return null;
     }
 
-    private PublishNotificationActivityArg createActivityArg(
-            PublishNotificationWorkflowArg arg,
-            String ruleName) {
+    private PublishNotificationActivityArg createActivityArg(PublishNotificationWorkflowArg arg, String ruleName) {
         final var activityArgBuilder = PublishNotificationActivityArg.newBuilder()
                 .setNotificationId(arg.getNotificationId())
-                .setNotificationRuleName(ruleName);
+                .setNotificationRuleName(ruleName)
+                .setRuleTest(arg.getRuleTest());
 
         if (arg.hasNotification()) {
             activityArgBuilder.setNotification(arg.getNotification());
@@ -117,9 +112,7 @@ public final class PublishNotificationWorkflow implements Workflow<PublishNotifi
         return activityArgBuilder.build();
     }
 
-    private void maybeDeleteNotificationFile(
-            WorkflowContext<?> ctx,
-            PublishNotificationWorkflowArg argument) {
+    private void maybeDeleteNotificationFile(WorkflowContext<?> ctx, PublishNotificationWorkflowArg argument) {
         if (!argument.hasNotificationFileMetadata()) {
             return;
         }
@@ -127,18 +120,18 @@ public final class PublishNotificationWorkflow implements Workflow<PublishNotifi
         ctx.logger().debug("Scheduling notification file for deletion");
 
         try {
-            ctx.activity(DeleteFilesActivity.class).call(
-                    new ActivityCallOptions<DeleteFilesArgument>()
+            ctx.activity(DeleteFilesActivity.class)
+                    .call(new ActivityCallOptions<DeleteFilesArgument>()
                             .withRetryPolicy(RetryPolicy.ofDefault()
                                     .withInitialDelay(Duration.ofSeconds(1))
                                     .withMaxDelay(Duration.ofSeconds(10))
                                     .withMaxAttempts(3))
                             .withArgument(DeleteFilesArgument.newBuilder()
                                     .addFileMetadata(argument.getNotificationFileMetadata())
-                                    .build())).await();
+                                    .build()))
+                    .await();
         } catch (ActivityFailureException e) {
             ctx.logger().warn("Failed to delete notification file", e.getCause());
         }
     }
-
 }

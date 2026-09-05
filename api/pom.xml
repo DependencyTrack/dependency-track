@@ -22,20 +22,14 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>dependency-track-parent</artifactId>
-        <version>5.1.0-SNAPSHOT</version>
+        <version>5.2.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>api</artifactId>
     <packaging>jar</packaging>
-
     <name>API</name>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
-        <spotless.check.skip>true</spotless.check.skip>
-        <spotless.apply.skip>true</spotless.apply.skip>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -47,7 +41,6 @@
             <artifactId>jackson-databind</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
@@ -64,20 +57,19 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>7.23.0</version>
+                <version>7.25.0</version>
                 <executions>
                     <execution>
                         <id>generate-api-v2</id>
-                        <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
                         </goals>
+                        <phase>generate-sources</phase>
                         <configuration>
                             <addCompileSourceRoot>true</addCompileSourceRoot>
                             <inputSpec>${basedir}/src/main/openapi/openapi.yaml</inputSpec>
@@ -101,9 +93,7 @@
                                 <generatePom>false</generatePom>
                                 <sourceFolder>.</sourceFolder>
                                 <openApiNullable>false</openApiNullable>
-                                <additionalModelTypeAnnotations>
-                                    @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
-                                </additionalModelTypeAnnotations>
+                                <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)</additionalModelTypeAnnotations>
                             </configOptions>
                         </configuration>
                     </execution>
@@ -111,5 +101,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

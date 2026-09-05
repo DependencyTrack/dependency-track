@@ -38,5 +38,4 @@ public class PolicyAnnotationsColumnMapper implements ColumnMapper<List<AppliedP
             throw new SQLException("Failed to parse policy annotations", e);
         }
     }
-
 }

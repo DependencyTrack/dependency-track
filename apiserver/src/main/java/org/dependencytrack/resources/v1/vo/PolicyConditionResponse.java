@@ -33,12 +33,18 @@ import java.util.UUID;
 public record PolicyConditionResponse(
         @Schema(description = "UUID of the policy condition", requiredMode = Schema.RequiredMode.REQUIRED)
         UUID uuid,
+
         @Schema(description = "Subject the condition evaluates", requiredMode = Schema.RequiredMode.REQUIRED)
         PolicyCondition.Subject subject,
-        @Schema(description = "Operator used to compare the subject to the value", requiredMode = Schema.RequiredMode.REQUIRED)
+
+        @Schema(
+                description = "Operator used to compare the subject to the value",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         PolicyCondition.Operator operator,
+
         @Schema(description = "Value the subject is compared to", requiredMode = Schema.RequiredMode.REQUIRED)
         String value,
+
         @Schema(description = "Violation type produced when the condition matches")
         PolicyViolation.@Nullable Type violationType) {
 
@@ -50,5 +56,4 @@ public record PolicyConditionResponse(
                 condition.getValue(),
                 condition.getViolationType());
     }
-
 }

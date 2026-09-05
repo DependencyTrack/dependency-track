@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -59,14 +60,16 @@ import java.util.UUID;
  */
 @PersistenceCapable
 @FetchGroups({
-        @FetchGroup(name = "ALL", members = {
+    @FetchGroup(
+            name = "ALL",
+            members = {
                 @Persistent(name = "provider"),
                 @Persistent(name = "project"),
                 @Persistent(name = "externalReferences"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
                 @Persistent(name = "vulnerabilities"),
-        })
+            })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ServiceComponent implements Serializable {
@@ -94,7 +97,9 @@ public class ServiceComponent implements Serializable {
     @Persistent
     @Column(name = "GROUP", jdbcType = "VARCHAR")
     @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The group may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The group may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String group;
 
@@ -103,7 +108,9 @@ public class ServiceComponent implements Serializable {
     @NotBlank
     @Size(min = 1, max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The name may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String name;
 
@@ -111,7 +118,9 @@ public class ServiceComponent implements Serializable {
     @Column(name = "VERSION", jdbcType = "VARCHAR")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The version may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String version;
 
@@ -119,7 +128,9 @@ public class ServiceComponent implements Serializable {
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR", length = 1024)
     @Size(max = 1024)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The description may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String description;
 
@@ -146,7 +157,7 @@ public class ServiceComponent implements Serializable {
     @JsonView(JsonViews.MetadataTools.class)
     private List<DataClassification> data;
 
-    //TODO add license support once Component license support is refactored
+    // TODO add license support once Component license support is refactored
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "EXTERNAL_REFERENCES")
@@ -155,7 +166,11 @@ public class ServiceComponent implements Serializable {
     private List<ExternalReference> externalReferences;
 
     @Persistent
-    @ForeignKey(name = "SERVICECOMPONENT_SERVICECOMPONENT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "SERVICECOMPONENT_SERVICECOMPONENT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PARENT_SERVICECOMPONENT_ID")
     private ServiceComponent parent;
 
@@ -164,13 +179,23 @@ public class ServiceComponent implements Serializable {
     private Collection<ServiceComponent> children;
 
     @Persistent(table = "SERVICECOMPONENTS_VULNERABILITIES")
-    @Join(column = "SERVICECOMPONENT_ID", foreignKey = "SERVICECOMPONENTS_VULNERABILITIES_SERVICECOMPONENT_FK", deleteAction = ForeignKeyAction.CASCADE)
-    @Element(column = "VULNERABILITY_ID", foreignKey = "SERVICECOMPONENTS_VULNERABILITIES_VULNERABILITY_FK", deleteAction = ForeignKeyAction.CASCADE)
+    @Join(
+            column = "SERVICECOMPONENT_ID",
+            foreignKey = "SERVICECOMPONENTS_VULNERABILITIES_SERVICECOMPONENT_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
+    @Element(
+            column = "VULNERABILITY_ID",
+            foreignKey = "SERVICECOMPONENTS_VULNERABILITIES_VULNERABILITY_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Vulnerability> vulnerabilities;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "SERVICECOMPONENT_PROJECT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "SERVICECOMPONENT_PROJECT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
     private Project project;

@@ -48,13 +48,14 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # tag=v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
           token: ${{ !inputs.dry-run && secrets.BOT_RELEASE_GITHUB_TOKEN || github.token }}
+          persist-credentials: true # Required for Maven release plugin.
           fetch-depth: 0
 
       - name: Set up JDK
-        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # tag=v5.3.0
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # tag=v6.0.0
         with:
           distribution: 'temurin'
           java-version: '25'
@@ -102,3 +103,11 @@ jobs:
             --draft \
             --generate-notes \
             ${PRERELEASE_FLAG}
+
+          NOTES=$(gh release view "${RELEASE_VERSION}" --json body --jq '.body')
+
+          gh release edit "${RELEASE_VERSION}" \
+            --notes "> [!IMPORTANT]
+          > Please read the [upgrade notes](https://dependencytrack.github.io/docs/next/guides/upgrading/) before upgrading your instance.
+
+          ${NOTES}"

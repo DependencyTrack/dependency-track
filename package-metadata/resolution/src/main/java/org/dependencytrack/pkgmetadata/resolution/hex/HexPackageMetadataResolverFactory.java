@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class HexPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -41,6 +42,11 @@ public final class HexPackageMetadataResolverFactory implements PackageMetadataR
     @Override
     public String extensionName() {
         return "hex";
+    }
+
+    @Override
+    public String displayName() {
+        return "Hex";
     }
 
     @Override
@@ -75,8 +81,7 @@ public final class HexPackageMetadataResolverFactory implements PackageMetadataR
 
     @Override
     public void init(ServiceRegistry serviceRegistry) {
-        objectMapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
                 serviceRegistry.require(CacheManager.class).getCache("responses"));
@@ -84,7 +89,6 @@ public final class HexPackageMetadataResolverFactory implements PackageMetadataR
 
     @Override
     public PackageMetadataResolver create() {
-        return new HexPackageMetadataResolver(objectMapper, cachingHttpClient);
+        return new HexPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

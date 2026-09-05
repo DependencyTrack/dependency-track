@@ -88,8 +88,7 @@ public final class EpssMirrorTask implements Runnable {
                 .GET()
                 .build();
         try {
-            final HttpResponse<Path> response = httpClient
-                    .send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+            final HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
             if (response.statusCode() != 200) {
                 throw new IllegalStateException("Unexpected response code: " + response.statusCode());
             }
@@ -107,10 +106,10 @@ public final class EpssMirrorTask implements Runnable {
         long lastHeartbeatNs = System.nanoTime();
 
         try (final var fileInputStream = Files.newInputStream(feedFilePath, StandardOpenOption.DELETE_ON_CLOSE);
-             final var bufferedInputStream = new BufferedInputStream(fileInputStream);
-             final var gzipInputStream = new GZIPInputStream(bufferedInputStream);
-             final var inputStreamReader = new InputStreamReader(gzipInputStream);
-             final var bufferedReader = new BufferedReader(inputStreamReader)) {
+                final var bufferedInputStream = new BufferedInputStream(fileInputStream);
+                final var gzipInputStream = new GZIPInputStream(bufferedInputStream);
+                final var inputStreamReader = new InputStreamReader(gzipInputStream);
+                final var bufferedReader = new BufferedReader(inputStreamReader)) {
             final var recordBatch = new ArrayList<Epss>(BATCH_SIZE);
 
             String csvLine;
@@ -134,9 +133,7 @@ public final class EpssMirrorTask implements Runnable {
                     recordsRead += recordBatch.size();
                     recordBatch.clear();
                     if (System.nanoTime() - lastHeartbeatNs >= HEARTBEAT_LOG_INTERVAL.toNanos()) {
-                        LOGGER.info(
-                                "Read {} records so far ({} modified)",
-                                recordsRead, recordsModified);
+                        LOGGER.info("Read {} records so far ({} modified)", recordsRead, recordsModified);
                         lastHeartbeatNs = System.nanoTime();
                     }
                 }
@@ -154,38 +151,31 @@ public final class EpssMirrorTask implements Runnable {
     private int processBatch(final List<Epss> records) {
         LOGGER.debug("Processing batch of {} records", records.size());
 
-        return inJdbiTransaction(
-                handle -> handle.attach(EpssDao.class).createOrUpdateAll(records));
+        return inJdbiTransaction(handle -> handle.attach(EpssDao.class).createOrUpdateAll(records));
     }
 
     private static Epss parseEpssRecord(final String csvLine) {
         final String[] columns = csvLine.split(",");
         if (columns.length != 3) {
             throw new IllegalStateException(
-                    "Expected 3 columns, but got %d in line: %s".formatted(
-                            columns.length, csvLine));
+                    "Expected 3 columns, but got %d in line: %s".formatted(columns.length, csvLine));
         }
 
-        return new Epss(
-                columns[0],
-                new BigDecimal(columns[1]),
-                new BigDecimal(columns[2]));
+        return new Epss(columns[0], new BigDecimal(columns[1]), new BigDecimal(columns[2]));
     }
 
-    private record Config(boolean isEnabled, String feedsBaseUrl) {
-    }
+    private record Config(boolean isEnabled, String feedsBaseUrl) {}
 
     private static Config loadConfig() {
         return withJdbiHandle(handle -> {
             final var dao = handle.attach(ConfigPropertyDao.class);
 
-            final boolean isEnabled = dao.getOptionalValue(
-                    VULNERABILITY_SOURCE_EPSS_ENABLED, Boolean.class).orElse(false);
-            final String feedsBaseUrl = dao.getOptionalValue(
-                    VULNERABILITY_SOURCE_EPSS_FEEDS_URL, String.class).orElse(null);
+            final boolean isEnabled = dao.getOptionalValue(VULNERABILITY_SOURCE_EPSS_ENABLED, Boolean.class)
+                    .orElse(false);
+            final String feedsBaseUrl = dao.getOptionalValue(VULNERABILITY_SOURCE_EPSS_FEEDS_URL, String.class)
+                    .orElse(null);
 
             return new Config(isEnabled, feedsBaseUrl);
         });
     }
-
 }

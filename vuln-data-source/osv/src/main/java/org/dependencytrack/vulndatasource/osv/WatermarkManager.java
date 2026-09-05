@@ -19,8 +19,10 @@
 package org.dependencytrack.vulndatasource.osv;
 
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,19 +39,17 @@ final class WatermarkManager {
     private final Map<String, WatermarkRecord> pendingRecordByEcosystem;
     private final Map<String, WatermarkRecord> committedRecordByEcosystem;
 
-    WatermarkManager(
-            final Collection<String> ecosystems,
-            final KeyValueStore kvStore) {
+    WatermarkManager(final Collection<String> ecosystems, final KeyValueStore kvStore) {
         final var watermarkStore = new WatermarkStore(kvStore);
-        final Map<String, WatermarkRecord> recordByEcosystem =
-                watermarkStore.getForEcosystems(ecosystems);
+        final Map<String, WatermarkRecord> recordByEcosystem = watermarkStore.getForEcosystems(ecosystems);
 
         this.store = watermarkStore;
         this.pendingRecordByEcosystem = new HashMap<>(recordByEcosystem);
         this.committedRecordByEcosystem = new HashMap<>(recordByEcosystem);
     }
 
-    Instant getWatermark(final String ecosystem) {
+    @Nullable
+    Instant getWatermark(String ecosystem) {
         final WatermarkRecord record = committedRecordByEcosystem.get(ecosystem);
         return record != null ? record.value() : null;
     }
@@ -88,6 +88,4 @@ final class WatermarkManager {
             pendingRecordByEcosystem.put(ecosystem, committedRecord);
         }
     }
-
-
 }

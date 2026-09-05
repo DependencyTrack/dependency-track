@@ -18,13 +18,14 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.model.ApiKey;
 import alpine.model.Team;
-import alpine.model.User;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
+import alpine.model.auth.TeamRef;
+import alpine.model.auth.UserPrincipal;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectProperty;
@@ -38,7 +39,6 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.metadata.MemberMetadata;
 import javax.jdo.metadata.TypeMetadata;
-import java.security.Principal;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -87,8 +87,8 @@ final class ProjectQueryManager extends QueryManager {
         final Project project = getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
         if (project != null) {
             // set Metrics to minimize the number of round trips a client needs to make
-            project.setMetrics(withJdbiHandle(handle ->
-                    handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
+            project.setMetrics(withJdbiHandle(
+                    handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
             // set ProjectVersions to minimize the number of round trips a client needs to make
             project.setVersions(getProjectVersions(project));
         }
@@ -145,8 +145,15 @@ final class ProjectQueryManager extends QueryManager {
     }
 
     @Override
-    public Project createProject(String name, String description, String version, Collection<Tag> tags, Project parent,
-                                 PackageURL purl, Date inactiveSince, boolean commitIndex) {
+    public Project createProject(
+            String name,
+            String description,
+            String version,
+            Collection<Tag> tags,
+            Project parent,
+            PackageURL purl,
+            Date inactiveSince,
+            boolean commitIndex) {
         return createProject(name, description, version, tags, parent, purl, inactiveSince, false, commitIndex);
     }
 
@@ -165,8 +172,16 @@ final class ProjectQueryManager extends QueryManager {
      * @return the created Project
      */
     @Override
-    public Project createProject(String name, String description, String version, Collection<Tag> tags, Project parent,
-                                 PackageURL purl, Date inactiveSince, boolean isLatest, boolean commitIndex) {
+    public Project createProject(
+            String name,
+            String description,
+            String version,
+            Collection<Tag> tags,
+            Project parent,
+            PackageURL purl,
+            Date inactiveSince,
+            boolean isLatest,
+            boolean commitIndex) {
         final Project project = new Project();
         project.setName(name);
         project.setDescription(description);
@@ -199,8 +214,7 @@ final class ProjectQueryManager extends QueryManager {
                             "A collection tag must be specified for AGGREGATE_DIRECT_CHILDREN_WITH_TAG logic.");
                 }
 
-                final Set<Tag> resolvedCollectionTags =
-                        resolveTags(List.of(project.getCollectionTag()));
+                final Set<Tag> resolvedCollectionTags = resolveTags(List.of(project.getCollectionTag()));
                 project.setCollectionTag(resolvedCollectionTags.iterator().next());
             } else {
                 project.setCollectionTag(null);
@@ -269,15 +283,18 @@ final class ProjectQueryManager extends QueryManager {
             }
             project.setIsLatest(transientProject.isLatest());
 
-            if (transientProject.getParent() != null && transientProject.getParent().getUuid() != null) {
+            if (transientProject.getParent() != null
+                    && transientProject.getParent().getUuid() != null) {
                 if (project.getUuid().equals(transientProject.getParent().getUuid())) {
                     throw new IllegalArgumentException("A project cannot select itself as a parent");
                 }
-                Project parent = getObjectByUuid(Project.class, transientProject.getParent().getUuid());
+                Project parent = getObjectByUuid(
+                        Project.class, transientProject.getParent().getUuid());
                 if (parent.getInactiveSince() != null) {
                     throw new IllegalArgumentException("An inactive project cannot be selected as a parent");
                 } else if (isChildOf(parent, transientProject.getUuid())) {
-                    throw new IllegalArgumentException("The new parent project cannot be a child of the current project.");
+                    throw new IllegalArgumentException(
+                            "The new parent project cannot be a child of the current project.");
                 } else {
                     project.setParent(parent);
                 }
@@ -306,8 +323,7 @@ final class ProjectQueryManager extends QueryManager {
                             "A collection tag must be specified for AGGREGATE_DIRECT_CHILDREN_WITH_TAG logic.");
                 }
 
-                final Set<Tag> resolvedCollectionTags =
-                        resolveTags(List.of(transientProject.getCollectionTag()));
+                final Set<Tag> resolvedCollectionTags = resolveTags(List.of(transientProject.getCollectionTag()));
                 resolvedCollectionTag = resolvedCollectionTags.iterator().next();
             }
 
@@ -335,9 +351,13 @@ final class ProjectQueryManager extends QueryManager {
      * @return the created ProjectProperty object
      */
     @Override
-    public ProjectProperty createProjectProperty(final Project project, final String groupName, final String propertyName,
-                                                 final String propertyValue, final ProjectProperty.PropertyType propertyType,
-                                                 final String description) {
+    public ProjectProperty createProjectProperty(
+            final Project project,
+            final String groupName,
+            final String propertyName,
+            final String propertyValue,
+            final ProjectProperty.PropertyType propertyType,
+            final String description) {
         final ProjectProperty property = new ProjectProperty();
         property.setProject(project);
         property.setGroupName(groupName);
@@ -357,8 +377,11 @@ final class ProjectQueryManager extends QueryManager {
      * @return a ProjectProperty object
      */
     @Override
-    public ProjectProperty getProjectProperty(final Project project, final String groupName, final String propertyName) {
-        final Query<ProjectProperty> query = this.pm.newQuery(ProjectProperty.class, "project == :project && groupName == :groupName && propertyName == :propertyName");
+    public ProjectProperty getProjectProperty(
+            final Project project, final String groupName, final String propertyName) {
+        final Query<ProjectProperty> query = this.pm.newQuery(
+                ProjectProperty.class,
+                "project == :project && groupName == :groupName && propertyName == :propertyName");
         query.setRange(0, 1);
         return singleResult(query.execute(project, groupName, propertyName));
     }
@@ -440,7 +463,7 @@ final class ProjectQueryManager extends QueryManager {
 
         final Query<?> query;
         switch (principal) {
-            case User user -> {
+            case UserPrincipal user -> {
                 query = pm.newQuery(Query.SQL, /* language=SQL */ """
                                 SELECT EXISTS(
                                   SELECT 1
@@ -450,10 +473,9 @@ final class ProjectQueryManager extends QueryManager {
                                    WHERE ph."CHILD_PROJECT_ID" = ?
                                      AND pau."USER_ID" = ?
                                 )
-                                """)
-                        .setParameters(project.getId(), user.getId());
+                                """).setParameters(project.getId(), user.id());
             }
-            case ApiKey apiKey -> {
+            case ApiKeyPrincipal apiKey -> {
                 query = pm.newQuery(Query.SQL, /* language=SQL */ """
                                 SELECT EXISTS(
                                   SELECT 1
@@ -465,10 +487,9 @@ final class ProjectQueryManager extends QueryManager {
                                    WHERE akt."APIKEY_ID" = ?
                                      AND ph."CHILD_PROJECT_ID" = ?
                                 )
-                                """)
-                        .setParameters(apiKey.getId(), project.getId());
+                                """).setParameters(apiKey.id(), project.getId());
             }
-            default -> {
+            case null -> {
                 return false;
             }
         }
@@ -483,13 +504,14 @@ final class ProjectQueryManager extends QueryManager {
         }
 
         String projectMemberFieldName = null;
-        final org.datanucleus.store.query.Query<?> internalQuery = ((JDOQuery<?>)query).getInternalQuery();
+        final org.datanucleus.store.query.Query<?> internalQuery = ((JDOQuery<?>) query).getInternalQuery();
         if (!Project.class.equals(internalQuery.getCandidateClass())) {
             // NB: The query does not directly target Project, but if it has a relationship
             // with Project we can still make the ACL check work. If the query candidate
             // has EXACTLY one persistent field of type Project, we'll use that.
             // If there are more than one, or none at all, we fail to avoid unintentional behavior.
-            final TypeMetadata candidateTypeMetadata = pm.getPersistenceManagerFactory().getMetadata(internalQuery.getCandidateClassName());
+            final TypeMetadata candidateTypeMetadata =
+                    pm.getPersistenceManagerFactory().getMetadata(internalQuery.getCandidateClassName());
 
             for (final MemberMetadata memberMetadata : candidateTypeMetadata.getMembers()) {
                 if (!Project.class.getName().equals(memberMetadata.getFieldType())) {
@@ -510,24 +532,27 @@ final class ProjectQueryManager extends QueryManager {
             }
         }
 
-        final String aclCondition = switch (principal) {
-            case ApiKey apiKey -> {
-                final Set<Long> teamIds = getTeamIds(apiKey);
-                if (teamIds.isEmpty()) {
-                    yield "false";
-                }
+        final String aclCondition =
+                switch (principal) {
+                    case ApiKeyPrincipal apiKey -> {
+                        final List<TeamRef> teams = apiKey.teams();
+                        if (teams.isEmpty()) {
+                            yield "false";
+                        }
 
-                params.put("projectAclTeamIds", teamIds.toArray(new Long[0]));
-                yield "%s.isAccessibleBy(:projectAclTeamIds)".formatted(
-                        requireNonNullElse(projectMemberFieldName, "this"));
-            }
-            case User user -> {
-                params.put("projectAclUserId", user.getId());
-                yield "%s.isAccessibleBy(:projectAclUserId)".formatted(
-                        requireNonNullElse(projectMemberFieldName, "this"));
-            }
-            default -> "false";
-        };
+                        params.put(
+                                "projectAclTeamIds",
+                                teams.stream().map(TeamRef::id).toArray(Long[]::new));
+                        yield "%s.isAccessibleBy(:projectAclTeamIds)"
+                                .formatted(requireNonNullElse(projectMemberFieldName, "this"));
+                    }
+                    case UserPrincipal user -> {
+                        params.put("projectAclUserId", user.id());
+                        yield "%s.isAccessibleBy(:projectAclUserId)"
+                                .formatted(requireNonNullElse(projectMemberFieldName, "this"));
+                    }
+                    case null -> "false";
+                };
 
         if (inputFilter != null && !inputFilter.isBlank()) {
             query.setFilter("%s && (%s)".formatted(inputFilter, aclCondition));
@@ -548,11 +573,12 @@ final class ProjectQueryManager extends QueryManager {
      */
     @Override
     public boolean updateNewProjectACL(Project project, Principal principal) {
-        if (isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && principal instanceof ApiKey apiKey) {
-            final var apiTeam = apiKey.getTeams().stream().findFirst();
+        if (principal instanceof final ApiKeyPrincipal apiKey
+                && (request != null && request.isPortfolioAccessControlEnabled())) {
+            final var apiTeam = apiKey.teams().stream().findFirst();
             if (apiTeam.isPresent()) {
                 LOGGER.debug("adding Team to ACL of newly created project");
-                final Team team = getObjectByUuid(Team.class, apiTeam.get().getUuid());
+                final Team team = getObjectByUuid(Team.class, apiTeam.get().uuid());
                 project.addAccessTeam(team);
                 persist(project);
                 return true;
@@ -578,16 +604,13 @@ final class ProjectQueryManager extends QueryManager {
             query.setFilter("name == :name && version == :version");
             query.setNamedParameters(Map.of(
                     "name", name,
-                    "version", version
-            ));
+                    "version", version));
         } else {
             // Version is optional for projects, but using null
             // for parameter values bypasses the query compilation cache.
             // https://github.com/DependencyTrack/dependency-track/issues/2540
             query.setFilter("name == :name && version == null");
-            query.setNamedParameters(Map.of(
-                    "name", name
-            ));
+            query.setNamedParameters(Map.of("name", name));
         }
         query.setRange(0, 1);
         query.setResult("id");
@@ -641,5 +664,4 @@ final class ProjectQueryManager extends QueryManager {
         query.setNamedParameters(params);
         return executeAndCloseResultList(query, ProjectVersion.class);
     }
-
 }

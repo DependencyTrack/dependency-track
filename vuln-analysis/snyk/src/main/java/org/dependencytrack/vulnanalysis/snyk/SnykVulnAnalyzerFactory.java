@@ -55,6 +55,11 @@ final class SnykVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfi
     }
 
     @Override
+    public String displayName() {
+        return "Snyk";
+    }
+
+    @Override
     public Class<? extends VulnAnalyzer> extensionClass() {
         return SnykVulnAnalyzer.class;
     }
@@ -64,8 +69,7 @@ final class SnykVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfi
         configRegistry = serviceRegistry.require(ConfigRegistry.class);
         cacheManager = serviceRegistry.require(CacheManager.class);
         httpClient = serviceRegistry.require(HttpClient.class);
-        objectMapper = new ObjectMapper()
-                .disable(FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
     @Override
@@ -80,7 +84,8 @@ final class SnykVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfi
             throw new IllegalStateException("Analyzer is disabled");
         }
 
-        final String apiVersion = configRegistry.getDeploymentConfig()
+        final String apiVersion = configRegistry
+                .getDeploymentConfig()
                 .getOptionalValue("api-version", String.class)
                 .orElse(DEFAULT_API_VERSION);
 
@@ -92,7 +97,8 @@ final class SnykVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfi
                 config.getOrgId(),
                 config.getApiToken(),
                 apiVersion,
-                config.isAliasSyncEnabled());
+                config.isAliasSyncEnabled(),
+                config.isBatchRequestsEnabled());
     }
 
     @Override
@@ -111,7 +117,8 @@ final class SnykVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfi
         return RuntimeConfigSpec.of(
                 new SnykVulnAnalyzerConfigV1()
                         .withEnabled(false)
-                        .withApiBaseUrl(URI.create("https://api.snyk.io")),
+                        .withApiBaseUrl(URI.create("https://api.snyk.io"))
+                        .withBatchRequestsEnabled(true),
                 config -> {
                     if (!config.isEnabled()) {
                         return;
@@ -127,5 +134,4 @@ final class SnykVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfi
                     }
                 });
     }
-
 }

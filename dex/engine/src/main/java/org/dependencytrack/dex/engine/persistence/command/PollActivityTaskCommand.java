@@ -20,5 +20,4 @@ package org.dependencytrack.dex.engine.persistence.command;
 
 import java.time.Duration;
 
-public record PollActivityTaskCommand(String activityName, Duration lockTimeout) {
-}
+public record PollActivityTaskCommand(String activityName, Duration lockTimeout) {}

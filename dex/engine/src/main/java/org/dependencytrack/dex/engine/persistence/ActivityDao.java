@@ -89,8 +89,7 @@ public final class ActivityDao extends AbstractDao {
                      , exists(select 1 from cte_updated_queue) as updated
                 """);
 
-        final Map.Entry<Boolean, Boolean> existsAndUpdated = query
-                .bindMethods(request)
+        final Map.Entry<Boolean, Boolean> existsAndUpdated = query.bindMethods(request)
                 .map((rs, ctx) -> Map.entry(rs.getBoolean(1), rs.getBoolean(2)))
                 .one();
 
@@ -113,14 +112,10 @@ public final class ActivityDao extends AbstractDao {
                 )
                 """);
 
-        return query
-                .bind("name", name)
-                .mapTo(boolean.class)
-                .one();
+        return query.bind("name", name).mapTo(boolean.class).one();
     }
 
-    record ListActivityTaskQueuesPageToken(String lastName) implements PageToken {
-    }
+    record ListActivityTaskQueuesPageToken(String lastName) implements PageToken {}
 
     public Page<TaskQueue> listActivityTaskQueues(ListTaskQueuesRequest request) {
         requireNonNull(request, "request must not be null");
@@ -154,16 +149,13 @@ public final class ActivityDao extends AbstractDao {
         final int limit = request.limit() > 0 ? request.limit() : 100;
         final int limitWithNext = limit + 1;
 
-        final List<TaskQueue> rows = query
-                .bind("limit", limitWithNext)
+        final List<TaskQueue> rows = query.bind("limit", limitWithNext)
                 .bind("lastName", pageTokenValue != null ? pageTokenValue.lastName() : null)
                 .defineNamedBindings()
                 .mapTo(TaskQueue.class)
                 .list();
 
-        final List<TaskQueue> resultItems = rows.size() > 1
-                ? rows.subList(0, Math.min(rows.size(), limit))
-                : rows;
+        final List<TaskQueue> resultItems = rows.size() > 1 ? rows.subList(0, Math.min(rows.size(), limit)) : rows;
 
         final ListActivityTaskQueuesPageToken nextPageToken = rows.size() == limitWithNext
                 ? new ListActivityTaskQueuesPageToken(resultItems.getLast().name())
@@ -212,15 +204,12 @@ public final class ActivityDao extends AbstractDao {
             activityNames[i] = command.activityName();
             queueNames[i] = command.queueName();
             priorities[i] = command.priority();
-            arguments[i] = command.argument() != null
-                    ? command.argument().toByteArray()
-                    : null;
+            arguments[i] = command.argument() != null ? command.argument().toByteArray() : null;
             retryPolicies[i] = command.retryPolicy().toByteArray();
             i++;
         }
 
-        return update
-                .bind("runIds", runIds)
+        return update.bind("runIds", runIds)
                 .bind("createdEventIds", createdEventIds)
                 .bind("activityNames", activityNames)
                 .bind("queueNames", queueNames)
@@ -231,10 +220,7 @@ public final class ActivityDao extends AbstractDao {
     }
 
     public List<PolledActivityTask> pollAndLockActivityTasks(
-            String engineInstanceId,
-            String queueName,
-            Collection<PollActivityTaskCommand> commands,
-            int limit) {
+            String engineInstanceId, String queueName, Collection<PollActivityTaskCommand> commands, int limit) {
         final Query query = jdbiHandle.createQuery("""
                 with
                 cte_poll_req as (
@@ -293,8 +279,7 @@ public final class ActivityDao extends AbstractDao {
             i++;
         }
 
-        return query
-                .bind("engineInstanceId", engineInstanceId)
+        return query.bind("engineInstanceId", engineInstanceId)
                 .bind("queueName", queueName)
                 .bind("activityNames", activityNames)
                 .bind("lockTimeouts", lockTimeouts)
@@ -304,8 +289,7 @@ public final class ActivityDao extends AbstractDao {
     }
 
     public int scheduleActivityTasksForRetry(
-            String engineInstanceId,
-            Collection<ScheduleActivityTaskRetryCommand> commands) {
+            String engineInstanceId, Collection<ScheduleActivityTaskRetryCommand> commands) {
         final Update update = jdbiHandle.createUpdate("""
                 with cte_cmd as (
                   select *
@@ -343,8 +327,7 @@ public final class ActivityDao extends AbstractDao {
             i++;
         }
 
-        return update
-                .bind("engineInstanceId", engineInstanceId)
+        return update.bind("engineInstanceId", engineInstanceId)
                 .bind("queueNames", queueNames)
                 .bind("workflowRunIds", workflowRunIds)
                 .bind("createdEventIds", createdEventIds)
@@ -385,8 +368,7 @@ public final class ActivityDao extends AbstractDao {
                    and dat.lock_version = cte_cmd.lock_version
                 """);
 
-        return update
-                .bind("queueNames", queueNames)
+        return update.bind("queueNames", queueNames)
                 .bind("workflowRunIds", workflowRunIds)
                 .bind("createdEventIds", createdEventIds)
                 .bind("lockVersions", lockVersions)
@@ -427,8 +409,7 @@ public final class ActivityDao extends AbstractDao {
                         , dat.created_event_id
                 """);
 
-        return update
-                .bind("queueNames", queueNames)
+        return update.bind("queueNames", queueNames)
                 .bind("workflowRunIds", workflowRunIds)
                 .bind("createdEventIds", createdEventIds)
                 .bind("lockVersions", lockVersions)
@@ -460,11 +441,9 @@ public final class ActivityDao extends AbstractDao {
                    and dat.created_event_id = t.created_event_id
                 """);
 
-        return update
-                .bind("queueNames", queueNames)
+        return update.bind("queueNames", queueNames)
                 .bind("workflowRunIds", workflowRunIds)
                 .bind("createdEventIds", createdEventIds)
                 .execute();
     }
-
 }

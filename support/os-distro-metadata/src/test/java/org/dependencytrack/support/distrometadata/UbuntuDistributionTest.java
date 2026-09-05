@@ -32,41 +32,41 @@ class UbuntuDistributionTest {
     class FromPurlTest {
 
         @ParameterizedTest
-        @CsvSource(value = {
-                "pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-22.04, ubuntu-22.04",
-                "pkg:deb/ubuntu/sudo@1.9.5?distro=jammy, ubuntu-22.04",
-                "pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-20.04, ubuntu-20.04",
-                "pkg:deb/ubuntu/sudo@1.9.5?distro=focal, ubuntu-20.04",
-        })
+        @CsvSource(
+                value = {
+                    "pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-22.04, ubuntu-22.04",
+                    "pkg:deb/ubuntu/sudo@1.9.5?distro=jammy, ubuntu-22.04",
+                    "pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-20.04, ubuntu-20.04",
+                    "pkg:deb/ubuntu/sudo@1.9.5?distro=focal, ubuntu-20.04",
+                })
         void shouldParse(String purl, String expectedQualifier) throws Exception {
             final OsDistribution distro = OsDistribution.of(new PackageURL(purl));
             assertThat(distro).isNotNull();
             assertThat(distro).isInstanceOf(UbuntuDistribution.class);
             assertThat(distro.purlQualifierValue()).isEqualTo(expectedQualifier);
         }
-
     }
 
     @Nested
     class KnownReleasesTest {
 
         @ParameterizedTest
-        @CsvSource(value = {
-                "22.04, jammy",
-                "20.04, focal",
-                "18.04, bionic",
-                "16.04, xenial",
-                "14.04, trusty",
-                "12.04, precise",
-                "10.04, lucid",
-        })
+        @CsvSource(
+                value = {
+                    "22.04, jammy",
+                    "20.04, focal",
+                    "18.04, bionic",
+                    "16.04, xenial",
+                    "14.04, trusty",
+                    "12.04, precise",
+                    "10.04, lucid",
+                })
         void shouldResolveFromVersion(String version, String expectedSeries) {
             final UbuntuDistribution distro = UbuntuDistribution.of(version);
             assertThat(distro).isNotNull();
             assertThat(distro.series()).isEqualTo(expectedSeries);
             assertThat(distro.version()).isEqualTo(version);
         }
-
     }
 
     @Nested
@@ -74,7 +74,8 @@ class UbuntuDistributionTest {
 
         @Test
         void shouldMatchVersionWithCodename() throws Exception {
-            final OsDistribution distroA = OsDistribution.of(new PackageURL("pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-22.04"));
+            final OsDistribution distroA =
+                    OsDistribution.of(new PackageURL("pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-22.04"));
             final OsDistribution distroB = OsDistribution.of(new PackageURL("pkg:deb/ubuntu/sudo@1.9.5?distro=jammy"));
 
             assertThat(distroA).isNotNull();
@@ -84,14 +85,15 @@ class UbuntuDistributionTest {
 
         @Test
         void shouldNotMatchDifferentVersions() throws Exception {
-            final OsDistribution distroA = OsDistribution.of(new PackageURL("pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-22.04"));
-            final OsDistribution distroB = OsDistribution.of(new PackageURL("pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-20.04"));
+            final OsDistribution distroA =
+                    OsDistribution.of(new PackageURL("pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-22.04"));
+            final OsDistribution distroB =
+                    OsDistribution.of(new PackageURL("pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-20.04"));
 
             assertThat(distroA).isNotNull();
             assertThat(distroB).isNotNull();
             assertThat(distroA.matches(distroB)).isFalse();
         }
-
     }
 
     @Nested
@@ -117,7 +119,8 @@ class UbuntuDistributionTest {
 
         @Test
         void shouldMatchUnknownVersions() throws Exception {
-            final OsDistribution distroA = OsDistribution.of(new PackageURL("pkg:deb/ubuntu/curl@8.0?distro=ubuntu-28.04"));
+            final OsDistribution distroA =
+                    OsDistribution.of(new PackageURL("pkg:deb/ubuntu/curl@8.0?distro=ubuntu-28.04"));
             final UbuntuDistribution distroB = UbuntuDistribution.of("28.04");
 
             assertThat(distroA).isNotNull();
@@ -127,7 +130,8 @@ class UbuntuDistributionTest {
 
         @Test
         void shouldNormalizePointRelease() throws Exception {
-            final OsDistribution distroA = OsDistribution.of(new PackageURL("pkg:deb/ubuntu/curl@8.0?distro=ubuntu-22.04.4"));
+            final OsDistribution distroA =
+                    OsDistribution.of(new PackageURL("pkg:deb/ubuntu/curl@8.0?distro=ubuntu-22.04.4"));
             assertThat(distroA).isNotNull();
             assertThat(distroA).isInstanceOf(UbuntuDistribution.class);
 
@@ -138,7 +142,8 @@ class UbuntuDistributionTest {
 
         @Test
         void shouldMatchPointReleaseWithMajorMinor() throws Exception {
-            final OsDistribution distroA = OsDistribution.of(new PackageURL("pkg:deb/ubuntu/curl@8.0?distro=ubuntu-22.04.4"));
+            final OsDistribution distroA =
+                    OsDistribution.of(new PackageURL("pkg:deb/ubuntu/curl@8.0?distro=ubuntu-22.04.4"));
             final UbuntuDistribution distroB = UbuntuDistribution.of("22.04");
 
             assertThat(distroA).isNotNull();
@@ -148,14 +153,13 @@ class UbuntuDistributionTest {
 
         @Test
         void shouldNotMatchUnknownVersionWithSeries() throws Exception {
-            final OsDistribution distroA = OsDistribution.of(new PackageURL("pkg:deb/ubuntu/curl@8.0?distro=ubuntu-28.04"));
+            final OsDistribution distroA =
+                    OsDistribution.of(new PackageURL("pkg:deb/ubuntu/curl@8.0?distro=ubuntu-28.04"));
             final UbuntuDistribution distroB = UbuntuDistribution.of("xyz");
 
             assertThat(distroA).isNotNull();
             assertThat(distroB).isNotNull();
             assertThat(distroA.matches(distroB)).isFalse();
         }
-
     }
-
 }

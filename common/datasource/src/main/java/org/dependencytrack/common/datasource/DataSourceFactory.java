@@ -20,8 +20,8 @@ package org.dependencytrack.common.datasource;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.util.DriverDataSource;
 import io.micrometer.core.instrument.Metrics;
-import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -29,6 +29,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,14 +37,30 @@ import java.util.concurrent.TimeUnit;
  */
 final class DataSourceFactory {
 
-    private DataSourceFactory() {
+    private DataSourceFactory() {}
+
+    static DataSource createDataSource(DataSourceConfig config) {
+        final DataSource dataSource = createDataSourceInternal(config);
+
+        final long queryTimeoutMillis = config.getQueryTimeoutMillis();
+        if (queryTimeoutMillis <= 0) {
+            return dataSource;
+        }
+
+        return new QueryTimeoutDataSource(
+                dataSource, Math.toIntExact(Math.max(1, TimeUnit.MILLISECONDS.toSeconds(queryTimeoutMillis))));
     }
 
-    static DataSource createDataSource(final DataSourceConfig config) {
+    private static DataSource createDataSourceInternal(DataSourceConfig config) {
+        final String appName = "dependency-track[%s]".formatted(config.getName());
+
         if (config.isPoolEnabled()) {
             final var hikariConfig = new HikariConfig();
             hikariConfig.setPoolName(config.getName());
             hikariConfig.setJdbcUrl(config.getUrl());
+            hikariConfig.addDataSourceProperty("ApplicationName", appName);
+            hikariConfig.addDataSourceProperty("reWriteBatchedInserts", "true");
+            hikariConfig.addDataSourceProperty("tcpKeepAlive", "true");
             hikariConfig.setMaximumPoolSize(config.getPoolMaxSize());
             hikariConfig.setMinimumIdle(config.getPoolMinIdle());
             hikariConfig.setMetricRegistry(Metrics.globalRegistry);
@@ -51,23 +68,29 @@ final class DataSourceFactory {
             getPassword(config).ifPresent(hikariConfig::setPassword);
             config.getConnectionTimeoutMillis().ifPresent(hikariConfig::setConnectionTimeout);
             config.getPoolIdleTimeoutMillis().ifPresent(hikariConfig::setIdleTimeout);
+            config.getPoolLeakDetectionThresholdMillis().ifPresent(hikariConfig::setLeakDetectionThreshold);
             config.getPoolMaxLifetimeMillis().ifPresent(hikariConfig::setMaxLifetime);
             config.getPoolKeepaliveIntervalMillis().ifPresent(hikariConfig::setKeepaliveTime);
             return new HikariDataSource(hikariConfig);
         }
 
-        final var dataSource = new PGSimpleDataSource();
-        dataSource.setUrl(config.getUrl());
-        config.getUsername().ifPresent(dataSource::setUser);
-        getPassword(config).ifPresent(dataSource::setPassword);
+        final var properties = new Properties();
+        properties.setProperty("ApplicationName", appName);
+        properties.setProperty("reWriteBatchedInserts", "true");
+        properties.setProperty("tcpKeepAlive", "true");
         config.getConnectionTimeoutMillis()
                 .map(TimeUnit.MILLISECONDS::toSeconds)
-                .map(Math::toIntExact)
-                .ifPresent(dataSource::setConnectTimeout);
-        return dataSource;
+                .ifPresent(seconds -> properties.setProperty("connectTimeout", Long.toString(seconds)));
+
+        return new DriverDataSource(
+                config.getUrl(),
+                /* driverClassName */ null,
+                properties,
+                config.getUsername().orElse(null),
+                getPassword(config).orElse(null));
     }
 
-    private static Optional<String> getPassword(final DataSourceConfig config) {
+    private static Optional<String> getPassword(DataSourceConfig config) {
         final Path passwordFilePath = config.getPasswordFilePath().orElse(null);
         if (passwordFilePath != null) {
             try {
@@ -79,5 +102,4 @@ final class DataSourceFactory {
 
         return config.getPassword();
     }
-
 }

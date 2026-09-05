@@ -70,8 +70,8 @@ import static org.mockito.Mockito.mock;
 class ImportBomWorkflowTest extends PersistenceCapableTest {
 
     @RegisterExtension
-    private final WorkflowTestExtension workflowTest
-            = new WorkflowTestExtension(DataSourceRegistry.getInstance().getDefault());
+    private final WorkflowTestExtension workflowTest =
+            new WorkflowTestExtension(DataSourceRegistry.getInstance().getDefault());
 
     private FileStorage fileStorage;
 
@@ -82,34 +82,24 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
         final DexEngine engine = workflowTest.getEngine();
 
         engine.registerWorkflow(
-                new ImportBomWorkflow(),
-                protoConverter(ImportBomArg.class),
-                voidConverter(),
-                Duration.ofSeconds(5));
+                new ImportBomWorkflow(), protoConverter(ImportBomArg.class), voidConverter(), Duration.ofSeconds(5));
         engine.registerActivity(
-                new ImportBomActivity(
-                        fileStorage, mock(DexEngine.class), false),
+                new ImportBomActivity(fileStorage, mock(DexEngine.class), false),
                 protoConverter(ImportBomArg.class),
-                voidConverter(),
-                Duration.ofSeconds(30));
+                voidConverter());
         engine.registerActivity(
-                new DeleteFilesActivity(fileStorage),
-                protoConverter(DeleteFilesArgument.class),
-                voidConverter(),
-                Duration.ofSeconds(5));
+                new DeleteFilesActivity(fileStorage), protoConverter(DeleteFilesArgument.class), voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "artifact-imports", 1));
 
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
         engine.registerTaskWorker(
                 new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-artifact-imports", "artifact-imports", 1)
                         .withMinPollInterval(Duration.ofMillis(25))
@@ -134,11 +124,13 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         final var bomFileMetadata = storeBomFile("bom-1.xml");
         final var bomUploadToken = UUID.randomUUID();
-        final var runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ImportBomWorkflow.class)
+        final var runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ImportBomWorkflow.class)
                         .withLabels(Map.ofEntries(
                                 Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, bomUploadToken.toString()),
-                                Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString())))
+                                Map.entry(
+                                        WF_LABEL_PROJECT_UUID, project.getUuid().toString())))
                         .withArgument(ImportBomArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .setProjectName(project.getName())
@@ -167,11 +159,13 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         final var bomFileMetadata = storeBomFile("bom-invalid.json");
         final var bomUploadToken = UUID.randomUUID();
-        final var runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ImportBomWorkflow.class)
+        final var runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ImportBomWorkflow.class)
                         .withLabels(Map.ofEntries(
                                 Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, bomUploadToken.toString()),
-                                Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString())))
+                                Map.entry(
+                                        WF_LABEL_PROJECT_UUID, project.getUuid().toString())))
                         .withArgument(ImportBomArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .setProjectName(project.getName())
@@ -187,7 +181,8 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
             assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_ERROR);
             assertThat(notification.hasSubject()).isTrue();
-            assertThat(notification.getSubject().is(BomProcessingFailedSubject.class)).isTrue();
+            assertThat(notification.getSubject().is(BomProcessingFailedSubject.class))
+                    .isTrue();
         });
 
         qm.getPersistenceManager().refresh(project);
@@ -199,11 +194,13 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         final var bomFileMetadata = storeBomFile("bom-empty.json");
         final var bomUploadToken = UUID.randomUUID();
-        final var runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ImportBomWorkflow.class)
+        final var runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ImportBomWorkflow.class)
                         .withLabels(Map.ofEntries(
                                 Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, bomUploadToken.toString()),
-                                Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString())))
+                                Map.entry(
+                                        WF_LABEL_PROJECT_UUID, project.getUuid().toString())))
                         .withArgument(ImportBomArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .setProjectName(project.getName())
@@ -233,5 +230,4 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
                     fileInputStream);
         }
     }
-
 }

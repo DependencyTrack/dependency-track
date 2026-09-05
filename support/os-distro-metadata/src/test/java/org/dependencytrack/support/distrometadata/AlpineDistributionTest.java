@@ -28,12 +28,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AlpineDistributionTest {
 
     @ParameterizedTest
-    @CsvSource(value = {
-            "pkg:apk/alpine/curl@8.5.0-r0?distro=alpine-3.16, alpine-3.16",
-            "pkg:apk/alpine/curl@8.5.0-r0?distro=3.16, alpine-3.16",
-            "pkg:apk/alpine/curl@8.5.0-r0?distro=3.16.4, alpine-3.16",
-            "pkg:apk/alpine/curl@8.5.0-r0?distro=alpine-3.18.5, alpine-3.18",
-    })
+    @CsvSource(
+            value = {
+                "pkg:apk/alpine/curl@8.5.0-r0?distro=alpine-3.16, alpine-3.16",
+                "pkg:apk/alpine/curl@8.5.0-r0?distro=3.16, alpine-3.16",
+                "pkg:apk/alpine/curl@8.5.0-r0?distro=3.16.4, alpine-3.16",
+                "pkg:apk/alpine/curl@8.5.0-r0?distro=alpine-3.18.5, alpine-3.18",
+            })
     void shouldParseFromPurl(String purl, String expectedQualifier) throws Exception {
         final OsDistribution distro = OsDistribution.of(new PackageURL(purl));
         assertThat(distro).isNotNull();
@@ -42,14 +43,15 @@ class AlpineDistributionTest {
     }
 
     @ParameterizedTest
-    @CsvSource(value = {
-            "v3.5, alpine-3.5",
-            "v3.16, alpine-3.16",
-            "v3.22, alpine-3.22",
-            "v3.18, alpine-3.18",
-            "3.16, alpine-3.16",
-            "3.16.4, alpine-3.16",
-    })
+    @CsvSource(
+            value = {
+                "v3.5, alpine-3.5",
+                "v3.16, alpine-3.16",
+                "v3.22, alpine-3.22",
+                "v3.18, alpine-3.18",
+                "3.16, alpine-3.16",
+                "3.16.4, alpine-3.16",
+            })
     void shouldParseFromVersion(String version, String expectedQualifier) {
         final AlpineDistribution distro = AlpineDistribution.ofVersion(version);
         assertThat(distro).isNotNull();
@@ -59,7 +61,8 @@ class AlpineDistributionTest {
     @Test
     void shouldMatchMajorMinorVersions() throws Exception {
         final OsDistribution distroA = OsDistribution.of(new PackageURL("pkg:apk/alpine/curl@8.5.0?distro=3.16.4"));
-        final OsDistribution distroB = OsDistribution.of(new PackageURL("pkg:apk/alpine/curl@8.5.0?distro=alpine-3.16"));
+        final OsDistribution distroB =
+                OsDistribution.of(new PackageURL("pkg:apk/alpine/curl@8.5.0?distro=alpine-3.16"));
 
         assertThat(distroA).isNotNull();
         assertThat(distroB).isNotNull();
@@ -75,5 +78,4 @@ class AlpineDistributionTest {
         assertThat(distroB).isNotNull();
         assertThat(distroA.matches(distroB)).isFalse();
     }
-
 }

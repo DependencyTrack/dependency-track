@@ -51,6 +51,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Objects.requireNonNullElse;
 import static org.dependencytrack.cel.CelExpressionUtils.normalizeDurationDays;
 
 /**
@@ -129,9 +130,7 @@ public final class NotificationFilterExpressionEnv {
             try {
                 ast = compiler.compile(normalizedSrc).getAst();
             } catch (CelValidationException e) {
-                throw new InvalidNotificationFilterExpressionException(
-                        "Failed to compile expression",
-                        e.getErrors());
+                throw new InvalidNotificationFilterExpressionException("Failed to compile expression", e.getErrors());
             }
 
             try {
@@ -139,15 +138,13 @@ public final class NotificationFilterExpressionEnv {
             } catch (CelEvaluationException e) {
                 throw new InvalidNotificationFilterExpressionException(
                         "Failed to create program",
-                        e.getMessage());
+                        requireNonNullElse(e.getMessage(), e.getClass().getName()));
             }
         });
     }
 
-    public boolean evaluate(
-            CelRuntime.Program program,
-            Notification notification,
-            @Nullable Object subject) throws CelEvaluationException {
+    public boolean evaluate(CelRuntime.Program program, Notification notification, @Nullable Object subject)
+            throws CelEvaluationException {
         final var args = new HashMap<String, @Nullable Object>(7);
         args.put("level", notification.getLevelValue());
         args.put("scope", notification.getScopeValue());
@@ -159,5 +156,4 @@ public final class NotificationFilterExpressionEnv {
 
         return (Boolean) program.eval(args);
     }
-
 }

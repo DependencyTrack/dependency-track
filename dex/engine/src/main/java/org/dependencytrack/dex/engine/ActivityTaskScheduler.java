@@ -28,7 +28,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Query;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.core.statement.Update;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -43,22 +42,23 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_QUEUE_NAME;
+
 final class ActivityTaskScheduler implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityTaskScheduler.class);
 
     private final Jdbi jdbi;
     private final Supplier<Boolean> leadershipSupplier;
-    private final MeterRegistry meterRegistry;
     private final long pollIntervalMillis;
     private final IntervalFunction pollBackoffFunction;
     private final Consumer<String> onTasksScheduledCallback;
     private final Thread pollThread;
+    private final Counter pollsCounter;
+    private final MeterProvider<Timer> taskSchedulingLatencyTimer;
+    private final MeterProvider<Counter> tasksScheduledCounter;
     private volatile boolean stopped = false;
     private volatile boolean nudged = false;
-    private @Nullable Counter pollsCounter;
-    private @Nullable MeterProvider<Timer> taskSchedulingLatencyTimer;
-    private @Nullable MeterProvider<Counter> tasksScheduledCounter;
 
     ActivityTaskScheduler(
             Jdbi jdbi,
@@ -69,26 +69,21 @@ final class ActivityTaskScheduler implements Closeable {
             Consumer<String> onTasksScheduledCallback) {
         this.jdbi = jdbi;
         this.leadershipSupplier = leadershipSupplier;
-        this.meterRegistry = meterRegistry;
         this.pollIntervalMillis = pollIntervalMillis.toMillis();
         this.pollBackoffFunction = pollBackoffFunction;
         this.onTasksScheduledCallback = onTasksScheduledCallback;
         this.pollThread = Thread.ofPlatform()
                 .name(ActivityTaskScheduler.class.getSimpleName())
                 .unstarted(this::pollLoop);
+        this.pollsCounter =
+                Counter.builder("dt.dex.engine.activity.task.scheduler.polls").register(meterRegistry);
+        this.taskSchedulingLatencyTimer =
+                Timer.builder("dt.dex.engine.activity.task.scheduling.latency").withRegistry(meterRegistry);
+        this.tasksScheduledCounter =
+                Counter.builder("dt.dex.engine.activity.tasks.scheduled").withRegistry(meterRegistry);
     }
 
     void start() {
-        pollsCounter = Counter
-                .builder("dt.dex.engine.activity.task.scheduler.polls")
-                .register(meterRegistry);
-        taskSchedulingLatencyTimer = Timer
-                .builder("dt.dex.engine.activity.task.scheduling.latency")
-                .withRegistry(meterRegistry);
-        tasksScheduledCounter = Counter
-                .builder("dt.dex.engine.activity.tasks.scheduled")
-                .withRegistry(meterRegistry);
-
         pollThread.start();
     }
 
@@ -135,14 +130,10 @@ final class ActivityTaskScheduler implements Closeable {
             if (pollsWithoutSchedules < 3 && consecutiveErrors == 0) {
                 nowMillis = System.currentTimeMillis();
                 nextPollAtMillis = lastPolledAtMillis + pollIntervalMillis;
-                nextPollDueInMillis = nextPollAtMillis > nowMillis
-                        ? nextPollAtMillis - nowMillis
-                        : 0;
+                nextPollDueInMillis = nextPollAtMillis > nowMillis ? nextPollAtMillis - nowMillis : 0;
             } else {
                 final int backoffAttempts = Math.max(pollsWithoutSchedules - 2, consecutiveErrors);
-                nextPollDueInMillis = Math.max(
-                        pollBackoffFunction.apply(backoffAttempts),
-                        pollIntervalMillis);
+                nextPollDueInMillis = Math.max(pollBackoffFunction.apply(backoffAttempts), pollIntervalMillis);
                 LOGGER.debug(
                         "Backing off for {}ms (attempt={}, pollsWithoutSchedules={}, consecutiveErrors={})",
                         nextPollDueInMillis,
@@ -204,18 +195,14 @@ final class ActivityTaskScheduler implements Closeable {
         boolean didScheduleTasks = false;
         for (final Queue queue : queues) {
             final Timer.Sample latencySample = Timer.start();
-            try (var _ = MDC.putCloseable("queueName", queue.name())) {
+            try (var _ = MDC.putCloseable(MDC_QUEUE_NAME, queue.name())) {
                 didScheduleTasks |= jdbi.inTransaction(handle -> processQueue(handle, queue));
             } finally {
-                latencySample.stop(
-                        taskSchedulingLatencyTimer
-                                .withTag("queueName", queue.name));
+                latencySample.stop(taskSchedulingLatencyTimer.withTag("queueName", queue.name));
             }
         }
 
-        return didScheduleTasks
-                ? PollResult.TASKS_SCHEDULED
-                : PollResult.NO_TASKS_SCHEDULED;
+        return didScheduleTasks ? PollResult.TASKS_SCHEDULED : PollResult.NO_TASKS_SCHEDULED;
     }
 
     private record Queue(String name, int capacity) {
@@ -226,9 +213,7 @@ final class ActivityTaskScheduler implements Closeable {
             public Queue map(ResultSet rs, StatementContext ctx) throws SQLException {
                 return new Queue(rs.getString("name"), rs.getInt("capacity"));
             }
-
         }
-
     }
 
     private List<Queue> getActiveQueuesWithCapacity(Handle handle) {
@@ -257,9 +242,7 @@ final class ActivityTaskScheduler implements Closeable {
                        ) > 0
                 """);
 
-        return query
-                .map(new Queue.RowMapper())
-                .list();
+        return query.map(new Queue.RowMapper()).list();
     }
 
     private boolean processQueue(Handle handle, Queue queue) {
@@ -276,8 +259,7 @@ final class ActivityTaskScheduler implements Closeable {
                     ) as limited
                 ),
                 cte_eligible_task as (
-                  select workflow_run_id
-                       , created_event_id
+                  select ctid
                     from dex_activity_task
                    where queue_name = :queueName
                      -- Only consider tasks that are not already queued.
@@ -297,15 +279,14 @@ final class ActivityTaskScheduler implements Closeable {
                 update dex_activity_task as wat
                    set status = 'QUEUED'
                      , updated_at = now()
-                  from cte_eligible_task
                  where wat.queue_name = :queueName
-                   and wat.workflow_run_id = cte_eligible_task.workflow_run_id
-                   and wat.created_event_id = cte_eligible_task.created_event_id
+                   -- NB: the non-constant limit in cte_eligible_task causes the query planner
+                   -- to over-estimate row counts. A CTID scan bypasses the suboptimal plan.
+                   and wat.ctid = any(array(select ctid from cte_eligible_task))
                 returning activity_name
                 """);
 
-        final List<String> scheduledActivityNames = update
-                .bind("queueName", queue.name())
+        final List<String> scheduledActivityNames = update.bind("queueName", queue.name())
                 .bind("capacity", queue.capacity())
                 .executeAndReturnGeneratedKeys()
                 .mapTo(String.class)
@@ -314,9 +295,7 @@ final class ActivityTaskScheduler implements Closeable {
         final boolean didSchedule = !scheduledActivityNames.isEmpty();
         handle.afterCommit(() -> {
             for (final String activityName : scheduledActivityNames) {
-                tasksScheduledCounter
-                        .withTag("activityName", activityName)
-                        .increment();
+                tasksScheduledCounter.withTag("activityName", activityName).increment();
             }
 
             if (didSchedule) {
@@ -326,5 +305,4 @@ final class ActivityTaskScheduler implements Closeable {
 
         return didSchedule;
     }
-
 }

@@ -42,7 +42,8 @@ import static org.dependencytrack.policy.cel.CelPolicyLibrary.Function.MATCHES_R
 final class CelPolicyVersValidator {
 
     private static final Set<String> COMPONENT_FILTER_FIELDS = Set.of("group", "name", "cpe", "purl", "swid_tag_id");
-    private static final List<String> COMPONENT_FILTER_FIELDS_SORTED = COMPONENT_FILTER_FIELDS.stream().sorted().toList();
+    private static final List<String> COMPONENT_FILTER_FIELDS_SORTED =
+            COMPONENT_FILTER_FIELDS.stream().sorted().toList();
 
     static final Set<String> RELEVANT_FUNCTIONS = Set.of(
             MATCHES_RANGE.functionName(),
@@ -51,8 +52,8 @@ final class CelPolicyVersValidator {
             IS_EXCLUSIVE_DEPENDENCY_OF.functionName(),
             IS_DIRECT_DEPENDENCY_OF.functionName());
 
-    record VersValidationError(RuntimeException exception, @Nullable Integer position) {
-    }
+    record VersValidationError(
+            RuntimeException exception, @Nullable Integer position) {}
 
     private final CelAbstractSyntaxTree ast;
     private final Map<Long, Integer> positions;
@@ -71,7 +72,9 @@ final class CelPolicyVersValidator {
             return;
         }
 
-        CelNavigableAst.fromAst(ast).getRoot().allNodes()
+        CelNavigableAst.fromAst(ast)
+                .getRoot()
+                .allNodes()
                 .filter(node -> node.getKind() == CelExpr.ExprKind.Kind.CALL)
                 .forEach(node -> {
                     final CelExpr expr = node.expr();
@@ -83,9 +86,9 @@ final class CelPolicyVersValidator {
                             maybeValidateVers(callExpr.args().getFirst());
                         }
                     } else if ((DEPENDS_ON.functionName().equals(functionName)
-                            || IS_DEPENDENCY_OF.functionName().equals(functionName)
-                            || IS_EXCLUSIVE_DEPENDENCY_OF.functionName().equals(functionName)
-                            || IS_DIRECT_DEPENDENCY_OF.functionName().equals(functionName))
+                                    || IS_DEPENDENCY_OF.functionName().equals(functionName)
+                                    || IS_EXCLUSIVE_DEPENDENCY_OF.functionName().equals(functionName)
+                                    || IS_DIRECT_DEPENDENCY_OF.functionName().equals(functionName))
                             && callExpr.args().size() == 1) {
                         maybeValidateComponentStruct(callExpr.args().getFirst());
                     }
@@ -146,7 +149,7 @@ final class CelPolicyVersValidator {
         }
 
         try {
-            final Vers vers = Vers.parse(constExpr.stringValue());
+            final Vers vers = Vers.parseLenient(constExpr.stringValue());
             vers.validate();
         } catch (VersException e) {
             errors.add(new VersValidationError(e, positions.get(expr.id())));
@@ -156,5 +159,4 @@ final class CelPolicyVersValidator {
     List<VersValidationError> getErrors() {
         return Collections.unmodifiableList(errors);
     }
-
 }

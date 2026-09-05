@@ -108,8 +108,7 @@ final class ModelConverter {
             "GHSA", "GITHUB",
             "CVE", "NVD");
 
-    private static final TypeReference<Map.Entry<String, String>> RANGE_EVENT_TYPE_REF = new TypeReference<>() {
-    };
+    private static final TypeReference<Map.Entry<String, String>> RANGE_EVENT_TYPE_REF = new TypeReference<>() {};
 
     private final ObjectMapper objectMapper;
 
@@ -124,10 +123,7 @@ final class ModelConverter {
     }
 
     private Vulnerability convertVulnerability(
-            Osv osv,
-            boolean isAliasSyncEnabled,
-            String currentEcosystem,
-            Bom.Builder bom) {
+            Osv osv, boolean isAliasSyncEnabled, String currentEcosystem, Bom.Builder bom) {
         final var vuln = Vulnerability.newBuilder();
         final String id = osv.getId();
 
@@ -136,16 +132,15 @@ final class ModelConverter {
             vuln.setSource(extractSource(id));
         }
 
-        vuln.addProperties(
-                Property.newBuilder()
-                        .setName(CycloneDxPropertyNames.OSV_ECOSYSTEM)
-                        .setValue(currentEcosystem));
+        vuln.addProperties(Property.newBuilder()
+                .setName(CycloneDxPropertyNames.OSV_ECOSYSTEM)
+                .setValue(currentEcosystem));
 
-        if (osv.getSummary() != null) {
-            vuln.addProperties(
-                    Property.newBuilder()
-                            .setName(CycloneDxPropertyNames.VULN_TITLE)
-                            .setValue(trimSummary(osv.getSummary())));
+        final String summary = osv.getSummary();
+        if (summary != null) {
+            vuln.addProperties(Property.newBuilder()
+                    .setName(CycloneDxPropertyNames.VULN_TITLE)
+                    .setValue(trimSummary(summary)));
         }
         if (osv.getDetails() != null) {
             vuln.setDescription(osv.getDetails());
@@ -211,17 +206,15 @@ final class ModelConverter {
 
         // Pick the strongest signal we have.
         // Malware advisories are always treated as critical.
-        final Severity severity = !isOsvMalwareIdentifier(id)
-                ? moreSevere(affectedSeverity, dbSeverity)
-                : SEVERITY_CRITICAL;
+        final Severity severity =
+                !isOsvMalwareIdentifier(id) ? moreSevere(affectedSeverity, dbSeverity) : SEVERITY_CRITICAL;
 
         vuln.addAllRatings(convertRatings(osv, severity));
 
         return vuln.build();
     }
 
-    private record DerivedCvss(ScoreMethod method, double score, Severity severity, String vector) {
-    }
+    private record DerivedCvss(ScoreMethod method, double score, Severity severity, String vector) {}
 
     private static @Nullable DerivedCvss deriveCvss(@Nullable String vectorString) {
         if (vectorString == null || vectorString.isBlank()) {
@@ -234,9 +227,7 @@ final class ModelConverter {
         }
 
         final double score = cvss.getBakedScores().getBaseScore();
-        final String stored = cvss instanceof Cvss2
-                ? "(" + cvss + ")"
-                : cvss.toString();
+        final String stored = cvss instanceof Cvss2 ? "(" + cvss + ")" : cvss.toString();
         return switch (cvss) {
             case Cvss4P0 _ -> new DerivedCvss(SCORE_METHOD_CVSSV4, score, scoreToSeverityCvssV4(score), stored);
             case Cvss3P1 _ -> new DerivedCvss(SCORE_METHOD_CVSSV31, score, scoreToSeverityCvssV3(score), stored);
@@ -335,7 +326,8 @@ final class ModelConverter {
     private static Severity severityForAffected(Affected entry) {
         final EcosystemSpecific ecosystemSpecific = entry.getEcosystemSpecific();
         if (ecosystemSpecific != null
-                && ecosystemSpecific.getAdditionalProperties().get(DatabaseSpecificPropertyNames.SEVERITY) instanceof final String ecosystemSeverity) {
+                && ecosystemSpecific.getAdditionalProperties().get(DatabaseSpecificPropertyNames.SEVERITY)
+                        instanceof final String ecosystemSeverity) {
             return convertSeverity(ecosystemSeverity);
         }
 
@@ -345,10 +337,9 @@ final class ModelConverter {
     private static List<VulnerabilityRating> convertRatings(Osv osv, Severity fallbackSeverity) {
         final List<org.dependencytrack.vulndatasource.osv.schema.Severity> osvSeverities = osv.getSeverity();
         if (osvSeverities == null || osvSeverities.isEmpty()) {
-            return List.of(
-                    VulnerabilityRating.newBuilder()
-                            .setSeverity(fallbackSeverity)
-                            .build());
+            return List.of(VulnerabilityRating.newBuilder()
+                    .setSeverity(fallbackSeverity)
+                    .build());
         }
 
         final var ratings = new ArrayList<VulnerabilityRating>(osvSeverities.size());
@@ -367,20 +358,18 @@ final class ModelConverter {
                 continue;
             }
 
-            ratings.add(
-                    VulnerabilityRating.newBuilder()
-                            .setMethod(derived.method())
-                            .setScore(derived.score())
-                            .setSeverity(derived.severity())
-                            .setVector(derived.vector())
-                            .build());
+            ratings.add(VulnerabilityRating.newBuilder()
+                    .setMethod(derived.method())
+                    .setScore(derived.score())
+                    .setSeverity(derived.severity())
+                    .setVector(derived.vector())
+                    .build());
         }
 
         if (ratings.isEmpty()) {
-            return List.of(
-                    VulnerabilityRating.newBuilder()
-                            .setSeverity(fallbackSeverity)
-                            .build());
+            return List.of(VulnerabilityRating.newBuilder()
+                    .setSeverity(fallbackSeverity)
+                    .build());
         }
 
         return ratings;
@@ -397,18 +386,14 @@ final class ModelConverter {
                 continue;
             }
 
-            advisories.add(
-                    Advisory.newBuilder()
-                            .setUrl(reference.getUrl())
-                            .build());
+            advisories.add(Advisory.newBuilder().setUrl(reference.getUrl()).build());
         }
 
         return advisories;
     }
 
     private static List<VulnerabilityReference> convertAliases(
-            @Nullable String selfId,
-            @Nullable List<String> aliases) {
+            @Nullable String selfId, @Nullable List<String> aliases) {
         if (aliases == null || aliases.isEmpty()) {
             return List.of();
         }
@@ -419,11 +404,10 @@ final class ModelConverter {
                 continue;
             }
 
-            result.add(
-                    VulnerabilityReference.newBuilder()
-                            .setId(alias)
-                            .setSource(extractSource(alias))
-                            .build());
+            result.add(VulnerabilityReference.newBuilder()
+                    .setId(alias)
+                    .setSource(extractSource(alias))
+                    .build());
         }
 
         return result;
@@ -469,9 +453,7 @@ final class ModelConverter {
     }
 
     private static String tryEnrichDistroQualifier(
-            PackageURL purl,
-            @Nullable String ecosystem,
-            @Nullable String vulnId) {
+            PackageURL purl, @Nullable String ecosystem, @Nullable String vulnId) {
         // Some PURLs already include the distro qualifier, e.g. "pkg:deb/ubuntu/php7.0?distro=xenial".
         // For others, infer it from the OSV ecosystem string, e.g. "Debian:13".
         final Map<String, String> qualifiers = purl.getQualifiers();
@@ -492,7 +474,9 @@ final class ModelConverter {
         } catch (MalformedPackageURLException e) {
             LOGGER.warn(
                     "Failed to add distro qualifier to PURL '{}' for vulnerability {}; Using original PURL",
-                    purl, vulnId, e);
+                    purl,
+                    vulnId,
+                    e);
             return purl.toString();
         }
     }
@@ -514,7 +498,8 @@ final class ModelConverter {
         final List<Range> ranges = entry.getRanges();
         final var parsedRanges = new ArrayList<VulnerabilityAffectedVersions>();
         if (ranges != null) {
-            final String ecosystem = entry.getPackage() != null ? entry.getPackage().getEcosystem() : null;
+            final String ecosystem =
+                    entry.getPackage() != null ? entry.getPackage().getEcosystem() : null;
             for (final Range range : ranges) {
                 parsedRanges.addAll(convertRange(range, ecosystem, entry.getDatabaseSpecific()));
             }
@@ -541,15 +526,12 @@ final class ModelConverter {
                 && parsedRanges.stream()
                         .map(VulnerabilityAffectedVersions::getRange)
                         .allMatch(WILDCARD_VERS_PATTERN.asPredicate());
-        if ((noUsableRange || malwareWildcardOnly)
-                && exactVersions != null
-                && !exactVersions.isEmpty()) {
+        if ((noUsableRange || malwareWildcardOnly) && exactVersions != null && !exactVersions.isEmpty()) {
             final var fallback = new ArrayList<VulnerabilityAffectedVersions>(exactVersions.size());
             for (final String version : exactVersions) {
-                fallback.add(
-                        VulnerabilityAffectedVersions.newBuilder()
-                                .setVersion(version)
-                                .build());
+                fallback.add(VulnerabilityAffectedVersions.newBuilder()
+                        .setVersion(version)
+                        .build());
             }
 
             return fallback;
@@ -559,9 +541,7 @@ final class ModelConverter {
     }
 
     private List<VulnerabilityAffectedVersions> convertRange(
-            Range range,
-            @Nullable String ecosystem,
-            @Nullable DatabaseSpecific__1 databaseSpecific) {
+            Range range, @Nullable String ecosystem, @Nullable DatabaseSpecific__1 databaseSpecific) {
         final Range.Type rangeType = range.getType();
         if (rangeType == null || rangeType == Range.Type.GIT || ecosystem == null) {
             // CycloneDX `range` MUST be valid `vers` syntax. OSV `GIT` ranges contain commit hashes,
@@ -579,25 +559,25 @@ final class ModelConverter {
             rangeEvents.add(objectMapper.convertValue(event, RANGE_EVENT_TYPE_REF));
         }
 
-        final boolean lastIsUpperBound = isUpperBound(rangeEvents.getLast().getKey());
-        final Map<String, Object> dbProps = !lastIsUpperBound && databaseSpecific != null
-                ? databaseSpecific.getAdditionalProperties()
-                : null;
+        final Map<String, Object> dbProps =
+                databaseSpecific != null ? databaseSpecific.getAdditionalProperties() : null;
 
+        final List<Vers> verses;
         try {
-            final Vers vers = versFromOsvRange(rangeType.value(), ecosystem, rangeEvents, dbProps);
-            return List.of(
-                    VulnerabilityAffectedVersions.newBuilder()
-                            .setRange(vers.toString())
-                            .build());
+            verses = versFromOsvRange(rangeType.value(), ecosystem, rangeEvents, dbProps);
         } catch (Exception e) {
-            LOGGER.debug("Exception while parsing OSV version range.", e);
+            LOGGER.debug("Failed to convert OSV version range to vers intervals", e);
             return List.of();
         }
-    }
 
-    private static boolean isUpperBound(String eventKey) {
-        return "fixed".equals(eventKey) || "limit".equals(eventKey) || "last_affected".equals(eventKey);
+        final var affectedVersions = new ArrayList<VulnerabilityAffectedVersions>(verses.size());
+        for (final Vers vers : verses) {
+            affectedVersions.add(VulnerabilityAffectedVersions.newBuilder()
+                    .setRange(vers.toString())
+                    .build());
+        }
+
+        return affectedVersions;
     }
 
     private static @Nullable VulnerabilityCredits convertCredits(@Nullable List<Credit> credits) {
@@ -667,11 +647,7 @@ final class ModelConverter {
         return null;
     }
 
-    static String trimSummary(@Nullable String summary) {
-        if (summary == null) {
-            return null;
-        }
-
+    static String trimSummary(String summary) {
         if (summary.length() > MAX_TITLE_LEN) {
             return summary.substring(0, MAX_TITLE_LEN - 2) + "..";
         }
@@ -706,10 +682,7 @@ final class ModelConverter {
         }
     }
 
-    private static @Nullable Timestamp toTimestamp(
-            @Nullable Date date,
-            @Nullable String advisoryId,
-            String fieldName) {
+    private static @Nullable Timestamp toTimestamp(@Nullable Date date, @Nullable String advisoryId, String fieldName) {
         if (date == null) {
             return null;
         }
@@ -721,5 +694,4 @@ final class ModelConverter {
             return null;
         }
     }
-
 }

@@ -29,9 +29,7 @@ final class ReplayAwareLogger implements Logger {
     private final WorkflowContextImpl<?, ?> workflowContext;
     private final Logger delegate;
 
-    ReplayAwareLogger(
-            final WorkflowContextImpl<?, ?> workflowContext,
-            final Logger delegate) {
+    ReplayAwareLogger(final WorkflowContextImpl<?, ?> workflowContext, final Logger delegate) {
         this.workflowContext = workflowContext;
         this.delegate = delegate;
     }
@@ -346,5 +344,4 @@ final class ReplayAwareLogger implements Logger {
     public void error(final Marker marker, final String s, final Throwable throwable) {
         unlessReplaying(() -> delegate.error(marker, s, throwable));
     }
-
 }

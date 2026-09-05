@@ -30,7 +30,9 @@ import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
+import org.jspecify.annotations.Nullable;
 
+import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Clock;
@@ -38,19 +40,26 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import static io.github.jeremylong.openvulnerability.client.ghsa.GitHubSecurityAdvisoryClientBuilder.aGitHubSecurityAdvisoryClient;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 5.0.0
  */
 final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeConfigurable {
 
-    private ConfigRegistry configRegistry;
-    private KeyValueStore kvStore;
-    private HttpAsyncClientSupplier httpClientSupplier;
+    private @Nullable ConfigRegistry configRegistry;
+    private @Nullable KeyValueStore kvStore;
+    private @Nullable HttpClient httpClient;
+    private @Nullable ProxySelector proxySelector;
 
     @Override
     public String extensionName() {
         return "github";
+    }
+
+    @Override
+    public String displayName() {
+        return "GitHub Advisories";
     }
 
     @Override
@@ -67,20 +76,23 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
     public void init(ServiceRegistry serviceRegistry) {
         this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
         this.kvStore = serviceRegistry.require(KeyValueStore.class);
-        final var proxySelector = serviceRegistry.require(HttpClient.class).proxy().orElse(null);
-        this.httpClientSupplier = () -> HttpAsyncClients.custom()
-                .setRetryStrategy(new GitHubHttpRequestRetryStrategy())
-                .setProxySelector(proxySelector)
-                .build();
+        this.httpClient = serviceRegistry.require(HttpClient.class);
+        this.proxySelector = httpClient.proxy().orElse(null);
     }
 
     @Override
     public boolean isDataSourceEnabled() {
-        return configRegistry.getRuntimeConfig(GithubVulnDataSourceConfigV1.class).isEnabled();
+        requireNonNull(configRegistry, "configRegistry must not be null");
+        return configRegistry
+                .getRuntimeConfig(GithubVulnDataSourceConfigV1.class)
+                .isEnabled();
     }
 
     @Override
     public VulnDataSource create() {
+        requireNonNull(configRegistry, "configRegistry must not be null");
+        requireNonNull(kvStore, "kvStore must not be null");
+
         final var config = configRegistry.getRuntimeConfig(GithubVulnDataSourceConfigV1.class);
         if (!config.isEnabled()) {
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
@@ -88,10 +100,16 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
 
         final var watermarkManager = WatermarkManager.create(Clock.systemUTC(), this.kvStore);
 
+        final GitHubTokenProvider tokenProvider = createTokenProvider(config);
+        final HttpAsyncClientSupplier httpClientSupplier = () -> HttpAsyncClients.custom()
+                .setRetryStrategy(new GitHubHttpRequestRetryStrategy())
+                .setProxySelector(proxySelector)
+                .addRequestInterceptorFirst(new BearerTokenInterceptor(tokenProvider))
+                .build();
+
         final GitHubSecurityAdvisoryClientBuilder clientBuilder = aGitHubSecurityAdvisoryClient()
                 .withHttpClientSupplier(httpClientSupplier)
-                .withEndpoint(config.getApiUrl().toString())
-                .withApiKey(config.getApiToken());
+                .withEndpoint(config.getApiUrl().toString());
         if (watermarkManager.getWatermark() != null) {
             clientBuilder.withUpdatedSinceFilter(
                     ZonedDateTime.ofInstant(watermarkManager.getWatermark(), ZoneOffset.UTC));
@@ -99,6 +117,20 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
         final GitHubSecurityAdvisoryClient client = clientBuilder.build();
 
         return new GitHubVulnDataSource(watermarkManager, client, config.getAliasSyncEnabled());
+    }
+
+    private GitHubTokenProvider createTokenProvider(final GithubVulnDataSourceConfigV1 config) {
+        requireNonNull(httpClient, "httpClient must not be null");
+        if (config.getApiToken() != null) {
+            return new StaticTokenProvider(config.getApiToken());
+        }
+        return new GitHubAppTokenProvider(
+                config.getAppId(),
+                config.getInstallationId(),
+                config.getAppPrivateKey(),
+                GitHubAppTokenProvider.tokenExchangeBaseUrl(config.getApiUrl()),
+                httpClient,
+                Clock.systemUTC());
     }
 
     @Override
@@ -115,10 +147,25 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
             if (config.getApiUrl() == null) {
                 throw new InvalidRuntimeConfigException("No API URL provided");
             }
-            if (config.getApiToken() == null) {
-                throw new InvalidRuntimeConfigException("No API Token provided");
+            final boolean hasPat = config.getApiToken() != null;
+            final boolean hasApp = config.getAppId() != null
+                    || config.getInstallationId() != null
+                    || config.getAppPrivateKey() != null;
+            if (hasPat && hasApp) {
+                throw new InvalidRuntimeConfigException(
+                        "Configure either an API Token or GitHub App credentials, not both");
+            }
+            if (!hasPat && !hasApp) {
+                throw new InvalidRuntimeConfigException(
+                        "No authentication configured; provide an API Token or GitHub App credentials");
+            }
+            if (hasApp
+                    && (config.getAppId() == null
+                            || config.getInstallationId() == null
+                            || config.getAppPrivateKey() == null)) {
+                throw new InvalidRuntimeConfigException(
+                        "GitHub App authentication requires App ID, Installation ID and App Private Key");
             }
         });
     }
-
 }

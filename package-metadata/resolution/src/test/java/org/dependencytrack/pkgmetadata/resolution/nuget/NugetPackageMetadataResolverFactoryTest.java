@@ -27,20 +27,23 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class NugetPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest<PackageMetadataResolver, NugetPackageMetadataResolverFactory> {
+class NugetPackageMetadataResolverFactoryTest
+        extends AbstractExtensionFactoryTest<PackageMetadataResolver, NugetPackageMetadataResolverFactory> {
 
     protected NugetPackageMetadataResolverFactoryTest() {
         super(NugetPackageMetadataResolverFactory.class);
     }
 
     @ParameterizedTest
-    @CsvSource(nullValues = "", value = {
-            "pkg:nuget/foo@1.0, pkg:nuget/foo@1.0",
-            "pkg:nuget/ns/foo@1.0, pkg:nuget/ns/foo@1.0",
-            "pkg:npm/foo@1.0, ",
-            "pkg:nuget/foo, ",
-            "pkg:nuget/ns/foo@1.0?key=value#sub/path, pkg:nuget/ns/foo@1.0",
-    })
+    @CsvSource(
+            nullValues = "",
+            value = {
+                "pkg:nuget/foo@1.0, pkg:nuget/foo@1.0",
+                "pkg:nuget/ns/foo@1.0, pkg:nuget/ns/foo@1.0",
+                "pkg:npm/foo@1.0, ",
+                "pkg:nuget/foo, ",
+                "pkg:nuget/ns/foo@1.0?key=value#sub/path, pkg:nuget/ns/foo@1.0",
+            })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))
                 .isEqualTo(expected != null ? new PackageURL(expected) : null);
@@ -50,5 +53,4 @@ class NugetPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTe
     void shouldRequireRepository() {
         assertThat(factory.requiresRepository()).isTrue();
     }
-
 }

@@ -25,10 +25,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.model.Tag;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import org.dependencytrack.model.Tag;
 
 import java.util.List;
 
@@ -41,17 +42,23 @@ import java.util.List;
 public final class BomSubmitRequest {
 
     @NotNull
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The project must be a valid 36 character UUID")
     private final String project;
 
     @NotBlank
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The project name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The project name may only contain printable characters")
     private final String projectName;
 
     @NotBlank
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The project version may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The project version may only contain printable characters")
     private final String projectVersion;
 
     @Schema(description = """
@@ -60,19 +67,27 @@ public final class BomSubmitRequest {
             PORTFOLIO_MANAGEMENT_UPDATE permission.""")
     private final List<Tag> projectTags;
 
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The parent UUID must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The parent UUID must be a valid 36 character UUID")
     private final String parentUUID;
 
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The parent name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The parent name may only contain printable characters")
     private final String parentName;
 
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The parent version may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The parent version may only contain printable characters")
     private final String parentVersion;
 
     @NotNull
-    @Pattern(regexp = "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$", message = "The BOM must be Base64 encoded")
+    @Pattern(
+            regexp = "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+            message = "The BOM must be Base64 encoded")
     private final String bom;
 
     private final boolean autoCreate;
@@ -81,29 +96,32 @@ public final class BomSubmitRequest {
 
     private final Boolean isActive;
 
-    public BomSubmitRequest(String project,
-                            String projectName,
-                            String projectVersion,
-                            List<Tag> projectTags,
-                            boolean autoCreate,
-                            boolean isLatest,
-                            boolean isActive,
-                            String bom) {
+    public BomSubmitRequest(
+            String project,
+            String projectName,
+            String projectVersion,
+            List<Tag> projectTags,
+            boolean autoCreate,
+            boolean isLatest,
+            boolean isActive,
+            String bom) {
         this(project, projectName, projectVersion, projectTags, autoCreate, null, null, null, isLatest, isActive, bom);
     }
 
     @JsonCreator
-    public BomSubmitRequest(@JsonProperty(value = "project") String project,
-                            @JsonProperty(value = "projectName") String projectName,
-                            @JsonProperty(value = "projectVersion") String projectVersion,
-                            @JsonProperty(value = "projectTags") List<Tag> projectTags,
-                            @JsonProperty(value = "autoCreate") boolean autoCreate,
-                            @JsonProperty(value = "parentUUID") String parentUUID,
-                            @JsonProperty(value = "parentName") String parentName,
-                            @JsonProperty(value = "parentVersion") String parentVersion,
-                            @JsonProperty(value = "isLatest", defaultValue = "false") @JsonAlias("isLatestProjectVersion") boolean isLatest,
-                            @JsonProperty(value = "isActive") Boolean isActive,
-                            @JsonProperty(value = "bom", required = true) String bom) {
+    public BomSubmitRequest(
+            @JsonProperty(value = "project") String project,
+            @JsonProperty(value = "projectName") String projectName,
+            @JsonProperty(value = "projectVersion") String projectVersion,
+            @JsonProperty(value = "projectTags") List<Tag> projectTags,
+            @JsonProperty(value = "autoCreate") boolean autoCreate,
+            @JsonProperty(value = "parentUUID") String parentUUID,
+            @JsonProperty(value = "parentName") String parentName,
+            @JsonProperty(value = "parentVersion") String parentVersion,
+            @JsonProperty(value = "isLatest", defaultValue = "false") @JsonAlias("isLatestProjectVersion")
+                    boolean isLatest,
+            @JsonProperty(value = "isActive") Boolean isActive,
+            @JsonProperty(value = "bom", required = true) String bom) {
         this.project = project;
         this.projectName = projectName;
         this.projectVersion = projectVersion;
@@ -157,22 +175,25 @@ public final class BomSubmitRequest {
     }
 
     @JsonProperty("isLatest")
-    public boolean isLatest() { return isLatest; }
+    public boolean isLatest() {
+        return isLatest;
+    }
 
     @JsonProperty("isActive")
-    public Boolean isActive() { return isActive; }
+    public Boolean isActive() {
+        return isActive;
+    }
 
     @Schema(
             description = "Base64 encoded BOM",
             requiredMode = Schema.RequiredMode.REQUIRED,
+            format = "bytes",
             example = """
                     ewogICJib21Gb3JtYXQiOiAiQ3ljbG9uZURYIiwKICAic3BlY1ZlcnNpb24iOiAi\
                     MS40IiwKICAiY29tcG9uZW50cyI6IFsKICAgIHsKICAgICAgInR5cGUiOiAibGli\
                     cmFyeSIsCiAgICAgICJuYW1lIjogImFjbWUtbGliIiwKICAgICAgInZlcnNpb24i\
-                    OiAiMS4wLjAiCiAgICB9CiAgXQp9"""
-    )
+                    OiAiMS4wLjAiCiAgICB9CiAgXQp9""")
     public String getBom() {
         return bom;
     }
-
 }

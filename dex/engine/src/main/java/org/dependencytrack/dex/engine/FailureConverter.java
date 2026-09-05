@@ -45,45 +45,44 @@ import java.util.regex.Pattern;
  */
 final class FailureConverter {
 
-    private FailureConverter() {
-    }
+    private FailureConverter() {}
 
     static FailureException toException(final Failure failure) {
-        final FailureException cause = failure.hasCause()
-                ? toException(failure.getCause())
-                : null;
+        final FailureException cause = failure.hasCause() ? toException(failure.getCause()) : null;
 
-        final FailureException exception = switch (failure.getFailureDetailsCase()) {
-            case ACTIVITY_FAILURE_DETAILS -> {
-                final ActivityFailureDetails details = failure.getActivityFailureDetails();
-                yield new ActivityFailureException(details.getActivityName(), cause);
-            }
-            case APPLICATION_FAILURE_DETAILS -> {
-                final ApplicationFailureDetails details = failure.getApplicationFailureDetails();
-                yield new ApplicationFailureException(failure.getMessage(), cause, details.getIsTerminal());
-            }
-            case CANCELLATION_FAILURE_DETAILS -> {
-                final CancellationFailureDetails details = failure.getCancellationFailureDetails();
-                yield new CancellationFailureException(details.getReason());
-            }
-            case CHILD_WORKFLOW_FAILURE_DETAILS -> {
-                final ChildWorkflowFailureDetails details = failure.getChildWorkflowFailureDetails();
-                yield new ChildWorkflowFailureException(
-                        UUID.fromString(details.getWorkflowRunId()),
-                        details.getWorkflowName(),
-                        details.getWorkflowVersion(),
-                        cause);
-            }
-            case INTERNAL_FAILURE_DETAILS -> new InternalFailureException(failure.getMessage(), cause);
-            case SIDE_EFFECT_FAILURE_DETAILS -> {
-                final SideEffectFailureDetails details = failure.getSideEffectFailureDetails();
-                yield new SideEffectFailureException(details.getSideEffectName(), cause);
-            }
-            default -> throw new IllegalArgumentException(
-                    "Unknown details type %s for failure: %s".formatted(
-                            failure.getFailureDetailsCase(),
-                            DebugFormat.singleLine().toString(failure)));
-        };
+        final FailureException exception =
+                switch (failure.getFailureDetailsCase()) {
+                    case ACTIVITY_FAILURE_DETAILS -> {
+                        final ActivityFailureDetails details = failure.getActivityFailureDetails();
+                        yield new ActivityFailureException(details.getActivityName(), cause);
+                    }
+                    case APPLICATION_FAILURE_DETAILS -> {
+                        final ApplicationFailureDetails details = failure.getApplicationFailureDetails();
+                        yield new ApplicationFailureException(failure.getMessage(), cause, details.getIsTerminal());
+                    }
+                    case CANCELLATION_FAILURE_DETAILS -> {
+                        final CancellationFailureDetails details = failure.getCancellationFailureDetails();
+                        yield new CancellationFailureException(details.getReason());
+                    }
+                    case CHILD_WORKFLOW_FAILURE_DETAILS -> {
+                        final ChildWorkflowFailureDetails details = failure.getChildWorkflowFailureDetails();
+                        yield new ChildWorkflowFailureException(
+                                UUID.fromString(details.getWorkflowRunId()),
+                                details.getWorkflowName(),
+                                details.getWorkflowVersion(),
+                                cause);
+                    }
+                    case INTERNAL_FAILURE_DETAILS -> new InternalFailureException(failure.getMessage(), cause);
+                    case SIDE_EFFECT_FAILURE_DETAILS -> {
+                        final SideEffectFailureDetails details = failure.getSideEffectFailureDetails();
+                        yield new SideEffectFailureException(details.getSideEffectName(), cause);
+                    }
+                    default ->
+                        throw new IllegalArgumentException("Unknown details type %s for failure: %s"
+                                .formatted(
+                                        failure.getFailureDetailsCase(),
+                                        DebugFormat.singleLine().toString(failure)));
+                };
 
         if (failure.hasStackTrace()) {
             exception.setStackTrace(deserializeStackTrace(failure.getStackTrace()));
@@ -100,43 +99,35 @@ final class FailureConverter {
                 if (activityException.getOriginalMessage() != null) {
                     failureBuilder.setMessage(activityException.getOriginalMessage());
                 }
-                failureBuilder
-                        .setActivityFailureDetails(
-                                ActivityFailureDetails.newBuilder()
-                                        .setActivityName(activityException.getActivityName())
-                                        .build());
+                failureBuilder.setActivityFailureDetails(ActivityFailureDetails.newBuilder()
+                        .setActivityName(activityException.getActivityName())
+                        .build());
             }
             case final ApplicationFailureException applicationException -> {
                 if (applicationException.getOriginalMessage() != null) {
                     failureBuilder.setMessage(applicationException.getOriginalMessage());
                 }
-                failureBuilder
-                        .setApplicationFailureDetails(
-                                ApplicationFailureDetails.newBuilder()
-                                        .setIsTerminal(applicationException.isTerminal())
-                                        .build());
+                failureBuilder.setApplicationFailureDetails(ApplicationFailureDetails.newBuilder()
+                        .setIsTerminal(applicationException.isTerminal())
+                        .build());
             }
             case final CancellationFailureException cancellationException -> {
                 if (cancellationException.getOriginalMessage() != null) {
                     failureBuilder.setMessage(cancellationException.getOriginalMessage());
                 }
-                failureBuilder
-                        .setCancellationFailureDetails(
-                                CancellationFailureDetails.newBuilder()
-                                        .setReason(cancellationException.getReason())
-                                        .build());
+                failureBuilder.setCancellationFailureDetails(CancellationFailureDetails.newBuilder()
+                        .setReason(cancellationException.getReason())
+                        .build());
             }
             case final ChildWorkflowFailureException childWorkflowException -> {
                 if (childWorkflowException.getOriginalMessage() != null) {
                     failureBuilder.setMessage(childWorkflowException.getOriginalMessage());
                 }
-                failureBuilder
-                        .setChildWorkflowFailureDetails(
-                                ChildWorkflowFailureDetails.newBuilder()
-                                        .setWorkflowRunId(childWorkflowException.getRunId().toString())
-                                        .setWorkflowName(childWorkflowException.getWorkflowName())
-                                        .setWorkflowVersion(childWorkflowException.getWorkflowVersion())
-                                        .build());
+                failureBuilder.setChildWorkflowFailureDetails(ChildWorkflowFailureDetails.newBuilder()
+                        .setWorkflowRunId(childWorkflowException.getRunId().toString())
+                        .setWorkflowName(childWorkflowException.getWorkflowName())
+                        .setWorkflowVersion(childWorkflowException.getWorkflowVersion())
+                        .build());
             }
             case final InternalFailureException internalFailureException -> {
                 if (internalFailureException.getMessage() != null) {
@@ -148,26 +139,24 @@ final class FailureConverter {
                 if (sideEffectException.getOriginalMessage() != null) {
                     failureBuilder.setMessage(sideEffectException.getOriginalMessage());
                 }
-                failureBuilder
-                        .setSideEffectFailureDetails(
-                                SideEffectFailureDetails.newBuilder()
-                                        .setSideEffectName(sideEffectException.getSideEffectName())
-                                        .build());
+                failureBuilder.setSideEffectFailureDetails(SideEffectFailureDetails.newBuilder()
+                        .setSideEffectName(sideEffectException.getSideEffectName())
+                        .build());
             }
             default -> {
                 if (throwable.getMessage() != null) {
                     failureBuilder.setMessage(throwable.getMessage());
                 }
 
-                failureBuilder.setApplicationFailureDetails(
-                        ApplicationFailureDetails.newBuilder()
-                                .setIsTerminal(false)
-                                .build());
+                failureBuilder.setApplicationFailureDetails(ApplicationFailureDetails.newBuilder()
+                        .setIsTerminal(false)
+                        .build());
             }
         }
 
-        if (throwable.getStackTrace() != null && throwable.getStackTrace().length > 0) {
-            failureBuilder.setStackTrace(serializeStackTrace(throwable.getStackTrace()));
+        final String stackTrace = serializeStackTrace(throwable.getStackTrace());
+        if (stackTrace != null) {
+            failureBuilder.setStackTrace(stackTrace);
         }
 
         if (throwable.getCause() != null) {
@@ -210,7 +199,8 @@ final class FailureConverter {
             return null;
         }
 
-        return stackTrace.lines()
+        return stackTrace
+                .lines()
                 .map(serializedElement -> {
                     final Matcher matcher = STACK_TRACE_ELEMENT_PATTERN.matcher(serializedElement);
                     if (!matcher.find()) {
@@ -221,11 +211,8 @@ final class FailureConverter {
                             matcher.group("className"),
                             matcher.group("methodName"),
                             matcher.group("fileName"),
-                            matcher.group("lineNumber") != null
-                                    ? Integer.parseInt(matcher.group("lineNumber"))
-                                    : -1);
+                            matcher.group("lineNumber") != null ? Integer.parseInt(matcher.group("lineNumber")) : -1);
                 })
                 .toArray(StackTraceElement[]::new);
     }
-
 }

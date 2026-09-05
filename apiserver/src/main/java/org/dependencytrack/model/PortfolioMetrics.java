@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotNull;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -42,6 +43,7 @@ public class PortfolioMetrics implements Serializable {
     private int medium;
     private int low;
     private int unassigned;
+    private int kev;
     private int vulnerabilities;
     private int projects;
     private int vulnerableProjects;
@@ -114,6 +116,14 @@ public class PortfolioMetrics implements Serializable {
 
     public void setUnassigned(int unassigned) {
         this.unassigned = unassigned;
+    }
+
+    public int getKev() {
+        return kev;
+    }
+
+    public void setKev(int kev) {
+        this.kev = kev;
     }
 
     public int getVulnerabilities() {
@@ -331,5 +341,4 @@ public class PortfolioMetrics implements Serializable {
     public void setLastOccurrence(Date lastOccurrence) {
         this.lastOccurrence = lastOccurrence;
     }
-
 }

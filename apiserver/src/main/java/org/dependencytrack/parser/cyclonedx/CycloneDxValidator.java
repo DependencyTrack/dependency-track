@@ -53,6 +53,7 @@ import static org.cyclonedx.CycloneDxSchema.NS_BOM_13;
 import static org.cyclonedx.CycloneDxSchema.NS_BOM_14;
 import static org.cyclonedx.CycloneDxSchema.NS_BOM_15;
 import static org.cyclonedx.CycloneDxSchema.NS_BOM_16;
+import static org.cyclonedx.CycloneDxSchema.NS_BOM_17;
 import static org.cyclonedx.Version.VERSION_10;
 import static org.cyclonedx.Version.VERSION_11;
 import static org.cyclonedx.Version.VERSION_12;
@@ -60,6 +61,7 @@ import static org.cyclonedx.Version.VERSION_13;
 import static org.cyclonedx.Version.VERSION_14;
 import static org.cyclonedx.Version.VERSION_15;
 import static org.cyclonedx.Version.VERSION_16;
+import static org.cyclonedx.Version.VERSION_17;
 
 /**
  * @since 4.11.0
@@ -75,8 +77,7 @@ public class CycloneDxValidator {
     private final Map<Version, com.networknt.schema.Schema> jsonSchemaCache = new ConcurrentHashMap<>();
     private final Map<Version, javax.xml.validation.Schema> xmlSchemaCache = new ConcurrentHashMap<>();
 
-    CycloneDxValidator() {
-    }
+    CycloneDxValidator() {}
 
     public static CycloneDxValidator getInstance() {
         return INSTANCE;
@@ -84,18 +85,18 @@ public class CycloneDxValidator {
 
     public void validate(byte[] bomBytes) {
         final FormatAndVersion formatAndVersion = detectFormatAndSchemaVersion(bomBytes);
-        final List<String> validationErrors = switch (formatAndVersion.format()) {
-            case JSON -> validateJson(bomBytes, formatAndVersion.version());
-            case XML -> validateXml(bomBytes, formatAndVersion.version());
-        };
+        final List<String> validationErrors =
+                switch (formatAndVersion.format()) {
+                    case JSON -> validateJson(bomBytes, formatAndVersion.version());
+                    case XML -> validateXml(bomBytes, formatAndVersion.version());
+                };
         if (!validationErrors.isEmpty()) {
             throw new InvalidBomException("Schema validation failed", validationErrors);
         }
     }
 
     private List<String> validateJson(byte[] bomBytes, Version version) {
-        final com.networknt.schema.Schema schema =
-                jsonSchemaCache.computeIfAbsent(version, this::loadJsonSchema);
+        final com.networknt.schema.Schema schema = jsonSchemaCache.computeIfAbsent(version, this::loadJsonSchema);
 
         final JsonNode bomNode;
         try {
@@ -105,15 +106,15 @@ public class CycloneDxValidator {
         }
 
         return schema.validate(bomNode).stream()
-                .map(error -> error.getInstanceLocation() != null && error.getInstanceLocation().getNameCount() > 0
+                .map(error -> error.getInstanceLocation() != null
+                                && error.getInstanceLocation().getNameCount() > 0
                         ? "%s: %s".formatted(error.getInstanceLocation(), error.getMessage())
                         : error.getMessage())
                 .toList();
     }
 
     private List<String> validateXml(byte[] bomBytes, Version version) {
-        final javax.xml.validation.Schema schema =
-                xmlSchemaCache.computeIfAbsent(version, this::loadXmlSchema);
+        final javax.xml.validation.Schema schema = xmlSchemaCache.computeIfAbsent(version, this::loadXmlSchema);
 
         // NB: Validator is not thread-safe.
         final Validator validator = schema.newValidator();
@@ -204,9 +205,12 @@ public class CycloneDxValidator {
             JsonToken currentToken = jsonParser.nextToken();
             if (currentToken != JsonToken.START_OBJECT) {
                 final String currentTokenAsString = Optional.ofNullable(currentToken)
-                        .map(JsonToken::asString).orElse(null);
-                throw new JsonParseException(jsonParser, "Expected token %s, but got %s"
-                        .formatted(JsonToken.START_OBJECT.asString(), currentTokenAsString));
+                        .map(JsonToken::asString)
+                        .orElse(null);
+                throw new JsonParseException(
+                        jsonParser,
+                        "Expected token %s, but got %s"
+                                .formatted(JsonToken.START_OBJECT.asString(), currentTokenAsString));
             }
 
             Version schemaVersion = null;
@@ -217,14 +221,16 @@ public class CycloneDxValidator {
                         final String specVersion = jsonParser.getValueAsString();
                         schemaVersion = switch (jsonParser.getValueAsString()) {
                             case "1.0", "1.1" ->
-                                    throw new InvalidBomException("JSON is not supported for specVersion %s".formatted(specVersion));
+                                throw new InvalidBomException(
+                                        "JSON is not supported for specVersion %s".formatted(specVersion));
                             case "1.2" -> VERSION_12;
                             case "1.3" -> VERSION_13;
                             case "1.4" -> VERSION_14;
                             case "1.5" -> VERSION_15;
                             case "1.6" -> VERSION_16;
+                            case "1.7" -> VERSION_17;
                             default ->
-                                    throw new InvalidBomException("Unrecognized specVersion %s".formatted(specVersion));
+                                throw new InvalidBomException("Unrecognized specVersion %s".formatted(specVersion));
                         };
                     }
                 }
@@ -262,6 +268,7 @@ public class CycloneDxValidator {
                         case NS_BOM_14 -> VERSION_14;
                         case NS_BOM_15 -> VERSION_15;
                         case NS_BOM_16 -> VERSION_16;
+                        case NS_BOM_17 -> VERSION_17;
                         default -> null;
                     };
 
@@ -270,8 +277,8 @@ public class CycloneDxValidator {
                     }
                 }
                 if (schemaVersion == null) {
-                    throw new InvalidBomException("Unable to determine schema version from XML namespaces %s"
-                            .formatted(namespaceUrisSeen));
+                    throw new InvalidBomException(
+                            "Unable to determine schema version from XML namespaces %s".formatted(namespaceUrisSeen));
                 }
 
                 break;
@@ -290,8 +297,7 @@ public class CycloneDxValidator {
         XML
     }
 
-    private record FormatAndVersion(Format format, Version version) {
-    }
+    private record FormatAndVersion(Format format, Version version) {}
 
     private static XMLInputFactory createXmlInputFactory() {
         final var factory = XMLInputFactory.newFactory();
@@ -300,5 +306,4 @@ public class CycloneDxValidator {
         factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
         return factory;
     }
-
 }

@@ -21,7 +21,6 @@ package org.dependencytrack.tasks;
 import alpine.model.IConfigProperty;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import jakarta.ws.rs.core.MediaType;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
@@ -31,6 +30,8 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.secret.TestSecretManager;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import jakarta.ws.rs.core.MediaType;
 
 import java.net.http.HttpClient;
 import java.util.Map;
@@ -62,33 +63,28 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 DEFECTDOJO_ENABLED.getPropertyName(),
                 "true",
                 DEFECTDOJO_ENABLED.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
                 wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
                 "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getDefaultPropertyValue(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null
-        );
+                null);
 
         stubFor(post(urlPathEqualTo("/api/v2/import-scan/"))
-                .willReturn(aResponse()
-                        .withStatus(201)));
+                .willReturn(aResponse().withStatus(201)));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -109,40 +105,27 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
-                "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
 
         new DefectDojoUploadTask(
-                HttpClient.newHttpClient(),
-                new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
+                        HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
                 .run();
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/import-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("engagement")
-                        .withBody(equalTo("666")))
+                .withAnyRequestBodyPart(aMultipart().withName("engagement").withBody(equalTo("666")))
                 .withAnyRequestBodyPart(aMultipart()
                         .withName("scan_type")
                         .withBody(equalTo("Dependency Track Finding Packaging Format (FPF) Export")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("verified")
-                        .withBody(equalTo("true")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("minimum_severity")
-                        .withBody(equalTo("Info")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("close_old_findings")
-                        .withBody(equalTo("true")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("push_to_jira")
-                        .withBody(equalTo("false")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("scan_date")
-                        .withBody(matching("\\d{4}-\\d{2}-\\d{2}")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("file")
-                        .withBody(equalToJson("""
+                .withAnyRequestBodyPart(aMultipart().withName("verified").withBody(equalTo("true")))
+                .withAnyRequestBodyPart(
+                        aMultipart().withName("minimum_severity").withBody(equalTo("Info")))
+                .withAnyRequestBodyPart(
+                        aMultipart().withName("close_old_findings").withBody(equalTo("true")))
+                .withAnyRequestBodyPart(aMultipart().withName("push_to_jira").withBody(equalTo("false")))
+                .withAnyRequestBodyPart(aMultipart().withName("scan_date").withBody(matching("\\d{4}-\\d{2}-\\d{2}")))
+                .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
                                   "version": "1.5",
                                   "meta": {
@@ -197,33 +180,28 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 DEFECTDOJO_ENABLED.getPropertyName(),
                 "true",
                 DEFECTDOJO_ENABLED.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
                 wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
                 "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getDefaultPropertyValue(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null
-        );
+                null);
 
         stubFor(post(urlPathEqualTo("/api/v2/import-scan/"))
-                .willReturn(aResponse()
-                        .withStatus(201)));
+                .willReturn(aResponse().withStatus(201)));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -244,45 +222,36 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
-                "666", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(project, "integrations", "defectdojo.testTitle",
-                "configured name of test", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project,
+                "integrations",
+                "defectdojo.testTitle",
+                "configured name of test",
+                IConfigProperty.PropertyType.STRING,
+                null);
 
         new DefectDojoUploadTask(
-                HttpClient.newHttpClient(),
-                new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
+                        HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
                 .run();
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/import-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("engagement")
-                        .withBody(equalTo("666")))
+                .withAnyRequestBodyPart(aMultipart().withName("engagement").withBody(equalTo("666")))
                 .withAnyRequestBodyPart(aMultipart()
                         .withName("scan_type")
                         .withBody(equalTo("Dependency Track Finding Packaging Format (FPF) Export")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("verified")
-                        .withBody(equalTo("true")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("minimum_severity")
-                        .withBody(equalTo("Info")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("close_old_findings")
-                        .withBody(equalTo("true")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("push_to_jira")
-                        .withBody(equalTo("false")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("scan_date")
-                        .withBody(matching("\\d{4}-\\d{2}-\\d{2}")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("test_title")
-                        .withBody(equalTo("configured name of test")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("file")
-                        .withBody(equalToJson("""
+                .withAnyRequestBodyPart(aMultipart().withName("verified").withBody(equalTo("true")))
+                .withAnyRequestBodyPart(
+                        aMultipart().withName("minimum_severity").withBody(equalTo("Info")))
+                .withAnyRequestBodyPart(
+                        aMultipart().withName("close_old_findings").withBody(equalTo("true")))
+                .withAnyRequestBodyPart(aMultipart().withName("push_to_jira").withBody(equalTo("false")))
+                .withAnyRequestBodyPart(aMultipart().withName("scan_date").withBody(matching("\\d{4}-\\d{2}-\\d{2}")))
+                .withAnyRequestBodyPart(
+                        aMultipart().withName("test_title").withBody(equalTo("configured name of test")))
+                .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
                                   "version": "1.5",
                                   "meta": {
@@ -330,7 +299,6 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                 """, true, false))));
     }
 
-
     @Test
     void testUploadWithGlobalReimport(WireMockRuntimeInfo wmRuntimeInfo) {
         qm.createConfigProperty(
@@ -338,29 +306,25 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 DEFECTDOJO_ENABLED.getPropertyName(),
                 "true",
                 DEFECTDOJO_ENABLED.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
                 wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
                 "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
                 "true",
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null
-        );
+                null);
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -479,8 +443,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                 """.formatted(wmRuntimeInfo.getHttpBaseUrl()))));
 
         stubFor(post(urlPathEqualTo("/api/v2/reimport-scan/"))
-                .willReturn(aResponse()
-                        .withStatus(201)));
+                .willReturn(aResponse().withStatus(201)));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -501,45 +464,30 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
-                "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
 
         new DefectDojoUploadTask(
-                HttpClient.newHttpClient(),
-                new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
+                        HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
                 .run();
 
         verify(2, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/reimport-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("engagement")
-                        .withBody(equalTo("666")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("test")
-                        .withBody(equalTo("3")))
+                .withAnyRequestBodyPart(aMultipart().withName("engagement").withBody(equalTo("666")))
+                .withAnyRequestBodyPart(aMultipart().withName("test").withBody(equalTo("3")))
                 .withAnyRequestBodyPart(aMultipart()
                         .withName("scan_type")
                         .withBody(equalTo("Dependency Track Finding Packaging Format (FPF) Export")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("verified")
-                        .withBody(equalTo("true")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("minimum_severity")
-                        .withBody(equalTo("Info")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("close_old_findings")
-                        .withBody(equalTo("true")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("push_to_jira")
-                        .withBody(equalTo("false")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("scan_date")
-                        .withBody(matching("\\d{4}-\\d{2}-\\d{2}")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("file")
-                        .withBody(equalToJson("""
+                .withAnyRequestBodyPart(aMultipart().withName("verified").withBody(equalTo("true")))
+                .withAnyRequestBodyPart(
+                        aMultipart().withName("minimum_severity").withBody(equalTo("Info")))
+                .withAnyRequestBodyPart(
+                        aMultipart().withName("close_old_findings").withBody(equalTo("true")))
+                .withAnyRequestBodyPart(aMultipart().withName("push_to_jira").withBody(equalTo("false")))
+                .withAnyRequestBodyPart(aMultipart().withName("scan_date").withBody(matching("\\d{4}-\\d{2}-\\d{2}")))
+                .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
                                   "version": "1.5",
                                   "meta": {
@@ -594,29 +542,25 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 DEFECTDOJO_ENABLED.getPropertyName(),
                 "true",
                 DEFECTDOJO_ENABLED.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
                 wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
                 "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
                 "false",
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null
-        );
+                null);
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -664,8 +608,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                 """)));
 
         stubFor(post(urlPathEqualTo("/api/v2/reimport-scan/"))
-                .willReturn(aResponse()
-                        .withStatus(201)));
+                .willReturn(aResponse().withStatus(201)));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -678,23 +621,20 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         component.setVersion("1.2.3");
         qm.persist(component);
 
-        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
-                "666", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(project, "integrations", "defectdojo.reimport",
-                "true", IConfigProperty.PropertyType.BOOLEAN, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.reimport", "true", IConfigProperty.PropertyType.BOOLEAN, null);
 
         new DefectDojoUploadTask(
-                HttpClient.newHttpClient(),
-                new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
+                        HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
                 .run();
 
         verify(1, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/reimport-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("file")
-                        .withBody(equalToJson("""
+                .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
                                   "version": "1.5",
                                   "meta": {
@@ -719,29 +659,25 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 DEFECTDOJO_ENABLED.getPropertyName(),
                 "true",
                 DEFECTDOJO_ENABLED.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
                 wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
                 "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
                 "false",
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null
-        );
+                null);
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -789,8 +725,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                 """)));
 
         stubFor(post(urlPathEqualTo("/api/v2/reimport-scan/"))
-                .willReturn(aResponse()
-                        .withStatus(201)));
+                .willReturn(aResponse().withStatus(201)));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -803,28 +738,29 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         component.setVersion("1.2.3");
         qm.persist(component);
 
-        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
-                "666", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(project, "integrations", "defectdojo.reimport",
-                "true", IConfigProperty.PropertyType.BOOLEAN, null);
-        qm.createProjectProperty(project, "integrations", "defectdojo.testTitle",
-                "configured name of test", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.reimport", "true", IConfigProperty.PropertyType.BOOLEAN, null);
+        qm.createProjectProperty(
+                project,
+                "integrations",
+                "defectdojo.testTitle",
+                "configured name of test",
+                IConfigProperty.PropertyType.STRING,
+                null);
 
         new DefectDojoUploadTask(
-                HttpClient.newHttpClient(),
-                new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
+                        HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
                 .run();
 
         verify(1, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/reimport-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("test_title")
-                        .withBody(equalTo("configured name of test")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("file")
-                        .withBody(equalToJson("""
+                .withAnyRequestBodyPart(
+                        aMultipart().withName("test_title").withBody(equalTo("configured name of test")))
+                .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
                                   "version": "1.5",
                                   "meta": {
@@ -849,29 +785,25 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 DEFECTDOJO_ENABLED.getPropertyName(),
                 "true",
                 DEFECTDOJO_ENABLED.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
                 wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
                 "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
                 "true",
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null
-        );
+                null);
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -891,8 +823,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                 """)));
 
         stubFor(post(urlPathEqualTo("/api/v2/import-scan/"))
-                .willReturn(aResponse()
-                        .withStatus(201)));
+                .willReturn(aResponse().withStatus(201)));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -905,21 +836,18 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         component.setVersion("1.2.3");
         qm.persist(component);
 
-        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
-                "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
 
         new DefectDojoUploadTask(
-                HttpClient.newHttpClient(),
-                new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
+                        HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
                 .run();
 
         verify(1, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/import-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("file")
-                        .withBody(equalToJson("""
+                .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
                                   "version": "1.5",
                                   "meta": {
@@ -944,33 +872,28 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 DEFECTDOJO_ENABLED.getPropertyName(),
                 "true",
                 DEFECTDOJO_ENABLED.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
                 wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
                 "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getDefaultPropertyValue(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null
-        );
+                null);
 
         stubFor(post(urlPathEqualTo("/api/v2/import-scan/"))
-                .willReturn(aResponse()
-                        .withStatus(201)));
+                .willReturn(aResponse().withStatus(201)));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -983,24 +906,24 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         component.setVersion("1.2.3");
         qm.persist(component);
 
-        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
-                "666", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(project, "integrations", "defectdojo.groupBy",
-                "component_name", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project,
+                "integrations",
+                "defectdojo.groupBy",
+                "component_name",
+                IConfigProperty.PropertyType.STRING,
+                null);
 
         new DefectDojoUploadTask(
-                HttpClient.newHttpClient(),
-                new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
+                        HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
                 .run();
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/import-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("engagement")
-                        .withBody(equalTo("666")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("group_by")
-                        .withBody(equalTo("component_name"))));
+                .withAnyRequestBodyPart(aMultipart().withName("engagement").withBody(equalTo("666")))
+                .withAnyRequestBodyPart(aMultipart().withName("group_by").withBody(equalTo("component_name"))));
     }
 
     @Test
@@ -1010,29 +933,25 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 DEFECTDOJO_ENABLED.getPropertyName(),
                 "true",
                 DEFECTDOJO_ENABLED.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
                 wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
                 "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
                 "false",
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null
-        );
+                null);
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -1080,8 +999,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                 """)));
 
         stubFor(post(urlPathEqualTo("/api/v2/reimport-scan/"))
-                .willReturn(aResponse()
-                        .withStatus(201)));
+                .willReturn(aResponse().withStatus(201)));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1094,31 +1012,30 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         component.setVersion("1.2.3");
         qm.persist(component);
 
-        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
-                "666", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(project, "integrations", "defectdojo.reimport",
-                "true", IConfigProperty.PropertyType.BOOLEAN, null);
-        qm.createProjectProperty(project, "integrations", "defectdojo.groupBy",
-                "component_name+component_version", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "defectdojo.reimport", "true", IConfigProperty.PropertyType.BOOLEAN, null);
+        qm.createProjectProperty(
+                project,
+                "integrations",
+                "defectdojo.groupBy",
+                "component_name+component_version",
+                IConfigProperty.PropertyType.STRING,
+                null);
 
         new DefectDojoUploadTask(
-                HttpClient.newHttpClient(),
-                new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
+                        HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
                 .run();
 
         verify(1, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/reimport-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("engagement")
-                        .withBody(equalTo("666")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("test")
-                        .withBody(equalTo("1")))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("group_by")
-                        .withBody(equalTo("component_name+component_version"))));
+                .withAnyRequestBodyPart(aMultipart().withName("engagement").withBody(equalTo("666")))
+                .withAnyRequestBodyPart(aMultipart().withName("test").withBody(equalTo("1")))
+                .withAnyRequestBodyPart(
+                        aMultipart().withName("group_by").withBody(equalTo("component_name+component_version"))));
     }
 
     /**
@@ -1141,22 +1058,19 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 DEFECTDOJO_URL.getPropertyName(),
                 baseUrl,
                 DEFECTDOJO_URL.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
                 "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
-                null
-        );
+                null);
         qm.createConfigProperty(
                 DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
                 Boolean.toString(globalReimport),
                 DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null
-        );
+                null);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1177,15 +1091,22 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
-                engagementId, IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(project, "integrations", "defectdojo.reimport",
-                Boolean.toString(projectReimport), IConfigProperty.PropertyType.BOOLEAN, null);
+        qm.createProjectProperty(
+                project,
+                "integrations",
+                "defectdojo.engagementId",
+                engagementId,
+                IConfigProperty.PropertyType.STRING,
+                null);
+        qm.createProjectProperty(
+                project,
+                "integrations",
+                "defectdojo.reimport",
+                Boolean.toString(projectReimport),
+                IConfigProperty.PropertyType.BOOLEAN,
+                null);
 
-        new DefectDojoUploadTask(
-                HttpClient.newHttpClient(),
-                new TestSecretManager(Map.of("wmRuntimeInfo", apiKey)))
+        new DefectDojoUploadTask(HttpClient.newHttpClient(), new TestSecretManager(Map.of("wmRuntimeInfo", apiKey)))
                 .run();
     }
-
 }

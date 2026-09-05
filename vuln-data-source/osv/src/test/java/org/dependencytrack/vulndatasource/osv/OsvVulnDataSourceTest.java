@@ -78,8 +78,7 @@ class OsvVulnDataSourceTest {
                 "http://localhost",
                 List.of("maven"),
                 mock(HttpClient.class),
-                false
-        );
+                false);
     }
 
     @Test
@@ -96,8 +95,7 @@ class OsvVulnDataSourceTest {
                 .build();
 
         vulnDataSource.markProcessed(bom);
-        verify(watermarkManagerMock)
-                .maybeAdvance(eq("maven"), eq(updatedAt));
+        verify(watermarkManagerMock).maybeAdvance(eq("maven"), eq(updatedAt));
     }
 
     @Test
@@ -105,10 +103,7 @@ class OsvVulnDataSourceTest {
         Vulnerability v1 = Vulnerability.newBuilder().build();
         Vulnerability v2 = Vulnerability.newBuilder().build();
 
-        Bom bom = Bom.newBuilder()
-                .addVulnerabilities(v1)
-                .addVulnerabilities(v2)
-                .build();
+        Bom bom = Bom.newBuilder().addVulnerabilities(v1).addVulnerabilities(v2).build();
 
         assertThatThrownBy(() -> vulnDataSource.markProcessed(bom))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -123,12 +118,9 @@ class OsvVulnDataSourceTest {
                 .setUpdated(Timestamps.fromMillis(updatedAt.toEpochMilli()))
                 .build();
 
-        Bom bom = Bom.newBuilder()
-                .addVulnerabilities(vuln)
-                .build();
+        Bom bom = Bom.newBuilder().addVulnerabilities(vuln).build();
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> vulnDataSource.markProcessed(bom));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> vulnDataSource.markProcessed(bom));
     }
 
     @Test
@@ -139,12 +131,9 @@ class OsvVulnDataSourceTest {
                         .setValue("maven"))
                 .build();
 
-        Bom bom = Bom.newBuilder()
-                .addVulnerabilities(vuln)
-                .build();
+        Bom bom = Bom.newBuilder().addVulnerabilities(vuln).build();
 
-        assertThatNoException()
-                .isThrownBy(() -> vulnDataSource.markProcessed(bom));
+        assertThatNoException().isThrownBy(() -> vulnDataSource.markProcessed(bom));
 
         verify(watermarkManagerMock, never()).maybeAdvance(eq("maven"), any(Instant.class));
     }
@@ -188,8 +177,7 @@ class OsvVulnDataSourceTest {
                 wmRuntimeInfo.getHttpBaseUrl(),
                 List.of(ecosystem),
                 HttpClient.newHttpClient(),
-                false
-        );
+                false);
 
         assertTrue(dataSource.hasNext());
         var bom = dataSource.next();
@@ -260,7 +248,8 @@ class OsvVulnDataSourceTest {
                 HttpClient.newHttpClient(),
                 false)) {
             assertTrue(dataSource.hasNext());
-            assertThat(dataSource.next().getVulnerabilitiesList().getFirst().getId()).isEqualTo("OSV-1");
+            assertThat(dataSource.next().getVulnerabilitiesList().getFirst().getId())
+                    .isEqualTo("OSV-1");
         }
 
         verify(getRequestedFor(urlEqualTo("/Red%20Hat/all.zip")));
@@ -479,7 +468,8 @@ class OsvVulnDataSourceTest {
     }
 
     @Test
-    void shouldFallBackToFullDownloadWhenIncrementalThresholdExceeded(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldFallBackToFullDownloadWhenIncrementalThresholdExceeded(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         when(watermarkManagerMock.getWatermark("maven")).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
 
         final var csvBody = new StringBuilder();
@@ -494,10 +484,10 @@ class OsvVulnDataSourceTest {
 
         var zipBytes = new ByteArrayOutputStream();
         try (var zos = new ZipOutputStream(zipBytes)) {
-            zos.putNextEntry(new ZipEntry("osv-advisory.json"));
+            zos.putNextEntry(new ZipEntry("OSV-42.json"));
             zos.write(/* language=JSON */ """
                     {
-                      "id": "OSV-789",
+                      "id": "OSV-42",
                       "summary": "Test vulnerability",
                       "affected": [],
                       "modified": "2025-01-01T00:00:00Z"
@@ -520,7 +510,7 @@ class OsvVulnDataSourceTest {
                 false)) {
             assertTrue(dataSource.hasNext());
             Bom first = dataSource.next();
-            assertThat(first.getVulnerabilitiesList().getFirst().getId()).isEqualTo("OSV-789");
+            assertThat(first.getVulnerabilitiesList().getFirst().getId()).isEqualTo("OSV-42");
             assertThat(dataSource.hasNext()).isFalse();
         }
 
@@ -530,7 +520,172 @@ class OsvVulnDataSourceTest {
     }
 
     @Test
-    void shouldPercentEncodeSpacesInEcosystemNameForIncrementalAdvisories(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldOnlyProcessChangedAdvisoriesFromFullArchive(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        when(watermarkManagerMock.getWatermark("maven")).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
+
+        final var csvBody = new StringBuilder();
+        for (int i = 0; i < 251; i++) {
+            csvBody.append("2025-01-01T00:00:00Z,OSV-%d\n".formatted(i));
+        }
+        csvBody.append("2023-01-01T00:00:00Z,OSV-UNCHANGED\n");
+        stubFor(get(urlEqualTo("/maven/modified_id.csv"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "text/csv")
+                        .withBody(csvBody.toString())));
+
+        var zipBytes = new ByteArrayOutputStream();
+        try (var zos = new ZipOutputStream(zipBytes)) {
+            for (final String entryName :
+                    List.of("OSV-1.json", "nested/OSV-2.json", "OSV-250.json", "OSV-UNCHANGED.json")) {
+                final String advisoryId =
+                        entryName.substring(entryName.lastIndexOf('/') + 1, entryName.length() - ".json".length());
+                zos.putNextEntry(new ZipEntry(entryName));
+                zos.write(/* language=JSON */ """
+                        {
+                          "id": "%s",
+                          "summary": "s",
+                          "affected": [],
+                          "modified": "2025-01-01T00:00:00Z"
+                        }
+                        """.formatted(advisoryId).getBytes());
+                zos.closeEntry();
+            }
+        }
+        stubFor(get(urlEqualTo("/maven/all.zip"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/zip")
+                        .withBody(zipBytes.toByteArray())));
+
+        final var ids = new ArrayList<String>();
+        try (var dataSource = new OsvVulnDataSource(
+                watermarkManagerMock,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("maven"),
+                HttpClient.newHttpClient(),
+                false)) {
+            while (dataSource.hasNext()) {
+                ids.add(dataSource.next().getVulnerabilitiesList().getFirst().getId());
+            }
+        }
+
+        assertThat(ids).containsExactlyInAnyOrder("OSV-1", "OSV-2", "OSV-250");
+    }
+
+    @Test
+    void shouldContinueWithRemainingEcosystemsWhenEcosystemHasNoChanges(WireMockRuntimeInfo wmRuntimeInfo) {
+        for (final String ecosystem : List.of("maven", "npm", "pypi")) {
+            when(watermarkManagerMock.getWatermark(ecosystem)).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
+        }
+
+        stubFor(get(urlEqualTo("/maven/modified_id.csv"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "text/csv")
+                        .withBody("2025-01-01T00:00:00Z,OSV-MAVEN\n")));
+        stubFor(get(urlEqualTo("/maven/OSV-MAVEN.json"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(/* language=JSON */ """
+                                {
+                                  "id": "OSV-MAVEN",
+                                  "summary": "s",
+                                  "affected": [],
+                                  "modified": "2025-01-01T00:00:00Z"
+                                }
+                                """)));
+        stubFor(get(urlEqualTo("/npm/modified_id.csv"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "text/csv")
+                        .withBody("")));
+        stubFor(get(urlEqualTo("/pypi/modified_id.csv"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "text/csv")
+                        .withBody("2025-01-01T00:00:00Z,OSV-PYPI\n")));
+        stubFor(get(urlEqualTo("/pypi/OSV-PYPI.json"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(/* language=JSON */ """
+                                {
+                                  "id": "OSV-PYPI",
+                                  "summary": "s",
+                                  "affected": [],
+                                  "modified": "2025-01-01T00:00:00Z"
+                                }
+                                """)));
+
+        final var ids = new ArrayList<String>();
+        try (var dataSource = new OsvVulnDataSource(
+                watermarkManagerMock,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("maven", "npm", "pypi"),
+                HttpClient.newHttpClient(),
+                false)) {
+            while (dataSource.hasNext()) {
+                ids.add(dataSource.next().getVulnerabilitiesList().getFirst().getId());
+            }
+        }
+
+        assertThat(ids).containsExactly("OSV-MAVEN", "OSV-PYPI");
+        verify(getRequestedFor(urlEqualTo("/pypi/modified_id.csv")));
+        verify(watermarkManagerMock).maybeCommit(List.of("pypi"));
+    }
+
+    @Test
+    void shouldContinueWithRemainingEcosystemsWhenFirstEcosystemHasNoChanges(WireMockRuntimeInfo wmRuntimeInfo) {
+        for (final String ecosystem : List.of("maven", "npm")) {
+            when(watermarkManagerMock.getWatermark(ecosystem)).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
+        }
+
+        stubFor(get(urlEqualTo("/maven/modified_id.csv"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "text/csv")
+                        .withBody("")));
+        stubFor(get(urlEqualTo("/npm/modified_id.csv"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "text/csv")
+                        .withBody("2025-01-01T00:00:00Z,OSV-NPM\n")));
+        stubFor(get(urlEqualTo("/npm/OSV-NPM.json"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(/* language=JSON */ """
+                                {
+                                  "id": "OSV-NPM",
+                                  "summary": "s",
+                                  "affected": [],
+                                  "modified": "2025-01-01T00:00:00Z"
+                                }
+                                """)));
+
+        final var ids = new ArrayList<String>();
+        try (var dataSource = new OsvVulnDataSource(
+                watermarkManagerMock,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("maven", "npm"),
+                HttpClient.newHttpClient(),
+                false)) {
+            while (dataSource.hasNext()) {
+                ids.add(dataSource.next().getVulnerabilitiesList().getFirst().getId());
+            }
+        }
+
+        assertThat(ids).containsExactly("OSV-NPM");
+    }
+
+    @Test
+    void shouldPercentEncodeSpacesInEcosystemNameForIncrementalAdvisories(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         when(watermarkManagerMock.getWatermark("Red Hat")).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
         String csvBody = """
                 2025-01-01T00:00:00Z,OSV-1
@@ -562,7 +717,7 @@ class OsvVulnDataSourceTest {
             assertThat(dataSource.hasNext()).isFalse();
         }
 
-        verify(1,getRequestedFor(urlEqualTo("/Red%20Hat/modified_id.csv")));
+        verify(1, getRequestedFor(urlEqualTo("/Red%20Hat/modified_id.csv")));
         verify(0, getRequestedFor(urlPathMatching(".*/Red\\+Hat/.*")));
 
         verify(1, getRequestedFor(urlPathMatching("/Red%20Hat/OSV-1\\.json")));

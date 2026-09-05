@@ -35,5 +35,4 @@ public record CloneProjectCommand(
         boolean includePolicyViolationsAuditHistory,
         boolean includeProperties,
         boolean includeServices,
-        boolean includeTags) {
-}
+        boolean includeTags) {}

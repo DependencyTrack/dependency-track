@@ -25,7 +25,11 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -33,6 +37,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,8 +70,7 @@ class BufferTest {
 
     @Test
     void addShouldThrowWhenNotRunning() {
-        final Consumer<List<String>> batchConsumer = _ -> {
-        };
+        final Consumer<List<String>> batchConsumer = _ -> {};
 
         final var buffer = new Buffer<>(
                 "test",
@@ -109,19 +113,18 @@ class BufferTest {
     @Test
     void shouldOpenCircuitBreakerAfterRepeatedFailures() throws Exception {
         final var flushAttempts = new AtomicInteger();
-        final Consumer<List<String>> batchConsumer = batch -> {
+        final Consumer<List<String>> batchConsumer = _ -> {
             flushAttempts.incrementAndGet();
             throw new RuntimeException("downstream broken");
         };
 
-        final var registry = CircuitBreakerRegistry.of(
-                CircuitBreakerConfig.custom()
-                        .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
-                        .slidingWindowSize(3)
-                        .minimumNumberOfCalls(3)
-                        .failureRateThreshold(50.0f)
-                        .waitDurationInOpenState(Duration.ofMinutes(1))
-                        .build());
+        final var registry = CircuitBreakerRegistry.of(CircuitBreakerConfig.custom()
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .slidingWindowSize(3)
+                .minimumNumberOfCalls(3)
+                .failureRateThreshold(50.0f)
+                .waitDurationInOpenState(Duration.ofMinutes(1))
+                .build());
 
         final var buffer = new Buffer<>(
                 "test",
@@ -162,15 +165,16 @@ class BufferTest {
             flushedBatches.add(List.copyOf(batch));
         };
 
-        final var registry = CircuitBreakerRegistry.of(
-                CircuitBreakerConfig.custom()
-                        .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
-                        .slidingWindowSize(2)
-                        .minimumNumberOfCalls(2)
-                        .failureRateThreshold(50.0f)
-                        .waitDurationInOpenState(Duration.ofMillis(200))
-                        .permittedNumberOfCallsInHalfOpenState(1)
-                        .build());
+        final var clock = new MutableClock();
+        final var registry = CircuitBreakerRegistry.of(CircuitBreakerConfig.custom()
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .slidingWindowSize(2)
+                .minimumNumberOfCalls(2)
+                .failureRateThreshold(50.0f)
+                .waitDurationInOpenState(Duration.ofMillis(200))
+                .permittedNumberOfCallsInHalfOpenState(1)
+                .clock(clock)
+                .build());
 
         final var buffer = new Buffer<>(
                 "test",
@@ -194,16 +198,14 @@ class BufferTest {
 
             shouldFail.set(false);
 
-            await().atMost(Duration.ofSeconds(5))
-                    .pollInterval(Duration.ofMillis(50))
-                    .until(() -> {
-                        try {
-                            buffer.add("recovery").get(200, TimeUnit.MILLISECONDS);
-                            return true;
-                        } catch (Exception e) {
-                            return false;
-                        }
-                    });
+            // Advance past waitDurationInOpenState so the next flush tick moves
+            // the circuit breaker from OPEN to HALF_OPEN.
+            clock.advance(Duration.ofSeconds(1));
+
+            final CompletableFuture<Void> recovery = buffer.add("recovery");
+
+            await().atMost(Duration.ofSeconds(5)).until(recovery::isDone);
+            recovery.get();
 
             assertThat(flushedBatches).contains(List.of("recovery"));
             assertThat(buffer.acceptsWork()).isTrue();
@@ -212,18 +214,17 @@ class BufferTest {
 
     @Test
     void addShouldFailFastWhileBreakerIsOpen() throws Exception {
-        final Consumer<List<String>> batchConsumer = batch -> {
+        final Consumer<List<String>> batchConsumer = _ -> {
             throw new RuntimeException("downstream broken");
         };
 
-        final var registry = CircuitBreakerRegistry.of(
-                CircuitBreakerConfig.custom()
-                        .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
-                        .slidingWindowSize(2)
-                        .minimumNumberOfCalls(2)
-                        .failureRateThreshold(50.0f)
-                        .waitDurationInOpenState(Duration.ofMinutes(1))
-                        .build());
+        final var registry = CircuitBreakerRegistry.of(CircuitBreakerConfig.custom()
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .slidingWindowSize(2)
+                .minimumNumberOfCalls(2)
+                .failureRateThreshold(50.0f)
+                .waitDurationInOpenState(Duration.ofMinutes(1))
+                .build());
 
         final var buffer = new Buffer<>(
                 "test",
@@ -252,4 +253,27 @@ class BufferTest {
         }
     }
 
+    private static final class MutableClock extends Clock {
+
+        private final AtomicReference<Instant> now = new AtomicReference<>(Instant.EPOCH);
+
+        @Override
+        public Instant instant() {
+            return now.get();
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            throw new UnsupportedOperationException();
+        }
+
+        void advance(Duration delta) {
+            now.updateAndGet(current -> current.plus(delta));
+        }
+    }
 }

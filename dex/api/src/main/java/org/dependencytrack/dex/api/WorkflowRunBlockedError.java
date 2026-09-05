@@ -27,5 +27,4 @@ public final class WorkflowRunBlockedError extends WorkflowRunError {
     public WorkflowRunBlockedError() {
         super(null, null, false, false);
     }
-
 }

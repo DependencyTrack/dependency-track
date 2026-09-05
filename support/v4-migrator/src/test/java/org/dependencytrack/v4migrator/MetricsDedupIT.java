@@ -80,24 +80,24 @@ class MetricsDedupIT {
                     "FIRST_OCCURRENCE", "LAST_OCCURRENCE",
                     "RISKSCORE", "SUPPRESSED", "VULNERABILITIES"
                 ) VALUES
-                  (1, 10, 1, 1, 0, 0, 0, '2026-05-12T10:00:00Z', '2026-05-12T10:00:00Z', 1.5, 0, 1),
-                  (2, 10, 1, 7, 0, 0, 0, '2026-05-12T10:00:00Z', '2026-05-12T10:00:00Z', 9.9, 0, 7)
+                  (1, 10, 1, 1, 0, 0, 0, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day', 1.5, 0, 1),
+                  (2, 10, 1, 7, 0, 0, 0, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day', 9.9, 0, 7)
                 """);
         });
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "COMPONENT_ID", "CRITICAL", "VULNERABILITIES"
                       FROM "DEPENDENCYMETRICS"
                      WHERE "COMPONENT_ID" = 10
                     """).mapToMap().list());
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0))
-            .containsEntry("component_id", 10L)
-            .containsEntry("critical", 7)
-            .containsEntry("vulnerabilities", 7);
+                .containsEntry("component_id", 10L)
+                .containsEntry("critical", 7)
+                .containsEntry("vulnerabilities", 7);
     }
 
     private void runPipeline() throws Exception {

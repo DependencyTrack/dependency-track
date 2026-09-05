@@ -31,7 +31,8 @@ public final class ConfigKeys {
 
     public static final String INIT_TASKS_ENABLED = "dt.init-tasks.enabled";
     public static final String INIT_TASKS_DATASOURCE_NAME = "dt.init-tasks.datasource.name";
-    public static final String INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION = "dt.init-tasks.datasource.close-after-completion";
+    public static final String INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION =
+            "dt.init-tasks.datasource.close-after-completion";
     public static final String INIT_TASKS_EXIT_AFTER_COMPLETION = "dt.init-tasks.exit-after-completion";
 
     public static final String MANAGEMENT_HOST = "dt.management.host";
@@ -52,12 +53,16 @@ public final class ConfigKeys {
     public static final String TASK_EPSS_MIRROR_CRON = "dt.task.epss-mirror.cron";
     public static final String TASK_KEV_MIRROR_CRON = "dt.task.kev-mirror.cron";
     public static final String TASK_FORTIFY_SSC_UPLOAD_CRON = "dt.task.fortify-ssc-upload.cron";
-    public static final String TASK_GITHUB_ADVISORY_VULN_DATA_SOURCE_MIRROR_CRON = "dt.task.github-advisory-vuln-data-source-mirror.cron";
+    public static final String TASK_GITHUB_ADVISORY_VULN_DATA_SOURCE_MIRROR_CRON =
+            "dt.task.github-advisory-vuln-data-source-mirror.cron";
     public static final String TASK_KENNA_SECURITY_UPLOAD_CRON = "dt.task.kenna-security-upload.cron";
     public static final String TASK_METRICS_MAINTENANCE_CRON = "dt.task.metrics-maintenance.cron";
     public static final String TASK_NVD_VULN_DATA_SOURCE_MIRROR_CRON = "dt.task.nvd-vuln-data-source-mirror.cron";
     public static final String TASK_OSV_VULN_DATA_SOURCE_MIRROR_CRON = "dt.task.osv-vuln-data-source-mirror.cron";
-    public static final String TASK_PORTFOLIO_ANALYSIS_CRON = "dt.task.portfolio-analysis.cron";
+    public static final String TASK_PORTFOLIO_ANALYSIS_MAX_IN_FLIGHT_ANALYSES =
+            "dt.task.portfolio-analysis.max-in-flight-analyses";
+    public static final String TASK_PORTFOLIO_ANALYSIS_MAX_ANALYSIS_AGE_MS =
+            "dt.task.portfolio-analysis.max-analysis-age-ms";
     public static final String TASK_PORTFOLIO_METRICS_UPDATE_CRON = "dt.task.portfolio-metrics-update.cron";
     public static final String TASK_PROJECT_MAINTENANCE_CRON = "dt.task.project-maintenance.cron";
     public static final String TASK_TAG_MAINTENANCE_CRON = "dt.task.tag-maintenance.cron";
@@ -65,7 +70,8 @@ public final class ConfigKeys {
     public static final String TASK_VULN_METRICS_UPDATE_CRON = "dt.task.vuln-metrics-update.cron";
     public static final String TASK_VULN_POLICY_BUNDLE_SYNC_CRON = "dt.task.vuln-policy-bundle-sync.cron";
     public static final String TASK_EXPIRED_SESSION_CLEANUP_CRON = "dt.task.expired-session-cleanup.cron";
-    public static final String TASK_SCHEDULED_NOTIFICATION_DISPATCH_CRON = "dt.task.scheduled-notification-dispatch.cron";
+    public static final String TASK_SCHEDULED_NOTIFICATION_DISPATCH_CRON =
+            "dt.task.scheduled-notification-dispatch.cron";
     public static final String TASK_TELEMETRY_SUBMISSION_CRON = "dt.task.telemetry-submission.cron";
 
     public static final String VULN_POLICY_BUNDLE_URL = "dt.vuln-policy-bundle.url";
@@ -78,13 +84,13 @@ public final class ConfigKeys {
     public static final String SECRET_MANAGEMENT_PROVIDER = "dt.secret-management.provider";
 
     public static final String NOTIFICATION_OUTBOX_RELAY_ENABLED = "dt.notification.outbox-relay.enabled";
-    public static final String NOTIFICATION_OUTBOX_RELAY_POLL_INTERVAL_MS = "dt.notification.outbox-relay.poll-interval-ms";
+    public static final String NOTIFICATION_OUTBOX_RELAY_POLL_INTERVAL_MS =
+            "dt.notification.outbox-relay.poll-interval-ms";
     public static final String NOTIFICATION_OUTBOX_RELAY_BATCH_SIZE = "dt.notification.outbox-relay.batch-size";
-    public static final String NOTIFICATION_OUTBOX_RELAY_LARGE_NOTIFICATION_THRESHOLD_BYTES = "dt.notification.outbox-relay.large-notification-threshold-bytes";
+    public static final String NOTIFICATION_OUTBOX_RELAY_LARGE_NOTIFICATION_THRESHOLD_BYTES =
+            "dt.notification.outbox-relay.large-notification-threshold-bytes";
 
     public static final String TELEMETRY_SUBMISSION_DEFAULT_ENABLED = "dt.telemetry.submission.default-enabled";
 
-    private ConfigKeys() {
-    }
-
+    private ConfigKeys() {}
 }

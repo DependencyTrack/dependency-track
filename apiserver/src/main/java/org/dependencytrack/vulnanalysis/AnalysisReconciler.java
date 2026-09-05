@@ -76,17 +76,14 @@ final class AnalysisReconciler {
     private final @Nullable Double owaspScore;
     private final @Nullable List<AppliedPolicyAnnotation> policyAnnotations;
 
-    AnalysisReconciler(
-            long projectId,
-            long componentId,
-            long vulnDbId,
-            @Nullable Analysis existing) {
+    AnalysisReconciler(long projectId, long componentId, long vulnDbId, @Nullable Analysis existing) {
         this.projectId = projectId;
         this.componentId = componentId;
         this.vulnDbId = vulnDbId;
         this.vulnPolicyId = existing != null ? existing.vulnPolicyId() : null;
         this.state = Optional.ofNullable(existing).map(Analysis::state).orElse(AnalysisState.NOT_SET);
-        this.justification = Optional.ofNullable(existing).map(Analysis::justification).orElse(AnalysisJustification.NOT_SET);
+        this.justification =
+                Optional.ofNullable(existing).map(Analysis::justification).orElse(AnalysisJustification.NOT_SET);
         this.response = Optional.ofNullable(existing).map(Analysis::response).orElse(AnalysisResponse.NOT_SET);
         this.details = existing != null ? existing.details() : null;
         this.suppressed = existing != null && existing.suppressed();
@@ -102,9 +99,8 @@ final class AnalysisReconciler {
         this.policyAnnotations = existing != null ? existing.policyAnnotations() : null;
     }
 
-    @Nullable Result reconcile(
-            final VulnerabilityPolicy policy,
-            final List<AppliedPolicyAnnotation> mergedPolicyAnnotations) {
+    @Nullable
+    Result reconcile(final VulnerabilityPolicy policy, final List<AppliedPolicyAnnotation> mergedPolicyAnnotations) {
         requireNonNull(policy, "policy must not be null");
         requireNonNull(mergedPolicyAnnotations, "mergedPolicyAnnotations must not be null");
 
@@ -179,13 +175,14 @@ final class AnalysisReconciler {
                     }
 
                     // Retain the highest severity among all ratings.
-                    final Severity ratingSeverity = switch (rating.getSeverity()) {
-                        case INFO -> Severity.INFO;
-                        case LOW -> Severity.LOW;
-                        case MEDIUM -> Severity.MEDIUM;
-                        case HIGH -> Severity.HIGH;
-                        case CRITICAL -> Severity.CRITICAL;
-                    };
+                    final Severity ratingSeverity =
+                            switch (rating.getSeverity()) {
+                                case INFO -> Severity.INFO;
+                                case LOW -> Severity.LOW;
+                                case MEDIUM -> Severity.MEDIUM;
+                                case HIGH -> Severity.HIGH;
+                                case CRITICAL -> Severity.CRITICAL;
+                            };
                     if (desiredSeverity == null || ratingSeverity.getLevel() > desiredSeverity.getLevel()) {
                         desiredSeverity = ratingSeverity;
                     }
@@ -217,22 +214,33 @@ final class AnalysisReconciler {
             boolean hasChanged = false;
             final boolean policyAnnotationsChanged = !annotationsEqual(policyAnnotations, mergedPolicyAnnotations);
 
-            final boolean analysisStateChanged = diffField(auditTrail, commenter, AnalysisCommentField.STATE, state, desiredState);
+            final boolean analysisStateChanged =
+                    diffField(auditTrail, commenter, AnalysisCommentField.STATE, state, desiredState);
             hasChanged |= analysisStateChanged;
-            hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.JUSTIFICATION, justification, desiredJustification);
+            hasChanged |= diffField(
+                    auditTrail, commenter, AnalysisCommentField.JUSTIFICATION, justification, desiredJustification);
             hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.RESPONSE, response, desiredResponse);
             hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.DETAILS, details, desiredDetails);
-            final boolean suppressionChanged = diffField(auditTrail, commenter, AnalysisCommentField.SUPPRESSED, suppressed, desiredSuppressed);
+            final boolean suppressionChanged =
+                    diffField(auditTrail, commenter, AnalysisCommentField.SUPPRESSED, suppressed, desiredSuppressed);
             hasChanged |= suppressionChanged;
             hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.SEVERITY, severity, desiredSeverity);
-            hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.CVSSV2_VECTOR, cvssV2Vector, desiredCvssV2Vector);
-            hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.CVSSV2_SCORE, cvssV2Score, desiredCvssV2Score);
-            hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.CVSSV3_VECTOR, cvssV3Vector, desiredCvssV3Vector);
-            hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.CVSSV3_SCORE, cvssV3Score, desiredCvssV3Score);
-            hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.CVSSV4_VECTOR, cvssV4Vector, desiredCvssV4Vector);
-            hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.CVSSV4_SCORE, cvssV4Score, desiredCvssV4Score);
-            hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.OWASP_VECTOR, owaspVector, desiredOwaspVector);
-            hasChanged |= diffField(auditTrail, commenter, AnalysisCommentField.OWASP_SCORE, owaspScore, desiredOwaspScore);
+            hasChanged |= diffField(
+                    auditTrail, commenter, AnalysisCommentField.CVSSV2_VECTOR, cvssV2Vector, desiredCvssV2Vector);
+            hasChanged |= diffField(
+                    auditTrail, commenter, AnalysisCommentField.CVSSV2_SCORE, cvssV2Score, desiredCvssV2Score);
+            hasChanged |= diffField(
+                    auditTrail, commenter, AnalysisCommentField.CVSSV3_VECTOR, cvssV3Vector, desiredCvssV3Vector);
+            hasChanged |= diffField(
+                    auditTrail, commenter, AnalysisCommentField.CVSSV3_SCORE, cvssV3Score, desiredCvssV3Score);
+            hasChanged |= diffField(
+                    auditTrail, commenter, AnalysisCommentField.CVSSV4_VECTOR, cvssV4Vector, desiredCvssV4Vector);
+            hasChanged |= diffField(
+                    auditTrail, commenter, AnalysisCommentField.CVSSV4_SCORE, cvssV4Score, desiredCvssV4Score);
+            hasChanged |= diffField(
+                    auditTrail, commenter, AnalysisCommentField.OWASP_VECTOR, owaspVector, desiredOwaspVector);
+            hasChanged |=
+                    diffField(auditTrail, commenter, AnalysisCommentField.OWASP_SCORE, owaspScore, desiredOwaspScore);
             if (policyAnnotationsChanged) {
                 auditTrail.addAll(annotationAuditComments(policyAnnotations, mergedPolicyAnnotations, commenter));
                 hasChanged = true;
@@ -264,7 +272,8 @@ final class AnalysisReconciler {
                     mergedPolicyAnnotations.isEmpty() ? null : mergedPolicyAnnotations);
 
             if (policy.getCondition() != null && !policy.getCondition().isEmpty()) {
-                auditTrail.addFirst(new AnnotationAuditComment(commenter, "Matched on condition: " + policy.getCondition()));
+                auditTrail.addFirst(
+                        new AnnotationAuditComment(commenter, "Matched on condition: " + policy.getCondition()));
             }
 
             return new Result(
@@ -277,14 +286,15 @@ final class AnalysisReconciler {
         }
     }
 
-    @Nullable Result reconcilePolicyAnnotations(final List<AppliedPolicyAnnotation> desiredPolicyAnnotations) {
+    @Nullable
+    Result reconcilePolicyAnnotations(final List<AppliedPolicyAnnotation> desiredPolicyAnnotations) {
         final boolean policyAnnotationsChanged = !annotationsEqual(policyAnnotations, desiredPolicyAnnotations);
         if (!policyAnnotationsChanged) {
             return null;
         }
 
-        final var auditTrail = new ArrayList<>(annotationAuditComments(
-                policyAnnotations, desiredPolicyAnnotations, "Policy"));
+        final var auditTrail =
+                new ArrayList<>(annotationAuditComments(policyAnnotations, desiredPolicyAnnotations, "Policy"));
 
         final var command = new MakeAnalysisCommand(
                 this.projectId,
@@ -307,26 +317,25 @@ final class AnalysisReconciler {
                 this.owaspScore,
                 desiredPolicyAnnotations.isEmpty() ? null : desiredPolicyAnnotations);
 
-        return new Result(
-                new FindingKey(componentId, vulnDbId),
-                command,
-                auditTrail,
-                false,
-                false,
-                true);
+        return new Result(new FindingKey(componentId, vulnDbId), command, auditTrail, false, false, true);
     }
 
-    @Nullable Result reconcileForNoPolicy() {
+    @Nullable
+    Result reconcileForNoPolicy() {
         final var auditTrail = new ArrayList<AnnotationAuditComment>();
         boolean hasChanged = false;
         final boolean policyAnnotationsChanged = !annotationsEqual(policyAnnotations, List.of());
 
-        final boolean analysisStateChanged = diffField(auditTrail, "Policy", AnalysisCommentField.STATE, state, AnalysisState.NOT_SET);
+        final boolean analysisStateChanged =
+                diffField(auditTrail, "Policy", AnalysisCommentField.STATE, state, AnalysisState.NOT_SET);
         hasChanged |= analysisStateChanged;
-        hasChanged |= diffField(auditTrail, "Policy", AnalysisCommentField.JUSTIFICATION, justification, AnalysisJustification.NOT_SET);
-        hasChanged |= diffField(auditTrail, "Policy", AnalysisCommentField.RESPONSE, response, AnalysisResponse.NOT_SET);
+        hasChanged |= diffField(
+                auditTrail, "Policy", AnalysisCommentField.JUSTIFICATION, justification, AnalysisJustification.NOT_SET);
+        hasChanged |=
+                diffField(auditTrail, "Policy", AnalysisCommentField.RESPONSE, response, AnalysisResponse.NOT_SET);
         hasChanged |= diffField(auditTrail, "Policy", AnalysisCommentField.DETAILS, details, null);
-        final boolean suppressionChanged = diffField(auditTrail, "Policy", AnalysisCommentField.SUPPRESSED, suppressed, false);
+        final boolean suppressionChanged =
+                diffField(auditTrail, "Policy", AnalysisCommentField.SUPPRESSED, suppressed, false);
         hasChanged |= suppressionChanged;
         hasChanged |= diffField(auditTrail, "Policy", AnalysisCommentField.SEVERITY, severity, null);
         hasChanged |= diffField(auditTrail, "Policy", AnalysisCommentField.CVSSV2_VECTOR, cvssV2Vector, null);
@@ -390,8 +399,7 @@ final class AnalysisReconciler {
             @Nullable final Object newValue) {
         if (!Objects.equals(oldValue, newValue)) {
             auditTrail.add(new AnnotationAuditComment(
-                    commenter,
-                    AnalysisCommentFormatter.formatComment(field, oldValue, newValue)));
+                    commenter, AnalysisCommentFormatter.formatComment(field, oldValue, newValue)));
             return true;
         }
 
@@ -412,5 +420,4 @@ final class AnalysisReconciler {
                     .toList();
         }
     }
-
 }

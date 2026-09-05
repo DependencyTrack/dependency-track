@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.filestorage.local;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
@@ -28,6 +30,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.ProxySelector;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -62,7 +66,8 @@ class LocalFileStorageTest {
         assertThat(fileMetadata.getProviderName()).isEqualTo("local");
         assertThat(fileMetadata.getLocation()).isEqualTo("local:///foo/bar");
         assertThat(fileMetadata.getMediaType()).isEqualTo("application/octet-stream");
-        assertThat(fileMetadata.getSha256Digest()).isEqualTo("018e647e32f8c2b320b731ddd7de9842616209d93a3aeeea985a48b7fe0e5eda");
+        assertThat(fileMetadata.getSha256Digest())
+                .isEqualTo("018e647e32f8c2b320b731ddd7de9842616209d93a3aeeea985a48b7fe0e5eda");
 
         assertThat(tempDirPath.resolve("foo/bar")).exists();
 
@@ -116,9 +121,7 @@ class LocalFileStorageTest {
 
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> storage.get(
-                        FileMetadata.newBuilder()
-                                .setLocation("foo:///bar")
-                                .build()))
+                        FileMetadata.newBuilder().setLocation("foo:///bar").build()))
                 .withMessage("foo:///bar: Unexpected scheme foo, expected local");
     }
 
@@ -128,11 +131,10 @@ class LocalFileStorageTest {
         final FileStorage storage = createStorage();
 
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> storage.get(
-                        FileMetadata.newBuilder()
-                                .setLocation("local:///foo/../../../bar")
-                                .setSha256Digest("some-digest")
-                                .build()))
+                .isThrownBy(() -> storage.get(FileMetadata.newBuilder()
+                        .setLocation("local:///foo/../../../bar")
+                        .setSha256Digest("some-digest")
+                        .build()))
                 .withMessage("""
                         The provided filePath foo/../../../bar does not resolve to a path \
                         within the configured base directory (%s)""", tempDirPath);
@@ -144,11 +146,10 @@ class LocalFileStorageTest {
         final FileStorage storage = createStorage();
 
         assertThatExceptionOfType(NoSuchFileException.class)
-                .isThrownBy(() -> storage.get(
-                        FileMetadata.newBuilder()
-                                .setLocation("local:///foo/bar")
-                                .setSha256Digest("some-digest")
-                                .build()));
+                .isThrownBy(() -> storage.get(FileMetadata.newBuilder()
+                        .setLocation("local:///foo/bar")
+                        .setSha256Digest("some-digest")
+                        .build()));
     }
 
     @Test
@@ -157,9 +158,7 @@ class LocalFileStorageTest {
         final FileStorage storage = createStorage();
 
         final boolean deleted = storage.delete(
-                FileMetadata.newBuilder()
-                        .setLocation("local:///foo")
-                        .build());
+                FileMetadata.newBuilder().setLocation("local:///foo").build());
         assertThat(deleted).isFalse();
     }
 
@@ -170,9 +169,7 @@ class LocalFileStorageTest {
 
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> storage.delete(
-                        FileMetadata.newBuilder()
-                                .setLocation("foo:///bar")
-                                .build()))
+                        FileMetadata.newBuilder().setLocation("foo:///bar").build()))
                 .withMessage("foo:///bar: Unexpected scheme foo, expected local");
     }
 
@@ -232,7 +229,8 @@ class LocalFileStorageTest {
                     barrier.await();
                     for (int i = 0; i < iterations; i++) {
                         final String fileName = "shared/dir/%d-%d".formatted(threadId, i);
-                        final FileMetadata metadata = storage.store(fileName, new ByteArrayInputStream("foo".getBytes()));
+                        final FileMetadata metadata =
+                                storage.store(fileName, new ByteArrayInputStream("foo".getBytes()));
                         storage.delete(metadata);
                     }
 
@@ -250,11 +248,30 @@ class LocalFileStorageTest {
         assertThat(tempDirPath).exists();
     }
 
+    @Test
+    @SuppressWarnings("resource")
+    void shouldUseForwardSlashesInLocationOnWindowsFilesystem() throws Exception {
+        try (final FileSystem fileSystem = Jimfs.newFileSystem(Configuration.windows())) {
+            final Path baseDirPath = fileSystem.getPath("C:\\storage");
+            Files.createDirectories(baseDirPath);
+            final FileStorage storage = new LocalFileStorage(baseDirPath, 5);
+
+            final FileMetadata fileMetadata = storage.store("foo/bar", new ByteArrayInputStream("baz".getBytes()));
+            assertThat(fileMetadata.getLocation()).isEqualTo("local:///foo/bar");
+
+            final InputStream fileStream = storage.get(fileMetadata);
+            assertThat(fileStream.readAllBytes()).asString().isEqualTo("baz");
+
+            assertThat(storage.delete(fileMetadata)).isTrue();
+        }
+    }
+
     private FileStorage createStorage() {
         final Config config = new SmallRyeConfigBuilder()
-                .withDefaultValues(Map.of("dt.file-storage.local.directory", tempDirPath.toAbsolutePath().toString()))
+                .withDefaultValues(Map.of(
+                        "dt.file-storage.local.directory",
+                        tempDirPath.toAbsolutePath().toString()))
                 .build();
         return new LocalFileStorageProvider().create(config, ProxySelector.getDefault());
     }
-
 }

@@ -33,5 +33,4 @@ public interface RuntimeConfigValidator<T extends RuntimeConfig> {
      * @throws InvalidRuntimeConfigException When the config is invalid.
      */
     void validate(T config);
-
 }

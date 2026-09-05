@@ -29,26 +29,17 @@ import java.util.Properties;
  */
 public final class JdoProperties {
 
-    private JdoProperties() { }
+    private JdoProperties() {}
 
-    public static Properties unit() {
-        final Properties properties = new Properties();
-        properties.put("javax.jdo.option.PersistenceUnitName", "Alpine");
-        properties.put("javax.jdo.option.ConnectionURL", "jdbc:h2:mem:alpine;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH");
-        properties.put("javax.jdo.option.ConnectionDriverName", "org.h2.Driver");
-        properties.put("javax.jdo.option.ConnectionUserName", "sa");
-        properties.put("javax.jdo.option.ConnectionPassword", "");
-        properties.put("javax.jdo.option.Mapping", "h2");
-        properties.put(PropertyNames.PROPERTY_SCHEMA_AUTOCREATE_DATABASE, "true");
-        properties.put(PropertyNames.PROPERTY_SCHEMA_AUTOCREATE_TABLES, "true");
-        properties.put(PropertyNames.PROPERTY_SCHEMA_AUTOCREATE_COLUMNS, "true");
-        properties.put(PropertyNames.PROPERTY_SCHEMA_AUTOCREATE_CONSTRAINTS, "true");
-        properties.put(PropertyNames.PROPERTY_SCHEMA_GENERATE_DATABASE_MODE, "create");
-        properties.put(PropertyNames.PROPERTY_QUERY_JDOQL_ALLOWALL, "true");
+    /// @since 5.2.0
+    public static Properties required() {
+        final var properties = new Properties();
         properties.put(PropertyNames.PROPERTY_CACHE_L2_TYPE, "none");
+        properties.put(PropertyNames.PROPERTY_QUERY_JDOQL_ALLOWALL, "true");
         properties.put(PropertyNames.PROPERTY_RETAIN_VALUES, "true");
         properties.put(PropertyNames.PROPERTY_METADATA_ALLOW_XML, "false");
         properties.put(PropertyNames.PROPERTY_METADATA_SUPPORT_ORM, "false");
+        properties.put(PropertyNames.PROPERTY_ENABLE_STATISTICS, "true");
         properties.put(PropertyNames.PROPERTY_EXECUTION_CONTEXT_MAX_IDLE, "0");
         properties.put(PropertyNames.PROPERTY_DELETION_POLICY, "DataNucleus");
         return properties;

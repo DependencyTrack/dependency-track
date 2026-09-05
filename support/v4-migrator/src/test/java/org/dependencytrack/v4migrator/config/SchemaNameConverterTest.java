@@ -30,39 +30,40 @@ class SchemaNameConverterTest {
     private final SchemaNameConverter converter = new SchemaNameConverter();
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "public",
-        "dbo",
-        "_dt",
-        "DependencyTrack",
-        "a$b",
-        "x1",
-        "dt_v4_migration",
-        "custom-schema",
-        "with-dash",
-        "with.dot",
-        "with space",
-        " ",
-        "1leading_digit",
-        "with;semicolon",
-        "foo;DROP TABLE x"
-    })
+    @ValueSource(
+            strings = {
+                "public",
+                "dbo",
+                "_dt",
+                "DependencyTrack",
+                "a$b",
+                "x1",
+                "dt_v4_migration",
+                "custom-schema",
+                "with-dash",
+                "with.dot",
+                "with space",
+                " ",
+                "1leading_digit",
+                "with;semicolon",
+                "foo;DROP TABLE x"
+            })
     void shouldAcceptValidName(final String value) {
         assertThat(converter.convert(value)).isEqualTo(value);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "",
-        "with\"quote",
-        "with'apostrophe",
-        "foo'); DROP TABLE x;--",
-        "with\ttab",
-        "with\nnewline",
-        "a234567890123456789012345678901234567890123456789012345678901234"
-    })
+    @ValueSource(
+            strings = {
+                "",
+                "with\"quote",
+                "with'apostrophe",
+                "foo'); DROP TABLE x;--",
+                "with\ttab",
+                "with\nnewline",
+                "a234567890123456789012345678901234567890123456789012345678901234"
+            })
     void shouldRejectInvalidName(final String value) {
-        assertThatThrownBy(() -> converter.convert(value))
-            .isInstanceOf(TypeConversionException.class);
+        assertThatThrownBy(() -> converter.convert(value)).isInstanceOf(TypeConversionException.class);
     }
 }

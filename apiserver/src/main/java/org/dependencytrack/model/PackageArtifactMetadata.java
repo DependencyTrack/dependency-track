@@ -46,11 +46,11 @@ public record PackageArtifactMetadata(
         requireNonNull(purl, "purl must not be null");
         requireNonNull(packagePurl, "packagePurl must not be null");
         if (packagePurl.getVersion() != null
-                || (packagePurl.getQualifiers() != null && !packagePurl.getQualifiers().isEmpty())
+                || (packagePurl.getQualifiers() != null
+                        && !packagePurl.getQualifiers().isEmpty())
                 || packagePurl.getSubpath() != null) {
             throw new IllegalArgumentException(
                     "packagePurl must not contain version, qualifiers, or subpath: " + packagePurl);
         }
     }
-
 }

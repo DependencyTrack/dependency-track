@@ -55,14 +55,16 @@ public final class TestDatabaseEventListener implements org.dependencytrack.test
 
     @Override
     public void onTablesTruncated() {
-        try (final Connection connection = DataSourceRegistry.getInstance().getDefault().getConnection();
-             final Statement statement = connection.createStatement()) {
+        try (final Connection connection =
+                        DataSourceRegistry.getInstance().getDefault().getConnection();
+                final Statement statement = connection.createStatement()) {
             statement.execute("""
                     DO $$
                     DECLARE
                       partition_name TEXT;
-                      today_partition_pattern TEXT := FORMAT('^(PROJECT|DEPENDENCY)METRICS_%s', TO_CHAR(CURRENT_DATE, 'YYYYMMDD'));
-                      tomorrow_partition_pattern TEXT := FORMAT('^(PROJECT|DEPENDENCY)METRICS_%s', TO_CHAR(CURRENT_DATE + 1, 'YYYYMMDD'));
+                      today_utc DATE := CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE);
+                      today_partition_pattern TEXT := FORMAT('^(PROJECT|DEPENDENCY)METRICS_%s', TO_CHAR(today_utc, 'YYYYMMDD'));
+                      tomorrow_partition_pattern TEXT := FORMAT('^(PROJECT|DEPENDENCY)METRICS_%s', TO_CHAR(today_utc + 1, 'YYYYMMDD'));
                     BEGIN
                       FOR partition_name IN
                         SELECT tablename
@@ -79,5 +81,4 @@ public final class TestDatabaseEventListener implements org.dependencytrack.test
             throw new IllegalStateException("Failed to drop stale metrics partitions", e);
         }
     }
-
 }

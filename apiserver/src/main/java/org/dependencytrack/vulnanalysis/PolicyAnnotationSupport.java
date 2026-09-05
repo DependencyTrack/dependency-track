@@ -25,9 +25,9 @@ import org.dependencytrack.util.AnalysisCommentFormatter;
 import org.dependencytrack.util.AnalysisCommentFormatter.AnalysisCommentField;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -37,11 +37,9 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public final class PolicyAnnotationSupport {
 
-    public record AnnotationAuditComment(String commenter, String comment) {
-    }
+    public record AnnotationAuditComment(String commenter, String comment) {}
 
-    private PolicyAnnotationSupport() {
-    }
+    private PolicyAnnotationSupport() {}
 
     public static List<AppliedPolicyAnnotation> desiredAnnotationsFromPolicies(
             final List<VulnerabilityPolicy> policies) {
@@ -67,8 +65,7 @@ public final class PolicyAnnotationSupport {
     }
 
     public static boolean annotationsEqual(
-            @Nullable List<AppliedPolicyAnnotation> existing,
-            @Nullable List<AppliedPolicyAnnotation> desired) {
+            @Nullable List<AppliedPolicyAnnotation> existing, @Nullable List<AppliedPolicyAnnotation> desired) {
         return normalizedPolicyNames(existing).equals(normalizedPolicyNames(desired));
     }
 
@@ -95,8 +92,7 @@ public final class PolicyAnnotationSupport {
 
             return desired.stream()
                     .sorted(Comparator.comparing(
-                            AppliedPolicyAnnotation::policyName,
-                            Comparator.nullsFirst(String::compareTo)))
+                            AppliedPolicyAnnotation::policyName, Comparator.nullsFirst(String::compareTo)))
                     .map(annotation -> new AnnotationAuditComment(
                             policyCommenter(annotation.policyName()),
                             AnalysisCommentFormatter.formatComment(
@@ -123,7 +119,7 @@ public final class PolicyAnnotationSupport {
      * their local part; other values (e.g. display names) are kept as-is. The full author is
      * still stored on {@link AppliedPolicyAnnotation#annotator()}.
      */
-    public static String formatAnnotatorForAudit(@Nullable final String annotator) {
+    public static @Nullable String formatAnnotatorForAudit(@Nullable final String annotator) {
         if (isBlank(annotator)) {
             return null;
         }
@@ -142,21 +138,18 @@ public final class PolicyAnnotationSupport {
 
         return annotations.stream()
                 .sorted(Comparator.comparing(
-                        AppliedPolicyAnnotation::policyName,
-                        Comparator.nullsFirst(String::compareTo)))
+                        AppliedPolicyAnnotation::policyName, Comparator.nullsFirst(String::compareTo)))
                 .map(PolicyAnnotationSupport::formatAnnotation)
                 .collect(Collectors.joining(", ", "[", "]"));
     }
 
     private static AppliedPolicyAnnotation desiredAnnotationForPolicy(final VulnerabilityPolicy policy) {
-        return new AppliedPolicyAnnotation(
-                policy.getName(),
-                new Date(),
-                policy.getAuthor());
+        return new AppliedPolicyAnnotation(policy.getName(), new Date(), policy.getAuthor());
     }
 
     private static boolean hasAnnotationDefinitions(final VulnerabilityPolicyAnalysis policyAnalysis) {
-        return policyAnalysis.getAnnotations() != null && !policyAnalysis.getAnnotations().isEmpty();
+        return policyAnalysis.getAnnotations() != null
+                && !policyAnalysis.getAnnotations().isEmpty();
     }
 
     private static String formatAnnotation(final AppliedPolicyAnnotation annotation) {
@@ -179,5 +172,4 @@ public final class PolicyAnnotationSupport {
                 .sorted()
                 .toList();
     }
-
 }

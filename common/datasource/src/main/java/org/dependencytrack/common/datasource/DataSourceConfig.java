@@ -64,8 +64,14 @@ final class DataSourceConfig {
         return config.getOptionalValue(PREFIX + "%s.connection-timeout-ms".formatted(name), long.class);
     }
 
+    long getQueryTimeoutMillis() {
+        return config.getOptionalValue(PREFIX + "%s.query-timeout-ms".formatted(name), long.class)
+                .orElse(60_000L);
+    }
+
     boolean isPoolEnabled() {
-        return config.getOptionalValue(PREFIX + "%s.pool.enabled".formatted(name), boolean.class).orElse(false);
+        return config.getOptionalValue(PREFIX + "%s.pool.enabled".formatted(name), boolean.class)
+                .orElse(false);
     }
 
     int getPoolMaxSize() {
@@ -80,6 +86,10 @@ final class DataSourceConfig {
         return config.getOptionalValue(PREFIX + "%s.pool.idle-timeout-ms".formatted(name), long.class);
     }
 
+    Optional<Long> getPoolLeakDetectionThresholdMillis() {
+        return config.getOptionalValue(PREFIX + "%s.pool.leak-detection-threshold-ms".formatted(name), long.class);
+    }
+
     Optional<Long> getPoolMaxLifetimeMillis() {
         return config.getOptionalValue(PREFIX + "%s.pool.max-lifetime-ms".formatted(name), long.class);
     }
@@ -87,5 +97,4 @@ final class DataSourceConfig {
     Optional<Long> getPoolKeepaliveIntervalMillis() {
         return config.getOptionalValue(PREFIX + "%s.pool.keepalive-interval-ms".formatted(name), long.class);
     }
-
 }

@@ -48,12 +48,10 @@ class ModelConverterTest {
 
         @Test
         void shouldIncludeAliasReferencesWhenEnabled() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-GHSA-77rv-6vfw-x4gc.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-GHSA-77rv-6vfw-x4gc.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .when(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -127,14 +125,13 @@ class ModelConverterTest {
 
         @Test
         void shouldOmitAliasReferencesWhenDisabled() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-GHSA-77rv-6vfw-x4gc.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-GHSA-77rv-6vfw-x4gc.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
             assertThat(bov.getVulnerabilitiesList())
                     .singleElement()
                     .satisfies(v -> assertThat(v.getReferencesList()).isEmpty());
         }
-
     }
 
     @Nested
@@ -142,12 +139,10 @@ class ModelConverterTest {
 
         @Test
         void shouldConvertMultipleAffectedRanges() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-vulnerability-with-ranges.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-vulnerability-with-ranges.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .when(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -201,7 +196,10 @@ class ModelConverterTest {
                                       "ref": "${json-unit.any-string}",
                                       "versions": [
                                         {
-                                          "range": "vers:maven/>=1|<2|>=3|<4"
+                                          "range": "vers:maven/>=1|<2"
+                                        },
+                                        {
+                                          "range": "vers:maven/>=3|<4"
                                         },
                                         {
                                           "range": "vers:maven/<1"
@@ -212,10 +210,7 @@ class ModelConverterTest {
                                       "ref": "${json-unit.any-string}",
                                       "versions": [
                                         {
-                                          "version": "1.0.0.RELEASE"
-                                        },
-                                        {
-                                          "version": "2.0.9.RELEASE"
+                                          "range": "vers:maven/>=3|<5"
                                         }
                                       ]
                                     },
@@ -262,12 +257,10 @@ class ModelConverterTest {
 
         @Test
         void shouldConvertVulnerabilityWithoutRanges() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-vulnerability-no-range.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-vulnerability-no-range.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .when(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "vulnerabilities": [
                                 {
@@ -301,12 +294,10 @@ class ModelConverterTest {
 
         @Test
         void shouldConvertGitCommitHashRanges() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-git-commit-hash-ranges.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-git-commit-hash-ranges.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .when(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -366,12 +357,10 @@ class ModelConverterTest {
 
         @Test
         void shouldUseLowestUpperBoundWhenMultiplePresent() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-git-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-git-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .withOptions(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).withOptions(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -416,12 +405,10 @@ class ModelConverterTest {
 
         @Test
         void shouldEmitWildcardRangeWhenNoUpperBound() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-git-no-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-git-no-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .withOptions(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).withOptions(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -466,12 +453,10 @@ class ModelConverterTest {
 
         @Test
         void shouldEmitExactVersionWhenNoRange() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-vulnerability-exact-version.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-vulnerability-exact-version.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .withOptions(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).withOptions(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -557,12 +542,13 @@ class ModelConverterTest {
 
         @Test
         void shouldResolveConflictingUpperBounds() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-git-conflict-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(
+                            loadOsvAdvisory("osv-git-conflict-upper-bound-range.json"),
+                            false,
+                            DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .withOptions(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).withOptions(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -637,9 +623,7 @@ class ModelConverterTest {
 
             final Bom bov = new ModelConverter(MAPPER).convert(advisory, false, "generic");
 
-            assertThatBov(bov)
-                    .inPath("$.vulnerabilities[0].affects[0]")
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).inPath("$.vulnerabilities[0].affects[0]").isEqualTo(/* language=JSON */ """
                             {
                               "ref": "${json-unit.any-string}"
                             }
@@ -680,6 +664,421 @@ class ModelConverterTest {
                     .isEqualTo("\"vers:golang/>=1.0.0\"");
         }
 
+        @Test
+        void shouldEmitSeparateRangesForDisjointIntervals() throws IOException {
+            // Modelled after PYSEC-2019-16, which encodes two disjoint intervals in a single range.
+            // See https://github.com/DependencyTrack/dependency-track/issues/6989.
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "introduced": "0" },
+                      { "fixed": "1.11.27" },
+                      { "introduced": "2.2" },
+                      { "fixed": "2.2.9" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/<1.11.27" },
+                              { "range": "vers:pypi/>=2.2|<2.2.9" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldSortEventsBeforeGrouping() throws IOException {
+            // OSV evaluates `sorted(range.events)`. The array order is only a recommendation.
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "fixed": "1.2.0" },
+                      { "introduced": "0" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/<1.2.0" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldUseLowestIntroducedWhenEventsAreOutOfOrder() throws IOException {
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "introduced": "2.0.0" },
+                      { "introduced": "1.0.0" },
+                      { "fixed": "2.5.0" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/>=1.0.0|<2.5.0" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldIgnoreUpperBoundsBeforeFirstIntroduced() throws IOException {
+            // Nothing is affected below the first `introduced`, so the leading `fixed` is a no-op.
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "fixed": "1.2.0" },
+                      { "introduced": "3.0.0" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/>=3.0.0" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldUseLowestUpperBoundWhenIntervalHasMultiple() throws IOException {
+            // Modelled after PYSEC-2024-265, whose last_affected events are not in ascending order.
+            //
+            // Note that computing <=1.2.0 here is aligned with the OSV evaluation algorithm,
+            // although the advisory author likely meant <=1.2.1. As a result, we may be under-reporting.
+            // However, the range as presented doesn't make sense, and it's arguably a data quality issue.
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "introduced": "0" },
+                      { "last_affected": "1.2.1" },
+                      { "last_affected": "1.2.0" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/<=1.2.0" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldUseLowestUpperBoundPerIntervalWhenMultipleIntervals() throws IOException {
+            // Modelled after PYSEC-2022-43170, which trails a multi-interval range with an
+            // additional fixed event.
+            //
+            // Note that computing >=6.2.0|<6.2.2 here is aligned with the OSV evaluation algorithm,
+            // although the advisory author likely meant >=6.2.0|<6.2.6. As a result, we may be under-reporting.
+            // However, the range as presented doesn't make sense, and it's arguably a data quality issue.
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "introduced": "5.0.0" },
+                      { "fixed": "5.0.12" },
+                      { "introduced": "6.2.0" },
+                      { "fixed": "6.2.2" },
+                      { "fixed": "6.2.6" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/>=5.0.0|<5.0.12" },
+                              { "range": "vers:pypi/>=6.2.0|<6.2.2" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldNotOpenNewIntervalForConsecutiveIntroduced() throws IOException {
+            // The lowest `introduced` wins, so `introduced=0` must not be narrowed to >=1.0.0.
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "introduced": "0" },
+                      { "introduced": "1.0.0" },
+                      { "fixed": "1.1.0" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/<1.1.0" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldKeepTrailingIntervalOpenWhenNotFixed() throws IOException {
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "introduced": "1.0.0" },
+                      { "fixed": "1.2.0" },
+                      { "introduced": "2.0.0" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/>=1.0.0|<1.2.0" },
+                              { "range": "vers:pypi/>=2.0.0" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldCapRangeAtHighestLimit() throws IOException {
+            // Per OSV's `BeforeLimits`, nothing at or above the highest limit is affected,
+            // no matter which interval it falls into.
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "introduced": "0" },
+                      { "fixed": "1.0.0" },
+                      { "introduced": "2.0.0" },
+                      { "limit": "3.0.0" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/<1.0.0" },
+                              { "range": "vers:pypi/>=2.0.0|<3.0.0" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldIgnoreWildcardLimit() throws IOException {
+            // `limit` allows "*" to represent infinity.
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "introduced": "1.0.0" },
+                      { "limit": "*" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/>=1.0.0" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldKeepRangeWithSchemeViolatingVersionInsteadOfFallingBackToVersions() throws IOException {
+            // "2.0.x" is not a valid PEP 440 version. Dropping the range would fall back to the
+            // enumerated `versions`, which only covers the releases known at publication time.
+            final var advisory = MAPPER.readValue(/* language=JSON */ """
+                    {
+                      "id": "OSV-2026-0010",
+                      "affected": [
+                        {
+                          "package": {
+                            "name": "foo",
+                            "ecosystem": "PyPI",
+                            "purl": "pkg:pypi/foo"
+                          },
+                          "versions": [
+                            "1.0"
+                          ],
+                          "ranges": [
+                            {
+                              "type": "ECOSYSTEM",
+                              "events": [
+                                { "introduced": "1.0" },
+                                { "fixed": "2.0.x" }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                    """, Osv.class);
+
+            final Bom bov = new ModelConverter(MAPPER).convert(advisory, false, "PyPI");
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:generic/>=1.0|<2.0.x" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldTreatDebianUnfixedAsOpenInterval() throws IOException {
+            final var advisory = MAPPER.readValue(/* language=JSON */ """
+                    {
+                      "id": "OSV-2026-0009",
+                      "affected": [
+                        {
+                          "package": {
+                            "name": "foo",
+                            "ecosystem": "Debian:12",
+                            "purl": "pkg:deb/debian/foo"
+                          },
+                          "ranges": [
+                            {
+                              "type": "ECOSYSTEM",
+                              "events": [
+                                { "introduced": "0" },
+                                { "fixed": "<unfixed>" }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                    """, Osv.class);
+
+            final Bom bov = new ModelConverter(MAPPER).convert(advisory, false, "Debian:12");
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:deb/*" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldEmitSeparateRangesForEachIntervalOfSemverRange() throws IOException {
+            // GO-2022-0344, whose three intervals were previously paired across interval boundaries,
+            // yielding inverted ranges such as `>=1.5.0|<1.4.13`.
+            // See https://github.com/DependencyTrack/dependency-track/issues/7054.
+            final var advisory = MAPPER.readValue(/* language=JSON */ """
+                    {
+                      "id": "GO-2022-0344",
+                      "affected": [
+                        {
+                          "package": {
+                            "name": "github.com/containerd/containerd",
+                            "ecosystem": "Go",
+                            "purl": "pkg:golang/github.com/containerd/containerd"
+                          },
+                          "ranges": [
+                            {
+                              "type": "SEMVER",
+                              "events": [
+                                { "introduced": "0" },
+                                { "fixed": "1.4.13" },
+                                { "introduced": "1.5.0" },
+                                { "fixed": "1.5.10" },
+                                { "introduced": "1.6.0" },
+                                { "fixed": "1.6.1" }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                    """, Osv.class);
+
+            final Bom bov = new ModelConverter(MAPPER).convert(advisory, false, "Go");
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:golang/<1.4.13" },
+                              { "range": "vers:golang/>=1.5.0|<1.5.10" },
+                              { "range": "vers:golang/>=1.6.0|<1.6.1" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldSortIntervalsThatAppearOutOfOrder() throws IOException {
+            // PYSEC-2023-192 lists the 2.x interval before the 1.x one,
+            // so pairing events in document order produces the inverted range `>=2.0.0|<1.26.17`.
+            // See https://github.com/DependencyTrack/dependency-track/issues/7054.
+            final Bom bov = convertRangeEvents(/* language=JSON */ """
+                    [
+                      { "introduced": "2.0.0" },
+                      { "fixed": "2.0.6" },
+                      { "introduced": "0" },
+                      { "fixed": "1.26.17" }
+                    ]
+                    """);
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/<1.26.17" },
+                              { "range": "vers:pypi/>=2.0.0|<2.0.6" }
+                            ]
+                            """);
+        }
+
+        @Test
+        void shouldIgnoreGitRangeAccompanyingEcosystemRange() throws IOException {
+            // PYSEC-2023-192 pairs a GIT range with an ECOSYSTEM range and an enumerated
+            // `versions` array. Dropping the GIT range must not make the advisory look
+            // range-less, which would fall back to the enumerated versions.
+            final var advisory = MAPPER.readValue(/* language=JSON */ """
+                    {
+                      "id": "PYSEC-2023-192",
+                      "affected": [
+                        {
+                          "package": {
+                            "name": "urllib3",
+                            "ecosystem": "PyPI",
+                            "purl": "pkg:pypi/urllib3"
+                          },
+                          "ranges": [
+                            {
+                              "type": "GIT",
+                              "repo": "https://github.com/urllib3/urllib3",
+                              "events": [
+                                { "introduced": "0" },
+                                { "fixed": "644124ecd0b6e417c527191f866daa05a5a2056d" },
+                                { "fixed": "01220354d389cd05474713f8c982d05c9b17aafb" }
+                              ]
+                            },
+                            {
+                              "type": "ECOSYSTEM",
+                              "events": [
+                                { "introduced": "2.0.0" },
+                                { "fixed": "2.0.6" },
+                                { "introduced": "0" },
+                                { "fixed": "1.26.17" }
+                              ]
+                            }
+                          ],
+                          "versions": [ "1.26.16", "2.0.0", "2.0.5" ]
+                        }
+                      ]
+                    }
+                    """, Osv.class);
+
+            final Bom bov = new ModelConverter(MAPPER).convert(advisory, false, "PyPI");
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:pypi/<1.26.17" },
+                              { "range": "vers:pypi/>=2.0.0|<2.0.6" }
+                            ]
+                            """);
+        }
     }
 
     @Nested
@@ -687,12 +1086,10 @@ class ModelConverterTest {
 
         @Test
         void shouldFilterInvalidCvssVectors() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-vulnerability-invalid-cvss.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-vulnerability-invalid-cvss.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .withOptions(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).withOptions(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "vulnerabilities": [
                                 {
@@ -731,7 +1128,6 @@ class ModelConverterTest {
                             }
                             """);
         }
-
     }
 
     @Nested
@@ -739,23 +1135,19 @@ class ModelConverterTest {
 
         @Test
         void shouldTrimSummaryToMaxLength() {
-            final String trimmed = trimSummary("In uvc_scan_chain_forward of uvc_driver.c, there is a possible linked list corruption due to an unusual root cause. This could lead to local escalation of privilege in the kernel with no additional execution privileges needed. User interaction is not needed for exploitation.");
+            final String trimmed = trimSummary(
+                    "In uvc_scan_chain_forward of uvc_driver.c, there is a possible linked list corruption due to an unusual root cause. This could lead to local escalation of privilege in the kernel with no additional execution privileges needed. User interaction is not needed for exploitation.");
 
             assertThat(trimmed)
                     .hasSize(255)
-                    .isEqualTo("In uvc_scan_chain_forward of uvc_driver.c, there is a possible linked list corruption due to an unusual root cause. This could lead to local escalation of privilege in the kernel with no additional execution privileges needed. User interaction is not ne..");
+                    .isEqualTo(
+                            "In uvc_scan_chain_forward of uvc_driver.c, there is a possible linked list corruption due to an unusual root cause. This could lead to local escalation of privilege in the kernel with no additional execution privileges needed. User interaction is not ne..");
         }
 
         @Test
         void shouldReturnShortSummaryUnchanged() {
             assertThat(trimSummary("I'm a short Summary")).isEqualTo("I'm a short Summary");
         }
-
-        @Test
-        void shouldReturnNullForNullSummary() {
-            assertThat(trimSummary(null)).isNull();
-        }
-
     }
 
     @Test
@@ -833,9 +1225,7 @@ class ModelConverterTest {
 
         final Bom bov = new ModelConverter(MAPPER).convert(advisory, false, "Maven");
 
-        assertThatBov(bov)
-                .inPath("$.vulnerabilities[0].credits.individuals")
-                .isEqualTo(/* language=JSON */ """
+        assertThatBov(bov).inPath("$.vulnerabilities[0].credits.individuals").isEqualTo(/* language=JSON */ """
                         [
                           {
                             "name": "Alice",
@@ -861,8 +1251,7 @@ class ModelConverterTest {
 
         @Test
         void shouldEnrichPurlsForRealDebianAdvisory() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-DSA-5474-1.json"), false, "Debian");
+            final Bom bov = new ModelConverter(MAPPER).convert(loadOsvAdvisory("osv-DSA-5474-1.json"), false, "Debian");
 
             assertThatBov(bov)
                     .when(Option.IGNORING_ARRAY_ORDER)
@@ -917,7 +1306,6 @@ class ModelConverterTest {
                     .inPath("$.components[0].purl")
                     .isEqualTo("pkg:deb/debian/intel-microcode?distro=bullseye");
         }
-
     }
 
     private static Osv loadOsvAdvisory(String resource) throws IOException {
@@ -928,4 +1316,28 @@ class ModelConverterTest {
         return assertThatJson(JsonFormat.printer().print(bov));
     }
 
+    private static Bom convertRangeEvents(String eventsJson) throws IOException {
+        final var advisory = MAPPER.readValue(/* language=JSON */ """
+                    {
+                      "id": "OSV-TEST",
+                      "affected": [
+                        {
+                          "package": {
+                            "name": "foo",
+                            "ecosystem": "PyPI",
+                            "purl": "pkg:pypi/foo"
+                          },
+                          "ranges": [
+                            {
+                              "type": "ECOSYSTEM",
+                              "events": %s
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                    """.formatted(eventsJson), Osv.class);
+
+        return new ModelConverter(MAPPER).convert(advisory, false, "PyPI");
+    }
 }

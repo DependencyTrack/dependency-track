@@ -33,9 +33,7 @@ class AppliedPolicyAnnotationSerializationTest {
     @Test
     void serializesAppliedAtAsIso8601String() throws Exception {
         final var annotation = new AppliedPolicyAnnotation(
-                "gem-policy-a",
-                Date.from(Instant.parse("2026-06-04T12:00:00Z")),
-                "admin@localhost");
+                "gem-policy-a", Date.from(Instant.parse("2026-06-04T12:00:00Z")), "admin@localhost");
 
         final String json = objectMapper.writeValueAsString(annotation);
 
@@ -47,5 +45,4 @@ class AppliedPolicyAnnotationSerializationTest {
                 }
                 """);
     }
-
 }

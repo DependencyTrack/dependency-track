@@ -54,6 +54,7 @@ import java.nio.file.NoSuchFileException;
 import java.util.Map;
 import java.util.function.Function;
 
+import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.common.MdcKeys.MDC_NOTIFICATION_ID;
 import static org.dependencytrack.common.MdcKeys.MDC_NOTIFICATION_RULE_NAME;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -85,9 +86,7 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
     }
 
     @Override
-    public @Nullable Void execute(
-            ActivityContext ctx,
-            @Nullable PublishNotificationActivityArg argument) {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable PublishNotificationActivityArg argument) {
         if (argument == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -110,8 +109,13 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
 
             final Notification notification = getNotification(argument);
 
-            final var template = ruleMetadata.template() != null
-                    ? new NotificationTemplate(ruleMetadata.template(), ruleMetadata.templateMimeType())
+            final String templateContent = ruleMetadata.template();
+            final var template = templateContent != null
+                    ? new NotificationTemplate(
+                            templateContent,
+                            requireNonNull(
+                                    ruleMetadata.templateMimeType(),
+                                    "templateMimeType must not be null when template is set"))
                     : null;
 
             final var publishCtx = new NotificationPublishContext(
@@ -123,13 +127,13 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
             try (final NotificationPublisher publisher = publisherFactory.create()) {
                 publisher.publish(publishCtx, notification);
 
-                if (ruleMetadata.logSuccessfulPublish()) {
+                if (shouldLogSuccessfulPublish(ruleMetadata.logSuccessfulPublish(), argument.getRuleTest())) {
                     LOGGER.info("Notification published successfully");
                 }
             } catch (RuntimeException | IOException e) {
                 if (e instanceof final RetryablePublishException rpe) {
                     throw new ApplicationFailureException(
-                            "Failed to publish notification with retryable cause", rpe, rpe.getRetryAfter());
+                            "Failed to publish notification with retryable cause", rpe, rpe.retryAfter());
                 }
 
                 throw new TerminalApplicationFailureException(
@@ -140,13 +144,16 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
         return null;
     }
 
+    static boolean shouldLogSuccessfulPublish(final boolean logSuccessfulPublish, final boolean ruleTest) {
+        return logSuccessfulPublish || ruleTest;
+    }
+
     private record RuleMetadata(
             String extensionName,
             @Nullable String publisherConfig,
             @Nullable String template,
             @Nullable String templateMimeType,
-            boolean logSuccessfulPublish) {
-    }
+            boolean logSuccessfulPublish) {}
 
     private @Nullable RuleMetadata getRuleMetadata(String ruleName) {
         return withJdbiHandle(handle -> {
@@ -162,14 +169,9 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
                      WHERE r."NAME" = :ruleName
                     """);
 
-            return query
-                    .bind("ruleName", ruleName)
+            return query.bind("ruleName", ruleName)
                     .map((rs, ctx) -> new RuleMetadata(
-                            rs.getString(1),
-                            rs.getString(2),
-                            rs.getString(3),
-                            rs.getString(4),
-                            rs.getBoolean(5)))
+                            rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getBoolean(5)))
                     .findOne()
                     .orElse(null);
         });
@@ -194,9 +196,7 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
         throw new TerminalApplicationFailureException("No notification found");
     }
 
-    private @Nullable RuntimeConfig getRuleConfig(
-            @Nullable RuntimeConfigSpec configSpec,
-            @Nullable String configJson) {
+    private @Nullable RuntimeConfig getRuleConfig(@Nullable RuntimeConfigSpec configSpec, @Nullable String configJson) {
         if (configSpec == null) {
             // Publisher doesn't support rule-level configuration.
             return null;
@@ -228,5 +228,4 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
 
         return config;
     }
-
 }

@@ -18,15 +18,17 @@
  */
 package org.dependencytrack.resources.v2.exception;
 
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.model.ProblemDetails;
 import org.dependencytrack.exception.ProjectAccessDeniedException;
+
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @since 5.0.0
  */
 @Provider
-public class ProjectAccessDeniedExceptionMapper extends ProblemDetailsExceptionMapper<ProjectAccessDeniedException, ProblemDetails> {
+public class ProjectAccessDeniedExceptionMapper
+        extends ProblemDetailsExceptionMapper<ProjectAccessDeniedException, ProblemDetails> {
 
     @Override
     ProblemDetails map(ProjectAccessDeniedException exception) {

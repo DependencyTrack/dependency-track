@@ -38,25 +38,23 @@ class InternalStatusConditionTest extends PersistenceCapableTest {
 
     @ParameterizedTest
     @CsvSource({
-            // IS true matches an internal component
-            "IS, true, true, true",
-            // IS true does not match a non-internal component
-            "IS, true, false, false",
-            // IS false matches a non-internal component
-            "IS, false, false, true",
-            // IS_NOT true matches a non-internal component
-            "IS_NOT, true, false, true",
-            // IS_NOT true does not match an internal component
-            "IS_NOT, true, true, false",
-            // Non-boolean values are parsed as false by Boolean.parseBoolean
-            "IS, notABoolean, false, true",
-            "IS, notABoolean, true, false"
+        // IS true matches an internal component
+        "IS, true, true, true",
+        // IS true does not match a non-internal component
+        "IS, true, false, false",
+        // IS false matches a non-internal component
+        "IS, false, false, true",
+        // IS_NOT true matches a non-internal component
+        "IS_NOT, true, false, true",
+        // IS_NOT true does not match an internal component
+        "IS_NOT, true, true, false",
+        // Non-boolean values are parsed as false by Boolean.parseBoolean
+        "IS, notABoolean, false, true",
+        "IS, notABoolean, true, false"
     })
     void shouldEvaluateInternalStatusCondition(
-            Operator operator,
-            String conditionValue,
-            boolean componentInternal,
-            boolean expectViolation) {
+            Operator operator, String conditionValue, boolean componentInternal, boolean expectViolation)
+            throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.IS_INTERNAL, operator, conditionValue);
 
@@ -99,13 +97,16 @@ class InternalStatusConditionTest extends PersistenceCapableTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Operator.class, names = {"IS", "IS_NOT"}, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(
+            value = Operator.class,
+            names = {"IS", "IS_NOT"},
+            mode = EnumSource.Mode.EXCLUDE)
     void shouldReturnNullForUnsupportedOperator(final Operator operator) {
         final var condition = new PolicyCondition();
         condition.setOperator(operator);
         condition.setValue("true");
 
-        assertThat(new InternalStatusCelPolicyScriptSourceBuilder().apply(condition)).isNull();
+        assertThat(new InternalStatusCelPolicyScriptSourceBuilder().apply(condition))
+                .isNull();
     }
-
 }

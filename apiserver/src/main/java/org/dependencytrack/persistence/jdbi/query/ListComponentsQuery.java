@@ -62,7 +62,9 @@ public record ListComponentsQuery(
         BLAKE2B_256,
         BLAKE2B_384,
         BLAKE2B_512,
-        BLAKE3
+        BLAKE3,
+        STREEBOG_256,
+        STREEBOG_512
     }
 
     public record PageToken(
@@ -72,7 +74,6 @@ public record ListComponentsQuery(
             @Nullable Double lastRiskScore,
             @Nullable SortBy sortBy,
             @Nullable SortDirection sortDirection,
-            Page.TotalCount totalCount) implements org.dependencytrack.common.pagination.PageToken {
-    }
-
+            Page.TotalCount totalCount)
+            implements org.dependencytrack.common.pagination.PageToken {}
 }

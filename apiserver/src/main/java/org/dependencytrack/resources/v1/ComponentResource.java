@@ -33,19 +33,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.inject.Inject;
-import jakarta.validation.Validator;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.dex.engine.api.DexEngine;
@@ -69,6 +56,20 @@ import org.dependencytrack.util.InternalComponentIdentifier;
 import org.dependencytrack.util.PurlUtil;
 import org.jdbi.v3.core.Handle;
 
+import jakarta.inject.Inject;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -86,10 +87,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
  */
 @Path("/v1/component")
 @Tag(name = "component")
-@SecurityRequirements({
-        @SecurityRequirement(name = "ApiKeyAuth"),
-        @SecurityRequirement(name = "BearerAuth")
-})
+@SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class ComponentResource extends AbstractApiResource {
 
     private final DexEngine dexEngine;
@@ -104,39 +102,58 @@ public class ComponentResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns a list of all components for a given project",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
-    )
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
     @PaginatedApi
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "A list of all components for a given project",
-                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of components", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Component.class)))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The project could not be found")
-    })
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A list of all components for a given project",
+                        headers =
+                                @Header(
+                                        name = TOTAL_COUNT_HEADER,
+                                        description = "The total number of components",
+                                        schema = @Schema(format = "integer")),
+                        content = @Content(array = @ArraySchema(schema = @Schema(implementation = Component.class)))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(responseCode = "404", description = "The project could not be found")
+            })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getAllComponents(
-            @Parameter(description = "The UUID of the project to retrieve components for", schema = @Schema(type = "string", format = "uuid"), required = true)
-            @PathParam("uuid") @ValidUuid String uuid,
+            @Parameter(
+                            description = "The UUID of the project to retrieve components for",
+                            schema = @Schema(type = "string", format = "uuid"),
+                            required = true)
+                    @PathParam("uuid")
+                    @ValidUuid
+                    String uuid,
             @Parameter(description = "Optionally exclude recent components so only outdated components are returned")
-            @QueryParam("onlyOutdated") boolean onlyOutdated,
-            @Parameter(description = "Optionally exclude transitive dependencies so only direct dependencies are returned")
-            @QueryParam("onlyDirect") boolean onlyDirect) {
+                    @QueryParam("onlyOutdated")
+                    boolean onlyOutdated,
+            @Parameter(
+                            description =
+                                    "Optionally exclude transitive dependencies so only direct dependencies are returned")
+                    @QueryParam("onlyDirect")
+                    boolean onlyDirect) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 requireAccess(qm, project);
                 final PaginatedResult result = qm.getComponents(project, true, onlyOutdated, onlyDirect);
-                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                return Response.ok(result.getObjects())
+                        .header(TOTAL_COUNT_HEADER, result.getTotal())
+                        .build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The project could not be found.")
+                        .build();
             }
         }
     }
@@ -146,42 +163,58 @@ public class ComponentResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns a specific component",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "A component",
-                    content = @Content(schema = @Schema(implementation = Component.class))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The component could not be found")
-    })
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A component",
+                        content = @Content(schema = @Schema(implementation = Component.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(responseCode = "404", description = "The component could not be found")
+            })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByUuid(
-            @Parameter(description = "The UUID of the component to retrieve", schema = @Schema(type = "string", format = "uuid"), required = true)
-            @PathParam("uuid") @ValidUuid String uuid,
-            @Parameter(description = "Optionally includes third-party metadata about the component from external repositories")
-            @QueryParam("includeRepositoryMetaData") boolean includeRepositoryMetaData) {
+            @Parameter(
+                            description = "The UUID of the component to retrieve",
+                            schema = @Schema(type = "string", format = "uuid"),
+                            required = true)
+                    @PathParam("uuid")
+                    @ValidUuid
+                    String uuid,
+            @Parameter(
+                            description =
+                                    "Optionally includes third-party metadata about the component from external repositories")
+                    @QueryParam("includeRepositoryMetaData")
+                    boolean includeRepositoryMetaData) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
                 requireAccess(qm, component.getProject());
-                final Component detachedComponent = qm.detach(Component.class, component.getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
+                final Component detachedComponent = qm.detach(
+                        Component.class,
+                        component
+                                .getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be
+                // having issues here.
                 if (includeRepositoryMetaData && detachedComponent.getPurl() != null) {
-                    final PackageMetadata packageMetadata = withJdbiHandle(
-                            handle -> new PackageMetadataDao(handle).get(detachedComponent.getPurl()));
+                    final PackageMetadata packageMetadata =
+                            withJdbiHandle(handle -> new PackageMetadataDao(handle).get(detachedComponent.getPurl()));
                     if (packageMetadata != null) {
                         detachedComponent.setRepositoryMeta(RepositoryMetaComponent.of(packageMetadata));
                     }
                 }
                 return Response.ok(detachedComponent).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The component could not be found.")
+                        .build();
             }
         }
     }
@@ -190,51 +223,59 @@ public class ComponentResource extends AbstractApiResource {
     @Path("/identity")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns a list of components that have the specified component identity. This resource accepts coordinates (group, name, version) or purl, cpe, or swidTagId",
+            summary =
+                    "Returns a list of components that have the specified component identity. This resource accepts coordinates (group, name, version) or purl, cpe, or swidTagId",
             description = """
                     <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
-                    <p><strong>Deprecated</strong>! Use <code>/api/v2/components</code> instead.</p>"""
-    )
+                    <p><strong>Deprecated</strong>! Use <code>/api/v2/components</code> instead.</p>""")
     @PaginatedApi
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "A list of components that have the specified component identity",
-                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of components", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Component.class)))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON))
-    })
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A list of components that have the specified component identity",
+                        headers =
+                                @Header(
+                                        name = TOTAL_COUNT_HEADER,
+                                        description = "The total number of components",
+                                        schema = @Schema(format = "integer")),
+                        content = @Content(array = @ArraySchema(schema = @Schema(implementation = Component.class)))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON))
+            })
     @Deprecated(since = "5.0.0", forRemoval = true)
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getComponentByIdentity(@Parameter(description = "The group of the component")
-                                           @QueryParam("group") String group,
-                                           @Parameter(description = "The name of the component")
-                                           @QueryParam("name") String name,
-                                           @Parameter(description = "The version of the component")
-                                           @QueryParam("version") String version,
-                                           @Parameter(description = "The purl of the component")
-                                           @QueryParam("purl") String purl,
-                                           @Parameter(description = "The cpe of the component")
-                                           @QueryParam("cpe") String cpe,
-                                           @Parameter(description = "The swidTagId of the component")
-                                           @QueryParam("swidTagId") String swidTagId,
-                                           @Parameter(description = "The project the component belongs to", schema = @Schema(format = "uuid"))
-                                           @QueryParam("project") @ValidUuid String projectUuid,
-                                           @Parameter(description = "When true, only return components from active projects")
-                                           @QueryParam("excludeInactiveProjects") boolean excludeInactiveProjects,
-                                           @Parameter(description = "When true, only return components from projects flagged as the latest version")
-                                           @QueryParam("onlyLatestProjectVersions") boolean onlyLatestProjectVersions) {
+    public Response getComponentByIdentity(
+            @Parameter(description = "The group of the component") @QueryParam("group") String group,
+            @Parameter(description = "The name of the component") @QueryParam("name") String name,
+            @Parameter(description = "The version of the component") @QueryParam("version") String version,
+            @Parameter(description = "The purl of the component") @QueryParam("purl") String purl,
+            @Parameter(description = "The cpe of the component") @QueryParam("cpe") String cpe,
+            @Parameter(description = "The swidTagId of the component") @QueryParam("swidTagId") String swidTagId,
+            @Parameter(description = "The project the component belongs to", schema = @Schema(format = "uuid"))
+                    @QueryParam("project")
+                    @ValidUuid
+                    String projectUuid,
+            @Parameter(description = "When true, only return components from active projects")
+                    @QueryParam("excludeInactiveProjects")
+                    boolean excludeInactiveProjects,
+            @Parameter(description = "When true, only return components from projects flagged as the latest version")
+                    @QueryParam("onlyLatestProjectVersions")
+                    boolean onlyLatestProjectVersions) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Project project = null;
             if (projectUuid != null) {
                 project = qm.getObjectByUuid(Project.class, projectUuid);
                 if (project == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                    return Response.status(Response.Status.NOT_FOUND)
+                            .entity("The project could not be found.")
+                            .build();
                 }
                 requireAccess(qm, project);
             }
@@ -246,11 +287,19 @@ public class ComponentResource extends AbstractApiResource {
                     // throw it away
                 }
             }
-            final ComponentIdentity identity = new ComponentIdentity(packageURL, StringUtils.trimToNull(cpe),
-                    StringUtils.trimToNull(swidTagId), StringUtils.trimToNull(group), StringUtils.trimToNull(name),
+            final ComponentIdentity identity = new ComponentIdentity(
+                    packageURL,
+                    StringUtils.trimToNull(cpe),
+                    StringUtils.trimToNull(swidTagId),
+                    StringUtils.trimToNull(group),
+                    StringUtils.trimToNull(name),
                     StringUtils.trimToNull(version));
-            if (identity.getGroup() == null && identity.getName() == null && identity.getVersion() == null
-                    && identity.getPurl() == null && identity.getCpe() == null && identity.getSwidTagId() == null) {
+            if (identity.getGroup() == null
+                    && identity.getName() == null
+                    && identity.getVersion() == null
+                    && identity.getPurl() == null
+                    && identity.getCpe() == null
+                    && identity.getSwidTagId() == null) {
                 return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();
             } else {
                 final PaginatedResult result = qm.getComponents(
@@ -259,7 +308,9 @@ public class ComponentResource extends AbstractApiResource {
                         /* includeMetrics */ true,
                         excludeInactiveProjects,
                         onlyLatestProjectVersions);
-                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                return Response.ok(result.getObjects())
+                        .header(TOTAL_COUNT_HEADER, result.getTotal())
+                        .build();
             }
         }
     }
@@ -267,30 +318,37 @@ public class ComponentResource extends AbstractApiResource {
     @GET
     @Path("/hash/{hash}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Returns a list of components that have the specified hash value",
-            description = """
+    @Operation(summary = "Returns a list of components that have the specified hash value", description = """
                     <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
-                    <p><strong>Deprecated</strong>! Use <code>/api/v2/components</code> instead.</p>"""
-    )
+                    <p><strong>Deprecated</strong>! Use <code>/api/v2/components</code> instead.</p>""")
     @PaginatedApi
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "A list of components that have the specified hash value",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Component.class))),
-                    headers = @Header(description = "The total number of components", name = TOTAL_COUNT_HEADER, schema = @Schema(format = "integer"))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A list of components that have the specified hash value",
+                        content = @Content(array = @ArraySchema(schema = @Schema(implementation = Component.class))),
+                        headers =
+                                @Header(
+                                        description = "The total number of components",
+                                        name = TOTAL_COUNT_HEADER,
+                                        schema = @Schema(format = "integer"))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized")
+            })
     @Deprecated(since = "5.0.0", forRemoval = true)
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByHash(
-            @Parameter(description = "The MD5, SHA-1, SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-384, SHA3-512, BLAKE2b-256, BLAKE2b-384, BLAKE2b-512, or BLAKE3 hash of the component to retrieve", required = true)
-            @PathParam("hash") String hash) {
+            @Parameter(
+                            description =
+                                    "The MD5, SHA-1, SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-384, SHA3-512, BLAKE2b-256, BLAKE2b-384, BLAKE2b-512, BLAKE3, Streebog-256, or Streebog-512 hash of the component to retrieve",
+                            required = true)
+                    @PathParam("hash")
+                    String hash) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getComponentByHash(hash);
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            return Response.ok(result.getObjects())
+                    .header(TOTAL_COUNT_HEADER, result.getTotal())
+                    .build();
         }
     }
 
@@ -300,25 +358,34 @@ public class ComponentResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Creates a new component",
-            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "The created component",
-                    content = @Content(schema = @Schema(implementation = Component.class))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The project could not be found")
-    })
-    @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT,
-            Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE})
-    public Response createComponent(@Parameter(description = "The UUID of the project to create a component for", schema = @Schema(format = "uuid"), required = true)
-                                    @PathParam("uuid") @ValidUuid String uuid, Component jsonComponent) {
+            description =
+                    "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "201",
+                        description = "The created component",
+                        content = @Content(schema = @Schema(implementation = Component.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(responseCode = "404", description = "The project could not be found")
+            })
+    @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE})
+    public Response createComponent(
+            @Parameter(
+                            description = "The UUID of the project to create a component for",
+                            schema = @Schema(format = "uuid"),
+                            required = true)
+                    @PathParam("uuid")
+                    @ValidUuid
+                    String uuid,
+            Component jsonComponent) {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonComponent, "authors"),
@@ -343,23 +410,31 @@ public class ComponentResource extends AbstractApiResource {
                 validator.validateProperty(jsonComponent, "sha512"),
                 validator.validateProperty(jsonComponent, "sha3_256"),
                 validator.validateProperty(jsonComponent, "sha3_384"),
-                validator.validateProperty(jsonComponent, "sha3_512")
-        );
+                validator.validateProperty(jsonComponent, "sha3_512"),
+                validator.validateProperty(jsonComponent, "blake2b_256"),
+                validator.validateProperty(jsonComponent, "blake2b_384"),
+                validator.validateProperty(jsonComponent, "blake2b_512"),
+                validator.validateProperty(jsonComponent, "blake3"),
+                validator.validateProperty(jsonComponent, "streebog_256"),
+                validator.validateProperty(jsonComponent, "streebog_512"));
 
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 Component parent = null;
-                if (jsonComponent.getParent() != null && jsonComponent.getParent().getUuid() != null) {
-                    parent = qm.getObjectByUuid(Component.class, jsonComponent.getParent().getUuid());
+                if (jsonComponent.getParent() != null
+                        && jsonComponent.getParent().getUuid() != null) {
+                    parent = qm.getObjectByUuid(
+                            Component.class, jsonComponent.getParent().getUuid());
                 }
                 final Project project = qm.getObjectByUuid(Project.class, uuid);
                 if (project == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                    return Response.status(Response.Status.NOT_FOUND)
+                            .entity("The project could not be found.")
+                            .build();
                 }
                 requireAccess(qm, project);
                 if (project.getCollectionLogic() != null) {
-                    return Response
-                            .status(Response.Status.BAD_REQUEST)
+                    return Response.status(Response.Status.BAD_REQUEST)
                             .entity("A collection project cannot contain components.")
                             .build();
                 }
@@ -388,6 +463,12 @@ public class ComponentResource extends AbstractApiResource {
                 component.setSha3_256(StringUtils.trimToNull(jsonComponent.getSha3_256()));
                 component.setSha3_384(StringUtils.trimToNull(jsonComponent.getSha3_384()));
                 component.setSha3_512(StringUtils.trimToNull(jsonComponent.getSha3_512()));
+                component.setBlake2b_256(StringUtils.trimToNull(jsonComponent.getBlake2b_256()));
+                component.setBlake2b_384(StringUtils.trimToNull(jsonComponent.getBlake2b_384()));
+                component.setBlake2b_512(StringUtils.trimToNull(jsonComponent.getBlake2b_512()));
+                component.setBlake3(StringUtils.trimToNull(jsonComponent.getBlake3()));
+                component.setStreebog_256(StringUtils.trimToNull(jsonComponent.getStreebog_256()));
+                component.setStreebog_512(StringUtils.trimToNull(jsonComponent.getStreebog_512()));
                 if (resolvedLicense != null) {
                     component.setLicense(null);
                     component.setLicenseExpression(null);
@@ -409,7 +490,9 @@ public class ComponentResource extends AbstractApiResource {
 
                 qm.createComponent(component, true);
 
-                return Response.status(Response.Status.CREATED).entity(component).build();
+                return Response.status(Response.Status.CREATED)
+                        .entity(component)
+                        .build();
             });
         }
     }
@@ -419,21 +502,24 @@ public class ComponentResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Updates a component",
-            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "The updated component",
-                    content = @Content(schema = @Schema(implementation = Component.class))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The UUID of the component could not be found"),
-    })
+            description =
+                    "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "The updated component",
+                        content = @Content(schema = @Schema(implementation = Component.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(responseCode = "404", description = "The UUID of the component could not be found"),
+            })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE})
     public Response updateComponent(Component jsonComponent) {
         final Validator validator = super.getValidator();
@@ -454,10 +540,17 @@ public class ComponentResource extends AbstractApiResource {
                 validator.validateProperty(jsonComponent, "md5"),
                 validator.validateProperty(jsonComponent, "sha1"),
                 validator.validateProperty(jsonComponent, "sha256"),
+                validator.validateProperty(jsonComponent, "sha384"),
                 validator.validateProperty(jsonComponent, "sha512"),
                 validator.validateProperty(jsonComponent, "sha3_256"),
-                validator.validateProperty(jsonComponent, "sha3_512")
-        );
+                validator.validateProperty(jsonComponent, "sha3_384"),
+                validator.validateProperty(jsonComponent, "sha3_512"),
+                validator.validateProperty(jsonComponent, "blake2b_256"),
+                validator.validateProperty(jsonComponent, "blake2b_384"),
+                validator.validateProperty(jsonComponent, "blake2b_512"),
+                validator.validateProperty(jsonComponent, "blake3"),
+                validator.validateProperty(jsonComponent, "streebog_256"),
+                validator.validateProperty(jsonComponent, "streebog_512"));
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Component component = qm.getObjectByUuid(Component.class, jsonComponent.getUuid());
@@ -489,6 +582,12 @@ public class ComponentResource extends AbstractApiResource {
                     component.setSha3_256(StringUtils.trimToNull(jsonComponent.getSha3_256()));
                     component.setSha3_384(StringUtils.trimToNull(jsonComponent.getSha3_384()));
                     component.setSha3_512(StringUtils.trimToNull(jsonComponent.getSha3_512()));
+                    component.setBlake2b_256(StringUtils.trimToNull(jsonComponent.getBlake2b_256()));
+                    component.setBlake2b_384(StringUtils.trimToNull(jsonComponent.getBlake2b_384()));
+                    component.setBlake2b_512(StringUtils.trimToNull(jsonComponent.getBlake2b_512()));
+                    component.setBlake3(StringUtils.trimToNull(jsonComponent.getBlake3()));
+                    component.setStreebog_256(StringUtils.trimToNull(jsonComponent.getStreebog_256()));
+                    component.setStreebog_512(StringUtils.trimToNull(jsonComponent.getStreebog_512()));
                     component.setExternalReferences(jsonComponent.getExternalReferences());
 
                     final License resolvedLicense = qm.getLicense(jsonComponent.getLicense());
@@ -519,7 +618,9 @@ public class ComponentResource extends AbstractApiResource {
 
                     return Response.ok(component).build();
                 } else {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
+                    return Response.status(Response.Status.NOT_FOUND)
+                            .entity("The UUID of the component could not be found.")
+                            .build();
                 }
             });
         }
@@ -531,21 +632,29 @@ public class ComponentResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Deletes a component",
-            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Component removed successfully"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The UUID of the component could not be found")
-    })
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>")
+    @ApiResponses(
+            value = {
+                @ApiResponse(responseCode = "204", description = "Component removed successfully"),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(responseCode = "404", description = "The UUID of the component could not be found")
+            })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE})
     public Response deleteComponent(
-            @Parameter(description = "The UUID of the component to delete", schema = @Schema(format = "uuid"), required = true)
-            @PathParam("uuid") @ValidUuid String uuid) {
+            @Parameter(
+                            description = "The UUID of the component to delete",
+                            schema = @Schema(format = "uuid"),
+                            required = true)
+                    @PathParam("uuid")
+                    @ValidUuid
+                    String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Component component = qm.getObjectByUuid(Component.class, uuid, Component.FetchGroup.ALL.name());
@@ -557,7 +666,9 @@ public class ComponentResource extends AbstractApiResource {
                     }
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
+                    return Response.status(Response.Status.NOT_FOUND)
+                            .entity("The UUID of the component could not be found.")
+                            .build();
                 }
             });
         }
@@ -568,18 +679,18 @@ public class ComponentResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Requests the identification of internal components in the portfolio",
-            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong> or <strong>SYSTEM_CONFIGURATION_READ</strong></p>"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Identification requested successfully"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
+            description =
+                    "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong> or <strong>SYSTEM_CONFIGURATION_READ</strong></p>")
+    @ApiResponses(
+            value = {
+                @ApiResponse(responseCode = "204", description = "Identification requested successfully"),
+                @ApiResponse(responseCode = "401", description = "Unauthorized")
+            })
     @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response identifyInternalComponents() {
-        dexEngine.createRun(
-                new CreateWorkflowRunRequest<>(IdentifyInternalComponentsWorkflow.class)
-                        .withWorkflowInstanceId(IdentifyInternalComponentsWorkflow.INSTANCE_ID)
-                        .withLabels(Map.of(WF_LABEL_TRIGGERED_BY, getPrincipal().getName())));
+        dexEngine.createRun(new CreateWorkflowRunRequest<>(IdentifyInternalComponentsWorkflow.class)
+                .withWorkflowInstanceId(IdentifyInternalComponentsWorkflow.INSTANCE_ID)
+                .withLabels(Map.of(WF_LABEL_TRIGGERED_BY, getPrincipal().getName())));
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
@@ -588,31 +699,48 @@ public class ComponentResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns the expanded dependency graph to every occurrence of a component",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "The expanded dependency graph to every occurrence of a component",
-                    content = @Content(schema = @Schema(type = "object"))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "- The UUID of the project could not be found\n- The UUID of the component could not be found")
-    })
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "The expanded dependency graph to every occurrence of a component",
+                        content = @Content(schema = @Schema(type = "object"))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(
+                        responseCode = "404",
+                        description =
+                                "- The UUID of the project could not be found\n- The UUID of the component could not be found")
+            })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getDependencyGraphForComponent(
-            @Parameter(description = "The UUID of the project to get the expanded dependency graph for", schema = @Schema(type = "string", format = "uuid"), required = true)
-            @PathParam("projectUuid") @ValidUuid String projectUuid,
-            @Parameter(description = "List of UUIDs of the components (separated by |) to get the expanded dependency graph for", required = true)
-            @PathParam("componentUuids") @ValidUuid String componentUuids) {
+            @Parameter(
+                            description = "The UUID of the project to get the expanded dependency graph for",
+                            schema = @Schema(type = "string", format = "uuid"),
+                            required = true)
+                    @PathParam("projectUuid")
+                    @ValidUuid
+                    String projectUuid,
+            @Parameter(
+                            description =
+                                    "List of UUIDs of the components (separated by |) to get the expanded dependency graph for",
+                            required = true)
+                    @PathParam("componentUuids")
+                    @ValidUuid
+                    String componentUuids) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             if (project == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The UUID of the project could not be found.")
+                        .build();
             }
             requireAccess(qm, project);
 
@@ -621,7 +749,9 @@ public class ComponentResource extends AbstractApiResource {
             for (String uuid : componentUuidsSplit) {
                 final Component component = qm.getObjectByUuid(Component.class, uuid);
                 if (component == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
+                    return Response.status(Response.Status.NOT_FOUND)
+                            .entity("The UUID of the component could not be found.")
+                            .build();
                 }
                 components.add(component);
             }
@@ -637,22 +767,32 @@ public class ComponentResource extends AbstractApiResource {
             summary = "Returns the occurrences of a component",
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
     @PaginatedApi
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "The occurrences of a component",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ComponentOccurrence.class)))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Component could not be found",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-    })
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "The occurrences of a component",
+                        content =
+                                @Content(
+                                        array =
+                                                @ArraySchema(
+                                                        schema = @Schema(implementation = ComponentOccurrence.class)))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "Component could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+            })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getOccurrences(@PathParam("uuid") final UUID uuid) {
         final List<ComponentOccurrence> occurrences = withJdbiHandle(getAlpineRequest(), handle -> {
@@ -662,8 +802,8 @@ public class ComponentResource extends AbstractApiResource {
             return dao.getOccurrences(uuid);
         });
 
-        final long totalCount = occurrences.isEmpty() ? 0 : occurrences.getFirst().getTotalCount();
+        final long totalCount =
+                occurrences.isEmpty() ? 0 : occurrences.getFirst().getTotalCount();
         return Response.ok(occurrences).header(TOTAL_COUNT_HEADER, totalCount).build();
     }
-
 }

@@ -38,7 +38,8 @@ final class WorkflowRunHistoryEntryRowMapper implements RowMapper<WorkflowRunHis
 
     @Override
     public void init(final ConfigRegistry registry) {
-        workflowEventColumnMapper = registry.get(ColumnMappers.class).findFor(WorkflowEvent.class).orElseThrow();
+        workflowEventColumnMapper =
+                registry.get(ColumnMappers.class).findFor(WorkflowEvent.class).orElseThrow();
     }
 
     @Override
@@ -46,8 +47,6 @@ final class WorkflowRunHistoryEntryRowMapper implements RowMapper<WorkflowRunHis
         requireNonNull(workflowEventColumnMapper);
 
         return new WorkflowRunHistoryEntry(
-                rs.getInt("sequence_number"),
-                workflowEventColumnMapper.map(rs, "event", ctx));
+                rs.getInt("sequence_number"), workflowEventColumnMapper.map(rs, "event", ctx));
     }
-
 }

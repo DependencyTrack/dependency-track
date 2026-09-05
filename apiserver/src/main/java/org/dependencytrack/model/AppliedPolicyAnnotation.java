@@ -34,7 +34,6 @@ import java.util.Date;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AppliedPolicyAnnotation(
         String policyName,
-        @JsonSerialize(using = Iso8601DateSerializer.class)
-        Date appliedAt,
-        @Nullable String annotator) implements Serializable {
-}
+        @JsonSerialize(using = Iso8601DateSerializer.class) Date appliedAt,
+        @Nullable String annotator)
+        implements Serializable {}

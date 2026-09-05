@@ -49,5 +49,4 @@ public class PolicyAnnotationsJsonConverter extends AbstractJsonConverter<List<A
         final List<AppliedPolicyAnnotation> annotations = super.convertToAttribute(datastoreValue);
         return annotations != null ? annotations : List.of();
     }
-
 }

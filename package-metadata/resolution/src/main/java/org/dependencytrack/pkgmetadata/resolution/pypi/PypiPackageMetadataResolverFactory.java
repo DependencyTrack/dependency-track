@@ -33,6 +33,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class PypiPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -42,6 +43,11 @@ public final class PypiPackageMetadataResolverFactory implements PackageMetadata
     @Override
     public String extensionName() {
         return "pypi";
+    }
+
+    @Override
+    public String displayName() {
+        return "PyPI";
     }
 
     @Override
@@ -63,8 +69,8 @@ public final class PypiPackageMetadataResolverFactory implements PackageMetadata
                     .withNamespace(purl.getNamespace())
                     .withName(purl.getName())
                     .withVersion(purl.getVersion());
-            final String fileName = purl.getQualifiers() != null
-                    ? purl.getQualifiers().get("file_name") : null;
+            final String fileName =
+                    purl.getQualifiers() != null ? purl.getQualifiers().get("file_name") : null;
             if (fileName != null) {
                 builder.withQualifier("file_name", fileName);
             }
@@ -91,7 +97,6 @@ public final class PypiPackageMetadataResolverFactory implements PackageMetadata
 
     @Override
     public PackageMetadataResolver create() {
-        return new PypiPackageMetadataResolver(objectMapper, cachingHttpClient);
+        return new PypiPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

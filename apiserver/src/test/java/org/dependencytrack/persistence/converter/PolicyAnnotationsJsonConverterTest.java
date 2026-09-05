@@ -47,8 +47,7 @@ class PolicyAnnotationsJsonConverterTest {
                         AppliedPolicyAnnotation::annotator,
                         AppliedPolicyAnnotation::appliedAt)
                 .containsExactly(
-                        tuple("gem-policy", "author-a", APPLIED_AT),
-                        tuple("csra-policy", "author-b", APPLIED_AT));
+                        tuple("gem-policy", "author-a", APPLIED_AT), tuple("csra-policy", "author-b", APPLIED_AT));
     }
 
     @Test
@@ -59,5 +58,4 @@ class PolicyAnnotationsJsonConverterTest {
         assertThat(converter.convertToDatastore(null)).isNull();
         assertThat(converter.convertToDatastore(List.of())).isNull();
     }
-
 }

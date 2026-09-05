@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class CargoPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -41,6 +42,11 @@ public final class CargoPackageMetadataResolverFactory implements PackageMetadat
     @Override
     public String extensionName() {
         return "cargo";
+    }
+
+    @Override
+    public String displayName() {
+        return "Cargo";
     }
 
     @Override
@@ -75,8 +81,7 @@ public final class CargoPackageMetadataResolverFactory implements PackageMetadat
 
     @Override
     public void init(ServiceRegistry serviceRegistry) {
-        objectMapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
                 serviceRegistry.require(CacheManager.class).getCache("responses"));
@@ -84,7 +89,6 @@ public final class CargoPackageMetadataResolverFactory implements PackageMetadat
 
     @Override
     public PackageMetadataResolver create() {
-        return new CargoPackageMetadataResolver(objectMapper, cachingHttpClient);
+        return new CargoPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

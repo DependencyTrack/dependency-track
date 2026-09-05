@@ -31,6 +31,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -55,7 +56,7 @@ class DexEngineMetricsCollectorTest {
         dataSource.setPassword(postgresContainer.getPassword());
         dataSource.setDatabaseName(postgresContainer.getDatabaseName());
 
-        jdbi = JdbiFactory.create(dataSource, new SimplePageTokenEncoder());
+        jdbi = JdbiFactory.create(dataSource, Duration.ofSeconds(10), new SimplePageTokenEncoder());
         meterRegistry = new SimpleMeterRegistry();
     }
 
@@ -68,31 +69,47 @@ class DexEngineMetricsCollectorTest {
                     values ('a0000000-0000-0000-0000-000000000001', 'wf-a', 1, 'default', 'RUNNING', now())
                          , ('a0000000-0000-0000-0000-000000000002', 'wf-a', 1, 'default', 'RUNNING', now())
                          , ('a0000000-0000-0000-0000-000000000003', 'wf-a', 1, 'default', 'CREATED', now())
+                         , ('a0000000-0000-0000-0000-000000000004', 'wf-a', 1, 'default', 'SUSPENDED', now())
                          , ('b0000000-0000-0000-0000-000000000001', 'wf-b', 1, 'default', 'COMPLETED', now())
                          , ('b0000000-0000-0000-0000-000000000002', 'wf-b', 1, 'default', 'FAILED', now())
                     """);
         });
 
-        try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+        try (final var collector =
+                new DexEngineMetricsCollector(jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
                     .atMost(Duration.ofSeconds(5))
                     .ignoreException(MeterNotFoundException.class)
                     .untilAsserted(() -> {
-                        assertThat(meterRegistry.get("dt.dex.engine.workflow.runs.current")
-                                .tag("workflowName", "wf-a").tag("status", "running")
-                                .gauge().value()).isEqualTo(2.0);
-                        assertThat(meterRegistry.get("dt.dex.engine.workflow.runs.current")
-                                .tag("workflowName", "wf-a").tag("status", "created")
-                                .gauge().value()).isEqualTo(1.0);
-                        assertThat(meterRegistry.get("dt.dex.engine.workflow.runs.current")
-                                .tag("workflowName", "wf-b").tag("status", "completed")
-                                .gauge().value()).isEqualTo(1.0);
-                        assertThat(meterRegistry.get("dt.dex.engine.workflow.runs.current")
-                                .tag("workflowName", "wf-b").tag("status", "failed")
-                                .gauge().value()).isEqualTo(1.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.workflow.runs.current")
+                                        .tag("workflowName", "wf-a")
+                                        .tag("status", "running")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(2.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.workflow.runs.current")
+                                        .tag("workflowName", "wf-a")
+                                        .tag("status", "created")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(1.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.workflow.runs.current")
+                                        .tag("workflowName", "wf-a")
+                                        .tag("status", "suspended")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(1.0);
+
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.workflow.runs.current")
+                                        .gauges())
+                                .noneSatisfy(gauge -> assertThat(gauge.getId().getTag("workflowName"))
+                                        .isEqualTo("wf-b"));
                     });
         }
     }
@@ -108,23 +125,23 @@ class DexEngineMetricsCollectorTest {
                     """);
         });
 
-        try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+        try (final var collector =
+                new DexEngineMetricsCollector(jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("First Collection")
                     .atMost(Duration.ofSeconds(5))
                     .ignoreException(MeterNotFoundException.class)
                     .untilAsserted(() -> assertThat(meterRegistry
-                            .get("dt.dex.engine.workflow.runs.current")
-                            .tag("workflowName", "wf-a")
-                            .tag("status", "created")
-                            .gauge()
-                            .value())
+                                    .get("dt.dex.engine.workflow.runs.current")
+                                    .tag("workflowName", "wf-a")
+                                    .tag("status", "created")
+                                    .gauge()
+                                    .value())
                             .isEqualTo(2.0));
 
             jdbi.useHandle(handle -> handle.execute("""
-                    update dex_workflow_run set status = 'COMPLETED', completed_at = now()
+                    update dex_workflow_run set status = 'RUNNING', started_at = now()
                     """));
 
             await("Second Collection")
@@ -132,20 +149,58 @@ class DexEngineMetricsCollectorTest {
                     .ignoreException(MeterNotFoundException.class)
                     .untilAsserted(() -> {
                         assertThat(meterRegistry
-                                .get("dt.dex.engine.workflow.runs.current")
-                                .tag("workflowName", "wf-a")
-                                .tag("status", "completed")
-                                .gauge()
-                                .value())
+                                        .get("dt.dex.engine.workflow.runs.current")
+                                        .tag("workflowName", "wf-a")
+                                        .tag("status", "running")
+                                        .gauge()
+                                        .value())
                                 .isEqualTo(2.0);
 
                         assertThat(meterRegistry
-                                .find("dt.dex.engine.workflow.runs.current")
-                                .tag("workflowName", "wf-a")
-                                .tag("status", "created")
-                                .gauge())
+                                        .find("dt.dex.engine.workflow.runs.current")
+                                        .tag("workflowName", "wf-a")
+                                        .tag("status", "created")
+                                        .gauge())
                                 .isNull();
                     });
+        }
+    }
+
+    @Test
+    void shouldNotCollectWhenNotLeader() {
+        jdbi.useHandle(handle -> {
+            handle.execute("select dex_create_workflow_task_queue('default', cast(100 as smallint))");
+            handle.execute("""
+                    insert into dex_workflow_run(id, workflow_name, workflow_version, task_queue_name, status, created_at)
+                    values ('a0000000-0000-0000-0000-000000000001', 'wf-a', 1, 'default', 'CREATED', now())
+                    """);
+        });
+
+        final var leader = new AtomicBoolean(true);
+
+        try (final var collector =
+                new DexEngineMetricsCollector(jdbi, leader::get, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+            collector.start();
+
+            await("Collection While Leader")
+                    .atMost(Duration.ofSeconds(5))
+                    .ignoreException(MeterNotFoundException.class)
+                    .untilAsserted(() -> assertThat(meterRegistry
+                                    .get("dt.dex.engine.workflow.runs.current")
+                                    .tag("workflowName", "wf-a")
+                                    .tag("status", "created")
+                                    .gauge()
+                                    .value())
+                            .isEqualTo(1.0));
+
+            leader.set(false);
+
+            await("Gauges cleared after losing leadership")
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(() -> assertThat(meterRegistry
+                                    .find("dt.dex.engine.workflow.runs.current")
+                                    .gauges())
+                            .isEmpty());
         }
     }
 
@@ -170,27 +225,39 @@ class DexEngineMetricsCollectorTest {
                     """);
         });
 
-        try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+        try (final var collector =
+                new DexEngineMetricsCollector(jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
                     .atMost(Duration.ofSeconds(5))
                     .ignoreException(MeterNotFoundException.class)
                     .untilAsserted(() -> {
-                        assertThat(meterRegistry.get("dt.dex.engine.workflow.task.queue.capacity")
-                                .tag("queueName", "queue-a")
-                                .gauge().value()).isEqualTo(50.0);
-                        assertThat(meterRegistry.get("dt.dex.engine.workflow.task.queue.capacity")
-                                .tag("queueName", "queue-b")
-                                .gauge().value()).isEqualTo(75.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.workflow.task.queue.capacity")
+                                        .tag("queueName", "queue-a")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(50.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.workflow.task.queue.capacity")
+                                        .tag("queueName", "queue-b")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(75.0);
 
-                        assertThat(meterRegistry.get("dt.dex.engine.workflow.task.queue.depth")
-                                .tag("queueName", "queue-a")
-                                .gauge().value()).isEqualTo(2.0);
-                        assertThat(meterRegistry.get("dt.dex.engine.workflow.task.queue.depth")
-                                .tag("queueName", "queue-b")
-                                .gauge().value()).isEqualTo(1.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.workflow.task.queue.depth")
+                                        .tag("queueName", "queue-a")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(2.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.workflow.task.queue.depth")
+                                        .tag("queueName", "queue-b")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(1.0);
                     });
         }
     }
@@ -217,27 +284,39 @@ class DexEngineMetricsCollectorTest {
                     """);
         });
 
-        try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+        try (final var collector =
+                new DexEngineMetricsCollector(jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
                     .atMost(Duration.ofSeconds(5))
                     .ignoreException(MeterNotFoundException.class)
                     .untilAsserted(() -> {
-                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.capacity")
-                                .tag("queueName", "act-queue-a")
-                                .gauge().value()).isEqualTo(30.0);
-                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.capacity")
-                                .tag("queueName", "act-queue-b")
-                                .gauge().value()).isEqualTo(60.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.activity.task.queue.capacity")
+                                        .tag("queueName", "act-queue-a")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(30.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.activity.task.queue.capacity")
+                                        .tag("queueName", "act-queue-b")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(60.0);
 
-                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.depth")
-                                .tag("queueName", "act-queue-a")
-                                .gauge().value()).isEqualTo(2.0);
-                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.depth")
-                                .tag("queueName", "act-queue-b")
-                                .gauge().value()).isEqualTo(1.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.activity.task.queue.depth")
+                                        .tag("queueName", "act-queue-a")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(2.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.activity.task.queue.depth")
+                                        .tag("queueName", "act-queue-b")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(1.0);
                     });
         }
     }
@@ -255,7 +334,7 @@ class DexEngineMetricsCollectorTest {
                     values ('a0000000-0000-0000-0000-000000000001', 'wf-a', 1, 'default', 'RUNNING', now())
                          , ('a0000000-0000-0000-0000-000000000002', 'wf-a', 1, 'default', 'RUNNING', now())
                     """);
-            
+
             handle.execute("""
                     insert into dex_activity_task(queue_name, workflow_run_id, created_event_id, activity_name, priority, retry_policy, status, visible_from, created_at)
                     values ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 1, 'act-a', 0, ''::bytea, 'CREATED', now() - interval '1 second', now())
@@ -266,23 +345,31 @@ class DexEngineMetricsCollectorTest {
                     """);
         });
 
-        try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+        try (final var collector =
+                new DexEngineMetricsCollector(jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
                     .atMost(Duration.ofSeconds(5))
                     .ignoreException(MeterNotFoundException.class)
                     .untilAsserted(() -> {
-                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.backlog")
-                                .tag("queueName", "act-queue-a")
-                                .gauge().value()).isEqualTo(2.0);
-                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.backlog")
-                                .tag("queueName", "act-queue-b")
-                                .gauge().value()).isEqualTo(1.0);
-                        assertThat(meterRegistry.find("dt.dex.engine.activity.task.queue.backlog")
-                                .tag("queueName", "act-queue-empty")
-                                .gauge()).isNull();
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.activity.task.queue.backlog")
+                                        .tag("queueName", "act-queue-a")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(2.0);
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.activity.task.queue.backlog")
+                                        .tag("queueName", "act-queue-b")
+                                        .gauge()
+                                        .value())
+                                .isEqualTo(1.0);
+                        assertThat(meterRegistry
+                                        .find("dt.dex.engine.activity.task.queue.backlog")
+                                        .tag("queueName", "act-queue-empty")
+                                        .gauge())
+                                .isNull();
                     });
         }
     }
@@ -307,28 +394,34 @@ class DexEngineMetricsCollectorTest {
                     """);
         });
 
-        try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+        try (final var collector =
+                new DexEngineMetricsCollector(jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
                     .atMost(Duration.ofSeconds(5))
                     .ignoreException(MeterNotFoundException.class)
                     .untilAsserted(() -> {
-                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.backlog.age")
-                                .tag("queueName", "act-queue-a")
-                                .gauge().value()).isCloseTo(5.0, within(2.0));
-                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.backlog.age")
-                                .tag("queueName", "act-queue-b")
-                                .gauge().value()).isCloseTo(2.0, within(2.0));
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.activity.task.queue.backlog.age")
+                                        .tag("queueName", "act-queue-a")
+                                        .gauge()
+                                        .value())
+                                .isCloseTo(5.0, within(2.0));
+                        assertThat(meterRegistry
+                                        .get("dt.dex.engine.activity.task.queue.backlog.age")
+                                        .tag("queueName", "act-queue-b")
+                                        .gauge()
+                                        .value())
+                                .isCloseTo(2.0, within(2.0));
                     });
         }
     }
 
     @Test
     void shouldHandleEmptyDatabase() {
-        try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+        try (final var collector =
+                new DexEngineMetricsCollector(jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
@@ -336,13 +429,27 @@ class DexEngineMetricsCollectorTest {
                     .atMost(Duration.ofSeconds(5))
                     .ignoreException(MeterNotFoundException.class)
                     .untilAsserted(() -> {
-                        assertThat(meterRegistry.find("dt.dex.engine.workflow.runs.current").gauge()).isNull();
-                        assertThat(meterRegistry.find("dt.dex.engine.workflow.task.queue.depth").gauge()).isNull();
-                        assertThat(meterRegistry.find("dt.dex.engine.activity.task.queue.depth").gauge()).isNull();
-                        assertThat(meterRegistry.find("dt.dex.engine.activity.task.queue.backlog").gauge()).isNull();
-                        assertThat(meterRegistry.find("dt.dex.engine.activity.task.queue.backlog.age").gauge()).isNull();
+                        assertThat(meterRegistry
+                                        .find("dt.dex.engine.workflow.runs.current")
+                                        .gauge())
+                                .isNull();
+                        assertThat(meterRegistry
+                                        .find("dt.dex.engine.workflow.task.queue.depth")
+                                        .gauge())
+                                .isNull();
+                        assertThat(meterRegistry
+                                        .find("dt.dex.engine.activity.task.queue.depth")
+                                        .gauge())
+                                .isNull();
+                        assertThat(meterRegistry
+                                        .find("dt.dex.engine.activity.task.queue.backlog")
+                                        .gauge())
+                                .isNull();
+                        assertThat(meterRegistry
+                                        .find("dt.dex.engine.activity.task.queue.backlog.age")
+                                        .gauge())
+                                .isNull();
                     });
         }
     }
-
 }

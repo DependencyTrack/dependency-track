@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1.vo;
 
 import alpine.model.Permission;
 import alpine.model.Team;
+
 import jakarta.annotation.Nonnull;
 
 import java.util.List;
@@ -27,12 +28,12 @@ import java.util.UUID;
 
 /**
  * Response-Object that contains only a subset of a {@link Team}
- * 
+ *
  * @author Ronny "Sephiroth" Perinke &lt;sephiroth&#64;sephiroth-j.de&gt;
  * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/861">gh-issue 861</a>
  */
 public final class TeamSelfResponse {
-    
+
     private final UUID uuid;
     private final String name;
     private final List<Permission> permissions;

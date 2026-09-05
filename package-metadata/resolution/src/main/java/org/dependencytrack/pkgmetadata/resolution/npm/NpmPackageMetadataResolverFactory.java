@@ -33,6 +33,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class NpmPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -41,6 +42,11 @@ public final class NpmPackageMetadataResolverFactory implements PackageMetadataR
 
     @Override
     public String extensionName() {
+        return "npm";
+    }
+
+    @Override
+    public String displayName() {
         return "npm";
     }
 
@@ -95,7 +101,6 @@ public final class NpmPackageMetadataResolverFactory implements PackageMetadataR
 
     @Override
     public PackageMetadataResolver create() {
-        return new NpmPackageMetadataResolver(objectMapper, cachingHttpClient);
+        return new NpmPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

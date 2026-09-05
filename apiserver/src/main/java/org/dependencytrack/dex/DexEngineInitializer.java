@@ -20,9 +20,6 @@ package org.dependencytrack.dex;
 
 import io.github.resilience4j.core.IntervalFunction;
 import io.micrometer.core.instrument.MeterRegistry;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
 import org.dependencytrack.analysis.AnalyzeProjectWorkflow;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.common.ConfigKeys;
@@ -31,6 +28,9 @@ import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.common.pagination.SimplePageTokenEncoder;
 import org.dependencytrack.dex.activity.DeleteFilesActivity;
+import org.dependencytrack.dex.api.Activity;
+import org.dependencytrack.dex.api.ActivitySpec;
+import org.dependencytrack.dex.api.payload.PayloadConverter;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.DexEngineConfig;
 import org.dependencytrack.dex.engine.api.DexEngineFactory;
@@ -50,6 +50,7 @@ import org.dependencytrack.notification.ProcessScheduledNotificationRuleActivity
 import org.dependencytrack.notification.ProcessScheduledNotificationsWorkflow;
 import org.dependencytrack.notification.PublishNotificationActivity;
 import org.dependencytrack.notification.PublishNotificationWorkflow;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.pkgmetadata.FetchPackageMetadataResolutionCandidatesActivity;
@@ -64,6 +65,7 @@ import org.dependencytrack.policy.vulnerability.SyncVulnPolicyBundleWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.dependencytrack.proto.internal.workflow.v1.EvalProjectPoliciesArg;
+import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolutionCandidatesArg;
 import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolutionCandidatesRes;
 import org.dependencytrack.proto.internal.workflow.v1.FetchProjectMetricsUpdateCandidatesRes;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
@@ -80,6 +82,7 @@ import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationActivit
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg;
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataActivityArg;
+import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowArg;
@@ -100,6 +103,10 @@ import org.eclipse.microprofile.config.Config;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -131,7 +138,11 @@ public final class DexEngineInitializer implements ServletContextListener {
     private final HealthCheckRegistry healthCheckRegistry;
     private @Nullable DexEngine engine;
 
-    public DexEngineInitializer(Config config, DataSourceRegistry dataSourceRegistry, MeterRegistry meterRegistry, HealthCheckRegistry healthCheckRegistry) {
+    public DexEngineInitializer(
+            Config config,
+            DataSourceRegistry dataSourceRegistry,
+            MeterRegistry meterRegistry,
+            HealthCheckRegistry healthCheckRegistry) {
         this.config = config;
         this.dataSourceRegistry = dataSourceRegistry;
         this.meterRegistry = meterRegistry;
@@ -157,14 +168,14 @@ public final class DexEngineInitializer implements ServletContextListener {
         final var secretManager = (SecretManager) servletContext.getAttribute(SecretManager.class.getName());
         requireNonNull(secretManager, "secretManager has not been initialized");
 
-        final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
-                Map.of("baseUrl", () -> withJdbiHandle(
-                        handle -> handle
-                                .attach(ConfigPropertyDao.class)
-                                .getOptionalValue(GENERAL_BASE_URL)
-                                .orElse(null))));
+        final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(Map.of(
+                NotificationTemplateVariables.BASE_URL,
+                () -> withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                        .getOptionalValue(GENERAL_BASE_URL)
+                        .orElse(null))));
 
-        final var engineFactory = ServiceLoader.load(DexEngineFactory.class).findFirst().orElseThrow();
+        final var engineFactory =
+                ServiceLoader.load(DexEngineFactory.class).findFirst().orElseThrow();
         engine = engineFactory.create(engineConfig);
 
         engine.registerWorkflow(
@@ -173,20 +184,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter(),
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
-                new IdentifyInternalComponentsWorkflow(),
-                voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(1));
+                new IdentifyInternalComponentsWorkflow(), voidConverter(), voidConverter(), Duration.ofMinutes(1));
         engine.registerWorkflow(
-                new ImportBomWorkflow(),
-                protoConverter(ImportBomArg.class),
-                voidConverter(),
-                Duration.ofMinutes(1));
+                new ImportBomWorkflow(), protoConverter(ImportBomArg.class), voidConverter(), Duration.ofMinutes(1));
         engine.registerWorkflow(
-                new ImportVexWorkflow(),
-                protoConverter(ImportVexArg.class),
-                voidConverter(),
-                Duration.ofMinutes(1));
+                new ImportVexWorkflow(), protoConverter(ImportVexArg.class), voidConverter(), Duration.ofMinutes(1));
         engine.registerWorkflow(
                 new MirrorVulnDataSourceWorkflow(),
                 protoConverter(MirrorVulnDataSourceArg.class),
@@ -209,7 +211,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
                 new ResolvePackageMetadataWorkflow(),
-                voidConverter(),
+                protoConverter(ResolvePackageMetadataWorkflowArg.class),
                 voidConverter(),
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
@@ -218,139 +220,119 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter(),
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
-                new UpdatePortfolioMetricsWorkflow(),
-                voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(1));
+                new UpdatePortfolioMetricsWorkflow(), voidConverter(), voidConverter(), Duration.ofMinutes(1));
         engine.registerWorkflow(
                 new VulnAnalysisWorkflow(),
                 protoConverter(VulnAnalysisWorkflowArg.class),
                 voidConverter(),
                 Duration.ofMinutes(1));
 
-        engine.registerActivity(
-                new IdentifyInternalComponentsActivity(),
-                voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(30));
-        engine.registerActivity(
+        registerActivity(engine, new IdentifyInternalComponentsActivity(), voidConverter(), voidConverter());
+        registerActivity(
+                engine,
                 new ImportBomActivity(
                         fileStorage,
                         engine,
-                        config.getOptionalValue("dt.tmp.delay-bom-processed-notification", boolean.class).orElse(false)),
+                        config.getOptionalValue("dt.tmp.delay-bom-processed-notification", boolean.class)
+                                .orElse(false)),
                 protoConverter(ImportBomArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
-                new ImportVexActivity(fileStorage),
-                protoConverter(ImportVexArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine, new ImportVexActivity(fileStorage), protoConverter(ImportVexArg.class), voidConverter());
+        registerActivity(
+                engine,
                 new DeleteFilesActivity(fileStorage),
                 protoConverter(DeleteFilesArgument.class),
-                voidConverter(),
-                Duration.ofMinutes(1));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new EvalProjectPoliciesActivity(new CelPolicyEngine()),
                 protoConverter(EvalProjectPoliciesArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new FetchPackageMetadataResolutionCandidatesActivity(pluginManager),
-                voidConverter(),
-                protoConverter(FetchPackageMetadataResolutionCandidatesRes.class),
-                Duration.ofMinutes(1));
-        engine.registerActivity(
+                protoConverter(FetchPackageMetadataResolutionCandidatesArg.class),
+                protoConverter(FetchPackageMetadataResolutionCandidatesRes.class));
+        registerActivity(
+                engine,
                 new FetchProjectMetricsUpdateCandidatesActivity(),
                 voidConverter(),
-                protoConverter(FetchProjectMetricsUpdateCandidatesRes.class),
-                Duration.ofMinutes(1));
-        engine.registerActivity(
+                protoConverter(FetchProjectMetricsUpdateCandidatesRes.class));
+        registerActivity(
+                engine,
                 new InvokeVulnAnalyzerActivity(fileStorage, pluginManager),
                 protoConverter(InvokeVulnAnalyzerArg.class),
-                protoConverter(InvokeVulnAnalyzerRes.class),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                protoConverter(InvokeVulnAnalyzerRes.class));
+        registerActivity(
+                engine,
                 new MirrorVulnDataSourceActivity(pluginManager),
                 protoConverter(MirrorVulnDataSourceArg.class),
-                voidConverter(),
-                // NB: Account for slow downloads, mainly of sources relying on data dumps.
-                // Activities can't heartbeat while blocked on I/O.
-                Duration.ofMinutes(15));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new MirrorKevDataSourceActivity(pluginManager),
                 protoConverter(MirrorKevDataSourceArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new PrepareVulnAnalysisActivity(fileStorage, pluginManager),
                 protoConverter(PrepareVulnAnalysisArg.class),
-                protoConverter(PrepareVulnAnalysisRes.class),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                protoConverter(PrepareVulnAnalysisRes.class));
+        registerActivity(
+                engine,
                 new ProcessScheduledNotificationRuleActivity(
                         engine,
                         fileStorage,
-                        config.getValue(ConfigKeys.NOTIFICATION_OUTBOX_RELAY_LARGE_NOTIFICATION_THRESHOLD_BYTES, int.class)),
+                        config.getValue(
+                                ConfigKeys.NOTIFICATION_OUTBOX_RELAY_LARGE_NOTIFICATION_THRESHOLD_BYTES, int.class)),
                 protoConverter(ProcessScheduledNotificationRuleArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new PublishNotificationActivity(
-                        pluginManager,
-                        fileStorage,
-                        secretManager::getSecretValue,
-                        templateRendererFactory),
+                        pluginManager, fileStorage, secretManager::getSecretValue, templateRendererFactory),
                 protoConverter(PublishNotificationActivityArg.class),
-                voidConverter(),
-                Duration.ofMinutes(1));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new ReconcileVulnAnalysisResultsActivity(
-                        fileStorage,
-                        pluginManager,
-                        new CelVulnerabilityPolicyEvaluator()),
+                        fileStorage, pluginManager, new CelVulnerabilityPolicyEvaluator()),
                 protoConverter(ReconcileVulnAnalysisResultsArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
-                new RefreshGlobalPortfolioMetricsActivity(),
-                voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
-                new RefreshVulnerabilityMetricsActivity(),
-                voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(engine, new RefreshGlobalPortfolioMetricsActivity(), voidConverter(), voidConverter());
+        registerActivity(engine, new RefreshVulnerabilityMetricsActivity(), voidConverter(), voidConverter());
+        registerActivity(
+                engine,
                 new ResolvePackageMetadataActivity(pluginManager, secretManager),
                 protoConverter(ResolvePackageMetadataActivityArg.class),
-                voidConverter(),
-                Duration.ofMinutes(10));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new SyncVulnPolicyBundleActivity(config, HttpClient.INSTANCE),
                 protoConverter(SyncVulnPolicyBundleArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new UpdateProjectMetricsActivity(),
                 protoConverter(UpdateProjectMetricsArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
 
-        ensureTaskQueues(engine, List.of(
-                new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1000),
-                new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1000),
-                new CreateTaskQueueRequest(TaskType.ACTIVITY, "artifact-imports", 25),
-                new CreateTaskQueueRequest(TaskType.ACTIVITY, "metrics-updates", 25),
-                new CreateTaskQueueRequest(TaskType.ACTIVITY, "notifications", 25),
-                new CreateTaskQueueRequest(TaskType.ACTIVITY, "package-metadata-resolutions", 25),
-                new CreateTaskQueueRequest(TaskType.ACTIVITY, "policy-evaluations", 25),
-                new CreateTaskQueueRequest(TaskType.ACTIVITY, "vuln-analyses", 25),
-                new CreateTaskQueueRequest(TaskType.ACTIVITY, "vuln-analysis-reconciliations", 25)));
+        ensureTaskQueues(
+                engine,
+                List.of(
+                        new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1000),
+                        new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1000),
+                        new CreateTaskQueueRequest(TaskType.ACTIVITY, "artifact-imports", 25),
+                        new CreateTaskQueueRequest(TaskType.ACTIVITY, "metrics-updates", 25),
+                        new CreateTaskQueueRequest(TaskType.ACTIVITY, "notifications", 25),
+                        new CreateTaskQueueRequest(TaskType.ACTIVITY, "package-metadata-resolutions", 25),
+                        new CreateTaskQueueRequest(TaskType.ACTIVITY, "policy-evaluations", 25),
+                        new CreateTaskQueueRequest(TaskType.ACTIVITY, "vuln-analyses", 25),
+                        new CreateTaskQueueRequest(TaskType.ACTIVITY, "vuln-analysis-reconciliations", 25)));
 
-        if (!config.getOptionalValue("dt.dex-engine.workers.enabled", boolean.class).orElse(true)) {
+        if (!config.getOptionalValue("dt.dex-engine.workers.enabled", boolean.class)
+                .orElse(true)) {
             LOGGER.info("Not registering task workers because they are disabled");
         } else {
             for (final String workerName : getWorkflowWorkerNames(config)) {
@@ -360,8 +342,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                 }
                 LOGGER.info("Registering workflow worker '{}'", workerName);
 
-                final TaskWorkerOptions workerOptions =
-                        getTaskWorkerOptions(config, TaskType.WORKFLOW, workerName);
+                final TaskWorkerOptions workerOptions = getTaskWorkerOptions(config, TaskType.WORKFLOW, workerName);
                 engine.registerTaskWorker(workerOptions);
             }
 
@@ -372,13 +353,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 }
                 LOGGER.info("Registering activity worker '{}'", workerName);
 
-                final TaskWorkerOptions workerOptions =
-                        getTaskWorkerOptions(config, TaskType.ACTIVITY, workerName);
+                final TaskWorkerOptions workerOptions = getTaskWorkerOptions(config, TaskType.ACTIVITY, workerName);
                 engine.registerTaskWorker(workerOptions);
             }
         }
-        if (config
-                .getOptionalValue("dt.tmp.delay-bom-processed-notification", boolean.class)
+        if (config.getOptionalValue("dt.tmp.delay-bom-processed-notification", boolean.class)
                 .orElse(false)) {
             engine.addEventListener(new DelayedBomProcessedNotificationEmitter());
         }
@@ -411,6 +390,17 @@ public final class DexEngineInitializer implements ServletContextListener {
         final var engineConfig = new DexEngineConfig(dataSource);
         engineConfig.setPageTokenEncoder(new SimplePageTokenEncoder());
 
+        config.getOptionalValue("dt.dex-engine.query-timeout-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig::setQueryTimeout);
+
+        config.getOptionalValue("dt.dex-engine.activity.lock-timeout-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig::setDefaultActivityLockTimeout);
+        config.getOptionalValue("dt.dex-engine.activity.execution-timeout-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig::setDefaultActivityExecutionTimeout);
+
         // Leader election.
         config.getOptionalValue("dt.dex-engine.leader-election.enabled", boolean.class)
                 .ifPresent(engineConfig.leaderElection()::setEnabled);
@@ -438,6 +428,10 @@ public final class DexEngineInitializer implements ServletContextListener {
                 .ifPresent(engineConfig.workflowTaskScheduler()::setPollInterval);
         getBackoffFunction(config, "dt.dex-engine.workflow-task-scheduler.poll-backoff")
                 .ifPresent(engineConfig.workflowTaskScheduler()::setPollBackoffFunction);
+        config.getOptionalValue(
+                        "dt.dex-engine.workflow-task-scheduler.concurrency-key-wakeup-repair-interval-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig.workflowTaskScheduler()::setConcurrencyKeyWakeupRepairInterval);
 
         // Activity task scheduler.
         config.getOptionalValue("dt.dex-engine.activity-task-scheduler.poll-interval-ms", long.class)
@@ -486,6 +480,8 @@ public final class DexEngineInitializer implements ServletContextListener {
                 .ifPresent(engineConfig.maintenance()::setRunRetentionDuration);
         config.getOptionalValue("dt.dex-engine.maintenance.run-deletion-batch-size", int.class)
                 .ifPresent(engineConfig.maintenance()::setRunDeletionBatchSize);
+        config.getOptionalValue("dt.dex-engine.maintenance.run-deletion-max-batches-per-cycle", int.class)
+                .ifPresent(engineConfig.maintenance()::setRunDeletionMaxBatchesPerCycle);
 
         return engineConfig;
     }
@@ -526,8 +522,7 @@ public final class DexEngineInitializer implements ServletContextListener {
     }
 
     private static boolean isTaskWorkerEnabled(Config config, TaskType taskType, String name) {
-        return config
-                .getOptionalValue(
+        return config.getOptionalValue(
                         switch (taskType) {
                             case ACTIVITY -> "dt.dex-engine.activity-worker.%s.enabled".formatted(name);
                             case WORKFLOW -> "dt.dex-engine.workflow-worker.%s.enabled".formatted(name);
@@ -537,18 +532,19 @@ public final class DexEngineInitializer implements ServletContextListener {
     }
 
     private static TaskWorkerOptions getTaskWorkerOptions(Config config, TaskType type, String name) {
-        final var prefix = switch (type) {
-            case ACTIVITY -> "dt.dex-engine.activity-worker.%s.".formatted(name);
-            case WORKFLOW -> "dt.dex-engine.workflow-worker.%s.".formatted(name);
-        };
+        final var prefix =
+                switch (type) {
+                    case ACTIVITY -> "dt.dex-engine.activity-worker.%s.".formatted(name);
+                    case WORKFLOW -> "dt.dex-engine.workflow-worker.%s.".formatted(name);
+                };
 
         final var queueName = config.getValue(prefix + "queue-name", String.class);
         final var maxConcurrency = config.getValue(prefix + "max-concurrency", int.class);
-        final var minPollInterval = config
-                .getOptionalValue(prefix + "min-poll-interval-ms", long.class)
+        final var minPollInterval = config.getOptionalValue(prefix + "min-poll-interval-ms", long.class)
                 .map(Duration::ofMillis)
                 .orElse(null);
-        final IntervalFunction pollBackoffFunction = getBackoffFunction(config, prefix + "poll-backoff").orElse(null);
+        final IntervalFunction pollBackoffFunction =
+                getBackoffFunction(config, prefix + "poll-backoff").orElse(null);
 
         var options = new TaskWorkerOptions(type, name, queueName, maxConcurrency);
         if (minPollInterval != null) {
@@ -564,7 +560,8 @@ public final class DexEngineInitializer implements ServletContextListener {
     private static Optional<IntervalFunction> getBackoffFunction(Config config, String prefix) {
         final Optional<Long> initialDelayMillis = config.getOptionalValue(prefix + ".initial-delay-ms", long.class);
         final Optional<Double> multiplier = config.getOptionalValue(prefix + ".multiplier", double.class);
-        final Optional<Double> randomizationFactor = config.getOptionalValue(prefix + ".randomization-factor", double.class);
+        final Optional<Double> randomizationFactor =
+                config.getOptionalValue(prefix + ".randomization-factor", double.class);
         final Optional<Long> maxDelayMillis = config.getOptionalValue(prefix + ".max-delay-ms", long.class);
 
         if (initialDelayMillis.isEmpty()
@@ -575,12 +572,24 @@ public final class DexEngineInitializer implements ServletContextListener {
         }
 
         final var backoffFunction = IntervalFunction.ofExponentialRandomBackoff(
-                initialDelayMillis.get(),
-                multiplier.get(),
-                randomizationFactor.get(),
-                maxDelayMillis.get());
+                initialDelayMillis.get(), multiplier.get(), randomizationFactor.get(), maxDelayMillis.get());
 
         return Optional.of(backoffFunction);
     }
 
+    private <A, R> void registerActivity(
+            DexEngine engine,
+            Activity<A, R> activity,
+            PayloadConverter<A> argumentConverter,
+            PayloadConverter<R> resultConverter) {
+        final var activitySpec = activity.getClass().getAnnotation(ActivitySpec.class);
+        requireNonNull(activitySpec, "Activity class must be annotated with @" + ActivitySpec.class.getSimpleName());
+
+        final Duration executionTimeout = config.getOptionalValue(
+                        "dt.dex-engine.activity.%s.execution-timeout-ms".formatted(activitySpec.name()), long.class)
+                .map(Duration::ofMillis)
+                .orElse(null);
+
+        engine.registerActivity(activity, argumentConverter, resultConverter, /* lockTimeout */ null, executionTimeout);
+    }
 }

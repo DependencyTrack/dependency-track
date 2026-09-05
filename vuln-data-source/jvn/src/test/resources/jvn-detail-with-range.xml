@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>   
+<VULDEF-Document 
+version="3.2" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xmlns="http://jvn.jp/vuldef/" 
+xmlns:vuldef="http://jvn.jp/vuldef/" 
+xmlns:status="http://jvndb.jvn.jp/myjvn/Status" 
+xmlns:sec="http://jvn.jp/rss/mod_sec/3.0/" 
+xmlns:marking="http://data-marking.mitre.org/Marking-1" 
+xmlns:tlpMarking="http://data-marking.mitre.org/extensions/MarkingStructure#TLP-1" 
+xsi:schemaLocation="http://jvn.jp/vuldef/ https://jvndb.jvn.jp/schema/vuldef_3.2.xsd http://jvn.jp/rss/mod_sec/3.0/ https://jvndb.jvn.jp/schema/mod_sec_3.0.xsd http://data-marking.mitre.org/extensions/MarkingStructure#TLP-1 https://jvndb.jvn.jp/schema/tlp_marking.xsd http://jvndb.jvn.jp/myjvn/Status https://jvndb.jvn.jp/schema/status_3.3.xsd" 
+xml:lang="ja">
+    <Vulinfo>
+      <VulinfoID>JVNDB-2026-022538</VulinfoID>
+      <VulinfoData>
+        <Title>SUSEのRancher Fleetにおける指定されたタイプの入力に対する不適切な検証に関する脆弱性</Title>
+        <VulinfoDescription>
+          <Overview>SUSE Rancher FleetのHelm Deployer（バージョン0.15の0.15.2未満、0.14の0.14.6未満、0.13の0.13.11未満、及び0.12の0.12.15未満）において、「valuesFrom」の参照の検証が欠如しているため、あるテナントの所有者が他のテナントのFleet認証情報にアクセスできる可能性があります。 </Overview>
+        </VulinfoDescription>
+        <Affected>
+          <AffectedItem>
+            <Name>SUSE</Name>
+            <ProductName>Rancher Fleet</ProductName>
+            <Cpe version="2.2">cpe:/a:suse:rancher_fleet</Cpe>
+            <VersionNumber>0.12.0 以上 0.12.15 未満</VersionNumber>
+            <VersionNumber>0.13.0 以上 0.13.11 未満</VersionNumber>
+            <VersionNumber>0.14.0 以上 0.14.6 未満</VersionNumber>
+            <VersionNumber>0.15.0 以上 0.15.2 未満</VersionNumber>
+          </AffectedItem>
+        </Affected>
+        <Impact>
+          <Cvss version="3.0">
+            <Severity type="Base">Critical</Severity>
+            <Base>9.9</Base>
+            <Vector>CVSS:3.0/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H</Vector>
+          </Cvss>
+          <ImpactItem>
+            <Description>・当該ソフトウェアが扱う全ての情報が外部に漏れる可能性があります。 ・当該ソフトウェアが扱う全ての情報が書き換えられる可能性があります。 ・当該ソフトウェアが完全に停止する可能性があります。 </Description>
+          </ImpactItem>
+        </Impact>
+        <Solution>
+          <SolutionItem>
+            <Description>ベンダ情報を参照して適切な対策を実施してください。 </Description>
+          </SolutionItem>
+        </Solution>
+        <Related>
+          <RelatedItem type="vendor">
+            <Name>GitHub</Name>
+            <VulinfoID>Cross namespace secret disclosure via unvalidated `valuesFrom` references in Helm Deployer  Advisory  rancher/fleet  GitHub</VulinfoID>
+            <URL>https://github.com/rancher/fleet/security/advisories/GHSA-xr65-5cpm-g36x</URL>
+          </RelatedItem>
+          <RelatedItem type="advisory">
+            <Name>Common Vulnerabilities and Exposures (CVE)</Name>
+            <VulinfoID>CVE-2026-44935</VulinfoID>
+            <URL>https://www.cve.org/CVERecord?id=CVE-2026-44935</URL>
+          </RelatedItem>
+          <RelatedItem type="advisory">
+            <Name>National Vulnerability Database (NVD)</Name>
+            <VulinfoID>CVE-2026-44935</VulinfoID>
+            <URL>https://nvd.nist.gov/vuln/detail/CVE-2026-44935</URL>
+          </RelatedItem>
+          <RelatedItem type="cwe">
+            <Name>JVNDB</Name>
+            <VulinfoID>CWE-1287</VulinfoID>
+            <Title>指定されたタイプの入力に対する不適切な検証</Title>
+            <URL>https://cwe.mitre.org/data/definitions/1287.html</URL>
+          </RelatedItem>
+        </Related>
+        <History>
+          <HistoryItem>
+            <HistoryNo>1</HistoryNo>
+            <DateTime>2026-07-07T10:44:46+09:00</DateTime>
+            <Description>[2026年07月07日]\n  掲載</Description>
+          </HistoryItem>
+        </History>
+        <DateFirstPublished>2026-07-07T10:44:46+09:00</DateFirstPublished>
+        <DateLastUpdated>2026-07-07T10:44:46+09:00</DateLastUpdated>
+        <DatePublic>2026-07-02T00:00:00+09:00</DatePublic>
+      </VulinfoData>
+    </Vulinfo>
+    <sec:handling>
+      <marking:Marking>
+        <marking:Marking_Structure xsi:type="tlpMarking:TLPMarkingStructureType" marking_model_name="TLP" marking_model_ref="http://www.us-cert.gov/tlp/" color="WHITE"/>
+      </marking:Marking>
+    </sec:handling>
+    <status:Status version="3.3" method="getVulnDetailInfo" lang="ja" retCd="0" retMax="10" errCd="" errMsg="" totalRes="1" totalResRet="1" firstRes="1" feed="hnd" vulnId="JVNDB-2026-022538"/>
+  </VULDEF-Document>
+

@@ -34,19 +34,26 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.util.Set;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @since 5.0.0
  */
 final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeConfigurable {
 
-    private ConfigRegistry configRegistry;
-    private KeyValueStore kvStore;
-    private ObjectMapper objectMapper;
-    private HttpClient httpClient;
+    private @Nullable ConfigRegistry configRegistry;
+    private @Nullable KeyValueStore kvStore;
+    private @Nullable ObjectMapper objectMapper;
+    private @Nullable HttpClient httpClient;
 
     @Override
     public String extensionName() {
         return "osv";
+    }
+
+    @Override
+    public String displayName() {
+        return "OSV";
     }
 
     @Override
@@ -64,8 +71,7 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
         this.kvStore = serviceRegistry.require(KeyValueStore.class);
         this.httpClient = serviceRegistry.require(HttpClient.class);
-        this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule());
+        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Override
@@ -92,19 +98,24 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
 
     @Override
     public boolean isDataSourceEnabled() {
+        requireNonNull(configRegistry, "configRegistry must not be null");
         return configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class).isEnabled();
     }
 
     @Override
     public VulnDataSource create() {
+        requireNonNull(configRegistry, "configRegistry must not be null");
+        requireNonNull(kvStore, "kvStore must not be null");
+        requireNonNull(objectMapper, "objectMapper must not be null");
+        requireNonNull(httpClient, "httpClient must not be null");
+
         final var config = configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class);
         if (!config.isEnabled()) {
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
         }
 
-        final @Nullable WatermarkManager watermarkManager = config.isIncrementalMirroringEnabled()
-                ? new WatermarkManager(config.getEcosystems(), kvStore)
-                : null;
+        final WatermarkManager watermarkManager =
+                config.isIncrementalMirroringEnabled() ? new WatermarkManager(config.getEcosystems(), kvStore) : null;
 
         return new OsvVulnDataSource(
                 watermarkManager,
@@ -114,5 +125,4 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
                 httpClient,
                 config.getAliasSyncEnabled());
     }
-
 }

@@ -19,6 +19,8 @@
 package org.dependencytrack;
 
 import alpine.server.auth.PasswordService;
+import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
+import org.datanucleus.management.FactoryStatistics;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.junit.jupiter.api.AfterEach;
@@ -32,8 +34,7 @@ public abstract class PersistenceCapableTest {
 
     protected QueryManager qm;
 
-    protected static final String TEST_PASSWORD_HASH = new String(
-            PasswordService.createHash("testuser".toCharArray()));
+    protected static final String TEST_PASSWORD_HASH = new String(PasswordService.createHash("testuser".toCharArray()));
 
     @BeforeEach
     public void before() throws Exception {
@@ -54,4 +55,9 @@ public abstract class PersistenceCapableTest {
         qm.close();
     }
 
+    protected FactoryStatistics getPmfStatistics() {
+        return ((JDOPersistenceManagerFactory) qm.getPersistenceManager().getPersistenceManagerFactory())
+                .getNucleusContext()
+                .getStatistics();
+    }
 }

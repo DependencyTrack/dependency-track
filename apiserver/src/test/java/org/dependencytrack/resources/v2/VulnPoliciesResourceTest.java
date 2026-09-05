@@ -18,9 +18,6 @@
  */
 package org.dependencytrack.resources.v2;
 
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -33,11 +30,11 @@ import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
 import org.dependencytrack.dex.proto.failure.v1.ActivityFailureDetails;
 import org.dependencytrack.dex.proto.failure.v1.Failure;
+import org.dependencytrack.model.PolicyAnnotation;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyBundleRow;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyDetailRow;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
-import org.dependencytrack.model.PolicyAnnotation;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyOperation;
@@ -47,6 +44,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentMatchers;
+
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 
 import java.net.URI;
 import java.time.Instant;
@@ -74,14 +75,12 @@ class VulnPoliciesResourceTest extends ResourceTest {
     }
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(new AbstractBinder() {
+        @Override
+        protected void configure() {
+            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+        }
+    }));
 
     @Test
     void shouldListVulnPolicies() {
@@ -90,8 +89,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
         final var vulnPolicy = createVulnPolicyInstance(0);
         useJdbiHandle(handle -> handle.attach(VulnerabilityPolicyDao.class).create(vulnPolicy));
 
-        final Response response = jersey
-                .target("/vuln-policies")
+        final Response response = jersey.target("/vuln-policies")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -125,8 +123,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
             useJdbiHandle(handle -> handle.attach(VulnerabilityPolicyDao.class).create(vulnPolicy));
         }
 
-        final Response response = jersey
-                .target("/vuln-policies")
+        final Response response = jersey.target("/vuln-policies")
                 .queryParam("limit", 2)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -139,8 +136,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
         assertThat(responseJson.getJsonObject("total").getInt("count")).isEqualTo(3);
 
         final String nextPageToken = responseJson.getString("next_page_token");
-        final Response nextResponse = jersey
-                .target("/vuln-policies")
+        final Response nextResponse = jersey.target("/vuln-policies")
                 .queryParam("limit", 2)
                 .queryParam("page_token", nextPageToken)
                 .request()
@@ -157,8 +153,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
     void shouldCreateVulnPolicy() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_CREATE);
 
-        final Response response = jersey
-                .target("/vuln-policies")
+        final Response response = jersey.target("/vuln-policies")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -198,12 +193,11 @@ class VulnPoliciesResourceTest extends ResourceTest {
         assertThat(created.author()).isEqualTo("test-author");
         assertThat(created.condition()).isEqualTo("vuln.id == \"CVE-2024-1234\"");
         assertThat(created.analysis().getState()).isEqualTo(VulnerabilityPolicyAnalysis.State.NOT_AFFECTED);
-        assertThat(created.analysis().getJustification()).isEqualTo(VulnerabilityPolicyAnalysis.Justification.CODE_NOT_REACHABLE);
+        assertThat(created.analysis().getJustification())
+                .isEqualTo(VulnerabilityPolicyAnalysis.Justification.CODE_NOT_REACHABLE);
         assertThat(created.analysis().isSuppress()).isTrue();
         assertThat(created.analysis().getAnnotations())
-                .containsExactly(
-                        new PolicyAnnotation("compliance", "gem"),
-                        new PolicyAnnotation("source", "test"));
+                .containsExactly(new PolicyAnnotation("compliance", "gem"), new PolicyAnnotation("source", "test"));
         assertThat(created.priority()).isEqualTo(10);
         assertThat(created.operationMode()).isEqualTo(VulnerabilityPolicyOperation.APPLY);
     }
@@ -213,22 +207,20 @@ class VulnPoliciesResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_READ);
 
         final var vulnPolicy = createVulnPolicyInstance(0);
-        vulnPolicy.getAnalysis().setAnnotations(List.of(
-                new PolicyAnnotation("compliance", "gem"),
-                new PolicyAnnotation("owner", "security")));
+        vulnPolicy
+                .getAnalysis()
+                .setAnnotations(
+                        List.of(new PolicyAnnotation("compliance", "gem"), new PolicyAnnotation("owner", "security")));
         final VulnPolicyIdentityRow created = inJdbiTransaction(
                 handle -> handle.attach(VulnerabilityPolicyDao.class).create(vulnPolicy));
 
-        final Response response = jersey
-                .target("/vuln-policies/%s".formatted(created.uuid()))
+        final Response response = jersey.target("/vuln-policies/%s".formatted(created.uuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .node("analysis.annotations")
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).node("analysis.annotations").isEqualTo(/* language=JSON */ """
                         [
                           { "key": "compliance", "value": "gem" },
                           { "key": "owner", "value": "security" }
@@ -244,8 +236,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
         final VulnPolicyIdentityRow created = inJdbiTransaction(
                 handle -> handle.attach(VulnerabilityPolicyDao.class).create(vulnPolicy));
 
-        final Response response = jersey
-                .target("/vuln-policies/%s".formatted(created.uuid()))
+        final Response response = jersey.target("/vuln-policies/%s".formatted(created.uuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -260,8 +251,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
     void shouldReturn404WhenGettingNonExistentPolicy() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_READ);
 
-        final Response response = jersey
-                .target("/vuln-policies/00000000-0000-0000-0000-000000000001")
+        final Response response = jersey.target("/vuln-policies/00000000-0000-0000-0000-000000000001")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -277,8 +267,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
         final VulnPolicyIdentityRow created = inJdbiTransaction(
                 handle -> handle.attach(VulnerabilityPolicyDao.class).create(vulnPolicy));
 
-        final Response response = jersey
-                .target("/vuln-policies/%s".formatted(created.uuid()))
+        final Response response = jersey.target("/vuln-policies/%s".formatted(created.uuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -313,8 +302,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
     void shouldReturn404WhenUpdatingNonExistentPolicy() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT, Permissions.POLICY_MANAGEMENT_UPDATE);
 
-        final Response response = jersey
-                .target("/vuln-policies/00000000-0000-0000-0000-000000000001")
+        final Response response = jersey.target("/vuln-policies/00000000-0000-0000-0000-000000000001")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -344,8 +332,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
             return dao.createAll(bundle.id(), List.of(policy)).getFirst();
         });
 
-        final Response response = jersey
-                .target("/vuln-policies/%s".formatted(created.uuid()))
+        final Response response = jersey.target("/vuln-policies/%s".formatted(created.uuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -370,8 +357,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
         final VulnPolicyIdentityRow created = inJdbiTransaction(
                 handle -> handle.attach(VulnerabilityPolicyDao.class).create(vulnPolicy));
 
-        final Response response = jersey
-                .target("/vuln-policies/%s".formatted(created.uuid()))
+        final Response response = jersey.target("/vuln-policies/%s".formatted(created.uuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -387,8 +373,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
     void shouldReturn404WhenDeletingNonExistentPolicy() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT, Permissions.POLICY_MANAGEMENT_DELETE);
 
-        final Response response = jersey
-                .target("/vuln-policies/00000000-0000-0000-0000-000000000001")
+        final Response response = jersey.target("/vuln-policies/00000000-0000-0000-0000-000000000001")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -409,8 +394,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
             return dao.createAll(bundle.id(), List.of(policy)).getFirst();
         });
 
-        final Response response = jersey
-                .target("/vuln-policies/%s".formatted(created.uuid()))
+        final Response response = jersey.target("/vuln-policies/%s".formatted(created.uuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -428,8 +412,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
             dao.createBundle(bundleUuid, URI.create("https://example.com/bundle.zip"));
         });
 
-        final Response response = jersey
-                .target("/vuln-policy-bundles")
+        final Response response = jersey.target("/vuln-policy-bundles")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -456,15 +439,13 @@ class VulnPoliciesResourceTest extends ResourceTest {
     void shouldListVulnPolicyBundlesEmpty() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_READ);
 
-        final Response response = jersey
-                .target("/vuln-policy-bundles")
+        final Response response = jersey.target("/vuln-policy-bundles")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .node("items").isArray().isEmpty();
+        assertThatJson(getPlainTextBody(response)).node("items").isArray().isEmpty();
     }
 
     @Test
@@ -474,7 +455,8 @@ class VulnPoliciesResourceTest extends ResourceTest {
         final var bundleUuid = UUID.fromString("00000000-0000-0000-0000-000000000004");
         useJdbiTransaction(handle -> {
             final var dao = handle.attach(VulnerabilityPolicyDao.class);
-            final VulnPolicyBundleRow bundle = dao.createBundle(bundleUuid, URI.create("https://example.com/bundle.zip"));
+            final VulnPolicyBundleRow bundle =
+                    dao.createBundle(bundleUuid, URI.create("https://example.com/bundle.zip"));
             final var policy = createVulnPolicyInstance(0);
             dao.createAll(bundle.id(), List.of(policy));
         });
@@ -491,8 +473,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
     void shouldReturn404WhenDeletingNonExistentBundle() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT, Permissions.POLICY_MANAGEMENT_DELETE);
 
-        final Response response = jersey
-                .target("/vuln-policy-bundles/00000000-0000-0000-0000-000000000005")
+        final Response response = jersey.target("/vuln-policy-bundles/00000000-0000-0000-0000-000000000005")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -502,10 +483,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
 
     @Test
     void shouldReturn401WhenNotAuthenticated() {
-        final Response response = jersey
-                .target("/vuln-policies")
-                .request()
-                .get();
+        final Response response = jersey.target("/vuln-policies").request().get();
 
         assertThat(response.getStatus()).isEqualTo(401);
     }
@@ -514,8 +492,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
     void shouldReturn403WhenMissingPermission() {
         initializeWithPermissions();
 
-        final Response response = jersey
-                .target("/vuln-policies")
+        final Response response = jersey.target("/vuln-policies")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -533,23 +510,20 @@ class VulnPoliciesResourceTest extends ResourceTest {
                 .thenReturn(null)
                 .thenReturn(runId);
 
-        Response response = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
+        Response response = jersey.target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
         assertThat(response.getStatus()).isEqualTo(202);
         assertThat(getPlainTextBody(response)).isEmpty();
 
-        response = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
+        response = jersey.target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
         assertThat(response.getStatus()).isEqualTo(409);
 
-        response = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
+        response = jersey.target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -564,15 +538,15 @@ class VulnPoliciesResourceTest extends ResourceTest {
                 .thenReturn(UUID.fromString("00000000-0000-0000-0000-000000000007"))
                 .thenReturn(null);
 
-        final Response firstResponse = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
+        final Response firstResponse = jersey.target(
+                        "/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
         assertThat(firstResponse.getStatus()).isEqualTo(202);
 
-        final Response secondResponse = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
+        final Response secondResponse = jersey.target(
+                        "/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -583,8 +557,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
     void shouldReturnCelErrorsWhenCreateConditionIsInvalid() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_CREATE);
 
-        final Response response = jersey
-                .target("/vuln-policies")
+        final Response response = jersey.target("/vuln-policies")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -624,8 +597,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
         final VulnPolicyIdentityRow created = inJdbiTransaction(
                 handle -> handle.attach(VulnerabilityPolicyDao.class).create(vulnPolicy));
 
-        final Response response = jersey
-                .target("/vuln-policies/%s".formatted(created.uuid()))
+        final Response response = jersey.target("/vuln-policies/%s".formatted(created.uuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -666,10 +638,21 @@ class VulnPoliciesResourceTest extends ResourceTest {
         final var completedAt = Instant.parse("2026-04-15T10:01:00Z");
 
         final var runMetadata = new WorkflowRunMetadata(
-                runId, null, "SyncVulnPolicyBundleWorkflow", 1,
+                runId,
+                null,
+                "SyncVulnPolicyBundleWorkflow",
+                1,
                 "sync-vuln-policy-bundle:bc106cf4-3993-4e38-952d-d2f5f11412ed",
-                "default", WorkflowRunStatus.FAILED, null, 0, null, null,
-                startedAt, completedAt, startedAt, completedAt);
+                "default",
+                WorkflowRunStatus.FAILED,
+                null,
+                0,
+                null,
+                null,
+                startedAt,
+                completedAt,
+                startedAt,
+                completedAt);
 
         when(DEX_ENGINE_MOCK.listRuns(any(ListWorkflowRunsRequest.class)))
                 .thenReturn(new Page<>(List.of(runMetadata), null, null));
@@ -679,28 +662,40 @@ class VulnPoliciesResourceTest extends ResourceTest {
                 .setActivityFailureDetails(ActivityFailureDetails.newBuilder()
                         .setActivityName("SyncVulnPolicyBundleActivity")
                         .build())
-                .setCause(Failure.newBuilder()
-                        .setMessage("connection refused")
-                        .build())
+                .setCause(Failure.newBuilder().setMessage("connection refused").build())
                 .build();
 
         final var run = new WorkflowRun(
-                runId, null, "SyncVulnPolicyBundleWorkflow", 1,
+                runId,
+                null,
+                "SyncVulnPolicyBundleWorkflow",
+                1,
                 "sync-vuln-policy-bundle:bc106cf4-3993-4e38-952d-d2f5f11412ed",
-                WorkflowRunStatus.FAILED, null, 0, null, null,
-                startedAt, completedAt, startedAt, completedAt,
-                null, null, failure, List.of());
+                WorkflowRunStatus.FAILED,
+                null,
+                0,
+                null,
+                null,
+                startedAt,
+                completedAt,
+                startedAt,
+                completedAt,
+                null,
+                null,
+                failure,
+                List.of());
 
         when(DEX_ENGINE_MOCK.getRunById(runId)).thenReturn(run);
 
-        final Response response = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs/latest")
+        final Response response = jersey.target(
+                        "/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs/latest")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
                 {
                   "status": "FAILED",
                   "started_at": %d,
@@ -729,5 +724,4 @@ class VulnPoliciesResourceTest extends ResourceTest {
         vulnPolicy.setOperationMode(VulnerabilityPolicyOperation.APPLY);
         return vulnPolicy;
     }
-
 }

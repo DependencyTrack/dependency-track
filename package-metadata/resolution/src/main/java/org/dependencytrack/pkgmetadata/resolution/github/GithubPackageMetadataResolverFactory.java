@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class GithubPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -41,6 +42,11 @@ public final class GithubPackageMetadataResolverFactory implements PackageMetada
     @Override
     public String extensionName() {
         return "github";
+    }
+
+    @Override
+    public String displayName() {
+        return "GitHub";
     }
 
     @Override
@@ -76,8 +82,7 @@ public final class GithubPackageMetadataResolverFactory implements PackageMetada
 
     @Override
     public void init(ServiceRegistry serviceRegistry) {
-        objectMapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
                 serviceRegistry.require(CacheManager.class).getCache("responses"));
@@ -85,7 +90,6 @@ public final class GithubPackageMetadataResolverFactory implements PackageMetada
 
     @Override
     public PackageMetadataResolver create() {
-        return new GithubPackageMetadataResolver(objectMapper, cachingHttpClient);
+        return new GithubPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

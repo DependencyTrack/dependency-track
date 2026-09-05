@@ -61,6 +61,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class ProjectDaoTest extends PersistenceCapableTest {
 
@@ -108,13 +109,12 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         vuln.setSource(Vulnerability.Source.INTERNAL);
         qm.persist(vuln);
         qm.addVulnerability(vuln, component, "internal");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vuln)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
-                        .withResponse(AnalysisResponse.WORKAROUND_AVAILABLE)
-                        .withDetails("analysisDetails")
-                        .withComment("someComment"));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                .withResponse(AnalysisResponse.WORKAROUND_AVAILABLE)
+                .withDetails("analysisDetails")
+                .withComment("someComment"));
 
         // Create a child component to validate that deletion is indeed recursive.
         final var componentChild = new Component();
@@ -143,11 +143,10 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         policyViolation.setType(PolicyViolation.Type.OPERATIONAL);
         policyViolation.setTimestamp(new Date());
         qm.persist(policyViolation);
-        qm.makeViolationAnalysis(
-                new MakeViolationAnalysisCommand(componentChild, policyViolation)
-                        .withState(ViolationAnalysisState.REJECTED)
-                        .withCommenter("someCommenter")
-                        .withComment("someComment"));
+        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentChild, policyViolation)
+                .withState(ViolationAnalysisState.REJECTED)
+                .withCommenter("someCommenter")
+                .withComment("someComment"));
 
         // Create metrics for project and component.
         useJdbiHandle(handle -> {
@@ -170,7 +169,8 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         });
 
         // Create a BOM.
-        final Bom bom = qm.createBom(project, new Date(), Bom.Format.CYCLONEDX, "1.4", 1, "serialNumber", UUID.randomUUID(), null);
+        final Bom bom = qm.createBom(
+                project, new Date(), Bom.Format.CYCLONEDX, "1.4", 1, "serialNumber", UUID.randomUUID(), null);
 
         // Create a child project with an accompanying component.
         final var projectChild = new Project();
@@ -195,8 +195,10 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         qm.persist(vex);
 
         // Create a notification rule and associate projectChild with it.
-        final NotificationPublisher notificationPublisher = qm.createNotificationPublisher("name", "description", "extensionName", "templateContent", "templateMimeType", true);
-        final NotificationRule notificationRule = qm.createNotificationRule("name", NotificationScope.PORTFOLIO, NotificationLevel.WARNING, notificationPublisher);
+        final NotificationPublisher notificationPublisher = qm.createNotificationPublisher(
+                "name", "description", "extensionName", "templateContent", "templateMimeType", true);
+        final NotificationRule notificationRule = qm.createNotificationRule(
+                "name", NotificationScope.PORTFOLIO, NotificationLevel.WARNING, notificationPublisher);
         notificationRule.getProjects().add(projectChild);
         qm.persist(notificationRule);
 
@@ -208,22 +210,32 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         projectDao.deleteProject(project.getUuid());
 
         // Ensure everything has been deleted as expected.
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(Project.class, project.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(Project.class, projectChild.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(Component.class, component.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(Component.class, componentChild.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(Component.class, projectChildComponent.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(ProjectMetadata.class, projectMetadata.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(Bom.class, bom.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(Vex.class, vex.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(ServiceComponent.class, serviceComponent.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(Project.class, project.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(Project.class, projectChild.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(Component.class, component.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(Component.class, componentChild.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(Component.class, projectChildComponent.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(ProjectMetadata.class, projectMetadata.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(Bom.class, bom.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(Vex.class, vex.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(ServiceComponent.class, serviceComponent.getId()));
 
         // Ensure associated objects were NOT deleted.
         assertThatNoException().isThrownBy(() -> qm.getObjectById(Vulnerability.class, vuln.getId()));
         assertThatNoException().isThrownBy(() -> qm.getObjectById(PolicyCondition.class, policyCondition.getId()));
         assertThatNoException().isThrownBy(() -> qm.getObjectById(Policy.class, policy.getId()));
         assertThatNoException().isThrownBy(() -> qm.getObjectById(NotificationRule.class, notificationRule.getId()));
-        assertThatNoException().isThrownBy(() -> qm.getObjectById(NotificationPublisher.class, notificationPublisher.getId()));
+        assertThatNoException()
+                .isThrownBy(() -> qm.getObjectById(NotificationPublisher.class, notificationPublisher.getId()));
 
         // Ensure that associations have been cleaned up.
         qm.getPersistenceManager().refresh(notificationRule);
@@ -233,8 +245,12 @@ public class ProjectDaoTest extends PersistenceCapableTest {
 
         // Metrics are NOT deleted, see ADR 029.
         MetricsDao dao = jdbiHandle.attach(MetricsDao.class);
-        assertThat(dao.getProjectMetricsSince(project.getId(), DateUtil.parseShortDate("20250101").toInstant())).isNotEmpty();
-        assertThat(dao.getDependencyMetricsSince(component.getId(), DateUtil.parseShortDate("20250101").toInstant())).isNotEmpty();
+        assertThat(dao.getProjectMetricsSince(
+                        project.getId(), DateUtil.parseShortDate("20250101").toInstant()))
+                .isNotEmpty();
+        assertThat(dao.getDependencyMetricsSince(
+                        component.getId(), DateUtil.parseShortDate("20250101").toInstant()))
+                .isNotEmpty();
     }
 
     @Test
@@ -257,16 +273,16 @@ public class ProjectDaoTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vuln)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
-                        .withResponse(AnalysisResponse.WORKAROUND_AVAILABLE)
-                        .withDetails("analysisDetails")
-                        .withCommenter("someCommenter")
-                        .withComment("someComment"));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                .withResponse(AnalysisResponse.WORKAROUND_AVAILABLE)
+                .withDetails("analysisDetails")
+                .withCommenter("someCommenter")
+                .withComment("someComment"));
 
-        jdbiHandle.createUpdate(/* language=SQL */ """
+        jdbiHandle
+                .createUpdate(/* language=SQL */ """
                         UPDATE "FINDINGATTRIBUTION"
                            SET "DELETED_AT" = NOW()
                          WHERE "COMPONENT_ID" = :componentId
@@ -290,7 +306,8 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 /* includeServices */ false,
                 /* includeTags */ false));
 
-        final Long clonedComponentId = jdbiHandle.createQuery(/* language=SQL */ """
+        final Long clonedComponentId = jdbiHandle
+                .createQuery(/* language=SQL */ """
                         SELECT c."ID"
                           FROM "COMPONENT" AS c
                          INNER JOIN "PROJECT" AS p
@@ -301,7 +318,8 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .mapTo(Long.class)
                 .one();
 
-        final long clonedCvCount = jdbiHandle.createQuery(/* language=SQL */ """
+        final long clonedCvCount = jdbiHandle
+                .createQuery(/* language=SQL */ """
                         SELECT COUNT(*)
                           FROM "COMPONENTS_VULNERABILITIES"
                          WHERE "COMPONENT_ID" = :componentId
@@ -311,7 +329,8 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .one();
         assertThat(clonedCvCount).isZero();
 
-        final long clonedAttributionCount = jdbiHandle.createQuery(/* language=SQL */ """
+        final long clonedAttributionCount = jdbiHandle
+                .createQuery(/* language=SQL */ """
                         SELECT COUNT(*)
                           FROM "FINDINGATTRIBUTION"
                          WHERE "COMPONENT_ID" = :componentId
@@ -321,7 +340,8 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .one();
         assertThat(clonedAttributionCount).isZero();
 
-        final long clonedAnalysisCount = jdbiHandle.createQuery(/* language=SQL */ """
+        final long clonedAnalysisCount = jdbiHandle
+                .createQuery(/* language=SQL */ """
                         SELECT COUNT(*)
                           FROM "ANALYSIS"
                          WHERE "COMPONENT_ID" = :componentId
@@ -331,7 +351,8 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .one();
         assertThat(clonedAnalysisCount).isZero();
 
-        final long clonedCommentCount = jdbiHandle.createQuery(/* language=SQL */ """
+        final long clonedCommentCount = jdbiHandle
+                .createQuery(/* language=SQL */ """
                         SELECT COUNT(*)
                           FROM "ANALYSISCOMMENT" AS ac
                          INNER JOIN "ANALYSIS" AS a
@@ -365,7 +386,8 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, component, "internal");
 
         qm.makeAnalysis(new MakeAnalysisCommand(component, vuln).withState(AnalysisState.EXPLOITABLE));
-        jdbiHandle.createUpdate(/* language=SQL */ """
+        jdbiHandle
+                .createUpdate(/* language=SQL */ """
                         UPDATE "ANALYSIS" a
                            SET "POLICY_ANNOTATIONS" = CAST(:policyAnnotationsJson AS jsonb)
                           FROM "COMPONENT" c
@@ -392,7 +414,8 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 /* includeServices */ false,
                 /* includeTags */ false));
 
-        final long clonedCvCount = jdbiHandle.createQuery(/* language=SQL */ """
+        final long clonedCvCount = jdbiHandle
+                .createQuery(/* language=SQL */ """
                         SELECT COUNT(*)
                           FROM "COMPONENTS_VULNERABILITIES" cv
                          INNER JOIN "COMPONENT" c
@@ -406,7 +429,8 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .one();
         assertThat(clonedCvCount).isOne();
 
-        final String clonedPolicyAnnotations = jdbiHandle.createQuery(/* language=SQL */ """
+        final String clonedPolicyAnnotations = jdbiHandle
+                .createQuery(/* language=SQL */ """
                         SELECT a."POLICY_ANNOTATIONS"
                           FROM "ANALYSIS" a
                          INNER JOIN "COMPONENT" c
@@ -429,5 +453,98 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         assertThat(projectDao.getProjectId(project.getUuid())).isEqualTo(null);
         qm.persist(project);
         assertThat(projectDao.getProjectId(project.getUuid())).isEqualTo(project.getId());
+    }
+
+    @Test
+    public void testDeleteProjectsReturnsRequestedProjectsAndCascadeDeletedDescendants() {
+        final var parent = new Project();
+        parent.setName("acme-app-parent");
+        parent.setVersion("1.0.0");
+        qm.persist(parent);
+
+        final var child = new Project();
+        child.setParent(parent);
+        child.setName("acme-app-child");
+        child.setVersion("1.0.0");
+        qm.persist(child);
+
+        final var grandChild = new Project();
+        grandChild.setParent(child);
+        grandChild.setName("acme-app-grandchild");
+        grandChild.setVersion("1.0.0");
+        qm.persist(grandChild);
+
+        final var unrelated = new Project();
+        unrelated.setName("other-app");
+        unrelated.setVersion("1.0.0");
+        qm.persist(unrelated);
+
+        final List<ProjectDao.DeletedProjectRow> deleted =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).deleteProjects(List.of(parent.getUuid())));
+
+        assertThat(deleted)
+                .satisfiesExactlyInAnyOrder(
+                        row -> {
+                            assertThat(row.uuid()).isEqualTo(parent.getUuid());
+                            assertThat(row.name()).isEqualTo("acme-app-parent");
+                            assertThat(row.version()).isEqualTo("1.0.0");
+                            assertThat(row.ancestorUuid()).isNull();
+                        },
+                        row -> {
+                            assertThat(row.uuid()).isEqualTo(child.getUuid());
+                            assertThat(row.name()).isEqualTo("acme-app-child");
+                            assertThat(row.version()).isEqualTo("1.0.0");
+                            assertThat(row.ancestorUuid()).isEqualTo(parent.getUuid());
+                        },
+                        row -> {
+                            assertThat(row.uuid()).isEqualTo(grandChild.getUuid());
+                            assertThat(row.name()).isEqualTo("acme-app-grandchild");
+                            assertThat(row.version()).isEqualTo("1.0.0");
+                            assertThat(row.ancestorUuid()).isEqualTo(parent.getUuid());
+                        });
+
+        assertThat(projectDao.getProjectId(parent.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(child.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(grandChild.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(unrelated.getUuid())).isEqualTo(unrelated.getId());
+    }
+
+    @Test
+    public void testDeleteProjectsAttributesDescendantsToClosestRequestedAncestor() {
+        final var parent = new Project();
+        parent.setName("acme-app-parent");
+        parent.setVersion("1.0.0");
+        qm.persist(parent);
+
+        final var child = new Project();
+        child.setParent(parent);
+        child.setName("acme-app-child");
+        child.setVersion("1.0.0");
+        qm.persist(child);
+
+        final var grandChild = new Project();
+        grandChild.setParent(child);
+        grandChild.setName("acme-app-grandchild");
+        grandChild.setVersion("1.0.0");
+        qm.persist(grandChild);
+
+        // Child is explicitly requested, so it is a deletion root rather than a descendant of parent.
+        final List<ProjectDao.DeletedProjectRow> deleted = withJdbiHandle(
+                handle -> handle.attach(ProjectDao.class).deleteProjects(List.of(parent.getUuid(), child.getUuid())));
+
+        assertThat(deleted)
+                .satisfiesExactlyInAnyOrder(
+                        row -> {
+                            assertThat(row.uuid()).isEqualTo(parent.getUuid());
+                            assertThat(row.ancestorUuid()).isNull();
+                        },
+                        row -> {
+                            assertThat(row.uuid()).isEqualTo(child.getUuid());
+                            assertThat(row.ancestorUuid()).isNull();
+                        },
+                        row -> {
+                            assertThat(row.uuid()).isEqualTo(grandChild.getUuid());
+                            assertThat(row.ancestorUuid()).isEqualTo(child.getUuid());
+                        });
     }
 }

@@ -33,6 +33,11 @@ class DummyTestExtensionFactory implements ExtensionFactory<@NonNull TestExtensi
     }
 
     @Override
+    public @NonNull String displayName() {
+        return DummyTestExtension.NAME;
+    }
+
+    @Override
     public @NonNull Class<? extends TestExtensionPoint> extensionClass() {
         return DummyTestExtension.class;
     }
@@ -49,7 +54,9 @@ class DummyTestExtensionFactory implements ExtensionFactory<@NonNull TestExtensi
 
     @Override
     public DummyTestExtension create() {
-        return new DummyTestExtension(configRegistry.getDeploymentConfig().getOptionalValue("bar", String.class).orElse(null));
+        return new DummyTestExtension(configRegistry
+                .getDeploymentConfig()
+                .getOptionalValue("bar", String.class)
+                .orElse(null));
     }
-
 }

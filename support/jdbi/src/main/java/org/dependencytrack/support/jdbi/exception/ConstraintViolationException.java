@@ -27,8 +27,8 @@ import org.postgresql.util.ServerErrorMessage;
  */
 public sealed class ConstraintViolationException extends RuntimeException
         permits UniqueConstraintViolationException,
-        CheckConstraintViolationException,
-        NotNullConstraintViolationException {
+                CheckConstraintViolationException,
+                NotNullConstraintViolationException {
 
     private final @Nullable String constraintName;
     private final @Nullable String tableName;
@@ -36,8 +36,8 @@ public sealed class ConstraintViolationException extends RuntimeException
     private final String sqlState;
 
     protected ConstraintViolationException(
-            String message,
-            Throwable cause,
+            @Nullable String message,
+            @Nullable Throwable cause,
             @Nullable String constraintName,
             @Nullable String tableName,
             @Nullable String columnName,
@@ -50,7 +50,7 @@ public sealed class ConstraintViolationException extends RuntimeException
     }
 
     public static @Nullable ConstraintViolationException of(Throwable throwable) {
-        final PSQLException psqlException = findPSQLException(throwable);
+        final PSQLException psqlException = PSQLExceptions.find(throwable);
         if (psqlException == null) {
             return null;
         }
@@ -61,24 +61,21 @@ public sealed class ConstraintViolationException extends RuntimeException
         }
 
         final ServerErrorMessage serverError = psqlException.getServerErrorMessage();
-        final String constraintName = serverError != null
-                ? serverError.getConstraint()
-                : null;
-        final String tableName = serverError != null
-                ? serverError.getTable()
-                : null;
-        final String columnName = serverError != null
-                ? serverError.getColumn()
-                : null;
+        final String constraintName = serverError != null ? serverError.getConstraint() : null;
+        final String tableName = serverError != null ? serverError.getTable() : null;
+        final String columnName = serverError != null ? serverError.getColumn() : null;
         final String message = psqlException.getMessage();
 
         return switch (sqlState) {
-            case "23505" -> new UniqueConstraintViolationException(
-                    message, throwable, constraintName, tableName, columnName, sqlState);
-            case "23514" -> new CheckConstraintViolationException(
-                    message, throwable, constraintName, tableName, columnName, sqlState);
-            case "23502" -> new NotNullConstraintViolationException(
-                    message, throwable, constraintName, tableName, columnName, sqlState);
+            case "23505" ->
+                new UniqueConstraintViolationException(
+                        message, throwable, constraintName, tableName, columnName, sqlState);
+            case "23514" ->
+                new CheckConstraintViolationException(
+                        message, throwable, constraintName, tableName, columnName, sqlState);
+            case "23502" ->
+                new NotNullConstraintViolationException(
+                        message, throwable, constraintName, tableName, columnName, sqlState);
             default -> null;
         };
     }
@@ -98,16 +95,4 @@ public sealed class ConstraintViolationException extends RuntimeException
     public String getSqlState() {
         return sqlState;
     }
-
-    private static @Nullable PSQLException findPSQLException(Throwable throwable) {
-        Throwable current = throwable;
-        while (current != null) {
-            if (current instanceof PSQLException psql) {
-                return psql;
-            }
-            current = current.getCause();
-        }
-        return null;
-    }
-
 }

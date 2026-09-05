@@ -44,7 +44,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class NvdVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull VulnDataSource, @NonNull NvdVulnDataSourceFactory> {
+class NvdVulnDataSourceFactoryTest
+        extends AbstractExtensionFactoryTest<@NonNull VulnDataSource, @NonNull NvdVulnDataSourceFactory> {
 
     protected NvdVulnDataSourceFactoryTest() {
         super(NvdVulnDataSourceFactory.class);
@@ -57,8 +58,7 @@ class NvdVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
         @Test
         void shouldPassConnectivityAndFeedFormatCheck(WireMockRuntimeInfo wmRuntimeInfo) {
             stubFor(get(urlPathEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
-                    .willReturn(aResponse()
-                            .withBody("""
+                    .willReturn(aResponse().withBody("""
                                     lastModifiedDate:2026-01-19T16:00:01-05:00
                                     size:15114674
                                     zipSize:1674794
@@ -66,12 +66,10 @@ class NvdVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
                                     sha256:482399306951B6FF9E00E3EC72A7EED8D927FB2DB4F4E61F2D6218CF67133CC0
                                     """)));
 
-            factory.init(
-                    new MutableServiceRegistry()
-                            .register(ConfigRegistry.class, new MockConfigRegistry(
-                                    Map.of("allow-local-connections", "true")))
-                            .register(HttpClient.class, HttpClient.newHttpClient())
-                            .register(KeyValueStore.class, new MockKeyValueStore()));
+            factory.init(new MutableServiceRegistry()
+                    .register(ConfigRegistry.class, new MockConfigRegistry(Map.of("allow-local-connections", "true")))
+                    .register(HttpClient.class, HttpClient.newHttpClient())
+                    .register(KeyValueStore.class, new MockKeyValueStore()));
 
             final var runtimeConfig = new NvdVulnDataSourceConfigV1()
                     .withEnabled(true)
@@ -80,31 +78,29 @@ class NvdVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
             final ExtensionTestResult testResult = factory.test(runtimeConfig);
 
             assertThat(testResult.isFailed()).isFalse();
-            assertThat(testResult.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.PASSED);
-                        assertThat(check.message()).isNull();
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("feed_format");
-                        assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.PASSED);
-                        assertThat(check.message()).isNull();
-                    });
+            assertThat(testResult.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.PASSED);
+                                assertThat(check.message()).isNull();
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("feed_format");
+                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.PASSED);
+                                assertThat(check.message()).isNull();
+                            });
         }
 
         @Test
         void shouldReportConnectionFailure(WireMockRuntimeInfo wmRuntimeInfo) {
             stubFor(get(urlPathEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
-                    .willReturn(aResponse()
-                            .withFault(Fault.CONNECTION_RESET_BY_PEER)));
+                    .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
 
-            factory.init(
-                    new MutableServiceRegistry()
-                            .register(ConfigRegistry.class, new MockConfigRegistry(
-                                    Map.of("allow-local-connections", "true")))
-                            .register(HttpClient.class, HttpClient.newHttpClient())
-                            .register(KeyValueStore.class, new MockKeyValueStore()));
+            factory.init(new MutableServiceRegistry()
+                    .register(ConfigRegistry.class, new MockConfigRegistry(Map.of("allow-local-connections", "true")))
+                    .register(HttpClient.class, HttpClient.newHttpClient())
+                    .register(KeyValueStore.class, new MockKeyValueStore()));
 
             final var runtimeConfig = new NvdVulnDataSourceConfigV1()
                     .withEnabled(true)
@@ -113,27 +109,26 @@ class NvdVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
             final ExtensionTestResult testResult = factory.test(runtimeConfig);
 
             assertThat(testResult.isFailed()).isTrue();
-            assertThat(testResult.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.FAILED);
-                        assertThat(check.message()).isEqualTo("Connection failed, check logs for details");
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("feed_format");
-                        assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.SKIPPED);
-                        assertThat(check.message()).isNull();
-                    });
+            assertThat(testResult.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.FAILED);
+                                assertThat(check.message()).isEqualTo("Connection failed, check logs for details");
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("feed_format");
+                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.SKIPPED);
+                                assertThat(check.message()).isNull();
+                            });
         }
 
         @Test
         void shouldReportConnectionFailureWhenLocalConnectionsAreDisallowed(WireMockRuntimeInfo wmRuntimeInfo) {
-            factory.init(
-                    new MutableServiceRegistry()
-                            .register(ConfigRegistry.class, new MockConfigRegistry(
-                                    Map.of("allow-local-connections", "false")))
-                            .register(HttpClient.class, HttpClient.newHttpClient())
-                            .register(KeyValueStore.class, new MockKeyValueStore()));
+            factory.init(new MutableServiceRegistry()
+                    .register(ConfigRegistry.class, new MockConfigRegistry(Map.of("allow-local-connections", "false")))
+                    .register(HttpClient.class, HttpClient.newHttpClient())
+                    .register(KeyValueStore.class, new MockKeyValueStore()));
 
             final var runtimeConfig = new NvdVulnDataSourceConfigV1()
                     .withEnabled(true)
@@ -142,31 +137,29 @@ class NvdVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
             final ExtensionTestResult testResult = factory.test(runtimeConfig);
 
             assertThat(testResult.isFailed()).isTrue();
-            assertThat(testResult.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.FAILED);
-                        assertThat(check.message()).isEqualTo("Connection to local hosts is not allowed");
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("feed_format");
-                        assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.SKIPPED);
-                        assertThat(check.message()).isNull();
-                    });
+            assertThat(testResult.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.FAILED);
+                                assertThat(check.message()).isEqualTo("Connection to local hosts is not allowed");
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("feed_format");
+                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.SKIPPED);
+                                assertThat(check.message()).isNull();
+                            });
         }
 
         @Test
         void shouldReportInvalidFeedFormatFailure(WireMockRuntimeInfo wmRuntimeInfo) {
             stubFor(get(urlPathEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
-                    .willReturn(aResponse()
-                            .withBody("invalid")));
+                    .willReturn(aResponse().withBody("invalid")));
 
-            factory.init(
-                    new MutableServiceRegistry()
-                            .register(ConfigRegistry.class, new MockConfigRegistry(
-                                    Map.of("allow-local-connections", "true")))
-                            .register(HttpClient.class, HttpClient.newHttpClient())
-                            .register(KeyValueStore.class, new MockKeyValueStore()));
+            factory.init(new MutableServiceRegistry()
+                    .register(ConfigRegistry.class, new MockConfigRegistry(Map.of("allow-local-connections", "true")))
+                    .register(HttpClient.class, HttpClient.newHttpClient())
+                    .register(KeyValueStore.class, new MockKeyValueStore()));
 
             final var runtimeConfig = new NvdVulnDataSourceConfigV1()
                     .withEnabled(true)
@@ -175,27 +168,27 @@ class NvdVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
             final ExtensionTestResult testResult = factory.test(runtimeConfig);
 
             assertThat(testResult.isFailed()).isTrue();
-            assertThat(testResult.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.PASSED);
-                        assertThat(check.message()).isNull();
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("feed_format");
-                        assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.FAILED);
-                        assertThat(check.message()).isEqualTo("Failed to parse feed metadata, check logs for details");
-                    });
+            assertThat(testResult.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.PASSED);
+                                assertThat(check.message()).isNull();
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("feed_format");
+                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.FAILED);
+                                assertThat(check.message())
+                                        .isEqualTo("Failed to parse feed metadata, check logs for details");
+                            });
         }
 
         @Test
         void shouldReportAllChecksSkippedWhenDisabled(WireMockRuntimeInfo wmRuntimeInfo) {
-            factory.init(
-                    new MutableServiceRegistry()
-                            .register(ConfigRegistry.class, new MockConfigRegistry(
-                                    Map.of("allow-local-connections", "true")))
-                            .register(HttpClient.class, HttpClient.newHttpClient())
-                            .register(KeyValueStore.class, new MockKeyValueStore()));
+            factory.init(new MutableServiceRegistry()
+                    .register(ConfigRegistry.class, new MockConfigRegistry(Map.of("allow-local-connections", "true")))
+                    .register(HttpClient.class, HttpClient.newHttpClient())
+                    .register(KeyValueStore.class, new MockKeyValueStore()));
 
             final var runtimeConfig = new NvdVulnDataSourceConfigV1()
                     .withEnabled(false)
@@ -204,19 +197,18 @@ class NvdVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
             final ExtensionTestResult testResult = factory.test(runtimeConfig);
 
             assertThat(testResult.isFailed()).isFalse();
-            assertThat(testResult.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.SKIPPED);
-                        assertThat(check.message()).isNull();
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("feed_format");
-                        assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.SKIPPED);
-                        assertThat(check.message()).isNull();
-                    });
+            assertThat(testResult.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.SKIPPED);
+                                assertThat(check.message()).isNull();
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("feed_format");
+                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.SKIPPED);
+                                assertThat(check.message()).isNull();
+                            });
         }
-
     }
-
 }

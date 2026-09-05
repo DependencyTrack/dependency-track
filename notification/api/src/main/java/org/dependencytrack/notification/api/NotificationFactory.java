@@ -87,11 +87,9 @@ import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_UNSPECIFIED;
  */
 public final class NotificationFactory {
 
-    private static final TimeBasedEpochRandomGenerator UUIDV7_GENERATOR =
-            Generators.timeBasedEpochRandomGenerator();
+    private static final TimeBasedEpochRandomGenerator UUIDV7_GENERATOR = Generators.timeBasedEpochRandomGenerator();
 
-    private NotificationFactory() {
-    }
+    private NotificationFactory() {}
 
     public static Notification createAnalyzerErrorNotification(String content) {
         requireNonNull(content, "content must not be null");
@@ -102,10 +100,7 @@ public final class NotificationFactory {
                 .build();
     }
 
-    static Notification createBomConsumedNotification(
-            Project project,
-            Bom bom,
-            String token) {
+    static Notification createBomConsumedNotification(Project project, Bom bom, String token) {
         requireNonNull(project, "project must not be null");
         requireNonNull(bom, "bom must not be null");
         requireNonNull(token, "token must not be null");
@@ -113,20 +108,16 @@ public final class NotificationFactory {
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_BOM_CONSUMED, LEVEL_INFORMATIONAL)
                 .setTitle("Bill of Materials Consumed")
                 .setContent("A %s BOM was consumed and will be processed".formatted(bom.getFormat()))
-                .setSubject(Any.pack(
-                        BomConsumedOrProcessedSubject.newBuilder()
-                                .setProject(project)
-                                .setBom(bom)
-                                .setToken(token)
-                                .build()))
+                .setSubject(Any.pack(BomConsumedOrProcessedSubject.newBuilder()
+                        .setProject(project)
+                        .setBom(bom)
+                        .setToken(token)
+                        .build()))
                 .build();
     }
 
     public static Notification createBomConsumedNotification(
-            Project project,
-            @Nullable String bomFormat,
-            @Nullable String bomSpecVersion,
-            String token) {
+            Project project, @Nullable String bomFormat, @Nullable String bomSpecVersion, String token) {
         final var bomBuilder = Bom.newBuilder().setContent("(Omitted)");
         if (bomFormat != null) {
             bomBuilder.setFormat(bomFormat);
@@ -138,10 +129,7 @@ public final class NotificationFactory {
         return createBomConsumedNotification(project, bomBuilder.build(), token);
     }
 
-    public static Notification createBomProcessedNotification(
-            Project project,
-            Bom bom,
-            String token) {
+    public static Notification createBomProcessedNotification(Project project, Bom bom, String token) {
         requireNonNull(project, "project must not be null");
         requireNonNull(bom, "bom must not be null");
         requireNonNull(token, "token must not be null");
@@ -149,20 +137,16 @@ public final class NotificationFactory {
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_BOM_PROCESSED, LEVEL_INFORMATIONAL)
                 .setTitle("Bill of Materials Processed")
                 .setContent("A %s BOM was processed".formatted(bom.getFormat()))
-                .setSubject(Any.pack(
-                        BomConsumedOrProcessedSubject.newBuilder()
-                                .setProject(project)
-                                .setBom(bom)
-                                .setToken(token)
-                                .build()))
+                .setSubject(Any.pack(BomConsumedOrProcessedSubject.newBuilder()
+                        .setProject(project)
+                        .setBom(bom)
+                        .setToken(token)
+                        .build()))
                 .build();
     }
 
     public static Notification createBomProcessedNotification(
-            Project project,
-            @Nullable String bomFormat,
-            @Nullable String bomSpecVersion,
-            String token) {
+            Project project, @Nullable String bomFormat, @Nullable String bomSpecVersion, String token) {
         final var bomBuilder = Bom.newBuilder().setContent("(Omitted)");
         if (bomFormat != null) {
             bomBuilder.setFormat(bomFormat);
@@ -175,10 +159,7 @@ public final class NotificationFactory {
     }
 
     public static Notification createBomProcessingFailedNotification(
-            Project project,
-            Bom bom,
-            String token,
-            String cause) {
+            Project project, Bom bom, String token, String cause) {
         requireNonNull(project, "project must not be null");
         requireNonNull(bom, "bom must not be null");
         requireNonNull(token, "token must not be null");
@@ -186,22 +167,17 @@ public final class NotificationFactory {
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_BOM_PROCESSING_FAILED, LEVEL_ERROR)
                 .setTitle("Bill of Materials Processing Failed")
                 .setContent("An error occurred while processing a BOM")
-                .setSubject(Any.pack(
-                        BomProcessingFailedSubject.newBuilder()
-                                .setProject(project)
-                                .setBom(bom)
-                                .setCause(cause)
-                                .setToken(token)
-                                .build()))
+                .setSubject(Any.pack(BomProcessingFailedSubject.newBuilder()
+                        .setProject(project)
+                        .setBom(bom)
+                        .setCause(cause)
+                        .setToken(token)
+                        .build()))
                 .build();
     }
 
     public static Notification createBomProcessingFailedNotification(
-            Project project,
-            @Nullable String bomFormat,
-            @Nullable String bomSpecVersion,
-            String token,
-            String cause) {
+            Project project, @Nullable String bomFormat, @Nullable String bomSpecVersion, String token, String cause) {
         final var bomBuilder = Bom.newBuilder().setContent("(Omitted)");
         if (bomFormat != null) {
             bomBuilder.setFormat(bomFormat);
@@ -213,30 +189,23 @@ public final class NotificationFactory {
         return createBomProcessingFailedNotification(project, bomBuilder.build(), token, cause);
     }
 
-    public static Notification createBomValidationFailedNotification(
-            Project project,
-            Collection<String> errors) {
+    public static Notification createBomValidationFailedNotification(Project project, Collection<String> errors) {
         requireNonNull(project, "project must not be null");
         requireNonNull(errors, "errors must not be null");
 
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_BOM_VALIDATION_FAILED, LEVEL_ERROR)
                 .setTitle("Bill of Materials Validation Failed")
                 .setContent("An error occurred while validating a BOM")
-                .setSubject(Any.pack(
-                        BomValidationFailedSubject.newBuilder()
-                                .setProject(project)
-                                .setBom(Bom.newBuilder()
-                                        .setContent("(Omitted)")
-                                        .build())
-                                .addAllErrors(errors)
-                                .build()))
+                .setSubject(Any.pack(BomValidationFailedSubject.newBuilder()
+                        .setProject(project)
+                        .setBom(Bom.newBuilder().setContent("(Omitted)").build())
+                        .addAllErrors(errors)
+                        .build()))
                 .build();
     }
 
     public static Notification createVulnerabilityRetractedNotification(
-            Project project,
-            Component component,
-            Vulnerability vulnerability) {
+            Project project, Component component, Vulnerability vulnerability) {
         requireNonNull(project, "project must not be null");
         requireNonNull(component, "component must not be null");
         requireNonNull(vulnerability, "vulnerability must not be null");
@@ -247,24 +216,14 @@ public final class NotificationFactory {
         }
         title += "]";
 
-        final String content;
-        if (vulnerability.hasDescription()) {
-            content = vulnerability.getDescription();
-        } else {
-            content = vulnerability.hasTitle()
-                    ? "%s: %s".formatted(vulnerability.getVulnId(), vulnerability.getTitle())
-                    : vulnerability.getVulnId();
-        }
-
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_VULNERABILITY_RETRACTED, LEVEL_INFORMATIONAL)
                 .setTitle(title)
-                .setContent(content)
-                .setSubject(Any.pack(
-                        VulnerabilityRetractedSubject.newBuilder()
-                                .setProject(project)
-                                .setComponent(component)
-                                .setVulnerability(vulnerability)
-                                .build()))
+                .setContent(contentFor(vulnerability))
+                .setSubject(Any.pack(VulnerabilityRetractedSubject.newBuilder()
+                        .setProject(project)
+                        .setComponent(component)
+                        .setVulnerability(vulnerability)
+                        .build()))
                 .build();
     }
 
@@ -279,10 +238,7 @@ public final class NotificationFactory {
 
     @SuppressWarnings("deprecation")
     public static Notification createNewVulnerabilityNotification(
-            Project project,
-            Component component,
-            Vulnerability vulnerability,
-            AnalysisTrigger analysisTrigger) {
+            Project project, Component component, Vulnerability vulnerability, AnalysisTrigger analysisTrigger) {
         requireNonNull(project, "project must not be null");
         requireNonNull(component, "component must not be null");
         requireNonNull(vulnerability, "vulnerability must not be null");
@@ -294,46 +250,34 @@ public final class NotificationFactory {
         }
         title += "]";
 
-        final String content;
-        if (vulnerability.hasDescription()) {
-            content = vulnerability.getDescription();
-        } else {
-            content = vulnerability.hasTitle()
-                    ? "%s: %s".formatted(vulnerability.getVulnId(), vulnerability.getTitle())
-                    : vulnerability.getVulnId();
-        }
-
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_NEW_VULNERABILITY, LEVEL_INFORMATIONAL)
                 .setTitle(title)
-                .setContent(content)
-                .setSubject(Any.pack(
-                        NewVulnerabilitySubject.newBuilder()
-                                .setProject(project)
-                                .setComponent(component)
-                                .setVulnerability(vulnerability)
-                                .setAnalysisTrigger(analysisTrigger)
-                                .setVulnerabilityAnalysisLevel(switch (analysisTrigger) {
+                .setContent(contentFor(vulnerability))
+                .setSubject(Any.pack(NewVulnerabilitySubject.newBuilder()
+                        .setProject(project)
+                        .setComponent(component)
+                        .setVulnerability(vulnerability)
+                        .setAnalysisTrigger(analysisTrigger)
+                        .setVulnerabilityAnalysisLevel(
+                                switch (analysisTrigger) {
                                     case ANALYSIS_TRIGGER_BOM_UPLOAD -> "BOM_UPLOAD_ANALYSIS";
                                     case ANALYSIS_TRIGGER_SCHEDULE -> "PERIODIC_ANALYSIS";
                                     case ANALYSIS_TRIGGER_MANUAL -> "MANUAL_ANALYSIS";
                                     default -> "UNKNOWN";
                                 })
-                                .setAffectedProjectsReference(
-                                        BackReference.newBuilder()
-                                                .setApiUri("/api/v1/vulnerability/source/%s/vuln/%s/projects".formatted(
-                                                        vulnerability.getSource(), vulnerability.getVulnId()))
-                                                .setFrontendUri("/vulnerabilities/%s/%s/affectedProjects".formatted(
-                                                        vulnerability.getSource(), vulnerability.getVulnId()))
-                                                .build())
-                                .addAffectedProjects(project)
-                                .build()))
+                        .setAffectedProjectsReference(BackReference.newBuilder()
+                                .setApiUri("/api/v1/vulnerability/source/%s/vuln/%s/projects"
+                                        .formatted(vulnerability.getSource(), vulnerability.getVulnId()))
+                                .setFrontendUri("/vulnerabilities/%s/%s/affectedProjects"
+                                        .formatted(vulnerability.getSource(), vulnerability.getVulnId()))
+                                .build())
+                        .addAffectedProjects(project)
+                        .build()))
                 .build();
     }
 
     public static Notification createNewVulnerableDependencyNotification(
-            Project project,
-            Component component,
-            Collection<Vulnerability> vulnerabilities) {
+            Project project, Component component, Collection<Vulnerability> vulnerabilities) {
         requireNonNull(project, "project must not be null");
         requireNonNull(component, "component must not be null");
         requireNonNull(vulnerabilities, "vulnerabilities must not be null");
@@ -356,12 +300,11 @@ public final class NotificationFactory {
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_NEW_VULNERABLE_DEPENDENCY, LEVEL_INFORMATIONAL)
                 .setTitle(title)
                 .setContent(content)
-                .setSubject(Any.pack(
-                        NewVulnerableDependencySubject.newBuilder()
-                                .setProject(project)
-                                .setComponent(component)
-                                .addAllVulnerabilities(vulnerabilities)
-                                .build()))
+                .setSubject(Any.pack(NewVulnerableDependencySubject.newBuilder()
+                        .setProject(project)
+                        .setComponent(component)
+                        .addAllVulnerabilities(vulnerabilities)
+                        .build()))
                 .build();
     }
 
@@ -396,20 +339,17 @@ public final class NotificationFactory {
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_PROJECT_AUDIT_CHANGE, LEVEL_INFORMATIONAL)
                 .setTitle(title)
                 .setContent("An violation analysis decision was made to a policy violation affecting a project")
-                .setSubject(Any.pack(
-                        PolicyViolationAnalysisDecisionChangeSubject.newBuilder()
-                                .setProject(project)
-                                .setComponent(component)
-                                .setPolicyViolation(violation)
-                                .setAnalysis(analysis)
-                                .build()))
+                .setSubject(Any.pack(PolicyViolationAnalysisDecisionChangeSubject.newBuilder()
+                        .setProject(project)
+                        .setComponent(component)
+                        .setPolicyViolation(violation)
+                        .setAnalysis(analysis)
+                        .build()))
                 .build();
     }
 
     public static Notification createPolicyViolationNotification(
-            Project project,
-            Component component,
-            PolicyViolation violation) {
+            Project project, Component component, PolicyViolation violation) {
         requireNonNull(project, "project must not be null");
         requireNonNull(component, "component must not be null");
         requireNonNull(violation, "violation must not be null");
@@ -422,13 +362,13 @@ public final class NotificationFactory {
 
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_POLICY_VIOLATION, LEVEL_INFORMATIONAL)
                 .setTitle(title)
-                .setContent("A %s policy violation occurred".formatted(violation.getType().toLowerCase()))
-                .setSubject(Any.pack(
-                        PolicyViolationSubject.newBuilder()
-                                .setProject(project)
-                                .setComponent(component)
-                                .setPolicyViolation(violation)
-                                .build()))
+                .setContent("A %s policy violation occurred"
+                        .formatted(violation.getType().toLowerCase()))
+                .setSubject(Any.pack(PolicyViolationSubject.newBuilder()
+                        .setProject(project)
+                        .setComponent(component)
+                        .setPolicyViolation(violation)
+                        .build()))
                 .build();
     }
 
@@ -462,41 +402,35 @@ public final class NotificationFactory {
                 .build();
     }
 
-    public static Notification createVexConsumedNotification(
-            Project project,
-            Bom bom) {
+    public static Notification createVexConsumedNotification(Project project, Bom bom) {
         requireNonNull(project, "project must not be null");
         requireNonNull(bom, "bom must not be null");
 
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_VEX_CONSUMED, LEVEL_INFORMATIONAL)
                 .setTitle("Vulnerability Exploitability Exchange (VEX) Consumed")
                 .setContent("A %s VEX was consumed and will be processed".formatted(bom.getFormat()))
-                .setSubject(Any.pack(
-                        VexConsumedOrProcessedSubject.newBuilder()
-                                .setProject(project)
-                                .setFormat(bom.getFormat())
-                                .setSpecVersion(bom.getSpecVersion())
-                                .setVex(ByteString.copyFromUtf8(bom.getContent()))
-                                .build()))
+                .setSubject(Any.pack(VexConsumedOrProcessedSubject.newBuilder()
+                        .setProject(project)
+                        .setFormat(bom.getFormat())
+                        .setSpecVersion(bom.getSpecVersion())
+                        .setVex(ByteString.copyFromUtf8(bom.getContent()))
+                        .build()))
                 .build();
     }
 
-    public static Notification createVexProcessedNotification(
-            Project project,
-            Bom bom) {
+    public static Notification createVexProcessedNotification(Project project, Bom bom) {
         requireNonNull(project, "project must not be null");
         requireNonNull(bom, "bom must not be null");
 
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_VEX_PROCESSED, LEVEL_INFORMATIONAL)
                 .setTitle("Vulnerability Exploitability Exchange (VEX) Processed")
                 .setContent("A %s VEX was processed".formatted(bom.getFormat()))
-                .setSubject(Any.pack(
-                        VexConsumedOrProcessedSubject.newBuilder()
-                                .setProject(project)
-                                .setFormat(bom.getFormat())
-                                .setSpecVersion(bom.getSpecVersion())
-                                .setVex(ByteString.copyFromUtf8(bom.getContent()))
-                                .build()))
+                .setSubject(Any.pack(VexConsumedOrProcessedSubject.newBuilder()
+                        .setProject(project)
+                        .setFormat(bom.getFormat())
+                        .setSpecVersion(bom.getSpecVersion())
+                        .setVex(ByteString.copyFromUtf8(bom.getContent()))
+                        .build()))
                 .build();
     }
 
@@ -508,8 +442,7 @@ public final class NotificationFactory {
             boolean analysisStateChanged,
             boolean suppressionChanged) {
         return createVulnerabilityAnalysisDecisionChangeNotification(
-                project, component, vulnerability, analysis,
-                analysisStateChanged, suppressionChanged, false);
+                project, component, vulnerability, analysis, analysisStateChanged, suppressionChanged, false);
     }
 
     public static Notification createVulnerabilityAnalysisDecisionChangeNotification(
@@ -529,8 +462,7 @@ public final class NotificationFactory {
         if (analysisStateChanged) {
             title = "Analysis Decision: " + analysis.getState();
         } else if (suppressionChanged) {
-            title = "Analysis Decision: Violation "
-                    + (analysis.getSuppressed() ? "Suppressed" : "Unsuppressed");
+            title = "Analysis Decision: Violation " + (analysis.getSuppressed() ? "Suppressed" : "Unsuppressed");
         } else if (policyAnnotationsChanged) {
             title = "Policy annotations updated";
         } else {
@@ -542,27 +474,25 @@ public final class NotificationFactory {
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_PROJECT_AUDIT_CHANGE, LEVEL_INFORMATIONAL)
                 .setTitle(title)
                 .setContent("An analysis decision was made to a finding affecting a project")
-                .setSubject(Any.pack(
-                        VulnerabilityAnalysisDecisionChangeSubject.newBuilder()
-                                .setProject(project)
-                                .setComponent(component)
-                                .setVulnerability(vulnerability)
-                                .setAnalysis(analysis)
-                                .build()))
+                .setSubject(Any.pack(VulnerabilityAnalysisDecisionChangeSubject.newBuilder()
+                        .setProject(project)
+                        .setComponent(component)
+                        .setVulnerability(vulnerability)
+                        .setAnalysis(analysis)
+                        .build()))
                 .build();
     }
 
-    public static Notification createNewVulnerabilitiesSummaryNotification(
-            NewVulnerabilitiesSummarySubject subject) {
+    public static Notification createNewVulnerabilitiesSummaryNotification(NewVulnerabilitiesSummarySubject subject) {
         return createNewVulnerabilitiesSummaryNotification(null, subject);
     }
 
     public static Notification createNewVulnerabilitiesSummaryNotification(
-            @Nullable String notificationId,
-            NewVulnerabilitiesSummarySubject subject) {
+            @Nullable String notificationId, NewVulnerabilitiesSummarySubject subject) {
         requireNonNull(subject, "subject must not be null");
 
-        final var builder = newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_NEW_VULNERABILITIES_SUMMARY, LEVEL_INFORMATIONAL)
+        final var builder = newNotificationBuilder(
+                        SCOPE_PORTFOLIO, GROUP_NEW_VULNERABILITIES_SUMMARY, LEVEL_INFORMATIONAL)
                 .setTitle("New Vulnerabilities Summary")
                 .setContent("A summary of new vulnerabilities has been generated")
                 .setSubject(Any.pack(subject));
@@ -572,17 +502,16 @@ public final class NotificationFactory {
         return builder.build();
     }
 
-    public static Notification createNewPolicyViolationsSummaryNotification(
-            NewPolicyViolationsSummarySubject subject) {
+    public static Notification createNewPolicyViolationsSummaryNotification(NewPolicyViolationsSummarySubject subject) {
         return createNewPolicyViolationsSummaryNotification(null, subject);
     }
 
     public static Notification createNewPolicyViolationsSummaryNotification(
-            @Nullable String notificationId,
-            NewPolicyViolationsSummarySubject subject) {
+            @Nullable String notificationId, NewPolicyViolationsSummarySubject subject) {
         requireNonNull(subject, "subject must not be null");
 
-        final var builder = newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_NEW_POLICY_VIOLATIONS_SUMMARY, LEVEL_INFORMATIONAL)
+        final var builder = newNotificationBuilder(
+                        SCOPE_PORTFOLIO, GROUP_NEW_POLICY_VIOLATIONS_SUMMARY, LEVEL_INFORMATIONAL)
                 .setTitle("New Policy Violations Summary")
                 .setContent("A summary of new policy violations has been generated")
                 .setSubject(Any.pack(subject));
@@ -592,10 +521,7 @@ public final class NotificationFactory {
         return builder.build();
     }
 
-    static Notification.Builder newNotificationBuilder(
-            final Scope scope,
-            final Group group,
-            final Level level) {
+    static Notification.Builder newNotificationBuilder(final Scope scope, final Group group, final Level level) {
         requireNonNull(scope, "scope must not be null");
         requireNonNull(group, "group must not be null");
         requireNonNull(level, "level must not be null");
@@ -620,4 +546,14 @@ public final class NotificationFactory {
                 .setLevel(level);
     }
 
+    private static String contentFor(Vulnerability vulnerability) {
+        if (!vulnerability.getDescription().isBlank()) {
+            return vulnerability.getDescription();
+        }
+        if (!vulnerability.getTitle().isBlank()) {
+            return "%s: %s".formatted(vulnerability.getVulnId(), vulnerability.getTitle());
+        }
+
+        return vulnerability.getVulnId();
+    }
 }

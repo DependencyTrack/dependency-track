@@ -31,12 +31,10 @@ public final class InvalidSortFieldException extends IllegalArgumentException {
     private final List<String> allowedFieldNames;
 
     public InvalidSortFieldException(String fieldName, @Nullable List<String> allowedFieldNames) {
-        super("Sorting by field '%s' is not supported".formatted(
-                requireNonNull(fieldName, "fieldName must not be null")));
+        super("Sorting by field '%s' is not supported"
+                .formatted(requireNonNull(fieldName, "fieldName must not be null")));
         this.fieldName = fieldName;
-        this.allowedFieldNames = allowedFieldNames != null
-                ? List.copyOf(allowedFieldNames)
-                : null;
+        this.allowedFieldNames = allowedFieldNames != null ? List.copyOf(allowedFieldNames) : null;
     }
 
     public InvalidSortFieldException(String fieldName) {
@@ -50,5 +48,4 @@ public final class InvalidSortFieldException extends IllegalArgumentException {
     public @Nullable List<String> getAllowedFieldNames() {
         return allowedFieldNames;
     }
-
 }

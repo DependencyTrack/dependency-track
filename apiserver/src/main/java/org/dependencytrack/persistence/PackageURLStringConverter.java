@@ -49,7 +49,9 @@ public class PackageURLStringConverter implements AttributeConverter<PackageURL,
         try {
             return new PackageURL(str.trim());
         } catch (MalformedPackageURLException e) {
-            LOGGER.warn("A persisted object with a PackageURL string in the datastore failed validation and is not valid. Returning null for: {}", str);
+            LOGGER.warn(
+                    "A persisted object with a PackageURL string in the datastore failed validation and is not valid. Returning null for: {}",
+                    str);
         }
         return null;
     }

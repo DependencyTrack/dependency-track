@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-
 /**
  * The Finding object is a metadata/value object that combines data from multiple tables. The object can
  * only be queried on, not updated or deleted. Modifications to data in the Finding object need to be made
@@ -141,8 +140,7 @@ public final class Finding implements Serializable {
         }
     }
 
-    private static List<Map<String, Object>> toPolicyAnnotationsApi(
-            final List<AppliedPolicyAnnotation> annotations) {
+    private static List<Map<String, Object>> toPolicyAnnotationsApi(final List<AppliedPolicyAnnotation> annotations) {
         if (annotations == null || annotations.isEmpty()) {
             return List.of();
         }
@@ -214,6 +212,6 @@ public final class Finding implements Serializable {
                 uniqueAliases.add(map);
             }
         }
-        vulnerability.put("aliases",uniqueAliases);
+        vulnerability.put("aliases", uniqueAliases);
     }
 }

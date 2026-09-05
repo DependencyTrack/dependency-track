@@ -33,7 +33,6 @@ import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +57,6 @@ import static java.util.Objects.requireNonNull;
 /**
  * @since 5.0.0
  */
-@NullMarked
 final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeConfigurable, Testable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NvdVulnDataSourceFactory.class);
@@ -71,6 +69,11 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     @Override
     public String extensionName() {
         return "nvd";
+    }
+
+    @Override
+    public String displayName() {
+        return "NVD";
     }
 
     @Override
@@ -120,14 +123,15 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     public VulnDataSource create() {
         requireNonNull(configRegistry, "configRegistry must not be null");
         requireNonNull(kvStore, "kvStore must not be null");
+        requireNonNull(objectMapper, "objectMapper must not be null");
+        requireNonNull(httpClient, "httpClient must not be null");
 
         final var config = configRegistry.getRuntimeConfig(NvdVulnDataSourceConfigV1.class);
         if (!config.isEnabled()) {
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
         }
 
-        final List<NvdDataFeed> feeds = IntStream
-                .range(2002, LocalDate.now().getYear() + 1)
+        final List<NvdDataFeed> feeds = IntStream.range(2002, LocalDate.now().getYear() + 1)
                 .boxed()
                 .sorted(Comparator.reverseOrder())
                 .map(NvdDataFeed.YearDataFeed::new)
@@ -137,7 +141,12 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         final List<String> feedNames = feeds.stream().map(NvdDataFeed::name).toList();
         final var watermarkManager = new WatermarkManager(kvStore, feedNames);
 
-        return new NvdVulnDataSource(watermarkManager, objectMapper, httpClient, config.getCveFeedsUrl().toString(), feeds);
+        return new NvdVulnDataSource(
+                watermarkManager,
+                objectMapper,
+                httpClient,
+                config.getCveFeedsUrl().toString(),
+                feeds);
     }
 
     @Override
@@ -210,5 +219,4 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
 
         return testResult;
     }
-
 }

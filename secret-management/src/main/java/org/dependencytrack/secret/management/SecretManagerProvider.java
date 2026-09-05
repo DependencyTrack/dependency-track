@@ -38,5 +38,4 @@ public interface SecretManagerProvider {
      * @return A secret manager instance.
      */
     SecretManager create(Config config, PageTokenEncoder pageTokenEncoder);
-
 }

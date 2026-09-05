@@ -36,6 +36,9 @@ import java.util.NoSuchElementException;
 import java.util.function.BooleanSupplier;
 
 import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_WORKFLOW_INSTANCE_ID;
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_WORKFLOW_NAME;
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_WORKFLOW_RUN_ID;
 
 final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
 
@@ -71,9 +74,10 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
     void process(final WorkflowTask task) {
-        try (var _ = MDC.putCloseable("workflowName", task.workflowName());
-             var _ = MDC.putCloseable("workflowInstanceId", task.workflowInstanceId());
-             var _ = MDC.putCloseable("workflowRunId", task.workflowRunId().toString())) {
+        try (var _ = MDC.putCloseable(MDC_WORKFLOW_NAME, task.workflowName());
+                var _ = MDC.putCloseable(MDC_WORKFLOW_INSTANCE_ID, task.workflowInstanceId());
+                var _ = MDC.putCloseable(
+                        MDC_WORKFLOW_RUN_ID, task.workflowRunId().toString())) {
             final WorkflowMetadata workflowMetadata;
             try {
                 workflowMetadata = metadataRegistry.getWorkflowMetadata(task.workflowName());
@@ -85,7 +89,7 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
 
             // Hydrate workflow run state from the history.
             final var workflowRunState = new WorkflowRunState(task.workflowRunId(), task.history());
-            if (workflowRunState.status() != null && workflowRunState.status().isTerminal()) {
+            if (workflowRunState.isCreated() && workflowRunState.status().isTerminal()) {
                 logger.warn("""
                         Task was scheduled despite the workflow run already being in terminal state {}. \
                         Discarding {} events in the run's inbox.""", workflowRunState.status(), task.inbox().size());
@@ -98,12 +102,11 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
 
             // Inject a WorkflowTaskStarted event.
             // Its timestamp will be used as deterministic "now" timestamp while processing new events.
-            workflowRunState.applyEvent(
-                    WorkflowEvent.newBuilder()
-                            .setId(-1)
-                            .setTimestamp(Timestamps.now())
-                            .setWorkflowTaskStarted(WorkflowTaskStarted.getDefaultInstance())
-                            .build());
+            workflowRunState.applyEvent(WorkflowEvent.newBuilder()
+                    .setId(-1)
+                    .setTimestamp(Timestamps.now())
+                    .setWorkflowTaskStarted(WorkflowTaskStarted.getDefaultInstance())
+                    .build());
 
             int eventsAdded = 0;
             for (final WorkflowEvent newEvent : task.inbox()) {
@@ -115,12 +118,11 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
                 // so we can differentiate between when a run was created vs.
                 // when it was eventually picked up.
                 if (newEvent.hasRunCreated()) {
-                    workflowRunState.applyEvent(
-                            WorkflowEvent.newBuilder()
-                                    .setId(-1)
-                                    .setTimestamp(Timestamps.now())
-                                    .setRunStarted(RunStarted.getDefaultInstance())
-                                    .build());
+                    workflowRunState.applyEvent(WorkflowEvent.newBuilder()
+                            .setId(-1)
+                            .setTimestamp(Timestamps.now())
+                            .setRunStarted(RunStarted.getDefaultInstance())
+                            .build());
                     eventsAdded++;
                 }
             }
@@ -129,6 +131,14 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
                 logger.warn("No new events; Abandoning task");
                 abandon(task);
                 return;
+            }
+
+            // All actions after this require state that only the RunCreated event provides,
+            // so a run without it can not make progress. Fail here rather than when task events
+            // are flushed, where the failure would take down the entire batch.
+            if (!workflowRunState.isCreated()) {
+                throw new IllegalStateException(
+                        "Run has no RunCreated event in its history or inbox and can not make progress");
             }
 
             final var ctx = new WorkflowContextImpl<>(
@@ -154,12 +164,11 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
                 // When continued as new, any pending events have already been deleted,
                 // and existing history will be truncated. Adding a WorkflowTaskCompleted
                 // event would add no value then.
-                workflowRunState.applyEvent(
-                        WorkflowEvent.newBuilder()
-                                .setId(-1)
-                                .setTimestamp(Timestamps.now())
-                                .setWorkflowTaskCompleted(WorkflowTaskCompleted.getDefaultInstance())
-                                .build());
+                workflowRunState.applyEvent(WorkflowEvent.newBuilder()
+                        .setId(-1)
+                        .setTimestamp(Timestamps.now())
+                        .setWorkflowTaskCompleted(WorkflowTaskCompleted.getDefaultInstance())
+                        .build());
             }
 
             engine.onTaskEvent(new WorkflowTaskCompletedEvent(task, workflowRunState));
@@ -170,5 +179,4 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
     void abandon(final WorkflowTask task) {
         engine.onTaskEvent(new WorkflowTaskAbandonedEvent(task));
     }
-
 }

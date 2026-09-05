@@ -81,7 +81,8 @@ class UsersPermissionsIT {
         // SYSTEM_CONFIGURATION to exercise the secret-management fan-out. Engineering holds
         // both ACCESS_MANAGEMENT and SYSTEM_CONFIGURATION to exercise both fan-outs at the team level.
         source.jdbi().useHandle(h -> {
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '11111111-1111-1111-1111-111111111111')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '11111111-1111-1111-1111-111111111111')");
             h.execute("INSERT INTO \"PERMISSION\" (\"ID\", \"NAME\") VALUES (1, 'VIEW_PORTFOLIO')");
             // VIEW_BADGES was a v4 permission that v5 removed; verifies v4-only names drop out.
             h.execute("INSERT INTO \"PERMISSION\" (\"ID\", \"NAME\") VALUES (2, 'VIEW_BADGES')");
@@ -113,11 +114,14 @@ class UsersPermissionsIT {
                 VALUES (40, 'dave', 'hash', 'Dave Managed', 'dave@example.com',
                         FALSE, '2025-01-01T00:00:00Z', FALSE, FALSE)
                 """);
-            h.execute("INSERT INTO \"MANAGEDUSERS_PERMISSIONS\" (\"MANAGEDUSER_ID\", \"PERMISSION_ID\") VALUES (10, 1)");
-            h.execute("INSERT INTO \"MANAGEDUSERS_PERMISSIONS\" (\"MANAGEDUSER_ID\", \"PERMISSION_ID\") VALUES (10, 2)");
+            h.execute(
+                    "INSERT INTO \"MANAGEDUSERS_PERMISSIONS\" (\"MANAGEDUSER_ID\", \"PERMISSION_ID\") VALUES (10, 1)");
+            h.execute(
+                    "INSERT INTO \"MANAGEDUSERS_PERMISSIONS\" (\"MANAGEDUSER_ID\", \"PERMISSION_ID\") VALUES (10, 2)");
             h.execute("INSERT INTO \"LDAPUSERS_PERMISSIONS\" (\"LDAPUSER_ID\", \"PERMISSION_ID\") VALUES (20, 2)");
             h.execute("INSERT INTO \"OIDCUSERS_PERMISSIONS\" (\"OIDCUSER_ID\", \"PERMISSION_ID\") VALUES (30, 3)");
-            h.execute("INSERT INTO \"MANAGEDUSERS_PERMISSIONS\" (\"MANAGEDUSER_ID\", \"PERMISSION_ID\") VALUES (40, 4)");
+            h.execute(
+                    "INSERT INTO \"MANAGEDUSERS_PERMISSIONS\" (\"MANAGEDUSER_ID\", \"PERMISSION_ID\") VALUES (40, 4)");
             h.execute("INSERT INTO \"TEAMS_PERMISSIONS\" (\"TEAM_ID\", \"PERMISSION_ID\") VALUES (1, 3)");
             h.execute("INSERT INTO \"TEAMS_PERMISSIONS\" (\"TEAM_ID\", \"PERMISSION_ID\") VALUES (1, 4)");
         });
@@ -126,29 +130,34 @@ class UsersPermissionsIT {
 
         // permission_name_map: only v4 names that match a seeded v5 catalog entry survive.
         // VIEW_BADGES is v4-only and drops out of the inner join against v5 PERMISSION.
-        final List<Map<String, Object>> mapRows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> mapRows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT orig_id, name
                       FROM dt_v4_migration.permission_name_map
                      ORDER BY orig_id
-                    """)
-                .mapToMap()
-                .list());
+                    """).mapToMap().list());
 
-        assertThat(mapRows).extracting(m -> m.get("name"))
-            .containsExactlyInAnyOrder("VIEW_PORTFOLIO", "ACCESS_MANAGEMENT", "SYSTEM_CONFIGURATION");
+        assertThat(mapRows)
+                .extracting(m -> m.get("name"))
+                .containsExactlyInAnyOrder("VIEW_PORTFOLIO", "ACCESS_MANAGEMENT", "SYSTEM_CONFIGURATION");
 
         // Full v5 catalog is seeded regardless of which subset v4 had. PORTFOLIO_ACCESS_CONTROL_BYPASS
         // (a v5.6.0 addition not present in v4) must be available for the implication fan-out below.
-        final List<String> perms = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT \"NAME\" FROM \"PERMISSION\" ORDER BY \"NAME\"")
-                .mapTo(String.class)
-                .list());
-        assertThat(perms).contains(
-            "ACCESS_MANAGEMENT", "ACCESS_MANAGEMENT_CREATE", "ACCESS_MANAGEMENT_READ",
-            "ACCESS_MANAGEMENT_UPDATE", "ACCESS_MANAGEMENT_DELETE",
-            "PORTFOLIO_ACCESS_CONTROL_BYPASS", "VIEW_PORTFOLIO",
-            "SECRET_MANAGEMENT", "SYSTEM_CONFIGURATION");
+        final List<String> perms = target.jdbi()
+                .withHandle(h -> h.createQuery("SELECT \"NAME\" FROM \"PERMISSION\" ORDER BY \"NAME\"")
+                        .mapTo(String.class)
+                        .list());
+        assertThat(perms)
+                .contains(
+                        "ACCESS_MANAGEMENT",
+                        "ACCESS_MANAGEMENT_CREATE",
+                        "ACCESS_MANAGEMENT_READ",
+                        "ACCESS_MANAGEMENT_UPDATE",
+                        "ACCESS_MANAGEMENT_DELETE",
+                        "PORTFOLIO_ACCESS_CONTROL_BYPASS",
+                        "VIEW_PORTFOLIO",
+                        "SECRET_MANAGEMENT",
+                        "SYSTEM_CONFIGURATION");
         assertThat(perms).doesNotContain("VIEW_BADGES");
 
         // USERS_PERMISSIONS final state:
@@ -156,44 +165,42 @@ class UsersPermissionsIT {
         //   - bob's only assignment was VIEW_BADGES, so he ends with no permissions.
         //   - carol keeps ACCESS_MANAGEMENT AND gains PORTFOLIO_ACCESS_CONTROL_BYPASS via fan-out.
         //   - dave keeps SYSTEM_CONFIGURATION AND gains SECRET_MANAGEMENT via fan-out.
-        final List<Map<String, Object>> userPerms = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> userPerms =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT u."USERNAME" AS username, p."NAME" AS permission_name
                       FROM "USERS_PERMISSIONS" up
                       JOIN "USER" u       ON u."ID" = up."USER_ID"
                       JOIN "PERMISSION" p ON p."ID" = up."PERMISSION_ID"
                      ORDER BY u."USERNAME", p."NAME"
-                    """)
-                .mapToMap()
-                .list());
+                    """).mapToMap().list());
 
-        assertThat(userPerms).extracting(m -> m.get("username") + ":" + m.get("permission_name"))
-            .containsExactlyInAnyOrder(
-                "alice:VIEW_PORTFOLIO",
-                "carol:ACCESS_MANAGEMENT",
-                "carol:PORTFOLIO_ACCESS_CONTROL_BYPASS",
-                "dave:SYSTEM_CONFIGURATION",
-                "dave:SECRET_MANAGEMENT");
+        assertThat(userPerms)
+                .extracting(m -> m.get("username") + ":" + m.get("permission_name"))
+                .containsExactlyInAnyOrder(
+                        "alice:VIEW_PORTFOLIO",
+                        "carol:ACCESS_MANAGEMENT",
+                        "carol:PORTFOLIO_ACCESS_CONTROL_BYPASS",
+                        "dave:SYSTEM_CONFIGURATION",
+                        "dave:SECRET_MANAGEMENT");
 
         // TEAMS_PERMISSIONS: Engineering held ACCESS_MANAGEMENT and SYSTEM_CONFIGURATION,
         // so must also gain PORTFOLIO_ACCESS_CONTROL_BYPASS and SECRET_MANAGEMENT via fan-out.
-        final List<Map<String, Object>> teamPerms = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> teamPerms =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT t."NAME" AS team_name, p."NAME" AS permission_name
                       FROM "TEAMS_PERMISSIONS" tp
                       JOIN "TEAM" t       ON t."ID" = tp."TEAM_ID"
                       JOIN "PERMISSION" p ON p."ID" = tp."PERMISSION_ID"
                      ORDER BY t."NAME", p."NAME"
-                    """)
-                .mapToMap()
-                .list());
+                    """).mapToMap().list());
 
-        assertThat(teamPerms).extracting(m -> m.get("team_name") + ":" + m.get("permission_name"))
-            .containsExactlyInAnyOrder(
-                "Engineering:ACCESS_MANAGEMENT",
-                "Engineering:PORTFOLIO_ACCESS_CONTROL_BYPASS",
-                "Engineering:SYSTEM_CONFIGURATION",
-                "Engineering:SECRET_MANAGEMENT");
+        assertThat(teamPerms)
+                .extracting(m -> m.get("team_name") + ":" + m.get("permission_name"))
+                .containsExactlyInAnyOrder(
+                        "Engineering:ACCESS_MANAGEMENT",
+                        "Engineering:PORTFOLIO_ACCESS_CONTROL_BYPASS",
+                        "Engineering:SYSTEM_CONFIGURATION",
+                        "Engineering:SECRET_MANAGEMENT");
     }
 
     /**
@@ -209,8 +216,7 @@ class UsersPermissionsIT {
         // Simulate the operator's recovery: drop everything that hangs off PERMISSION,
         // including PERMISSION itself, and restart the identity sequence so the re-seed
         // produces identical IDs to the originals captured in permission_name_map.
-        target.jdbi().useHandle(h ->
-            h.execute("TRUNCATE TABLE \"PERMISSION\" RESTART IDENTITY CASCADE"));
+        target.jdbi().useHandle(h -> h.execute("TRUNCATE TABLE \"PERMISSION\" RESTART IDENTITY CASCADE"));
 
         // Re-bootstrap: only the PERMISSION seed step (Flyway is already at head).
         PermissionCatalog.seed(target.jdbi());
@@ -218,53 +224,53 @@ class UsersPermissionsIT {
         // Re-run just the join-table loads. The permission_name_map and tgt_*_permissions
         // staging tables are still in place from the first pipeline run.
         final TableMigration teamsPerms = TableRegistry.loaded().stream()
-            .filter(t -> t.name().equals("TEAMS_PERMISSIONS"))
-            .findFirst().orElseThrow();
+                .filter(t -> t.name().equals("TEAMS_PERMISSIONS"))
+                .findFirst()
+                .orElseThrow();
         final TableMigration usersPerms = TableRegistry.loaded().stream()
-            .filter(t -> t.name().equals("USERS_PERMISSIONS"))
-            .findFirst().orElseThrow();
+                .filter(t -> t.name().equals("USERS_PERMISSIONS"))
+                .findFirst()
+                .orElseThrow();
 
         target.jdbi().useHandle(h -> {
             h.execute(teamsPerms.loadSql().formatted("dt_v4_migration"));
             h.execute(usersPerms.loadSql().formatted("dt_v4_migration"));
         });
 
-        final List<Map<String, Object>> userPerms = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> userPerms =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT u."USERNAME" AS username, p."NAME" AS permission_name
                       FROM "USERS_PERMISSIONS" up
                       JOIN "USER" u       ON u."ID" = up."USER_ID"
                       JOIN "PERMISSION" p ON p."ID" = up."PERMISSION_ID"
                      ORDER BY u."USERNAME", p."NAME"
-                    """)
-                .mapToMap()
-                .list());
+                    """).mapToMap().list());
 
-        assertThat(userPerms).extracting(m -> m.get("username") + ":" + m.get("permission_name"))
-            .containsExactlyInAnyOrder(
-                "alice:VIEW_PORTFOLIO",
-                "carol:ACCESS_MANAGEMENT",
-                "carol:PORTFOLIO_ACCESS_CONTROL_BYPASS",
-                "dave:SYSTEM_CONFIGURATION",
-                "dave:SECRET_MANAGEMENT");
+        assertThat(userPerms)
+                .extracting(m -> m.get("username") + ":" + m.get("permission_name"))
+                .containsExactlyInAnyOrder(
+                        "alice:VIEW_PORTFOLIO",
+                        "carol:ACCESS_MANAGEMENT",
+                        "carol:PORTFOLIO_ACCESS_CONTROL_BYPASS",
+                        "dave:SYSTEM_CONFIGURATION",
+                        "dave:SECRET_MANAGEMENT");
 
-        final List<Map<String, Object>> teamPerms = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> teamPerms =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT t."NAME" AS team_name, p."NAME" AS permission_name
                       FROM "TEAMS_PERMISSIONS" tp
                       JOIN "TEAM" t       ON t."ID" = tp."TEAM_ID"
                       JOIN "PERMISSION" p ON p."ID" = tp."PERMISSION_ID"
                      ORDER BY t."NAME", p."NAME"
-                    """)
-                .mapToMap()
-                .list());
+                    """).mapToMap().list());
 
-        assertThat(teamPerms).extracting(m -> m.get("team_name") + ":" + m.get("permission_name"))
-            .containsExactlyInAnyOrder(
-                "Engineering:ACCESS_MANAGEMENT",
-                "Engineering:PORTFOLIO_ACCESS_CONTROL_BYPASS",
-                "Engineering:SYSTEM_CONFIGURATION",
-                "Engineering:SECRET_MANAGEMENT");
+        assertThat(teamPerms)
+                .extracting(m -> m.get("team_name") + ":" + m.get("permission_name"))
+                .containsExactlyInAnyOrder(
+                        "Engineering:ACCESS_MANAGEMENT",
+                        "Engineering:PORTFOLIO_ACCESS_CONTROL_BYPASS",
+                        "Engineering:SYSTEM_CONFIGURATION",
+                        "Engineering:SECRET_MANAGEMENT");
     }
 
     private void runPipeline() throws Exception {

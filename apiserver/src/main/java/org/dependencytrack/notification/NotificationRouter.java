@@ -68,8 +68,7 @@ import static org.dependencytrack.notification.NotificationModelConverter.conver
  */
 final class NotificationRouter {
 
-    record Result(Notification notification, Set<String> ruleNames) {
-    }
+    record Result(Notification notification, Set<String> ruleNames) {}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NotificationRouter.class.getName());
 
@@ -78,21 +77,16 @@ final class NotificationRouter {
     private final Timer ruleFilterLatency;
     private final MeterProvider<Counter> rulesMatchedCounter;
 
-    NotificationRouter(
-            Handle jdbiHandle,
-            MeterRegistry meterRegistry) {
+    NotificationRouter(Handle jdbiHandle, MeterRegistry meterRegistry) {
         this.jdbiHandle = requireNonNull(jdbiHandle, "jdbiHandle must not be null");
         requireNonNull(meterRegistry, "meterRegistry must not be null");
-        this.ruleQueryLatency = Timer
-                .builder("dt.notification.router.rule.query.latency")
+        this.ruleQueryLatency = Timer.builder("dt.notification.router.rule.query.latency")
                 .description("Latency of applicable notification rule queries")
                 .register(meterRegistry);
-        this.ruleFilterLatency = Timer
-                .builder("dt.notification.router.rule.filter.latency")
+        this.ruleFilterLatency = Timer.builder("dt.notification.router.rule.filter.latency")
                 .description("Latency of applicable notification rule filtering")
                 .register(meterRegistry);
-        this.rulesMatchedCounter = Counter
-                .builder("dt.notification.router.rules.matched")
+        this.rulesMatchedCounter = Counter.builder("dt.notification.router.rules.matched")
                 .description("Number of matched notification rules")
                 .withRegistry(meterRegistry);
     }
@@ -124,9 +118,15 @@ final class NotificationRouter {
 
             try (var _ = new MdcScope(Map.ofEntries(
                     Map.entry(MDC_NOTIFICATION_ID, notification.getId()),
-                    Map.entry(MDC_NOTIFICATION_SCOPE, convert(notification.getScope()).name()),
-                    Map.entry(MDC_NOTIFICATION_GROUP, convert(notification.getGroup()).name()),
-                    Map.entry(MDC_NOTIFICATION_LEVEL, convert(notification.getLevel()).name())))) {
+                    Map.entry(
+                            MDC_NOTIFICATION_SCOPE,
+                            convert(notification.getScope()).name()),
+                    Map.entry(
+                            MDC_NOTIFICATION_GROUP,
+                            convert(notification.getGroup()).name()),
+                    Map.entry(
+                            MDC_NOTIFICATION_LEVEL,
+                            convert(notification.getLevel()).name())))) {
                 final Timer.Sample ruleFilterLatencySample = Timer.start();
                 final List<RuleQueryResult> applicableRules;
                 try {
@@ -170,7 +170,6 @@ final class NotificationRouter {
         private boolean hasFilterExpression() {
             return filterExpression != null && !filterExpression.isBlank();
         }
-
     }
 
     private Map<Notification, List<RuleQueryResult>> queryRules(Collection<Notification> notifications) {
@@ -239,13 +238,10 @@ final class NotificationRouter {
                 .map(ConstructorMapper.of(RuleQueryResult.class))
                 .stream()
                 .collect(Collectors.groupingBy(
-                        rule -> notificationsList.get(rule.notificationIndex()),
-                        Collectors.toList()));
+                        rule -> notificationsList.get(rule.notificationIndex()), Collectors.toList()));
     }
 
-    private List<RuleQueryResult> maybeFilterRules(
-            Notification notification,
-            List<RuleQueryResult> ruleCandidates) {
+    private List<RuleQueryResult> maybeFilterRules(Notification notification, List<RuleQueryResult> ruleCandidates) {
         final Object unpackedSubject = unpackSubject(notification);
         final Project projectSubject = getProjectSubject(unpackedSubject);
 
@@ -265,10 +261,7 @@ final class NotificationRouter {
     }
 
     private boolean isApplicable(
-            RuleQueryResult rule,
-            Notification notification,
-            @Nullable Project project,
-            @Nullable Object subject) {
+            RuleQueryResult rule, Notification notification, @Nullable Project project, @Nullable Object subject) {
         if (!isApplicableByProjectOrTag(rule, project)) {
             return false;
         }
@@ -292,11 +285,12 @@ final class NotificationRouter {
             return true;
         }
 
-        if (rule.isLimitedToTags()) {
-            LOGGER.debug("Rule is limited to tags: {}", rule.limitToTagNames());
+        final Set<String> limitToTagNames = rule.limitToTagNames();
+        if (rule.isLimitedToTags() && limitToTagNames != null) {
+            LOGGER.debug("Rule is limited to tags: {}", limitToTagNames);
 
             final String matchedTagName = project.getTagsList().stream()
-                    .filter(rule.limitToTagNames()::contains)
+                    .filter(limitToTagNames::contains)
                     .findAny()
                     .orElse(null);
             if (matchedTagName != null) {
@@ -308,15 +302,16 @@ final class NotificationRouter {
             }
         }
 
-        if (rule.isLimitedToProjects()) {
-            LOGGER.debug("Rule is limited to projects with UUIDs: {}", rule.limitToProjectUuids());
+        final Set<String> limitToProjectUuids = rule.limitToProjectUuids();
+        if (rule.isLimitedToProjects() && limitToProjectUuids != null) {
+            LOGGER.debug("Rule is limited to projects with UUIDs: {}", limitToProjectUuids);
 
-            if (rule.limitToProjectUuids().contains(project.getUuid())) {
+            if (limitToProjectUuids.contains(project.getUuid())) {
                 LOGGER.debug("Rule matched project on UUID: {}", project.getUuid());
                 return true;
             } else if (rule.isNotifyChildProjects()) {
                 LOGGER.debug("Rule did not match on any project UUID");
-                if (isChildOfAnyActiveParent(rule.limitToProjectUuids(), project.getUuid())) {
+                if (isChildOfAnyActiveParent(limitToProjectUuids, project.getUuid())) {
                     LOGGER.debug("Rule matched parents of project");
                     return true;
                 } else {
@@ -332,9 +327,7 @@ final class NotificationRouter {
     }
 
     private boolean evaluateFilterExpression(
-            RuleQueryResult rule,
-            Notification notification,
-            @Nullable Object subject) {
+            RuleQueryResult rule, Notification notification, @Nullable Object subject) {
         final String filterExpression = rule.filterExpression();
         if (filterExpression == null || filterExpression.isBlank()) {
             return true;
@@ -343,7 +336,7 @@ final class NotificationRouter {
         final var expressionEnv = NotificationFilterExpressionEnv.getInstance();
 
         try {
-            final CelRuntime.Program program = expressionEnv.compile(rule.filterExpression());
+            final CelRuntime.Program program = expressionEnv.compile(filterExpression);
             final boolean result = expressionEnv.evaluate(program, notification, subject);
             LOGGER.debug("Filter expression evaluated to {}", result);
             return result;
@@ -377,35 +370,32 @@ final class NotificationRouter {
 
         try {
             return switch (notification.getGroup()) {
-                case GROUP_BOM_CONSUMED, GROUP_BOM_PROCESSED -> notification.getSubject().unpack(
-                        BomConsumedOrProcessedSubject.class);
-                case GROUP_VULNERABILITY_RETRACTED -> notification.getSubject().unpack(
-                        VulnerabilityRetractedSubject.class);
-                case GROUP_BOM_PROCESSING_FAILED -> notification.getSubject().unpack(
-                        BomProcessingFailedSubject.class);
-                case GROUP_BOM_VALIDATION_FAILED -> notification.getSubject().unpack(
-                        BomValidationFailedSubject.class);
-                case GROUP_NEW_VULNERABILITY -> notification.getSubject().unpack(
-                        NewVulnerabilitySubject.class);
-                case GROUP_NEW_VULNERABLE_DEPENDENCY -> notification.getSubject().unpack(
-                        NewVulnerableDependencySubject.class);
-                case GROUP_POLICY_VIOLATION -> notification.getSubject().unpack(
-                        PolicyViolationSubject.class);
+                case GROUP_BOM_CONSUMED, GROUP_BOM_PROCESSED ->
+                    notification.getSubject().unpack(BomConsumedOrProcessedSubject.class);
+                case GROUP_VULNERABILITY_RETRACTED ->
+                    notification.getSubject().unpack(VulnerabilityRetractedSubject.class);
+                case GROUP_BOM_PROCESSING_FAILED -> notification.getSubject().unpack(BomProcessingFailedSubject.class);
+                case GROUP_BOM_VALIDATION_FAILED -> notification.getSubject().unpack(BomValidationFailedSubject.class);
+                case GROUP_NEW_VULNERABILITY -> notification.getSubject().unpack(NewVulnerabilitySubject.class);
+                case GROUP_NEW_VULNERABLE_DEPENDENCY ->
+                    notification.getSubject().unpack(NewVulnerableDependencySubject.class);
+                case GROUP_POLICY_VIOLATION -> notification.getSubject().unpack(PolicyViolationSubject.class);
                 case GROUP_PROJECT_AUDIT_CHANGE -> {
                     if (notification.getSubject().is(PolicyViolationAnalysisDecisionChangeSubject.class)) {
                         yield notification.getSubject().unpack(PolicyViolationAnalysisDecisionChangeSubject.class);
                     } else if (notification.getSubject().is(VulnerabilityAnalysisDecisionChangeSubject.class)) {
                         yield notification.getSubject().unpack(VulnerabilityAnalysisDecisionChangeSubject.class);
                     }
-                    throw new IllegalStateException(
-                            "Unexpected subject for group %s: %s".formatted(
-                                    notification.getGroup(), notification.getSubject().getTypeUrl()));
+                    throw new IllegalStateException("Unexpected subject for group %s: %s"
+                            .formatted(
+                                    notification.getGroup(),
+                                    notification.getSubject().getTypeUrl()));
                 }
                 case GROUP_PROJECT_CREATED -> notification.getSubject().unpack(Project.class);
-                case GROUP_VEX_CONSUMED, GROUP_VEX_PROCESSED -> notification.getSubject().unpack(
-                        VexConsumedOrProcessedSubject.class);
-                case GROUP_USER_CREATED, GROUP_USER_DELETED -> notification.getSubject().unpack(
-                        UserSubject.class);
+                case GROUP_VEX_CONSUMED, GROUP_VEX_PROCESSED ->
+                    notification.getSubject().unpack(VexConsumedOrProcessedSubject.class);
+                case GROUP_USER_CREATED, GROUP_USER_DELETED ->
+                    notification.getSubject().unpack(UserSubject.class);
                 default -> null;
             };
         } catch (IOException e) {
@@ -428,11 +418,9 @@ final class NotificationRouter {
                 )
                 """);
 
-        return query
-                .bindArray("parentUuids", String.class, parentUuids)
+        return query.bindArray("parentUuids", String.class, parentUuids)
                 .bind("childUuid", childUuid)
                 .mapTo(boolean.class)
                 .one();
     }
-
 }

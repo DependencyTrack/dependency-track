@@ -95,9 +95,8 @@ public final class PackageMetadataDao {
         for (final PackageMetadata pm : metadata) {
             purls[i] = pm.purl().canonicalize();
             latestVersions[i] = pm.latestVersion();
-            latestVersionPublishedAts[i] = pm.latestVersionPublishedAt() != null
-                ? Timestamp.from(pm.latestVersionPublishedAt())
-                : null;
+            latestVersionPublishedAts[i] =
+                    pm.latestVersionPublishedAt() != null ? Timestamp.from(pm.latestVersionPublishedAt()) : null;
             resolvedAts[i] = Timestamp.from(pm.resolvedAt());
             resolvedFroms[i] = pm.resolvedFrom();
             resolvedBys[i] = pm.resolvedBy();
@@ -145,5 +144,4 @@ public final class PackageMetadataDao {
                 .bind("resolvedBys", resolvedBys)
                 .execute();
     }
-
 }

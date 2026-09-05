@@ -54,6 +54,12 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.BASE_URL;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.NOTIFICATION;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.SUBJECT;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.SUBJECT_JSON;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.TIMESTAMP;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.TIMESTAMP_EPOCH_SECONDS;
 
 /**
  * A {@link NotificationTemplateRenderer} powered by Pebble.
@@ -74,14 +80,13 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
             Map<String, Supplier<@Nullable Object>> contextVariableSuppliers) {
         this.pebbleEngine = requireNonNull(pebbleEngine, "pebbleEngine must not be null");
         this.template = template;
-        this.contextVariableSuppliers = requireNonNull(
-                contextVariableSuppliers, "contextVariableSuppliers must not be null");
+        this.contextVariableSuppliers =
+                requireNonNull(contextVariableSuppliers, "contextVariableSuppliers must not be null");
     }
 
     @Override
     public @Nullable RenderedNotificationTemplate render(
-            Notification notification,
-            @Nullable Map<String, @Nullable Object> additionalContext) {
+            Notification notification, @Nullable Map<String, @Nullable Object> additionalContext) {
         requireNonNull(notification, "notification must not be null");
         if (template == null) {
             return null;
@@ -93,10 +98,14 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
         if (additionalContext != null) {
             templateCtx.putAll(additionalContext);
         }
-        templateCtx.put("baseUrl", contextVariableSuppliers.getOrDefault("baseUrl", NULL_SUPPLIER).get());
-        templateCtx.put("timestampEpochSeconds", Timestamps.toSeconds(notification.getTimestamp()));
-        templateCtx.put("timestamp", format(notification.getTimestamp()));
-        templateCtx.put("notification", notification);
+        templateCtx.put(
+                BASE_URL,
+                normalizeBaseUrl(contextVariableSuppliers
+                        .getOrDefault(BASE_URL, NULL_SUPPLIER)
+                        .get()));
+        templateCtx.put(TIMESTAMP_EPOCH_SECONDS, Timestamps.toSeconds(notification.getTimestamp()));
+        templateCtx.put(TIMESTAMP, format(notification.getTimestamp()));
+        templateCtx.put(NOTIFICATION, notification);
 
         final Message subject;
         try {
@@ -106,10 +115,10 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
         }
 
         if (subject != null) {
-            templateCtx.put("subject", subject);
+            templateCtx.put(SUBJECT, subject);
 
             try {
-                templateCtx.put("subjectJson", JsonFormat.printer().print(subject));
+                templateCtx.put(SUBJECT_JSON, JsonFormat.printer().print(subject));
             } catch (IOException e) {
                 throw new UncheckedIOException("Failed to serialize subject as JSON", e);
             }
@@ -123,14 +132,35 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
         }
     }
 
-    private static final DateTimeFormatter TIMESTAMP_FORMATTER =
-            new DateTimeFormatterBuilder()
-                    .parseCaseInsensitive()
-                    .appendInstant(3)
-                    .toFormatter();
+    private static final DateTimeFormatter TIMESTAMP_FORMATTER = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .appendInstant(3)
+            .toFormatter();
 
     private static String format(Timestamp protoTimestamp) {
         return TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(Timestamps.toMillis(protoTimestamp)));
+    }
+
+    /**
+     * Notification templates concatenate
+     * {@link org.dependencytrack.notification.api.templating.NotificationTemplateVariables#BASE_URL}
+     * with path segments that already start with {@code /}
+     * (e.g. {@code {{ baseUrl }}/projects/...} and {@code {{ baseUrl }}{{ frontendUri }}}).
+     * Configured base URLs commonly include a trailing slash; strip trailing slashes
+     * so rendered links never contain redundant {@code //}, which breaks the frontend router.
+     *
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/6786">#6786</a>
+     */
+    private static @Nullable Object normalizeBaseUrl(@Nullable Object baseUrl) {
+        if (!(baseUrl instanceof String value)) {
+            return baseUrl;
+        }
+
+        int end = value.length();
+        while (end > 0 && value.charAt(end - 1) == '/') {
+            end--;
+        }
+        return end == value.length() ? value : value.substring(0, end);
     }
 
     private static @Nullable Message extractSubject(Notification notification) throws IOException {
@@ -168,5 +198,4 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
 
         return null;
     }
-
 }

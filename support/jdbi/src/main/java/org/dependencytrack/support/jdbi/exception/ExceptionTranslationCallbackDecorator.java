@@ -36,13 +36,18 @@ final class ExceptionTranslationCallbackDecorator implements HandleCallbackDecor
             try {
                 return delegated.withHandle(handle);
             } catch (RuntimeException e) {
-                final ConstraintViolationException translated = ConstraintViolationException.of(e);
-                if (translated != null) {
-                    throw translated;
+                final var cve = ConstraintViolationException.of(e);
+                if (cve != null) {
+                    throw cve;
                 }
+
+                final var qte = QueryTimeoutException.of(e);
+                if (qte != null) {
+                    throw qte;
+                }
+
                 throw e;
             }
         };
     }
-
 }

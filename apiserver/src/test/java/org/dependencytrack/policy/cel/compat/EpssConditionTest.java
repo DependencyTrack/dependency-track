@@ -47,46 +47,46 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 public class EpssConditionTest extends PersistenceCapableTest {
 
     private static Object[] parameters() {
-        return new Object[]{
-                // NUMERIC_GREATER_THAN with match.
-                new Object[]{NUMERIC_GREATER_THAN, "0.666", 0.667, true},
-                // NUMERIC_GREATER_THAN with no match.
-                new Object[]{NUMERIC_GREATER_THAN, "0.666", 0.665, false},
-                // NUMERIC_GREATER_THAN_OR_EQUAL with match.
-                new Object[]{NUMERIC_GREATER_THAN_OR_EQUAL, "0.666", 0.666, true},
-                new Object[]{NUMERIC_GREATER_THAN_OR_EQUAL, "0.666", 0.667, true},
-                // NUMERIC_GREATER_THAN_OR_EQUAL with no match.
-                new Object[]{NUMERIC_GREATER_THAN_OR_EQUAL, "0.666", 0.665, false},
-                // NUMERIC_EQUAL with match.
-                new Object[]{NUMERIC_EQUAL, "0.666", 0.666, true},
-                // NUMERIC_EQUAL with no match.
-                new Object[]{NUMERIC_EQUAL, "0.666", 0.667, false},
-                // NUMERIC_NOT_EQUAL with match.
-                new Object[]{NUMERIC_NOT_EQUAL, "0.666", 0.667, true},
-                // NUMERIC_NOT_EQUAL with no match.
-                new Object[]{NUMERIC_NOT_EQUAL, "0.666", 0.666, false},
-                // NUMERIC_LESSER_THAN_OR_EQUAL with match.
-                new Object[]{NUMERIC_LESSER_THAN_OR_EQUAL, "0.666", 0.666, true},
-                new Object[]{NUMERIC_LESSER_THAN_OR_EQUAL, "0.666", 0.665, true},
-                // NUMERIC_LESSER_THAN_OR_EQUAL with no match.
-                new Object[]{NUMERIC_LESSER_THAN_OR_EQUAL, "0.666", 0.667, false},
-                // NUMERIC_LESS_THAN with match.
-                new Object[]{NUMERIC_LESS_THAN, "0.666", 0.665, true},
-                // NUMERIC_LESS_THAN with no match.
-                new Object[]{NUMERIC_LESS_THAN, "0.666", 0.667, false},
-                // Invalid operator.
-                new Object[]{MATCHES, "0.666", 0.666, false},
-                // Vulnerability without EPSS score.
-                new Object[]{NUMERIC_EQUAL, "0.666", null, false},
-                new Object[]{NUMERIC_NOT_EQUAL, "0.666", null, false},
-                new Object[]{NUMERIC_GREATER_THAN, "0.666", null, false},
-                new Object[]{NUMERIC_GREATER_THAN_OR_EQUAL, "0.666", null, false},
-                new Object[]{NUMERIC_LESSER_THAN_OR_EQUAL, "0.666", null, false},
-                new Object[]{NUMERIC_LESS_THAN, "0.666", null, false},
-                // No condition value.
-                new Object[]{NUMERIC_EQUAL, "", 0.666, false},
-                // Invalid condition value.
-                new Object[]{NUMERIC_EQUAL, "foo", 0.666, false},
+        return new Object[] {
+            // NUMERIC_GREATER_THAN with match.
+            new Object[] {NUMERIC_GREATER_THAN, "0.666", 0.667, true},
+            // NUMERIC_GREATER_THAN with no match.
+            new Object[] {NUMERIC_GREATER_THAN, "0.666", 0.665, false},
+            // NUMERIC_GREATER_THAN_OR_EQUAL with match.
+            new Object[] {NUMERIC_GREATER_THAN_OR_EQUAL, "0.666", 0.666, true},
+            new Object[] {NUMERIC_GREATER_THAN_OR_EQUAL, "0.666", 0.667, true},
+            // NUMERIC_GREATER_THAN_OR_EQUAL with no match.
+            new Object[] {NUMERIC_GREATER_THAN_OR_EQUAL, "0.666", 0.665, false},
+            // NUMERIC_EQUAL with match.
+            new Object[] {NUMERIC_EQUAL, "0.666", 0.666, true},
+            // NUMERIC_EQUAL with no match.
+            new Object[] {NUMERIC_EQUAL, "0.666", 0.667, false},
+            // NUMERIC_NOT_EQUAL with match.
+            new Object[] {NUMERIC_NOT_EQUAL, "0.666", 0.667, true},
+            // NUMERIC_NOT_EQUAL with no match.
+            new Object[] {NUMERIC_NOT_EQUAL, "0.666", 0.666, false},
+            // NUMERIC_LESSER_THAN_OR_EQUAL with match.
+            new Object[] {NUMERIC_LESSER_THAN_OR_EQUAL, "0.666", 0.666, true},
+            new Object[] {NUMERIC_LESSER_THAN_OR_EQUAL, "0.666", 0.665, true},
+            // NUMERIC_LESSER_THAN_OR_EQUAL with no match.
+            new Object[] {NUMERIC_LESSER_THAN_OR_EQUAL, "0.666", 0.667, false},
+            // NUMERIC_LESS_THAN with match.
+            new Object[] {NUMERIC_LESS_THAN, "0.666", 0.665, true},
+            // NUMERIC_LESS_THAN with no match.
+            new Object[] {NUMERIC_LESS_THAN, "0.666", 0.667, false},
+            // Invalid operator.
+            new Object[] {MATCHES, "0.666", 0.666, false},
+            // Vulnerability without EPSS score.
+            new Object[] {NUMERIC_EQUAL, "0.666", null, false},
+            new Object[] {NUMERIC_NOT_EQUAL, "0.666", null, false},
+            new Object[] {NUMERIC_GREATER_THAN, "0.666", null, false},
+            new Object[] {NUMERIC_GREATER_THAN_OR_EQUAL, "0.666", null, false},
+            new Object[] {NUMERIC_LESSER_THAN_OR_EQUAL, "0.666", null, false},
+            new Object[] {NUMERIC_LESS_THAN, "0.666", null, false},
+            // No condition value.
+            new Object[] {NUMERIC_EQUAL, "", 0.666, false},
+            // Invalid condition value.
+            new Object[] {NUMERIC_EQUAL, "foo", 0.666, false},
         };
     }
 
@@ -96,8 +96,8 @@ public class EpssConditionTest extends PersistenceCapableTest {
             final Operator operator,
             final String conditionValue,
             final Double vulnEpssScore,
-            final boolean expectViolation
-    ) {
+            final boolean expectViolation)
+            throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EPSS, operator, conditionValue);
 
@@ -118,10 +118,8 @@ public class EpssConditionTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, component, "internal");
 
         useJdbiHandle(handle -> handle.attach(EpssDao.class)
-                .createOrUpdateAll(List.of(new Epss(
-                        "CVE-123",
-                        vulnEpssScore != null ? BigDecimal.valueOf(vulnEpssScore) : null,
-                        null))));
+                .createOrUpdateAll(List.of(
+                        new Epss("CVE-123", vulnEpssScore != null ? BigDecimal.valueOf(vulnEpssScore) : null, null))));
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         if (expectViolation) {
@@ -130,5 +128,4 @@ public class EpssConditionTest extends PersistenceCapableTest {
             assertThat(qm.getAllPolicyViolations(component)).isEmpty();
         }
     }
-
 }

@@ -25,6 +25,7 @@ import org.dependencytrack.notification.api.publishing.NotificationPublishContex
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.publishing.RetryablePublishException;
 import org.dependencytrack.notification.api.templating.NotificationTemplateRenderer;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherTest;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
@@ -46,8 +47,8 @@ import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
@@ -78,9 +79,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
     protected void beforeEach() throws Exception {
         super.beforeEach();
 
-        WIREMOCK.stubFor(post(anyUrl())
-                .willReturn(aResponse()
-                        .withStatus(200)));
+        WIREMOCK.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(200)));
     }
 
     @Override
@@ -373,36 +372,32 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {429, 503})
+    @ValueSource(ints = {429, 502, 503, 504})
     void shouldThrowRetryableExceptionWhenDestinationRespondsWithRetryableStatus(int status) {
-        WIREMOCK.stubFor(post(anyUrl())
-                .willReturn(aResponse()
-                        .withStatus(status)));
+        WIREMOCK.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(status)));
 
         assertThatExceptionOfType(RetryablePublishException.class)
                 .isThrownBy(() -> publisher.publish(publishContext, createBomConsumedTestNotification()))
-                .satisfies(exception -> Assertions.assertThat(exception.getRetryAfter()).isNull());
+                .satisfies(exception ->
+                        Assertions.assertThat(exception.retryAfter()).isNull());
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {429, 503})
+    @ValueSource(ints = {429, 502, 503, 504})
     void shouldThrowRetryableExceptionWhenDestinationRespondsWithRetryableStatusAndRetryAfterHeader(int status) {
-        WIREMOCK.stubFor(post(anyUrl())
-                .willReturn(aResponse()
-                        .withStatus(status)
-                        .withHeader("Retry-After", "300")));
+        WIREMOCK.stubFor(
+                post(anyUrl()).willReturn(aResponse().withStatus(status).withHeader("Retry-After", "300")));
 
         assertThatExceptionOfType(RetryablePublishException.class)
                 .isThrownBy(() -> publisher.publish(publishContext, createBomConsumedTestNotification()))
-                .satisfies(exception -> Assertions.assertThat(exception.getRetryAfter()).hasMinutes(5));
+                .satisfies(exception ->
+                        Assertions.assertThat(exception.retryAfter()).hasMinutes(5));
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {400, 401, 403, 405, 500, 504})
+    @ValueSource(ints = {400, 401, 403, 405, 500})
     void shouldThrowWhenDestinationRespondsWithNonRetryableStatus(int status) {
-        WIREMOCK.stubFor(post(anyUrl())
-                .willReturn(aResponse()
-                        .withStatus(status)));
+        WIREMOCK.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(status)));
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> publisher.publish(publishContext, createBomConsumedTestNotification()))
@@ -412,12 +407,10 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
     @Test
     void shouldSendAuthHeaderWhenConfigured() {
         try (final var factory = new WebhookNotificationPublisherFactory()) {
-            final var configRegistry = new MockConfigRegistry(
-                    Map.of(), null, RuntimeConfigMapper.getInstance(), null);
-            factory.init(
-                    new MutableServiceRegistry()
-                            .register(ConfigRegistry.class, configRegistry)
-                            .register(HttpClient.class, HttpClient.newHttpClient()));
+            final var configRegistry = new MockConfigRegistry(Map.of(), null, RuntimeConfigMapper.getInstance(), null);
+            factory.init(new MutableServiceRegistry()
+                    .register(ConfigRegistry.class, configRegistry)
+                    .register(HttpClient.class, HttpClient.newHttpClient()));
 
             try (final var publisher = factory.create()) {
                 final RuntimeConfigSpec ruleConfigSpec = factory.ruleConfigSpec();
@@ -426,19 +419,17 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
                 ruleConfig.setAuthHeaderName("Authorization");
                 ruleConfig.setAuthHeaderValue("Bearer my-secret-token");
 
-                final var templateRendererFactory =
-                        new PebbleNotificationTemplateRendererFactory(
-                                Map.of("baseUrl", () -> "https://example.com"));
+                final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
+                        Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"));
                 final NotificationTemplateRenderer templateRenderer =
                         templateRendererFactory.createRenderer(factory.defaultTemplate());
 
                 final var ctx = new NotificationPublishContext(ruleConfig, templateRenderer);
 
-                assertThatNoException()
-                        .isThrownBy(() -> publisher.publish(ctx, createBomConsumedTestNotification()));
+                assertThatNoException().isThrownBy(() -> publisher.publish(ctx, createBomConsumedTestNotification()));
 
-                WIREMOCK.verify(postRequestedFor(anyUrl())
-                        .withHeader("Authorization", equalTo("Bearer my-secret-token")));
+                WIREMOCK.verify(
+                        postRequestedFor(anyUrl()).withHeader("Authorization", equalTo("Bearer my-secret-token")));
             }
         }
     }
@@ -446,12 +437,10 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
     @Test
     void shouldSendProtobufWhenConfigured() {
         try (final var factory = new WebhookNotificationPublisherFactory()) {
-            final var configRegistry = new MockConfigRegistry(
-                    Map.of(), null, RuntimeConfigMapper.getInstance(), null);
-            factory.init(
-                    new MutableServiceRegistry()
-                            .register(ConfigRegistry.class, configRegistry)
-                            .register(HttpClient.class, HttpClient.newHttpClient()));
+            final var configRegistry = new MockConfigRegistry(Map.of(), null, RuntimeConfigMapper.getInstance(), null);
+            factory.init(new MutableServiceRegistry()
+                    .register(ConfigRegistry.class, configRegistry)
+                    .register(HttpClient.class, HttpClient.newHttpClient()));
 
             try (final var publisher = factory.create()) {
                 final RuntimeConfigSpec ruleConfigSpec = factory.ruleConfigSpec();
@@ -459,9 +448,8 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
                 ruleConfig.setDestinationUrl(URI.create(WIREMOCK.baseUrl()));
                 ruleConfig.setPublishProtobuf(true);
 
-                final var templateRendererFactory =
-                        new PebbleNotificationTemplateRendererFactory(
-                                Map.of("baseUrl", () -> "https://example.com"));
+                final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
+                        Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"));
                 final NotificationTemplateRenderer templateRenderer =
                         templateRendererFactory.createRenderer(factory.defaultTemplate());
 
@@ -469,8 +457,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
 
                 final var notification = createBomConsumedTestNotification();
                 final var expectedProtobuf = notification.toByteArray();
-                assertThatNoException()
-                        .isThrownBy(() -> publisher.publish(ctx, notification));
+                assertThatNoException().isThrownBy(() -> publisher.publish(ctx, notification));
 
                 WIREMOCK.verify(postRequestedFor(anyUrl())
                         .withHeader("Content-Type", equalTo("application/protobuf"))

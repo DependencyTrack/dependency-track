@@ -73,6 +73,8 @@ public class PolicyProtoMapper {
         maybeSet(component::getBlake2b_384, protoBuilder::setBlake2B384);
         maybeSet(component::getBlake2b_512, protoBuilder::setBlake2B512);
         maybeSet(component::getBlake3, protoBuilder::setBlake3);
+        maybeSet(component::getStreebog_256, protoBuilder::setStreebog256);
+        maybeSet(component::getStreebog_512, protoBuilder::setStreebog512);
         maybeSet(component::getResolvedLicense, license -> protoBuilder.setResolvedLicense(mapToProto(license)));
 
         return protoBuilder.build();
@@ -92,8 +94,12 @@ public class PolicyProtoMapper {
         maybeSet(asString(vuln.getUuid()), protoBuilder::setUuid);
         maybeSet(vuln::getVulnId, protoBuilder::setId);
         maybeSet(vuln::getSource, protoBuilder::setSource);
-        maybeSet(() -> vuln.getAliases() != null
-                        ? vuln.getAliases().stream().flatMap(PolicyProtoMapper::mapToProtos).distinct().toList()
+        maybeSet(
+                () -> vuln.getAliases() != null
+                        ? vuln.getAliases().stream()
+                                .flatMap(PolicyProtoMapper::mapToProtos)
+                                .distinct()
+                                .toList()
                         : Collections.emptyList(),
                 protoBuilder::addAllAliases);
         maybeSet(vuln::getCwes, protoBuilder::addAllCwes);
@@ -138,8 +144,11 @@ public class PolicyProtoMapper {
         maybeSet(license::isFsfLibre, protoBuilder::setIsFsfLibre);
         maybeSet(license::isDeprecatedLicenseId, protoBuilder::setIsDeprecatedId);
         maybeSet(license::isCustomLicense, protoBuilder::setIsCustom);
-        maybeSet(license::getLicenseGroups, licenseGroups -> licenseGroups.stream()
-                .map(PolicyProtoMapper::mapToProto).forEach(protoBuilder::addGroups));
+        maybeSet(
+                license::getLicenseGroups,
+                licenseGroups -> licenseGroups.stream()
+                        .map(PolicyProtoMapper::mapToProto)
+                        .forEach(protoBuilder::addGroups));
 
         return protoBuilder.build();
     }
@@ -160,7 +169,8 @@ public class PolicyProtoMapper {
         return protoBuilder.build();
     }
 
-    private static Stream<org.dependencytrack.proto.policy.v1.Vulnerability.Alias> mapToProtos(final VulnerabilityAlias alias) {
+    private static Stream<org.dependencytrack.proto.policy.v1.Vulnerability.Alias> mapToProtos(
+            final VulnerabilityAlias alias) {
         if (alias == null) {
             return Stream.empty();
         }
@@ -200,5 +210,4 @@ public class PolicyProtoMapper {
     private static Supplier<Timestamp> asTimestamp(final Date date) {
         return () -> date != null ? Timestamps.fromDate(date) : null;
     }
-
 }

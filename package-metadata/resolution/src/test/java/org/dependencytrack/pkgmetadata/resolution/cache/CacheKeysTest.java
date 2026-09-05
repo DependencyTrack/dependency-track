@@ -81,8 +81,6 @@ class CacheKeysTest {
     @Test
     void shouldBuildWithRepositoryAndMultipleSegments() {
         final var repo = new PackageRepository("test", "https://repo.example.com", null, null);
-        assertThat(CacheKeys.build(repo, "ns", "name"))
-                .isEqualTo("https://repo.example.com:ns:name");
+        assertThat(CacheKeys.build(repo, "ns", "name")).isEqualTo("https://repo.example.com:ns:name");
     }
-
 }

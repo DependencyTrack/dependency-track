@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class GoModulesPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -41,6 +42,11 @@ public final class GoModulesPackageMetadataResolverFactory implements PackageMet
     @Override
     public String extensionName() {
         return "go-modules";
+    }
+
+    @Override
+    public String displayName() {
+        return "Go Modules";
     }
 
     @Override
@@ -75,8 +81,7 @@ public final class GoModulesPackageMetadataResolverFactory implements PackageMet
 
     @Override
     public void init(ServiceRegistry serviceRegistry) {
-        objectMapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
                 serviceRegistry.require(CacheManager.class).getCache("responses"));
@@ -84,7 +89,6 @@ public final class GoModulesPackageMetadataResolverFactory implements PackageMet
 
     @Override
     public PackageMetadataResolver create() {
-        return new GoModulesPackageMetadataResolver(objectMapper, cachingHttpClient);
+        return new GoModulesPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

@@ -28,5 +28,4 @@ import java.io.Serializable;
  * @since 5.0.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record PolicyAnnotation(String key, String value) implements Serializable {
-}
+public record PolicyAnnotation(String key, String value) implements Serializable {}

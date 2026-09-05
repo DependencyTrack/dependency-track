@@ -51,7 +51,7 @@ class MaintenanceWorkerTest {
         dataSource.setPassword(postgresContainer.getPassword());
         dataSource.setDatabaseName(postgresContainer.getDatabaseName());
 
-        jdbi = JdbiFactory.create(dataSource, new SimplePageTokenEncoder());
+        jdbi = JdbiFactory.create(dataSource, Duration.ofSeconds(10), new SimplePageTokenEncoder());
     }
 
     @Test
@@ -75,23 +75,23 @@ class MaintenanceWorkerTest {
                 jdbi,
                 /* leadershipSupplier */ () -> true,
                 /* runRetentionDuration */ Duration.ofDays(3),
-                /* runRetentionBatchSize */ 10,
+                /* runDeletionBatchSize */ 10,
+                /* runDeletionMaxBatchesPerCycle */ 100,
                 /* initialDelay */ Duration.ZERO,
                 /* interval */ Duration.ofMillis(100));
 
         try (worker) {
             worker.start();
 
-            await()
-                    .atMost(Duration.ofSeconds(1))
-                    .untilAsserted(() -> {
-                        final List<String> remainingIds = jdbi.withHandle(
-                                handle -> handle.createQuery("select id from dex_workflow_run").mapTo(String.class).list());
-                        assertThat(remainingIds).containsExactlyInAnyOrder(
-                                "e01d0fe8-f972-474c-bc70-ba8ce4bc4351",
-                                "4f8fe08f-6263-4beb-a515-8a0b4e56d9e8");
-                    });
+            await().atMost(Duration.ofSeconds(1)).untilAsserted(() -> {
+                final List<String> remainingIds =
+                        jdbi.withHandle(handle -> handle.createQuery("select id from dex_workflow_run")
+                                .mapTo(String.class)
+                                .list());
+                assertThat(remainingIds)
+                        .containsExactlyInAnyOrder(
+                                "e01d0fe8-f972-474c-bc70-ba8ce4bc4351", "4f8fe08f-6263-4beb-a515-8a0b4e56d9e8");
+            });
         }
     }
-
 }

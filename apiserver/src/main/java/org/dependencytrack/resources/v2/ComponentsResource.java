@@ -21,14 +21,6 @@ package org.dependencytrack.resources.v2;
 import alpine.server.auth.PermissionRequired;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ClientErrorException;
-import jakarta.ws.rs.NotAuthorizedException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-import jakarta.ws.rs.ext.Provider;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.api.v2.ComponentsApi;
 import org.dependencytrack.api.v2.model.CreateComponentRequest;
@@ -62,6 +54,15 @@ import org.slf4j.LoggerFactory;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.Provider;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,10 +92,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
     private UriInfo uriInfo;
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.PORTFOLIO_MANAGEMENT,
-            Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE
-    })
+    @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE})
     public Response createComponent(final CreateComponentRequest request) {
         final UUID projectUuid = request.getProjectUuid();
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
@@ -112,8 +110,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
             });
 
             LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Component created: {}", request.getName());
-            return Response
-                    .created(uriInfo.getBaseUriBuilder()
+            return Response.created(uriInfo.getBaseUriBuilder()
                             .path("/components")
                             .path(component.getUuid().toString())
                             .build())
@@ -170,27 +167,28 @@ public class ComponentsResource extends AbstractApiResource implements Component
             ListComponentsQuery.HashType hashTypeEnum = null;
             if (hashType != null) {
                 try {
-                    hashTypeEnum = ListComponentsQuery.HashType.valueOf(StringUtils.trimToNull(hashType).toUpperCase());
+                    hashTypeEnum = ListComponentsQuery.HashType.valueOf(
+                            StringUtils.trimToNull(hashType).toUpperCase());
                 } catch (IllegalArgumentException e) {
                     throw new BadRequestException("Invalid Hash type: %s".formatted(hashType));
                 }
             }
 
-            final ListComponentsQuery.SortBy sortByEnum = switch (sortBy) {
-                case null -> null;
-                case "name" -> ListComponentsQuery.SortBy.NAME;
-                case "group" -> ListComponentsQuery.SortBy.GROUP;
-                case "last_inherited_risk_score" -> ListComponentsQuery.SortBy.LAST_RISKSCORE;
-                default -> throw new InvalidSortFieldException(
-                        sortBy, List.of("name", "group", "last_inherited_risk_score"));
-            };
+            final ListComponentsQuery.SortBy sortByEnum =
+                    switch (sortBy) {
+                        case null -> null;
+                        case "name" -> ListComponentsQuery.SortBy.NAME;
+                        case "group" -> ListComponentsQuery.SortBy.GROUP;
+                        case "last_inherited_risk_score" -> ListComponentsQuery.SortBy.LAST_RISKSCORE;
+                        default ->
+                            throw new InvalidSortFieldException(
+                                    sortBy, List.of("name", "group", "last_inherited_risk_score"));
+                    };
 
             final Page<Component> componentsPage = handle.attach(ComponentDao.class)
                     .listComponents(new ListComponentsQuery(
                             /* projectId */ null,
-                            packageURL != null
-                                    ? packageURL.canonicalize().toLowerCase()
-                                    : null,
+                            packageURL != null ? packageURL.canonicalize().toLowerCase() : null,
                             StringUtils.trimToNull(cpe),
                             StringUtils.trimToNull(swidTagIdContains),
                             StringUtils.trimToNull(groupContains),
@@ -220,56 +218,49 @@ public class ComponentsResource extends AbstractApiResource implements Component
             var pkgArtifactMetaByPurl = Map.<String, PackageArtifactMetadata>of();
             if (!componentsPage.items().isEmpty()) {
                 if (expandMetrics) {
-                    final Set<Long> componentIds =
-                            componentsPage.items().stream()
-                                    .map(Component::getId)
-                                    .collect(Collectors.toSet());
-                    metricsByComponentId = handle.attach(MetricsDao.class)
-                            .getMostRecentDependencyMetrics(componentIds)
-                            .stream()
-                            .collect(Collectors.toMap(
-                                    DependencyMetrics::getComponentId,
-                                    Function.identity()));
+                    final Set<Long> componentIds = componentsPage.items().stream()
+                            .map(Component::getId)
+                            .collect(Collectors.toSet());
+                    metricsByComponentId =
+                            handle.attach(MetricsDao.class).getMostRecentDependencyMetrics(componentIds).stream()
+                                    .collect(Collectors.toMap(DependencyMetrics::getComponentId, Function.identity()));
                 }
                 if (expandPkgMeta) {
                     final Set<String> packagePurls = componentsPage.items().stream()
                             .filter(component -> component.getPurl() != null)
                             .map(component -> PurlUtil.purlPackageOnly(component.getPurl()))
                             .collect(Collectors.toSet());
-                    pkgMetaByPackagePurl =
-                            new PackageMetadataDao(handle).getAll(packagePurls).stream()
-                                    .collect(Collectors.toMap(
-                                            pm -> pm.purl().canonicalize(),
-                                            Function.identity()));
+                    pkgMetaByPackagePurl = new PackageMetadataDao(handle)
+                            .getAll(packagePurls).stream()
+                                    .collect(Collectors.toMap(pm -> pm.purl().canonicalize(), Function.identity()));
                 }
                 if (expandPkgArtifactMeta) {
                     final Set<String> versionedPurls = componentsPage.items().stream()
                             .filter(component -> component.getPurl() != null)
                             .map(component -> component.getPurl().canonicalize())
                             .collect(Collectors.toSet());
-                    pkgArtifactMetaByPurl =
-                            new PackageArtifactMetadataDao(handle).getAll(versionedPurls).stream()
+                    pkgArtifactMetaByPurl = new PackageArtifactMetadataDao(handle)
+                            .getAll(versionedPurls).stream()
                                     .collect(Collectors.toMap(pam -> pam.purl().canonicalize(), Function.identity()));
                 }
             }
 
-            final var responseItems = new ArrayList<ListComponentsResponseItem>(componentsPage.items().size());
+            final var responseItems = new ArrayList<ListComponentsResponseItem>(
+                    componentsPage.items().size());
             for (final Component componentRow : componentsPage.items()) {
-                final String purlStr = componentRow.getPurl() != null
-                        ? componentRow.getPurl().canonicalize()
-                        : null;
-                final String packagePurlStr = componentRow.getPurl() != null
-                        ? PurlUtil.purlPackageOnly(componentRow.getPurl())
-                        : null;
-                final PackageArtifactMetadata pkgArtifactMeta = purlStr != null
-                        ? pkgArtifactMetaByPurl.get(purlStr)
-                        : null;
+                final String purlStr =
+                        componentRow.getPurl() != null ? componentRow.getPurl().canonicalize() : null;
+                final String packagePurlStr =
+                        componentRow.getPurl() != null ? PurlUtil.purlPackageOnly(componentRow.getPurl()) : null;
+                final PackageArtifactMetadata pkgArtifactMeta =
+                        purlStr != null ? pkgArtifactMetaByPurl.get(purlStr) : null;
                 final var item = ListComponentsResponseItem.builder()
                         .name(componentRow.getName())
                         .hashes(mapHashes(componentRow))
-                        .classifier(componentRow.getClassifier() != null
-                                ? componentRow.getClassifier().name()
-                                : null)
+                        .classifier(
+                                componentRow.getClassifier() != null
+                                        ? componentRow.getClassifier().name()
+                                        : null)
                         .scope(mapScope(componentRow.getScope()))
                         .copyright(componentRow.getCopyright())
                         .cpe(componentRow.getCpe())
@@ -285,17 +276,15 @@ public class ComponentsResource extends AbstractApiResource implements Component
                         .uuid(componentRow.getUuid())
                         .version(componentRow.getVersion())
                         .project(mapProject(componentRow.getProject()))
-                        .metrics(expandMetrics
-                                ? mapDependencyMetrics(metricsByComponentId.get(componentRow.getId()))
-                                : null)
+                        .metrics(
+                                expandMetrics
+                                        ? mapDependencyMetrics(metricsByComponentId.get(componentRow.getId()))
+                                        : null)
                         .packageMetadata(
                                 expandPkgMeta && packagePurlStr != null
                                         ? map(pkgMetaByPackagePurl.get(packagePurlStr))
                                         : null)
-                        .packageArtifactMetadata(
-                                expandPkgArtifactMeta
-                                        ? map(pkgArtifactMeta)
-                                        : null)
+                        .packageArtifactMetadata(expandPkgArtifactMeta ? map(pkgArtifactMeta) : null)
                         .build();
                 responseItems.add(item);
             }
@@ -340,6 +329,12 @@ public class ComponentsResource extends AbstractApiResource implements Component
             component.setSha3_256(StringUtils.trimToNull(request.getHashes().getSha3256()));
             component.setSha3_384(StringUtils.trimToNull(request.getHashes().getSha3384()));
             component.setSha3_512(StringUtils.trimToNull(request.getHashes().getSha3512()));
+            component.setBlake2b_256(StringUtils.trimToNull(request.getHashes().getBlake2b256()));
+            component.setBlake2b_384(StringUtils.trimToNull(request.getHashes().getBlake2b384()));
+            component.setBlake2b_512(StringUtils.trimToNull(request.getHashes().getBlake2b512()));
+            component.setBlake3(StringUtils.trimToNull(request.getHashes().getBlake3()));
+            component.setStreebog_256(StringUtils.trimToNull(request.getHashes().getStreebog256()));
+            component.setStreebog_512(StringUtils.trimToNull(request.getHashes().getStreebog512()));
         }
         if (resolvedLicense != null) {
             component.setLicense(null);

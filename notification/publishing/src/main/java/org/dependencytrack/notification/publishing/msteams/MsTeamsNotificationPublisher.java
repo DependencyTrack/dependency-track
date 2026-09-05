@@ -30,5 +30,4 @@ final class MsTeamsNotificationPublisher extends AbstractHttpNotificationPublish
     MsTeamsNotificationPublisher(HttpClient httpClient) {
         super(httpClient);
     }
-
 }

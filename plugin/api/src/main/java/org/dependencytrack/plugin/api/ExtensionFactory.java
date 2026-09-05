@@ -34,6 +34,12 @@ public interface ExtensionFactory<T extends ExtensionPoint> extends Closeable {
     String extensionName();
 
     /**
+     * @return Human-readable name of the extension, for display purposes.
+     * @since 5.1.0
+     */
+    String displayName();
+
+    /**
      * @return {@link Class} of the extension.
      */
     Class<? extends T> extensionClass();
@@ -70,5 +76,4 @@ public interface ExtensionFactory<T extends ExtensionPoint> extends Closeable {
     default void close() {
         // Default no-op to remove checked exception from method signature.
     }
-
 }

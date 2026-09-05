@@ -38,20 +38,18 @@ class PolicyAnnotationSupportTest {
 
     @Test
     void annotationsEqualIgnoresAppliedAtAndAnnotator() {
-        final var existing = List.of(
-                new AppliedPolicyAnnotation("test-policy", Date.from(Instant.parse("2020-01-01T00:00:00Z")), "author-a"));
-        final var desired = List.of(
-                new AppliedPolicyAnnotation("test-policy", Date.from(Instant.parse("2026-01-01T00:00:00Z")), "author-b"));
+        final var existing = List.of(new AppliedPolicyAnnotation(
+                "test-policy", Date.from(Instant.parse("2020-01-01T00:00:00Z")), "author-a"));
+        final var desired = List.of(new AppliedPolicyAnnotation(
+                "test-policy", Date.from(Instant.parse("2026-01-01T00:00:00Z")), "author-b"));
 
         assertThat(annotationsEqual(existing, desired)).isTrue();
     }
 
     @Test
     void annotationsEqualDetectsPolicyNameChanges() {
-        final var existing = List.of(
-                new AppliedPolicyAnnotation("gem-policy", Date.from(Instant.now()), "author"));
-        final var desired = List.of(
-                new AppliedPolicyAnnotation("csra-policy", Date.from(Instant.now()), "author"));
+        final var existing = List.of(new AppliedPolicyAnnotation("gem-policy", Date.from(Instant.now()), "author"));
+        final var desired = List.of(new AppliedPolicyAnnotation("csra-policy", Date.from(Instant.now()), "author"));
 
         assertThat(annotationsEqual(existing, desired)).isFalse();
     }
@@ -73,12 +71,8 @@ class PolicyAnnotationSupportTest {
         csraPolicy.setAnalysis(csraAnalysis);
 
         assertThat(desiredAnnotationsFromPolicies(List.of(gemPolicy, csraPolicy)))
-                .extracting(
-                        AppliedPolicyAnnotation::policyName,
-                        AppliedPolicyAnnotation::annotator)
-                .containsExactly(
-                        tuple("gem-policy", "author-gem"),
-                        tuple("csra-policy", "author-csra"));
+                .extracting(AppliedPolicyAnnotation::policyName, AppliedPolicyAnnotation::annotator)
+                .containsExactly(tuple("gem-policy", "author-gem"), tuple("csra-policy", "author-csra"));
     }
 
     @Test
@@ -111,17 +105,19 @@ class PolicyAnnotationSupportTest {
                 .extracting(
                         PolicyAnnotationSupport.AnnotationAuditComment::commenter,
                         PolicyAnnotationSupport.AnnotationAuditComment::comment)
-                .containsExactly(tuple(
-                        "owner-policy",
-                        "Policy annotations: [gem-policy-a (author-a)] → [gem-policy-a (author-a), gem-policy-b (author-b)]"));
+                .containsExactly(
+                        tuple(
+                                "owner-policy",
+                                "Policy annotations: [gem-policy-a (author-a)] → [gem-policy-a (author-a), gem-policy-b (author-b)]"));
     }
 
     @Test
     void hasExistingAnnotationsDetectsEmpty() {
         assertThat(PolicyAnnotationSupport.hasExistingAnnotations(null)).isFalse();
         assertThat(PolicyAnnotationSupport.hasExistingAnnotations(List.of())).isFalse();
-        assertThat(PolicyAnnotationSupport.hasExistingAnnotations(List.of(
-                new AppliedPolicyAnnotation("gem-policy", Date.from(Instant.now()), "author")))).isTrue();
+        assertThat(PolicyAnnotationSupport.hasExistingAnnotations(
+                        List.of(new AppliedPolicyAnnotation("gem-policy", Date.from(Instant.now()), "author"))))
+                .isTrue();
     }
 
     @Test
@@ -138,9 +134,7 @@ class PolicyAnnotationSupportTest {
 
         assertThat(desired).hasSize(1);
         assertThat(desired.getFirst())
-                .extracting(
-                        AppliedPolicyAnnotation::policyName,
-                        AppliedPolicyAnnotation::annotator)
+                .extracting(AppliedPolicyAnnotation::policyName, AppliedPolicyAnnotation::annotator)
                 .containsExactly("test-policy", "policy-author");
     }
 
@@ -157,11 +151,10 @@ class PolicyAnnotationSupportTest {
     void formatAnnotationsTest() {
         assertThat(formatAnnotations(null)).isEqualTo("(None)");
         assertThat(formatAnnotations(List.of(
-                new AppliedPolicyAnnotation("gem-policy", Date.from(Instant.now()), "security@example.com"))))
+                        new AppliedPolicyAnnotation("gem-policy", Date.from(Instant.now()), "security@example.com"))))
                 .isEqualTo("[gem-policy (security)]");
-        assertThat(formatAnnotations(List.of(
-                new AppliedPolicyAnnotation("gem-policy", Date.from(Instant.now()), "Security Team"))))
+        assertThat(formatAnnotations(
+                        List.of(new AppliedPolicyAnnotation("gem-policy", Date.from(Instant.now()), "Security Team"))))
                 .isEqualTo("[gem-policy (Security Team)]");
     }
-
 }

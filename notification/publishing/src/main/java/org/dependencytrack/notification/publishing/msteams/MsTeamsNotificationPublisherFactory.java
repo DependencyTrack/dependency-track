@@ -45,6 +45,11 @@ public final class MsTeamsNotificationPublisherFactory implements NotificationPu
     }
 
     @Override
+    public String displayName() {
+        return "Microsoft Teams";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return MsTeamsNotificationPublisher.class;
     }
@@ -62,14 +67,12 @@ public final class MsTeamsNotificationPublisherFactory implements NotificationPu
 
     @Override
     public RuntimeConfigSpec ruleConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new HttpNotificationPublisherRuleConfigV1()
-                        .withDestinationUrl(URI.create("https://msteams.example.com")));
+        return RuntimeConfigSpec.of(new HttpNotificationPublisherRuleConfigV1()
+                .withDestinationUrl(URI.create("https://msteams.example.com")));
     }
 
     @Override
     public NotificationTemplate defaultTemplate() {
         return new NotificationTemplate(loadDefaultTemplate(extensionClass()), "application/json");
     }
-
 }

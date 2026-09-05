@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources;
 
+import alpine.model.auth.Principal;
 import alpine.server.resources.AlpineResource;
 import org.dependencytrack.api.v2.model.TotalCount;
 import org.dependencytrack.api.v2.model.TotalCountType;
@@ -35,7 +36,6 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -88,8 +88,8 @@ public abstract class AbstractApiResource extends AlpineResource {
                 logSecurityEvent(logger, SecurityMarkers.SECURITY_FAILURE, "Unauthorized project access attempt");
             }
 
-            throw new ProjectAccessDeniedException(requireNonNullElse(
-                    message, "Access to the requested project is forbidden"));
+            throw new ProjectAccessDeniedException(
+                    requireNonNullElse(message, "Access to the requested project is forbidden"));
         }
     }
 
@@ -160,12 +160,9 @@ public abstract class AbstractApiResource extends AlpineResource {
 
         final Set<UUID> accessibleUuids = withJdbiHandle(
                 super.getAlpineRequest(),
-                handle -> handle
-                        .attach(ProjectDao.class)
+                handle -> handle.attach(ProjectDao.class)
                         .getAccessibleProjectUuids(
-                                projects.stream()
-                                        .map(Project::getUuid)
-                                        .collect(Collectors.toSet())));
+                                projects.stream().map(Project::getUuid).collect(Collectors.toSet())));
 
         return projects.stream()
                 .filter(project -> accessibleUuids.contains(project.getUuid()))
@@ -179,11 +176,11 @@ public abstract class AbstractApiResource extends AlpineResource {
 
         return TotalCount.builder()
                 .count(totalCount.value())
-                .type(switch (totalCount.type()) {
-                    case AT_LEAST -> TotalCountType.AT_LEAST;
-                    case EXACT -> TotalCountType.EXACT;
-                })
+                .type(
+                        switch (totalCount.type()) {
+                            case AT_LEAST -> TotalCountType.AT_LEAST;
+                            case EXACT -> TotalCountType.EXACT;
+                        })
                 .build();
     }
-
 }

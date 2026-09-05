@@ -42,14 +42,22 @@ public class MigrationExecutor {
     /// from the mainline without blocking the subsequent minor upgrade on validation.
     /// Enable only where backports are anticipated. When disabled, Flyway aborts if it discovers an
     /// unapplied migration with a version lower than the latest in history.
-    /// @see [How to fix or avoid ignored migrations in Flyway](https://www.red-gate.com/hub/product-learning/flyway/how-to-fix-or-avoid-ignored-migrations-in-flyway/).
+    /// @param skipRepeatable     Whether to skip repeatable migrations entirely.
+    /// Repeatable migrations always run last, irrespective of `targetVersion`, and thus assume that
+    /// all versioned migrations were applied. Enable this when migrating to a `targetVersion` older
+    /// than the latest, where repeatable migrations may depend on DDL that does not exist yet.
+    /// @see [How to fix or avoid ignored migrations in Flyway]
+    ///
+    /// [How to fix or avoid ignored migrations in Flyway]:
+    /// https://www.red-gate.com/hub/product-learning/flyway/how-to-fix-or-avoid-ignored-migrations-in-flyway/
     public MigrationExecutor(
             DataSource dataSource,
             String baselineVersion,
             String location,
             @Nullable String schemaHistoryTable,
             @Nullable String targetVersion,
-            boolean outOfOrder) {
+            boolean outOfOrder,
+            boolean skipRepeatable) {
         final FluentConfiguration config = Flyway.configure()
                 .dataSource(requireNonNull(dataSource, "dataSource must not be null"))
                 .baselineVersion(requireNonNull(baselineVersion, "baselineVersion must not be null"))
@@ -73,11 +81,13 @@ public class MigrationExecutor {
         if (targetVersion != null) {
             config.target(targetVersion);
         }
+        if (skipRepeatable) {
+            config.repeatableSqlMigrationPrefix("DISABLED_REPEATABLE_");
+        }
         this.flyway = config.load();
     }
 
     public void execute() {
         flyway.migrate();
     }
-
 }

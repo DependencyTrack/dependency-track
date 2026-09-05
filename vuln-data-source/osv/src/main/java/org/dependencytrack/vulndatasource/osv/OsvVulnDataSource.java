@@ -62,23 +62,23 @@ final class OsvVulnDataSource implements VulnDataSource {
     private static final Logger LOGGER = LoggerFactory.getLogger(OsvVulnDataSource.class);
     private static final int MAX_INCREMENTAL_ADVISORY_DOWNLOADS = 250;
 
-    private final WatermarkManager watermarkManager;
+    private final @Nullable WatermarkManager watermarkManager;
     private final ObjectMapper objectMapper;
     private final String dataUrl;
     private final List<String> ecosystems;
     private final Set<String> successfullyCompletedEcosystems;
     private final HttpClient httpClient;
     private final ModelConverter modelConverter;
-    private String currentEcosystem;
+    private @Nullable String currentEcosystem;
     private int currentEcosystemIndex;
     private int currentEcosystemAdvisoriesProcessed;
     private @Nullable OsvAdvisorySource currentAdvisorySource;
     private boolean hasNextCalled;
-    private Bom nextItem;
+    private @Nullable Bom nextItem;
     private final boolean isAliasSyncEnabled;
 
     OsvVulnDataSource(
-            final WatermarkManager watermarkManager,
+            final @Nullable WatermarkManager watermarkManager,
             final ObjectMapper objectMapper,
             final String dataUrl,
             final Collection<String> ecosystems,
@@ -109,30 +109,28 @@ final class OsvVulnDataSource implements VulnDataSource {
                 return true;
             }
 
-            successfullyCompletedEcosystems.add(currentEcosystem);
-            if (watermarkManager != null) {
-                watermarkManager.maybeCommit(List.of(currentEcosystem));
-            }
-            logCurrentEcosystemSummary();
-            closeCurrentEcosystem();
+            completeCurrentEcosystem();
             currentEcosystemIndex++;
         }
 
-        if (currentEcosystemIndex < ecosystems.size()) {
-            final boolean nextEcosystemOpened = openNextEcosystem();
-            if (nextEcosystemOpened) {
-                final Bom item = readNextItem();
-                if (item != null) {
-                    nextItem = item;
-                    return true;
-                }
-                successfullyCompletedEcosystems.add(currentEcosystem);
-                if (watermarkManager != null) {
-                    watermarkManager.maybeCommit(List.of(currentEcosystem));
-                }
-                logCurrentEcosystemSummary();
-                closeCurrentEcosystem();
+        // NB: An ecosystem can legitimately yield no advisories at all, e.g. when nothing changed
+        // upstream since the last run. Keep advancing until an ecosystem yields an item,
+        // or none are left.
+        while (currentEcosystemIndex < ecosystems.size()) {
+            if (Thread.interrupted()) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while advancing to the next ecosystem");
             }
+
+            openNextEcosystem();
+
+            final Bom item = readNextItem();
+            if (item != null) {
+                nextItem = item;
+                return true;
+            }
+
+            completeCurrentEcosystem();
             currentEcosystemIndex++;
         }
 
@@ -146,10 +144,20 @@ final class OsvVulnDataSource implements VulnDataSource {
             throw new NoSuchElementException();
         }
 
-        final Bom item = nextItem;
+        final Bom item = requireNonNull(nextItem);
         nextItem = null;
         hasNextCalled = false;
         return item;
+    }
+
+    private void completeCurrentEcosystem() {
+        final String ecosystem = requireNonNull(currentEcosystem, "currentEcosystem must not be null");
+        successfullyCompletedEcosystems.add(ecosystem);
+        if (watermarkManager != null) {
+            watermarkManager.maybeCommit(List.of(ecosystem));
+        }
+        logCurrentEcosystemSummary();
+        closeCurrentEcosystem();
     }
 
     @Override
@@ -158,8 +166,7 @@ final class OsvVulnDataSource implements VulnDataSource {
 
         if (bov.getVulnerabilitiesCount() != 1) {
             throw new IllegalArgumentException(
-                    "BOV must have exactly one vulnerability, but has "
-                            + bov.getVulnerabilitiesCount());
+                    "BOV must have exactly one vulnerability, but has " + bov.getVulnerabilitiesCount());
         }
 
         final Vulnerability vuln = bov.getVulnerabilities(0);
@@ -169,9 +176,8 @@ final class OsvVulnDataSource implements VulnDataSource {
             throw new IllegalArgumentException();
         }
 
-        final Instant updatedAt = vuln.hasUpdated()
-                ? Instant.ofEpochMilli(Timestamps.toMillis(vuln.getUpdated()))
-                : null;
+        final Instant updatedAt =
+                vuln.hasUpdated() ? Instant.ofEpochMilli(Timestamps.toMillis(vuln.getUpdated())) : null;
         if (updatedAt == null) {
             LOGGER.warn("Vulnerability {} has no updated timestamp; Cannot advance watermark", vuln.getId());
             return;
@@ -190,14 +196,15 @@ final class OsvVulnDataSource implements VulnDataSource {
         closeCurrentEcosystem();
     }
 
-    private Bom readNextItem() {
+    private @Nullable Bom readNextItem() {
         if (currentAdvisorySource == null || !currentAdvisorySource.hasNext()) {
             return null;
         }
 
         final Osv osv = currentAdvisorySource.next();
         currentEcosystemAdvisoriesProcessed++;
-        return modelConverter.convert(osv, isAliasSyncEnabled, currentEcosystem);
+        return modelConverter.convert(
+                osv, isAliasSyncEnabled, requireNonNull(currentEcosystem, "currentEcosystem must not be null"));
     }
 
     private void logCurrentEcosystemSummary() {
@@ -211,52 +218,48 @@ final class OsvVulnDataSource implements VulnDataSource {
                 currentEcosystemAdvisoriesProcessed);
     }
 
-    private boolean openNextEcosystem() {
-        if (currentEcosystemIndex >= ecosystems.size()) {
-            return false;
-        }
-
+    private void openNextEcosystem() {
         currentEcosystem = ecosystems.get(currentEcosystemIndex);
         currentEcosystemAdvisoriesProcessed = 0;
         currentAdvisorySource = openAdvisorySource(currentEcosystem);
 
         LOGGER.info("Processing ecosystem {}", currentEcosystem);
-        return true;
     }
 
     private @Nullable OsvAdvisorySource openAdvisorySource(String ecosystem) {
         if (watermarkManager == null) {
             LOGGER.debug("Incremental mirroring disabled; downloading all advisories");
-            return downloadFullArchive(ecosystem);
+            return downloadFullArchive(ecosystem, /* modifiedAdvisoryIds */ null);
         }
 
         final Instant watermark = watermarkManager.getWatermark(ecosystem);
         if (watermark == null) {
             LOGGER.debug("No watermark found; Downloading all advisories");
-            return downloadFullArchive(ecosystem);
+            return downloadFullArchive(ecosystem, /* modifiedAdvisoryIds */ null);
         }
 
         LOGGER.debug("Downloading advisories changed since {}", watermark);
-        final Set<String> modifiedIds = getModifiedIds(ecosystem, watermark);
-        if (modifiedIds.isEmpty()) {
+        final Set<String> modifiedAdvisoryIds = getModifiedAdvisoryIds(ecosystem, watermark);
+        if (modifiedAdvisoryIds.isEmpty()) {
             LOGGER.info("No new or updated advisories since {}", watermark);
             return null;
         }
 
-        if (modifiedIds.size() > MAX_INCREMENTAL_ADVISORY_DOWNLOADS) {
+        if (modifiedAdvisoryIds.size() > MAX_INCREMENTAL_ADVISORY_DOWNLOADS) {
             LOGGER.info("""
                             Number of new or updated advisories for ecosystem {} exceeds the incremental \
-                            download threshold of {}; downloading the full advisory archive instead""",
-                    ecosystem, MAX_INCREMENTAL_ADVISORY_DOWNLOADS);
-            return downloadFullArchive(ecosystem);
+                            download threshold of {}; downloading the full advisory archive instead""", ecosystem, MAX_INCREMENTAL_ADVISORY_DOWNLOADS);
+            return downloadFullArchive(ecosystem, modifiedAdvisoryIds);
         }
 
-        LOGGER.info("Incrementally mirroring {} new or updated advisories for ecosystem {}",
-                modifiedIds.size(), ecosystem);
-        return new IncrementalOsvAdvisorySource(httpClient, objectMapper, dataUrl, ecosystem, modifiedIds);
+        LOGGER.info(
+                "Incrementally mirroring {} new or updated advisories for ecosystem {}",
+                modifiedAdvisoryIds.size(),
+                ecosystem);
+        return new IncrementalOsvAdvisorySource(httpClient, objectMapper, dataUrl, ecosystem, modifiedAdvisoryIds);
     }
 
-    private ZipOsvAdvisorySource downloadFullArchive(String ecosystem) {
+    private ZipOsvAdvisorySource downloadFullArchive(String ecosystem, @Nullable Set<String> modifiedAdvisoryIds) {
         LOGGER.info("Downloading all advisories for ecosystem {} from upstream", ecosystem);
 
         final Path tempZipPath;
@@ -286,7 +289,7 @@ final class OsvVulnDataSource implements VulnDataSource {
             }
 
             try {
-                return new ZipOsvAdvisorySource(tempZipPath, objectMapper);
+                return new ZipOsvAdvisorySource(tempZipPath, objectMapper, modifiedAdvisoryIds);
             } catch (IOException e) {
                 throw new UncheckedIOException("Failed to open advisory archive " + tempZipPath, e);
             }
@@ -313,7 +316,7 @@ final class OsvVulnDataSource implements VulnDataSource {
         currentEcosystem = null;
     }
 
-    private Set<String> getModifiedIds(String ecosystem, Instant watermark) {
+    private Set<String> getModifiedAdvisoryIds(String ecosystem, Instant watermark) {
         final var request = HttpRequest.newBuilder()
                 .uri(URI.create("%s/%s/modified_id.csv".formatted(dataUrl, encodeEcosystem(ecosystem))))
                 .GET()
@@ -321,8 +324,7 @@ final class OsvVulnDataSource implements VulnDataSource {
 
         final HttpResponse<InputStream> response;
         try {
-            response = httpClient.send(request, BodyHandlers.buffering(
-                    BodyHandlers.ofInputStream(), 1024));
+            response = httpClient.send(request, BodyHandlers.buffering(BodyHandlers.ofInputStream(), 1024));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to download modified IDs", e);
         } catch (InterruptedException e) {
@@ -335,8 +337,8 @@ final class OsvVulnDataSource implements VulnDataSource {
 
         final var modifiedIds = new HashSet<String>();
         try (final InputStream inputStream = response.body();
-             final var inputStreamReader = new InputStreamReader(inputStream);
-             final var bufferedReader = new BufferedReader(inputStreamReader)) {
+                final var inputStreamReader = new InputStreamReader(inputStream);
+                final var bufferedReader = new BufferedReader(inputStreamReader)) {
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 final String[] parts = line.split(",", 2);
@@ -347,12 +349,9 @@ final class OsvVulnDataSource implements VulnDataSource {
                 final Instant timestamp = Instant.parse(parts[0]);
                 if (timestamp.isAfter(watermark)) {
                     modifiedIds.add(parts[1]);
-                    if (modifiedIds.size() > MAX_INCREMENTAL_ADVISORY_DOWNLOADS) {
-                        // NB: We already know there are too many modified IDs,
-                        // no point in scanning further.
-                        break;
-                    }
                 } else {
+                    // Rows are ordered newest-first.
+                    // Everything below this we've already seen.
                     break;
                 }
             }
@@ -363,7 +362,7 @@ final class OsvVulnDataSource implements VulnDataSource {
         return modifiedIds;
     }
 
-    private static String extractEcosystem(Vulnerability vuln) {
+    private static @Nullable String extractEcosystem(Vulnerability vuln) {
         for (final Property property : vuln.getPropertiesList()) {
             if (OSV_ECOSYSTEM.equals(property.getName())) {
                 return property.getValue();
@@ -373,8 +372,8 @@ final class OsvVulnDataSource implements VulnDataSource {
         return null;
     }
 
+    @Nullable
     WatermarkManager getWatermarkManager() {
         return watermarkManager;
     }
-
 }

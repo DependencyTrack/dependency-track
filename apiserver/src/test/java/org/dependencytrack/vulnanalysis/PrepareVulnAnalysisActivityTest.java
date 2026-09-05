@@ -69,9 +69,8 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
 
     @Test
     void shouldIncludeComponentTypeWhenRequired() throws Exception {
-        setupActivityForAnalyzerRequirements(EnumSet.of(
-                VulnAnalyzerRequirement.COMPONENT_PURL,
-                VulnAnalyzerRequirement.COMPONENT_TYPE));
+        setupActivityForAnalyzerRequirements(
+                EnumSet.of(VulnAnalyzerRequirement.COMPONENT_PURL, VulnAnalyzerRequirement.COMPONENT_TYPE));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -102,15 +101,16 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
 
         final Bom bom = readBom(res);
 
-        assertThat(bom.getComponentsList()).satisfiesExactlyInAnyOrder(
-                component -> {
-                    assertThat(component.getType()).isEqualTo(Classification.CLASSIFICATION_LIBRARY);
-                    assertThat(component.getPurl()).isEqualTo("pkg:maven/com.example/libraryComponent@1.0.0");
-                },
-                component -> {
-                    assertThat(component.getType()).isEqualTo(Classification.CLASSIFICATION_OPERATING_SYSTEM);
-                    assertThat(component.getName()).isEqualTo("ubuntu");
-                });
+        assertThat(bom.getComponentsList())
+                .satisfiesExactlyInAnyOrder(
+                        component -> {
+                            assertThat(component.getType()).isEqualTo(Classification.CLASSIFICATION_LIBRARY);
+                            assertThat(component.getPurl()).isEqualTo("pkg:maven/com.example/libraryComponent@1.0.0");
+                        },
+                        component -> {
+                            assertThat(component.getType()).isEqualTo(Classification.CLASSIFICATION_OPERATING_SYSTEM);
+                            assertThat(component.getName()).isEqualTo("ubuntu");
+                        });
     }
 
     @Test
@@ -133,19 +133,14 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
         qm.persist(component);
 
         qm.createComponentProperty(
-                component,
-                "aquasecurity",
-                "trivy:SrcName",
-                "glibc",
-                IConfigProperty.PropertyType.STRING,
-                null);
+                component, "aquasecurity", "trivy:SrcName", "glibc", IConfigProperty.PropertyType.STRING, null);
         qm.createComponentProperty(
-                component,
-                "aquasecurity",
-                "trivy:SrcVersion",
-                "2.35",
-                IConfigProperty.PropertyType.STRING,
-                null);
+                component, "aquasecurity", "trivy:SrcVersion", "2.35", IConfigProperty.PropertyType.STRING, null);
+
+        // Property values can be null, make sure that's handled properly.
+        // https://github.com/DependencyTrack/dependency-track/issues/6572
+        qm.createComponentProperty(
+                component, "syft", "package:metadataType", null, IConfigProperty.PropertyType.STRING, null);
 
         final PrepareVulnAnalysisRes res = activity.execute(
                 mockActivityContext(),
@@ -159,23 +154,27 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
             assertThat(bomComponent.getPurl()).isEqualTo("pkg:deb/ubuntu/libc6@2.35");
             assertThat(bomComponent.getType()).isEqualTo(Classification.CLASSIFICATION_LIBRARY);
 
-            assertThat(bomComponent.getPropertiesList()).satisfiesExactlyInAnyOrder(
-                    property -> {
-                        assertThat(property.getName()).isEqualTo("aquasecurity:trivy:SrcName");
-                        assertThat(property.getValue()).isEqualTo("glibc");
-                    },
-                    property -> {
-                        assertThat(property.getName()).isEqualTo("aquasecurity:trivy:SrcVersion");
-                        assertThat(property.getValue()).isEqualTo("2.35");
-                    });
+            assertThat(bomComponent.getPropertiesList())
+                    .satisfiesExactlyInAnyOrder(
+                            property -> {
+                                assertThat(property.getName()).isEqualTo("aquasecurity:trivy:SrcName");
+                                assertThat(property.getValue()).isEqualTo("glibc");
+                            },
+                            property -> {
+                                assertThat(property.getName()).isEqualTo("aquasecurity:trivy:SrcVersion");
+                                assertThat(property.getValue()).isEqualTo("2.35");
+                            },
+                            property -> {
+                                assertThat(property.getName()).isEqualTo("syft:package:metadataType");
+                                assertThat(property.hasValue()).isFalse();
+                            });
         });
     }
 
     @Test
     void shouldHandleComponentPropertyWithNullGroupName() throws Exception {
-        setupActivityForAnalyzerRequirements(EnumSet.of(
-                VulnAnalyzerRequirement.COMPONENT_PURL,
-                VulnAnalyzerRequirement.COMPONENT_PROPERTIES));
+        setupActivityForAnalyzerRequirements(
+                EnumSet.of(VulnAnalyzerRequirement.COMPONENT_PURL, VulnAnalyzerRequirement.COMPONENT_PROPERTIES));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -190,12 +189,7 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
         qm.persist(component);
 
         qm.createComponentProperty(
-                component,
-                null,
-                "some-property",
-                "some-value",
-                IConfigProperty.PropertyType.STRING,
-                null);
+                component, null, "some-property", "some-value", IConfigProperty.PropertyType.STRING, null);
 
         final PrepareVulnAnalysisRes res = activity.execute(
                 mockActivityContext(),
@@ -230,12 +224,7 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
         qm.persist(component);
 
         qm.createComponentProperty(
-                component,
-                "aquasecurity",
-                "trivy:SrcName",
-                "glibc",
-                IConfigProperty.PropertyType.STRING,
-                null);
+                component, "aquasecurity", "trivy:SrcName", "glibc", IConfigProperty.PropertyType.STRING, null);
 
         final PrepareVulnAnalysisRes res = activity.execute(
                 mockActivityContext(),
@@ -245,10 +234,9 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
 
         final Bom bom = readBom(res);
 
-        assertThat(bom.getComponentsList()).satisfiesExactly(
-                bomComponent -> assertThat(bomComponent.getPropertiesList()).isEmpty());
-
-
+        assertThat(bom.getComponentsList())
+                .satisfiesExactly(bomComponent ->
+                        assertThat(bomComponent.getPropertiesList()).isEmpty());
     }
 
     @Test
@@ -307,26 +295,11 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
         qm.persist(componentB);
 
         qm.createComponentProperty(
-                componentA,
-                "aquasecurity",
-                "trivy:SrcName",
-                "glibc",
-                IConfigProperty.PropertyType.STRING,
-                null);
+                componentA, "aquasecurity", "trivy:SrcName", "glibc", IConfigProperty.PropertyType.STRING, null);
         qm.createComponentProperty(
-                componentB,
-                "aquasecurity",
-                "trivy:SrcName",
-                "libxml2",
-                IConfigProperty.PropertyType.STRING,
-                null);
+                componentB, "aquasecurity", "trivy:SrcName", "libxml2", IConfigProperty.PropertyType.STRING, null);
         qm.createComponentProperty(
-                componentB,
-                "aquasecurity",
-                "trivy:PkgType",
-                "amazon",
-                IConfigProperty.PropertyType.STRING,
-                null);
+                componentB, "aquasecurity", "trivy:PkgType", "amazon", IConfigProperty.PropertyType.STRING, null);
 
         final PrepareVulnAnalysisRes res = activity.execute(
                 mockActivityContext(),
@@ -336,33 +309,34 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
 
         final Bom bom = readBom(res);
 
-        assertThat(bom.getComponentsList()).satisfiesExactlyInAnyOrder(
-                component -> {
-                    assertThat(component.getName()).isEqualTo("libc6");
-                    assertThat(component.getPropertiesList()).satisfiesExactly(property -> {
-                        assertThat(property.getName()).isEqualTo("aquasecurity:trivy:SrcName");
-                        assertThat(property.getValue()).isEqualTo("glibc");
-                    });
-                },
-                component -> {
-                    assertThat(component.getName()).isEqualTo("libxml2");
-                    assertThat(component.getPropertiesList()).satisfiesExactlyInAnyOrder(
-                            property -> {
+        assertThat(bom.getComponentsList())
+                .satisfiesExactlyInAnyOrder(
+                        component -> {
+                            assertThat(component.getName()).isEqualTo("libc6");
+                            assertThat(component.getPropertiesList()).satisfiesExactly(property -> {
                                 assertThat(property.getName()).isEqualTo("aquasecurity:trivy:SrcName");
-                                assertThat(property.getValue()).isEqualTo("libxml2");
-                            },
-                            property -> {
-                                assertThat(property.getName()).isEqualTo("aquasecurity:trivy:PkgType");
-                                assertThat(property.getValue()).isEqualTo("amazon");
+                                assertThat(property.getValue()).isEqualTo("glibc");
                             });
-                });
+                        },
+                        component -> {
+                            assertThat(component.getName()).isEqualTo("libxml2");
+                            assertThat(component.getPropertiesList())
+                                    .satisfiesExactlyInAnyOrder(
+                                            property -> {
+                                                assertThat(property.getName()).isEqualTo("aquasecurity:trivy:SrcName");
+                                                assertThat(property.getValue()).isEqualTo("libxml2");
+                                            },
+                                            property -> {
+                                                assertThat(property.getName()).isEqualTo("aquasecurity:trivy:PkgType");
+                                                assertThat(property.getValue()).isEqualTo("amazon");
+                                            });
+                        });
     }
 
     @Test
     void shouldMarkInternalComponents() throws Exception {
-        setupActivityForAnalyzerRequirements(EnumSet.of(
-                VulnAnalyzerRequirement.COMPONENT_PURL,
-                VulnAnalyzerRequirement.COMPONENT_TYPE));
+        setupActivityForAnalyzerRequirements(
+                EnumSet.of(VulnAnalyzerRequirement.COMPONENT_PURL, VulnAnalyzerRequirement.COMPONENT_TYPE));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -400,8 +374,7 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
                 List.of(VulnAnalyzer.class));
-        pluginManager.loadPlugins(List.of(
-                new MockVulnAnalyzerPlugin(bom -> Bom.getDefaultInstance(), requirements)));
+        pluginManager.loadPlugins(List.of(new MockVulnAnalyzerPlugin(bom -> Bom.getDefaultInstance(), requirements)));
         activity = new PrepareVulnAnalysisActivity(fileStorage, pluginManager);
     }
 
@@ -418,5 +391,4 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
             return Bom.parseFrom(inputStream);
         }
     }
-
 }

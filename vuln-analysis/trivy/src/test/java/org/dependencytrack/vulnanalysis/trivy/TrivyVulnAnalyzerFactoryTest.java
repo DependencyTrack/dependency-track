@@ -18,8 +18,15 @@
  */
 package org.dependencytrack.vulnanalysis.trivy;
 
+import org.dependencytrack.plugin.api.RuntimeConfigurable;
+import org.dependencytrack.plugin.config.RuntimeConfigMapper;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
+import org.junit.jupiter.api.Test;
+
+import java.net.URI;
+
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class TrivyVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnAnalyzer, TrivyVulnAnalyzerFactory> {
 
@@ -27,4 +34,19 @@ class TrivyVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnAnal
         super(TrivyVulnAnalyzerFactory.class);
     }
 
+    @Test
+    void shouldAcceptConfigWithoutApiToken() {
+        // Trivy servers do not require a token unless one was configured with --token,
+        // so a deployment can legitimately have no token to provide.
+        final var config = new TrivyVulnAnalyzerConfigV1()
+                .withEnabled(true)
+                .withApiUrl(URI.create("http://localhost:8080"))
+                .withIgnoreUnfixed(false)
+                .withScanLibrary(true)
+                .withScanOs(false);
+
+        assertThatNoException()
+                .isThrownBy(() -> RuntimeConfigMapper.getInstance()
+                        .validate(config, ((RuntimeConfigurable) factory).runtimeConfigSpec()));
+    }
 }

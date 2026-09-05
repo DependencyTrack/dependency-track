@@ -19,7 +19,9 @@
 package org.dependencytrack.cache.database;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -29,49 +31,35 @@ import java.util.Optional;
 final class DatabaseCacheMeterBinder extends CacheMeterBinder<DatabaseCache> {
 
     DatabaseCacheMeterBinder(DatabaseCache cache, String cacheName) {
-        super(cache, cacheName, null);
+        super(cache, cacheName, Tags.empty());
     }
 
     @Override
-    protected Long size() {
+    protected @Nullable Long size() {
         final DatabaseCache cache = getCache();
         return cache != null ? cache.size() : null;
     }
 
     @Override
     protected long hitCount() {
-        return Optional
-                .ofNullable(getCache())
-                .map(DatabaseCache::hitCount)
-                .orElse(0L);
+        return Optional.ofNullable(getCache()).map(DatabaseCache::hitCount).orElse(0L);
     }
 
     @Override
     protected Long missCount() {
-        return Optional
-                .ofNullable(getCache())
-                .map(DatabaseCache::missCount)
-                .orElse(0L);
+        return Optional.ofNullable(getCache()).map(DatabaseCache::missCount).orElse(0L);
     }
 
     @Override
     protected Long evictionCount() {
-        return Optional
-                .ofNullable(getCache())
-                .map(DatabaseCache::evictionCount)
-                .orElse(0L);
+        return Optional.ofNullable(getCache()).map(DatabaseCache::evictionCount).orElse(0L);
     }
 
     @Override
     protected long putCount() {
-        return Optional
-                .ofNullable(getCache())
-                .map(DatabaseCache::putCount)
-                .orElse(0L);
+        return Optional.ofNullable(getCache()).map(DatabaseCache::putCount).orElse(0L);
     }
 
     @Override
-    protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
-    }
-
+    protected void bindImplementationSpecificMetrics(MeterRegistry registry) {}
 }

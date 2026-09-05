@@ -27,20 +27,23 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class NixpkgsPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest<PackageMetadataResolver, NixpkgsPackageMetadataResolverFactory> {
+class NixpkgsPackageMetadataResolverFactoryTest
+        extends AbstractExtensionFactoryTest<PackageMetadataResolver, NixpkgsPackageMetadataResolverFactory> {
 
     protected NixpkgsPackageMetadataResolverFactoryTest() {
         super(NixpkgsPackageMetadataResolverFactory.class);
     }
 
     @ParameterizedTest
-    @CsvSource(nullValues = "", value = {
-            "pkg:nixpkgs/foo@1.0, pkg:nixpkgs/foo@1.0",
-            "pkg:nixpkgs/ns/foo@1.0, pkg:nixpkgs/ns/foo@1.0",
-            "pkg:npm/foo@1.0, ",
-            "pkg:nixpkgs/foo, ",
-            "pkg:nixpkgs/ns/foo@1.0?key=value#sub/path, pkg:nixpkgs/ns/foo@1.0",
-    })
+    @CsvSource(
+            nullValues = "",
+            value = {
+                "pkg:nixpkgs/foo@1.0, pkg:nixpkgs/foo@1.0",
+                "pkg:nixpkgs/ns/foo@1.0, pkg:nixpkgs/ns/foo@1.0",
+                "pkg:npm/foo@1.0, ",
+                "pkg:nixpkgs/foo, ",
+                "pkg:nixpkgs/ns/foo@1.0?key=value#sub/path, pkg:nixpkgs/ns/foo@1.0",
+            })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))
                 .isEqualTo(expected != null ? new PackageURL(expected) : null);
@@ -50,5 +53,4 @@ class NixpkgsPackageMetadataResolverFactoryTest extends AbstractExtensionFactory
     void shouldRequireRepository() {
         assertThat(factory.requiresRepository()).isTrue();
     }
-
 }

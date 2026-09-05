@@ -18,10 +18,11 @@
  */
 package org.dependencytrack.resources.v1.exception;
 
+import org.dependencytrack.resources.v1.problems.ProblemDetails;
+
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
-import org.dependencytrack.resources.v1.problems.ProblemDetails;
 
 import java.util.NoSuchElementException;
 
@@ -35,5 +36,4 @@ public class NoSuchElementExceptionMapper implements ExceptionMapper<NoSuchEleme
     public Response toResponse(final NoSuchElementException exception) {
         return new ProblemDetails(404, "Resource does not exist", exception.getMessage()).toResponse();
     }
-
 }

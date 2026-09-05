@@ -20,6 +20,7 @@ package org.dependencytrack.vulndatasource.github;
 
 import org.dependencytrack.plugin.api.storage.CompareAndPutResult;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,16 +40,16 @@ final class WatermarkManager {
 
     private final Clock clock;
     private final KeyValueStore kvStore;
-    private Instant committedWatermark;
-    private Long committedWatermarkVersion;
-    private Instant pendingWatermark;
+    private @Nullable Instant committedWatermark;
+    private @Nullable Long committedWatermarkVersion;
+    private @Nullable Instant pendingWatermark;
     private Instant lastCommittedAt;
 
     private WatermarkManager(
             final Clock clock,
             final KeyValueStore kvStore,
-            final Instant committedWatermark,
-            final Long committedWatermarkVersion) {
+            final @Nullable Instant committedWatermark,
+            final @Nullable Long committedWatermarkVersion) {
         this.clock = clock;
         this.kvStore = kvStore;
         this.committedWatermark = committedWatermark;
@@ -74,11 +75,12 @@ final class WatermarkManager {
         return new WatermarkManager(clock, kvStore, null, null);
     }
 
+    @Nullable
     Instant getWatermark() {
         return committedWatermark;
     }
 
-    void maybeAdvance(final Instant watermark) {
+    void maybeAdvance(final @Nullable Instant watermark) {
         if (watermark == null) {
             return;
         }
@@ -89,8 +91,7 @@ final class WatermarkManager {
     }
 
     void maybeCommit(final boolean ignoreMinCommitInterval) {
-        if (pendingWatermark == null
-                || (committedWatermark != null && committedWatermark.equals(pendingWatermark))) {
+        if (pendingWatermark == null || (committedWatermark != null && committedWatermark.equals(pendingWatermark))) {
             return;
         }
         if (!ignoreMinCommitInterval
@@ -100,9 +101,7 @@ final class WatermarkManager {
 
         LOGGER.debug("Committing watermark {} to KV store", pendingWatermark);
         final CompareAndPutResult capResult = kvStore.compareAndPut(
-                "watermark",
-                String.valueOf(pendingWatermark.toEpochMilli()),
-                committedWatermarkVersion);
+                "watermark", String.valueOf(pendingWatermark.toEpochMilli()), committedWatermarkVersion);
         switch (capResult) {
             case CompareAndPutResult.Success(long newVersion) -> {
                 committedWatermark = pendingWatermark;
@@ -110,10 +109,8 @@ final class WatermarkManager {
                 lastCommittedAt = Instant.now(clock);
             }
             case CompareAndPutResult.Failure(CompareAndPutResult.Failure.Reason reason) ->
-                    throw new IllegalStateException(
-                            "Failed to commit watermark %s to KV store: %s".formatted(
-                                    pendingWatermark, reason));
+                throw new IllegalStateException(
+                        "Failed to commit watermark %s to KV store: %s".formatted(pendingWatermark, reason));
         }
     }
-
 }

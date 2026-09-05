@@ -39,12 +39,12 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import jakarta.servlet.DispatcherType;
 import org.dependencytrack.cache.CacheManagerBinder;
 import org.dependencytrack.cache.CacheManagerInitializer;
 import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.LegacyConfigPropertyValidator;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
+import org.dependencytrack.common.datasource.QueryTimeout;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dev.DevServices;
 import org.dependencytrack.dex.DexEngineBinder;
@@ -85,6 +85,8 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+
+import jakarta.servlet.DispatcherType;
 
 import java.net.URL;
 import java.util.EnumSet;
@@ -139,18 +141,12 @@ public final class Application {
         configureMeterRegistry(config, Metrics.globalRegistry);
 
         // Start management server so health and metrics are available during init.
-        final String managementHost = config
-                .getOptionalValue(ConfigKeys.MANAGEMENT_HOST, String.class)
+        final String managementHost = config.getOptionalValue(ConfigKeys.MANAGEMENT_HOST, String.class)
                 .orElse("0.0.0.0");
-        final int managementPort = config
-                .getOptionalValue(ConfigKeys.MANAGEMENT_PORT, int.class)
-                .orElse(9000);
+        final int managementPort =
+                config.getOptionalValue(ConfigKeys.MANAGEMENT_PORT, int.class).orElse(9000);
         final var managementServer = new ManagementServer(
-                managementHost,
-                managementPort,
-                healthCheckRegistry,
-                prometheusMeterRegistry,
-                config);
+                managementHost, managementPort, healthCheckRegistry, prometheusMeterRegistry, config);
         try {
             managementServer.start();
         } catch (Exception e) {
@@ -159,20 +155,33 @@ public final class Application {
         }
 
         // Execute init tasks.
+        // Failures must exit the JVM explicitly: the management server started above
+        // keeps the JVM alive with its non-daemon threads, so an exception escaping
+        // the main thread would leave the process running but forever unready.
         final var dataSourceRegistry = DataSourceRegistry.getInstance();
         if (config.getValue(ConfigKeys.INIT_TASKS_ENABLED, boolean.class)) {
-            final String dataSourceName = config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_NAME, String.class);
-            final var initTaskExecutor = new InitTaskExecutor(
-                    config, dataSourceRegistry.get(dataSourceName),
-                    initTasksHealthCheck);
-            initTaskExecutor.execute();
+            try {
+                final String dataSourceName = config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_NAME, String.class);
+                final var initTaskExecutor =
+                        new InitTaskExecutor(config, dataSourceRegistry.get(dataSourceName), initTasksHealthCheck);
 
-            if (config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION, boolean.class)) {
-                dataSourceRegistry.close(dataSourceName);
-            }
-            if (config.getValue(ConfigKeys.INIT_TASKS_EXIT_AFTER_COMPLETION, boolean.class)) {
-                LOGGER.info("Exiting because dt.init-tasks.exit-after-completion is enabled");
-                System.exit(0);
+                // NB: Init tasks include schema migrations, whose statements legitimately
+                // run longer than the default query timeout allows. Bypass the timeout for them.
+                QueryTimeout.bypassing(() -> {
+                    initTaskExecutor.execute();
+                    return null;
+                });
+
+                if (config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION, boolean.class)) {
+                    dataSourceRegistry.close(dataSourceName);
+                }
+                if (config.getValue(ConfigKeys.INIT_TASKS_EXIT_AFTER_COMPLETION, boolean.class)) {
+                    LOGGER.info("Exiting because dt.init-tasks.exit-after-completion is enabled");
+                    System.exit(0);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to execute init tasks", e);
+                System.exit(-1);
             }
         }
         initTasksHealthCheck.markInitialized();
@@ -193,7 +202,7 @@ public final class Application {
         final var connector = new ServerConnector(server, new HttpConnectionFactory(httpConfig));
         connector.setHost(host);
         connector.setPort(port);
-        server.setConnectors(new Connector[]{connector});
+        server.setConnectors(new Connector[] {connector});
 
         final var context = new ServletContextHandler();
         context.setContextPath(contextPath);
@@ -220,11 +229,7 @@ public final class Application {
         context.addEventListener(new PluginInitializer());
         context.addEventListener(new DefaultNotificationPublisherInitializer());
         context.addEventListener(
-                new DexEngineInitializer(
-                        config,
-                        dataSourceRegistry,
-                        Metrics.globalRegistry,
-                        healthCheckRegistry));
+                new DexEngineInitializer(config, dataSourceRegistry, Metrics.globalRegistry, healthCheckRegistry));
         context.addEventListener(new TaskSchedulerInitializer(healthCheckRegistry));
         context.addEventListener(new NotificationSubsystemInitializer());
 
@@ -253,8 +258,8 @@ public final class Application {
         apiV1Servlet.setInitOrder(1);
         context.addServlet(apiV1Servlet, "/api/*");
 
-        final var apiV2Servlet = new ServletHolder("REST-API-v2", new ServletContainer(
-                new org.dependencytrack.resources.v2.ResourceConfig()));
+        final var apiV2Servlet = new ServletHolder(
+                "REST-API-v2", new ServletContainer(new org.dependencytrack.resources.v2.ResourceConfig()));
         context.addServlet(apiV2Servlet, "/api/v2/*");
         context.addServlet(new ServletHolder("default", DefaultServlet.class), "/");
 
@@ -318,8 +323,7 @@ public final class Application {
             "vuln_policy_evaluation");
 
     private static void configureMeterRegistry(Config config, MeterRegistry meterRegistry) {
-        final boolean metricsEnabled = config
-                .getOptionalValue(ConfigKeys.METRICS_ENABLED, boolean.class)
+        final boolean metricsEnabled = config.getOptionalValue(ConfigKeys.METRICS_ENABLED, boolean.class)
                 .orElse(false);
         if (!metricsEnabled) {
             return;
@@ -330,7 +334,7 @@ public final class Application {
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 if (HISTOGRAM_METER_NAMES.contains(id.getName())) {
                     return DistributionStatisticConfig.builder()
-                            .percentiles(/* none */) // Disable client-side calculation of percentiles.
+                            .percentiles(/* none */ ) // Disable client-side calculation of percentiles.
                             .percentilesHistogram(true) // Publish histogram instead.
                             .build()
                             .merge(config);
@@ -340,8 +344,7 @@ public final class Application {
             }
         });
 
-        Gauge
-                .builder("dt.info", () -> 1)
+        Gauge.builder("dt.info", () -> 1)
                 .description("Metadata about the Dependency-Track application")
                 .tag("version", config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class))
                 .tag("built_at", config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_TIMESTAMP, String.class))
@@ -357,5 +360,4 @@ public final class Application {
         new ProcessThreadMetrics().bindTo(meterRegistry);
         new UptimeMetrics().bindTo(meterRegistry);
     }
-
 }

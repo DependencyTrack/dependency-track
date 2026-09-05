@@ -28,8 +28,10 @@ import static java.util.Objects.requireNonNull;
 public final class RuntimeConfigSpec {
 
     private final Class<? extends RuntimeConfig> configClass;
+
     @SuppressWarnings("rawtypes")
     private final @Nullable RuntimeConfigValidator validator;
+
     private final RuntimeConfig defaultConfig;
     private final String schema;
 
@@ -46,8 +48,8 @@ public final class RuntimeConfigSpec {
 
     public static <T extends RuntimeConfig> RuntimeConfigSpec of(
             T defaultConfig,
-            RuntimeConfigSchemaSource schemaSource,
-            RuntimeConfigValidator<T> validator) {
+            @Nullable RuntimeConfigSchemaSource schemaSource,
+            @Nullable RuntimeConfigValidator<T> validator) {
         return new RuntimeConfigSpec(defaultConfig, schemaSource, validator);
     }
 
@@ -77,13 +79,13 @@ public final class RuntimeConfigSpec {
     }
 
     private static String loadSchema(
-            Class<? extends RuntimeConfig> configClass,
-            @Nullable RuntimeConfigSchemaSource schemaSource) {
+            Class<? extends RuntimeConfig> configClass, @Nullable RuntimeConfigSchemaSource schemaSource) {
         final String schema;
         if (schemaSource != null) {
             schema = schemaSource.getSchema(configClass);
         } else {
-            final String configClassNameKebab = configClass.getSimpleName()
+            final String configClassNameKebab = configClass
+                    .getSimpleName()
                     .replaceAll("([a-z])([A-Z])", "$1-$2")
                     .toLowerCase();
 
@@ -93,5 +95,4 @@ public final class RuntimeConfigSpec {
 
         return requireNonNull(schema, "schema must not be null");
     }
-
 }

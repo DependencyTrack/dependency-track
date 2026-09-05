@@ -24,7 +24,6 @@ import alpine.server.filters.HeaderFilter;
 import alpine.server.filters.RequestIdFilter;
 import alpine.server.filters.RequestMdcEnrichmentFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.ws.rs.ext.ContextResolver;
 import org.dependencytrack.cache.CacheManagerBinder;
 import org.dependencytrack.capabilities.SystemCapabilitiesBinder;
 import org.dependencytrack.common.Mappers;
@@ -32,12 +31,15 @@ import org.dependencytrack.dex.DexEngineBinder;
 import org.dependencytrack.filestorage.FileStorageBinder;
 import org.dependencytrack.filters.DeprecationResponseFilter;
 import org.dependencytrack.filters.JerseyMetricsApplicationEventListener;
+import org.dependencytrack.kevdatasource.KevDataSourceMirrorServiceBinder;
 import org.dependencytrack.plugin.PluginManagerBinder;
 import org.dependencytrack.secret.SecretManagerBinder;
 import org.dependencytrack.vulndatasource.VulnDataSourceMirrorServiceBinder;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
+
+import jakarta.ws.rs.ext.ContextResolver;
 
 import static org.glassfish.jersey.server.ServerProperties.PROVIDER_PACKAGES;
 import static org.glassfish.jersey.server.ServerProperties.PROVIDER_SCANNING_RECURSIVE;
@@ -77,11 +79,10 @@ public final class ResourceConfig extends org.glassfish.jersey.server.ResourceCo
         register(CacheManagerBinder.class);
         register(DexEngineBinder.class);
         register(FileStorageBinder.class);
+        register(KevDataSourceMirrorServiceBinder.class);
         register(PluginManagerBinder.class);
         register(SecretManagerBinder.class);
         register(SystemCapabilitiesBinder.class);
         register(VulnDataSourceMirrorServiceBinder.class);
     }
-
 }
-

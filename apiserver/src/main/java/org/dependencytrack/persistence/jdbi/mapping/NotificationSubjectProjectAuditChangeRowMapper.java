@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.persistence.jdbi.mapping;
 
+import com.google.protobuf.util.Timestamps;
 import org.dependencytrack.model.AppliedPolicyAnnotation;
 import org.dependencytrack.notification.proto.v1.Component;
 import org.dependencytrack.notification.proto.v1.Project;
@@ -32,17 +33,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import com.google.protobuf.util.Timestamps;
-
 import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
 
-public class NotificationSubjectProjectAuditChangeRowMapper implements RowMapper<VulnerabilityAnalysisDecisionChangeSubject> {
+public class NotificationSubjectProjectAuditChangeRowMapper
+        implements RowMapper<VulnerabilityAnalysisDecisionChangeSubject> {
 
     @Override
-    public VulnerabilityAnalysisDecisionChangeSubject map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-        final RowMapper<Component> componentRowMapper = ctx.findRowMapperFor(Component.class).orElseThrow();
-        final RowMapper<Project> projectRowMapper = ctx.findRowMapperFor(Project.class).orElseThrow();
-        final RowMapper<Vulnerability> vulnRowMapper = ctx.findRowMapperFor(Vulnerability.class).orElseThrow();
+    public VulnerabilityAnalysisDecisionChangeSubject map(final ResultSet rs, final StatementContext ctx)
+            throws SQLException {
+        final RowMapper<Component> componentRowMapper =
+                ctx.findRowMapperFor(Component.class).orElseThrow();
+        final RowMapper<Project> projectRowMapper =
+                ctx.findRowMapperFor(Project.class).orElseThrow();
+        final RowMapper<Vulnerability> vulnRowMapper =
+                ctx.findRowMapperFor(Vulnerability.class).orElseThrow();
         final VulnerabilityAnalysis.Builder vulnAnalysisBuilder = VulnerabilityAnalysis.newBuilder()
                 .setComponent(componentRowMapper.map(rs, ctx))
                 .setProject(projectRowMapper.map(rs, ctx))
@@ -60,7 +64,8 @@ public class NotificationSubjectProjectAuditChangeRowMapper implements RowMapper
                         org.dependencytrack.notification.proto.v1.AppliedPolicyAnnotation.newBuilder()
                                 .setPolicyName(annotation.policyName());
                 if (annotation.appliedAt() != null) {
-                    annotationBuilder.setAppliedAt(Timestamps.fromMillis(annotation.appliedAt().getTime()));
+                    annotationBuilder.setAppliedAt(
+                            Timestamps.fromMillis(annotation.appliedAt().getTime()));
                 }
                 if (annotation.annotator() != null) {
                     annotationBuilder.setAnnotator(annotation.annotator());
@@ -68,12 +73,12 @@ public class NotificationSubjectProjectAuditChangeRowMapper implements RowMapper
                 vulnAnalysisBuilder.addPolicyAnnotations(annotationBuilder);
             }
         });
-        final VulnerabilityAnalysisDecisionChangeSubject.Builder builder = VulnerabilityAnalysisDecisionChangeSubject.newBuilder()
-                .setComponent(componentRowMapper.map(rs, ctx))
-                .setProject(projectRowMapper.map(rs, ctx))
-                .setVulnerability(vulnRowMapper.map(rs, ctx))
-                .setAnalysis(vulnAnalysisBuilder);
+        final VulnerabilityAnalysisDecisionChangeSubject.Builder builder =
+                VulnerabilityAnalysisDecisionChangeSubject.newBuilder()
+                        .setComponent(componentRowMapper.map(rs, ctx))
+                        .setProject(projectRowMapper.map(rs, ctx))
+                        .setVulnerability(vulnRowMapper.map(rs, ctx))
+                        .setAnalysis(vulnAnalysisBuilder);
         return builder.build();
     }
-
 }

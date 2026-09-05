@@ -19,6 +19,7 @@
 package org.dependencytrack.persistence.jdbi;
 
 import alpine.persistence.OrderDirection;
+import alpine.resources.AlpineRequest;
 import org.jdbi.v3.core.config.JdbiConfig;
 import org.jspecify.annotations.Nullable;
 
@@ -33,6 +34,7 @@ public class ApiRequestConfig implements JdbiConfig<ApiRequestConfig> {
     private Set<OrderingColumn> orderingAllowedColumns;
     private @Nullable AlwaysByOrdering orderingAlwaysBy;
     private String projectIdColumn = "\"PROJECT\".\"ID\"";
+    private @Nullable AlpineRequest apiRequest;
 
     @SuppressWarnings("unused")
     public ApiRequestConfig() {
@@ -45,6 +47,7 @@ public class ApiRequestConfig implements JdbiConfig<ApiRequestConfig> {
                 : that.orderingAllowedColumns;
         this.orderingAlwaysBy = that.orderingAlwaysBy;
         this.projectIdColumn = that.projectIdColumn;
+        this.apiRequest = that.apiRequest;
     }
 
     @Override
@@ -79,12 +82,21 @@ public class ApiRequestConfig implements JdbiConfig<ApiRequestConfig> {
         return projectIdColumn;
     }
 
+    /// @return The API request this handle serves, or `null` for handles opened for background work.
+    /// @since 5.1.0
+    public @Nullable AlpineRequest apiRequest() {
+        return apiRequest;
+    }
+
+    public void setApiRequest(final @Nullable AlpineRequest apiRequest) {
+        this.apiRequest = apiRequest;
+    }
+
     public record OrderingColumn(String name, String queryName) {
 
         public OrderingColumn(final String name) {
             this(name, null);
         }
-
     }
 
     public record AlwaysByOrdering(String queryName, OrderDirection direction) {
@@ -92,7 +104,5 @@ public class ApiRequestConfig implements JdbiConfig<ApiRequestConfig> {
         public AlwaysByOrdering(String queryName) {
             this(queryName, OrderDirection.UNSPECIFIED);
         }
-
     }
-
 }

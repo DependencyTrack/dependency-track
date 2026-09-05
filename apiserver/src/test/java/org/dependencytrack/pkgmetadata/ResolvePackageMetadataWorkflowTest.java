@@ -32,17 +32,21 @@ import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.testing.WorkflowTestExtension;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.PackageMetadataResolutionStatus;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.persistence.jdbi.PackageMetadataResolutionDao;
 import org.dependencytrack.pkgmetadata.resolution.api.HashAlgorithm;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.plugin.runtime.PluginManager;
+import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolutionCandidatesArg;
 import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolutionCandidatesRes;
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataActivityArg;
+import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataWorkflowArg;
 import org.dependencytrack.secret.TestSecretManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,9 +76,8 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
 
     private PluginManager pluginManager;
     private final AtomicReference<Function<PackageURL, PackageMetadata>> mockResolveFnRef =
-            new AtomicReference<>(purl -> null);
-    private final AtomicReference<PackageArtifactMetadata> mockLastSeenPriorRef =
-            new AtomicReference<>(null);
+            new AtomicReference<>(_ -> null);
+    private final AtomicReference<PackageArtifactMetadata> mockLastSeenPriorRef = new AtomicReference<>(null);
 
     @BeforeEach
     void beforeEach() {
@@ -83,7 +86,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
         pluginManager = new PluginManager(
                 new SmallRyeConfigBuilder().build(),
                 new NoopCacheManager(),
-                secretName -> null,
+                _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
                 List.of(PackageMetadataResolver.class));
@@ -93,36 +96,32 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
 
         engine.registerWorkflow(
                 new ResolvePackageMetadataWorkflow(),
-                voidConverter(),
+                protoConverter(ResolvePackageMetadataWorkflowArg.class),
                 voidConverter(),
                 Duration.ofSeconds(10));
         engine.registerActivity(
-                new FetchPackageMetadataResolutionCandidatesActivity(pluginManager),
-                voidConverter(),
-                protoConverter(FetchPackageMetadataResolutionCandidatesRes.class),
-                Duration.ofSeconds(5));
+                new FetchPackageMetadataResolutionCandidatesActivity(pluginManager, /* resolveBatchSize */ 2),
+                protoConverter(FetchPackageMetadataResolutionCandidatesArg.class),
+                protoConverter(FetchPackageMetadataResolutionCandidatesRes.class));
         engine.registerActivity(
                 new ResolvePackageMetadataActivity(pluginManager, new TestSecretManager()),
                 protoConverter(ResolvePackageMetadataActivityArg.class),
-                voidConverter(),
-                Duration.ofSeconds(10));
+                voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "package-metadata-resolutions", 1));
 
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-pkg-metadata", "package-metadata-resolutions", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(
+                        TaskType.ACTIVITY, "activity-worker-pkg-metadata", "package-metadata-resolutions", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
 
         engine.start();
     }
@@ -136,16 +135,15 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
 
     @Test
     void shouldCompleteWhenNoCandidates() {
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        final long pkgMetadataCount = withJdbiHandle(handle -> handle
-                .createQuery("""
+        final long pkgMetadataCount = withJdbiHandle(
+                handle -> handle.createQuery("""
                         SELECT COUNT(*) FROM "PACKAGE_METADATA"
-                        """)
-                .mapTo(Long.class)
-                .one());
+                        """).mapTo(Long.class).one());
         assertThat(pkgMetadataCount).isZero();
     }
 
@@ -153,18 +151,21 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
     void shouldResolveMetadataForComponents() {
         final Instant resolvedAt = Instant.now();
 
-        mockResolveFnRef.set(purl -> new PackageMetadata(
-                "9.9.9",
-                Instant.now(),
-                resolvedAt,
-                new PackageArtifactMetadata(
+        mockResolveFnRef.set(
+                _ -> new PackageMetadata(
+                        "9.9.9",
+                        Instant.now(),
                         resolvedAt,
-                        null,
-                        Map.of(
-                                HashAlgorithm.MD5, "d41d8cd98f00b204e9800998ecf8427e",
-                                HashAlgorithm.SHA1, "da39a3ee5e6b4b0d3255bfef95601890afd80709",
-                                HashAlgorithm.SHA256, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                                HashAlgorithm.SHA512, "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"))));
+                        new PackageArtifactMetadata(
+                                resolvedAt,
+                                null,
+                                Map.of(
+                                        HashAlgorithm.MD5, "d41d8cd98f00b204e9800998ecf8427e",
+                                        HashAlgorithm.SHA1, "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+                                        HashAlgorithm.SHA256,
+                                                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                                        HashAlgorithm.SHA512,
+                                                "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"))));
 
         var project = new Project();
         project.setName("test-project");
@@ -176,7 +177,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
         componentFoo.setName("foo");
         componentFoo.setVersion("1.0");
         componentFoo.setPurl("pkg:maven/org.acme/foo@1.0");
-        qm.persist(componentFoo);
+        qm.createComponent(componentFoo, false);
 
         final var componentBar = new Component();
         componentBar.setProject(project);
@@ -184,57 +185,62 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
         componentBar.setName("bar");
         componentBar.setVersion("2.0");
         componentBar.setPurl("pkg:maven/org.acme/bar@2.0");
-        qm.persist(componentBar);
+        qm.createComponent(componentBar, false);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        final List<Map<String, Object>> pkgMetadata = withJdbiHandle(handle -> handle
-                .createQuery("""
+        final List<Map<String, Object>> pkgMetadata =
+                withJdbiHandle(handle -> handle.createQuery("""
                         SELECT "PURL", "LATEST_VERSION", "LATEST_VERSION_PUBLISHED_AT", "RESOLVED_BY"
                           FROM "PACKAGE_METADATA"
                          ORDER BY "PURL"
-                        """)
-                .mapToMap()
-                .list());
-        assertThat(pkgMetadata).satisfiesExactly(
-                row -> {
-                    assertThat(row).containsEntry("purl", "pkg:maven/org.acme/bar");
-                    assertThat(row).containsEntry("latest_version", "9.9.9");
-                    assertThat(row).containsKey("latest_version_published_at");
-                    assertThat(row).containsEntry("resolved_by", "mock");
-                },
-                row -> {
-                    assertThat(row).containsEntry("purl", "pkg:maven/org.acme/foo");
-                    assertThat(row).containsEntry("latest_version", "9.9.9");
-                    assertThat(row).containsKey("latest_version_published_at");
-                    assertThat(row).containsEntry("resolved_by", "mock");
-                });
+                        """).mapToMap().list());
+        assertThat(pkgMetadata)
+                .satisfiesExactly(
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/bar");
+                            assertThat(row).containsEntry("latest_version", "9.9.9");
+                            assertThat(row).containsKey("latest_version_published_at");
+                            assertThat(row).containsEntry("resolved_by", "mock");
+                        },
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/foo");
+                            assertThat(row).containsEntry("latest_version", "9.9.9");
+                            assertThat(row).containsKey("latest_version_published_at");
+                            assertThat(row).containsEntry("resolved_by", "mock");
+                        });
 
-        final List<Map<String, Object>> versionMetadata = withJdbiHandle(handle -> handle
-                .createQuery("""
+        final List<Map<String, Object>> versionMetadata =
+                withJdbiHandle(handle -> handle.createQuery("""
                         SELECT "PURL", "HASH_SHA256", "RESOLVED_BY"
                           FROM "PACKAGE_ARTIFACT_METADATA"
                          ORDER BY "PURL"
-                        """)
-                .mapToMap()
-                .list());
-        assertThat(versionMetadata).satisfiesExactly(
-                row -> {
-                    assertThat(row).containsEntry("purl", "pkg:maven/org.acme/bar@2.0");
-                    assertThat(row).containsEntry("hash_sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
-                    assertThat(row).containsEntry("resolved_by", "mock");
-                },
-                row -> {
-                    assertThat(row).containsEntry("purl", "pkg:maven/org.acme/foo@1.0");
-                    assertThat(row).containsEntry("hash_sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
-                    assertThat(row).containsEntry("resolved_by", "mock");
-                });
+                        """).mapToMap().list());
+        assertThat(versionMetadata)
+                .satisfiesExactly(
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/bar@2.0");
+                            assertThat(row)
+                                    .containsEntry(
+                                            "hash_sha256",
+                                            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+                            assertThat(row).containsEntry("resolved_by", "mock");
+                        },
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/foo@1.0");
+                            assertThat(row)
+                                    .containsEntry(
+                                            "hash_sha256",
+                                            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+                            assertThat(row).containsEntry("resolved_by", "mock");
+                        });
     }
 
     @Test
-    void shouldPersistEmptyResultsForUnknownResolver() {
+    void shouldRecordNotFoundResolutionForUnknownResolver() {
         var project = new Project();
         project.setName("test-project");
         project = qm.persist(project);
@@ -244,51 +250,175 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
         component.setName("foo");
         component.setVersion("1.0");
         component.setPurl("pkg:npm/foo@1.0");
-        qm.persist(component);
+        qm.createComponent(component, false);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        final List<Map<String, Object>> pkgMetadata = withJdbiHandle(handle -> handle
-                .createQuery("""
-                        SELECT "PURL", "LATEST_VERSION", "LATEST_VERSION_PUBLISHED_AT"
-                          FROM "PACKAGE_METADATA"
-                        """)
-                .mapToMap()
-                .list());
-        assertThat(pkgMetadata).satisfiesExactly(row -> {
-            assertThat(row).containsEntry("purl", "pkg:npm/foo");
-            assertThat(row).containsEntry("latest_version", null);
-            assertThat(row).containsEntry("latest_version_published_at", null);
-        });
-
-        final List<Map<String, Object>> versionMetadata = withJdbiHandle(handle -> handle
-                .createQuery("""
-                        SELECT "PURL", "HASH_SHA256"
-                          FROM "PACKAGE_ARTIFACT_METADATA"
-                        """)
-                .mapToMap()
-                .list());
-        assertThat(versionMetadata).satisfiesExactly(row -> {
+        assertThat(resolutionRows()).satisfiesExactly(row -> {
             assertThat(row).containsEntry("purl", "pkg:npm/foo@1.0");
-            assertThat(row).containsEntry("hash_sha256", null);
+            assertThat(row).containsEntry("status", "NOT_FOUND");
         });
+        assertThat(rowCountOfTable("PACKAGE_METADATA")).isZero();
+        assertThat(rowCountOfTable("PACKAGE_ARTIFACT_METADATA")).isZero();
+    }
+
+    @Test
+    void shouldRecordUnresolvableResolutionForMalformedPurl() {
+        var project = new Project();
+        project.setName("test-project");
+        project = qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("foo");
+        component.setVersion("1.0");
+        component.setPurl("pkg:npm/foo%ZZ@1.0");
+        qm.createComponent(component, false);
+
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        assertThat(resolutionRows()).satisfiesExactly(row -> {
+            assertThat(row).containsEntry("purl", "pkg:npm/foo%ZZ@1.0");
+            assertThat(row).containsEntry("status", "UNRESOLVABLE");
+        });
+    }
+
+    @Test
+    void shouldPageThroughCandidatesAcrossMultipleBatches() {
+        final Instant resolvedAt = Instant.now();
+        mockResolveFnRef.set(_ -> new PackageMetadata("9.9.9", Instant.now(), resolvedAt, null));
+
+        var project = new Project();
+        project.setName("test-project");
+        project = qm.persist(project);
+
+        for (final String name : List.of("a", "b", "c", "d", "e")) {
+            final var component = new Component();
+            component.setProject(project);
+            component.setGroup("org.acme");
+            component.setName(name);
+            component.setVersion("1.0");
+            component.setPurl("pkg:maven/org.acme/" + name + "@1.0");
+            qm.createComponent(component, false);
+        }
+
+        // Pre-suppress "c" with a fresh EMPTY record. It must be skipped as a non-candidate
+        // while the cursor still advances past it to reach "d" and "e" in later batches.
+        useJdbiTransaction(handle -> new PackageMetadataResolutionDao(handle)
+                .upsertAll(Map.of("pkg:maven/org.acme/c@1.0", PackageMetadataResolutionStatus.NOT_FOUND)));
+
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        assertThat(resolutionRows())
+                .satisfiesExactly(
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/a@1.0");
+                            assertThat(row).containsEntry("status", "RESOLVED");
+                        },
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/b@1.0");
+                            assertThat(row).containsEntry("status", "RESOLVED");
+                        },
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/c@1.0");
+                            assertThat(row).containsEntry("status", "NOT_FOUND");
+                        },
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/d@1.0");
+                            assertThat(row).containsEntry("status", "RESOLVED");
+                        },
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/e@1.0");
+                            assertThat(row).containsEntry("status", "RESOLVED");
+                        });
+    }
+
+    @Test
+    void shouldReResolveStalePurlButSkipFreshOne() {
+        final Instant resolvedAt = Instant.now();
+        mockResolveFnRef.set(_ -> new PackageMetadata("9.9.9", Instant.now(), resolvedAt, null));
+
+        var project = new Project();
+        project.setName("test-project");
+        project = qm.persist(project);
+
+        for (final String name : List.of("stale", "fresh")) {
+            final var component = new Component();
+            component.setProject(project);
+            component.setGroup("org.acme");
+            component.setName(name);
+            component.setVersion("1.0");
+            component.setPurl("pkg:maven/org.acme/" + name + "@1.0");
+            qm.createComponent(component, false);
+        }
+
+        final Instant now = Instant.now();
+        useJdbiTransaction(handle -> handle.createUpdate("""
+                        UPDATE "PACKAGE_METADATA_RESOLUTION"
+                           SET "STATUS" = v.status
+                             , "LAST_ATTEMPTED_AT" = v.last_attempted_at
+                          FROM (
+                            VALUES ('pkg:maven/org.acme/stale@1.0', 'RESOLVED', CAST(:now AS TIMESTAMPTZ) - INTERVAL '25 hours')
+                                 , ('pkg:maven/org.acme/fresh@1.0', 'RESOLVED', CAST(:now AS TIMESTAMPTZ) - INTERVAL '23 hours')
+                          ) AS v(purl, status, last_attempted_at)
+                         WHERE "PURL" = v.purl
+                        """).bind("now", now).execute());
+
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        final Instant threshold = now.minus(Duration.ofHours(1));
+        assertThat(lastAttemptedAt("pkg:maven/org.acme/stale@1.0")).isAfter(threshold);
+        assertThat(lastAttemptedAt("pkg:maven/org.acme/fresh@1.0")).isBefore(threshold);
+    }
+
+    @Test
+    void shouldResolveDuePurlEvenWithoutComponent() {
+        // NB: Orphan rows are deliberately swept until the maintenance task removes them,
+        // keeping the candidate query's cost bounded by the batch size alone.
+        useJdbiTransaction(handle -> handle.createUpdate("""
+                        INSERT INTO "PACKAGE_METADATA_RESOLUTION" ("PURL", "STATUS")
+                        VALUES (:purl, 'PENDING')
+                        """)
+                .bind("purl", "pkg:maven/org.acme/orphan@1.0")
+                .execute());
+
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        assertThat(resolutionRows()).satisfiesExactly(row -> {
+            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/orphan@1.0");
+            assertThat(row).containsEntry("status", "NOT_FOUND");
+        });
+        assertThat(rowCountOfTable("PACKAGE_METADATA")).isZero();
     }
 
     @Test
     void shouldPassPriorArtifactMetadataToResolverWhenAvailable() {
         useJdbiTransaction(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new org.dependencytrack.model.PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new org.dependencytrack.model.PackageMetadata(
                             parsePurl("pkg:maven/org.acme/foo"),
                             "1.0",
                             Instant.parse("2024-06-15T12:00:00Z"),
                             Instant.parse("2024-06-15T12:00:00Z"),
                             null,
                             "mock")));
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new org.dependencytrack.model.PackageArtifactMetadata(
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new org.dependencytrack.model.PackageArtifactMetadata(
                             parsePurl("pkg:maven/org.acme/foo@1.0"),
                             parsePurl("pkg:maven/org.acme/foo"),
                             null,
@@ -302,7 +432,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
         });
 
         final Instant resolvedAt = Instant.now();
-        mockResolveFnRef.set(purl -> new PackageMetadata("9.9.9", Instant.now(), resolvedAt, null));
+        mockResolveFnRef.set(_ -> new PackageMetadata("9.9.9", Instant.now(), resolvedAt, null));
 
         var project = new Project();
         project.setName("test-project");
@@ -314,10 +444,11 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
         component.setName("foo");
         component.setVersion("1.0");
         component.setPurl("pkg:maven/org.acme/foo@1.0");
-        qm.persist(component);
+        qm.createComponent(component, false);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
         final PackageArtifactMetadata seenPrior = mockLastSeenPriorRef.get();
@@ -328,7 +459,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
 
     @Test
     void shouldHandleResolverFailureGracefully() {
-        mockResolveFnRef.set(purl -> {
+        mockResolveFnRef.set(_ -> {
             throw new RuntimeException("Simulated resolver failure");
         });
 
@@ -342,23 +473,29 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
         component.setName("foo");
         component.setVersion("1.0");
         component.setPurl("pkg:maven/org.acme/foo@1.0");
-        qm.persist(component);
+        qm.createComponent(component, false);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        final List<Map<String, Object>> pkgMetadata = withJdbiHandle(handle -> handle
-                .createQuery("""
-                        SELECT "PURL", "LATEST_VERSION"
-                          FROM "PACKAGE_METADATA"
-                        """)
-                .mapToMap()
-                .list());
-        assertThat(pkgMetadata).satisfiesExactly(row -> {
-            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/foo");
-            assertThat(row).containsEntry("latest_version", null);
+        assertThat(resolutionRows()).satisfiesExactly(row -> {
+            assertThat(row).containsEntry("purl", "pkg:maven/org.acme/foo@1.0");
+            assertThat(row).containsEntry("status", "NOT_FOUND");
         });
+        assertThat(rowCountOfTable("PACKAGE_METADATA")).isZero();
+    }
+
+    @Test
+    void shouldFailTerminallyOnMalformedCursor() {
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class)
+                        .withArgument(ResolvePackageMetadataWorkflowArg.newBuilder()
+                                .setCursor("cursor-without-delimiter")
+                                .build()));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
     }
 
     private static PackageURL parsePurl(String purl) {
@@ -369,4 +506,27 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
         }
     }
 
+    private static List<Map<String, Object>> resolutionRows() {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT "PURL"
+                             , "STATUS"
+                          FROM "PACKAGE_METADATA_RESOLUTION"
+                         ORDER BY "PURL"
+                        """).mapToMap().list());
+    }
+
+    private static long rowCountOfTable(String table) {
+        return withJdbiHandle(handle -> handle.createQuery("SELECT COUNT(*) FROM \"" + table + "\"")
+                .mapTo(Long.class)
+                .one());
+    }
+
+    private static Instant lastAttemptedAt(String purl) {
+        return withJdbiHandle(handle ->
+                handle.createQuery("""
+                        SELECT "LAST_ATTEMPTED_AT"
+                          FROM "PACKAGE_METADATA_RESOLUTION"
+                         WHERE "PURL" = :purl
+                        """).bind("purl", purl).mapTo(Instant.class).one());
+    }
 }

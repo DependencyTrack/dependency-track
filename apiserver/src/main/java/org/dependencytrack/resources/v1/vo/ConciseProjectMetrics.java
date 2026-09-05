@@ -26,27 +26,78 @@ import org.dependencytrack.persistence.jdbi.ProjectDao.ConciseProjectMetricsRow;
  */
 @Schema(description = "A concise representation of a project's metrics")
 public record ConciseProjectMetrics(
-        @Schema(description = "Total number of components", requiredMode = Schema.RequiredMode.REQUIRED) int components,
-        @Schema(description = "Number of vulnerabilities with critical severity", requiredMode = Schema.RequiredMode.REQUIRED) int critical,
-        @Schema(description = "Number of vulnerabilities with high severity", requiredMode = Schema.RequiredMode.REQUIRED) int high,
-        @Schema(description = "Number of vulnerabilities with low severity", requiredMode = Schema.RequiredMode.REQUIRED) int low,
-        @Schema(description = "Number of vulnerabilities with medium severity", requiredMode = Schema.RequiredMode.REQUIRED) int medium,
-        @Schema(description = "Number of policy violations with status FAIL", requiredMode = Schema.RequiredMode.REQUIRED) int policyViolationsFail,
-        @Schema(description = "Number of policy violations with status WARN", requiredMode = Schema.RequiredMode.REQUIRED) int policyViolationsInfo,
-        @Schema(description = "Number of license policy violations", requiredMode = Schema.RequiredMode.REQUIRED) int policyViolationsLicenseTotal,
-        @Schema(description = "Number of operational policy violations", requiredMode = Schema.RequiredMode.REQUIRED) int policyViolationsOperationalTotal,
-        @Schema(description = "Number of security policy violations", requiredMode = Schema.RequiredMode.REQUIRED) int policyViolationsSecurityTotal,
-        @Schema(description = "Total number of policy violations", requiredMode = Schema.RequiredMode.REQUIRED) int policyViolationsTotal,
-        @Schema(description = "Number of policy violations with status WARN", requiredMode = Schema.RequiredMode.REQUIRED) int policyViolationsWarn,
-        @Schema(description = "The inherited risk score", requiredMode = Schema.RequiredMode.REQUIRED) double inheritedRiskScore,
-        @Schema(description = "Number of vulnerabilities with unassigned severity", requiredMode = Schema.RequiredMode.REQUIRED) int unassigned,
-        @Schema(description = "Total number of vulnerabilities", requiredMode = Schema.RequiredMode.REQUIRED) int vulnerabilities) {
+        @Schema(description = "Total number of components", requiredMode = Schema.RequiredMode.REQUIRED)
+        int components,
+
+        @Schema(
+                description = "Number of vulnerabilities with critical severity",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        int critical,
+
+        @Schema(
+                description = "Number of vulnerabilities with high severity",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        int high,
+
+        @Schema(
+                description = "Number of vulnerabilities known to be exploited",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        int kev,
+
+        @Schema(
+                description = "Number of vulnerabilities with low severity",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        int low,
+
+        @Schema(
+                description = "Number of vulnerabilities with medium severity",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        int medium,
+
+        @Schema(
+                description = "Number of policy violations with status FAIL",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        int policyViolationsFail,
+
+        @Schema(
+                description = "Number of policy violations with status WARN",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        int policyViolationsInfo,
+
+        @Schema(description = "Number of license policy violations", requiredMode = Schema.RequiredMode.REQUIRED)
+        int policyViolationsLicenseTotal,
+
+        @Schema(description = "Number of operational policy violations", requiredMode = Schema.RequiredMode.REQUIRED)
+        int policyViolationsOperationalTotal,
+
+        @Schema(description = "Number of security policy violations", requiredMode = Schema.RequiredMode.REQUIRED)
+        int policyViolationsSecurityTotal,
+
+        @Schema(description = "Total number of policy violations", requiredMode = Schema.RequiredMode.REQUIRED)
+        int policyViolationsTotal,
+
+        @Schema(
+                description = "Number of policy violations with status WARN",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        int policyViolationsWarn,
+
+        @Schema(description = "The inherited risk score", requiredMode = Schema.RequiredMode.REQUIRED)
+        double inheritedRiskScore,
+
+        @Schema(
+                description = "Number of vulnerabilities with unassigned severity",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        int unassigned,
+
+        @Schema(description = "Total number of vulnerabilities", requiredMode = Schema.RequiredMode.REQUIRED)
+        int vulnerabilities) {
 
     public ConciseProjectMetrics(final ConciseProjectMetricsRow row) {
         this(
                 row.components(),
                 row.critical(),
                 row.high(),
+                row.kev(),
                 row.low(),
                 row.medium(),
                 row.policyViolationsFail(),
@@ -60,5 +111,4 @@ public record ConciseProjectMetrics(
                 row.unassigned(),
                 row.vulnerabilities());
     }
-
 }

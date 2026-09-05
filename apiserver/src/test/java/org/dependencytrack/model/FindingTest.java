@@ -82,6 +82,7 @@ public class FindingTest extends PersistenceCapableTest {
         Assertions.assertEquals(AnalysisState.NOT_AFFECTED, map.get("state"));
         Assertions.assertEquals(true, map.get("isSuppressed"));
         assertThat(map).doesNotContainKey("detail");
+        assertThat(map.get("policyAnnotations")).asList().isEmpty();
     }
 
     @Test
@@ -168,7 +169,8 @@ public class FindingTest extends PersistenceCapableTest {
                 null,
                 AnalysisState.NOT_AFFECTED,
                 true,
-                analysisDetail, /* totalCount */
-                null);
+                analysisDetail,
+                null,
+                1L);
     }
 }

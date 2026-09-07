@@ -117,8 +117,9 @@ public final class LegacyConfigPropertyValidator {
     /// A rename entry would be misleading, since the operator has to decide on a new value rather
     /// than move the old one.
     static final Map<String, String> REMOVED_PROPERTY_REPLACEMENTS = Map.of("dt.task.portfolio-analysis.cron", """
-                    The portfolio analysis no longer starts at a fixed time. \
-                    Use dt.task.portfolio-analysis.max-analysis-age-ms to say how long an analysis stays valid.""");
+        The portfolio analysis no longer starts at a fixed time. \
+        Use dt.task.portfolio-analysis.max-analysis-age-ms to say how long an analysis stays valid.\
+        """);
 
     private static final Set<String> STANDARD_SYSTEM_ENV_VARS = Set.of("NO_PROXY");
 
@@ -149,9 +150,9 @@ public final class LegacyConfigPropertyValidator {
                 explanations.append("\n  ").append(name).append(": ").append(replacement));
 
         throw new IllegalStateException("""
-                The following configuration properties are no longer supported. \
-                Remove them, and configure the replacement named for each:%s\
-                """.formatted(explanations));
+            The following configuration properties are no longer supported. \
+            Remove them, and configure the replacement named for each:%s\
+            """.formatted(explanations));
     }
 
     private static void throwOnLegacyFileSecretProperties(SmallRyeConfig config) {
@@ -166,9 +167,9 @@ public final class LegacyConfigPropertyValidator {
         }
 
         throw new IllegalStateException("""
-                Legacy file-secret properties are no longer supported: %s; \
-                Replace each <key>.file=/path with <key>=${file::/path}\
-                """.formatted(present));
+            Legacy file-secret properties are no longer supported: %s; \
+            Replace each <key>.file=/path with <key>=${file::/path}\
+            """.formatted(present));
     }
 
     private static void throwOnLegacyV4Properties(SmallRyeConfig config) {
@@ -183,10 +184,10 @@ public final class LegacyConfigPropertyValidator {
         }
 
         throw new IllegalStateException("""
-                Legacy Dependency-Track v4 configuration properties are no longer supported: %s; \
-                Migrate to the dt.* equivalents documented in the v5.0.0-rc.2 upgrade guide: \
-                https://dependencytrack.github.io/docs/next/guides/upgrading/v5.0.0-rc.2/\
-                """.formatted(present));
+            Legacy Dependency-Track v4 configuration properties are no longer supported: %s; \
+            Migrate to the dt.* equivalents documented in the v5.0.0-rc.2 upgrade guide: \
+            https://dependencytrack.github.io/docs/next/guides/upgrading/v5.0.0-rc.2/\
+            """.formatted(present));
     }
 
     private static void throwOnLegacyV5Rc1Properties(SmallRyeConfig config) {
@@ -221,10 +222,10 @@ public final class LegacyConfigPropertyValidator {
                 migrations.append("\n  ").append(oldName).append(" -> ").append(newName));
 
         throw new IllegalStateException("""
-                Legacy Dependency-Track v5.0.0-rc.1 configuration properties are no longer supported. \
-                Rename the following properties to their v5.0.0-rc.2 equivalents (see \
-                https://dependencytrack.github.io/docs/next/guides/upgrading/v5.0.0-rc.2/):%s\
-                """.formatted(migrations));
+            Legacy Dependency-Track v5.0.0-rc.1 configuration properties are no longer supported. \
+            Rename the following properties to their v5.0.0-rc.2 equivalents (see \
+            https://dependencytrack.github.io/docs/next/guides/upgrading/v5.0.0-rc.2/):%s\
+            """.formatted(migrations));
     }
 
     private static String envForm(String name) {
@@ -288,14 +289,16 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.ldap.basedn", "dt.ldap.base-dn");
         renames.put("dt.ldap.bind.password", "dt.ldap.bind-password");
         renames.put("dt.ldap.bind.username", "dt.ldap.bind-username");
-        renames.put("dt.ldap.groups.filter", "dt.ldap.group-filter");
+        renames.put("dt.ldap.groups.filter", "(removed; the group filter was never applied during authentication)");
         renames.put("dt.ldap.groups.search.filter", "dt.ldap.group-search-filter");
         renames.put("dt.ldap.security.auth", "dt.ldap.security-auth");
         renames.put("dt.ldap.server.url", "dt.ldap.server-url");
         renames.put("dt.ldap.team.synchronization", "dt.ldap.team-synchronization");
         renames.put("dt.ldap.user.groups.filter", "dt.ldap.user-groups-filter");
         renames.put("dt.ldap.user.provisioning", "dt.ldap.user-provisioning");
-        renames.put("dt.ldap.users.search.filter", "dt.ldap.user-search-filter");
+        renames.put(
+                "dt.ldap.users.search.filter",
+                "(removed; the user search filter was never applied during authentication)");
         renames.put("dt.no.proxy", "dt.http.proxy.exclusions");
         renames.put("dt.oidc.auth.customizer", "dt.oidc.auth-customizer");
         renames.put("dt.oidc.client.id", "dt.oidc.client-id");
@@ -316,9 +319,10 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.task.project.maintenance.cron", "dt.task.project-maintenance.cron");
         renames.put("dt.task.tag.maintenance.cron", "dt.task.tag-maintenance.cron");
         renames.put("dt.task.vulnerability-policy-bundle-sync.cron", "dt.task.vuln-policy-bundle-sync.cron");
-        renames.put(
-                "dt.task.vulnerability.analysis.cron",
-                "(removed; the portfolio analysis no longer starts at a fixed time, see dt.task.portfolio-analysis.max-analysis-age-ms)");
+        renames.put("dt.task.vulnerability.analysis.cron", """
+            (removed; the portfolio analysis no longer starts at a fixed time, see \
+            dt.task.portfolio-analysis.max-analysis-age-ms)\
+            """);
         renames.put("dt.task.vulnerability.database.maintenance.cron", "dt.task.vuln-database-maintenance.cron");
         renames.put("dt.task.vulnerability.metrics.update.cron", "dt.task.vuln-metrics-update.cron");
         renames.put("dt.telemetry.submission.enabled.default", "dt.telemetry.submission.default-enabled");

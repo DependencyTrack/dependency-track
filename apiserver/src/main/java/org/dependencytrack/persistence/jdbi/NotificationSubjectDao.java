@@ -41,6 +41,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMappers;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 import java.util.ArrayList;
@@ -172,7 +173,10 @@ public interface NotificationSubjectDao extends SqlObject {
                  FROM "FINDINGATTRIBUTION" AS fa
                 WHERE c."ID" = fa."COMPONENT_ID"
                   AND v."ID" = fa."VULNERABILITY_ID"
-                ORDER BY fa."ID"
+                <#if !includeInactiveFindings>
+                  AND fa."DELETED_AT" IS NULL
+                </#if>
+                ORDER BY fa."DELETED_AT" DESC NULLS FIRST, fa."ID"
                 LIMIT 1
              ) AS fa ON TRUE
               LEFT JOIN "ANALYSIS" AS a
@@ -181,7 +185,7 @@ public interface NotificationSubjectDao extends SqlObject {
              WHERE a."SUPPRESSED" IS DISTINCT FROM TRUE
             """)
     @RegisterRowMapper(NotificationSubjectNewVulnerabilityRowMapper.class)
-    List<NewVulnerabilitySubject> getForNewVulnerabilities(List<Long> componentIds, List<Long> vulnerabilityIds);
+    List<NewVulnerabilitySubject> getForNewVulnerabilities(List<Long> componentIds, List<Long> vulnerabilityIds, @Define boolean includeInactiveFindings);
 
     default List<NewVulnerableDependencySubject> getForNewVulnerableDependencies(Collection<Long> componentIds) {
         if (componentIds.isEmpty()) {

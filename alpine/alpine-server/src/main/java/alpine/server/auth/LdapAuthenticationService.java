@@ -222,7 +222,7 @@ public class LdapAuthenticationService implements AuthenticationService<LdapUser
                 }
             }
         } catch (NamingException e) {
-            LOGGER.debug("An error occurred while attempting to validate credentials", e);
+            LOGGER.warn("An error occurred while attempting to validate credentials", e);
         } finally {
             ldap.closeQuietly(ldapContext);
             ldap.closeQuietly(dirContext);

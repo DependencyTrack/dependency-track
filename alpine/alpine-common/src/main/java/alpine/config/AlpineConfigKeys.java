@@ -33,10 +33,8 @@ public final class AlpineConfigKeys {
     public static final String LDAP_USERNAME_FORMAT = "dt.ldap.username-format";
     public static final String LDAP_NAME_ATTRIBUTE = "dt.ldap.name-attribute";
     public static final String LDAP_MAIL_ATTRIBUTE = "dt.ldap.mail-attribute";
-    public static final String LDAP_GROUP_FILTER = "dt.ldap.group-filter";
     public static final String LDAP_USER_GROUPS_FILTER = "dt.ldap.user-groups-filter";
     public static final String LDAP_GROUP_SEARCH_FILTER = "dt.ldap.group-search-filter";
-    public static final String LDAP_USER_SEARCH_FILTER = "dt.ldap.user-search-filter";
     public static final String LDAP_USER_PROVISIONING = "dt.ldap.user-provisioning";
     public static final String LDAP_TEAM_SYNCHRONIZATION = "dt.ldap.team-synchronization";
     public static final String OIDC_ENABLED = "dt.oidc.enabled";

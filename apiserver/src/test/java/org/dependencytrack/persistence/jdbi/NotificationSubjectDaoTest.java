@@ -155,10 +155,10 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                 .withState(AnalysisState.FALSE_POSITIVE)
                 .withSuppress(true));
 
-        final List<NewVulnerabilitySubject> subjects =
-                withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
-                        .getForNewVulnerabilities(
-                                List.of(component.getId(), component.getId()), List.of(vulnA.getId(), vulnB.getId()), false));
+        final List<NewVulnerabilitySubject> subjects = withJdbiHandle(handle -> handle.attach(
+                        NotificationSubjectDao.class)
+                .getForNewVulnerabilities(
+                        List.of(component.getId(), component.getId()), List.of(vulnA.getId(), vulnB.getId()), false));
 
         assertThat(subjects)
                 .satisfiesExactly(subject -> assertThatJson(JsonFormat.printer().print(subject))

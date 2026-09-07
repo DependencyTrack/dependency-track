@@ -185,7 +185,8 @@ public interface NotificationSubjectDao extends SqlObject {
              WHERE a."SUPPRESSED" IS DISTINCT FROM TRUE
             """)
     @RegisterRowMapper(NotificationSubjectNewVulnerabilityRowMapper.class)
-    List<NewVulnerabilitySubject> getForNewVulnerabilities(List<Long> componentIds, List<Long> vulnerabilityIds, @Define boolean includeInactiveFindings);
+    List<NewVulnerabilitySubject> getForNewVulnerabilities(
+            List<Long> componentIds, List<Long> vulnerabilityIds, @Define boolean includeInactiveFindings);
 
     default List<NewVulnerableDependencySubject> getForNewVulnerableDependencies(Collection<Long> componentIds) {
         if (componentIds.isEmpty()) {

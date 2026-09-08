@@ -170,6 +170,69 @@ class BomResourceTest extends ResourceTest {
     }
 
     @Test
+    void exportProjectAsCycloneDxUsesLegacyToolsBelowSpecVersion15() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .queryParam("version", "1.4")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        // The tools object form was only introduced in CycloneDX 1.5.
+        assertThatJson(jsonResponse)
+                .inPath("$.metadata.tools")
+                .isEqualTo(json("""
+                        [
+                            {
+                                "vendor": "OWASP",
+                                "name": "Dependency-Track",
+                                "version": "${json-unit.any-string}"
+                            }
+                        ]
+                        """));
+    }
+
+    @Test
+    void exportProjectAsCycloneDxUsesToolComponentsFromSpecVersion15() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .queryParam("version", "1.5")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        // metadata.tools is a oneOf; the legacy array must not be emitted alongside the object form.
+        assertThatJson(jsonResponse)
+                .inPath("$.metadata.tools")
+                .isEqualTo(json("""
+                        {
+                            "components": [
+                                {
+                                    "type": "application",
+                                    "supplier": {
+                                        "name": "OWASP"
+                                    },
+                                    "name": "Dependency-Track",
+                                    "version": "${json-unit.any-string}"
+                                }
+                            ]
+                        }
+                        """));
+    }
+
+    @Test
     void exportProjectAsCycloneDxInventoryTest() {
         var vulnerability = new Vulnerability();
         vulnerability.setVulnId("INT-001");
@@ -312,13 +375,18 @@ class BomResourceTest extends ResourceTest {
                         "supplier": {
                           "name": "bomSupplier"
                         },
-                        "tools": [
-                            {
-                                "vendor": "OWASP",
-                                "name": "Dependency-Track",
-                                "version": "${json-unit.any-string}"
-                            }
-                        ]
+                        "tools": {
+                            "components": [
+                                {
+                                    "type": "application",
+                                    "supplier": {
+                                        "name": "OWASP"
+                                    },
+                                    "name": "Dependency-Track",
+                                    "version": "${json-unit.any-string}"
+                                }
+                            ]
+                        }
                     },
                     "components": [
                         {
@@ -416,13 +484,18 @@ class BomResourceTest extends ResourceTest {
                     "version": 1,
                     "metadata": {
                         "timestamp": "${json-unit.any-string}",
-                        "tools": [
-                            {
-                                "vendor": "OWASP",
-                                "name": "Dependency-Track",
-                                "version": "${json-unit.any-string}"
-                            }
-                        ],
+                        "tools": {
+                            "components": [
+                                {
+                                    "type": "application",
+                                    "supplier": {
+                                        "name": "OWASP"
+                                    },
+                                    "name": "Dependency-Track",
+                                    "version": "${json-unit.any-string}"
+                                }
+                            ]
+                        },
                         "component": {
                             "type": "application",
                             "bom-ref": "${json-unit.matches:projectUuid}",
@@ -546,13 +619,18 @@ class BomResourceTest extends ResourceTest {
                             "name": "acme-app",
                             "version": ""
                         },
-                        "tools": [
-                            {
-                                "vendor": "OWASP",
-                                "name": "Dependency-Track",
-                                "version": "${json-unit.any-string}"
-                            }
-                        ]
+                        "tools": {
+                            "components": [
+                                {
+                                    "type": "application",
+                                    "supplier": {
+                                        "name": "OWASP"
+                                    },
+                                    "name": "Dependency-Track",
+                                    "version": "${json-unit.any-string}"
+                                }
+                            ]
+                        }
                     },
                     "components": [
                         {
@@ -740,13 +818,18 @@ class BomResourceTest extends ResourceTest {
                             "name": "acme-app",
                             "version": ""
                         },
-                        "tools": [
-                            {
-                                "vendor": "OWASP",
-                                "name": "Dependency-Track",
-                                "version": "${json-unit.any-string}"
-                            }
-                        ]
+                        "tools": {
+                            "components": [
+                                {
+                                    "type": "application",
+                                    "supplier": {
+                                        "name": "OWASP"
+                                    },
+                                    "name": "Dependency-Track",
+                                    "version": "${json-unit.any-string}"
+                                }
+                            ]
+                        }
                     },
                     "components": [
                         {

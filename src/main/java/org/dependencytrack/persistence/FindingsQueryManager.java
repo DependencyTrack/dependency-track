@@ -284,6 +284,11 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
         query.deletePersistentAll(project);
     }
 
+    public void deleteAnalysisTrail(Vulnerability vulnerability) {
+        final Query<Analysis> query = pm.newQuery(Analysis.class, "vulnerability == :vulnerability");
+        query.deletePersistentAll(vulnerability);
+    }
+
     /**
      * Returns a List of Finding objects for the specified project.
      * @param project the project to retrieve findings for

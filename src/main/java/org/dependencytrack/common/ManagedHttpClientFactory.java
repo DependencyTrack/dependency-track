@@ -114,7 +114,9 @@ public final class ManagedHttpClientFactory {
                 .setConnectionRequestTimeout(TIMEOUT_POOL * 1000)
                 .setSocketTimeout(TIMEOUT_SOCKET * 1000)
                 .build();
-        final HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(config);
+        final HttpClientBuilder clientBuilder = HttpClientBuilder.create()
+                .setDefaultRequestConfig(config)
+                .setUserAgent(USER_AGENT);
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         clientBuilder.useSystemProperties();
 

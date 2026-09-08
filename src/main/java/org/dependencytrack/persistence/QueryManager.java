@@ -1176,6 +1176,10 @@ public class QueryManager extends AlpineQueryManager {
         getFindingsQueryManager().deleteAnalysisTrail(project);
     }
 
+    public void deleteAnalysisTrail(Vulnerability vulnerability) {
+        getFindingsQueryManager().deleteAnalysisTrail(vulnerability);
+    }
+
     public List<Finding> getFindings(Project project) {
         return getFindingsQueryManager().getFindings(project);
     }

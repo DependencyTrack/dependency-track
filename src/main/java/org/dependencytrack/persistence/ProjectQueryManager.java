@@ -247,15 +247,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         preprocessACLs(query, queryFilter, params, false);
         query.setFilter(queryFilter);
+        query.setNamedParameters(params);
         query.setRange(0, 1);
-        final Project project = singleResult(query.executeWithMap(params));
-        if (project != null) {
-            // set Metrics to prevent extra round trip
-            project.setMetrics(getMostRecentProjectMetrics(project));
-            // set ProjectVersions to prevent extra round trip
-            project.setVersions(getProjectVersions(project));
-        }
-        return project;
+        return executeAndCloseUnique(query);
     }
 
 
@@ -278,16 +272,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         preprocessACLs(query, queryFilter, params, false);
         query.setFilter(queryFilter);
+        query.setNamedParameters(params);
         query.setRange(0, 1);
-
-        final Project project = singleResult(query.executeWithMap(params));
-        if (project != null) {
-            // set Metrics to prevent extra round trip
-            project.setMetrics(getMostRecentProjectMetrics(project));
-            // set ProjectVersions to prevent extra round trip
-            project.setVersions(getProjectVersions(project));
-        }
-        return project;
+        return executeAndCloseUnique(query);
     }
 
     /**
@@ -1834,7 +1821,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         return hasActiveChild;
     }
 
-    private List<ProjectVersion> getProjectVersions(Project project) {
+    public List<ProjectVersion> getProjectVersions(Project project) {
         final Query<Project> query = pm.newQuery(Project.class);
         query.setFilter("name == :name");
         query.setParameters(project.getName());

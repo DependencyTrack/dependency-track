@@ -197,10 +197,10 @@ public class BomResource extends AlpineResource {
 
             try {
                 if (download) {
-                    return Response.ok(exporter.export(exporter.create(project), cdxOutputFormat, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
+                    return Response.ok(exporter.export(exporter.create(project, cdxOutputVersion), cdxOutputFormat, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
                             .header("content-disposition","attachment; filename=\"" + project.getUuid() + "-" + parsedVariant + ".cdx.json\"").build();
                 }
-                return Response.ok(exporter.export(exporter.create(project), cdxOutputFormat, cdxOutputVersion), cdxOutputMediaType).build();
+                return Response.ok(exporter.export(exporter.create(project, cdxOutputVersion), cdxOutputFormat, cdxOutputVersion), cdxOutputMediaType).build();
 
             } catch (GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
@@ -266,7 +266,7 @@ public class BomResource extends AlpineResource {
 
             final CycloneDXExporter exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY, qm);
             try {
-                return Response.ok(exporter.export(exporter.create(component), cdxOutputFormat, cdxOutputVersion), cdxOutputMediaType).build();
+                return Response.ok(exporter.export(exporter.create(component, cdxOutputVersion), cdxOutputFormat, cdxOutputVersion), cdxOutputMediaType).build();
             } catch (GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();

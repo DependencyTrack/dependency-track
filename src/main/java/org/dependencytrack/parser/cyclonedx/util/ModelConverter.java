@@ -31,6 +31,7 @@ import jakarta.json.JsonValue;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
+import org.cyclonedx.Version;
 import org.cyclonedx.model.BomReference;
 import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Hash;
@@ -42,6 +43,7 @@ import org.cyclonedx.model.Service;
 import org.cyclonedx.model.ServiceData;
 import org.cyclonedx.model.Swid;
 import org.cyclonedx.model.Tool;
+import org.cyclonedx.model.metadata.ToolInformation;
 import org.cyclonedx.model.license.Expression;
 import org.cyclonedx.model.license.ExpressionDetailed;
 import org.dependencytrack.model.Analysis;
@@ -728,13 +730,9 @@ public class ModelConverter {
         return stringBuilder.toString();
     }
 
-    public static Metadata createMetadata(final Project project) {
+    public static Metadata createMetadata(final Project project, final Version version) {
         final Metadata metadata = new Metadata();
-        final Tool tool = new Tool();
-        tool.setVendor("OWASP");
-        tool.setName(Config.getInstance().getApplicationName());
-        tool.setVersion(Config.getInstance().getApplicationVersion());
-        metadata.setTools(Collections.singletonList(tool));
+        setMetadataTools(metadata, version);
         if (project != null) {
             metadata.setManufacture(convert(project.getManufacturer()));
 
@@ -794,6 +792,39 @@ public class ModelConverter {
             }
         }
         return metadata;
+    }
+
+    /**
+     * Populates {@code metadata.tools} with Dependency-Track itself.
+     * <p>
+     * CycloneDX 1.5 introduced the object form ({@code tools.components}) and deprecated the
+     * legacy array of {@code tool} objects. The schema models the two as a {@code oneOf},
+     * so exactly one of them may be present. Schemas older than 1.5 only know the legacy form.
+     */
+    private static void setMetadataTools(final Metadata metadata, final Version version) {
+        final String applicationName = Config.getInstance().getApplicationName();
+        final String applicationVersion = Config.getInstance().getApplicationVersion();
+
+        if (version.compareTo(Version.VERSION_15) >= 0) {
+            final var supplier = new org.cyclonedx.model.OrganizationalEntity();
+            supplier.setName("OWASP");
+
+            final var toolComponent = new org.cyclonedx.model.Component();
+            toolComponent.setType(org.cyclonedx.model.Component.Type.APPLICATION);
+            toolComponent.setSupplier(supplier);
+            toolComponent.setName(applicationName);
+            toolComponent.setVersion(applicationVersion);
+
+            final var toolInformation = new ToolInformation();
+            toolInformation.setComponents(List.of(toolComponent));
+            metadata.setToolChoice(toolInformation);
+        } else {
+            final var tool = new Tool();
+            tool.setVendor("OWASP");
+            tool.setName(applicationName);
+            tool.setVersion(applicationVersion);
+            metadata.setTools(List.of(tool));
+        }
     }
 
     public static Service convert(final QueryManager qm, final ServiceComponent service) {

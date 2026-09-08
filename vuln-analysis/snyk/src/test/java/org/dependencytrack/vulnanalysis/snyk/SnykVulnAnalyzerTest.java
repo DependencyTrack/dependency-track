@@ -27,8 +27,7 @@ import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.memory.MemoryCacheProvider;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
@@ -37,7 +36,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.util.ArrayList;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -80,10 +78,10 @@ class SnykVulnAnalyzerTest {
                         .withApiToken("test-api-token")
                         .withBatchRequestsEnabled(true));
 
-        analyzerFactory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(CacheManager.class, cacheManager)
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(configRegistry)
+                .withCacheManager(cacheManager)
+                .build());
 
         analyzer = analyzerFactory.create();
     }
@@ -99,10 +97,10 @@ class SnykVulnAnalyzerTest {
                         .withApiToken("test-api-token")
                         .withBatchRequestsEnabled(false));
 
-        analyzerFactory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(CacheManager.class, cacheManager)
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(configRegistry)
+                .withCacheManager(cacheManager)
+                .build());
 
         analyzer = analyzerFactory.create();
     }

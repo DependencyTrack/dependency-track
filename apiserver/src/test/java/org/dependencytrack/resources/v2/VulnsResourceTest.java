@@ -33,7 +33,7 @@ import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
@@ -264,7 +264,7 @@ class VulnsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public boolean isEnabled() {

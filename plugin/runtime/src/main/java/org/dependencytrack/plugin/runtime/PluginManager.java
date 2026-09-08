@@ -20,10 +20,10 @@ package org.dependencytrack.plugin.runtime;
 
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.api.NamespacedCacheManager;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionFactory;
 import org.dependencytrack.plugin.api.ExtensionPoint;
 import org.dependencytrack.plugin.api.ExtensionPointSpec;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
 import org.dependencytrack.plugin.api.Plugin;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
@@ -374,16 +374,12 @@ public class PluginManager implements Closeable {
         final var extensionCacheManager = new NamespacedCacheManager(
                 this.cacheManager, "%s.%s".formatted(extensionPointMetadata.name(), extensionIdentity.name()));
 
-        final var serviceRegistry = new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(CacheManager.class, extensionCacheManager)
-                .register(KeyValueStore.class, keyValueStore)
-                .register(HttpClient.class, httpClient)
-                .freeze();
+        final var extensionContext =
+                new ExtensionContext(configRegistry, extensionCacheManager, keyValueStore, httpClient);
 
         LOGGER.debug("Initializing extension");
         try {
-            extensionFactory.init(serviceRegistry);
+            extensionFactory.init(extensionContext);
         } catch (RuntimeException e) {
             throw new IllegalStateException(
                     "Failed to initialize extension %s from plugin %s"

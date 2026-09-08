@@ -204,6 +204,10 @@ public class ProjectResource extends AlpineResource {
             final Project project = qm.getProject(name, version);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
+                    // Enrich here rather than in the query manager, so that call sites
+                    // which don't need this data don't pay for it.
+                    project.setMetrics(qm.getMostRecentProjectMetrics(project));
+                    project.setVersions(qm.getProjectVersions(project));
                     return Response.ok(project).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
@@ -240,6 +244,10 @@ public class ProjectResource extends AlpineResource {
             final Project project = qm.getLatestProjectVersion(name);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
+                    // Enrich here rather than in the query manager, so that call sites
+                    // which don't need this data don't pay for it.
+                    project.setMetrics(qm.getMostRecentProjectMetrics(project));
+                    project.setVersions(qm.getProjectVersions(project));
                     return Response.ok(project).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();

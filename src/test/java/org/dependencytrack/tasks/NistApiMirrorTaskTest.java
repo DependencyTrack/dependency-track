@@ -129,7 +129,7 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getVersionEndIncluding()).isNull();
                     assertThat(vs.getVersionEndExcluding()).isEqualTo("14.10.5");
                     assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(qm.hasAffectedVersionAttribution(vuln, vs, Source.NVD)).isTrue();
+                    assertThat(qm.getAffectedVersionAttribution(vuln, vs, Source.NVD)).isNotNull();
                 },
                 vs -> {
                     assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:gitlab:gitlab:*:*:*:*:enterprise:*:*:*");
@@ -149,7 +149,7 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getVersionEndIncluding()).isNull();
                     assertThat(vs.getVersionEndExcluding()).isEqualTo("14.10.5");
                     assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(qm.hasAffectedVersionAttribution(vuln, vs, Source.NVD)).isTrue();
+                    assertThat(qm.getAffectedVersionAttribution(vuln, vs, Source.NVD)).isNotNull();
                 },
                 vs -> {
                     assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:gitlab:gitlab:*:*:*:*:community:*:*:*");
@@ -169,7 +169,7 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getVersionEndIncluding()).isNull();
                     assertThat(vs.getVersionEndExcluding()).isEqualTo("15.0.4");
                     assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(qm.hasAffectedVersionAttribution(vuln, vs, Source.NVD)).isTrue();
+                    assertThat(qm.getAffectedVersionAttribution(vuln, vs, Source.NVD)).isNotNull();
                 },
                 vs -> {
                     assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:gitlab:gitlab:*:*:*:*:enterprise:*:*:*");
@@ -189,7 +189,7 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getVersionEndIncluding()).isNull();
                     assertThat(vs.getVersionEndExcluding()).isEqualTo("15.0.4");
                     assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(qm.hasAffectedVersionAttribution(vuln, vs, Source.NVD)).isTrue();
+                    assertThat(qm.getAffectedVersionAttribution(vuln, vs, Source.NVD)).isNotNull();
                 },
                 vs -> {
                     assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:gitlab:gitlab:15.1.0:*:*:*:community:*:*:*");
@@ -209,7 +209,7 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getVersionEndIncluding()).isNull();
                     assertThat(vs.getVersionEndExcluding()).isNull();
                     assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(qm.hasAffectedVersionAttribution(vuln, vs, Source.NVD)).isTrue();
+                    assertThat(qm.getAffectedVersionAttribution(vuln, vs, Source.NVD)).isNotNull();
                 },
                 vs -> {
                     assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:gitlab:gitlab:15.1.0:*:*:*:enterprise:*:*:*");
@@ -229,7 +229,7 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getVersionEndIncluding()).isNull();
                     assertThat(vs.getVersionEndExcluding()).isNull();
                     assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(qm.hasAffectedVersionAttribution(vuln, vs, Source.NVD)).isTrue();
+                    assertThat(qm.getAffectedVersionAttribution(vuln, vs, Source.NVD)).isNotNull();
                 }
         );
 
@@ -373,7 +373,7 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
         assertThat(vuln.getVulnerableSoftware()).satisfiesExactlyInAnyOrder(
                 vs -> {
                     assertThat(vs.getPurl()).isEqualTo("pkg:generic/linux/kernel@1.2.3");
-                    assertThat(qm.hasAffectedVersionAttribution(vuln, vs, Source.NVD)).isFalse();
+                    assertThat(qm.getAffectedVersionAttribution(vuln, vs, Source.NVD)).isNull();
                     final AffectedVersionAttribution attribution = qm.getAffectedVersionAttribution(vuln, vs, Source.OSV);
                     assertThat(attribution.getFirstSeen()).isEqualTo(oldAttributionDate);
                     assertThat(attribution.getLastSeen()).isEqualTo(oldAttributionDate); // Not modified because reported by another source
@@ -382,7 +382,7 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:gitlab:gitlab:15.1.0:*:*:*:enterprise:*:*:*");
                     final AffectedVersionAttribution attribution = qm.getAffectedVersionAttribution(vuln, vs, Source.NVD);
                     assertThat(attribution.getFirstSeen()).isEqualTo(oldAttributionDate);
-                    assertThat(attribution.getLastSeen()).isAfter(oldAttributionDate); // Modified because still reported
+                    assertThat(attribution.getLastSeen()).isEqualTo(oldAttributionDate); // Not modified; lastSeen is no longer bumped
                 },
                 vs -> {
                     assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:gitlab:gitlab:*:*:*:*:community:*:*:*");

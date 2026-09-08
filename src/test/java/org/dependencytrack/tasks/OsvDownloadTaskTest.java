@@ -51,6 +51,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -899,7 +900,8 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         task.updateDatasource(parser.parse(new JSONObject(advisoryJson)));
 
         qm.getPersistenceManager().evictAll();
-        final Map<Long, Date> firstSeenByVsId = firstSeenByVulnerableSoftwareId("UBUNTU-CVE-2025-6297");
+        final Map<Long, Date> firstSeenByVsId = attributionTimestampsByVulnerableSoftwareId(
+                "UBUNTU-CVE-2025-6297", AffectedVersionAttribution::getFirstSeen);
         assertThat(firstSeenByVsId).hasSize(8);
 
         // Ubuntu bumps the source package version embedded in the advisory's PURL whenever the
@@ -910,16 +912,43 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
                 .replace("It was discovered", "It was later discovered"))));
 
         qm.getPersistenceManager().evictAll();
-        assertThat(firstSeenByVulnerableSoftwareId("UBUNTU-CVE-2025-6297")).isEqualTo(firstSeenByVsId);
+        assertThat(attributionTimestampsByVulnerableSoftwareId(
+                "UBUNTU-CVE-2025-6297", AffectedVersionAttribution::getFirstSeen))
+                .isEqualTo(firstSeenByVsId);
     }
 
-    private Map<Long, Date> firstSeenByVulnerableSoftwareId(final String vulnId) {
+    @Test
+    void testUpdateDatasourceDoesNotBumpAffectedVersionAttributionLastSeen() throws IOException {
+        final String advisoryJson = Files.readString(
+                Paths.get("src/test/resources/unit/osv.jsons/osv-UBUNTU-CVE-2025-6297.json"), StandardCharsets.UTF_8);
+
+        final var task = new OsvDownloadTask();
+        task.updateDatasource(parser.parse(new JSONObject(advisoryJson)));
+
+        qm.getPersistenceManager().evictAll();
+        final Map<Long, Date> lastSeenByVsId = attributionTimestampsByVulnerableSoftwareId(
+                "UBUNTU-CVE-2025-6297", AffectedVersionAttribution::getLastSeen);
+        assertThat(lastSeenByVsId).hasSize(8);
+
+        // Re-mirroring an advisory whose affected version ranges did not change must not
+        // touch the existing attributions. Bumping lastSeen would cause one UPDATE per
+        // affected version range, per mirror run, without providing any value.
+        task.updateDatasource(parser.parse(new JSONObject(
+                advisoryJson.replace("It was discovered", "It was later discovered"))));
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(attributionTimestampsByVulnerableSoftwareId(
+                "UBUNTU-CVE-2025-6297", AffectedVersionAttribution::getLastSeen))
+                .isEqualTo(lastSeenByVsId);
+    }
+
+    private Map<Long, Date> attributionTimestampsByVulnerableSoftwareId(
+            final String vulnId, final Function<AffectedVersionAttribution, Date> timestamp) {
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.OSV, vulnId, false);
         assertThat(vuln).isNotNull();
         return qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware()).stream()
                 .collect(Collectors.toMap(
-                        attribution -> attribution.getVulnerableSoftware().getId(),
-                        AffectedVersionAttribution::getFirstSeen));
+                        attribution -> attribution.getVulnerableSoftware().getId(), timestamp));
     }
 
     private void prepareJsonObject(String filePath) throws IOException {

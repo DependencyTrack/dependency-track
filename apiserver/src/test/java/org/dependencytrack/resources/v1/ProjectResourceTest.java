@@ -5300,6 +5300,44 @@ class ProjectResourceTest extends ResourceTest {
         assertThat(json.containsKey("classifier")).isFalse();
     }
 
+    /**
+     * https://github.com/DependencyTrack/dependency-track/issues/7241
+     */
+    @Test
+    void shouldConvertCollectionProjectBackToRegularWithParent() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+
+        final var parentProject = new Project();
+        parentProject.setName("acme-app-parent");
+        qm.persist(parentProject);
+
+        final var project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        project.setClassifier(null);
+        project.setParent(parentProject);
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "acme-app",
+                          "version": "1.0",
+                          "classifier": "LIBRARY",
+                          "parent": {
+                            "uuid": "%s"
+                          }
+                        }
+                        """.formatted(project.getUuid(), parentProject.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(200);
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json.getString("classifier")).isEqualTo("LIBRARY");
+        assertThat(json.containsKey("collectionLogic")).isFalse();
+        assertThat(json.getJsonObject("parent").getString("uuid")).isEqualTo(parentProject.getUuid().toString());
+    }
+
     @Test
     void shouldPatchCollectionLogicAndNullClassifier() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);

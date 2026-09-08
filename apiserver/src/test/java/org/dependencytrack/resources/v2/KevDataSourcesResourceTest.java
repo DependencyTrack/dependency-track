@@ -37,7 +37,7 @@ import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.kevdatasource.api.KevDataSourceFactory;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
@@ -461,7 +461,7 @@ class KevDataSourcesResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public boolean isEnabled() {

@@ -28,7 +28,7 @@ import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
@@ -1717,7 +1717,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public @NonNull VulnDataSource create() {
@@ -1772,7 +1772,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public @NonNull VulnDataSource create() {

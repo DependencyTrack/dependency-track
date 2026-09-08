@@ -28,9 +28,8 @@ import org.dependencytrack.notification.api.templating.NotificationTemplateRende
 import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.config.RuntimeConfigMapper;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,7 +74,8 @@ class EmailNotificationPublisherTlsTest {
                 RuntimeConfigMapper.getInstance(),
                 emailGlobalConfig);
 
-        publisherFactory.init(new MutableServiceRegistry().register(ConfigRegistry.class, configRegistry));
+        publisherFactory.init(
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
         publisher = publisherFactory.create();
 
         final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(

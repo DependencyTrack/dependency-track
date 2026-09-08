@@ -29,11 +29,10 @@ import org.dependencytrack.notification.api.templating.NotificationTemplateVaria
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherTest;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.config.RuntimeConfigMapper;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +41,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -408,9 +406,9 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
     void shouldSendAuthHeaderWhenConfigured() {
         try (final var factory = new WebhookNotificationPublisherFactory()) {
             final var configRegistry = new MockConfigRegistry(Map.of(), null, RuntimeConfigMapper.getInstance(), null);
-            factory.init(new MutableServiceRegistry()
-                    .register(ConfigRegistry.class, configRegistry)
-                    .register(HttpClient.class, HttpClient.newHttpClient()));
+            factory.init(new ExtensionContextBuilder()
+                    .withConfigRegistry(configRegistry)
+                    .build());
 
             try (final var publisher = factory.create()) {
                 final RuntimeConfigSpec ruleConfigSpec = factory.ruleConfigSpec();
@@ -438,9 +436,9 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
     void shouldSendProtobufWhenConfigured() {
         try (final var factory = new WebhookNotificationPublisherFactory()) {
             final var configRegistry = new MockConfigRegistry(Map.of(), null, RuntimeConfigMapper.getInstance(), null);
-            factory.init(new MutableServiceRegistry()
-                    .register(ConfigRegistry.class, configRegistry)
-                    .register(HttpClient.class, HttpClient.newHttpClient()));
+            factory.init(new ExtensionContextBuilder()
+                    .withConfigRegistry(configRegistry)
+                    .build());
 
             try (final var publisher = factory.create()) {
                 final RuntimeConfigSpec ruleConfigSpec = factory.ruleConfigSpec();

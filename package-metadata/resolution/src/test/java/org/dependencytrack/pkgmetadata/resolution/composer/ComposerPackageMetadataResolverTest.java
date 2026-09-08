@@ -29,11 +29,7 @@ import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
 import org.dependencytrack.pkgmetadata.resolution.cache.CachingHttpClient;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.api.storage.KeyValueStore;
-import org.dependencytrack.plugin.testing.MockConfigRegistry;
-import org.dependencytrack.plugin.testing.MockKeyValueStore;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,7 +39,6 @@ import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
-import java.util.Map;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -69,11 +64,8 @@ class ComposerPackageMetadataResolverTest {
         cacheManager = cacheProvider.create();
 
         resolverFactory = new ComposerPackageMetadataResolverFactory();
-        resolverFactory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                .register(CacheManager.class, cacheManager)
-                .register(HttpClient.class, HttpClient.newHttpClient())
-                .register(KeyValueStore.class, new MockKeyValueStore()));
+        resolverFactory.init(
+                new ExtensionContextBuilder().withCacheManager(cacheManager).build());
         resolver = resolverFactory.create();
     }
 

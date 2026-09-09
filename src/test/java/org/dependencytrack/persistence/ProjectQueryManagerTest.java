@@ -133,7 +133,7 @@ class ProjectQueryManagerTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void getRootProjectsAttachesShallowChildrenTest() {
+    void getRootProjectsAttachesShallowChildrenTest() {
         final Project root = qm.createProject("root", null, "1.0", null, null, null, true, false);
         final Project activeChild = qm.createProject("child-active", null, "1.0", null, root, null, true, false);
         final Project inactiveChild = qm.createProject("child-inactive", null, "1.0", null, root, null, false, false);
@@ -143,33 +143,41 @@ class ProjectQueryManagerTest extends PersistenceCapableTest {
         activeChild.setDirectDependencies("[{\"uuid\":\"00000000-0000-0000-0000-000000000000\"}]");
         qm.persist(activeChild);
         final long projectCountBefore = qm.getProjects(false, false, false, null).getTotal();
+        // includeMetrics=true must still populate metrics on the (detached) root rows.
+        final ProjectMetrics rootMetrics = new ProjectMetrics();
+        rootMetrics.setProject(root);
+        rootMetrics.setVulnerabilities(3);
+        rootMetrics.setFirstOccurrence(new Date());
+        rootMetrics.setLastOccurrence(new Date());
+        qm.persist(rootMetrics);
 
         final List<Project> roots = qm.getProjects(true, false, true, null).getList(Project.class);
 
-        Assert.assertEquals(2, roots.size());
+        Assertions.assertEquals(2, roots.size());
         final Project rootResult = roots.stream()
                 .filter(p -> p.getUuid().equals(root.getUuid())).findFirst().orElseThrow();
-        Assert.assertNotNull(rootResult.getChildren());
-        Assert.assertEquals(2, rootResult.getChildren().size());
+        Assertions.assertNotNull(rootResult.getChildren());
+        Assertions.assertEquals(2, rootResult.getChildren().size());
+        Assertions.assertNotNull(rootResult.getMetrics(), "metrics must survive the detach");
+        Assertions.assertEquals(3, rootResult.getMetrics().getVulnerabilities());
 
         final Project activeChildStub = rootResult.getChildren().stream()
                 .filter(c -> c.getUuid().equals(activeChild.getUuid())).findFirst().orElseThrow();
-        Assert.assertEquals("child-active", activeChildStub.getName());
-        Assert.assertEquals("1.0", activeChildStub.getVersion());
-        Assert.assertTrue(activeChildStub.isActive());
-        Assert.assertNull("child stubs must not carry their own subtree", activeChildStub.getChildren());
-        Assert.assertNull("child stubs must not carry the dependency-graph CLOB", activeChildStub.getDirectDependencies());
+        Assertions.assertEquals("child-active", activeChildStub.getName());
+        Assertions.assertEquals("1.0", activeChildStub.getVersion());
+        Assertions.assertTrue(activeChildStub.isActive());
+        Assertions.assertNull(activeChildStub.getChildren(), "child stubs must not carry their own subtree");
+        Assertions.assertNull(activeChildStub.getDirectDependencies(), "child stubs must not carry the dependency-graph CLOB");
 
-        Assert.assertTrue(rootResult.getChildren().stream()
+        Assertions.assertTrue(rootResult.getChildren().stream()
                 .anyMatch(c -> c.getUuid().equals(inactiveChild.getUuid()) && !c.isActive()));
 
         final Project childlessResult = roots.stream()
                 .filter(p -> p.getUuid().equals(childless.getUuid())).findFirst().orElseThrow();
-        Assert.assertNotNull("childless roots keep an empty array for the frontend", childlessResult.getChildren());
-        Assert.assertTrue(childlessResult.getChildren().isEmpty());
+        Assertions.assertNotNull(childlessResult.getChildren(), "childless roots keep an empty array for the frontend");
+        Assertions.assertTrue(childlessResult.getChildren().isEmpty());
 
-        Assert.assertEquals("listing must not persist stub children",
-                projectCountBefore, qm.getProjects(false, false, false, null).getTotal());
+        Assertions.assertEquals(projectCountBefore, qm.getProjects(false, false, false, null).getTotal(), "listing must not persist stub children");
     }
 
 }

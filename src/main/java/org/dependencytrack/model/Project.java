@@ -99,6 +99,29 @@ import java.util.UUID;
                 @Persistent(name = "metadata"),
                 @Persistent(name = "isLatest")
         }),
+        // ALL minus "children": root-only listings need to know THAT a child exists, not the child's
+        // subtree. Loading children here drags every descendant Project (default fetch group, the
+        // DIRECT_DEPENDENCIES CLOB included) through the ORM for one page of roots.
+        @FetchGroup(name = "ROOT_LIST", members = {
+                @Persistent(name = "name"),
+                @Persistent(name = "authors"),
+                @Persistent(name = "publisher"),
+                @Persistent(name = "supplier"),
+                @Persistent(name = "group"),
+                @Persistent(name = "description"),
+                @Persistent(name = "version"),
+                @Persistent(name = "classifier"),
+                @Persistent(name = "cpe"),
+                @Persistent(name = "purl"),
+                @Persistent(name = "swidTagId"),
+                @Persistent(name = "uuid"),
+                @Persistent(name = "parent"),
+                @Persistent(name = "properties"),
+                @Persistent(name = "tags"),
+                @Persistent(name = "accessTeams"),
+                @Persistent(name = "metadata"),
+                @Persistent(name = "isLatest")
+        }),
         @FetchGroup(name = "METADATA", members = {
                 @Persistent(name = "metadata")
         }),
@@ -153,7 +176,8 @@ public class Project implements Serializable {
         PARENT,
         PORTFOLIO_METRICS_UPDATE,
         PROJECT_TAGS,
-        PROJECT_VULN_ANALYSIS
+        PROJECT_VULN_ANALYSIS,
+        ROOT_LIST
     }
 
     @PrimaryKey

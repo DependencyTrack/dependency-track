@@ -19,7 +19,10 @@ description: A single assertion that a vulnerability is known to be exploited.
 properties:
   asserter:
     type: string
-    description: The entity that asserted the vulnerability is known to be exploited (e.g. `CISA`, `ENISA`).
+    description: The entity that asserted the vulnerability is known to be exploited (e.g. `cisa`, `enisa`).
+  asserter_display_name:
+    type: string
+    description: Human-readable name of the asserting entity (e.g. `CISA KEV`).
   vuln_source:
     type: string
     description: Source of the asserted vulnerability identifier (e.g. `NVD`).
@@ -46,6 +49,7 @@ properties:
     $ref: "../../../shared/schemas/timestamp.yaml"
 required:
 - asserter
+- asserter_display_name
 - vuln_source
 - vuln_id
 - created_at

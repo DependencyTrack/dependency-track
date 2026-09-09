@@ -78,7 +78,10 @@ abstract class AbstractE2ET {
     @SuppressWarnings("resource")
     private GenericContainer<?> createApiServerContainer() {
         final var container = new GenericContainer<>(API_SERVER_IMAGE)
-                .withImagePullPolicy("local".equals(API_SERVER_IMAGE.getVersionPart()) ? PullPolicy.defaultPolicy() : PullPolicy.alwaysPull())
+                .withImagePullPolicy(
+                        "local".equals(API_SERVER_IMAGE.getVersionPart())
+                                ? PullPolicy.defaultPolicy()
+                                : PullPolicy.alwaysPull())
                 .withEnv("JAVA_OPTIONS", "-Xmx512m -XX:+UseSerialGC -XX:TieredStopAtLevel=1")
                 .withEnv("DT_DATASOURCE_URL", "jdbc:postgresql://postgres:5432/dtrack")
                 .withEnv("DT_DATASOURCE_USERNAME", "dtrack")
@@ -93,8 +96,7 @@ abstract class AbstractE2ET {
         return container;
     }
 
-    protected void customizeApiServerContainer(final GenericContainer<?> container) {
-    }
+    protected void customizeApiServerContainer(final GenericContainer<?> container) {}
 
     private ApiClient initializeApiServerClient() {
         final ApiClient client = Feign.builder()
@@ -128,8 +130,7 @@ abstract class AbstractE2ET {
                 "VIEW_PORTFOLIO",
                 "VIEW_VULNERABILITY",
                 "VULNERABILITY_ANALYSIS",
-                "VULNERABILITY_MANAGEMENT"
-        )) {
+                "VULNERABILITY_MANAGEMENT")) {
             client.addPermissionToTeam(team.uuid(), permission);
         }
 
@@ -148,5 +149,4 @@ abstract class AbstractE2ET {
 
         Optional.ofNullable(internalNetwork).ifPresent(Network::close);
     }
-
 }

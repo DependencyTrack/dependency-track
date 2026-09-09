@@ -27,7 +27,8 @@ import static java.util.Objects.requireNonNull;
 /**
  * @since 5.0.0
  */
-record WatermarkRecord(String ecosystem, Instant value, @Nullable Long version) {
+record WatermarkRecord(
+        String ecosystem, Instant value, @Nullable Long version) {
 
     WatermarkRecord {
         requireNonNull(ecosystem, "ecosystem must not be null");
@@ -37,5 +38,4 @@ record WatermarkRecord(String ecosystem, Instant value, @Nullable Long version) 
     WatermarkRecord(final String ecosystem, final Instant value) {
         this(ecosystem, value, null);
     }
-
 }

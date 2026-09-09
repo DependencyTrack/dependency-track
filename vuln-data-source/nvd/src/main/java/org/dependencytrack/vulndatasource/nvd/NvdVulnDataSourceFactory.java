@@ -22,9 +22,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionTestResult;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.Testable;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
@@ -72,6 +72,11 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
+    public String displayName() {
+        return "NVD";
+    }
+
+    @Override
     public Class<? extends VulnDataSource> extensionClass() {
         return NvdVulnDataSource.class;
     }
@@ -82,10 +87,10 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        this.kvStore = serviceRegistry.require(KeyValueStore.class);
-        this.httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(ExtensionContext context) {
+        this.configRegistry = context.configRegistry();
+        this.kvStore = context.keyValueStore();
+        this.httpClient = context.httpClient();
         this.objectMapper = new ObjectMapper()
                 .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true)
                 .configure(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature(), true)
@@ -126,8 +131,7 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
         }
 
-        final List<NvdDataFeed> feeds = IntStream
-                .range(2002, LocalDate.now().getYear() + 1)
+        final List<NvdDataFeed> feeds = IntStream.range(2002, LocalDate.now().getYear() + 1)
                 .boxed()
                 .sorted(Comparator.reverseOrder())
                 .map(NvdDataFeed.YearDataFeed::new)
@@ -137,7 +141,12 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         final List<String> feedNames = feeds.stream().map(NvdDataFeed::name).toList();
         final var watermarkManager = new WatermarkManager(kvStore, feedNames);
 
-        return new NvdVulnDataSource(watermarkManager, objectMapper, httpClient, config.getCveFeedsUrl().toString(), feeds);
+        return new NvdVulnDataSource(
+                watermarkManager,
+                objectMapper,
+                httpClient,
+                config.getCveFeedsUrl().toString(),
+                feeds);
     }
 
     @Override
@@ -210,5 +219,4 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
 
         return testResult;
     }
-
 }

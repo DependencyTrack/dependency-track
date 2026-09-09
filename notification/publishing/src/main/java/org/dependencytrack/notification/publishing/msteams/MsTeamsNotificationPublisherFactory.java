@@ -22,7 +22,7 @@ import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplate;
 import org.dependencytrack.notification.publishing.http.HttpNotificationPublisherRuleConfigV1;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.jspecify.annotations.Nullable;
 
@@ -45,13 +45,18 @@ public final class MsTeamsNotificationPublisherFactory implements NotificationPu
     }
 
     @Override
+    public String displayName() {
+        return "Microsoft Teams";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return MsTeamsNotificationPublisher.class;
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(ExtensionContext context) {
+        this.httpClient = context.httpClient();
     }
 
     @Override
@@ -62,14 +67,12 @@ public final class MsTeamsNotificationPublisherFactory implements NotificationPu
 
     @Override
     public RuntimeConfigSpec ruleConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new HttpNotificationPublisherRuleConfigV1()
-                        .withDestinationUrl(URI.create("https://msteams.example.com")));
+        return RuntimeConfigSpec.of(new HttpNotificationPublisherRuleConfigV1()
+                .withDestinationUrl(URI.create("https://msteams.example.com")));
     }
 
     @Override
     public NotificationTemplate defaultTemplate() {
         return new NotificationTemplate(loadDefaultTemplate(extensionClass()), "application/json");
     }
-
 }

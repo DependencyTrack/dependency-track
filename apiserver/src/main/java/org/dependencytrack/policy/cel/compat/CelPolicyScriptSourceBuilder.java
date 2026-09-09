@@ -27,5 +27,4 @@ public interface CelPolicyScriptSourceBuilder extends Function<PolicyCondition, 
     static String escapeQuotes(String value) {
         return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
-
 }

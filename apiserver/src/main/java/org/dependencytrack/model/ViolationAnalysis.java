@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.validation.constraints.NotNull;
+
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.ForeignKey;
@@ -32,7 +34,6 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
-import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -43,7 +44,9 @@ import java.util.List;
  * @since 4.0.0
  */
 @PersistenceCapable
-@Unique(name="VIOLATIONANALYSIS_COMPOSITE_IDX", members={"project", "component", "policyViolation"})
+@Unique(
+        name = "VIOLATIONANALYSIS_COMPOSITE_IDX",
+        members = {"project", "component", "policyViolation"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ViolationAnalysis implements Serializable {
 
@@ -53,19 +56,31 @@ public class ViolationAnalysis implements Serializable {
     private long id;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "VIOLATIONANALYSIS_PROJECT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "VIOLATIONANALYSIS_PROJECT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PROJECT_ID")
     @JsonIgnore
     private Project project;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "VIOLATIONANALYSIS_COMPONENT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "VIOLATIONANALYSIS_COMPONENT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "COMPONENT_ID")
     @JsonIgnore
     private Component component;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "VIOLATIONANALYSIS_POLICYVIOLATION_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "VIOLATIONANALYSIS_POLICYVIOLATION_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "POLICYVIOLATION_ID", allowsNull = "false")
     @NotNull
     @JsonIgnore

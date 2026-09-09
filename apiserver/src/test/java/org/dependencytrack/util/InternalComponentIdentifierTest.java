@@ -58,14 +58,19 @@ class InternalComponentIdentifierTest extends PersistenceCapableTest {
                 // specific regex for name
                 Arguments.of(null, null, "^dependency-track$", "dependency-track", "OR", true),
                 // generalized, case-insensitive regex for group
-                Arguments.of("(?i)^(org\\.apache)(\\.[\\w.]+)?$", "Org.Apache.Logging.Log4J", null, "log4j-test", "OR", true),
+                Arguments.of(
+                        "(?i)^(org\\.apache)(\\.[\\w.]+)?$",
+                        "Org.Apache.Logging.Log4J",
+                        null,
+                        "log4j-test",
+                        "OR",
+                        true),
                 // same as above, but with incomplete regex
                 Arguments.of("(?i)^(org\\.apache)", "Org.Apache.Logging.Log4J", null, "log4j-test", "OR", false),
                 // generalized regex for names
                 Arguments.of(null, "org.apache.logging.log4j", "^(log4j-)([\\w-]+)$", "log4j-test", "OR", true),
                 // same as above, but with incomplete regex
-                Arguments.of(null, "org.apache.logging.log4j", "^(log4j-)", "log4j-test", "OR", false)
-        );
+                Arguments.of(null, "org.apache.logging.log4j", "^(log4j-)", "log4j-test", "OR", false));
     }
 
     @MethodSource("testParameters")
@@ -84,22 +89,19 @@ class InternalComponentIdentifierTest extends PersistenceCapableTest {
                 INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName(),
                 groupsRegexProperty,
                 INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyType(),
-                INTERNAL_COMPONENTS_GROUPS_REGEX.getDescription()
-        );
+                INTERNAL_COMPONENTS_GROUPS_REGEX.getDescription());
         qm.createConfigProperty(
                 INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName(),
                 INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyName(),
                 namesRegexProperty,
                 INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyType(),
-                INTERNAL_COMPONENTS_NAMES_REGEX.getDescription()
-        );
+                INTERNAL_COMPONENTS_NAMES_REGEX.getDescription());
         qm.createConfigProperty(
                 INTERNAL_COMPONENTS_MATCH_MODE.getGroupName(),
                 INTERNAL_COMPONENTS_MATCH_MODE.getPropertyName(),
                 matchMode,
                 INTERNAL_COMPONENTS_MATCH_MODE.getPropertyType(),
-                INTERNAL_COMPONENTS_MATCH_MODE.getDescription()
-        );
+                INTERNAL_COMPONENTS_MATCH_MODE.getDescription());
 
         final Component component = new Component();
         component.setGroup(componentGroup);
@@ -107,5 +109,4 @@ class InternalComponentIdentifierTest extends PersistenceCapableTest {
 
         assertThat(new InternalComponentIdentifier().isInternal(component)).isEqualTo(shouldBeInternal);
     }
-
 }

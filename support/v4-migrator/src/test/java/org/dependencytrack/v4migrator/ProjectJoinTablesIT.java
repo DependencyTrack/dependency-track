@@ -79,7 +79,8 @@ class ProjectJoinTablesIT {
                 VALUES (2, 'Foo', '1.0', '00000000-0000-0000-0000-000000000002',
                         '2024-12-01T00:00:00Z')
                 """);
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Eng', '00000000-0000-0000-0000-000000000011')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Eng', '00000000-0000-0000-0000-000000000011')");
             h.execute("INSERT INTO \"TAG\" (\"ID\", \"NAME\") VALUES (1, 'frontend')");
             h.execute("""
                 INSERT INTO "POLICY" (
@@ -103,32 +104,29 @@ class ProjectJoinTablesIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> policyProjects = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> policyProjects =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "POLICY_ID", "PROJECT_ID"
                       FROM "POLICY_PROJECTS"
                      ORDER BY "POLICY_ID", "PROJECT_ID"
                     """).mapToMap().list());
-        assertThat(policyProjects).extracting("policy_id", "project_id")
-            .containsExactly(tuple(10L, 2L));
+        assertThat(policyProjects).extracting("policy_id", "project_id").containsExactly(tuple(10L, 2L));
 
-        final List<Map<String, Object>> accessTeams = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> accessTeams =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "PROJECT_ID", "TEAM_ID"
                       FROM "PROJECT_ACCESS_TEAMS"
                      ORDER BY "PROJECT_ID", "TEAM_ID"
                     """).mapToMap().list());
-        assertThat(accessTeams).extracting("project_id", "team_id")
-            .containsExactly(tuple(2L, 1L));
+        assertThat(accessTeams).extracting("project_id", "team_id").containsExactly(tuple(2L, 1L));
 
-        final List<Map<String, Object>> projectsTags = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> projectsTags =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "PROJECT_ID", "TAG_ID"
                       FROM "PROJECTS_TAGS"
                      ORDER BY "PROJECT_ID", "TAG_ID"
                     """).mapToMap().list());
-        assertThat(projectsTags).extracting("project_id", "tag_id")
-            .containsExactly(tuple(2L, 1L));
+        assertThat(projectsTags).extracting("project_id", "tag_id").containsExactly(tuple(2L, 1L));
     }
 
     private void runPipeline() throws Exception {

@@ -39,5 +39,4 @@ public record WorkflowRunMetadata(
         Instant createdAt,
         @Nullable Instant updatedAt,
         @Nullable Instant startedAt,
-        @Nullable Instant completedAt) {
-}
+        @Nullable Instant completedAt) {}

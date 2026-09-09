@@ -29,11 +29,14 @@ import org.slf4j.LoggerFactory;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.dependencytrack.util.PersistenceUtil.assertNonPersistentAll;
@@ -152,12 +155,9 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
             final String versionEndIncluding,
             final String versionStartExcluding,
             final String versionStartIncluding) {
-        final var queryFilterParts = new ArrayList<>(List.of(
-                "purlType == :purlType",
-                "purlName == :purlName"));
-        final var queryParams = new HashMap<String, Object>(Map.ofEntries(
-                Map.entry("purlType", purlType),
-                Map.entry("purlName", purlName)));
+        final var queryFilterParts = new ArrayList<>(List.of("purlType == :purlType", "purlName == :purlName"));
+        final var queryParams = new HashMap<String, Object>(
+                Map.ofEntries(Map.entry("purlType", purlType), Map.entry("purlName", purlName)));
 
         if (purlNamespace == null) {
             queryFilterParts.add("purlNamespace == null");
@@ -244,13 +244,15 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
             // Get all VulnerableSoftware records that are currently associated with the vulnerability.
             // Note: For SOME ODD REASON, duplicate (as in, same database ID and all) VulnerableSoftware
             // records are returned. We thus have to deduplicate here.
-            final List<VulnerableSoftware> vsOldList = persistentVuln.getVulnerableSoftware().stream().distinct().toList();
-            LOGGER.trace("%s: Existing VS: %d".formatted(persistentVuln.getVulnId(), vsOldList.size()));
+            final List<VulnerableSoftware> vsOldList =
+                    persistentVuln.getVulnerableSoftware().stream().distinct().toList();
+            LOGGER.trace("{}: Existing VS: {}", persistentVuln.getVulnId(), vsOldList.size());
 
             // Get attributions for all existing VulnerableSoftware records.
             final Map<Long, List<AffectedVersionAttribution>> attributionsByVsId =
                     getAffectedVersionAttributions(persistentVuln, vsOldList).stream()
-                            .collect(groupingBy(attribution -> attribution.getVulnerableSoftware().getId()));
+                            .collect(groupingBy(attribution ->
+                                    attribution.getVulnerableSoftware().getId()));
             for (final VulnerableSoftware vsOld : vsOldList) {
                 vsOld.setAffectedVersionAttributions(attributionsByVsId.get(vsOld.getId()));
             }
@@ -262,14 +264,17 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
             final var vsListToKeep = new ArrayList<VulnerableSoftware>();
 
             // Separately track existing VulnerableSoftware records that are reported by the source.
-            // Records in this list must be attributed to the source.
-            // Records in vsListToKeep that are NOT in this list could have been reported by other sources.
-            final var matchedOldVsList = new ArrayList<VulnerableSoftware>();
+            // Records in this set must be attributed to the source.
+            // Records in vsListToKeep that are NOT in this set could have been reported by other sources.
+            //
+            // NB: Identity-based because the entries are instances taken from vsOldList,
+            // so reference equality is sufficient.
+            final Set<VulnerableSoftware> matchedOldVsSet = Collections.newSetFromMap(new IdentityHashMap<>());
 
             for (final VulnerableSoftware vsOld : vsOldList) {
                 if (mutableVsList.removeIf(vsOld::equalsIgnoringDatastoreIdentity)) {
                     vsListToKeep.add(vsOld);
-                    matchedOldVsList.add(vsOld);
+                    matchedOldVsSet.add(vsOld);
                 } else {
                     final List<AffectedVersionAttribution> attributions = vsOld.getAffectedVersionAttributions();
                     if (attributions == null || attributions.isEmpty()) {
@@ -281,8 +286,8 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
                         continue;
                     }
 
-                    final boolean previouslyReportedBySource = attributions.stream()
-                            .anyMatch(attr -> attr.getSource() == source);
+                    final boolean previouslyReportedBySource =
+                            attributions.stream().anyMatch(attr -> attr.getSource() == source);
                     final boolean previouslyReportedByOthers = !previouslyReportedBySource;
 
                     if (previouslyReportedByOthers) {
@@ -292,8 +297,8 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
                     }
                 }
             }
-            LOGGER.trace("%s: vsListToKeep: %d".formatted(persistentVuln.getVulnId(), vsListToKeep.size()));
-            LOGGER.trace("%s: vsListToRemove: %d".formatted(persistentVuln.getVulnId(), vsListToRemove.size()));
+            LOGGER.trace("{}: vsListToKeep: {}", persistentVuln.getVulnId(), vsListToKeep.size());
+            LOGGER.trace("{}: vsListToRemove: {}", persistentVuln.getVulnId(), vsListToRemove.size());
 
             // Remove attributions for VulnerableSoftware records that are no longer reported.
             if (!vsListToRemove.isEmpty()) {
@@ -302,26 +307,22 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
 
             final var attributionDate = new Date();
 
-            // For VulnerableSoftware records that existed before, update the lastSeen timestamp,
-            // or create an attribution if it doesn't exist already.
+            // For VulnerableSoftware records that existed before,
+            // create an attribution if it doesn't exist already.
+            //
+            // NB: Attributions that already exist remain untouched.
+            // Refreshing their lastSeen timestamp causes unnecessary write amplification.
             for (final VulnerableSoftware oldVs : vsListToKeep) {
-                boolean hasAttribution = false;
-                if (oldVs.getAffectedVersionAttributions() != null) {
-                    for (final AffectedVersionAttribution attribution : oldVs.getAffectedVersionAttributions()) {
-                        if (attribution.getSource() == source) {
-                            attribution.setLastSeen(attributionDate);
-                            hasAttribution = true;
-                            break;
-                        }
-                    }
-                }
+                final List<AffectedVersionAttribution> attributions = oldVs.getAffectedVersionAttributions();
+                final boolean hasAttribution = attributions != null
+                        && attributions.stream().anyMatch(attribution -> attribution.getSource() == source);
 
                 // The record was previously reported by others, but now the source reports it, too.
                 // Ensure that an attribution is added accordingly.
-                if (matchedOldVsList.contains(oldVs) && !hasAttribution) {
-                    LOGGER.trace("%s: Adding attribution".formatted(persistentVuln.getVulnId()));
-                    final AffectedVersionAttribution attribution = createAttribution(
-                            persistentVuln, oldVs, attributionDate, source);
+                if (matchedOldVsSet.contains(oldVs) && !hasAttribution) {
+                    LOGGER.trace("{}: Adding attribution", persistentVuln.getVulnId());
+                    final AffectedVersionAttribution attribution =
+                            createAttribution(persistentVuln, oldVs, attributionDate, source);
                     persist(attribution);
                 }
             }
@@ -350,33 +351,40 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
                             vs.getVersionStartExcluding(),
                             vs.getVersionStartIncluding());
                 } else {
-                    throw new IllegalStateException("VulnerableSoftware must define a CPE or PURL, but %s has neither".formatted(vs));
+                    throw new IllegalStateException(
+                            "VulnerableSoftware must define a CPE or PURL, but %s has neither".formatted(vs));
                 }
                 if (existingVs != null) {
-                    final boolean hasAttribution = hasAffectedVersionAttribution(persistentVuln, existingVs, source);
-                    if (!hasAttribution) {
-                        LOGGER.trace("%s: Adding attribution".formatted(persistentVuln.getVulnId()));
-                        final AffectedVersionAttribution attribution = createAttribution(persistentVuln, existingVs, attributionDate, source);
+                    final AffectedVersionAttribution existingAttribution =
+                            getAffectedVersionAttribution(persistentVuln, existingVs, source);
+                    if (existingAttribution == null) {
+                        LOGGER.trace("{}: Adding attribution", persistentVuln.getVulnId());
+                        final AffectedVersionAttribution attribution =
+                                createAttribution(persistentVuln, existingVs, attributionDate, source);
                         persist(attribution);
                     } else {
-                        LOGGER.debug("%s: Encountered dangling attribution; Re-using by updating firstSeen and lastSeen timestamps".formatted(persistentVuln.getVulnId()));
-                        final AffectedVersionAttribution existingAttribution = getAffectedVersionAttribution(persistentVuln, existingVs, source);
+                        LOGGER.debug(
+                                "{}: Encountered dangling attribution; Re-using by updating firstSeen timestamp",
+                                persistentVuln.getVulnId());
                         existingAttribution.setFirstSeen(attributionDate);
-                        existingAttribution.setLastSeen(attributionDate);
                     }
                     vsListToKeep.add(existingVs);
                 } else {
-                    LOGGER.trace("%s: Creating new VS".formatted(persistentVuln.getVulnId()));
+                    LOGGER.trace("{}: Creating new VS", persistentVuln.getVulnId());
                     final VulnerableSoftware persistentVs = persist(vs);
-                    final AffectedVersionAttribution attribution = createAttribution(persistentVuln, persistentVs, attributionDate, source);
+                    final AffectedVersionAttribution attribution =
+                            createAttribution(persistentVuln, persistentVs, attributionDate, source);
                     persist(attribution);
                     vsListToKeep.add(persistentVs);
                 }
             }
 
-            LOGGER.trace("%s: Final vsList: %d".formatted(persistentVuln.getVulnId(), vsListToKeep.size()));
+            LOGGER.trace("{}: Final vsList: {}", persistentVuln.getVulnId(), vsListToKeep.size());
             if (!Objects.equals(persistentVuln.getVulnerableSoftware(), vsListToKeep)) {
-                LOGGER.trace("%s: vsList has changed: %s".formatted(persistentVuln.getVulnId(), new PersistenceUtil.Diff(persistentVuln.getVulnerableSoftware(), vsListToKeep)));
+                LOGGER.trace(
+                        "{}: vsList has changed: {}",
+                        persistentVuln.getVulnId(),
+                        new PersistenceUtil.Diff(persistentVuln.getVulnerableSoftware(), vsListToKeep));
                 persistentVuln.setVulnerableSoftware(vsListToKeep);
             }
         });
@@ -392,8 +400,6 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
         attribution.setVulnerability(vuln);
         attribution.setVulnerableSoftware(vs);
         attribution.setFirstSeen(attributionDate);
-        attribution.setLastSeen(attributionDate);
         return attribution;
     }
-
 }

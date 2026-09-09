@@ -20,5 +20,4 @@ package org.dependencytrack.dex.engine;
 
 import java.util.UUID;
 
-record WorkflowRunHistoryCacheKey(UUID runId, int continuedAsNewGeneration) {
-}
+record WorkflowRunHistoryCacheKey(UUID runId, int continuedAsNewGeneration) {}

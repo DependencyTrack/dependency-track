@@ -21,14 +21,12 @@ package org.dependencytrack.pkgmetadata.resolution.maven;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURLBuilder;
-import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolverFactory;
 import org.dependencytrack.pkgmetadata.resolution.cache.CachingHttpClient;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.jspecify.annotations.Nullable;
 
-import java.net.http.HttpClient;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
@@ -40,6 +38,11 @@ public final class MavenPackageMetadataResolverFactory implements PackageMetadat
     @Override
     public String extensionName() {
         return "maven";
+    }
+
+    @Override
+    public String displayName() {
+        return "Maven";
     }
 
     @Override
@@ -58,12 +61,8 @@ public final class MavenPackageMetadataResolverFactory implements PackageMetadat
 
         try {
             final Map<String, String> origQualifiers = purl.getQualifiers();
-            final String type = origQualifiers != null
-                    ? origQualifiers.getOrDefault("type", "jar")
-                    : "jar";
-            final String classifier = origQualifiers != null
-                    ? origQualifiers.get("classifier")
-                    : null;
+            final String type = origQualifiers != null ? origQualifiers.getOrDefault("type", "jar") : "jar";
+            final String classifier = origQualifiers != null ? origQualifiers.get("classifier") : null;
             final var builder = PackageURLBuilder.aPackageURL()
                     .withType(purl.getType())
                     .withNamespace(purl.getNamespace())
@@ -85,15 +84,13 @@ public final class MavenPackageMetadataResolverFactory implements PackageMetadat
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
+    public void init(ExtensionContext context) {
         cachingHttpClient = new CachingHttpClient(
-                serviceRegistry.require(HttpClient.class),
-                serviceRegistry.require(CacheManager.class).getCache("responses"));
+                context.httpClient(), context.cacheManager().getCache("responses"));
     }
 
     @Override
     public PackageMetadataResolver create() {
         return new MavenPackageMetadataResolver(requireNonNull(cachingHttpClient));
     }
-
 }

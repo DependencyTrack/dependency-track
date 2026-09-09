@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.filestorage;
 
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
 import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.ProxySelector;
 import org.dependencytrack.filestorage.api.FileStorage;
@@ -29,6 +27,9 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import java.io.IOException;
 import java.util.ServiceLoader;
@@ -57,18 +58,15 @@ public final class FileStorageInitializer implements ServletContextListener {
         final String providerName = config.getValue(ConfigKeys.FILE_STORAGE_PROVIDER, String.class);
         LOGGER.info("Initializing file storage for provider '{}'", providerName);
 
-        final FileStorageProvider fileStorageProvider =
-                ServiceLoader.load(FileStorageProvider.class).stream()
-                        .map(ServiceLoader.Provider::get)
-                        .filter(provider -> providerName.equals(provider.name()))
-                        .findAny()
-                        .orElseThrow(() -> new IllegalStateException(
-                                "No file storage provider found for name: " + providerName));
+        final FileStorageProvider fileStorageProvider = ServiceLoader.load(FileStorageProvider.class).stream()
+                .map(ServiceLoader.Provider::get)
+                .filter(provider -> providerName.equals(provider.name()))
+                .findAny()
+                .orElseThrow(
+                        () -> new IllegalStateException("No file storage provider found for name: " + providerName));
 
         fileStorage = fileStorageProvider.create(config, new ProxySelector());
-        event.getServletContext().setAttribute(
-                FileStorage.class.getName(),
-                fileStorage);
+        event.getServletContext().setAttribute(FileStorage.class.getName(), fileStorage);
     }
 
     @Override
@@ -83,5 +81,4 @@ public final class FileStorageInitializer implements ServletContextListener {
             fileStorage = null;
         }
     }
-
 }

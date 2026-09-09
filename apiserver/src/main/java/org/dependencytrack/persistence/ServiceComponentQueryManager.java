@@ -67,7 +67,7 @@ final class ServiceComponentQueryManager extends QueryManager {
         final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project");
         query.getFetchPlan().setMaxFetchDepth(2);
         query.setOrdering("name asc");
-        return (List<ServiceComponent>)query.execute(project);
+        return (List<ServiceComponent>) query.execute(project);
     }
 
     /**

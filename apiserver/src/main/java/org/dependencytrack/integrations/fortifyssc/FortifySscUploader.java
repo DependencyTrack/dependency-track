@@ -67,13 +67,15 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public boolean isEnabled() {
-        final ConfigProperty enabled = qm.getConfigProperty(FORTIFY_SSC_ENABLED.getGroupName(), FORTIFY_SSC_ENABLED.getPropertyName());
+        final ConfigProperty enabled =
+                qm.getConfigProperty(FORTIFY_SSC_ENABLED.getGroupName(), FORTIFY_SSC_ENABLED.getPropertyName());
         return enabled != null && Boolean.valueOf(enabled.getPropertyValue());
     }
 
     @Override
     public boolean isProjectConfigured(final Project project) {
-        final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
+        final ProjectProperty applicationId =
+                qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
         return applicationId != null && applicationId.getPropertyValue() != null;
     }
 
@@ -85,9 +87,12 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public void upload(final Project project, final InputStream payload) {
-        final ConfigProperty sscUrl = qm.getConfigProperty(FORTIFY_SSC_URL.getGroupName(), FORTIFY_SSC_URL.getPropertyName());
-        final ConfigProperty citoken = qm.getConfigProperty(FORTIFY_SSC_TOKEN.getGroupName(), FORTIFY_SSC_TOKEN.getPropertyName());
-        final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
+        final ConfigProperty sscUrl =
+                qm.getConfigProperty(FORTIFY_SSC_URL.getGroupName(), FORTIFY_SSC_URL.getPropertyName());
+        final ConfigProperty citoken =
+                qm.getConfigProperty(FORTIFY_SSC_TOKEN.getGroupName(), FORTIFY_SSC_TOKEN.getPropertyName());
+        final ProjectProperty applicationId =
+                qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
         if (citoken == null) {
             LOGGER.warn("Fortify SSC token not specified. Aborting");
             return;
@@ -98,7 +103,8 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
             return;
         }
         try {
-            final FortifySscClient client = new FortifySscClient(httpClient, this, URI.create(sscUrl.getPropertyValue()).toURL());
+            final FortifySscClient client = new FortifySscClient(
+                    httpClient, this, URI.create(sscUrl.getPropertyValue()).toURL());
             final String tokenValue = secretManager.getSecretValue(tokenSecretName);
             if (tokenValue == null) {
                 LOGGER.warn("Fortify SSC secret '%s' could not be resolved. Aborting".formatted(tokenSecretName));

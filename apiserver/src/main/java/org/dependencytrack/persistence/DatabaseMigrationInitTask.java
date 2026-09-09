@@ -41,5 +41,4 @@ public final class DatabaseMigrationInitTask implements InitTask {
     public void execute(InitTaskContext ctx) {
         new MigrationExecutor(ctx.dataSource()).execute();
     }
-
 }

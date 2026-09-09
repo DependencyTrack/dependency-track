@@ -31,7 +31,6 @@ sealed interface SpdxExpressionToken {
         public String toString() {
             return id;
         }
-
     }
 
     record Operator(SpdxExpressionOperator operator) implements SpdxExpressionToken {
@@ -40,11 +39,9 @@ sealed interface SpdxExpressionToken {
         public String toString() {
             return operator.toString();
         }
-
     }
 
     enum Grouping implements SpdxExpressionToken {
-
         LEFT_PAREN {
             @Override
             public String toString() {
@@ -58,7 +55,5 @@ sealed interface SpdxExpressionToken {
                 return ")";
             }
         }
-
     }
-
 }

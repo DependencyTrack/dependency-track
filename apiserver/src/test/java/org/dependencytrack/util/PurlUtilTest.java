@@ -48,5 +48,4 @@ public class PurlUtilTest {
         assertThat(purl.getSubpath()).isEqualTo("baz");
         assertThat(purl.getQualifiers()).containsOnly(Map.entry("qux", "quux"));
     }
-
 }

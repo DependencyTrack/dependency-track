@@ -94,12 +94,12 @@ class ServiceComponentMigrationIT {
                     :data, :endpoints, :ext, :provider
                 )
                 """)
-                .bind("u", "00000000-0000-0000-0000-00000000aa01")
-                .bind("data", new byte[]{0x10, 0x11, 0x12})
-                .bind("endpoints", new byte[]{0x20, 0x21, 0x22})
-                .bind("ext", new byte[]{0x30, 0x31, 0x32})
-                .bind("provider", new byte[]{0x40, 0x41, 0x42})
-                .execute();
+                    .bind("u", "00000000-0000-0000-0000-00000000aa01")
+                    .bind("data", new byte[] {0x10, 0x11, 0x12})
+                    .bind("endpoints", new byte[] {0x20, 0x21, 0x22})
+                    .bind("ext", new byte[] {0x30, 0x31, 0x32})
+                    .bind("provider", new byte[] {0x40, 0x41, 0x42})
+                    .execute();
 
             // Child of (1). Points at the LOSER project (100); should be rewritten to 200.
             h.execute("""
@@ -148,17 +148,21 @@ class ServiceComponentMigrationIT {
             //   (1, 500) dup → dedup
             //   (1, 501) malformed-UUID vuln → drop
             //   (3, 500) malformed-UUID svc → drop
-            h.execute("INSERT INTO \"SERVICECOMPONENTS_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"SERVICECOMPONENT_ID\") VALUES (500, 1)");
-            h.execute("INSERT INTO \"SERVICECOMPONENTS_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"SERVICECOMPONENT_ID\") VALUES (500, 1)");
-            h.execute("INSERT INTO \"SERVICECOMPONENTS_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"SERVICECOMPONENT_ID\") VALUES (501, 1)");
-            h.execute("INSERT INTO \"SERVICECOMPONENTS_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"SERVICECOMPONENT_ID\") VALUES (500, 3)");
+            h.execute(
+                    "INSERT INTO \"SERVICECOMPONENTS_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"SERVICECOMPONENT_ID\") VALUES (500, 1)");
+            h.execute(
+                    "INSERT INTO \"SERVICECOMPONENTS_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"SERVICECOMPONENT_ID\") VALUES (500, 1)");
+            h.execute(
+                    "INSERT INTO \"SERVICECOMPONENTS_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"SERVICECOMPONENT_ID\") VALUES (501, 1)");
+            h.execute(
+                    "INSERT INTO \"SERVICECOMPONENTS_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"SERVICECOMPONENT_ID\") VALUES (500, 3)");
         });
 
         runPipeline();
 
         // Malformed UUID probed.
-        final List<Map<String, Object>> probe = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> probe =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT table_name, orig_id, bad_uuid
                       FROM "dt_v4_migration".probe_invalid_uuids
                      WHERE table_name = 'SERVICECOMPONENT'
@@ -166,26 +170,24 @@ class ServiceComponentMigrationIT {
                     """).mapToMap().list());
         assertThat(probe).hasSize(1);
         assertThat(probe.get(0))
-            .containsEntry("table_name", "SERVICECOMPONENT")
-            .containsEntry("orig_id", 3L)
-            .containsEntry("bad_uuid", "not-a-uuid");
+                .containsEntry("table_name", "SERVICECOMPONENT")
+                .containsEntry("orig_id", 3L)
+                .containsEntry("bad_uuid", "not-a-uuid");
 
         // Identity servicecomponent_canonical_id_map for valid-UUID rows.
-        final List<Map<String, Object>> map = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> map =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT orig_id, canonical_id
                       FROM dt_v4_migration.servicecomponent_canonical_id_map
                      ORDER BY orig_id
                     """).mapToMap().list());
-        assertThat(map).extracting("orig_id", "canonical_id").containsExactly(
-            tuple(1L, 1L),
-            tuple(2L, 2L),
-            tuple(4L, 4L)
-        );
+        assertThat(map)
+                .extracting("orig_id", "canonical_id")
+                .containsExactly(tuple(1L, 1L), tuple(2L, 2L), tuple(4L, 4L));
 
         // Full v5 SERVICECOMPONENT contents.
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "NAME", "UUID", "PROJECT_ID", "PARENT_SERVICECOMPONENT_ID",
                            "AUTHENTICATED", "X_TRUST_BOUNDARY", "LAST_RISKSCORE",
                            "DATA", "ENDPOINTS", "EXTERNAL_REFERENCES", "PROVIDER_ID"
@@ -196,12 +198,12 @@ class ServiceComponentMigrationIT {
 
         // (1) parent: pass-through, native UUID, all four blobs preserved byte-for-byte.
         assertThat(rows.get(0))
-            .containsEntry("name", "parent-svc")
-            .containsEntry("uuid", UUID.fromString("00000000-0000-0000-0000-00000000aa01"))
-            .containsEntry("project_id", 200L)
-            .containsEntry("parent_servicecomponent_id", null)
-            .containsEntry("authenticated", true)
-            .containsEntry("x_trust_boundary", false);
+                .containsEntry("name", "parent-svc")
+                .containsEntry("uuid", UUID.fromString("00000000-0000-0000-0000-00000000aa01"))
+                .containsEntry("project_id", 200L)
+                .containsEntry("parent_servicecomponent_id", null)
+                .containsEntry("authenticated", true)
+                .containsEntry("x_trust_boundary", false);
         assertThat((byte[]) rows.get(0).get("data")).containsExactly(0x10, 0x11, 0x12);
         assertThat((byte[]) rows.get(0).get("endpoints")).containsExactly(0x20, 0x21, 0x22);
         assertThat((byte[]) rows.get(0).get("external_references")).containsExactly(0x30, 0x31, 0x32);
@@ -210,24 +212,21 @@ class ServiceComponentMigrationIT {
         // (2) child: PROJECT_ID rewritten from loser (100) to winner (200);
         // PARENT_SERVICECOMPONENT_ID preserved (canonical).
         assertThat(rows.get(1))
-            .containsEntry("name", "child-svc")
-            .containsEntry("project_id", 200L)
-            .containsEntry("parent_servicecomponent_id", 1L);
+                .containsEntry("name", "child-svc")
+                .containsEntry("project_id", 200L)
+                .containsEntry("parent_servicecomponent_id", 1L);
 
         // (4) Orphan: parent had malformed UUID → PARENT_SERVICECOMPONENT_ID NULL.
-        assertThat(rows.get(2))
-            .containsEntry("name", "svc-orphan")
-            .containsEntry("parent_servicecomponent_id", null);
+        assertThat(rows.get(2)).containsEntry("name", "svc-orphan").containsEntry("parent_servicecomponent_id", null);
 
         // SERVICECOMPONENTS_VULNERABILITIES join: only (500, 1) survives.
-        final List<Map<String, Object>> sv = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> sv =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "VULNERABILITY_ID", "SERVICECOMPONENT_ID"
                       FROM "SERVICECOMPONENTS_VULNERABILITIES"
                      ORDER BY "VULNERABILITY_ID", "SERVICECOMPONENT_ID"
                     """).mapToMap().list());
-        assertThat(sv).extracting("vulnerability_id", "servicecomponent_id")
-            .containsExactly(tuple(500L, 1L));
+        assertThat(sv).extracting("vulnerability_id", "servicecomponent_id").containsExactly(tuple(500L, 1L));
     }
 
     private void runPipeline() throws Exception {

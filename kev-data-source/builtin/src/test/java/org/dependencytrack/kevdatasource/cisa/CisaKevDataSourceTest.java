@@ -37,14 +37,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 @WireMockTest
 class CisaKevDataSourceTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Test
     void shouldParseCisaKevFeed(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlEqualTo("/kev.json")).willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBody(/* language=JSON */ """
+        stubFor(get(urlEqualTo("/kev.json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(/* language=JSON */ """
                         {
                           "vulnerabilities": [
                             {
@@ -66,24 +66,23 @@ class CisaKevDataSourceTest {
                         """)));
 
         final var dataSource = new CisaKevDataSource(
-                HttpClient.newHttpClient(),
-                objectMapper,
-                URI.create(wmRuntimeInfo.getHttpBaseUrl() + "/kev.json"));
+                HttpClient.newHttpClient(), objectMapper, URI.create(wmRuntimeInfo.getHttpBaseUrl() + "/kev.json"));
 
-        assertThat(dataSource).toIterable().satisfiesExactly(
-                first -> {
-                    assertThat(first.vulnSource()).isEqualTo("NVD");
-                    assertThat(first.vulnId()).isEqualTo("CVE-2021-44228");
-                    assertThat(first.publishedAt()).isEqualTo(Instant.parse("2021-12-10T00:00:00Z"));
-                    assertThat(first.requiredAction()).isEqualTo("Apply updates");
-                    assertThat(first.knownRansomware()).isTrue();
-                    assertThat(first.description()).isEqualTo("Log4Shell");
-                    assertThat(first.raw().path("cveID").asText()).isEqualTo("CVE-2021-44228");
-                },
-                second -> {
-                    assertThat(second.vulnId()).isEqualTo("CVE-2021-45046");
-                    assertThat(second.knownRansomware()).isNull();
-                });
+        assertThat(dataSource)
+                .toIterable()
+                .satisfiesExactly(
+                        first -> {
+                            assertThat(first.vulnSource()).isEqualTo("NVD");
+                            assertThat(first.vulnId()).isEqualTo("CVE-2021-44228");
+                            assertThat(first.publishedAt()).isEqualTo(Instant.parse("2021-12-10T00:00:00Z"));
+                            assertThat(first.requiredAction()).isEqualTo("Apply updates");
+                            assertThat(first.knownRansomware()).isTrue();
+                            assertThat(first.description()).isEqualTo("Log4Shell");
+                            assertThat(first.raw().path("cveID").asText()).isEqualTo("CVE-2021-44228");
+                        },
+                        second -> {
+                            assertThat(second.vulnId()).isEqualTo("CVE-2021-45046");
+                            assertThat(second.knownRansomware()).isNull();
+                        });
     }
-
 }

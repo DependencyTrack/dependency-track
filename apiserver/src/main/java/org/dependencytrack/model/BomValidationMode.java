@@ -22,7 +22,6 @@ package org.dependencytrack.model;
  * @since 4.12.0
  */
 public enum BomValidationMode {
-
     ENABLED,
     DISABLED,
     ENABLED_FOR_TAGS,

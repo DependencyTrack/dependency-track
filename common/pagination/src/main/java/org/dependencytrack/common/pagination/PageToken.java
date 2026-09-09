@@ -25,5 +25,4 @@ package org.dependencytrack.common.pagination;
  *
  * @since 5.0.0
  */
-public interface PageToken {
-}
+public interface PageToken {}

@@ -37,10 +37,11 @@ public class Person {
     private String name;
 
     @Persistent
-    @Extensions(value = {
-            @Extension(vendorName = "datanucleus", key = "insert-function", value = "(?::JSONB)"),
-            @Extension(vendorName = "datanucleus", key = "update-function", value = "(?::JSONB)")
-    })
+    @Extensions(
+            value = {
+                @Extension(vendorName = "datanucleus", key = "insert-function", value = "(?::JSONB)"),
+                @Extension(vendorName = "datanucleus", key = "update-function", value = "(?::JSONB)")
+            })
     private String properties;
 
     @Persistent(customValueStrategy = "uuid-v7")
@@ -77,5 +78,4 @@ public class Person {
     public void setUuid(final UUID uuid) {
         this.uuid = uuid;
     }
-
 }

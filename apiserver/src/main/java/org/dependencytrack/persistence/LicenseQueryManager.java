@@ -77,7 +77,7 @@ final class LicenseQueryManager extends QueryManager {
         if (orderBy == null) {
             query.setOrdering("name asc");
         }
-        return (List<License>)query.execute();
+        return (List<License>) query.execute();
     }
 
     /**
@@ -138,8 +138,10 @@ final class LicenseQueryManager extends QueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */
     public void deleteLicense(final License license, final boolean commitIndex) {
-        final Query<PolicyCondition> query = pm.newQuery(PolicyCondition.class, "subject == :subject && value == :value");
-        List<PolicyCondition> policyConditions = (List<PolicyCondition>)query.execute(PolicyCondition.Subject.LICENSE ,license.getUuid().toString());
+        final Query<PolicyCondition> query =
+                pm.newQuery(PolicyCondition.class, "subject == :subject && value == :value");
+        List<PolicyCondition> policyConditions = (List<PolicyCondition>)
+                query.execute(PolicyCondition.Subject.LICENSE, license.getUuid().toString());
         delete(license);
         delete(policyConditions);
     }

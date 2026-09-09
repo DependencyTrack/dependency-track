@@ -116,7 +116,7 @@ public class ToolsJsonConverterTest {
         service.setName("serviceName");
         service.setVersion("serviceVersion");
         service.setDescription("serviceDescription");
-        service.setEndpoints(new String[]{"https://example.com"});
+        service.setEndpoints(new String[] {"https://example.com"});
         service.setAuthenticated(true);
         service.setCrossesTrustBoundary(true);
         service.setData(List.of(serviceDataClassification));
@@ -276,36 +276,41 @@ public class ToolsJsonConverterTest {
 
         assertThat(tools).isNotNull();
         assertThat(tools.components()).satisfiesExactly(component -> {
-             assertThat(component.getAuthors().get(0).getName()).isEqualTo("componentAuthor");
-             assertThat(component.getAuthors().size()==1);
-             assertThat(component.getBlake2b_256()).isEqualTo("componentBlake2b_256");
-             assertThat(component.getBlake2b_384()).isEqualTo("componentBlake2b_384");
-             assertThat(component.getBlake2b_512()).isEqualTo("componentBlake2b_512");
-             assertThat(component.getBlake3()).isEqualTo("componentBlake3");
-             assertThat(component.getClassifier()).isEqualTo(Classifier.LIBRARY);
-             assertThat(component.getCpe()).isEqualTo("componentCpe");
-             assertThat(component.getExternalReferences()).satisfiesExactly(externalReference -> {
-                 assertThat(externalReference.getType()).isEqualTo(org.cyclonedx.model.ExternalReference.Type.DOCUMENTATION);
-                 assertThat(externalReference.getUrl()).isEqualTo("https://example.com");
-             });
-             assertThat(component.getGroup()).isEqualTo("componentGroup");
-             assertThat(component.getMd5()).isEqualTo("componentmd5");
-             assertThat(component.getName()).isEqualTo("componentName");
-             assertThat(component.getPublisher()).isEqualTo("componentPublisher");
-             assertThat(component.getPurl()).asString().isEqualTo("pkg:maven/componentGroup/componentName@componentVersion?foo=bar");
-             assertThat(component.getSha1()).isEqualTo("componentsha1");
-             assertThat(component.getSha256()).isEqualTo("componentsha256");
-             assertThat(component.getSha384()).isEqualTo("componentsha384");
-             assertThat(component.getSha512()).isEqualTo("componentsha512");
-             assertThat(component.getSha3_256()).isEqualTo("componentsha3_256");
-             assertThat(component.getSha3_384()).isEqualTo("componentsha3_384");
-             assertThat(component.getSha3_512()).isEqualTo("componentsha3_512");
-             assertThat(component.getSupplier()).satisfies(supplier -> assertThat(supplier.getName()).isEqualTo("componentSupplierName"));
-             assertThat(component.getSwidTagId()).isEqualTo("componentSwidTagId");
-             assertThat(component.getVersion()).isEqualTo("componentVersion");
+            assertThat(component.getAuthors().get(0).getName()).isEqualTo("componentAuthor");
+            assertThat(component.getAuthors().size() == 1);
+            assertThat(component.getBlake2b_256()).isEqualTo("componentBlake2b_256");
+            assertThat(component.getBlake2b_384()).isEqualTo("componentBlake2b_384");
+            assertThat(component.getBlake2b_512()).isEqualTo("componentBlake2b_512");
+            assertThat(component.getBlake3()).isEqualTo("componentBlake3");
+            assertThat(component.getClassifier()).isEqualTo(Classifier.LIBRARY);
+            assertThat(component.getCpe()).isEqualTo("componentCpe");
+            assertThat(component.getExternalReferences()).satisfiesExactly(externalReference -> {
+                assertThat(externalReference.getType())
+                        .isEqualTo(org.cyclonedx.model.ExternalReference.Type.DOCUMENTATION);
+                assertThat(externalReference.getUrl()).isEqualTo("https://example.com");
+            });
+            assertThat(component.getGroup()).isEqualTo("componentGroup");
+            assertThat(component.getMd5()).isEqualTo("componentmd5");
+            assertThat(component.getName()).isEqualTo("componentName");
+            assertThat(component.getPublisher()).isEqualTo("componentPublisher");
+            assertThat(component.getPurl())
+                    .asString()
+                    .isEqualTo("pkg:maven/componentGroup/componentName@componentVersion?foo=bar");
+            assertThat(component.getSha1()).isEqualTo("componentsha1");
+            assertThat(component.getSha256()).isEqualTo("componentsha256");
+            assertThat(component.getSha384()).isEqualTo("componentsha384");
+            assertThat(component.getSha512()).isEqualTo("componentsha512");
+            assertThat(component.getSha3_256()).isEqualTo("componentsha3_256");
+            assertThat(component.getSha3_384()).isEqualTo("componentsha3_384");
+            assertThat(component.getSha3_512()).isEqualTo("componentsha3_512");
+            assertThat(component.getSupplier())
+                    .satisfies(supplier -> assertThat(supplier.getName()).isEqualTo("componentSupplierName"));
+            assertThat(component.getSwidTagId()).isEqualTo("componentSwidTagId");
+            assertThat(component.getVersion()).isEqualTo("componentVersion");
         });
         assertThat(tools.services()).satisfiesExactly(service -> {
-            assertThat(service.getProvider()).satisfies(provider -> assertThat(provider.getName()).isEqualTo("serviceProviderName"));
+            assertThat(service.getProvider())
+                    .satisfies(provider -> assertThat(provider.getName()).isEqualTo("serviceProviderName"));
             assertThat(service.getGroup()).isEqualTo("serviceGroup");
             assertThat(service.getName()).isEqualTo("serviceName");
             assertThat(service.getVersion()).isEqualTo("serviceVersion");
@@ -318,7 +323,8 @@ public class ToolsJsonConverterTest {
                 assertThat(classification.getName()).isEqualTo("serviceDataClassificationName");
             });
             assertThat(service.getExternalReferences()).satisfiesExactly(externalReference -> {
-                assertThat(externalReference.getType()).isEqualTo(org.cyclonedx.model.ExternalReference.Type.DOCUMENTATION);
+                assertThat(externalReference.getType())
+                        .isEqualTo(org.cyclonedx.model.ExternalReference.Type.DOCUMENTATION);
                 assertThat(externalReference.getUrl()).isEqualTo("https://example.com");
             });
         });
@@ -333,5 +339,4 @@ public class ToolsJsonConverterTest {
     public void testConvertToAttributeNull() {
         assertThat(new ToolsJsonConverter().convertToAttribute(null)).isNull();
     }
-
 }

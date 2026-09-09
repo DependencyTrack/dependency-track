@@ -28,6 +28,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
@@ -40,10 +45,6 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Serialized;
 import javax.jdo.annotations.Unique;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
@@ -56,7 +57,9 @@ import java.util.UUID;
  */
 @PersistenceCapable
 @FetchGroups({
-        @FetchGroup(name = "ALL", members = {
+    @FetchGroup(
+            name = "ALL",
+            members = {
                 @Persistent(name = "name"),
                 @Persistent(name = "text"),
                 @Persistent(name = "template"),
@@ -70,15 +73,17 @@ import java.util.UUID;
                 @Persistent(name = "seeAlso"),
                 @Persistent(name = "licenseGroups"),
                 @Persistent(name = "uuid"),
-        }),
-        @FetchGroup(name = "CONCISE", members = {
+            }),
+    @FetchGroup(
+            name = "CONCISE",
+            members = {
                 @Persistent(name = "name"),
                 @Persistent(name = "licenseId"),
                 @Persistent(name = "osiApproved"),
                 @Persistent(name = "fsfLibre"),
                 @Persistent(name = "deprecatedLicenseId"),
                 @Persistent(name = "customLicense")
-        })
+            })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -109,7 +114,9 @@ public class License implements Serializable {
     @JsonProperty(value = "name")
     @NotBlank
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The name may only contain printable characters")
     private String name;
 
     /**
@@ -160,7 +167,9 @@ public class License implements Serializable {
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Size(min = 1, max = 255)
     @NotBlank
-    @Pattern(regexp = RegexSequence.Definition.STRING_IDENTIFIER, message = "The licenseId may only contain alpha, numeric, and specific symbols _-.+")
+    @Pattern(
+            regexp = RegexSequence.Definition.STRING_IDENTIFIER,
+            message = "The licenseId may only contain alpha, numeric, and specific symbols _-.+")
     private String licenseId;
 
     /**
@@ -301,7 +310,6 @@ public class License implements Serializable {
         this.deprecatedLicenseId = deprecatedLicenseId;
     }
 
-
     public boolean isCustomLicense() {
         return customLicense;
     }
@@ -337,5 +345,4 @@ public class License implements Serializable {
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
-
 }

@@ -38,12 +38,17 @@ import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_VULNERABILITY;
 final class CelPolicyRequirements {
 
     static final Map<String, Map<CelType, List<String>>> FUNCTION_FIELD_REQUIREMENTS = Map.ofEntries(
-            Map.entry(DEPENDS_ON.functionName(), Map.of(TYPE_PROJECT, List.of("uuid"), TYPE_COMPONENT, List.of("uuid"))),
+            Map.entry(
+                    DEPENDS_ON.functionName(), Map.of(TYPE_PROJECT, List.of("uuid"), TYPE_COMPONENT, List.of("uuid"))),
             Map.entry(IS_DEPENDENCY_OF.functionName(), Map.of(TYPE_COMPONENT, List.of("uuid"))),
             Map.entry(IS_EXCLUSIVE_DEPENDENCY_OF.functionName(), Map.of(TYPE_COMPONENT, List.of("uuid"))),
             Map.entry(IS_DIRECT_DEPENDENCY_OF.functionName(), Map.of(TYPE_COMPONENT, List.of("uuid"))),
-            Map.entry(MATCHES_RANGE.functionName(), Map.of(TYPE_PROJECT, List.of("version"), TYPE_COMPONENT, List.of("version"))),
-            Map.entry(VERSION_DISTANCE.functionName(), Map.of(TYPE_COMPONENT, List.of("purl", "uuid", "version", "latest_version"))),
+            Map.entry(
+                    MATCHES_RANGE.functionName(),
+                    Map.of(TYPE_PROJECT, List.of("version"), TYPE_COMPONENT, List.of("version"))),
+            Map.entry(
+                    VERSION_DISTANCE.functionName(),
+                    Map.of(TYPE_COMPONENT, List.of("purl", "uuid", "version", "latest_version"))),
             Map.entry(COMPARE_AGE.functionName(), Map.of(TYPE_COMPONENT, List.of("purl", "published_at"))),
             Map.entry(
                     HAS_PACKAGE_ARTIFACT_HASH_MISMATCH.functionName(),
@@ -60,8 +65,10 @@ final class CelPolicyRequirements {
                                     "package_artifact_sha512"))));
 
     static final Map<CelType, Map<String, List<String>>> FIELD_EXPANSIONS = Map.of(
-            TYPE_VULNERABILITY, Map.of(
-                    "severity", List.of(
+            TYPE_VULNERABILITY,
+            Map.of(
+                    "severity",
+                    List.of(
                             "cvssv2_base_score",
                             "cvssv3_base_score",
                             "cvssv4_score",
@@ -69,7 +76,5 @@ final class CelPolicyRequirements {
                             "owasp_rr_technical_impact_score",
                             "owasp_rr_business_impact_score")));
 
-    private CelPolicyRequirements() {
-    }
-
+    private CelPolicyRequirements() {}
 }

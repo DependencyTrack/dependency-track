@@ -19,7 +19,6 @@
 package org.dependencytrack.v4migrator.source;
 
 public enum SourceFlavor {
-
     POSTGRESQL("public"),
     MSSQL("dbo");
 
@@ -47,8 +46,7 @@ public enum SourceFlavor {
         final int sep = indexOfAny(jdbcUrl, '?', ';');
         final String safe = sep < 0 ? jdbcUrl : jdbcUrl.substring(0, sep);
         throw new IllegalArgumentException(
-            "Unsupported source JDBC URL '" + safe
-                + "': expected jdbc:postgresql: or jdbc:sqlserver:");
+                "Unsupported source JDBC URL '" + safe + "': expected jdbc:postgresql: or jdbc:sqlserver:");
     }
 
     private static int indexOfAny(final String s, final char a, final char b) {

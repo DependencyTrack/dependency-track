@@ -63,8 +63,8 @@ class DatabaseCacheTest {
 
     @BeforeEach
     void beforeEach() {
-        final var cacheProviderFactory = new DatabaseCacheProvider(
-                config, dataSourceRegistry, new SimpleMeterRegistry());
+        final var cacheProviderFactory =
+                new DatabaseCacheProvider(config, dataSourceRegistry, new SimpleMeterRegistry());
         cacheManager = cacheProviderFactory.create();
     }
 
@@ -254,7 +254,6 @@ class DatabaseCacheTest {
         assertThat(cache.get("key", k -> "other".getBytes())).asString().isEqualTo("value");
     }
 
-
     @Test
     void invalidateAllShouldRemoveAllEntries() {
         final Cache cache = cacheManager.getCache("test");
@@ -277,5 +276,4 @@ class DatabaseCacheTest {
 
         assertThat(cache.get("key", k -> "value".getBytes())).asString().isEqualTo("value");
     }
-
 }

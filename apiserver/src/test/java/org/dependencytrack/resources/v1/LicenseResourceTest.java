@@ -20,8 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -33,6 +31,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+
 import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -43,9 +44,7 @@ public class LicenseResourceTest extends ResourceTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(LicenseResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+            new ResourceConfig(LicenseResource.class).register(ApiFilter.class).register(AuthFeature.class));
 
     @BeforeEach
     @Override
@@ -57,16 +56,14 @@ public class LicenseResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturnFullLicenseJsonForKnownSpdxIdentifier() {
-        final Response response = jersey
-                .target(V1_LICENSE + "/Apache-2.0")
+        final Response response = jersey.target(V1_LICENSE + "/Apache-2.0")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
         final String body = getPlainTextBody(response);
-        assertThatJson(body)
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(body).isEqualTo(/* language=JSON */ """
                         {
                           "name": "Apache License 2.0",
                           "licenseId": "Apache-2.0",
@@ -97,15 +94,12 @@ public class LicenseResourceTest extends ResourceTest {
         group.setLicenses(List.of(license));
         qm.persist(group);
 
-        final Response response = jersey
-                .target(V1_LICENSE + "/Apache-2.0")
+        final Response response = jersey.target(V1_LICENSE + "/Apache-2.0")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .node("licenseGroups")
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).node("licenseGroups").isEqualTo(/* language=JSON */ """
                         [
                           {
                             "uuid": "${json-unit.any-string}",
@@ -117,8 +111,7 @@ public class LicenseResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturn404WhenLicenseIdDoesNotExist() {
-        final Response response = jersey
-                .target(V1_LICENSE + "/blah")
+        final Response response = jersey.target(V1_LICENSE + "/blah")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -129,18 +122,13 @@ public class LicenseResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturnPaginatedFullLicenseListing() {
-        final Response response = jersey
-                .target(V1_LICENSE)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Response response =
+                jersey.target(V1_LICENSE).request().header(X_API_KEY, apiKey).get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("811");
         final String body = getPlainTextBody(response);
         assertThatJson(body).isArray().hasSize(100);
-        assertThatJson(body)
-                .node("[0]")
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(body).node("[0]").isEqualTo(/* language=JSON */ """
                         {
                           "name": "${json-unit.any-string}",
                           "licenseId": "${json-unit.any-string}",
@@ -159,8 +147,7 @@ public class LicenseResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturnConciseLicenseListingWithoutClobFields() {
-        final Response response = jersey
-                .target(V1_LICENSE + "/concise")
+        final Response response = jersey.target(V1_LICENSE + "/concise")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -168,9 +155,7 @@ public class LicenseResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
         final String body = getPlainTextBody(response);
         assertThatJson(body).isArray().hasSize(811);
-        assertThatJson(body)
-                .node("[0]")
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(body).node("[0]").isEqualTo(/* language=JSON */ """
                         {
                           "name": "${json-unit.any-string}",
                           "licenseId": "${json-unit.any-string}",
@@ -187,11 +172,8 @@ public class LicenseResourceTest extends ResourceTest {
     public void shouldRoundTripAllOptionalFieldsOnCreate() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
 
-        final Response response = jersey
-                .target(V1_LICENSE)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .put(Entity.json(/* language=JSON */ """
+        final Response response =
+                jersey.target(V1_LICENSE).request().header(X_API_KEY, apiKey).put(Entity.json(/* language=JSON */ """
                         {
                           "name": "Acme Example",
                           "licenseId": "Acme-Example-License",
@@ -206,8 +188,7 @@ public class LicenseResourceTest extends ResourceTest {
                         }
                         """));
         assertThat(response.getStatus()).isEqualTo(201);
-        assertThatJson(getPlainTextBody(response))
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                         {
                           "name": "Acme Example",
                           "licenseId": "Acme-Example-License",
@@ -230,11 +211,8 @@ public class LicenseResourceTest extends ResourceTest {
     public void shouldForceCustomLicenseFlagOnCreate() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
 
-        final Response response = jersey
-                .target(V1_LICENSE)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .put(Entity.json(/* language=JSON */ """
+        final Response response =
+                jersey.target(V1_LICENSE).request().header(X_API_KEY, apiKey).put(Entity.json(/* language=JSON */ """
                         {
                           "name": "Sneaky Example",
                           "licenseId": "Sneaky-Example-License",
@@ -242,20 +220,15 @@ public class LicenseResourceTest extends ResourceTest {
                         }
                         """));
         assertThat(response.getStatus()).isEqualTo(201);
-        assertThatJson(getPlainTextBody(response))
-                .node("isCustomLicense")
-                .isEqualTo(true);
+        assertThatJson(getPlainTextBody(response)).node("isCustomLicense").isEqualTo(true);
     }
 
     @Test
     public void shouldReject400WhenCreatingLicenseWithoutName() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
 
-        final Response response = jersey
-                .target(V1_LICENSE)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .put(Entity.json(/* language=JSON */ """
+        final Response response =
+                jersey.target(V1_LICENSE).request().header(X_API_KEY, apiKey).put(Entity.json(/* language=JSON */ """
                         {
                           "licenseId": "Acme-Example-License"
                         }
@@ -268,11 +241,8 @@ public class LicenseResourceTest extends ResourceTest {
     public void shouldReject400WhenCreatingLicenseWithoutLicenseId() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
 
-        final Response response = jersey
-                .target(V1_LICENSE)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .put(Entity.json(/* language=JSON */ """
+        final Response response =
+                jersey.target(V1_LICENSE).request().header(X_API_KEY, apiKey).put(Entity.json(/* language=JSON */ """
                         {
                           "name": "Acme Example"
                         }
@@ -285,11 +255,8 @@ public class LicenseResourceTest extends ResourceTest {
     public void shouldReject409WhenLicenseAlreadyExists() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
 
-        final Response response = jersey
-                .target(V1_LICENSE)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .put(Entity.json(/* language=JSON */ """
+        final Response response =
+                jersey.target(V1_LICENSE).request().header(X_API_KEY, apiKey).put(Entity.json(/* language=JSON */ """
                         {
                           "name": "Apache License 2.0",
                           "licenseId": "Apache-2.0"
@@ -297,8 +264,7 @@ public class LicenseResourceTest extends ResourceTest {
                         """));
         assertThat(response.getStatus()).isEqualTo(409);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThat(getPlainTextBody(response))
-                .isEqualTo("A license with the specified licenseId already exists.");
+        assertThat(getPlainTextBody(response)).isEqualTo("A license with the specified licenseId already exists.");
     }
 
     @Test
@@ -311,8 +277,7 @@ public class LicenseResourceTest extends ResourceTest {
         license.setCustomLicense(true);
         qm.createCustomLicense(license, false);
 
-        final Response response = jersey
-                .target(V1_LICENSE + "/Acme-Example-License")
+        final Response response = jersey.target(V1_LICENSE + "/Acme-Example-License")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -323,8 +288,7 @@ public class LicenseResourceTest extends ResourceTest {
     public void shouldReject409WhenDeletingNonCustomLicense() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
 
-        final Response response = jersey
-                .target(V1_LICENSE + "/Apache-2.0")
+        final Response response = jersey.target(V1_LICENSE + "/Apache-2.0")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -337,13 +301,11 @@ public class LicenseResourceTest extends ResourceTest {
     public void shouldReturn404WhenDeletingUnknownLicense() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
 
-        final Response response = jersey
-                .target(V1_LICENSE + "/does-not-exist")
+        final Response response = jersey.target(V1_LICENSE + "/does-not-exist")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(getPlainTextBody(response)).isEqualTo("The license could not be found.");
     }
-
 }

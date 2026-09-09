@@ -36,7 +36,6 @@ class CacheConfigTest {
         assertThat(cacheConfig.ttl()).hasMillis(123);
     }
 
-
     @Test
     void ttlShouldReturnDefaultWhenPropertyIsNotDefined() {
         final var config = new SmallRyeConfigBuilder().build();
@@ -45,5 +44,4 @@ class CacheConfigTest {
 
         assertThat(cacheConfig.ttl()).hasHours(1);
     }
-
 }

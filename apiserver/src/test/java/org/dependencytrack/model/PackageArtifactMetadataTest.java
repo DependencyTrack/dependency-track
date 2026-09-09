@@ -35,5 +35,4 @@ class PackageArtifactMetadataTest {
                 .isThrownBy(() -> new PackageArtifactMetadata(
                         purl, purl, "2.0.0", null, null, null, null, null, null, Instant.now()));
     }
-
 }

@@ -22,13 +22,20 @@ package org.dependencytrack.model;
  * @since 5.0.0
  */
 public enum DefaultRepository {
-
     CPAN_PUBLIC_REGISTRY(RepositoryType.CPAN, "cpan-public-registry", "https://fastapi.metacpan.org/v1/", 1),
     GEM_RUBYGEMS(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", 1),
     HEX_HEX_PM(RepositoryType.HEX, "hex.pm", "https://hex.pm/", 1),
     MAVEN_CENTRAL(RepositoryType.MAVEN, "central", "https://repo1.maven.org/maven2/", 1),
-    MAVEN_ATLASSIAN_PUBLIC(RepositoryType.MAVEN, "atlassian-public", "https://packages.atlassian.com/content/repositories/atlassian-public/", 2),
-    MAVEN_JBOSS_RELEASES(RepositoryType.MAVEN, "jboss-releases", "https://repository.jboss.org/nexus/content/repositories/releases/", 3),
+    MAVEN_ATLASSIAN_PUBLIC(
+            RepositoryType.MAVEN,
+            "atlassian-public",
+            "https://packages.atlassian.com/content/repositories/atlassian-public/",
+            2),
+    MAVEN_JBOSS_RELEASES(
+            RepositoryType.MAVEN,
+            "jboss-releases",
+            "https://repository.jboss.org/nexus/content/repositories/releases/",
+            3),
     MAVEN_CLOJARS(RepositoryType.MAVEN, "clojars", "https://repo.clojars.org/", 4),
     MAVEN_GOOGLE_ANDROID(RepositoryType.MAVEN, "google-android", "https://maven.google.com/", 5),
     NPM_PUBLIC_REGISTRY(RepositoryType.NPM, "npm-public-registry", "https://registry.npmjs.org/", 1),
@@ -39,7 +46,8 @@ public enum DefaultRepository {
     GO_PROXY_GOLANG_ORG(RepositoryType.GO_MODULES, "proxy.golang.org", "https://proxy.golang.org", 1),
     GITHUB(RepositoryType.GITHUB, "github", "https://github.com", 1),
     HACKAGE(RepositoryType.HACKAGE, "hackage.haskell", "https://hackage.haskell.org/", 1),
-    NIXPKGS_NIXOS_ORG(RepositoryType.NIXPKGS, "nixos.org", "https://channels.nixos.org/nixpkgs-unstable/packages.json.br", 1);
+    NIXPKGS_NIXOS_ORG(
+            RepositoryType.NIXPKGS, "nixos.org", "https://channels.nixos.org/nixpkgs-unstable/packages.json.br", 1);
 
     private final RepositoryType type;
     private final String identifier;
@@ -68,5 +76,4 @@ public enum DefaultRepository {
     public int getResolutionOrder() {
         return resolutionOrder;
     }
-
 }

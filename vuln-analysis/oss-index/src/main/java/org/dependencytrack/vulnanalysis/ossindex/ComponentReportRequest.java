@@ -23,5 +23,4 @@ import java.util.Collection;
 /**
  * @since 5.0.0
  */
-record ComponentReportRequest(Collection<String> coordinates) {
-}
+record ComponentReportRequest(Collection<String> coordinates) {}

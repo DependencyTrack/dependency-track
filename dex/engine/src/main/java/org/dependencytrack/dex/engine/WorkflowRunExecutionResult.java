@@ -22,5 +22,5 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
-record WorkflowRunExecutionResult(List<WorkflowCommand> commands, @Nullable String customStatus) {
-}
+record WorkflowRunExecutionResult(
+        List<WorkflowCommand> commands, @Nullable String customStatus) {}

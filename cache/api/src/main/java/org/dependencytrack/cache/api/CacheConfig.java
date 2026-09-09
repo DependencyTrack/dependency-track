@@ -38,10 +38,8 @@ public final class CacheConfig {
     }
 
     public Duration ttl() {
-        return config
-                .getOptionalValue("dt.cache.\"%s\".ttl-ms".formatted(this.name), long.class)
+        return config.getOptionalValue("dt.cache.\"%s\".ttl-ms".formatted(this.name), long.class)
                 .map(Duration::ofMillis)
                 .orElse(Duration.ofHours(1));
     }
-
 }

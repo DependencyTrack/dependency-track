@@ -112,10 +112,18 @@ public final class LegacyConfigPropertyValidator {
             "alpine.worker.threads");
 
     static final Map<String, String> LEGACY_V5_RC1_PROPERTY_RENAMES = buildLegacyV5Rc1Renames();
+
+    /// Properties that no longer exist, and whose value cannot be carried over to their replacement.
+    /// A rename entry would be misleading, since the operator has to decide on a new value rather
+    /// than move the old one.
+    static final Map<String, String> REMOVED_PROPERTY_REPLACEMENTS = Map.of("dt.task.portfolio-analysis.cron", """
+        The portfolio analysis no longer starts at a fixed time. \
+        Use dt.task.portfolio-analysis.max-analysis-age-ms to say how long an analysis stays valid.\
+        """);
+
     private static final Set<String> STANDARD_SYSTEM_ENV_VARS = Set.of("NO_PROXY");
 
-    private LegacyConfigPropertyValidator() {
-    }
+    private LegacyConfigPropertyValidator() {}
 
     public static void validate(Config config) {
         final SmallRyeConfig smallRyeConfig = config.unwrap(SmallRyeConfig.class);
@@ -123,6 +131,28 @@ public final class LegacyConfigPropertyValidator {
         throwOnLegacyFileSecretProperties(smallRyeConfig);
         throwOnLegacyV4Properties(smallRyeConfig);
         throwOnLegacyV5Rc1Properties(smallRyeConfig);
+        throwOnRemovedProperties(smallRyeConfig);
+    }
+
+    private static void throwOnRemovedProperties(SmallRyeConfig config) {
+        final var present = new LinkedHashMap<String, String>();
+        REMOVED_PROPERTY_REPLACEMENTS.forEach((name, replacement) -> {
+            if (config.getConfigValue(name).getValue() != null) {
+                present.put(name, replacement);
+            }
+        });
+        if (present.isEmpty()) {
+            return;
+        }
+
+        final var explanations = new StringBuilder();
+        present.forEach((name, replacement) ->
+                explanations.append("\n  ").append(name).append(": ").append(replacement));
+
+        throw new IllegalStateException("""
+            The following configuration properties are no longer supported. \
+            Remove them, and configure the replacement named for each:%s\
+            """.formatted(explanations));
     }
 
     private static void throwOnLegacyFileSecretProperties(SmallRyeConfig config) {
@@ -137,9 +167,9 @@ public final class LegacyConfigPropertyValidator {
         }
 
         throw new IllegalStateException("""
-                Legacy file-secret properties are no longer supported: %s; \
-                Replace each <key>.file=/path with <key>=${file::/path}\
-                """.formatted(present));
+            Legacy file-secret properties are no longer supported: %s; \
+            Replace each <key>.file=/path with <key>=${file::/path}\
+            """.formatted(present));
     }
 
     private static void throwOnLegacyV4Properties(SmallRyeConfig config) {
@@ -154,10 +184,10 @@ public final class LegacyConfigPropertyValidator {
         }
 
         throw new IllegalStateException("""
-                Legacy Dependency-Track v4 configuration properties are no longer supported: %s; \
-                Migrate to the dt.* equivalents documented in the v5.0.0-rc.2 upgrade guide: \
-                https://dependencytrack.github.io/docs/next/guides/upgrading/v5.0.0-rc.2/\
-                """.formatted(present));
+            Legacy Dependency-Track v4 configuration properties are no longer supported: %s; \
+            Migrate to the dt.* equivalents documented in the v5.0.0-rc.2 upgrade guide: \
+            https://dependencytrack.github.io/docs/next/guides/upgrading/v5.0.0-rc.2/\
+            """.formatted(present));
     }
 
     private static void throwOnLegacyV5Rc1Properties(SmallRyeConfig config) {
@@ -192,10 +222,10 @@ public final class LegacyConfigPropertyValidator {
                 migrations.append("\n  ").append(oldName).append(" -> ").append(newName));
 
         throw new IllegalStateException("""
-                Legacy Dependency-Track v5.0.0-rc.1 configuration properties are no longer supported. \
-                Rename the following properties to their v5.0.0-rc.2 equivalents (see \
-                https://dependencytrack.github.io/docs/next/guides/upgrading/v5.0.0-rc.2/):%s\
-                """.formatted(migrations));
+            Legacy Dependency-Track v5.0.0-rc.1 configuration properties are no longer supported. \
+            Rename the following properties to their v5.0.0-rc.2 equivalents (see \
+            https://dependencytrack.github.io/docs/next/guides/upgrading/v5.0.0-rc.2/):%s\
+            """.formatted(migrations));
     }
 
     private static String envForm(String name) {
@@ -217,13 +247,20 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.dev.services.image.frontend", "dt.dev-services.frontend-image");
         renames.put("dt.dev.services.image.postgres", "dt.dev-services.postgres-image");
         renames.put("dt.dev.services.port.frontend", "dt.dev-services.frontend-port");
-        renames.put("dt.dex-engine.maintenance-worker.initial-delay-ms", "dt.dex-engine.maintenance.worker-initial-delay-ms");
+        renames.put(
+                "dt.dex-engine.maintenance-worker.initial-delay-ms",
+                "dt.dex-engine.maintenance.worker-initial-delay-ms");
         renames.put("dt.dex-engine.maintenance-worker.interval-ms", "dt.dex-engine.maintenance.worker-interval-ms");
-        renames.put("dt.dex-engine.maintenance.run-retention-duration", "dt.dex-engine.maintenance.run-retention-ms (now a long in milliseconds, was an ISO-8601 Duration)");
-        renames.put("dt.dex-engine.maintenance.worker.initial-delay-ms", "dt.dex-engine.maintenance.worker-initial-delay-ms");
+        renames.put(
+                "dt.dex-engine.maintenance.run-retention-duration",
+                "dt.dex-engine.maintenance.run-retention-ms (now a long in milliseconds, was an ISO-8601 Duration)");
+        renames.put(
+                "dt.dex-engine.maintenance.worker.initial-delay-ms",
+                "dt.dex-engine.maintenance.worker-initial-delay-ms");
         renames.put("dt.dex-engine.maintenance.worker.interval-ms", "dt.dex-engine.maintenance.worker-interval-ms");
         renames.put("dt.dex-engine.metrics.collector.enabled", "dt.dex-engine.metrics-collector.enabled");
-        renames.put("dt.dex-engine.metrics.collector.initial-delay-ms", "dt.dex-engine.metrics-collector.initial-delay-ms");
+        renames.put(
+                "dt.dex-engine.metrics.collector.initial-delay-ms", "dt.dex-engine.metrics-collector.initial-delay-ms");
         renames.put("dt.dex-engine.metrics.collector.interval-ms", "dt.dex-engine.metrics-collector.interval-ms");
         renames.put("dt.file-storage.local.compression.level", "dt.file-storage.local.compression-level");
         renames.put("dt.file-storage.s3.access.key", "dt.file-storage.s3.access-key");
@@ -235,9 +272,13 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.http.timeout.connection", "dt.http.connect-timeout-ms (now milliseconds, was seconds)");
         renames.put("dt.init.and.exit", "dt.init-tasks.exit-after-completion");
         renames.put("dt.init.task.database.migration.enabled", "dt.init-task.database-migration.enabled");
-        renames.put("dt.init.task.database.partition.maintenance.enabled", "dt.init-task.database-partition-maintenance.enabled");
+        renames.put(
+                "dt.init.task.database.partition.maintenance.enabled",
+                "dt.init-task.database-partition-maintenance.enabled");
         renames.put("dt.init.task.database.seeding.enabled", "dt.init-task.database-seeding.enabled");
-        renames.put("dt.init.task.dex.engine.database.migration.enabled", "dt.init-task.dex-engine-database-migration.enabled");
+        renames.put(
+                "dt.init.task.dex.engine.database.migration.enabled",
+                "dt.init-task.dex-engine-database-migration.enabled");
         renames.put("dt.init.task.key.generation.enabled", "(removed; key generation no longer runs as an init task)");
         renames.put("dt.init.tasks.datasource.close-after-use", "dt.init-tasks.datasource.close-after-completion");
         renames.put("dt.init.tasks.datasource.name", "dt.init-tasks.datasource.name");
@@ -248,14 +289,16 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.ldap.basedn", "dt.ldap.base-dn");
         renames.put("dt.ldap.bind.password", "dt.ldap.bind-password");
         renames.put("dt.ldap.bind.username", "dt.ldap.bind-username");
-        renames.put("dt.ldap.groups.filter", "dt.ldap.group-filter");
+        renames.put("dt.ldap.groups.filter", "(removed; the group filter was never applied during authentication)");
         renames.put("dt.ldap.groups.search.filter", "dt.ldap.group-search-filter");
         renames.put("dt.ldap.security.auth", "dt.ldap.security-auth");
         renames.put("dt.ldap.server.url", "dt.ldap.server-url");
         renames.put("dt.ldap.team.synchronization", "dt.ldap.team-synchronization");
         renames.put("dt.ldap.user.groups.filter", "dt.ldap.user-groups-filter");
         renames.put("dt.ldap.user.provisioning", "dt.ldap.user-provisioning");
-        renames.put("dt.ldap.users.search.filter", "dt.ldap.user-search-filter");
+        renames.put(
+                "dt.ldap.users.search.filter",
+                "(removed; the user search filter was never applied during authentication)");
         renames.put("dt.no.proxy", "dt.http.proxy.exclusions");
         renames.put("dt.oidc.auth.customizer", "dt.oidc.auth-customizer");
         renames.put("dt.oidc.client.id", "dt.oidc.client-id");
@@ -276,7 +319,10 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.task.project.maintenance.cron", "dt.task.project-maintenance.cron");
         renames.put("dt.task.tag.maintenance.cron", "dt.task.tag-maintenance.cron");
         renames.put("dt.task.vulnerability-policy-bundle-sync.cron", "dt.task.vuln-policy-bundle-sync.cron");
-        renames.put("dt.task.vulnerability.analysis.cron", "dt.task.portfolio-analysis.cron");
+        renames.put("dt.task.vulnerability.analysis.cron", """
+            (removed; the portfolio analysis no longer starts at a fixed time, see \
+            dt.task.portfolio-analysis.max-analysis-age-ms)\
+            """);
         renames.put("dt.task.vulnerability.database.maintenance.cron", "dt.task.vuln-database-maintenance.cron");
         renames.put("dt.task.vulnerability.metrics.update.cron", "dt.task.vuln-metrics-update.cron");
         renames.put("dt.telemetry.submission.enabled.default", "dt.telemetry.submission.default-enabled");
@@ -287,5 +333,4 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.vulnerability.policy.bundle.url", "dt.vuln-policy-bundle.url");
         return renames;
     }
-
 }

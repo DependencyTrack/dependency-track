@@ -22,7 +22,6 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.github.nscuro.versatile.Vers;
 import io.github.nscuro.versatile.VersException;
-import jakarta.annotation.Nullable;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.parser.spdx.expression.SpdxExpressions;
 import org.dependencytrack.policy.cel.persistence.CelPolicyDao;
@@ -34,6 +33,8 @@ import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.jdbi.v3.core.statement.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.annotation.Nullable;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -68,12 +69,12 @@ final class CelPolicyFunctions {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CelPolicyFunctions.class);
 
-    private CelPolicyFunctions() {
-    }
+    private CelPolicyFunctions() {}
 
     static boolean dependsOn(final Project project, final Component component) {
         if (project.getUuid().isBlank()) {
-            LOGGER.warn("%s: project does not have a UUID; Unable to evaluate, returning false".formatted(DEPENDS_ON.functionName()));
+            LOGGER.warn("%s: project does not have a UUID; Unable to evaluate, returning false"
+                    .formatted(DEPENDS_ON.functionName()));
             return false;
         }
 
@@ -98,8 +99,10 @@ final class CelPolicyFunctions {
                          WHERE "PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
                            AND ${filters}
                         """);
-                return query
-                        .define(ATTRIBUTE_QUERY_NAME, "%s#dependsOn_withoutInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                return query.define(
+                                ATTRIBUTE_QUERY_NAME,
+                                "%s#dependsOn_withoutInMemoryFilters"
+                                        .formatted(CelPolicyFunctions.class.getSimpleName()))
                         .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                         .bind("projectUuid", UUID.fromString(project.getUuid()))
                         .bindMap(compositeNodeFilter.sqlFilterParams())
@@ -120,7 +123,9 @@ final class CelPolicyFunctions {
                        AND ${filters}
                     """);
             return query
-                    .define(ATTRIBUTE_QUERY_NAME, "%s#dependsOn_withInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                    .define(
+                            ATTRIBUTE_QUERY_NAME,
+                            "%s#dependsOn_withInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
                     .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                     .define("selectColumnNames", compositeNodeFilter.sqlSelectColumns())
                     .bind("projectUuid", UUID.fromString(project.getUuid()))
@@ -133,7 +138,8 @@ final class CelPolicyFunctions {
 
     static boolean isDependencyOf(final Component leafComponent, final Component rootComponent) {
         if (leafComponent.getUuid().isBlank()) {
-            LOGGER.warn("%s: leaf component does not have a UUID; Unable to evaluate, returning false".formatted(IS_DEPENDENCY_OF.functionName()));
+            LOGGER.warn("%s: leaf component does not have a UUID; Unable to evaluate, returning false"
+                    .formatted(IS_DEPENDENCY_OF.functionName()));
             return false;
         }
 
@@ -185,8 +191,10 @@ final class CelPolicyFunctions {
                           FROM "CTE_DEPENDENCIES"
                         """);
 
-                return query
-                        .define(ATTRIBUTE_QUERY_NAME, "%s#isDependencyOf_withoutInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                return query.define(
+                                ATTRIBUTE_QUERY_NAME,
+                                "%s#isDependencyOf_withoutInMemoryFilters"
+                                        .formatted(CelPolicyFunctions.class.getSimpleName()))
                         .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                         .bind("leafComponentUuid", UUID.fromString(leafComponent.getUuid()))
                         .bindMap(compositeNodeFilter.sqlFilterParams())
@@ -246,7 +254,9 @@ final class CelPolicyFunctions {
                     """);
 
             return query
-                    .define(ATTRIBUTE_QUERY_NAME, "%s#isDependencyOf_withInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                    .define(
+                            ATTRIBUTE_QUERY_NAME,
+                            "%s#isDependencyOf_withInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
                     .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                     .define("selectColumnNames", compositeNodeFilter.sqlSelectColumns())
                     .bind("leafComponentUuid", UUID.fromString(leafComponent.getUuid()))
@@ -259,7 +269,8 @@ final class CelPolicyFunctions {
 
     static boolean isExclusiveDependencyOf(final Component leafComponent, final Component rootComponent) {
         if (leafComponent.getUuid().isBlank()) {
-            LOGGER.warn("%s: leaf component does not have a UUID; Unable to evaluate, returning false".formatted(IS_EXCLUSIVE_DEPENDENCY_OF.functionName()));
+            LOGGER.warn("%s: leaf component does not have a UUID; Unable to evaluate, returning false"
+                    .formatted(IS_EXCLUSIVE_DEPENDENCY_OF.functionName()));
             return false;
         }
 
@@ -329,8 +340,9 @@ final class CelPolicyFunctions {
                       FROM "CTE_DEPENDENCIES"
                     """);
 
-            final List<DependencyNode> nodes = query
-                    .define(ATTRIBUTE_QUERY_NAME, "%s#isExclusiveDependencyOf".formatted(CelPolicyFunctions.class.getSimpleName()))
+            final List<DependencyNode> nodes = query.define(
+                            ATTRIBUTE_QUERY_NAME,
+                            "%s#isExclusiveDependencyOf".formatted(CelPolicyFunctions.class.getSimpleName()))
                     .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                     .define("selectColumnNames", compositeNodeFilter.sqlSelectColumns())
                     .bind("leafComponentUuid", UUID.fromString(leafComponent.getUuid()))
@@ -356,10 +368,10 @@ final class CelPolicyFunctions {
         }
     }
 
-    static boolean isDirectDependencyOf(final Component childComponent,
-                                        final Component parentTemplate) {
+    static boolean isDirectDependencyOf(final Component childComponent, final Component parentTemplate) {
         if (childComponent.getUuid().isBlank()) {
-            LOGGER.warn("%s: leaf component does not have a UUID; returning false".formatted(IS_DIRECT_DEPENDENCY_OF.functionName()));
+            LOGGER.warn("%s: leaf component does not have a UUID; returning false"
+                    .formatted(IS_DIRECT_DEPENDENCY_OF.functionName()));
             return false;
         }
 
@@ -388,9 +400,10 @@ final class CelPolicyFunctions {
                              AND ${filters}
                         )
                         """);
-                return query
-                        .define(ATTRIBUTE_QUERY_NAME,
-                                "%s#isDirectDependencyOf_withoutInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                return query.define(
+                                ATTRIBUTE_QUERY_NAME,
+                                "%s#isDirectDependencyOf_withoutInMemoryFilters"
+                                        .formatted(CelPolicyFunctions.class.getSimpleName()))
                         .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                         .bind("childUuid", UUID.fromString(childComponent.getUuid()))
                         .bindMap(compositeNodeFilter.sqlFilterParams())
@@ -429,8 +442,10 @@ final class CelPolicyFunctions {
                     """);
 
             return query
-                    .define(ATTRIBUTE_QUERY_NAME,
-                            "%s#isDirectDependencyOf_withInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                    .define(
+                            ATTRIBUTE_QUERY_NAME,
+                            "%s#isDirectDependencyOf_withInMemoryFilters"
+                                    .formatted(CelPolicyFunctions.class.getSimpleName()))
                     .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                     .define("selectColumnNames", compositeNodeFilter.sqlSelectColumns())
                     .bind("childUuid", UUID.fromString(childComponent.getUuid()))
@@ -445,8 +460,10 @@ final class CelPolicyFunctions {
         try {
             return Vers.parseLenient(versStr).contains(version);
         } catch (VersException e) {
-            LOGGER.warn("%s: Failed to check if version %s matches range %s"
-                    .formatted(MATCHES_RANGE.functionName(), version, versStr), e);
+            LOGGER.warn(
+                    "%s: Failed to check if version %s matches range %s"
+                            .formatted(MATCHES_RANGE.functionName(), version, versStr),
+                    e);
             return false;
         }
     }
@@ -454,20 +471,24 @@ final class CelPolicyFunctions {
     static boolean matchesVersionDistance(Component component, String comparator, VersionDistance value) {
         try {
             if (!component.hasPurl()) {
-                LOGGER.warn("%s: Component does not have a purl; returning false".formatted(VERSION_DISTANCE.functionName()));
+                LOGGER.warn("%s: Component does not have a purl; returning false"
+                        .formatted(VERSION_DISTANCE.functionName()));
                 return false;
             }
             try {
                 if (RepositoryType.resolve(new PackageURL(component.getPurl())) == RepositoryType.UNSUPPORTED) {
-                    LOGGER.warn("%s: Unsupported repository type for component; returning false".formatted(VERSION_DISTANCE.functionName()));
+                    LOGGER.warn("%s: Unsupported repository type for component; returning false"
+                            .formatted(VERSION_DISTANCE.functionName()));
                     return false;
                 }
             } catch (MalformedPackageURLException ex) {
-                LOGGER.warn("%s: Invalid package url %s; returning false".formatted(VERSION_DISTANCE.functionName(), component.getPurl()));
+                LOGGER.warn("%s: Invalid package url %s; returning false"
+                        .formatted(VERSION_DISTANCE.functionName(), component.getPurl()));
                 return false;
             }
             if (!component.hasLatestVersion()) {
-                LOGGER.warn("%s: Component does not have latest version information; returning false".formatted(VERSION_DISTANCE.functionName()));
+                LOGGER.warn("%s: Component does not have latest version information; returning false"
+                        .formatted(VERSION_DISTANCE.functionName()));
                 return false;
             }
             return evaluateVersionDistance(component, comparator, value);
@@ -480,15 +501,16 @@ final class CelPolicyFunctions {
     }
 
     private static boolean evaluateVersionDistance(Component component, String comparator, VersionDistance value) {
-        String comparatorComputed = switch (comparator) {
-            case "NUMERIC_GREATER_THAN", ">" -> "NUMERIC_GREATER_THAN";
-            case "NUMERIC_GREATER_THAN_OR_EQUAL", ">=" -> "NUMERIC_GREATER_THAN_OR_EQUAL";
-            case "NUMERIC_EQUAL", "==" -> "NUMERIC_EQUAL";
-            case "NUMERIC_NOT_EQUAL", "!=" -> "NUMERIC_NOT_EQUAL";
-            case "NUMERIC_LESSER_THAN_OR_EQUAL", "<=" -> "NUMERIC_LESSER_THAN_OR_EQUAL";
-            case "NUMERIC_LESS_THAN", "<" -> "NUMERIC_LESS_THAN";
-            default -> "";
-        };
+        String comparatorComputed =
+                switch (comparator) {
+                    case "NUMERIC_GREATER_THAN", ">" -> "NUMERIC_GREATER_THAN";
+                    case "NUMERIC_GREATER_THAN_OR_EQUAL", ">=" -> "NUMERIC_GREATER_THAN_OR_EQUAL";
+                    case "NUMERIC_EQUAL", "==" -> "NUMERIC_EQUAL";
+                    case "NUMERIC_NOT_EQUAL", "!=" -> "NUMERIC_NOT_EQUAL";
+                    case "NUMERIC_LESSER_THAN_OR_EQUAL", "<=" -> "NUMERIC_LESSER_THAN_OR_EQUAL";
+                    case "NUMERIC_LESS_THAN", "<" -> "NUMERIC_LESS_THAN";
+                    default -> "";
+                };
         if (comparatorComputed.isEmpty()) {
             LOGGER.warn("""
                     %s: Unsupported operator %s for version distance policy; \
@@ -500,15 +522,23 @@ final class CelPolicyFunctions {
             versionDistance = org.dependencytrack.model.VersionDistance.getVersionDistance(
                     component.getVersion(), component.getLatestVersion());
         } catch (RuntimeException e) {
-            LOGGER.warn("""
+            LOGGER.warn(
+                    """
                     %s: Failed to compute version distance for component %s (UUID: %s), \
                     between component version %s and latest version %s; Skipping\
-                    """.formatted(VERSION_DISTANCE.functionName(), component, component.getUuid(), component.getVersion(), component.getLatestVersion()), e);
+                    """.formatted(
+                                    VERSION_DISTANCE.functionName(),
+                                    component,
+                                    component.getUuid(),
+                                    component.getVersion(),
+                                    component.getLatestVersion()),
+                    e);
             return false;
         }
-        final boolean isDirectDependency = withJdbiHandle(
-                handle -> new CelPolicyDao(handle).isDirectDependency(component));
-        return isDirectDependency && org.dependencytrack.model.VersionDistance.evaluate(value, comparatorComputed, versionDistance);
+        final boolean isDirectDependency =
+                withJdbiHandle(handle -> new CelPolicyDao(handle).isDirectDependency(component));
+        return isDirectDependency
+                && org.dependencytrack.model.VersionDistance.evaluate(value, comparatorComputed, versionDistance);
     }
 
     static boolean isComponentOld(Component component, String comparator, String age) {
@@ -534,7 +564,8 @@ final class CelPolicyFunctions {
             return false;
         }
         if (agePeriod.isZero() || agePeriod.isNegative()) {
-            LOGGER.warn("%s: Age durations must not be zero or negative, but was %s".formatted(COMPARE_AGE.functionName(), agePeriod));
+            LOGGER.warn("%s: Age durations must not be zero or negative, but was %s"
+                    .formatted(COMPARE_AGE.functionName(), agePeriod));
             return false;
         }
         Instant instant = Instant.ofEpochSecond(componentPublishedDate.getSeconds(), componentPublishedDate.getNanos());
@@ -549,7 +580,8 @@ final class CelPolicyFunctions {
             case "NUMERIC_LESSER_THAN_OR_EQUAL", "<=" -> ageDate.isEqual(today) || ageDate.isAfter(today);
             case "NUMERIC_LESS_THAN", "<" -> ageDate.isAfter(today);
             default -> {
-                LOGGER.warn("%s: Operator %s is not supported for component age conditions".formatted(COMPARE_AGE.functionName(), comparator));
+                LOGGER.warn("%s: Operator %s is not supported for component age conditions"
+                        .formatted(COMPARE_AGE.functionName(), comparator));
                 yield false;
             }
         };
@@ -589,14 +621,12 @@ final class CelPolicyFunctions {
                 .collect(
                         ArrayList::new,
                         (ArrayList<List<Long>> paths, List<Long> newPath) -> {
-                            final boolean isCovered = paths.stream()
-                                    .anyMatch(path -> containsExactly(path, newPath));
+                            final boolean isCovered = paths.stream().anyMatch(path -> containsExactly(path, newPath));
                             if (!isCovered) {
                                 paths.add(newPath);
                             }
                         },
-                        ArrayList::addAll
-                );
+                        ArrayList::addAll);
     }
 
     private static <T> boolean containsExactly(final List<T> lhs, final List<T> rhs) {
@@ -617,8 +647,7 @@ final class CelPolicyFunctions {
             @Nullable Long id,
             @Nullable String version,
             @Nullable Boolean found,
-            @Nullable List<Long> path) {
-    }
+            @Nullable List<Long> path) {}
 
     record CompositeDependencyNodeFilter(
             List<String> sqlFilters,
@@ -727,7 +756,5 @@ final class CelPolicyFunctions {
         Predicate<DependencyNode> inMemoryFiltersConjunctive() {
             return inMemoryFilters.stream().reduce(Predicate::and).orElse(node -> true);
         }
-
     }
-
 }

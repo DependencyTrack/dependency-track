@@ -21,6 +21,12 @@ package org.dependencytrack.filestorage.s3;
 import com.github.luben.zstd.Zstd;
 import io.minio.BucketExistsArgs;
 import io.minio.MinioClient;
+import io.minio.credentials.AwsConfigProvider;
+import io.minio.credentials.AwsEnvironmentProvider;
+import io.minio.credentials.ChainedProvider;
+import io.minio.credentials.IamAwsProvider;
+import io.minio.credentials.Provider;
+import io.minio.credentials.StaticProvider;
 import okhttp3.OkHttpClient;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.api.FileStorageProvider;
@@ -30,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.ProxySelector;
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * @since 5.0.0
@@ -39,6 +46,11 @@ public final class S3FileStorageProvider implements FileStorageProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(S3FileStorageProvider.class);
     static final String NAME = "s3";
 
+    enum CredentialsSource {
+        STATIC,
+        AWS
+    }
+
     @Override
     public String name() {
         return NAME;
@@ -46,8 +58,7 @@ public final class S3FileStorageProvider implements FileStorageProvider {
 
     @Override
     public FileStorage create(Config config, ProxySelector proxySelector) {
-        final var httpClientBuilder = new OkHttpClient.Builder()
-                .proxySelector(proxySelector);
+        final var httpClientBuilder = new OkHttpClient.Builder().proxySelector(proxySelector);
         config.getOptionalValue("dt.file-storage.s3.connect-timeout-ms", long.class)
                 .map(Duration::ofMillis)
                 .ifPresent(httpClientBuilder::connectTimeout);
@@ -63,11 +74,7 @@ public final class S3FileStorageProvider implements FileStorageProvider {
                 .httpClient(httpClient, /* close */ true)
                 .endpoint(config.getValue("dt.file-storage.s3.endpoint", String.class));
 
-        final var accessKey = config.getOptionalValue("dt.file-storage.s3.access-key", String.class).orElse(null);
-        final var secretKey = config.getOptionalValue("dt.file-storage.s3.secret-key", String.class).orElse(null);
-        if (accessKey != null && secretKey != null) {
-            clientBuilder.credentials(accessKey, secretKey);
-        }
+        resolveCredentialsProvider(config, httpClient).ifPresent(clientBuilder::credentialsProvider);
 
         config.getOptionalValue("dt.file-storage.s3.region", String.class).ifPresent(clientBuilder::region);
         final MinioClient s3Client = clientBuilder.build();
@@ -76,27 +83,56 @@ public final class S3FileStorageProvider implements FileStorageProvider {
         LOGGER.debug("Verifying existence of bucket {}", bucketName);
         requireBucketExists(s3Client, bucketName);
 
-        final int compressionLevel = config
-                .getOptionalValue("dt.file-storage.s3.compression-level", int.class)
+        final int compressionLevel = config.getOptionalValue("dt.file-storage.s3.compression-level", int.class)
                 .orElse(5);
         if (compressionLevel < Zstd.minCompressionLevel() || compressionLevel > Zstd.maxCompressionLevel()) {
-            throw new IllegalStateException(
-                    "Invalid compression level: must be between %d and %d, but is %d".formatted(
-                            Zstd.minCompressionLevel(),
-                            Zstd.maxCompressionLevel(),
-                            compressionLevel));
+            throw new IllegalStateException("Invalid compression level: must be between %d and %d, but is %d"
+                    .formatted(Zstd.minCompressionLevel(), Zstd.maxCompressionLevel(), compressionLevel));
         }
 
         return new S3FileStorage(s3Client, bucketName, compressionLevel);
+    }
+
+    static Optional<Provider> resolveCredentialsProvider(Config config, OkHttpClient httpClient) {
+        final CredentialsSource credentialsSource = config.getOptionalValue(
+                        "dt.file-storage.s3.credentials-source", CredentialsSource.class)
+                .orElse(CredentialsSource.STATIC);
+
+        final var accessKey = config.getOptionalValue("dt.file-storage.s3.access-key", String.class)
+                .orElse(null);
+        final var secretKey = config.getOptionalValue("dt.file-storage.s3.secret-key", String.class)
+                .orElse(null);
+
+        return switch (credentialsSource) {
+            case STATIC -> {
+                if (accessKey != null && secretKey != null) {
+                    yield Optional.of(new StaticProvider(accessKey, secretKey, null));
+                }
+                if (accessKey != null || secretKey != null) {
+                    throw new IllegalStateException(
+                            "Both dt.file-storage.s3.access-key and dt.file-storage.s3.secret-key must be set when using static credentials");
+                }
+                yield Optional.empty();
+            }
+            case AWS -> {
+                if (accessKey != null || secretKey != null) {
+                    throw new IllegalStateException(
+                            "Conflicting credentials configuration: dt.file-storage.s3.credentials-source is aws, "
+                                    + "but dt.file-storage.s3.access-key or dt.file-storage.s3.secret-key is also configured");
+                }
+                yield Optional.of(new ChainedProvider(
+                        new AwsEnvironmentProvider(),
+                        new AwsConfigProvider(/* filename */ null, /* profile */ null),
+                        new IamAwsProvider(/* customEndpoint */ null, httpClient)));
+            }
+        };
     }
 
     private static void requireBucketExists(MinioClient s3Client, String bucketName) {
         final boolean doesBucketExist;
         try {
             doesBucketExist = s3Client.bucketExists(
-                    BucketExistsArgs.builder()
-                            .bucket(bucketName)
-                            .build());
+                    BucketExistsArgs.builder().bucket(bucketName).build());
         } catch (Exception e) {
             throw new IllegalStateException("Failed to determine if bucket %s exists".formatted(bucketName), e);
         }
@@ -105,5 +141,4 @@ public final class S3FileStorageProvider implements FileStorageProvider {
             throw new IllegalStateException("Bucket %s does not exist".formatted(bucketName));
         }
     }
-
 }

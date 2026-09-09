@@ -24,21 +24,21 @@ import org.junit.jupiter.api.Test;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TagTest { 
+public class TagTest {
 
     @Test
-    public void testId() { 
+    public void testId() {
         Tag tag = new Tag();
         tag.setId(111);
         Assertions.assertEquals(111L, tag.getId());
-    } 
+    }
 
     @Test
     public void testName() {
         Tag tag = new Tag();
         tag.setName("java");
         Assertions.assertEquals("java", tag.getName());
-    } 
+    }
 
     @Test
     public void testProjects() {
@@ -49,7 +49,7 @@ public class TagTest {
         tag.setProjects(projects);
         Assertions.assertEquals(1, tag.getProjects().size());
         Assertions.assertEquals(project, tag.getProjects().iterator().next());
-    } 
+    }
 
     @Test
     public void testEquals() {
@@ -62,4 +62,4 @@ public class TagTest {
         Assertions.assertFalse(t1.equals(t2));
         Assertions.assertTrue(t1.equals(t3));
     }
-} 
+}

@@ -18,5 +18,4 @@
  */
 package org.dependencytrack.e2e.api.model;
 
-public record VexSubmitRequest(String project, String projectName, String projectVersion, String vex) {
-}
+public record VexSubmitRequest(String project, String projectName, String projectVersion, String vex) {}

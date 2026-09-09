@@ -19,28 +19,27 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.ws.rs.core.Response;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class OidcResourceUnauthenticatedTest extends ResourceTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(OidcResource.class)
-                    .register(ApiFilter.class));
+    static JerseyTestExtension jersey =
+            new JerseyTestExtension(new ResourceConfig(OidcResource.class).register(ApiFilter.class));
 
     @Test
     public void isAvailableShouldReturnFalseWhenOidcIsNotAvailable() {
-        final Response response = jersey.target(V1_OIDC + "/available")
-                .request().get();
+        final Response response =
+                jersey.target(V1_OIDC + "/available").request().get();
 
         assertThat(getPlainTextBody(response)).isEqualTo("false");
     }
-
 }

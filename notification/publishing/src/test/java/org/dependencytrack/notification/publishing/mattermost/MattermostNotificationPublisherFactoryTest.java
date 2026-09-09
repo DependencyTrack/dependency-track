@@ -20,10 +20,10 @@ package org.dependencytrack.notification.publishing.mattermost;
 
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherFactoryTest;
 
-class MattermostNotificationPublisherFactoryTest extends AbstractNotificationPublisherFactoryTest<MattermostNotificationPublisherFactory> {
+class MattermostNotificationPublisherFactoryTest
+        extends AbstractNotificationPublisherFactoryTest<MattermostNotificationPublisherFactory> {
 
     protected MattermostNotificationPublisherFactoryTest() {
         super(MattermostNotificationPublisherFactory.class);
     }
-
 }

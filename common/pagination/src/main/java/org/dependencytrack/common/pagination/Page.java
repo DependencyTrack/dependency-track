@@ -45,12 +45,11 @@ public record Page<T>(
 
             /**
              * {@code value} represents a bounded count of the total
-             * number of elements in the collection. There are more
-             * than {@code value} elements, but exactly how many is
+             * number of elements in the collection. There are at
+             * least {@code value} elements, but exactly how many is
              * not known.
              */
             AT_LEAST
-
         }
 
         public TotalCount {
@@ -60,6 +59,14 @@ public record Page<T>(
             requireNonNull(type, "type must not be null");
         }
 
+        /// @since 5.1.0
+        public static TotalCount bounded(long count, long threshold) {
+            if (threshold < 1) {
+                throw new IllegalArgumentException("threshold must not be less than 1");
+            }
+
+            return count > threshold ? new TotalCount(threshold, Type.AT_LEAST) : new TotalCount(count, Type.EXACT);
+        }
     }
 
     public Page {
@@ -75,12 +82,14 @@ public record Page<T>(
     }
 
     public static <T> Page<T> empty() {
-        return new Page<T>(Collections.emptyList())
-                .withTotalCount(0, TotalCount.Type.EXACT);
+        return new Page<T>(Collections.emptyList()).withTotalCount(0, TotalCount.Type.EXACT);
     }
 
     public Page<T> withTotalCount(long value, TotalCount.Type type) {
-        return new Page<>(this.items, this.nextPageToken, new TotalCount(value, type));
+        return withTotalCount(new TotalCount(value, type));
     }
 
+    public Page<T> withTotalCount(TotalCount totalCount) {
+        return new Page<>(this.items, this.nextPageToken, totalCount);
+    }
 }

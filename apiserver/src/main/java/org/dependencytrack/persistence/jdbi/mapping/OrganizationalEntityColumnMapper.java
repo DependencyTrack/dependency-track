@@ -32,5 +32,4 @@ public final class OrganizationalEntityColumnMapper implements ColumnMapper<Orga
     public OrganizationalEntity map(ResultSet r, int columnNumber, StatementContext ctx) throws SQLException {
         return new OrganizationalEntityJsonConverter().convertToAttribute(r.getString(columnNumber));
     }
-
 }

@@ -42,5 +42,4 @@ final class BearerTokenInterceptor implements HttpRequestInterceptor {
         request.removeHeaders("Authorization");
         request.setHeader("Authorization", "Bearer " + tokenProvider.currentToken());
     }
-
 }

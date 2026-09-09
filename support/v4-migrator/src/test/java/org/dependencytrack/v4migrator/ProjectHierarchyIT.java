@@ -82,24 +82,23 @@ class ProjectHierarchyIT {
         runPipeline();
 
         // PROJECT: 3 rows, INACTIVE_SINCE only on Leaf (was ACTIVE=FALSE in v4).
-        final List<Map<String, Object>> projects = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> projects =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "NAME", "PARENT_PROJECT_ID", "INACTIVE_SINCE"
                       FROM "PROJECT"
                      ORDER BY "ID"
-                    """)
-                .mapToMap()
-                .list());
+                    """).mapToMap().list());
         assertThat(projects).hasSize(3);
-        assertThat(projects.get(0)).containsEntry("name", "Root")
-            .containsEntry("parent_project_id", null)
-            .containsEntry("inactive_since", null);
-        assertThat(projects.get(1)).containsEntry("name", "Mid")
-            .containsEntry("parent_project_id", 1L)
-            .containsEntry("inactive_since", null);
+        assertThat(projects.get(0))
+                .containsEntry("name", "Root")
+                .containsEntry("parent_project_id", null)
+                .containsEntry("inactive_since", null);
+        assertThat(projects.get(1))
+                .containsEntry("name", "Mid")
+                .containsEntry("parent_project_id", 1L)
+                .containsEntry("inactive_since", null);
         // Leaf was inactive in v4 -> INACTIVE_SINCE = 'epoch'.
-        assertThat(projects.get(2)).containsEntry("name", "Leaf")
-            .containsEntry("parent_project_id", 2L);
+        assertThat(projects.get(2)).containsEntry("name", "Leaf").containsEntry("parent_project_id", 2L);
         assertThat(projects.get(2).get("inactive_since")).isNotNull();
 
         // PROJECT_HIERARCHY closure:
@@ -107,25 +106,23 @@ class ProjectHierarchyIT {
         //   (1, 2, 1)  (2, 3, 1)              ← parent-child
         //   (1, 3, 2)                         ← grandparent-grandchild
         // Total: 6 rows.
-        final List<Map<String, Object>> hierarchy = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> hierarchy =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "PARENT_PROJECT_ID", "CHILD_PROJECT_ID", "DEPTH"
                       FROM "PROJECT_HIERARCHY"
                      ORDER BY "PARENT_PROJECT_ID", "DEPTH"
-                    """)
-                .mapToMap()
-                .list());
+                    """).mapToMap().list());
 
         assertThat(hierarchy).hasSize(6);
-        assertThat(hierarchy).extracting("parent_project_id", "child_project_id", "depth")
-            .containsExactly(
-                tuple(1L, 1L, 0),
-                tuple(1L, 2L, 1),
-                tuple(1L, 3L, 2),
-                tuple(2L, 2L, 0),
-                tuple(2L, 3L, 1),
-                tuple(3L, 3L, 0)
-            );
+        assertThat(hierarchy)
+                .extracting("parent_project_id", "child_project_id", "depth")
+                .containsExactly(
+                        tuple(1L, 1L, 0),
+                        tuple(1L, 2L, 1),
+                        tuple(1L, 3L, 2),
+                        tuple(2L, 2L, 0),
+                        tuple(2L, 3L, 1),
+                        tuple(3L, 3L, 0));
     }
 
     private void runPipeline() throws Exception {

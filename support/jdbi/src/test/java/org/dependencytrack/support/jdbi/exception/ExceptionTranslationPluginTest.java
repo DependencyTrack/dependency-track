@@ -32,15 +32,13 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 class ExceptionTranslationPluginTest {
 
     @Container
-    private static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:14-alpine");
+    private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:14-alpine");
 
     private static Jdbi jdbi;
 
     @BeforeAll
     static void beforeAll() {
-        jdbi = Jdbi
-                .create(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+        jdbi = Jdbi.create(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .installPlugin(new ExceptionTranslationPlugin());
 
         jdbi.useHandle(handle -> handle.execute("""
@@ -91,4 +89,13 @@ class ExceptionTranslationPluginTest {
                 });
     }
 
+    @Test
+    void shouldTranslateQueryTimeout() {
+        assertThatExceptionOfType(QueryTimeoutException.class)
+                .isThrownBy(() -> jdbi.useHandle(handle -> {
+                    handle.execute("SET statement_timeout TO 100");
+                    handle.createQuery("SELECT pg_sleep(1)").mapTo(String.class).one();
+                }))
+                .satisfies(e -> assertThat(e.getSqlState()).isEqualTo("57014"));
+    }
 }

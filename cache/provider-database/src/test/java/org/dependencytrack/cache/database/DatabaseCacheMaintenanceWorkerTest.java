@@ -73,7 +73,8 @@ class DatabaseCacheMaintenanceWorkerTest {
         insertEntry("cache-a", "expired2", "v2", Instant.now().minusSeconds(5));
         insertEntry("cache-a", "valid", "v3", Instant.now().plusSeconds(3600));
 
-        try (final var worker = new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
+        try (final var worker =
+                new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
             worker.performMaintenance();
 
             assertThat(countEntries("cache-a")).isEqualTo(1);
@@ -85,7 +86,8 @@ class DatabaseCacheMaintenanceWorkerTest {
     void performMaintenanceShouldDeleteExpiredEntriesFromUnregisteredCaches() throws Exception {
         insertEntry("unregistered", "key1", "v1", Instant.now().minusSeconds(10));
 
-        try (final var worker = new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
+        try (final var worker =
+                new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
             worker.performMaintenance();
 
             assertThat(countEntries("unregistered")).isZero();
@@ -98,7 +100,8 @@ class DatabaseCacheMaintenanceWorkerTest {
 
         final var cache = new DatabaseCache("cache-a", Duration.ofHours(1), dataSource);
 
-        try (final var worker = new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
+        try (final var worker =
+                new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
             worker.registerCache(cache);
             worker.performMaintenance();
 
@@ -116,7 +119,8 @@ class DatabaseCacheMaintenanceWorkerTest {
         final var cacheA = new DatabaseCache("cache-a", Duration.ofHours(1), dataSource);
         final var cacheB = new DatabaseCache("cache-b", Duration.ofHours(1), dataSource);
 
-        try (final var worker = new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
+        try (final var worker =
+                new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
             worker.registerCache(cacheA);
             worker.registerCache(cacheB);
 
@@ -136,13 +140,14 @@ class DatabaseCacheMaintenanceWorkerTest {
 
         final var cacheA = new DatabaseCache("cache-a", Duration.ofHours(1), dataSource);
 
-        try (final var worker = new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
+        try (final var worker =
+                new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
             worker.registerCache(cacheA);
             worker.performMaintenance();
             assertThat(cacheA.size()).isEqualTo(1);
 
             try (final Connection connection = dataSource.getConnection();
-                 final Statement statement = connection.createStatement()) {
+                    final Statement statement = connection.createStatement()) {
                 statement.execute("DELETE FROM \"CACHE_ENTRY\" WHERE \"CACHE_NAME\" = 'cache-a'");
             }
 
@@ -162,7 +167,8 @@ class DatabaseCacheMaintenanceWorkerTest {
         final var cacheA = new DatabaseCache("cache-a", Duration.ofHours(1), dataSource);
         final var cacheB = new DatabaseCache("cache-b", Duration.ofHours(1), dataSource);
 
-        try (final var worker = new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
+        try (final var worker =
+                new DatabaseCacheMaintenanceWorker(dataSource, Duration.ofMinutes(1), Duration.ofMinutes(5))) {
             worker.registerCache(cacheA);
             worker.registerCache(cacheB);
             worker.performMaintenance();
@@ -174,13 +180,9 @@ class DatabaseCacheMaintenanceWorkerTest {
         }
     }
 
-    private void insertEntry(
-            String cacheName,
-            String key,
-            String value,
-            Instant expiresAt) throws Exception {
+    private void insertEntry(String cacheName, String key, String value, Instant expiresAt) throws Exception {
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      INSERT INTO "CACHE_ENTRY" ("CACHE_NAME", "KEY", "VALUE", "EXPIRES_AT")
                      VALUES (?, ?, ?, ?)
                      """)) {
@@ -194,7 +196,7 @@ class DatabaseCacheMaintenanceWorkerTest {
 
     private long countEntries(String cacheName) throws Exception {
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      SELECT COUNT(*) FROM "CACHE_ENTRY" WHERE "CACHE_NAME" = ?
                      """)) {
             ps.setString(1, cacheName);
@@ -205,7 +207,7 @@ class DatabaseCacheMaintenanceWorkerTest {
 
     private boolean entryExists(String cacheName, String key) throws Exception {
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      SELECT 1 FROM "CACHE_ENTRY" WHERE "CACHE_NAME" = ? AND "KEY" = ?
                      """)) {
             ps.setString(1, cacheName);
@@ -213,5 +215,4 @@ class DatabaseCacheMaintenanceWorkerTest {
             return ps.executeQuery().next();
         }
     }
-
 }

@@ -74,16 +74,12 @@ public final class ExtensionTestResult {
     }
 
     public boolean isFailed() {
-        return checkByName.values().stream()
-                .map(ExtensionTestCheck::status)
-                .anyMatch(Status.FAILED::equals);
+        return checkByName.values().stream().map(ExtensionTestCheck::status).anyMatch(Status.FAILED::equals);
     }
 
     private void requireRegistered(String checkName) {
         if (!checkByName.containsKey(checkName)) {
-            throw new IllegalArgumentException(
-                    "No check with name '%s' was registered".formatted(checkName));
+            throw new IllegalArgumentException("No check with name '%s' was registered".formatted(checkName));
         }
     }
-
 }

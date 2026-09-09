@@ -46,16 +46,18 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
     @Test
     @SuppressWarnings("unchecked")
     public void wrapperTest() {
-        final Project project = qm.createProject(
-                "Test", "Sample project", "1.0", null, null, null, null, false);
-        final var fpf = new FindingPackagingFormat(
-                project.getUuid(),
-                Collections.EMPTY_LIST
-        );
+        final Project project = qm.createProject("Test", "Sample project", "1.0", null, null, null, null, false);
+        final var fpf = new FindingPackagingFormat(project.getUuid(), Collections.EMPTY_LIST);
 
         assertThatJson(fpf.getDocument())
-                .withMatcher("appName", equalTo(ConfigProvider.getConfig().getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_NAME, String.class)))
-                .withMatcher("appVersion", equalTo(ConfigProvider.getConfig().getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class)))
+                .withMatcher(
+                        "appName",
+                        equalTo(ConfigProvider.getConfig()
+                                .getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_NAME, String.class)))
+                .withMatcher(
+                        "appVersion",
+                        equalTo(ConfigProvider.getConfig()
+                                .getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class)))
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
@@ -78,16 +80,53 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
 
     @Test
     public void testFindingsVulnerabilityAndAliases() {
-        final Project project = qm.createProject(
-                "Test", "Sample project", "1.0", null, null, null, null, false);
+        final Project project = qm.createProject("Test", "Sample project", "1.0", null, null, null, null, false);
 
-        final var findingRow1 = new FindingDao.FindingRow(project.getUuid(), UUID.randomUUID(), project.getName(), project.getVersion(),
-                "component-name-1", null, "component-version", null, null, "Optional", true,
-                UUID.randomUUID(), Vulnerability.Source.GITHUB, "vuln-vulnId-1", "vuln-title", "vuln-subtitle", "vuln-description",
-                "vuln-recommendation", "vuln-references", Instant.now(), Severity.CRITICAL, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
-                "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
-                "oss-index", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, true, null, 1);
+        final var findingRow1 = new FindingDao.FindingRow(
+                project.getUuid(),
+                UUID.randomUUID(),
+                project.getName(),
+                project.getVersion(),
+                "component-name-1",
+                null,
+                "component-version",
+                null,
+                null,
+                "Optional",
+                true,
+                UUID.randomUUID(),
+                Vulnerability.Source.GITHUB,
+                "vuln-vulnId-1",
+                "vuln-title",
+                "vuln-subtitle",
+                "vuln-description",
+                "vuln-recommendation",
+                "vuln-references",
+                Instant.now(),
+                Severity.CRITICAL,
+                null,
+                BigDecimal.valueOf(7.2),
+                BigDecimal.valueOf(8.4),
+                BigDecimal.valueOf(8.4),
+                "cvssV2-vector",
+                "cvssV3-vector",
+                "cvssV4-vector",
+                BigDecimal.valueOf(1.25),
+                BigDecimal.valueOf(1.75),
+                BigDecimal.valueOf(1.3),
+                "owasp-vector",
+                null,
+                BigDecimal.valueOf(0.5),
+                BigDecimal.valueOf(0.9),
+                false,
+                "oss-index",
+                Instant.now(),
+                null,
+                null,
+                AnalysisState.NOT_AFFECTED,
+                true,
+                null, /* totalCount */
+                null);
         final Finding findingWithoutAlias = new Finding(findingRow1);
 
         var alias = new VulnerabilityAlias();
@@ -110,19 +149,54 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
         other.setInternalId("anotherInternalId");
         other.setVulnDbId(null);
 
-        final var findingRow2 = new FindingDao.FindingRow(project.getUuid(), UUID.randomUUID(), project.getName(), project.getVersion(),
-                "component-name-2", null, "component-version", null, null, "Required", true,
-                UUID.randomUUID(), Vulnerability.Source.NVD, "vuln-vulnId-2", "vuln-title", "vuln-subtitle", "vuln-description",
-                "vuln-recommendation", "vuln-references", Instant.now(), Severity.HIGH, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
-                "cvssV2-vector", "cvssV3-vector", "cvssV4vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-                "owasp-vector", List.of(alias, other), BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
-                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, true, null, 1);
+        final var findingRow2 = new FindingDao.FindingRow(
+                project.getUuid(),
+                UUID.randomUUID(),
+                project.getName(),
+                project.getVersion(),
+                "component-name-2",
+                null,
+                "component-version",
+                null,
+                null,
+                "Required",
+                true,
+                UUID.randomUUID(),
+                Vulnerability.Source.NVD,
+                "vuln-vulnId-2",
+                "vuln-title",
+                "vuln-subtitle",
+                "vuln-description",
+                "vuln-recommendation",
+                "vuln-references",
+                Instant.now(),
+                Severity.HIGH,
+                null,
+                BigDecimal.valueOf(7.2),
+                BigDecimal.valueOf(8.4),
+                BigDecimal.valueOf(8.4),
+                "cvssV2-vector",
+                "cvssV3-vector",
+                "cvssV4vector",
+                BigDecimal.valueOf(1.25),
+                BigDecimal.valueOf(1.75),
+                BigDecimal.valueOf(1.3),
+                "owasp-vector",
+                List.of(alias, other),
+                BigDecimal.valueOf(0.5),
+                BigDecimal.valueOf(0.9),
+                false,
+                "internal",
+                Instant.now(),
+                null,
+                null,
+                AnalysisState.NOT_AFFECTED,
+                true,
+                null, /* totalCount */
+                null);
         final Finding findingWithAlias = new Finding(findingRow2);
 
-        final var fpf = new FindingPackagingFormat(
-                project.getUuid(),
-                List.of(findingWithoutAlias, findingWithAlias)
-        );
+        final var fpf = new FindingPackagingFormat(project.getUuid(), List.of(findingWithoutAlias, findingWithAlias));
 
         final String doc = fpf.getDocument();
         assertThatJson(doc)
@@ -262,8 +336,7 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
 
     @Test
     public void testFindingsExposeAffectedVersionRanges() {
-        final Project project = qm.createProject(
-                "Test", "Sample project", "1.0", null, null, null, null, false);
+        final Project project = qm.createProject("Test", "Sample project", "1.0", null, null, null, null, false);
 
         // A vulnerability that affects two separate release trains of the same
         // component. There is no single fixed version, so the FPF must carry the
@@ -294,13 +367,51 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
 
         vuln.setVulnerableSoftware(List.of(vsTrain2, vsTrain3));
 
-        final var findingRow = new FindingDao.FindingRow(project.getUuid(), UUID.randomUUID(), project.getName(), project.getVersion(),
-                "acme-lib", "com.acme", "2.2.0", "pkg:maven/com.acme/acme-lib@2.2.0", null, "Required", true,
-                vuln.getUuid(), Vulnerability.Source.GITHUB, "GHSA-xxxx-yyyy-zzzz", "vuln-title", "vuln-subtitle", "vuln-description",
-                "vuln-recommendation", "vuln-references", Instant.now(), Severity.CRITICAL, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
-                "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
-                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, false, null, 1);
+        final var findingRow = new FindingDao.FindingRow(
+                project.getUuid(),
+                UUID.randomUUID(),
+                project.getName(),
+                project.getVersion(),
+                "acme-lib",
+                "com.acme",
+                "2.2.0",
+                "pkg:maven/com.acme/acme-lib@2.2.0",
+                null,
+                "Required",
+                true,
+                vuln.getUuid(),
+                Vulnerability.Source.GITHUB,
+                "GHSA-xxxx-yyyy-zzzz",
+                "vuln-title",
+                "vuln-subtitle",
+                "vuln-description",
+                "vuln-recommendation",
+                "vuln-references",
+                Instant.now(),
+                Severity.CRITICAL,
+                null,
+                BigDecimal.valueOf(7.2),
+                BigDecimal.valueOf(8.4),
+                BigDecimal.valueOf(8.4),
+                "cvssV2-vector",
+                "cvssV3-vector",
+                "cvssV4-vector",
+                BigDecimal.valueOf(1.25),
+                BigDecimal.valueOf(1.75),
+                BigDecimal.valueOf(1.3),
+                "owasp-vector",
+                null,
+                BigDecimal.valueOf(0.5),
+                BigDecimal.valueOf(0.9),
+                false,
+                "internal",
+                Instant.now(),
+                null,
+                null,
+                AnalysisState.NOT_AFFECTED,
+                false,
+                null,
+                1L);
         final Finding finding = new Finding(findingRow);
 
         final var fpf = new FindingPackagingFormat(project.getUuid(), List.of(finding));
@@ -336,8 +447,7 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
 
     @Test
     public void testFindingsWithoutAffectedSoftwareOmitAffectedVersions() {
-        final Project project = qm.createProject(
-                "Test", "Sample project", "1.0", null, null, null, null, false);
+        final Project project = qm.createProject("Test", "Sample project", "1.0", null, null, null, null, false);
 
         // The finding references a vulnerability that has no vulnerable software
         // recorded (e.g. a Trivy verdict). The affectedVersions field must be
@@ -348,13 +458,51 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
         vuln.setSeverity(Severity.MEDIUM);
         vuln = qm.createVulnerability(vuln);
 
-        final var findingRow = new FindingDao.FindingRow(project.getUuid(), UUID.randomUUID(), project.getName(), project.getVersion(),
-                "component-name", null, "component-version", null, null, "Required", true,
-                vuln.getUuid(), Vulnerability.Source.INTERNAL, "INT-1", "vuln-title", "vuln-subtitle", "vuln-description",
-                "vuln-recommendation", "vuln-references", Instant.now(), Severity.MEDIUM, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
-                "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
-                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, false, null, 1);
+        final var findingRow = new FindingDao.FindingRow(
+                project.getUuid(),
+                UUID.randomUUID(),
+                project.getName(),
+                project.getVersion(),
+                "component-name",
+                null,
+                "component-version",
+                null,
+                null,
+                "Required",
+                true,
+                vuln.getUuid(),
+                Vulnerability.Source.INTERNAL,
+                "INT-1",
+                "vuln-title",
+                "vuln-subtitle",
+                "vuln-description",
+                "vuln-recommendation",
+                "vuln-references",
+                Instant.now(),
+                Severity.MEDIUM,
+                null,
+                BigDecimal.valueOf(7.2),
+                BigDecimal.valueOf(8.4),
+                BigDecimal.valueOf(8.4),
+                "cvssV2-vector",
+                "cvssV3-vector",
+                "cvssV4-vector",
+                BigDecimal.valueOf(1.25),
+                BigDecimal.valueOf(1.75),
+                BigDecimal.valueOf(1.3),
+                "owasp-vector",
+                null,
+                BigDecimal.valueOf(0.5),
+                BigDecimal.valueOf(0.9),
+                false,
+                "internal",
+                Instant.now(),
+                null,
+                null,
+                AnalysisState.NOT_AFFECTED,
+                false,
+                null,
+                1L);
         final Finding finding = new Finding(findingRow);
 
         final var fpf = new FindingPackagingFormat(project.getUuid(), List.of(finding));
@@ -367,8 +515,7 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
 
     @Test
     public void testFindingsSharingVulnerabilityBothGetRanges() {
-        final Project project = qm.createProject(
-                "Test", "Sample project", "1.0", null, null, null, null, false);
+        final Project project = qm.createProject("Test", "Sample project", "1.0", null, null, null, null, false);
 
         // One vulnerability with a single affected range, referenced by two
         // different components. The batched lookup groups the range per
@@ -390,25 +537,100 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
 
         vuln.setVulnerableSoftware(List.of(vs));
 
-        final var findingRow1 = new FindingDao.FindingRow(project.getUuid(), UUID.randomUUID(), project.getName(), project.getVersion(),
-                "acme-lib", "com.acme", "2.2.0", "pkg:maven/com.acme/acme-lib@2.2.0", null, "Required", true,
-                vuln.getUuid(), Vulnerability.Source.GITHUB, "GHSA-xxxx-yyyy-zzzz", "vuln-title", "vuln-subtitle", "vuln-description",
-                "vuln-recommendation", "vuln-references", Instant.now(), Severity.CRITICAL, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
-                "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
-                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, false, null, 1);
+        final var findingRow1 = new FindingDao.FindingRow(
+                project.getUuid(),
+                UUID.randomUUID(),
+                project.getName(),
+                project.getVersion(),
+                "acme-lib",
+                "com.acme",
+                "2.2.0",
+                "pkg:maven/com.acme/acme-lib@2.2.0",
+                null,
+                "Required",
+                true,
+                vuln.getUuid(),
+                Vulnerability.Source.GITHUB,
+                "GHSA-xxxx-yyyy-zzzz",
+                "vuln-title",
+                "vuln-subtitle",
+                "vuln-description",
+                "vuln-recommendation",
+                "vuln-references",
+                Instant.now(),
+                Severity.CRITICAL,
+                null,
+                BigDecimal.valueOf(7.2),
+                BigDecimal.valueOf(8.4),
+                BigDecimal.valueOf(8.4),
+                "cvssV2-vector",
+                "cvssV3-vector",
+                "cvssV4-vector",
+                BigDecimal.valueOf(1.25),
+                BigDecimal.valueOf(1.75),
+                BigDecimal.valueOf(1.3),
+                "owasp-vector",
+                null,
+                BigDecimal.valueOf(0.5),
+                BigDecimal.valueOf(0.9),
+                false,
+                "internal",
+                Instant.now(),
+                null,
+                null,
+                AnalysisState.NOT_AFFECTED,
+                false,
+                null,
+                1L);
 
-        final var findingRow2 = new FindingDao.FindingRow(project.getUuid(), UUID.randomUUID(), project.getName(), project.getVersion(),
-                "other-lib", "com.acme", "1.0.0", "pkg:maven/com.acme/other-lib@1.0.0", null, "Required", true,
-                vuln.getUuid(), Vulnerability.Source.GITHUB, "GHSA-xxxx-yyyy-zzzz", "vuln-title", "vuln-subtitle", "vuln-description",
-                "vuln-recommendation", "vuln-references", Instant.now(), Severity.CRITICAL, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
-                "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
-                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, false, null, 1);
+        final var findingRow2 = new FindingDao.FindingRow(
+                project.getUuid(),
+                UUID.randomUUID(),
+                project.getName(),
+                project.getVersion(),
+                "other-lib",
+                "com.acme",
+                "1.0.0",
+                "pkg:maven/com.acme/other-lib@1.0.0",
+                null,
+                "Required",
+                true,
+                vuln.getUuid(),
+                Vulnerability.Source.GITHUB,
+                "GHSA-xxxx-yyyy-zzzz",
+                "vuln-title",
+                "vuln-subtitle",
+                "vuln-description",
+                "vuln-recommendation",
+                "vuln-references",
+                Instant.now(),
+                Severity.CRITICAL,
+                null,
+                BigDecimal.valueOf(7.2),
+                BigDecimal.valueOf(8.4),
+                BigDecimal.valueOf(8.4),
+                "cvssV2-vector",
+                "cvssV3-vector",
+                "cvssV4-vector",
+                BigDecimal.valueOf(1.25),
+                BigDecimal.valueOf(1.75),
+                BigDecimal.valueOf(1.3),
+                "owasp-vector",
+                null,
+                BigDecimal.valueOf(0.5),
+                BigDecimal.valueOf(0.9),
+                false,
+                "internal",
+                Instant.now(),
+                null,
+                null,
+                AnalysisState.NOT_AFFECTED,
+                false,
+                null,
+                1L);
 
         final var fpf = new FindingPackagingFormat(
-                project.getUuid(),
-                List.of(new Finding(findingRow1), new Finding(findingRow2)));
+                project.getUuid(), List.of(new Finding(findingRow1), new Finding(findingRow2)));
 
         final String expectedRanges = /* language=JSON */ """
                 [

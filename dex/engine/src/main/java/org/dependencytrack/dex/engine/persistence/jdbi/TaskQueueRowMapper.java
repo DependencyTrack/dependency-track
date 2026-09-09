@@ -40,7 +40,8 @@ final class TaskQueueRowMapper implements RowMapper<TaskQueue> {
 
     @Override
     public void init(final ConfigRegistry registry) {
-        instantColumnMapper = registry.get(ColumnMappers.class).findFor(Instant.class).orElseThrow();
+        instantColumnMapper =
+                registry.get(ColumnMappers.class).findFor(Instant.class).orElseThrow();
     }
 
     @Override
@@ -56,5 +57,4 @@ final class TaskQueueRowMapper implements RowMapper<TaskQueue> {
                 instantColumnMapper.map(rs, "created_at", ctx),
                 instantColumnMapper.map(rs, "updated_at", ctx));
     }
-
 }

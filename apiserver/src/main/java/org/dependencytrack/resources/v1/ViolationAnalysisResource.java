@@ -30,15 +30,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Validator;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.PolicyViolation;
@@ -51,6 +42,16 @@ import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisResponse;
 
+import jakarta.validation.Validator;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 /**
  * JAX-RS resources for processing violation analysis decisions.
  *
@@ -59,46 +60,54 @@ import org.dependencytrack.resources.v1.vo.ViolationAnalysisResponse;
  */
 @Path("/v1/violation/analysis")
 @Tag(name = "violationanalysis")
-@SecurityRequirements({
-        @SecurityRequirement(name = "ApiKeyAuth"),
-        @SecurityRequirement(name = "BearerAuth")
-})
+@SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class ViolationAnalysisResource extends AbstractApiResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Retrieves a violation analysis trail",
-            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "A violation analysis trail",
-                    content = @Content(schema = @Schema(implementation = ViolationAnalysisResponse.class))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The component or policy violation could not be found")
-    })
+            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A violation analysis trail",
+                        content = @Content(schema = @Schema(implementation = ViolationAnalysisResponse.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(responseCode = "404", description = "The component or policy violation could not be found")
+            })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response retrieveAnalysis(@Parameter(description = "The UUID of the component", schema = @Schema(type = "string", format = "uuid"), required = true)
-                                     @QueryParam("component") @ValidUuid String componentUuid,
-                                     @Parameter(description = "The UUID of the policy violation", schema = @Schema(type = "string", format = "uuid"), required = true)
-                                     @QueryParam("policyViolation") @ValidUuid String violationUuid) {
+    public Response retrieveAnalysis(
+            @Parameter(
+                            description = "The UUID of the component",
+                            schema = @Schema(type = "string", format = "uuid"),
+                            required = true)
+                    @QueryParam("component")
+                    @ValidUuid
+                    String componentUuid,
+            @Parameter(
+                            description = "The UUID of the policy violation",
+                            schema = @Schema(type = "string", format = "uuid"),
+                            required = true)
+                    @QueryParam("policyViolation")
+                    @ValidUuid
+                    String violationUuid) {
         failOnValidationError(
                 new ValidationTask(RegexSequence.Pattern.UUID, componentUuid, "Component is not a valid UUID"),
-                new ValidationTask(RegexSequence.Pattern.UUID, violationUuid, "Policy violation is not a valid UUID")
-        );
+                new ValidationTask(RegexSequence.Pattern.UUID, violationUuid, "Policy violation is not a valid UUID"));
 
         try (final var qm = new QueryManager(getAlpineRequest())) {
             final var component = qm.getObjectByUuid(Component.class, componentUuid);
             if (component == null) {
-                return Response
-                        .status(Response.Status.NOT_FOUND)
+                return Response.status(Response.Status.NOT_FOUND)
                         .entity("The component could not be found.")
                         .build();
             }
@@ -106,17 +115,13 @@ public class ViolationAnalysisResource extends AbstractApiResource {
 
             final var policyViolation = qm.getObjectByUuid(PolicyViolation.class, violationUuid);
             if (policyViolation == null) {
-                return Response
-                        .status(Response.Status.NOT_FOUND)
+                return Response.status(Response.Status.NOT_FOUND)
                         .entity("The policy violation could not be found.")
                         .build();
             }
 
             final ViolationAnalysis analysis = qm.getViolationAnalysis(component, policyViolation);
-            return Response
-                    .ok(analysis != null
-                            ? ViolationAnalysisResponse.of(analysis)
-                            : null)
+            return Response.ok(analysis != null ? ViolationAnalysisResponse.of(analysis) : null)
                     .build();
         }
     }
@@ -126,21 +131,23 @@ public class ViolationAnalysisResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Records a violation analysis decision",
-            description = "<p>Requires permission <strong>POLICY_VIOLATION_ANALYSIS</strong></p>"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "The created violation analysis",
-                    content = @Content(schema = @Schema(implementation = ViolationAnalysisResponse.class))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The component or policy violation could not be found")
-    })
+            description = "<p>Requires permission <strong>POLICY_VIOLATION_ANALYSIS</strong></p>")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "The created violation analysis",
+                        content = @Content(schema = @Schema(implementation = ViolationAnalysisResponse.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(responseCode = "404", description = "The component or policy violation could not be found")
+            })
     @PermissionRequired(Permissions.Constants.POLICY_VIOLATION_ANALYSIS)
     public Response updateAnalysis(ViolationAnalysisRequest request) {
         final Validator validator = getValidator();
@@ -148,15 +155,13 @@ public class ViolationAnalysisResource extends AbstractApiResource {
                 validator.validateProperty(request, "component"),
                 validator.validateProperty(request, "policyViolation"),
                 validator.validateProperty(request, "analysisState"),
-                validator.validateProperty(request, "comment")
-        );
+                validator.validateProperty(request, "comment"));
 
         try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final var component = qm.getObjectByUuid(Component.class, request.getComponent());
                 if (component == null) {
-                    return Response
-                            .status(Response.Status.NOT_FOUND)
+                    return Response.status(Response.Status.NOT_FOUND)
                             .entity("The component could not be found.")
                             .build();
                 }
@@ -164,23 +169,19 @@ public class ViolationAnalysisResource extends AbstractApiResource {
 
                 final var violation = qm.getObjectByUuid(PolicyViolation.class, request.getPolicyViolation());
                 if (violation == null) {
-                    return Response
-                            .status(Response.Status.NOT_FOUND)
+                    return Response.status(Response.Status.NOT_FOUND)
                             .entity("The policy violation could not be found.")
                             .build();
                 }
 
-                final long analysisId = qm.makeViolationAnalysis(
-                        new MakeViolationAnalysisCommand(component, violation)
-                                .withState(request.getAnalysisState())
-                                .withSuppress(request.isSuppressed())
-                                .withComment(request.getComment()));
+                final long analysisId = qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(component, violation)
+                        .withState(request.getAnalysisState())
+                        .withSuppress(request.isSuppressed())
+                        .withComment(request.getComment()));
 
-                return Response
-                        .ok(ViolationAnalysisResponse.of(qm.getObjectById(ViolationAnalysis.class, analysisId)))
+                return Response.ok(ViolationAnalysisResponse.of(qm.getObjectById(ViolationAnalysis.class, analysisId)))
                         .build();
             });
         }
     }
-
 }

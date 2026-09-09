@@ -50,5 +50,4 @@ public interface Cache {
     void invalidateMany(Set<String> keys);
 
     void invalidateAll();
-
 }

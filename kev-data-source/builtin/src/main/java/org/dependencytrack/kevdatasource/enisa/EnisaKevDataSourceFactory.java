@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.kevdatasource.api.KevDataSourceFactory;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
@@ -47,6 +47,11 @@ public final class EnisaKevDataSourceFactory implements KevDataSourceFactory, Ru
     }
 
     @Override
+    public String displayName() {
+        return "ENISA EU KEV";
+    }
+
+    @Override
     public Class<? extends KevDataSource> extensionClass() {
         return EnisaKevDataSource.class;
     }
@@ -57,19 +62,18 @@ public final class EnisaKevDataSourceFactory implements KevDataSourceFactory, Ru
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        this.httpClient = serviceRegistry.require(HttpClient.class);
-        this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule());
+    public void init(ExtensionContext context) {
+        this.configRegistry = context.configRegistry();
+        this.httpClient = context.httpClient();
+        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        final var defaultConfig =
-                new EnisaKevDataSourceConfigV1()
-                        .withEnabled(true)
-                        .withFeedUrl(URI.create("https://raw.githubusercontent.com/enisaeu/CNW/main/advisories/eukev/eukev.json"));
+        final var defaultConfig = new EnisaKevDataSourceConfigV1()
+                .withEnabled(true)
+                .withFeedUrl(
+                        URI.create("https://raw.githubusercontent.com/enisaeu/CNW/main/advisories/eukev/eukev.json"));
 
         return RuntimeConfigSpec.of(defaultConfig, config -> {
             if (!config.isEnabled()) {
@@ -90,16 +94,11 @@ public final class EnisaKevDataSourceFactory implements KevDataSourceFactory, Ru
 
     @Override
     public KevDataSource create() {
-        final var config = requireNonNull(configRegistry)
-                .getRuntimeConfig(EnisaKevDataSourceConfigV1.class);
+        final var config = requireNonNull(configRegistry).getRuntimeConfig(EnisaKevDataSourceConfigV1.class);
         if (!config.isEnabled()) {
             throw new IllegalStateException("KEV data source is disabled and cannot be created");
         }
 
-        return new EnisaKevDataSource(
-                requireNonNull(httpClient),
-                requireNonNull(objectMapper),
-                config.getFeedUrl());
+        return new EnisaKevDataSource(requireNonNull(httpClient), requireNonNull(objectMapper), config.getFeedUrl());
     }
-
 }

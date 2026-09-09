@@ -52,14 +52,12 @@ final class VulnDbModelConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(VulnDbModelConverter.class);
     private static final Pattern CWE_PATTERN = Pattern.compile("CWE-(\\d+)", Pattern.CASE_INSENSITIVE);
     private static final Source SOURCE_NVD = Source.newBuilder().setName("NVD").build();
-    private static final Source SOURCE_VULNDB = Source.newBuilder().setName("VULNDB").build();
+    private static final Source SOURCE_VULNDB =
+            Source.newBuilder().setName("VULNDB").build();
 
-    private VulnDbModelConverter() {
-    }
+    private VulnDbModelConverter() {}
 
-    static Vulnerability.Builder convert(
-            VulnDbApiResponse.Vulnerability vuln,
-            boolean includeAliases) {
+    static Vulnerability.Builder convert(VulnDbApiResponse.Vulnerability vuln, boolean includeAliases) {
         final var vulnBuilder = Vulnerability.newBuilder()
                 .setId(String.valueOf(vuln.vulndbId()))
                 .setSource(SOURCE_VULNDB);
@@ -70,11 +68,10 @@ final class VulnDbModelConverter {
         }
 
         if (vuln.title() != null) {
-            vulnBuilder.addProperties(
-                    Property.newBuilder()
-                            .setName("dependency-track:vuln:title")
-                            .setValue(vuln.title())
-                            .build());
+            vulnBuilder.addProperties(Property.newBuilder()
+                    .setName("dependency-track:vuln:title")
+                    .setValue(vuln.title())
+                    .build());
         }
 
         if (vuln.authors() != null && !vuln.authors().isEmpty()) {
@@ -88,11 +85,10 @@ final class VulnDbModelConverter {
                 }
             }
             if (!credits.isEmpty()) {
-                vulnBuilder.addProperties(
-                        Property.newBuilder()
-                                .setName("dependency-track:vuln:credits")
-                                .setValue(credits.toString())
-                                .build());
+                vulnBuilder.addProperties(Property.newBuilder()
+                        .setName("dependency-track:vuln:credits")
+                        .setValue(credits.toString())
+                        .build());
             }
         }
 
@@ -100,9 +96,7 @@ final class VulnDbModelConverter {
             for (final var extRef : vuln.extReferences()) {
                 if (extRef.value() != null && !extRef.value().isBlank()) {
                     vulnBuilder.addAdvisories(
-                            Advisory.newBuilder()
-                                    .setUrl(extRef.value())
-                                    .build());
+                            Advisory.newBuilder().setUrl(extRef.value()).build());
                 }
             }
         }
@@ -119,11 +113,10 @@ final class VulnDbModelConverter {
 
         if (includeAliases) {
             for (final String cveId : cveIds) {
-                vulnBuilder.addReferences(
-                        VulnerabilityReference.newBuilder()
-                                .setId(cveId)
-                                .setSource(SOURCE_NVD)
-                                .build());
+                vulnBuilder.addReferences(VulnerabilityReference.newBuilder()
+                        .setId(cveId)
+                        .setSource(SOURCE_NVD)
+                        .build());
             }
         }
 
@@ -150,9 +143,7 @@ final class VulnDbModelConverter {
         }
     }
 
-    private static void addCvssV2Rating(
-            Vulnerability.Builder vulnBuilder,
-            @Nullable List<CvssV2Metric> metrics) {
+    private static void addCvssV2Rating(Vulnerability.Builder vulnBuilder, @Nullable List<CvssV2Metric> metrics) {
         if (metrics == null || metrics.isEmpty()) {
             return;
         }
@@ -175,18 +166,15 @@ final class VulnDbModelConverter {
         }
 
         final BakedCvssVectorScores score = cvss.getBakedScores();
-        vulnBuilder.addRatings(
-                VulnerabilityRating.newBuilder()
-                        .setMethod(SCORE_METHOD_CVSSV2)
-                        .setVector("(" + cvss + ")")
-                        .setScore(score.getBaseScore())
-                        .setSource(SOURCE_VULNDB)
-                        .build());
+        vulnBuilder.addRatings(VulnerabilityRating.newBuilder()
+                .setMethod(SCORE_METHOD_CVSSV2)
+                .setVector("(" + cvss + ")")
+                .setScore(score.getBaseScore())
+                .setSource(SOURCE_VULNDB)
+                .build());
     }
 
-    private static void addCvssV3Rating(
-            Vulnerability.Builder vulnBuilder,
-            @Nullable List<CvssV3Metric> metrics) {
+    private static void addCvssV3Rating(Vulnerability.Builder vulnBuilder, @Nullable List<CvssV3Metric> metrics) {
         if (metrics == null || metrics.isEmpty()) {
             return;
         }
@@ -208,13 +196,12 @@ final class VulnDbModelConverter {
         }
 
         final BakedCvssVectorScores score = cvss.getBakedScores();
-        vulnBuilder.addRatings(
-                VulnerabilityRating.newBuilder()
-                        .setMethod(SCORE_METHOD_CVSSV3)
-                        .setVector(cvss.toString())
-                        .setScore(score.getBaseScore())
-                        .setSource(SOURCE_VULNDB)
-                        .build());
+        vulnBuilder.addRatings(VulnerabilityRating.newBuilder()
+                .setMethod(SCORE_METHOD_CVSSV3)
+                .setVector(cvss.toString())
+                .setScore(score.getBaseScore())
+                .setSource(SOURCE_VULNDB)
+                .build());
     }
 
     private static @Nullable Cvss2 buildCvssV2(CvssV2Metric metric) {
@@ -368,9 +355,7 @@ final class VulnDbModelConverter {
     }
 
     private static <T> void extractCveIds(
-            HashSet<String> cveIds,
-            @Nullable List<T> items,
-            Function<T, @Nullable String> cveIdExtractor) {
+            HashSet<String> cveIds, @Nullable List<T> items, Function<T, @Nullable String> cveIdExtractor) {
         if (items == null) {
             return;
         }
@@ -398,5 +383,4 @@ final class VulnDbModelConverter {
             }
         }
     }
-
 }

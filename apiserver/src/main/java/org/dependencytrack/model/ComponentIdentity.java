@@ -54,8 +54,13 @@ public class ComponentIdentity {
     private UUID uuid;
     private Scope scope;
 
-    public ComponentIdentity(final PackageURL purl, final String cpe, final String swidTagId,
-                             final String group, final String name, final String version) {
+    public ComponentIdentity(
+            final PackageURL purl,
+            final String cpe,
+            final String swidTagId,
+            final String group,
+            final String name,
+            final String version) {
         this.purl = purl;
         this.purlCoordinates = PurlUtil.silentPurlCoordinatesOnly(purl);
         this.cpe = cpe;
@@ -171,7 +176,16 @@ public class ComponentIdentity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final ComponentIdentity that = (ComponentIdentity) o;
-        return objectType == that.objectType && Objects.equals(purl, that.purl) && Objects.equals(purlCoordinates, that.purlCoordinates) && Objects.equals(cpe, that.cpe) && Objects.equals(swidTagId, that.swidTagId) && Objects.equals(group, that.group) && Objects.equals(name, that.name) && Objects.equals(version, that.version) && Objects.equals(uuid, that.uuid) && Objects.equals(scope, that.scope);
+        return objectType == that.objectType
+                && Objects.equals(purl, that.purl)
+                && Objects.equals(purlCoordinates, that.purlCoordinates)
+                && Objects.equals(cpe, that.cpe)
+                && Objects.equals(swidTagId, that.swidTagId)
+                && Objects.equals(group, that.group)
+                && Objects.equals(name, that.name)
+                && Objects.equals(version, that.version)
+                && Objects.equals(uuid, that.uuid)
+                && Objects.equals(scope, that.scope);
     }
 
     @Override
@@ -182,5 +196,4 @@ public class ComponentIdentity {
     public ObjectNode toJSON() {
         return Mappers.jsonMapper().valueToTree(this);
     }
-
 }

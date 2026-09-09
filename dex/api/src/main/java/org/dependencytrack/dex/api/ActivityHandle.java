@@ -46,5 +46,4 @@ public interface ActivityHandle<A extends @Nullable Object, R extends @Nullable 
     default Awaitable<@Nullable R> call() {
         return call(new ActivityCallOptions<>());
     }
-
 }

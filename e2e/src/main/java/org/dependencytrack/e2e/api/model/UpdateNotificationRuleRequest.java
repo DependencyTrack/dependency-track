@@ -28,5 +28,4 @@ public record UpdateNotificationRuleRequest(
         String scope,
         String notificationLevel,
         Set<String> notifyOn,
-        String publisherConfig) {
-}
+        String publisherConfig) {}

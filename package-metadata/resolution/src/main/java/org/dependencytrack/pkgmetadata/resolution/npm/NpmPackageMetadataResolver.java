@@ -61,9 +61,8 @@ final class NpmPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String packageName = formatPackageName(purl);
@@ -75,21 +74,19 @@ final class NpmPackageMetadataResolver implements PackageMetadataResolver {
 
         final Instant resolvedAt = Instant.now();
         final VersionInfo versionInfo = doc.versions().get(purl.getVersion());
-        final var latestVersionPublishedAt = (doc.latestVersion() != null && doc.versions().containsKey(doc.latestVersion()))
-                ? doc.versions().get(doc.latestVersion()).publishedAt()
-                : null;
+        final var latestVersionPublishedAt =
+                (doc.latestVersion() != null && doc.versions().containsKey(doc.latestVersion()))
+                        ? doc.versions().get(doc.latestVersion()).publishedAt()
+                        : null;
         return buildResult(doc.latestVersion(), latestVersionPublishedAt, resolvedAt, versionInfo);
     }
 
     private static String formatPackageName(PackageURL purl) {
-        return purl.getNamespace() != null
-                ? purl.getNamespace() + "/" + purl.getName()
-                : purl.getName();
+        return purl.getNamespace() != null ? purl.getNamespace() + "/" + purl.getName() : purl.getName();
     }
 
-    private @Nullable NpmPackageDocument fetchAndParseDocument(
-            String packageName,
-            PackageRepository repository) throws InterruptedException {
+    private @Nullable NpmPackageDocument fetchAndParseDocument(String packageName, PackageRepository repository)
+            throws InterruptedException {
         final String url = UrlUtils.join(repository.url(), packageName);
 
         final HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
@@ -140,15 +137,9 @@ final class NpmPackageMetadataResolver implements PackageMetadataResolver {
             return null;
         }
 
-        final PackageArtifactMetadata artifactMetadata = (versionInfo != null)
-                ? new PackageArtifactMetadata(resolvedAt, publishedAt, hashes)
-                : null;
+        final PackageArtifactMetadata artifactMetadata =
+                (versionInfo != null) ? new PackageArtifactMetadata(resolvedAt, publishedAt, hashes) : null;
 
-        return new PackageMetadata(
-                latestVersion,
-                latestVersionPublishedAt,
-                resolvedAt,
-                artifactMetadata);
+        return new PackageMetadata(latestVersion, latestVersionPublishedAt, resolvedAt, artifactMetadata);
     }
-
 }

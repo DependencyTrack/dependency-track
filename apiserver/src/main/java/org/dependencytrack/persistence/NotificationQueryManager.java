@@ -76,7 +76,8 @@ public class NotificationQueryManager extends QueryManager {
      * @return a new NotificationRule
      */
     @Override
-    public NotificationRule createNotificationRule(String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
+    public NotificationRule createNotificationRule(
+            String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
         return callInTransaction(() -> {
             final NotificationRule rule = new NotificationRule();
             rule.setName(name);
@@ -96,10 +97,7 @@ public class NotificationQueryManager extends QueryManager {
      */
     @Override
     public NotificationRule createScheduledNotificationRule(
-            String name,
-            NotificationScope scope,
-            NotificationLevel level,
-            NotificationPublisher publisher) {
+            String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
         return callInTransaction(() -> {
             final var rule = new NotificationRule();
             rule.setName(name);
@@ -126,8 +124,7 @@ public class NotificationQueryManager extends QueryManager {
     public NotificationRule updateNotificationRule(NotificationRule transientRule) {
         return callInTransaction(() -> {
             final var rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
-            if (transientRule.getTriggerType() != null
-                    && rule.getTriggerType() != transientRule.getTriggerType()) {
+            if (transientRule.getTriggerType() != null && rule.getTriggerType() != transientRule.getTriggerType()) {
                 throw new IllegalArgumentException("Trigger type can not be changed");
             }
 
@@ -136,9 +133,8 @@ public class NotificationQueryManager extends QueryManager {
                         .filter(group -> group.getSupportedTriggerType() != NotificationTriggerType.SCHEDULE)
                         .toList();
                 if (!invalidGroups.isEmpty()) {
-                    throw new IllegalArgumentException(
-                            "Groups %s are not supported for trigger type %s".formatted(
-                                    invalidGroups, rule.getTriggerType()));
+                    throw new IllegalArgumentException("Groups %s are not supported for trigger type %s"
+                            .formatted(invalidGroups, rule.getTriggerType()));
                 }
 
                 rule.setScheduleCron(transientRule.getScheduleCron());
@@ -149,9 +145,8 @@ public class NotificationQueryManager extends QueryManager {
                         .filter(group -> group.getSupportedTriggerType() != NotificationTriggerType.EVENT)
                         .toList();
                 if (!invalidGroups.isEmpty()) {
-                    throw new IllegalArgumentException(
-                            "Groups %s are not supported for trigger type %s".formatted(
-                                    invalidGroups, rule.getTriggerType()));
+                    throw new IllegalArgumentException("Groups %s are not supported for trigger type %s"
+                            .formatted(invalidGroups, rule.getTriggerType()));
                 }
             }
 
@@ -207,7 +202,7 @@ public class NotificationQueryManager extends QueryManager {
         final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class);
         query.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
         query.setOrdering("name asc");
-        return (List<NotificationPublisher>)query.execute();
+        return (List<NotificationPublisher>) query.execute();
     }
 
     /**
@@ -251,7 +246,8 @@ public class NotificationQueryManager extends QueryManager {
      * @since 4.12.3
      */
     @Override
-    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags, final boolean keepExisting) {
+    public boolean bind(
+            final NotificationRule notificationRule, final Collection<Tag> tags, final boolean keepExisting) {
         assertPersistent(notificationRule, "notificationRule must be persistent");
         assertPersistentAll(tags, "tags must be persistent");
 
@@ -263,7 +259,8 @@ public class NotificationQueryManager extends QueryManager {
             }
 
             if (!keepExisting) {
-                final Iterator<Tag> existingTagsIterator = notificationRule.getTags().iterator();
+                final Iterator<Tag> existingTagsIterator =
+                        notificationRule.getTags().iterator();
                 while (existingTagsIterator.hasNext()) {
                     final Tag existingTag = existingTagsIterator.next();
                     if (!tags.contains(existingTag)) {
@@ -335,5 +332,4 @@ public class NotificationQueryManager extends QueryManager {
             executeAndClose(query);
         }
     }
-
 }

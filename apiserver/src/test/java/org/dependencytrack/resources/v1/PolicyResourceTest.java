@@ -21,11 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -37,6 +32,12 @@ import org.dependencytrack.model.Project;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import java.util.Date;
 import java.util.List;
@@ -50,9 +51,7 @@ public class PolicyResourceTest extends ResourceTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(PolicyResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+            new ResourceConfig(PolicyResource.class).register(ApiFilter.class).register(AuthFeature.class));
 
     @Test
     public void getPoliciesTest() {
@@ -62,10 +61,8 @@ public class PolicyResourceTest extends ResourceTest {
             qm.createPolicy("policy" + i, Policy.Operator.ANY, Policy.ViolationState.INFO);
         }
 
-        final Response response = jersey.target(V1_POLICY)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Response response =
+                jersey.target(V1_POLICY).request().header(X_API_KEY, apiKey).get();
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1000");
@@ -221,7 +218,8 @@ public class PolicyResourceTest extends ResourceTest {
         component = qm.createComponent(component, false);
 
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        final PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, "<coordinates>");
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, "<coordinates>");
 
         PolicyViolation violation = new PolicyViolation();
         violation.setComponent(component);
@@ -237,7 +235,8 @@ public class PolicyResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(204);
         assertThat(qm.getObjectByUuid(Policy.class, policy.getUuid())).isNull();
-        assertThat(qm.getObjectByUuid(PolicyCondition.class, condition.getUuid())).isNull();
+        assertThat(qm.getObjectByUuid(PolicyCondition.class, condition.getUuid()))
+                .isNull();
     }
 
     @Test
@@ -256,7 +255,8 @@ public class PolicyResourceTest extends ResourceTest {
 
         final JsonObject json = parseJsonObject(response);
         assertThat(json.getJsonArray("projects")).hasSize(1);
-        assertThat(json.getJsonArray("projects").get(0).asJsonObject().getString("uuid")).isEqualTo(project.getUuid().toString());
+        assertThat(json.getJsonArray("projects").get(0).asJsonObject().getString("uuid"))
+                .isEqualTo(project.getUuid().toString());
     }
 
     @Test
@@ -292,11 +292,11 @@ public class PolicyResourceTest extends ResourceTest {
         policy.setViolationState(Policy.ViolationState.INFO);
         qm.persist(policy);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_POLICY + "/" + policy.getUuid() + "/project/" + project.getUuid())
-                .request()
-                .header(X_API_KEY, apiKey)
-                .post(null);
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_POLICY + "/" + policy.getUuid() + "/project/" + project.getUuid())
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .post(null);
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -363,11 +363,11 @@ public class PolicyResourceTest extends ResourceTest {
         policy.setProjects(List.of(project));
         qm.persist(policy);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_POLICY + "/" + policy.getUuid() + "/project/" + project.getUuid())
-                .request()
-                .header(X_API_KEY, apiKey)
-                .delete();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_POLICY + "/" + policy.getUuid() + "/project/" + project.getUuid())
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .delete();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -439,10 +439,8 @@ public class PolicyResourceTest extends ResourceTest {
         policy.setProjects(List.of(accessibleProject, inaccessibleProject));
         qm.persist(policy);
 
-        final Response response = jersey.target(V1_POLICY)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Response response =
+                jersey.target(V1_POLICY).request().header(X_API_KEY, apiKey).get();
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response))
@@ -472,8 +470,8 @@ public class PolicyResourceTest extends ResourceTest {
         policy.setProjects(List.of(inaccessibleProject));
         qm.persist(policy);
 
-        final Response response = jersey
-                .target(V1_POLICY + "/" + policy.getUuid() + "/project/" + accessibleProject.getUuid())
+        final Response response = jersey.target(
+                        V1_POLICY + "/" + policy.getUuid() + "/project/" + accessibleProject.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -520,9 +518,7 @@ public class PolicyResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturnAllProjectsViaGetPolicyWhenCallerBypassesAcl() {
-        initializeWithPermissions(
-                Permissions.POLICY_MANAGEMENT_READ,
-                Permissions.PORTFOLIO_ACCESS_CONTROL_BYPASS);
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_READ, Permissions.PORTFOLIO_ACCESS_CONTROL_BYPASS);
         enablePortfolioAccessControl();
 
         final var projectA = new Project();
@@ -550,8 +546,7 @@ public class PolicyResourceTest extends ResourceTest {
                 .inPath("$.projects[*].uuid")
                 .isArray()
                 .containsExactlyInAnyOrder(
-                        projectA.getUuid().toString(),
-                        projectB.getUuid().toString());
+                        projectA.getUuid().toString(), projectB.getUuid().toString());
     }
 
     @Test
@@ -575,7 +570,8 @@ public class PolicyResourceTest extends ResourceTest {
         policy.setProjects(List.of(accessibleProject, inaccessibleProject));
         qm.persist(policy);
 
-        final Response response = jersey.target(V1_POLICY).request()
+        final Response response = jersey.target(V1_POLICY)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
                         {
@@ -614,8 +610,8 @@ public class PolicyResourceTest extends ResourceTest {
         policy.setProjects(List.of(inaccessibleProject, accessibleProject));
         qm.persist(policy);
 
-        final Response response = jersey
-                .target(V1_POLICY + "/" + policy.getUuid() + "/project/" + accessibleProject.getUuid())
+        final Response response = jersey.target(
+                        V1_POLICY + "/" + policy.getUuid() + "/project/" + accessibleProject.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -626,5 +622,4 @@ public class PolicyResourceTest extends ResourceTest {
                 .isArray()
                 .isEmpty();
     }
-
 }

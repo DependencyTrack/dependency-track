@@ -38,7 +38,8 @@ public final class DateColumnMapper implements ColumnMapper<Date> {
 
     @Override
     public void init(ConfigRegistry registry) {
-        instantColumnMapper = registry.get(ColumnMappers.class).findFor(Instant.class).orElseThrow();
+        instantColumnMapper =
+                registry.get(ColumnMappers.class).findFor(Instant.class).orElseThrow();
     }
 
     @Override
@@ -51,5 +52,4 @@ public final class DateColumnMapper implements ColumnMapper<Date> {
 
         return Date.from(instant);
     }
-
 }

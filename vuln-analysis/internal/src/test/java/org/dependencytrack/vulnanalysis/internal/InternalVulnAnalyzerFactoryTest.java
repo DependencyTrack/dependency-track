@@ -26,5 +26,4 @@ class InternalVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
     protected InternalVulnAnalyzerFactoryTest() {
         super(InternalVulnAnalyzerFactory.class);
     }
-
 }

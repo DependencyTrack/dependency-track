@@ -900,7 +900,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "description": "Snapshot of workflow run counts by lifecycle status.",
+      "description": "Snapshot of non-terminal workflow run counts by lifecycle status.",
       "fieldConfig": {
         "defaults": {
           "color": {

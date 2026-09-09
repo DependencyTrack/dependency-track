@@ -161,6 +161,7 @@
   ]
 }
 {% elseif notification.group == "GROUP_PROJECT_AUDIT_CHANGE" %}
+{% set isViolationAnalysis = subject.policyViolation is defined %}
 {
   "blocks": [
     {
@@ -206,6 +207,40 @@
 		  "type": "plain_text",
 		  "text": "{{ subject.analysis.suppressed | escape(strategy="json") }}"
 		},
+		{% if isViolationAnalysis %}
+		{
+		  "type": "mrkdwn",
+		  "text": "*Policy*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.policyViolation.condition.policy.name | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Subject*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.policyViolation.condition.subject | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Operator*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.policyViolation.condition.operator | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Value*"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "`{{ subject.policyViolation.condition.value | escape(strategy="json") }}`"
+		}
+		{% else %}
 		{
 		  "type": "mrkdwn",
 		  "text": "*VulnID*"
@@ -230,6 +265,7 @@
 		  "type": "plain_text",
 		  "text": "{{ subject.vulnerability.source | escape(strategy="json") }}"
 		}
+		{% endif %}
 	  ]
 	},
     {
@@ -273,7 +309,7 @@
 		  },
 		  "action_id": "actionId-2",
 		  "url": "{{ baseUrl }}/components/{{ subject.component.uuid | escape(strategy="json") }}"
-		},
+		}{% if not isViolationAnalysis %},
 	    {
 		  "type": "button",
 		  "text": {
@@ -283,6 +319,7 @@
 		  "action_id": "actionId-3",
 		  "url": "{{ baseUrl }}/vulnerabilities/{{ subject.vulnerability.source | escape(strategy="json") }}/{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
 		}
+		{% endif %}
 	  ]
 	}
 	{% endif %}
@@ -324,7 +361,7 @@
 		{
 		  "type": "plain_text",
 		  "emoji": true,
-		  "text": "{{ subject.policyViolation.policyCondition.subject | escape(strategy="json") }}"
+		  "text": "{{ subject.policyViolation.condition.subject | escape(strategy="json") }}"
 		},
 		{
 		  "type": "mrkdwn",
@@ -333,7 +370,7 @@
 		{
 		  "type": "plain_text",
 		  "emoji": true,
-		  "text": "{{ subject.policyViolation.policyCondition.operator | escape(strategy="json") }}"
+		  "text": "{{ subject.policyViolation.condition.operator | escape(strategy="json") }}"
 		},
 		{
 		  "type": "mrkdwn",
@@ -341,7 +378,7 @@
 		},
 		{
 		  "type": "mrkdwn",
-		  "text": "`{{ subject.policyViolation.policyCondition.value | escape(strategy="json") }}`"
+		  "text": "`{{ subject.policyViolation.condition.value | escape(strategy="json") }}`"
 		},
 		{
 		  "type": "mrkdwn",
@@ -387,14 +424,14 @@
 	{% endif %}
   ]
 }
-{% elseif notification.group == "BOM_VALIDATION_FAILED" %}
+{% elseif notification.group == "GROUP_BOM_VALIDATION_FAILED" %}
 {
   "blocks": [
     {
 	  "type": "header",
 	  "text": {
 	    "type": "plain_text",
-		"text": "{{ notification.group | escape(strategy="json") }} | {{ subject.project.toString | escape(strategy="json") }}"
+		"text": "{{ notification.group | escape(strategy="json") }} | {{ subject.project | summarize | escape(strategy="json") }}"
 	  }
 	},
 	{
@@ -426,7 +463,7 @@
 	{
 	  "type": "section",
 	  "text": {
-	    "text": "{{ subject.errors.toString | escape(strategy="json") }}",
+	    "text": "{{ subject.errorsList | join(", ") | escape(strategy="json") }}",
 		"type": "plain_text"
 	  }
 	}

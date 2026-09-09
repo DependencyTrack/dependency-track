@@ -18,9 +18,9 @@
  */
 package alpine.server.filters;
 
-import alpine.model.ApiKey;
-import alpine.model.User;
-import alpine.persistence.AlpineQueryManager;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
+import alpine.model.auth.UserPrincipal;
 import alpine.server.auth.PermissionRequired;
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.ForbiddenException;
@@ -35,7 +35,6 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.Principal;
 import java.util.Collections;
 import java.util.Set;
 
@@ -52,8 +51,6 @@ public class AuthorizationFilter implements ContainerRequestFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorizationFilter.class);
 
-    public static final String EFFECTIVE_PERMISSIONS_PROPERTY = "effectivePermissions";
-
     @Context
     private ResourceInfo resourceInfo;
 
@@ -65,35 +62,27 @@ public class AuthorizationFilter implements ContainerRequestFilter {
             return;
         }
 
-        final Principal principal = (Principal) requestContext.getProperty("Principal");
-        if (principal == null) {
+        if (!(requestContext.getSecurityContext().getUserPrincipal() instanceof final Principal principal)) {
             LOGGER.info(SecurityMarkers.SECURITY_FAILURE, "A request was made without the assertion of a valid user principal");
             throw new ForbiddenException(Response.status(Response.Status.FORBIDDEN).build());
         }
-
-        final Set<String> effectivePermissions;
-        try (final var qm = new AlpineQueryManager()) {
-            effectivePermissions = qm.getEffectivePermissions(principal);
-        }
-        requestContext.setProperty(EFFECTIVE_PERMISSIONS_PROPERTY, effectivePermissions);
 
         final PermissionRequired annotation = resourceInfo.getResourceMethod().getDeclaredAnnotation(PermissionRequired.class);
         if (annotation == null) {
             return;
         }
 
-        if (!Collections.disjoint(Set.of(annotation.value()), effectivePermissions)) {
+        if (!Collections.disjoint(Set.of(annotation.value()), principal.effectivePermissions())) {
             return;
         }
 
-        final String requestPrincipal = switch (principal) {
-            case ApiKey apiKey -> "API Key " + apiKey.getMaskedKey();
-            case User user -> user.getUsername();
-            default -> throw new IllegalStateException("Unexpected principal type: " + principal.getClass().getName());
+        final String principalDescription = switch (principal) {
+            case ApiKeyPrincipal apiKey -> "API Key " + apiKey.maskedKey();
+            case UserPrincipal user -> user.username();
         };
 
         LOGGER.info(SecurityMarkers.SECURITY_FAILURE, "Unauthorized access attempt made by %s to %s"
-                .formatted(requestPrincipal, requestContext.getUriInfo().getRequestUri().toString()));
+                .formatted(principalDescription, requestContext.getUriInfo().getRequestUri().toString()));
 
         throw new ForbiddenException(Response.status(Response.Status.FORBIDDEN).build());
     }

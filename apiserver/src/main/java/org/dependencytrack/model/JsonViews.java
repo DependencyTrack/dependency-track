@@ -28,7 +28,5 @@ public class JsonViews {
     /**
      * Marks fields to be included when (de-)serializing {@link Tools}.
      */
-    public interface MetadataTools {
-    }
-
+    public interface MetadataTools {}
 }

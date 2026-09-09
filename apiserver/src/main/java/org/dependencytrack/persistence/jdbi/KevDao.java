@@ -38,9 +38,7 @@ public interface KevDao extends SqlObject {
     default void upsertBatch(String asserter, Collection<KevAssertion> batch) {
         final var assertionByVulnKey = new LinkedHashMap<VulnerabilityKey, KevAssertion>(batch.size());
         for (final KevAssertion assertion : batch) {
-            assertionByVulnKey.put(
-                    new VulnerabilityKey(assertion.vulnId(), assertion.vulnSource()),
-                    assertion);
+            assertionByVulnKey.put(new VulnerabilityKey(assertion.vulnId(), assertion.vulnSource()), assertion);
         }
         if (assertionByVulnKey.isEmpty()) {
             return;
@@ -116,8 +114,7 @@ public interface KevDao extends SqlObject {
                    OR "KEV_ASSERTION"."RAW" IS DISTINCT FROM EXCLUDED."RAW"
                 """);
 
-        update
-                .registerArrayType(Instant.class, "timestamptz")
+        update.registerArrayType(Instant.class, "timestamptz")
                 .registerArrayType(Boolean.class, "bool")
                 .bind("asserter", asserter)
                 .bind("vulnSources", vulnSources)
@@ -185,8 +182,7 @@ public interface KevDao extends SqlObject {
             @Nullable Boolean knownRansomware,
             @Nullable String description,
             Instant createdAt,
-            Instant updatedAt) {
-    }
+            Instant updatedAt) {}
 
     default boolean hasAssertions(String asserter) {
         return getHandle()
@@ -201,5 +197,4 @@ public interface KevDao extends SqlObject {
                 .mapTo(boolean.class)
                 .one();
     }
-
 }

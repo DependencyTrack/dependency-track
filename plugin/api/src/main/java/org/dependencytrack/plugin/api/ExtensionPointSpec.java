@@ -39,5 +39,4 @@ public @interface ExtensionPointSpec {
      * Can contain lowercase letters, numbers, and hyphens.
      */
     String name();
-
 }

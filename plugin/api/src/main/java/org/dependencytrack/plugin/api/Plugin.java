@@ -29,5 +29,4 @@ public interface Plugin {
      * @return The {@link ExtensionFactory}s provided by the plugin.
      */
     Collection<? extends ExtensionFactory<? extends ExtensionPoint>> extensionFactories();
-
 }

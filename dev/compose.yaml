@@ -19,6 +19,8 @@ name: dtrack-dev
 services:
   traefik:
     image: traefik:v3
+    security_opt:
+      - "label=disable"
     command:
     - "--providers.docker=true"
     - "--entrypoints.web.address=:8080"

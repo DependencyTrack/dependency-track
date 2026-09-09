@@ -30,5 +30,4 @@ final class WebexNotificationPublisher extends AbstractHttpNotificationPublisher
     WebexNotificationPublisher(HttpClient httpClient) {
         super(httpClient);
     }
-
 }

@@ -69,11 +69,12 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
 
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        final Page<ListProjectsRow> projectsPage =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
 
-        assertThat(projectsPage.items()).satisfiesExactly(
-                retainedProject -> assertThat(retainedProject.name()).isEqualTo("acme-app-B"));
+        assertThat(projectsPage.items())
+                .satisfiesExactly(
+                        retainedProject -> assertThat(retainedProject.name()).isEqualTo("acme-app-B"));
     }
 
     @Test
@@ -124,13 +125,13 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         // Retain all active and last 2 inactive versions of a project and delete rest
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
-        assertThat(projectsPage.items()).satisfiesExactly(
-                retainedProject -> assertThat(retainedProject.version()).isEqualTo("3.0.0"),
-                retainedProject -> assertThat(retainedProject.version()).isEqualTo("4.0.0"),
-                retainedProject -> assertThat(retainedProject.version()).isEqualTo("5.0.0")
-        );
+        final Page<ListProjectsRow> projectsPage =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        assertThat(projectsPage.items())
+                .satisfiesExactly(
+                        retainedProject -> assertThat(retainedProject.version()).isEqualTo("3.0.0"),
+                        retainedProject -> assertThat(retainedProject.version()).isEqualTo("4.0.0"),
+                        retainedProject -> assertThat(retainedProject.version()).isEqualTo("5.0.0"));
     }
 
     @Test
@@ -181,22 +182,22 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         // Retain all active and last 2 inactive versions of all projects and delete rest
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
-        assertThat(projectsPage.items()).satisfiesExactlyInAnyOrder(
-                retainedProject -> {
-                    assertThat(retainedProject.name()).isEqualTo("acme-app-A");
-                    assertThat(retainedProject.version()).isEqualTo("2.0.0");
-                },
-                retainedProject -> {
-                    assertThat(retainedProject.name()).isEqualTo("acme-app-B");
-                    assertThat(retainedProject.version()).isEqualTo("2.0.0");
-                },
-                retainedProject -> {
-                    assertThat(retainedProject.name()).isEqualTo("acme-app-B");
-                    assertThat(retainedProject.version()).isEqualTo("3.0.0");
-                }
-        );
+        final Page<ListProjectsRow> projectsPage =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        assertThat(projectsPage.items())
+                .satisfiesExactlyInAnyOrder(
+                        retainedProject -> {
+                            assertThat(retainedProject.name()).isEqualTo("acme-app-A");
+                            assertThat(retainedProject.version()).isEqualTo("2.0.0");
+                        },
+                        retainedProject -> {
+                            assertThat(retainedProject.name()).isEqualTo("acme-app-B");
+                            assertThat(retainedProject.version()).isEqualTo("2.0.0");
+                        },
+                        retainedProject -> {
+                            assertThat(retainedProject.name()).isEqualTo("acme-app-B");
+                            assertThat(retainedProject.version()).isEqualTo("3.0.0");
+                        });
     }
 
     @Test
@@ -216,8 +217,8 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        final Page<ListProjectsRow> projectsPage =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items()).isNotEmpty();
     }
 
@@ -238,9 +239,8 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        final Page<ListProjectsRow> projectsPage =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items()).isNotEmpty();
     }
-
 }

@@ -33,5 +33,4 @@ record ExtensionIdentity(Class<? extends ExtensionPoint> extensionPointClass, St
         requireNonNull(extensionPointClass, "extensionPointClass must not be null");
         requireNonNull(name, "name must not be null");
     }
-
 }

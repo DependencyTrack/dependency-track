@@ -80,9 +80,7 @@ public final class LicenseCelPolicyScriptSourceBuilder implements CelPolicyScrip
         // translation layers, and not do any I/O whatsoever.
         final ConditionLicense conditionLicense = tryLookupLicense(value);
         if (conditionLicense == null) {
-            LOGGER.warn(
-                    "No license with UUID {} exists; Skipping condition {}",
-                    value, policyCondition.getUuid());
+            LOGGER.warn("No license with UUID {} exists; Skipping condition {}", value, policyCondition.getUuid());
             return null;
         }
 
@@ -99,29 +97,23 @@ public final class LicenseCelPolicyScriptSourceBuilder implements CelPolicyScrip
         };
     }
 
-    record ConditionLicense(@Nullable String licenseId, String name) {
-    }
+    record ConditionLicense(@Nullable String licenseId, String name) {}
 
     private static @Nullable ConditionLicense tryLookupLicense(String licenseUuid) {
         try {
-            return withJdbiHandle(
-                    handle -> handle
-                            .createQuery("""
+            return withJdbiHandle(handle -> handle.createQuery("""
                                     SELECT COALESCE("LICENSEID", '')
                                          , "NAME" -- NOT NULL
                                       FROM "LICENSE"
                                      WHERE "UUID" = CAST(:uuid AS UUID)
                                     """)
-                            .bind("uuid", licenseUuid)
-                            .map((rs, _) -> new ConditionLicense(
-                                    rs.getString(1),
-                                    rs.getString(2)))
-                            .findOne()
-                            .orElse(null));
+                    .bind("uuid", licenseUuid)
+                    .map((rs, _) -> new ConditionLicense(rs.getString(1), rs.getString(2)))
+                    .findOne()
+                    .orElse(null));
         } catch (RuntimeException e) {
             LOGGER.warn("Failed to look up license with UUID {}", licenseUuid, e);
             return null;
         }
     }
-
 }

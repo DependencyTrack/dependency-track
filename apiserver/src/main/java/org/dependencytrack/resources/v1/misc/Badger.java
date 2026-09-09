@@ -37,13 +37,20 @@ import java.util.Map;
  */
 public class Badger {
 
-    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
-    private static final PebbleTemplate PROJECT_VULNS_TEMPLATE = ENGINE.getTemplate("templates/badge/project-vulns.peb");
-    private static final PebbleTemplate PROJECT_VULNS_NONE_TEMPLATE = ENGINE.getTemplate("templates/badge/project-vulns-none.peb");
-    private static final PebbleTemplate PROJECT_VULNS_NO_METRICS_TEMPLATE = ENGINE.getTemplate("templates/badge/project-vulns-nometrics.peb");
-    private static final PebbleTemplate PROJECT_VIOLATIONS_TEMPLATE = ENGINE.getTemplate("templates/badge/project-violations.peb");
-    private static final PebbleTemplate PROJECT_VIOLATIONS_NONE_TEMPLATE = ENGINE.getTemplate("templates/badge/project-violations-none.peb");
-    private static final PebbleTemplate PROJECT_VIOLATIONS_NO_METRICS_TEMPLATE = ENGINE.getTemplate("templates/badge/project-violations-nometrics.peb");
+    private static final PebbleEngine ENGINE =
+            new PebbleEngine.Builder().newLineTrimming(false).build();
+    private static final PebbleTemplate PROJECT_VULNS_TEMPLATE =
+            ENGINE.getTemplate("templates/badge/project-vulns.peb");
+    private static final PebbleTemplate PROJECT_VULNS_NONE_TEMPLATE =
+            ENGINE.getTemplate("templates/badge/project-vulns-none.peb");
+    private static final PebbleTemplate PROJECT_VULNS_NO_METRICS_TEMPLATE =
+            ENGINE.getTemplate("templates/badge/project-vulns-nometrics.peb");
+    private static final PebbleTemplate PROJECT_VIOLATIONS_TEMPLATE =
+            ENGINE.getTemplate("templates/badge/project-violations.peb");
+    private static final PebbleTemplate PROJECT_VIOLATIONS_NONE_TEMPLATE =
+            ENGINE.getTemplate("templates/badge/project-violations-none.peb");
+    private static final PebbleTemplate PROJECT_VIOLATIONS_NO_METRICS_TEMPLATE =
+            ENGINE.getTemplate("templates/badge/project-violations-nometrics.peb");
 
     public String generateVulnerabilities(ProjectMetrics metrics, String linkToProjectVuln) {
         final Map<String, Object> context = new HashMap<>();
@@ -93,5 +100,3 @@ public class Badger {
         }
     }
 }
-
-

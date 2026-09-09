@@ -45,63 +45,302 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 public class VersionDistanceCelPolicyEvaluatorTest extends PersistenceCapableTest {
 
     public static Collection<?> testParameters() {
-        return Arrays.asList(new Object[][]{
-                {"1.0.0", "1.0.0", Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"1.0.0", "1.0.0", Operator.NUMERIC_GREATER_THAN, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                // Latest version is 1 minor newer than current version
-                {"1.2.3", "1.3.1", Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }", true},
-                {"1.2.3", "1.3.1", Operator.NUMERIC_GREATER_THAN, "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }", false},
-                {"1.2.3", "1.3.1", Operator.NUMERIC_EQUAL, "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }", true},
-                {"1.2.3", "1.3.1", Operator.NUMERIC_NOT_EQUAL, "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }", false},
-                {"1.2.3", "1.3.1", Operator.NUMERIC_LESS_THAN, "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }", false},
-                {"1.2.3", "1.3.1", Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }", true},
-                // Latest version is 1 major newer than current version
-                {"1.2.3", "2.1.1", Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"1.2.3", "2.1.1", Operator.NUMERIC_GREATER_THAN, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"1.2.3", "2.1.1", Operator.NUMERIC_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"1.2.3", "2.1.1", Operator.NUMERIC_NOT_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"1.2.3", "2.1.1", Operator.NUMERIC_LESS_THAN, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"1.2.3", "2.1.1", Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                // Latest version is 2 major newer than current version
-                {"1.2.3", "3.0.1", Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"1.2.3", "3.0.1", Operator.NUMERIC_GREATER_THAN, "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"1.2.3", "3.0.1", Operator.NUMERIC_EQUAL, "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"1.2.3", "3.0.1", Operator.NUMERIC_NOT_EQUAL, "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"1.2.3", "3.0.1", Operator.NUMERIC_LESS_THAN, "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"1.2.3", "3.0.1", Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                // Component is latest version.
-                {"1.2.3", "1.2.3", Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", true},
-                {"1.2.3", "1.2.3", Operator.NUMERIC_GREATER_THAN, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", false},
-                {"1.2.3", "1.2.3", Operator.NUMERIC_EQUAL, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", true},
-                {"1.2.3", "1.2.3", Operator.NUMERIC_NOT_EQUAL, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", false},
-                {"1.2.3", "1.2.3", Operator.NUMERIC_LESS_THAN, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", false},
-                {"1.2.3", "1.2.3", Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", true},
-                // Negative distanse.
-                {"2.3.4", "1.2.3", Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"2.3.4", "1.2.3", Operator.NUMERIC_GREATER_THAN, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"2.3.4", "1.2.3", Operator.NUMERIC_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"2.3.4", "1.2.3", Operator.NUMERIC_NOT_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"2.3.4", "1.2.3", Operator.NUMERIC_LESS_THAN, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"2.3.4", "1.2.3", Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                // Combined policies.
-                {"2.0.0", "1.0.0", Operator.NUMERIC_EQUAL, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"1:1.0.0", "1.0.0", Operator.NUMERIC_EQUAL, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"1:2.0.0", "1.0.0", Operator.NUMERIC_EQUAL, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"1.0.0", "1.0.0", Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"1.0.0", "1.0.0", Operator.NUMERIC_LESS_THAN, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true},
-                {"1.0.0", "1.0.0", Operator.NUMERIC_EQUAL, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"1.0.0", "1.0.0", Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"1.0.0", "1.0.0", Operator.NUMERIC_GREATER_THAN, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"2:2.0.0", "1.0.0", Operator.NUMERIC_EQUAL, "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                {"3.2.2", "1.0.0", Operator.NUMERIC_EQUAL, "{\"epoch\": \"0\", \"major\": \"1\", \"minor\": \"1\", \"patch\": \"1\" }", false},
-                {"1.2.2", "1.0.0", Operator.NUMERIC_EQUAL, "{\"epoch\": \"0\", \"major\": \"0\", \"minor\": \"1\", \"patch\": \"1\" }", false},
-                {"0.2.2", "1.0.0", Operator.NUMERIC_EQUAL, "{\"epoch\": \"0\", \"major\": \"0\", \"minor\": \"1\", \"patch\": \"1\" }", false},
-                // Unsupported operator.
-                {"1.2.3", "2.1.1", Operator.MATCHES, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
-                // Invalid distanse format.
-                {"1.2.3", "2.1.1", Operator.NUMERIC_EQUAL, "{ \"major\": \"1a\" }", false},
-                // No known latestVersion.
-                {"1.2.3", null, Operator.NUMERIC_EQUAL, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", false},
+        return Arrays.asList(new Object[][] {
+            {
+                "1.0.0",
+                "1.0.0",
+                Operator.NUMERIC_GREATER_THAN_OR_EQUAL,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "1.0.0",
+                "1.0.0",
+                Operator.NUMERIC_GREATER_THAN,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            // Latest version is 1 minor newer than current version
+            {
+                "1.2.3",
+                "1.3.1",
+                Operator.NUMERIC_GREATER_THAN_OR_EQUAL,
+                "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }",
+                true
+            },
+            {
+                "1.2.3",
+                "1.3.1",
+                Operator.NUMERIC_GREATER_THAN,
+                "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }",
+                false
+            },
+            {"1.2.3", "1.3.1", Operator.NUMERIC_EQUAL, "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }", true
+            },
+            {
+                "1.2.3",
+                "1.3.1",
+                Operator.NUMERIC_NOT_EQUAL,
+                "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "1.2.3",
+                "1.3.1",
+                Operator.NUMERIC_LESS_THAN,
+                "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "1.2.3",
+                "1.3.1",
+                Operator.NUMERIC_LESSER_THAN_OR_EQUAL,
+                "{ \"major\": \"0\", \"minor\": \"1\", \"patch\": \"?\" }",
+                true
+            },
+            // Latest version is 1 major newer than current version
+            {
+                "1.2.3",
+                "2.1.1",
+                Operator.NUMERIC_GREATER_THAN_OR_EQUAL,
+                "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            {
+                "1.2.3",
+                "2.1.1",
+                Operator.NUMERIC_GREATER_THAN,
+                "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {"1.2.3", "2.1.1", Operator.NUMERIC_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true
+            },
+            {
+                "1.2.3",
+                "2.1.1",
+                Operator.NUMERIC_NOT_EQUAL,
+                "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "1.2.3",
+                "2.1.1",
+                Operator.NUMERIC_LESS_THAN,
+                "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "1.2.3",
+                "2.1.1",
+                Operator.NUMERIC_LESSER_THAN_OR_EQUAL,
+                "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            // Latest version is 2 major newer than current version
+            {
+                "1.2.3",
+                "3.0.1",
+                Operator.NUMERIC_GREATER_THAN_OR_EQUAL,
+                "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            {
+                "1.2.3",
+                "3.0.1",
+                Operator.NUMERIC_GREATER_THAN,
+                "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {"1.2.3", "3.0.1", Operator.NUMERIC_EQUAL, "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }", true
+            },
+            {
+                "1.2.3",
+                "3.0.1",
+                Operator.NUMERIC_NOT_EQUAL,
+                "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "1.2.3",
+                "3.0.1",
+                Operator.NUMERIC_LESS_THAN,
+                "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "1.2.3",
+                "3.0.1",
+                Operator.NUMERIC_LESSER_THAN_OR_EQUAL,
+                "{ \"major\": \"2\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            // Component is latest version.
+            {
+                "1.2.3",
+                "1.2.3",
+                Operator.NUMERIC_GREATER_THAN_OR_EQUAL,
+                "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }",
+                true
+            },
+            {
+                "1.2.3",
+                "1.2.3",
+                Operator.NUMERIC_GREATER_THAN,
+                "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }",
+                false
+            },
+            {"1.2.3", "1.2.3", Operator.NUMERIC_EQUAL, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", true
+            },
+            {
+                "1.2.3",
+                "1.2.3",
+                Operator.NUMERIC_NOT_EQUAL,
+                "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }",
+                false
+            },
+            {
+                "1.2.3",
+                "1.2.3",
+                Operator.NUMERIC_LESS_THAN,
+                "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }",
+                false
+            },
+            {
+                "1.2.3",
+                "1.2.3",
+                Operator.NUMERIC_LESSER_THAN_OR_EQUAL,
+                "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }",
+                true
+            },
+            // Negative distanse.
+            {
+                "2.3.4",
+                "1.2.3",
+                Operator.NUMERIC_GREATER_THAN_OR_EQUAL,
+                "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            {
+                "2.3.4",
+                "1.2.3",
+                Operator.NUMERIC_GREATER_THAN,
+                "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {"2.3.4", "1.2.3", Operator.NUMERIC_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true
+            },
+            {
+                "2.3.4",
+                "1.2.3",
+                Operator.NUMERIC_NOT_EQUAL,
+                "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "2.3.4",
+                "1.2.3",
+                Operator.NUMERIC_LESS_THAN,
+                "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "2.3.4",
+                "1.2.3",
+                Operator.NUMERIC_LESSER_THAN_OR_EQUAL,
+                "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            // Combined policies.
+            {
+                "2.0.0",
+                "1.0.0",
+                Operator.NUMERIC_EQUAL,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            {
+                "1:1.0.0",
+                "1.0.0",
+                Operator.NUMERIC_EQUAL,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            {
+                "1:2.0.0",
+                "1.0.0",
+                Operator.NUMERIC_EQUAL,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            {
+                "1.0.0",
+                "1.0.0",
+                Operator.NUMERIC_LESSER_THAN_OR_EQUAL,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            {
+                "1.0.0",
+                "1.0.0",
+                Operator.NUMERIC_LESS_THAN,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                true
+            },
+            {
+                "1.0.0",
+                "1.0.0",
+                Operator.NUMERIC_EQUAL,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "1.0.0",
+                "1.0.0",
+                Operator.NUMERIC_GREATER_THAN_OR_EQUAL,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "1.0.0",
+                "1.0.0",
+                Operator.NUMERIC_GREATER_THAN,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "2:2.0.0",
+                "1.0.0",
+                Operator.NUMERIC_EQUAL,
+                "{\"epoch\": \"1\", \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }",
+                false
+            },
+            {
+                "3.2.2",
+                "1.0.0",
+                Operator.NUMERIC_EQUAL,
+                "{\"epoch\": \"0\", \"major\": \"1\", \"minor\": \"1\", \"patch\": \"1\" }",
+                false
+            },
+            {
+                "1.2.2",
+                "1.0.0",
+                Operator.NUMERIC_EQUAL,
+                "{\"epoch\": \"0\", \"major\": \"0\", \"minor\": \"1\", \"patch\": \"1\" }",
+                false
+            },
+            {
+                "0.2.2",
+                "1.0.0",
+                Operator.NUMERIC_EQUAL,
+                "{\"epoch\": \"0\", \"major\": \"0\", \"minor\": \"1\", \"patch\": \"1\" }",
+                false
+            },
+            // Unsupported operator.
+            {"1.2.3", "2.1.1", Operator.MATCHES, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false},
+            // Invalid distanse format.
+            {"1.2.3", "2.1.1", Operator.NUMERIC_EQUAL, "{ \"major\": \"1a\" }", false},
+            // No known latestVersion.
+            {"1.2.3", null, Operator.NUMERIC_EQUAL, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", false},
         });
     }
 
@@ -111,8 +350,12 @@ public class VersionDistanceCelPolicyEvaluatorTest extends PersistenceCapableTes
     private String versionDistance;
     private boolean shouldViolate;
 
-    public void initVersionDistanceCelPolicyEvaluatorTest(final String version, String latestVersion,
-                                                          Operator operator, String versionDistance, boolean shouldViolate) {
+    public void initVersionDistanceCelPolicyEvaluatorTest(
+            final String version,
+            String latestVersion,
+            Operator operator,
+            String versionDistance,
+            boolean shouldViolate) {
         this.version = version;
         this.latestVersion = latestVersion;
         this.operator = operator;
@@ -122,7 +365,13 @@ public class VersionDistanceCelPolicyEvaluatorTest extends PersistenceCapableTes
 
     @MethodSource("testParameters")
     @ParameterizedTest(name = "[{index}] version={0} latestVersion={1} operator={2} distance={3} shouldViolate={4}")
-    public void evaluateTest(final String version, String latestVersion, Operator operator, String versionDistance, boolean shouldViolate) throws Exception {
+    public void evaluateTest(
+            final String version,
+            String latestVersion,
+            Operator operator,
+            String versionDistance,
+            boolean shouldViolate)
+            throws Exception {
         initVersionDistanceCelPolicyEvaluatorTest(version, latestVersion, operator, versionDistance, shouldViolate);
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         final var condition = qm.createPolicyCondition(policy, Subject.VERSION_DISTANCE, operator, versionDistance);
@@ -135,19 +384,17 @@ public class VersionDistanceCelPolicyEvaluatorTest extends PersistenceCapableTes
         final var componentPurl = new PackageURL("pkg:maven/foo/bar@" + version);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
                             packagePurl,
                             latestVersion != null ? latestVersion : "6.6.6",
                             null,
                             Instant.now(),
                             null,
                             null)));
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
-                            componentPurl, packagePurl,
-                            null, null, null, null, null,
-                            null, null, Instant.now())));
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
+                            componentPurl, packagePurl, null, null, null, null, null, null, null, Instant.now())));
         });
 
         final var component = new Component();
@@ -164,7 +411,8 @@ public class VersionDistanceCelPolicyEvaluatorTest extends PersistenceCapableTes
         new CelPolicyEngine().evaluateProject(project.getUuid());
         if (shouldViolate) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
-            final PolicyViolation violation = qm.getAllPolicyViolations(component).getFirst();
+            final PolicyViolation violation =
+                    qm.getAllPolicyViolations(component).getFirst();
             assertThat(violation.getComponent()).isEqualTo(component);
             assertThat(violation.getPolicyCondition()).isEqualTo(condition);
         } else {
@@ -177,5 +425,4 @@ public class VersionDistanceCelPolicyEvaluatorTest extends PersistenceCapableTes
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
-
 }

@@ -39,13 +39,12 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import java.io.Serializable;
-import java.security.Principal;
 import java.util.List;
 
 @PersistenceCapable(table = "USER")
 @Discriminator(column = "TYPE", strategy = DiscriminatorStrategy.VALUE_MAP)
 @Inheritance(strategy = InheritanceStrategy.NEW_TABLE)
-public abstract class User implements Serializable, Principal {
+public abstract class User implements Serializable {
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
@@ -156,17 +155,6 @@ public abstract class User implements Serializable, Principal {
      */
     public void setPermissions(List<Permission> permissions) {
         this.permissions = permissions;
-    }
-
-    /**
-     * Do not use - only here to satisfy Principal implementation requirement.
-     * @deprecated use {@link #getUsername()}
-     * @return the value of {@link #getUsername()}
-     */
-    @Deprecated
-    @JsonIgnore
-    public String getName() {
-        return getUsername();
     }
 
 }

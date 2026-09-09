@@ -130,9 +130,7 @@ public final class NotificationFilterExpressionEnv {
             try {
                 ast = compiler.compile(normalizedSrc).getAst();
             } catch (CelValidationException e) {
-                throw new InvalidNotificationFilterExpressionException(
-                        "Failed to compile expression",
-                        e.getErrors());
+                throw new InvalidNotificationFilterExpressionException("Failed to compile expression", e.getErrors());
             }
 
             try {
@@ -145,10 +143,8 @@ public final class NotificationFilterExpressionEnv {
         });
     }
 
-    public boolean evaluate(
-            CelRuntime.Program program,
-            Notification notification,
-            @Nullable Object subject) throws CelEvaluationException {
+    public boolean evaluate(CelRuntime.Program program, Notification notification, @Nullable Object subject)
+            throws CelEvaluationException {
         final var args = new HashMap<String, @Nullable Object>(7);
         args.put("level", notification.getLevelValue());
         args.put("scope", notification.getScopeValue());
@@ -160,5 +156,4 @@ public final class NotificationFilterExpressionEnv {
 
         return (Boolean) program.eval(args);
     }
-
 }

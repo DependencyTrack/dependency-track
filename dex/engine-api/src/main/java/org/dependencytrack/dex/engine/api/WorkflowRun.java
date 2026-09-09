@@ -33,7 +33,7 @@ public record WorkflowRun(
         @Nullable UUID parentId,
         String workflowName,
         int workflowVersion,
-        String workflowInstanceId,
+        @Nullable String workflowInstanceId,
         WorkflowRunStatus status,
         @Nullable String customStatus,
         int priority,
@@ -46,5 +46,4 @@ public record WorkflowRun(
         @Nullable Payload argument,
         @Nullable Payload result,
         @Nullable Failure failure,
-        List<WorkflowEvent> eventHistory) {
-}
+        List<WorkflowEvent> eventHistory) {}

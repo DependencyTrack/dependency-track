@@ -57,9 +57,8 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String url = UrlUtils.join(repository.url(), "api", "v1", "crates", purl.getName());
@@ -127,8 +126,7 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
         }
 
         Map<HashAlgorithm, String> hashes = Map.of();
-        if (crateVersion.checksum() != null
-                && HashAlgorithm.SHA256.isValid(crateVersion.checksum())) {
+        if (crateVersion.checksum() != null && HashAlgorithm.SHA256.isValid(crateVersion.checksum())) {
             hashes = Map.of(HashAlgorithm.SHA256, crateVersion.checksum().toLowerCase());
         }
 
@@ -147,8 +145,8 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
         final String authHeaderValue;
         if (repository.username() != null) {
             final String credentials = repository.username() + ":" + repository.password();
-            authHeaderValue = "Basic " + Base64.getEncoder().encodeToString(
-                    credentials.getBytes(StandardCharsets.UTF_8));
+            authHeaderValue =
+                    "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         } else {
             authHeaderValue = "Bearer " + repository.password();
         }
@@ -163,5 +161,4 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
             throw new UncheckedIOException(e);
         }
     }
-
 }

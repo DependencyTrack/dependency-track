@@ -34,7 +34,6 @@ class SimplePageTokenEncoderTest {
 
         public int offset;
         public String value;
-
     }
 
     @Test
@@ -68,8 +67,7 @@ class SimplePageTokenEncoderTest {
 
     @Test
     void decodeShouldThrowForMalformedJson() {
-        final String encoded = Base64.getUrlEncoder()
-                .encodeToString("{invalid".getBytes(StandardCharsets.UTF_8));
+        final String encoded = Base64.getUrlEncoder().encodeToString("{invalid".getBytes(StandardCharsets.UTF_8));
 
         assertThatExceptionOfType(InvalidPageTokenException.class)
                 .isThrownBy(() -> encoder.decode(encoded, TestPageToken.class));
@@ -93,5 +91,4 @@ class SimplePageTokenEncoderTest {
                 .isThrownBy(() -> encoder.decode(encoded, TestPageToken.class))
                 .withMessageContaining("exceeds maximum size");
     }
-
 }

@@ -37,18 +37,19 @@ import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSe
  */
 public class VulnerableSoftwareRowMapper implements RowMapper<VulnerableSoftware> {
 
-    private static final TypeReference<List<AffectedVersionAttribution>> ATTRIBUTIONS_TYPE_REF = new TypeReference<>() {
-    };
+    private static final TypeReference<List<AffectedVersionAttribution>> ATTRIBUTIONS_TYPE_REF =
+            new TypeReference<>() {};
 
     private final RowMapper<VulnerableSoftware> vulnerableSoftwareMapper = BeanMapper.of(VulnerableSoftware.class);
 
     @Override
     public VulnerableSoftware map(final ResultSet rs, final StatementContext ctx) throws SQLException {
         final VulnerableSoftware vs = vulnerableSoftwareMapper.map(rs, ctx);
-        maybeSet(rs, "attributionsJson",
+        maybeSet(
+                rs,
+                "attributionsJson",
                 (_, columnName) -> deserializeJson(rs, columnName, ATTRIBUTIONS_TYPE_REF),
                 vs::setAffectedVersionAttributions);
         return vs;
     }
-
 }

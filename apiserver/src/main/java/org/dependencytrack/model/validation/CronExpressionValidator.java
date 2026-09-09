@@ -20,6 +20,7 @@ package org.dependencytrack.model.validation;
 
 import com.asahaf.javacron.InvalidExpressionException;
 import com.asahaf.javacron.Schedule;
+
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 

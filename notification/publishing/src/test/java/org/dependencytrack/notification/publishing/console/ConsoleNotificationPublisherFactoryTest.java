@@ -23,7 +23,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ConsoleNotificationPublisherFactoryTest extends AbstractNotificationPublisherFactoryTest<ConsoleNotificationPublisherFactory> {
+class ConsoleNotificationPublisherFactoryTest
+        extends AbstractNotificationPublisherFactoryTest<ConsoleNotificationPublisherFactory> {
 
     protected ConsoleNotificationPublisherFactoryTest() {
         super(ConsoleNotificationPublisherFactory.class);
@@ -35,5 +36,4 @@ class ConsoleNotificationPublisherFactoryTest extends AbstractNotificationPublis
             assertThat(publisherFactory.defaultTemplate()).isNotNull();
         }
     }
-
 }

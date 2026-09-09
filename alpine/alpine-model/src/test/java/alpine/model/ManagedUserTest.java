@@ -40,7 +40,6 @@ public class ManagedUserTest {
         ManagedUser user = new ManagedUser();
         user.setUsername("myUsername");
         Assertions.assertEquals("myUsername", user.getUsername());
-        Assertions.assertEquals("myUsername", user.getName());
     }
 
     @Test

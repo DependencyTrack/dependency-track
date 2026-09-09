@@ -51,5 +51,4 @@ public record KevAssertion(
         requireNonNull(vulnSource, "vulnSource must not be null");
         requireNonNull(vulnId, "vulnId must not be null");
     }
-
 }

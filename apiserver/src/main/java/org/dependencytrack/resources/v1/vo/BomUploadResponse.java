@@ -45,5 +45,4 @@ public class BomUploadResponse implements Serializable {
     public UUID getProjectUuid() {
         return projectUuid;
     }
-
 }

@@ -23,6 +23,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -45,7 +46,9 @@ import java.io.Serializable;
  * @since 3.0.0
  */
 @PersistenceCapable(table = "PROJECT_PROPERTY")
-@Unique(name = "PROJECT_PROPERTY_KEYS_IDX", members = {"project", "groupName", "propertyName"})
+@Unique(
+        name = "PROJECT_PROPERTY_KEYS_IDX",
+        members = {"project", "groupName", "propertyName"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectProperty implements IConfigProperty, Serializable {
 
@@ -57,7 +60,11 @@ public class ProjectProperty implements IConfigProperty, Serializable {
     private long id;
 
     @Persistent
-    @ForeignKey(name = "PROJECT_PROPERTY_PROJECT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "PROJECT_PROPERTY_PROJECT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @JsonIgnore
     private Project project;
@@ -152,5 +159,4 @@ public class ProjectProperty implements IConfigProperty, Serializable {
     public void setDescription(String description) {
         this.description = description;
     }
-
 }

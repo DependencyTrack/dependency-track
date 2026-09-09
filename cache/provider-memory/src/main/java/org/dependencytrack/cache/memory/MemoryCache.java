@@ -86,5 +86,4 @@ final class MemoryCache implements Cache {
     public void invalidateAll() {
         delegate.invalidateAll();
     }
-
 }

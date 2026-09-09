@@ -28,27 +28,27 @@ import org.dependencytrack.common.Mappers;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
+import org.dependencytrack.resources.v1.vo.AffectedComponent;
 import org.dependencytrack.util.DateUtil;
 
 import java.io.UncheckedIOException;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
-import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
-import org.dependencytrack.resources.v1.vo.AffectedComponent;
+import java.util.UUID;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class FindingPackagingFormat {
 
-    private static final ObjectWriter OBJECT_WRITER = Mappers.jsonMapper().writer()
+    private static final ObjectWriter OBJECT_WRITER = Mappers.jsonMapper()
+            .writer()
             .without(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .withDefaultPrettyPrinter();
 
@@ -56,6 +56,7 @@ public class FindingPackagingFormat {
      * FPF is versioned. If the format changes, the version needs to be bumped.
      */
     private static final String FPF_VERSION = "1.6";
+
     private static final String FIELD_APPLICATION = "application";
     private static final String FIELD_VERSION = "version";
     private static final String FIELD_TIMESTAMP = "timestamp";
@@ -83,13 +84,14 @@ public class FindingPackagingFormat {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final About about = new About();
-            final ConfigProperty baseUrl = qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
+            final ConfigProperty baseUrl =
+                    qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
 
             /*
-                Create a generic meta object containing basic Dependency-Track information
-                This is useful for file-based parsing systems that needs to be able to
-                identify what type of file it is, and what type of system generated it.
-             */
+               Create a generic meta object containing basic Dependency-Track information
+               This is useful for file-based parsing systems that needs to be able to
+               identify what type of file it is, and what type of system generated it.
+            */
             final ObjectNode meta = Mappers.jsonMapper().createObjectNode();
             meta.put(FIELD_APPLICATION, about.getApplication());
             meta.put(FIELD_VERSION, about.getVersion());
@@ -98,13 +100,12 @@ public class FindingPackagingFormat {
                 meta.put(FIELD_BASE_URL, baseUrl.getPropertyValue());
             }
 
-
             /*
-                Findings are specific to a given project. This information is useful for
-                systems outside of Dependency-Track so that they can perform mappings as
-                well as not have to perform additional queries back to Dependency-Track
-                to discover basic project information.
-             */
+               Findings are specific to a given project. This information is useful for
+               systems outside of Dependency-Track so that they can perform mappings as
+               well as not have to perform additional queries back to Dependency-Track
+               to discover basic project information.
+            */
             final ObjectNode projectJson = Mappers.jsonMapper().createObjectNode();
             projectJson.put(FIELD_UUID, project.getUuid().toString());
             projectJson.put(FIELD_NAME, project.getName());
@@ -121,13 +122,12 @@ public class FindingPackagingFormat {
                 projectJson.put(FIELD_CPE, project.getCpe());
             }
 
-
             /*
-                Enrich each finding's vulnerability with the affected version
-                ranges of the components it applies to, so a consumer can derive
-                the version to upgrade to. Reuses the AffectedComponent shape
-                already exposed by the vulnerability API.
-             */
+               Enrich each finding's vulnerability with the affected version
+               ranges of the components it applies to, so a consumer can derive
+               the version to upgrade to. Reuses the AffectedComponent shape
+               already exposed by the vulnerability API.
+            */
             useJdbiHandle(handle -> {
                 final var dao = handle.attach(VulnerabilityDao.class);
 
@@ -153,9 +153,9 @@ public class FindingPackagingFormat {
             });
 
             /*
-                Add the meta and project objects along with the findings array
-                to a root json object and return.
-             */
+               Add the meta and project objects along with the findings array
+               to a root json object and return.
+            */
             final ObjectNode root = Mappers.jsonMapper().createObjectNode();
             root.put(FIELD_VERSION, FPF_VERSION);
             root.set(FIELD_META, meta);

@@ -21,12 +21,13 @@ package org.dependencytrack.resources.v1;
 import alpine.server.filters.ApiFilter;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 
@@ -35,15 +36,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OpenApiResourceTest extends ResourceTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(OpenApiResource.class)
-                    .register(ApiFilter.class));
+    static JerseyTestExtension jersey =
+            new JerseyTestExtension(new ResourceConfig(OpenApiResource.class).register(ApiFilter.class));
 
     @Test
     public void testOpenApiJson() {
-        final Response response = jersey.target("/openapi.json")
-                .request()
-                .get(Response.class);
+        final Response response = jersey.target("/openapi.json").request().get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/json");
 
@@ -58,9 +56,7 @@ public class OpenApiResourceTest extends ResourceTest {
 
     @Test
     public void testOpenApiYaml() {
-        final Response response = jersey.target("/openapi.yaml")
-                .request()
-                .get(Response.class);
+        final Response response = jersey.target("/openapi.yaml").request().get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/yaml");
 
@@ -72,5 +68,4 @@ public class OpenApiResourceTest extends ResourceTest {
         validationMessages.removeIf("attribute paths.'/version'(get).responses.200.description is missing"::equals);
         assertThat(validationMessages).isEmpty();
     }
-
 }

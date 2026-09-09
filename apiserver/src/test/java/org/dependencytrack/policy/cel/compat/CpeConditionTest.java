@@ -34,26 +34,30 @@ import static org.dependencytrack.model.PolicyCondition.Operator.MATCHES;
 public class CpeConditionTest extends PersistenceCapableTest {
 
     private static Object[] parameters() {
-        return new Object[]{
-                // MATCHES with exact match
-                new Object[]{MATCHES, "cpe:/a:acme:application:1.0.0", "cpe:/a:acme:application:1.0.0", true},
-                // MATCHES with regex match
-                new Object[]{MATCHES, "cpe:/a:acme:\\w+:[0-9].0.0", "cpe:/a:acme:application:1.0.0", true},
-                // MATCHES with no match
-                new Object[]{MATCHES, "cpe:/a:acme:application:1.0.0", "cpe:/a:acme:application:9.9.9", false},
-                // NO_MATCH with no match
-                new Object[]{Operator.NO_MATCH, "cpe:/a:acme:application:1.0.0", "cpe:/a:acme:application:9.9.9", true},
-                // NO_MATCH with exact match
-                new Object[]{Operator.NO_MATCH, "cpe:/a:acme:application:1.0.0", "cpe:/a:acme:application:1.0.0", false},
-                // MATCHES with quotes
-                new Object[]{MATCHES, "\"cpe:/a:acme:application:1.0.0", "\"cpe:/a:acme:application:1.0.0", true}
+        return new Object[] {
+            // MATCHES with exact match
+            new Object[] {MATCHES, "cpe:/a:acme:application:1.0.0", "cpe:/a:acme:application:1.0.0", true},
+            // MATCHES with regex match
+            new Object[] {MATCHES, "cpe:/a:acme:\\w+:[0-9].0.0", "cpe:/a:acme:application:1.0.0", true},
+            // MATCHES with no match
+            new Object[] {MATCHES, "cpe:/a:acme:application:1.0.0", "cpe:/a:acme:application:9.9.9", false},
+            // NO_MATCH with no match
+            new Object[] {Operator.NO_MATCH, "cpe:/a:acme:application:1.0.0", "cpe:/a:acme:application:9.9.9", true},
+            // NO_MATCH with exact match
+            new Object[] {Operator.NO_MATCH, "cpe:/a:acme:application:1.0.0", "cpe:/a:acme:application:1.0.0", false},
+            // MATCHES with quotes
+            new Object[] {MATCHES, "\"cpe:/a:acme:application:1.0.0", "\"cpe:/a:acme:application:1.0.0", true}
         };
     }
 
-
     @ParameterizedTest
     @MethodSource("parameters")
-    public void testCondition(final Operator operator, final String conditionCpe, final String componentCpe, final boolean expectViolation) {
+    public void testCondition(
+            final Operator operator,
+            final String conditionCpe,
+            final String componentCpe,
+            final boolean expectViolation)
+            throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.CPE, operator, conditionCpe);
 
@@ -74,5 +78,4 @@ public class CpeConditionTest extends PersistenceCapableTest {
             assertThat(qm.getAllPolicyViolations(component)).isEmpty();
         }
     }
-
 }

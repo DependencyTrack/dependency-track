@@ -35,44 +35,49 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 @AnalyzeClasses(
         packages = "org.dependencytrack",
         importOptions = {
-                DoNotIncludeJars.class,
-                DoNotIncludeTests.class,
+            DoNotIncludeJars.class,
+            DoNotIncludeTests.class,
         })
 class NotificationSubsystemArchitectureTest {
 
     @ArchTest
-    static final ArchRule mustOnlyBeCreatedThroughNotificationFactory =
-            noClasses()
-                    .that().resideOutsideOfPackages(
-                            "org.dependencytrack.notification..",
-                            "org.dependencytrack.proto..")
-                    .should().callMethod(Notification.class, "newBuilder")
-                    .because("""
+    static final ArchRule mustOnlyBeCreatedThroughNotificationFactory = noClasses()
+            .that()
+            .resideOutsideOfPackages("org.dependencytrack.notification..", "org.dependencytrack.proto..")
+            .should()
+            .callMethod(Notification.class, "newBuilder")
+            .because("""
                             All notifications must be created through NotificationFactory. \
                             This ensures that critical fields such as ID and timestamp are always set.""");
 
     @ArchTest
-    static final ArchRule mustNotModifyCoreNotificationFieldsOutsideOfNotificationFactory =
-            noClasses()
-                    .that().areNotAssignableTo(org.dependencytrack.notification.api.NotificationFactory.class)
-                    .and().areNotAssignableTo(org.dependencytrack.notification.api.TestNotificationFactory.class)
-                    // Workaround for the fact that ArchUnit's callMethod() predicate
-                    // does not yet inspect lambda code: https://github.com/TNG/ArchUnit/issues/981
-                    .should().accessTargetWhere(target(owner(equivalentTo(Notification.Builder.class)))
-                            .and(nameMatching("set(Id|Timestamp|Scope|Group|Level)")))
-                    .because("""
+    static final ArchRule mustNotModifyCoreNotificationFieldsOutsideOfNotificationFactory = noClasses()
+            .that()
+            .areNotAssignableTo(org.dependencytrack.notification.api.NotificationFactory.class)
+            .and()
+            .areNotAssignableTo(org.dependencytrack.notification.api.TestNotificationFactory.class)
+            // Workaround for the fact that ArchUnit's callMethod() predicate
+            // does not yet inspect lambda code: https://github.com/TNG/ArchUnit/issues/981
+            .should()
+            .accessTargetWhere(target(owner(equivalentTo(Notification.Builder.class)))
+                    .and(nameMatching("set(Id|Timestamp|Scope|Group|Level)")))
+            .because("""
                             The notification fields id, timestamp, scope, group, and level must \
                             only be set by NotificationFactory. This ensures consistency.""");
 
     @ArchTest
-    static final ArchRule mustNotUseJdoApi =
-            noClasses()
-                    .that().resideInAPackage("org.dependencytrack.notification..")
-                    .and().areNotAssignableTo(JdoNotificationEmitter.class)
-                    .should().dependOnClassesThat().areAssignableTo(AbstractAlpineQueryManager.class)
-                    .orShould().dependOnClassesThat().resideInAPackage("javax.jdo..")
-                    .because("""
+    static final ArchRule mustNotUseJdoApi = noClasses()
+            .that()
+            .resideInAPackage("org.dependencytrack.notification..")
+            .and()
+            .areNotAssignableTo(JdoNotificationEmitter.class)
+            .should()
+            .dependOnClassesThat()
+            .areAssignableTo(AbstractAlpineQueryManager.class)
+            .orShould()
+            .dependOnClassesThat()
+            .resideInAPackage("javax.jdo..")
+            .because("""
                             The notification subsystem should not use the JDO API to perform \
                             persistence operations. The system must be as lightweight as possible.""");
-
 }

@@ -67,7 +67,5 @@ public final class FileSecretKeysHandlerFactory implements SecretKeysHandlerFact
         public String getName() {
             return NAME;
         }
-
     }
-
 }

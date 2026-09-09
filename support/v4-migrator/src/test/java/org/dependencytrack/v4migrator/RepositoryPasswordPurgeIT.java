@@ -67,7 +67,7 @@ class RepositoryPasswordPurgeIT {
     @Test
     void purgesPasswordAndDisablesRepository() throws Exception {
         final UUID securedUuid = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-        final UUID openUuid    = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        final UUID openUuid = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         source.jdbi().useHandle(h -> {
             h.createUpdate("""
                     INSERT INTO "REPOSITORY" (
@@ -89,17 +89,17 @@ class RepositoryPasswordPurgeIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "IDENTIFIER", "ENABLED", "PASSWORD", "USERNAME", "UUID"
                       FROM "REPOSITORY"
                      ORDER BY "ID"
                     """).mapToMap().list());
-        assertThat(rows).extracting("id", "identifier", "enabled", "password", "username", "uuid")
-            .containsExactly(
-                tuple(1L, "private-maven", false, null, "svc", securedUuid),
-                tuple(2L, "central",       true,  null, null,  openUuid)
-            );
+        assertThat(rows)
+                .extracting("id", "identifier", "enabled", "password", "username", "uuid")
+                .containsExactly(
+                        tuple(1L, "private-maven", false, null, "svc", securedUuid),
+                        tuple(2L, "central", true, null, null, openUuid));
     }
 
     private void runPipeline() throws Exception {

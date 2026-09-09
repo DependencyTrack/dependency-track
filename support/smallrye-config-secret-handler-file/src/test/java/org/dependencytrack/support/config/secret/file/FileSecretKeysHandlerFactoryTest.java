@@ -117,5 +117,4 @@ class FileSecretKeysHandlerFactoryTest {
         assertThatThrownBy(() -> config.getValue("dt.password", String.class))
                 .isInstanceOf(IllegalStateException.class);
     }
-
 }

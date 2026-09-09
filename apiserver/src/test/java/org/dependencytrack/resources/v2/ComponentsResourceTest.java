@@ -19,25 +19,31 @@
 package org.dependencytrack.resources.v2;
 
 import com.github.packageurl.PackageURL;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PackageArtifactMetadata;
 import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scope;
+import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -47,8 +53,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 public class ComponentsResourceTest extends ResourceTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig());
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig());
 
     @Test
     public void createComponentTest() {
@@ -66,7 +71,9 @@ public class ComponentsResourceTest extends ResourceTest {
                           "purl": "pkg:maven/org.acme/abc",
                           "hashes": {
                             "sha1": "640ab2bae07bedc4c163f679a746f7ab7fb5d1fa",
-                            "sha3_512": "301bb421c971fbb7ed01dcc3a9976ce53df034022ba982b97d0f27d48c4f03883aabf7c6bc778aa7c383062f6823045a6d41b8a720afbb8a9607690f89fbe1a7"
+                            "sha3_512": "301bb421c971fbb7ed01dcc3a9976ce53df034022ba982b97d0f27d48c4f03883aabf7c6bc778aa7c383062f6823045a6d41b8a720afbb8a9607690f89fbe1a7",
+                            "blake2b_256": "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d90e0e1f0b1a8a1f0b1a8a1f0",
+                            "streebog_256": "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb"
                           },
                           "supplier": {
                             "name": "supplier",
@@ -94,6 +101,8 @@ public class ComponentsResourceTest extends ResourceTest {
                     "name" : "foo",
                     "sha1" : "640ab2bae07bedc4c163f679a746f7ab7fb5d1fa",
                     "sha3_512" : "301bb421c971fbb7ed01dcc3a9976ce53df034022ba982b97d0f27d48c4f03883aabf7c6bc778aa7c383062f6823045a6d41b8a720afbb8a9607690f89fbe1a7",
+                    "blake2b_256" : "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d90e0e1f0b1a8a1f0b1a8a1f0",
+                    "streebog_256" : "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb",
                     "purl" : "pkg:maven/org.acme/abc",
                     "purlCoordinates" : "pkg:maven/org.acme/abc",
                     "project" : {
@@ -222,6 +231,7 @@ public class ComponentsResourceTest extends ResourceTest {
                         },
                         "internal": false,
                         "last_inherited_risk_score": 2.3,
+                        "license": "Public Domain",
                         "uuid": "${json-unit.any-string}",
                         "project": {
                             "name": "projectB",
@@ -263,6 +273,7 @@ public class ComponentsResourceTest extends ResourceTest {
                         },
                         "internal": false,
                         "last_inherited_risk_score": 2.3,
+                        "license": "Public Domain",
                         "uuid": "${json-unit.any-string}",
                         "project": {
                             "name": "projectB",
@@ -499,6 +510,7 @@ public class ComponentsResourceTest extends ResourceTest {
                         },
                         "internal": false,
                         "last_inherited_risk_score": 2.3,
+                        "license": "Public Domain",
                         "uuid": "${json-unit.any-string}",
                         "project": {
                             "name": "projectB",
@@ -516,11 +528,54 @@ public class ComponentsResourceTest extends ResourceTest {
     }
 
     @Test
+    public void listComponentByStreebogHashTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("projectA", null, "1.0", null, null, null, null, false);
+        project.addAccessTeam(team);
+        var component = new Component();
+        component.setProject(project);
+        component.setName("nameA");
+        component.setStreebog_256("3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb");
+        qm.createComponent(component, false);
+
+        final Response response = jersey.target("/components")
+                .queryParam("hash_type", "STREEBOG_256")
+                .queryParam("hash", "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(parseJsonObject(response).toString()).isEqualTo(/* language=JSON */ """
+                {
+                  "items": [
+                    {
+                      "name": "nameA",
+                      "hashes": {
+                        "streebog_256": "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb"
+                      },
+                      "internal": false,
+                      "uuid": "${json-unit.any-string}",
+                      "project": {
+                        "name": "projectA",
+                        "version": "1.0",
+                        "uuid": "${json-unit.any-string}"
+                      }
+                    }
+                  ],
+                  "total": {
+                    "count": 1,
+                    "type": "EXACT"
+                  }
+                }
+                """);
+    }
+
+    @Test
     public void listComponentsWithInvalidProjectStateTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
-        final Response response = jersey
-                .target("/components")
+        final Response response = jersey.target("/components")
                 .queryParam("project_state", "invalid")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -546,8 +601,7 @@ public class ComponentsResourceTest extends ResourceTest {
     public void shouldReturn400WhenSortByFieldIsNotSupported() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
-        final Response response = jersey
-                .target("/components")
+        final Response response = jersey.target("/components")
                 .queryParam("sort_by", "invalid_field")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -606,8 +660,7 @@ public class ComponentsResourceTest extends ResourceTest {
         inactiveNotLatest.setName("inactiveNotLatest");
         qm.persist(inactiveNotLatest);
 
-        Response response = jersey
-                .target("/components")
+        Response response = jersey.target("/components")
                 .queryParam("project_state", "ACTIVE")
                 .queryParam("limit", 10)
                 .request()
@@ -619,8 +672,7 @@ public class ComponentsResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactlyInAnyOrder("activeLatest", "activeNotLatest");
 
-        response = jersey
-                .target("/components")
+        response = jersey.target("/components")
                 .queryParam("project_state", "INACTIVE")
                 .queryParam("limit", 10)
                 .request()
@@ -632,8 +684,7 @@ public class ComponentsResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactlyInAnyOrder("inactiveLatest", "inactiveNotLatest");
 
-        response = jersey
-                .target("/components")
+        response = jersey.target("/components")
                 .queryParam("project_latest_version", "true")
                 .queryParam("limit", 10)
                 .request()
@@ -645,8 +696,7 @@ public class ComponentsResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactlyInAnyOrder("activeLatest", "inactiveLatest");
 
-        response = jersey
-                .target("/components")
+        response = jersey.target("/components")
                 .queryParam("project_latest_version", "false")
                 .queryParam("limit", 10)
                 .request()
@@ -658,8 +708,7 @@ public class ComponentsResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactlyInAnyOrder("activeNotLatest", "inactiveNotLatest");
 
-        response = jersey
-                .target("/components")
+        response = jersey.target("/components")
                 .queryParam("project_state", "ACTIVE")
                 .queryParam("project_latest_version", "false")
                 .queryParam("limit", 10)
@@ -672,8 +721,7 @@ public class ComponentsResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactly("activeNotLatest");
 
-        response = jersey
-                .target("/components")
+        response = jersey.target("/components")
                 .queryParam("limit", 10)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -697,8 +745,8 @@ public class ComponentsResourceTest extends ResourceTest {
         qm.createComponent(component, false);
 
         final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
-        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
-                new PackageMetadata(
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(List.of(new PackageMetadata(
                         new PackageURL("maven", "test", "comp", null, null, null),
                         "2.0",
                         null,
@@ -737,10 +785,10 @@ public class ComponentsResourceTest extends ResourceTest {
         final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
         final Instant publishedAt = Instant.ofEpochMilli(1_600_000_000_000L);
         final var packagePurl = new PackageURL("maven", "test", "comp", null, null, null);
-        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
-                new PackageMetadata(packagePurl, null, null, resolvedAt, null, null))));
-        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                new PackageArtifactMetadata(
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(List.of(new PackageMetadata(packagePurl, null, null, resolvedAt, null, null))));
+        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle)
+                .upsertAll(List.of(new PackageArtifactMetadata(
                         new PackageURL("maven", "test", "comp", "1.0", null, null),
                         packagePurl,
                         null,
@@ -752,8 +800,7 @@ public class ComponentsResourceTest extends ResourceTest {
                         "central",
                         resolvedAt))));
 
-        final Response response = jersey
-                .target("/components")
+        final Response response = jersey.target("/components")
                 .queryParam("expand", "package_artifact_metadata")
                 .queryParam("limit", 10)
                 .request()
@@ -791,34 +838,34 @@ public class ComponentsResourceTest extends ResourceTest {
         assertThat(c1).isNotNull();
         assertThat(c2).isNotNull();
 
-        final Response from = jersey
-                .target("/components")
+        final Response from = jersey.target("/components")
                 .queryParam("package_artifact_published_since", t1)
                 .queryParam("limit", 10)
-                .request().header(X_API_KEY, apiKey).get();
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
         assertThat(from.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(from))
                 .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("c1", "c2");
 
-        final Response to = jersey
-                .target("/components")
+        final Response to = jersey.target("/components")
                 .queryParam("package_artifact_published_before", t2)
                 .queryParam("limit", 10)
-                .request().header(X_API_KEY, apiKey).get();
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
         assertThat(to.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(to))
-                .inPath("$.items[*].name")
-                .isArray()
-                .containsExactlyInAnyOrder("c0", "c1");
+        assertThatJson(getPlainTextBody(to)).inPath("$.items[*].name").isArray().containsExactlyInAnyOrder("c0", "c1");
 
-        final Response range = jersey
-                .target("/components")
+        final Response range = jersey.target("/components")
                 .queryParam("package_artifact_published_since", t1)
                 .queryParam("package_artifact_published_before", t2)
                 .queryParam("limit", 10)
-                .request().header(X_API_KEY, apiKey).get();
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
         assertThat(range.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(range))
                 .inPath("$.items[*].name")
@@ -826,7 +873,78 @@ public class ComponentsResourceTest extends ResourceTest {
                 .containsExactly("c1");
     }
 
-    private Component createComponentWithPublishedAt(final Project project, final String name, final Instant publishedAt) throws Exception {
+    @Test
+    public void listComponentsWithMetricsTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("test", null, "1.0", null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("comp");
+        qm.createComponent(component, false);
+
+        useJdbiHandle(handle -> {
+            final var dao = handle.attach(MetricsTestDao.class);
+            dao.createMetricsPartitionsForDate("DEPENDENCYMETRICS", LocalDate.now(ZoneOffset.UTC));
+
+            final var metrics = new DependencyMetrics();
+            metrics.setProjectId(project.getId());
+            metrics.setComponentId(component.getId());
+            metrics.setFirstOccurrence(Date.from(Instant.now()));
+            metrics.setLastOccurrence(Date.from(Instant.now()));
+            metrics.setCritical(1);
+            metrics.setHigh(2);
+            metrics.setMedium(3);
+            metrics.setLow(4);
+            metrics.setUnassigned(5);
+            metrics.setKev(6);
+            metrics.setVulnerabilities(10);
+            metrics.setInheritedRiskScore(5.0);
+            dao.createDependencyMetrics(metrics);
+        });
+
+        final Response response = jersey.target("/components")
+                .queryParam("expand", "metrics")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items[0].metrics").isEqualTo(/* language=JSON */ """
+                        {
+                          "critical": 1,
+                          "high": 2,
+                          "medium": 3,
+                          "low": 4,
+                          "unassigned": 5,
+                          "kev": 6,
+                          "vulnerabilities": 10,
+                          "suppressed": 0,
+                          "inherited_risk_score": 5.0,
+                          "findings_total": 0,
+                          "findings_audited": 0,
+                          "findings_unaudited": 0,
+                          "policy_violations_fail": 0,
+                          "policy_violations_warn": 0,
+                          "policy_violations_info": 0,
+                          "policy_violations_total": 0,
+                          "policy_violations_audited": 0,
+                          "policy_violations_unaudited": 0,
+                          "policy_violations_security_total": 0,
+                          "policy_violations_security_audited": 0,
+                          "policy_violations_security_unaudited": 0,
+                          "policy_violations_license_total": 0,
+                          "policy_violations_license_audited": 0,
+                          "policy_violations_license_unaudited": 0,
+                          "policy_violations_operational_total": 0,
+                          "policy_violations_operational_audited": 0,
+                          "policy_violations_operational_unaudited": 0
+                        }
+                        """);
+    }
+
+    private Component createComponentWithPublishedAt(
+            final Project project, final String name, final Instant publishedAt) throws Exception {
         final var component = new Component();
         component.setProject(project);
         component.setName(name);
@@ -835,10 +953,10 @@ public class ComponentsResourceTest extends ResourceTest {
 
         final var packagePurl = new PackageURL("maven", "test", name, null, null, null);
         final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
-        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
-                new PackageMetadata(packagePurl, null, null, resolvedAt, null, null))));
-        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                new PackageArtifactMetadata(
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(List.of(new PackageMetadata(packagePurl, null, null, resolvedAt, null, null))));
+        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle)
+                .upsertAll(List.of(new PackageArtifactMetadata(
                         new PackageURL("maven", "test", name, "1.0", null, null),
                         packagePurl,
                         null,
@@ -887,6 +1005,7 @@ public class ComponentsResourceTest extends ResourceTest {
         componentC.setPurl("pkg:maven/groupC/nameC@versionC?baz=qux");
         componentC.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
         componentC.setLastInheritedRiskScore(2.3);
+        componentC.setLicense("Public Domain");
         qm.createComponent(componentC, false);
     }
 }

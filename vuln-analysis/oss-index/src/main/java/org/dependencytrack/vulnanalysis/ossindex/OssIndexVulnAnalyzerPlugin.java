@@ -34,5 +34,4 @@ public final class OssIndexVulnAnalyzerPlugin implements Plugin {
     public Collection<? extends ExtensionFactory<? extends ExtensionPoint>> extensionFactories() {
         return List.of(new OssIndexVulnAnalyzerFactory());
     }
-
 }

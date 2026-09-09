@@ -38,5 +38,4 @@ public class SeverityCelPolicyScriptSourceBuilder implements CelPolicyScriptSour
 
         return null;
     }
-
 }

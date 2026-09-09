@@ -49,44 +49,38 @@ final class OssIndexModelConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(OssIndexModelConverter.class);
     private static final Pattern CWE_PATTERN = Pattern.compile("(cwe-)?(\\d+)", Pattern.CASE_INSENSITIVE);
     private static final Source SOURCE_NVD = Source.newBuilder().setName("NVD").build();
-    private static final Source SOURCE_OSSINDEX = Source.newBuilder().setName("OSSINDEX").build();
+    private static final Source SOURCE_OSSINDEX =
+            Source.newBuilder().setName("OSSINDEX").build();
 
-    private OssIndexModelConverter() {
-    }
+    private OssIndexModelConverter() {}
 
-    static Vulnerability.Builder convert(
-            ComponentReportVulnerability reportedVuln,
-            boolean includeAliases) {
-        final var vulnBuilder = Vulnerability.newBuilder()
-                .setId(reportedVuln.id());
+    static Vulnerability.Builder convert(ComponentReportVulnerability reportedVuln, boolean includeAliases) {
+        final var vulnBuilder = Vulnerability.newBuilder().setId(reportedVuln.id());
 
         if (reportedVuln.id().toLowerCase().startsWith("cve-")) {
             vulnBuilder.setSource(SOURCE_NVD);
         } else {
             vulnBuilder.setSource(SOURCE_OSSINDEX);
             if (includeAliases && reportedVuln.cve() != null) {
-                vulnBuilder.addReferences(
-                        VulnerabilityReference.newBuilder()
-                                .setId(reportedVuln.cve())
-                                .setSource(SOURCE_NVD)
-                                .build());
+                vulnBuilder.addReferences(VulnerabilityReference.newBuilder()
+                        .setId(reportedVuln.cve())
+                        .setSource(SOURCE_NVD)
+                        .build());
             }
         }
 
         if (reportedVuln.title() != null) {
-            vulnBuilder.addProperties(
-                    Property.newBuilder()
-                            .setName("dependency-track:vuln:title")
-                            .setValue(reportedVuln.title())
-                            .build());
+            vulnBuilder.addProperties(Property.newBuilder()
+                    .setName("dependency-track:vuln:title")
+                    .setValue(reportedVuln.title())
+                    .build());
         }
 
         if (reportedVuln.reference() != null) {
-            vulnBuilder.addProperties(
-                    Property.newBuilder()
-                            .setName("dependency-track:vuln:reference-url")
-                            .setValue(reportedVuln.reference())
-                            .build());
+            vulnBuilder.addProperties(Property.newBuilder()
+                    .setName("dependency-track:vuln:reference-url")
+                    .setValue(reportedVuln.reference())
+                    .build());
         }
 
         if (reportedVuln.description() != null) {
@@ -102,16 +96,12 @@ final class OssIndexModelConverter {
 
         if (reportedVuln.reference() != null) {
             vulnBuilder.addAdvisories(
-                    Advisory.newBuilder()
-                            .setUrl(reportedVuln.reference())
-                            .build());
+                    Advisory.newBuilder().setUrl(reportedVuln.reference()).build());
         }
         if (reportedVuln.externalReferences() != null) {
             for (final String externalReference : reportedVuln.externalReferences()) {
                 vulnBuilder.addAdvisories(
-                        Advisory.newBuilder()
-                                .setUrl(externalReference)
-                                .build());
+                        Advisory.newBuilder().setUrl(externalReference).build());
             }
         }
 
@@ -136,32 +126,35 @@ final class OssIndexModelConverter {
 
         final double score = cvss.getBakedScores().getBaseScore();
         return switch (cvss) {
-            case Cvss4P0 it -> VulnerabilityRating.newBuilder()
-                    .setMethod(SCORE_METHOD_CVSSV4)
-                    .setVector(it.toString())
-                    .setScore(score)
-                    .setSource(SOURCE_OSSINDEX)
-                    .build();
-            case Cvss3P1 it -> VulnerabilityRating.newBuilder()
-                    .setMethod(SCORE_METHOD_CVSSV31)
-                    .setVector(it.toString())
-                    .setScore(score)
-                    .setSource(SOURCE_OSSINDEX)
-                    .build();
-            case Cvss3P0 it -> VulnerabilityRating.newBuilder()
-                    .setMethod(SCORE_METHOD_CVSSV3)
-                    .setVector(it.toString())
-                    .setScore(score)
-                    .setSource(SOURCE_OSSINDEX)
-                    .build();
-            case Cvss2 it -> VulnerabilityRating.newBuilder()
-                    .setMethod(SCORE_METHOD_CVSSV2)
-                    .setVector("(" + it + ")")
-                    .setScore(score)
-                    .setSource(SOURCE_OSSINDEX)
-                    .build();
+            case Cvss4P0 it ->
+                VulnerabilityRating.newBuilder()
+                        .setMethod(SCORE_METHOD_CVSSV4)
+                        .setVector(it.toString())
+                        .setScore(score)
+                        .setSource(SOURCE_OSSINDEX)
+                        .build();
+            case Cvss3P1 it ->
+                VulnerabilityRating.newBuilder()
+                        .setMethod(SCORE_METHOD_CVSSV31)
+                        .setVector(it.toString())
+                        .setScore(score)
+                        .setSource(SOURCE_OSSINDEX)
+                        .build();
+            case Cvss3P0 it ->
+                VulnerabilityRating.newBuilder()
+                        .setMethod(SCORE_METHOD_CVSSV3)
+                        .setVector(it.toString())
+                        .setScore(score)
+                        .setSource(SOURCE_OSSINDEX)
+                        .build();
+            case Cvss2 it ->
+                VulnerabilityRating.newBuilder()
+                        .setMethod(SCORE_METHOD_CVSSV2)
+                        .setVector("(" + it + ")")
+                        .setScore(score)
+                        .setSource(SOURCE_OSSINDEX)
+                        .build();
             default -> null;
         };
     }
-
 }

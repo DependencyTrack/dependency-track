@@ -36,5 +36,4 @@ public final class IdentifyInternalComponentsWorkflow implements Workflow<Void, 
         ctx.activity(IdentifyInternalComponentsActivity.class).call().await();
         return null;
     }
-
 }

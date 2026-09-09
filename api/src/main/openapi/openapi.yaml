@@ -92,6 +92,10 @@ info:
     }
     ```
 
+    A request that takes too long to complete is aborted and rejected
+    with `504 Gateway Timeout`. Any operation can time out, so operations
+    do not document it individually.
+
     ## Authentication
 
     Two credential types are accepted:
@@ -187,6 +191,8 @@ tags:
   description: Endpoints related to components
 - name: Extensions
   description: Endpoints related to extensions
+- name: Kev Data Sources
+  description: Endpoints related to KEV data sources
 - name: Projects
   description: Endpoints related to projects
 - name: Secrets
@@ -217,6 +223,10 @@ paths:
     $ref: "./resources/extensions/extension-config-schema.yaml"
   /extension-points/{extension_point_name}/extensions/{extension_name}/test:
     $ref: "./resources/extensions/extension-test.yaml"
+  /kev-data-sources/{name}/mirror-runs:
+    $ref: "./resources/kev-data-sources/kev-data-source-mirror-runs.yaml"
+  /kev-data-sources/{name}/mirror-runs/latest:
+    $ref: "./resources/kev-data-sources/kev-data-source-mirror-run-latest.yaml"
   /projects/{uuid}/clone:
     $ref: "./resources/projects/project-clone.yaml"
   /projects/{uuid}/components:

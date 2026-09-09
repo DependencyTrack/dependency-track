@@ -41,6 +41,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMappers;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 import java.util.ArrayList;
@@ -49,16 +50,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SequencedCollection;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RegisterRowMappers({
-        @RegisterRowMapper(NotificationBomRowMapper.class),
-        @RegisterRowMapper(NotificationComponentRowMapper.class),
-        @RegisterRowMapper(NotificationProjectRowMapper.class),
-        @RegisterRowMapper(NotificationVulnerabilityRowMapper.class)
+    @RegisterRowMapper(NotificationBomRowMapper.class),
+    @RegisterRowMapper(NotificationComponentRowMapper.class),
+    @RegisterRowMapper(NotificationProjectRowMapper.class),
+    @RegisterRowMapper(NotificationVulnerabilityRowMapper.class)
 })
 public interface NotificationSubjectDao extends SqlObject {
+
+    /// @since 5.1.0
+    @SqlQuery("""
+            SELECT DISTINCT UNNEST("NOTIFY_ON")
+              FROM "NOTIFICATIONRULE"
+             WHERE "ENABLED"
+            """)
+    Set<String> getSubscribedNotificationGroups();
 
     @SqlQuery("""
             SELECT c."UUID" AS "componentUuid"
@@ -145,7 +155,8 @@ public interface NotificationSubjectDao extends SqlObject {
                  , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
                  , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
                  , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
-                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
+                 , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
+                 , fa."ANALYZERIDENTITY" AS "vulnAnalyzerIdentity"
               FROM UNNEST(:componentIds, :vulnerabilityIds)
                 AS req(component_id, vulnerability_id)
              INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
@@ -157,13 +168,25 @@ public interface NotificationSubjectDao extends SqlObject {
                 ON p."ID" = c."PROJECT_ID"
              INNER JOIN "VULNERABILITY" AS v
                 ON v."ID" = req.vulnerability_id
+             INNER JOIN LATERAL (
+               SELECT *
+                 FROM "FINDINGATTRIBUTION" AS fa
+                WHERE c."ID" = fa."COMPONENT_ID"
+                  AND v."ID" = fa."VULNERABILITY_ID"
+                <#if !includeInactiveFindings>
+                  AND fa."DELETED_AT" IS NULL
+                </#if>
+                ORDER BY fa."DELETED_AT" DESC NULLS FIRST, fa."ID"
+                LIMIT 1
+             ) AS fa ON TRUE
               LEFT JOIN "ANALYSIS" AS a
                 ON a."COMPONENT_ID" = req.component_id
                AND a."VULNERABILITY_ID" = req.vulnerability_id
              WHERE a."SUPPRESSED" IS DISTINCT FROM TRUE
             """)
     @RegisterRowMapper(NotificationSubjectNewVulnerabilityRowMapper.class)
-    List<NewVulnerabilitySubject> getForNewVulnerabilities(List<Long> componentIds, List<Long> vulnerabilityIds);
+    List<NewVulnerabilitySubject> getForNewVulnerabilities(
+            List<Long> componentIds, List<Long> vulnerabilityIds, @Define boolean includeInactiveFindings);
 
     default List<NewVulnerableDependencySubject> getForNewVulnerableDependencies(Collection<Long> componentIds) {
         if (componentIds.isEmpty()) {
@@ -260,7 +283,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
                              , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
                              , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
-                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
+                             , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
                           FROM "COMPONENT" AS c
                          INNER JOIN "PROJECT" AS p
                             ON p."ID" = c."PROJECT_ID"
@@ -407,7 +430,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
                              , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
                              , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
-                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
+                             , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
                              , req.analysis_state AS "vulnAnalysisState"
                              , req.suppressed AS "isVulnAnalysisSuppressed"
                              , format('/api/v1/vulnerability/source/%s/vuln/%s/projects', v."SOURCE", v."VULNID") AS "affectedProjectsApiUrl"
@@ -598,7 +621,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
                              , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
                              , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
-                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
+                             , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
                           FROM UNNEST(:componentIds, :vulnDbIds)
                             AS t(component_id, vuln_db_id)
                          INNER JOIN "VULNERABILITY" AS v
@@ -746,5 +769,4 @@ public interface NotificationSubjectDao extends SqlObject {
                 })
                 .list();
     }
-
 }

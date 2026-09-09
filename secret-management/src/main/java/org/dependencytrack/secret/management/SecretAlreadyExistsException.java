@@ -26,5 +26,4 @@ public final class SecretAlreadyExistsException extends IllegalStateException {
     public SecretAlreadyExistsException(final String secretName) {
         super("A secret with name %s already exists".formatted(secretName));
     }
-
 }

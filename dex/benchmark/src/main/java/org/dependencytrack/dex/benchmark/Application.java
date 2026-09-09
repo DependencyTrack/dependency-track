@@ -104,7 +104,7 @@ public class Application {
                 final var currentBatch = new ArrayList<CreateWorkflowRunRequest<?>>(currentBatchSize);
 
                 for (int j = 0; j < currentBatchSize; j++) {
-                    currentBatch.add(new CreateWorkflowRunRequest<>(DummyWorkflow.class));
+                    currentBatch.add(new CreateWorkflowRunRequest<>(DummyWorkflow.class).withConcurrencyKey("" + i + ":" + j));
                 }
 
                 LOGGER.info("Creating batch of {} workflow runs", currentBatchSize);
@@ -204,8 +204,7 @@ public class Application {
         dexEngine.registerActivity(
                 new DummyActivity(),
                 voidConverter(),
-                voidConverter(),
-                Duration.ofSeconds(30));
+                voidConverter());
 
         return dexEngine;
     }

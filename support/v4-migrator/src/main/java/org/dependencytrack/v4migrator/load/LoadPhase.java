@@ -45,23 +45,45 @@ public final class LoadPhase {
      * Tables that have IDENTITY columns whose sequence must be reset after load.
      */
     private static final List<String> IDENTITY_TABLES_TO_RESET = List.of(
-        "LICENSE", "LICENSEGROUP", "TEAM", "TAG", "OIDCGROUP", "REPOSITORY", "PROJECT", "USER",
-        "NOTIFICATIONPUBLISHER", "NOTIFICATIONRULE", "POLICY", "POLICYCONDITION",
-        "PROJECT_METADATA", "COMPONENT", "SERVICECOMPONENT",
-        "APIKEY", "MAPPEDLDAPGROUP", "MAPPEDOIDCGROUP",
-        "VULNERABILITY", "VULNERABLESOFTWARE", "VULNERABILITYMETRICS",
-        "AFFECTEDVERSIONATTRIBUTION", "BOM", "VEX",
-        "FINDINGATTRIBUTION", "POLICYVIOLATION", "ANALYSIS", "ANALYSISCOMMENT",
-        "VIOLATIONANALYSIS", "VIOLATIONANALYSISCOMMENT",
-        "CONFIGPROPERTY", "PROJECT_PROPERTY", "COMPONENT_PROPERTY"
-    );
+            "LICENSE",
+            "LICENSEGROUP",
+            "TEAM",
+            "TAG",
+            "OIDCGROUP",
+            "REPOSITORY",
+            "PROJECT",
+            "USER",
+            "NOTIFICATIONPUBLISHER",
+            "NOTIFICATIONRULE",
+            "POLICY",
+            "POLICYCONDITION",
+            "PROJECT_METADATA",
+            "COMPONENT",
+            "SERVICECOMPONENT",
+            "APIKEY",
+            "MAPPEDLDAPGROUP",
+            "MAPPEDOIDCGROUP",
+            "VULNERABILITY",
+            "VULNERABLESOFTWARE",
+            "VULNERABILITYMETRICS",
+            "AFFECTEDVERSIONATTRIBUTION",
+            "BOM",
+            "VEX",
+            "FINDINGATTRIBUTION",
+            "POLICYVIOLATION",
+            "ANALYSIS",
+            "ANALYSISCOMMENT",
+            "VIOLATIONANALYSIS",
+            "VIOLATIONANALYSISCOMMENT",
+            "CONFIGPROPERTY",
+            "PROJECT_PROPERTY",
+            "COMPONENT_PROPERTY");
 
     private final GlobalOptions options;
     private final Jdbi target;
     private final boolean dropStagingAfter;
 
-    public LoadPhase(final GlobalOptions options, final Jdbi target,
-                     final boolean dropStagingAfter) {
+    public LoadPhase(final GlobalOptions options, final Jdbi target, final boolean dropStagingAfter) {
         this.options = options;
         this.target = target;
         this.dropStagingAfter = dropStagingAfter;
@@ -157,8 +179,7 @@ public final class LoadPhase {
      * transaction to respect {@code max_locks_per_transaction}.
      */
     private void prepareMetricsPartitions() {
-        final Optional<String> cutoffStr = target.withHandle(h ->
-            h.createQuery("""
+        final Optional<String> cutoffStr = target.withHandle(h -> h.createQuery("""
                     SELECT value FROM "%s".migration_config
                      WHERE key = 'metrics_retention_cutoff_at'
                     """.formatted(options.stagingSchema))
@@ -174,8 +195,7 @@ public final class LoadPhase {
         for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
             days.add(d);
         }
-        LOGGER.info("Pre-creating metrics partitions for {} day(s) from {} to {}",
-            days.size(), from, to);
+        LOGGER.info("Pre-creating metrics partitions for {} day(s) from {} to {}", days.size(), from, to);
 
         for (final String parent : List.of("DEPENDENCYMETRICS", "PROJECTMETRICS")) {
             // Create-then-attach in chunks of 32. Chunking limits the number of AccessExclusiveLocks
@@ -191,8 +211,8 @@ public final class LoadPhase {
                     // overlap regardless of the operator's TZ.
                     th.execute("SET LOCAL TIME ZONE 'UTC'");
                     for (final LocalDate d : slice) {
-                        final String child = "%s_%s".formatted(parent,
-                            d.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+                        final String child =
+                                "%s_%s".formatted(parent, d.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
                         th.execute("""
                             CREATE TABLE IF NOT EXISTS "%s"
                               (LIKE "%s" INCLUDING DEFAULTS INCLUDING CONSTRAINTS)
@@ -205,9 +225,9 @@ public final class LoadPhase {
                                      WHERE inhrelid = ('"' || :c || '"')::regclass
                                 )
                                 """)
-                            .bind("c", child)
-                            .mapTo(Boolean.class)
-                            .one();
+                                .bind("c", child)
+                                .mapTo(Boolean.class)
+                                .one();
                         if (!attached) {
                             final LocalDate next = d.plusDays(1);
                             th.execute("""
@@ -299,7 +319,8 @@ public final class LoadPhase {
         try (final LoadProgressReporter reporter = new LoadProgressReporter()) {
             reporter.start(t.name(), expected);
             try {
-                final int inserted = target.inTransaction(h -> h.execute(t.loadSql().formatted(options.stagingSchema)));
+                final int inserted =
+                        target.inTransaction(h -> h.execute(t.loadSql().formatted(options.stagingSchema)));
                 markState(t.name(), "COMPLETED", inserted);
                 reporter.done(inserted);
                 return inserted;
@@ -318,10 +339,10 @@ public final class LoadPhase {
      */
     private long expectedRows(final String name) {
         try {
-            return target.withHandle(h ->
-                h.createQuery("SELECT count(*) FROM \"%s\".tgt_%s".formatted(options.stagingSchema, name))
-                    .mapTo(Long.class)
-                    .one());
+            return target.withHandle(
+                    h -> h.createQuery("SELECT count(*) FROM \"%s\".tgt_%s".formatted(options.stagingSchema, name))
+                            .mapTo(Long.class)
+                            .one());
         } catch (final RuntimeException e) {
             return -1L;
         }
@@ -336,9 +357,9 @@ public final class LoadPhase {
                         rows_processed = :r,
                         completed_at = CASE WHEN :s IN ('COMPLETED', 'FAILED') THEN NOW() END
                 """.formatted(options.stagingSchema))
-            .bind("t", table)
-            .bind("s", status)
-            .bind("r", rows)
-            .execute());
+                .bind("t", table)
+                .bind("s", status)
+                .bind("r", rows)
+                .execute());
     }
 }

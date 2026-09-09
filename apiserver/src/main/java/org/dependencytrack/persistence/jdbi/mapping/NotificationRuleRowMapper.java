@@ -46,8 +46,7 @@ public final class NotificationRuleRowMapper implements RowMapper<NotificationRu
     @Override
     @SuppressWarnings("unchecked")
     public void init(ConfigRegistry registry) {
-        groupsColumnMapper = (ColumnMapper<Set<NotificationGroup>>) registry
-                .get(ColumnMappers.class)
+        groupsColumnMapper = (ColumnMapper<Set<NotificationGroup>>) registry.get(ColumnMappers.class)
                 .findFor(parameterizeClass(Set.class, NotificationGroup.class))
                 .orElseThrow();
     }
@@ -61,12 +60,12 @@ public final class NotificationRuleRowMapper implements RowMapper<NotificationRu
         maybeSet(rs, "SCOPE", ResultSet::getString, v -> rule.setScope(NotificationScope.valueOf(v)));
         rule.setNotifyOn(groupsColumnMapper.map(rs, "NOTIFY_ON", ctx));
         maybeSet(rs, "NOTIFY_CHILDREN", ResultSet::getBoolean, rule::setNotifyChildren);
-        maybeSet(rs, "TRIGGER_TYPE", ResultSet::getString, v -> rule.setTriggerType(NotificationTriggerType.valueOf(v)));
+        maybeSet(
+                rs, "TRIGGER_TYPE", ResultSet::getString, v -> rule.setTriggerType(NotificationTriggerType.valueOf(v)));
         maybeSet(rs, "SCHEDULE_CRON", ResultSet::getString, rule::setScheduleCron);
         maybeSet(rs, "SCHEDULE_LAST_TRIGGERED_AT", ResultSet::getTimestamp, rule::setScheduleLastTriggeredAt);
         maybeSet(rs, "SCHEDULE_SKIP_UNCHANGED", ResultSet::getBoolean, rule::setScheduleSkipUnchanged);
         maybeSet(rs, "FILTER_EXPRESSION", ResultSet::getString, rule::setFilterExpression);
         return rule;
     }
-
 }

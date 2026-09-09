@@ -37,6 +37,7 @@ public final class CelPolicyComponentRowMapper implements RowMapper<Component> {
         maybeSet(rs, "group", ResultSet::getString, builder::setGroup);
         maybeSet(rs, "name", ResultSet::getString, builder::setName);
         maybeSet(rs, "version", ResultSet::getString, builder::setVersion);
+        maybeSet(rs, "scope", ResultSet::getString, builder::setScope);
         maybeSet(rs, "classifier", ResultSet::getString, builder::setClassifier);
         maybeSet(rs, "cpe", ResultSet::getString, builder::setCpe);
         maybeSet(rs, "purl", ResultSet::getString, builder::setPurl);
@@ -54,11 +55,17 @@ public final class CelPolicyComponentRowMapper implements RowMapper<Component> {
         maybeSet(rs, "blake2b_384", ResultSet::getString, builder::setBlake2B384);
         maybeSet(rs, "blake2b_512", ResultSet::getString, builder::setBlake2B512);
         maybeSet(rs, "blake3", ResultSet::getString, builder::setBlake3);
+        maybeSet(rs, "streebog_256", ResultSet::getString, builder::setStreebog256);
+        maybeSet(rs, "streebog_512", ResultSet::getString, builder::setStreebog512);
         maybeSet(rs, "license_name", ResultSet::getString, builder::setLicenseName);
         maybeSet(rs, "license_expression", ResultSet::getString, builder::setLicenseExpression);
         maybeSet(rs, "published_at", RowMapperUtil::nullableTimestamp, builder::setPublishedAt);
         maybeSet(rs, "latest_version", ResultSet::getString, builder::setLatestVersion);
-        maybeSet(rs, "latest_version_published_at", RowMapperUtil::nullableTimestamp, builder::setLatestVersionPublishedAt);
+        maybeSet(
+                rs,
+                "latest_version_published_at",
+                RowMapperUtil::nullableTimestamp,
+                builder::setLatestVersionPublishedAt);
         maybeSet(rs, "package_artifact_md5", ResultSet::getString, builder::setPackageArtifactMd5);
         maybeSet(rs, "package_artifact_sha1", ResultSet::getString, builder::setPackageArtifactSha1);
         maybeSet(rs, "package_artifact_sha256", ResultSet::getString, builder::setPackageArtifactSha256);

@@ -34,7 +34,5 @@ public final class NoopCacheManager implements CacheManager {
     }
 
     @Override
-    public void close() throws IOException {
-    }
-
+    public void close() throws IOException {}
 }

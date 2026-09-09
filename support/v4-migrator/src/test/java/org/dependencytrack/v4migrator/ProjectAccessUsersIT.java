@@ -95,19 +95,18 @@ class ProjectAccessUsersIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT pau."PROJECT_ID", u."USERNAME"
                       FROM "PROJECT_ACCESS_USERS" pau
                       JOIN "USER" u ON u."ID" = pau."USER_ID"
                      ORDER BY pau."PROJECT_ID", u."USERNAME"
                     """).mapToMap().list());
 
-        assertThat(rows).extracting("project_id", "username")
-            .containsExactly(tuple(1L, "alice"));
+        assertThat(rows).extracting("project_id", "username").containsExactly(tuple(1L, "alice"));
 
-        final long rowsProcessed = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final long rowsProcessed = target.jdbi()
+                .withHandle(h -> h.createQuery("""
                     SELECT rows_processed
                       FROM "dt_v4_migration".migration_state
                      WHERE table_name = 'PROJECT_ACCESS_USERS' AND phase = 'LOAD'

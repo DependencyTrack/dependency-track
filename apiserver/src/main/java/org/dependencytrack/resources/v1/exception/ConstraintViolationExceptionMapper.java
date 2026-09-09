@@ -19,13 +19,14 @@
 package org.dependencytrack.resources.v1.exception;
 
 import alpine.server.resources.AlpineResource;
+import org.apache.commons.lang3.Strings;
+import org.glassfish.jersey.server.validation.ValidationError;
+
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
-import org.apache.commons.lang3.Strings;
-import org.glassfish.jersey.server.validation.ValidationError;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,10 +51,7 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
     public Response toResponse(final ConstraintViolationException exception) {
         final List<ValidationError> errors = mapToValidationErrors(exception.getConstraintViolations());
 
-        return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity(errors)
-                .build();
+        return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
     }
 
     /**
@@ -68,10 +66,16 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
 
         for (final ConstraintViolation<?> violation : violations) {
             if (violation.getPropertyPath().iterator().next().getName() != null) {
-                final String path = violation.getPropertyPath() != null ? violation.getPropertyPath().toString() : null;
-                final String message = violation.getMessage() != null ? Strings.CS.removeStart(violation.getMessage(), path + ".") : null;
+                final String path = violation.getPropertyPath() != null
+                        ? violation.getPropertyPath().toString()
+                        : null;
+                final String message = violation.getMessage() != null
+                        ? Strings.CS.removeStart(violation.getMessage(), path + ".")
+                        : null;
                 final String messageTemplate = violation.getMessageTemplate();
-                final String invalidValue = violation.getInvalidValue() != null ? violation.getInvalidValue().toString() : null;
+                final String invalidValue = violation.getInvalidValue() != null
+                        ? violation.getInvalidValue().toString()
+                        : null;
                 final ValidationError error = new ValidationError(message, messageTemplate, path, invalidValue);
                 errors.add(error);
             }
@@ -79,5 +83,4 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
 
         return errors;
     }
-
 }

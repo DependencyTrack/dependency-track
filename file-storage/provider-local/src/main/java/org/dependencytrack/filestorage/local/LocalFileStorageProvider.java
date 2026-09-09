@@ -57,24 +57,18 @@ public final class LocalFileStorageProvider implements FileStorageProvider {
         final boolean canRead = directoryPath.toFile().canRead();
         final boolean canWrite = directoryPath.toFile().canWrite();
         if (!canRead || !canWrite) {
-            throw new IllegalStateException(
-                    "Insufficient permissions for directory %s (canRead=%s, canWrite=%s)".formatted(
-                            directoryPath, canRead, canWrite));
+            throw new IllegalStateException("Insufficient permissions for directory %s (canRead=%s, canWrite=%s)"
+                    .formatted(directoryPath, canRead, canWrite));
         }
 
-        final int compressionLevel = config
-                .getOptionalValue("dt.file-storage.local.compression-level", int.class)
+        final int compressionLevel = config.getOptionalValue("dt.file-storage.local.compression-level", int.class)
                 .orElse(5);
         if (compressionLevel < Zstd.minCompressionLevel() || compressionLevel > Zstd.maxCompressionLevel()) {
-            throw new IllegalStateException(
-                    "Invalid compression level: must be between %d and %d, but is %d".formatted(
-                            Zstd.minCompressionLevel(),
-                            Zstd.maxCompressionLevel(),
-                            compressionLevel));
+            throw new IllegalStateException("Invalid compression level: must be between %d and %d, but is %d"
+                    .formatted(Zstd.minCompressionLevel(), Zstd.maxCompressionLevel(), compressionLevel));
         }
 
         LOGGER.debug("Files will be stored in {}", directoryPath);
         return new LocalFileStorage(directoryPath, compressionLevel);
     }
-
 }

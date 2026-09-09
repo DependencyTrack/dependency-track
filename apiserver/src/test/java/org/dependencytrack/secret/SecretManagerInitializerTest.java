@@ -19,13 +19,14 @@
 package org.dependencytrack.secret;
 
 import io.smallrye.config.SmallRyeConfigBuilder;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletContextEvent;
 import org.dependencytrack.secret.management.SecretManager;
 import org.eclipse.microprofile.config.Config;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -53,13 +54,10 @@ public class SecretManagerInitializerTest {
 
         final var servletContextMock = mock(ServletContext.class);
 
-        new SecretManagerInitializer(config).contextInitialized(
-                new ServletContextEvent(servletContextMock));
+        new SecretManagerInitializer(config).contextInitialized(new ServletContextEvent(servletContextMock));
 
         final var secretManagerCaptor = ArgumentCaptor.forClass(SecretManager.class);
-        verify(servletContextMock).setAttribute(
-                eq(SecretManager.class.getName()),
-                secretManagerCaptor.capture());
+        verify(servletContextMock).setAttribute(eq(SecretManager.class.getName()), secretManagerCaptor.capture());
         assertThat(SecretManagerInitializer.secretManager).isEqualTo(secretManagerCaptor.getValue());
 
         assertThat(secretManagerCaptor.getValue()).isInstanceOf(TestSecretManager.class);
@@ -92,5 +90,4 @@ public class SecretManagerInitializerTest {
 
         verify(secretManagerMock).close();
     }
-
 }

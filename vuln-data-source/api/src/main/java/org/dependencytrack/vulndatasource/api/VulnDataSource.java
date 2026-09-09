@@ -96,7 +96,5 @@ public interface VulnDataSource extends ExtensionPoint, Iterator<Bom> {
      *
      * @param bov The BOV to be marked as processed.
      */
-    default void markProcessed(Bom bov) {
-    }
-
+    default void markProcessed(Bom bov) {}
 }

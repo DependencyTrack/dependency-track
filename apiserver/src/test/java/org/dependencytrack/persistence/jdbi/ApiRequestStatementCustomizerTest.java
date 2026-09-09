@@ -19,11 +19,12 @@
 package org.dependencytrack.persistence.jdbi;
 
 import alpine.model.ApiKey;
-import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
-import alpine.model.OidcUser;
 import alpine.model.Team;
 import alpine.model.User;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.UserPrincipal;
+import alpine.model.auth.UserType;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.Pagination;
 import alpine.resources.AlpineRequest;
@@ -35,15 +36,17 @@ import org.dependencytrack.persistence.jdbi.ApiRequestConfig.OrderingColumn;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.core.statement.StatementCustomizer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.sql.PreparedStatement;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
@@ -67,8 +70,7 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
 
     @Test
     public void testWithoutAlpineRequest() {
-        useJdbiHandle(handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
+        useJdbiHandle(handle -> handle.addCustomizer(inspectStatement(ctx -> {
                     assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
                             """);
@@ -87,20 +89,20 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* pagination */ null,
                 /* filter */ "foo",
                 /* orderBy */ null,
-                /* orderDirection */ null
-        );
+                /* orderDirection */ null);
 
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE AND 'foo' = :apiFilter
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{named:{apiFilter:foo}}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding()).hasToString("{named:{apiFilter:foo}}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
@@ -110,21 +112,46 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* pagination */ new Pagination(Pagination.Strategy.PAGES, 1, 100),
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null
-        );
+                /* orderDirection */ null);
 
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
                             OFFSET :paginationOffset FETCH NEXT :paginationLimit ROWS ONLY
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{named:{paginationOffset:0,paginationLimit:100}}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding())
+                                    .hasToString("{named:{paginationOffset:0,paginationLimit:100}}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
+    }
+
+    @Test
+    public void testWithAlpineRequestPaginationOptOut() {
+        final var request = new AlpineRequest(
+                /* principal */ null,
+                /* pagination */ new Pagination(Pagination.Strategy.PAGES, 1, 100),
+                /* filter */ null,
+                /* orderBy */ null,
+                /* orderDirection */ null);
+
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace(/* language=SQL */ """
+                            SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
+                            """);
+
+                            assertThat(ctx.getBinding()).hasToString("{}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .define(JdbiAttributes.ATTRIBUTE_API_PAGINATE, false)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
@@ -134,20 +161,20 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ "value",
-                /* orderDirection */ OrderDirection.DESCENDING
-        );
+                /* orderDirection */ OrderDirection.DESCENDING);
 
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding()).hasToString("{}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
@@ -157,16 +184,17 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ "value",
-                /* orderDirection */ OrderDirection.DESCENDING
-        );
+                /* orderDirection */ OrderDirection.DESCENDING);
 
         assertThatExceptionOfType(InvalidSortFieldException.class)
-                .isThrownBy(() -> useJdbiHandle(request, handle -> handle
-                        .configure(ApiRequestConfig.class, config ->
-                                config.setOrderingAllowedColumns(Collections.emptySet()))
-                        .createQuery(TEST_QUERY_TEMPLATE)
-                        .mapTo(Integer.class)
-                        .findOne()))
+                .isThrownBy(() -> useJdbiHandle(
+                        request,
+                        handle -> handle.configure(
+                                        ApiRequestConfig.class,
+                                        config -> config.setOrderingAllowedColumns(Collections.emptySet()))
+                                .createQuery(TEST_QUERY_TEMPLATE)
+                                .mapTo(Integer.class)
+                                .findOne()))
                 .withMessage("Sorting by field 'value' is not supported")
                 .satisfies(e -> {
                     assertThat(e.getFieldName()).isEqualTo("value");
@@ -181,16 +209,18 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ "foobar",
-                /* orderDirection */ OrderDirection.DESCENDING
-        );
+                /* orderDirection */ OrderDirection.DESCENDING);
 
         assertThatExceptionOfType(InvalidSortFieldException.class)
-                .isThrownBy(() -> useJdbiHandle(request, handle -> handle
-                        .configure(ApiRequestConfig.class, config ->
-                                config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA"))))
-                        .createQuery(TEST_QUERY_TEMPLATE)
-                        .mapTo(Integer.class)
-                        .findOne()))
+                .isThrownBy(() -> useJdbiHandle(
+                        request,
+                        handle -> handle.configure(
+                                        ApiRequestConfig.class,
+                                        config ->
+                                                config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA"))))
+                                .createQuery(TEST_QUERY_TEMPLATE)
+                                .mapTo(Integer.class)
+                                .findOne()))
                 .withMessage("Sorting by field 'foobar' is not supported")
                 .satisfies(e -> {
                     assertThat(e.getFieldName()).isEqualTo("foobar");
@@ -205,22 +235,23 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ "valueA",
-                /* orderDirection */ OrderDirection.DESCENDING
-        );
+                /* orderDirection */ OrderDirection.DESCENDING);
 
-        useJdbiHandle(request, handle -> handle
-                .configure(ApiRequestConfig.class, config ->
-                        config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA"))))
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.configure(
+                                ApiRequestConfig.class,
+                                config -> config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA"))))
+                        .addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE ORDER BY "valueA" DESC
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding()).hasToString("{}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
@@ -230,24 +261,22 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ "foobar",
-                /* orderDirection */ OrderDirection.DESCENDING
-        );
+                /* orderDirection */ OrderDirection.DESCENDING);
 
         assertThatExceptionOfType(InvalidSortFieldException.class)
-                .isThrownBy(() -> useJdbiHandle(request, handle -> handle
-                        .configure(ApiRequestConfig.class, config -> {
-                            config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
-                            config.setOrderingAlwaysBy(new AlwaysByOrdering("fa.\"ID\""));
-                        })
-                        .createQuery(TEST_QUERY_TEMPLATE)
-                        .mapTo(Integer.class)
-                        .findOne()))
+                .isThrownBy(() -> useJdbiHandle(
+                        request,
+                        handle -> handle.configure(ApiRequestConfig.class, config -> {
+                                    config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
+                                    config.setOrderingAlwaysBy(new AlwaysByOrdering("fa.\"ID\""));
+                                })
+                                .createQuery(TEST_QUERY_TEMPLATE)
+                                .mapTo(Integer.class)
+                                .findOne()))
                 .withMessage("Sorting by field 'foobar' is not supported")
                 .satisfies(e -> {
                     assertThat(e.getFieldName()).isEqualTo("foobar");
-                    assertThat(e.getAllowedFieldNames())
-                            .containsOnly("valueA")
-                            .doesNotContain("fa.\"ID\"");
+                    assertThat(e.getAllowedFieldNames()).containsOnly("valueA").doesNotContain("fa.\"ID\"");
                 });
     }
 
@@ -258,24 +287,24 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ "valueA",
-                /* orderDirection */ OrderDirection.DESCENDING
-        );
+                /* orderDirection */ OrderDirection.DESCENDING);
 
-        useJdbiHandle(request, handle -> handle
-                .configure(ApiRequestConfig.class, config -> {
-                    config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
-                    config.setOrderingAlwaysBy(new AlwaysByOrdering("\"valueA\""));
-                })
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.configure(ApiRequestConfig.class, config -> {
+                            config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
+                            config.setOrderingAlwaysBy(new AlwaysByOrdering("\"valueA\""));
+                        })
+                        .addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE ORDER BY "valueA" DESC
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding()).hasToString("{}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
@@ -285,24 +314,24 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ "valueA",
-                /* orderDirection */ OrderDirection.DESCENDING
-        );
+                /* orderDirection */ OrderDirection.DESCENDING);
 
-        useJdbiHandle(request, handle -> handle
-                .configure(ApiRequestConfig.class, config -> {
-                    config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
-                    config.setOrderingAlwaysBy(new AlwaysByOrdering("\"valueB\""));
-                })
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.configure(ApiRequestConfig.class, config -> {
+                            config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
+                            config.setOrderingAlwaysBy(new AlwaysByOrdering("\"valueB\""));
+                        })
+                        .addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE ORDER BY "valueA" DESC, "valueB"
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding()).hasToString("{}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
@@ -312,82 +341,68 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ "valueA",
-                /* orderDirection */ OrderDirection.DESCENDING
-        );
+                /* orderDirection */ OrderDirection.DESCENDING);
 
-        useJdbiHandle(request, handle -> handle
-                .configure(ApiRequestConfig.class, config -> {
-                    config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
-                    config.setOrderingAlwaysBy(new AlwaysByOrdering("\"valueB\"", OrderDirection.ASCENDING));
-                })
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.configure(ApiRequestConfig.class, config -> {
+                            config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
+                            config.setOrderingAlwaysBy(new AlwaysByOrdering("\"valueB\"", OrderDirection.ASCENDING));
+                        })
+                        .addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE ORDER BY "valueA" DESC, "valueB" ASC
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding()).hasToString("{}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
     public void testWithPortfolioAclDisabled() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "false",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
-
         final ManagedUser managedUser = qm.createManagedUser("username", "passwordHash");
 
         final var request = new AlpineRequest(
-                /* principal */ managedUser,
+                /* principal */ userPrincipal(managedUser, UserType.MANAGED),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null
-        );
+                /* orderDirection */ null,
+                /* portfolioAccessControlEnabled */ false);
 
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding()).hasToString("{}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
     public void testWithPortfolioAclEnabledWithNoTeams() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
-
         final ManagedUser managedUser = qm.createManagedUser("username", "passwordHash");
 
         final var request = new AlpineRequest(
-                /* principal */ managedUser,
+                /* principal */ userPrincipal(managedUser, UserType.MANAGED),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null
-        );
+                /* orderDirection */ null,
+                /* portfolioAccessControlEnabled */ true);
 
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace(/* language=SQL */ """
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace(/* language=SQL */ """
                             SELECT
                               1 AS "valueA",
                               2 AS "valueB"
@@ -402,175 +417,85 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                              )
                             """);
 
-                    assertThat(ctx.getBinding())
-                            .hasToString("{named:{projectAclUserId:%d}}".formatted(managedUser.getId()));
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding())
+                                    .hasToString("{named:{projectAclUserId:%d}}".formatted(managedUser.getId()));
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
     public void testWithPortfolioAclEnabledWithApiKeyHavingPortfolioAccessControlBypassPermission() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
-
         final Team team = qm.createTeam("team");
         final ApiKey apiKey = qm.createApiKey(team);
 
         final var request = new AlpineRequest(
-                /* principal */ apiKey,
+                /* principal */ apiKeyPrincipal(apiKey, Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
                 /* orderDirection */ null,
-                /* effectivePermissions */ Set.of(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)
-        );
+                /* portfolioAccessControlEnabled */ true);
 
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding()).hasToString("{}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
-    @Test
-    public void testWithPortfolioAclEnabledWithManagedUserHavingPortfolioAccessControlBypassPermission() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
-
-        final ManagedUser managedUser = qm.createManagedUser("username", "passwordHash");
+    @ParameterizedTest
+    @EnumSource(UserType.class)
+    public void testWithPortfolioAclEnabledWithUserHavingPortfolioAccessControlBypassPermission(final UserType type) {
+        final ManagedUser user = qm.createManagedUser("username", "passwordHash");
 
         final var request = new AlpineRequest(
-                /* principal */ managedUser,
+                /* principal */ userPrincipal(user, type, Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
                 /* orderDirection */ null,
-                /* effectivePermissions */ Set.of(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)
-        );
+                /* portfolioAccessControlEnabled */ true);
 
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
-    }
-
-    @Test
-    public void testWithPortfolioAclEnabledWithLdapUserHavingPortfolioAccessControlBypassPermission() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
-
-        final LdapUser ldapUser = qm.createLdapUser("username");
-
-        final var request = new AlpineRequest(
-                /* principal */ ldapUser,
-                /* pagination */ null,
-                /* filter */ null,
-                /* orderBy */ null,
-                /* orderDirection */ null,
-                /* effectivePermissions */ Set.of(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)
-        );
-
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
-                            SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
-                            """);
-
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
-    }
-
-    @Test
-    public void testWithPortfolioAclEnabledWithOidcUserHavingPortfolioAccessControlBypassPermission() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
-
-        final OidcUser oidcUser = qm.createOidcUser("username");
-
-        final var request = new AlpineRequest(
-                /* principal */ oidcUser,
-                /* pagination */ null,
-                /* filter */ null,
-                /* orderBy */ null,
-                /* orderDirection */ null,
-                /* effectivePermissions */ Set.of(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)
-        );
-
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
-                            SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
-                            """);
-
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding()).hasToString("{}");
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
     public void testWithPortfolioAclEnabledWithTeams() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
-
         final Team team = qm.createTeam("team");
         final ApiKey apiKey = qm.createApiKey(team);
 
         final var request = new AlpineRequest(
-                /* principal */ apiKey,
+                /* principal */ apiKeyPrincipal(apiKey),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null
-        );
+                /* orderDirection */ null,
+                /* portfolioAccessControlEnabled */ true);
 
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA"
                                  , 2 AS "valueB"
                               FROM "PROJECT"
@@ -586,37 +511,31 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                              )
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{named:{projectAclApiKeyId:%s}}".formatted(apiKey.getId()));
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding())
+                                    .hasToString("{named:{projectAclApiKeyId:%s}}".formatted(apiKey.getId()));
+                        }))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
     public void testWithPortfolioAclEnabledWithCustomizedAclStatement() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
-
         final Team team = qm.createTeam("team");
         final ApiKey apiKey = qm.createApiKey(team);
 
         final var request = new AlpineRequest(
-                /* principal */ apiKey,
+                /* principal */ apiKeyPrincipal(apiKey),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null
-        );
+                /* orderDirection */ null,
+                /* portfolioAccessControlEnabled */ true);
 
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA"
                                  , 2 AS "valueB"
                               FROM "PROJECT"
@@ -632,39 +551,33 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                              )
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{named:{projectAclApiKeyId:%s}}".formatted(apiKey.getId()));
-                }))
-                .addCustomizer(new DefineApiProjectAclCondition.StatementCustomizer(
-                        JdbiAttributes.ATTRIBUTE_API_PROJECT_ACL_CONDITION,
-                        "\"PROJECT\".\"PARENT_PROJECT_ID\""))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding())
+                                    .hasToString("{named:{projectAclApiKeyId:%s}}".formatted(apiKey.getId()));
+                        }))
+                        .addCustomizer(new DefineApiProjectAclCondition.StatementCustomizer(
+                                JdbiAttributes.ATTRIBUTE_API_PROJECT_ACL_CONDITION,
+                                "\"PROJECT\".\"PARENT_PROJECT_ID\""))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
     }
 
     @Test
     public void testWithPortfolioAclEnabledWithUserPrincipalAndCustomizedAclStatement() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
-
         final User user = qm.createManagedUser("foo", "password");
 
         final var request = new AlpineRequest(
-                /* principal */ user,
+                /* principal */ userPrincipal(user, UserType.MANAGED),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null
-        );
+                /* orderDirection */ null,
+                /* portfolioAccessControlEnabled */ true);
 
-        useJdbiHandle(request, handle -> handle
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
+        useJdbiHandle(
+                request,
+                handle -> handle.addCustomizer(inspectStatement(ctx -> {
+                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
                             SELECT 1 AS "valueA"
                                  , 2 AS "valueB"
                               FROM "PROJECT"
@@ -678,14 +591,23 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                              )
                             """);
 
-                    assertThat(ctx.getBinding()).hasToString("{named:{projectAclUserId:%s}}".formatted(user.getId()));
-                }))
-                .addCustomizer(new DefineApiProjectAclCondition.StatementCustomizer(
-                        JdbiAttributes.ATTRIBUTE_API_PROJECT_ACL_CONDITION,
-                        "\"PROJECT\".\"PARENT_PROJECT_ID\""))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
+                            assertThat(ctx.getBinding())
+                                    .hasToString("{named:{projectAclUserId:%s}}".formatted(user.getId()));
+                        }))
+                        .addCustomizer(new DefineApiProjectAclCondition.StatementCustomizer(
+                                JdbiAttributes.ATTRIBUTE_API_PROJECT_ACL_CONDITION,
+                                "\"PROJECT\".\"PARENT_PROJECT_ID\""))
+                        .createQuery(TEST_QUERY_TEMPLATE)
+                        .mapTo(Integer.class)
+                        .findOne());
+    }
+
+    private static UserPrincipal userPrincipal(User user, UserType type, String... effectivePermissions) {
+        return new UserPrincipal(user.getId(), user.getUsername(), type, List.of(), Set.of(effectivePermissions));
+    }
+
+    private static ApiKeyPrincipal apiKeyPrincipal(ApiKey apiKey, String... effectivePermissions) {
+        return new ApiKeyPrincipal(apiKey.getId(), apiKey.getPublicId(), List.of(), Set.of(effectivePermissions));
     }
 
     private static StatementInspector inspectStatement(final Consumer<StatementContext> contextConsumer) {
@@ -698,7 +620,5 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
         public void beforeExecution(final PreparedStatement stmt, final StatementContext ctx) {
             contextConsumer.accept(ctx);
         }
-
     }
-
 }

@@ -39,5 +39,4 @@ public class ProjectAccessDeniedExceptionMapper implements ExceptionMapper<Proje
         problemDetails.setDetail(exception.getMessage());
         return problemDetails.toResponse();
     }
-
 }

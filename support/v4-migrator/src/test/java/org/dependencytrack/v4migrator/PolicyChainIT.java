@@ -93,8 +93,8 @@ class PolicyChainIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> policies = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> policies =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "NAME", "OPERATOR", "VIOLATIONSTATE",
                            "INCLUDE_CHILDREN", "ONLY_LATEST_PROJECT_VERSION", "UUID"
                       FROM "POLICY"
@@ -102,41 +102,37 @@ class PolicyChainIT {
                     """).mapToMap().list());
         assertThat(policies).hasSize(1);
         assertThat(policies.get(0))
-            .containsEntry("id", 10L)
-            .containsEntry("name", "Strict")
-            .containsEntry("operator", "ALL")
-            .containsEntry("violationstate", "FAIL")
-            .containsEntry("include_children", true)
-            .containsEntry("only_latest_project_version", false)
-            .containsEntry("uuid", UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
+                .containsEntry("id", 10L)
+                .containsEntry("name", "Strict")
+                .containsEntry("operator", "ALL")
+                .containsEntry("violationstate", "FAIL")
+                .containsEntry("include_children", true)
+                .containsEntry("only_latest_project_version", false)
+                .containsEntry("uuid", UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
 
-        final List<Map<String, Object>> conditions = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> conditions =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "OPERATOR", "POLICY_ID", "SUBJECT", "UUID", "VALUE", "VIOLATIONTYPE"
                       FROM "POLICYCONDITION"
                      ORDER BY "ID"
                     """).mapToMap().list());
         assertThat(conditions).hasSize(1);
         assertThat(conditions.get(0))
-            .containsEntry("id", 100L)
-            .containsEntry("operator", "MATCHES")
-            .containsEntry("policy_id", 10L)
-            .containsEntry("subject", "COORDINATES")
-            .containsEntry("uuid", UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc"))
-            .containsEntry("value", "pkg:maven/org.example/lib@1.0.0")
-            .containsEntry("violationtype", null);
+                .containsEntry("id", 100L)
+                .containsEntry("operator", "MATCHES")
+                .containsEntry("policy_id", 10L)
+                .containsEntry("subject", "COORDINATES")
+                .containsEntry("uuid", UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc"))
+                .containsEntry("value", "pkg:maven/org.example/lib@1.0.0")
+                .containsEntry("violationtype", null);
 
-        final List<Map<String, Object>> joins = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> joins =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "POLICY_ID", "TAG_ID"
                       FROM "POLICY_TAGS"
                      ORDER BY "TAG_ID"
                     """).mapToMap().list());
-        assertThat(joins).extracting("policy_id", "tag_id")
-            .containsExactly(
-                tuple(10L, 1L),
-                tuple(10L, 2L)
-            );
+        assertThat(joins).extracting("policy_id", "tag_id").containsExactly(tuple(10L, 1L), tuple(10L, 2L));
     }
 
     private void runPipeline() throws Exception {

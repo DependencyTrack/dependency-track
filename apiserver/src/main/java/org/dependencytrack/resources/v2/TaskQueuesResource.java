@@ -19,9 +19,6 @@
 package org.dependencytrack.resources.v2;
 
 import alpine.server.auth.PermissionRequired;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.TaskQueuesApi;
 import org.dependencytrack.api.v2.model.ListTaskQueuesResponse;
 import org.dependencytrack.api.v2.model.TaskQueue;
@@ -40,6 +37,10 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+
 @Provider
 @NullMarked
 public final class TaskQueuesResource extends AbstractApiResource implements TaskQueuesApi {
@@ -54,10 +55,7 @@ public final class TaskQueuesResource extends AbstractApiResource implements Tas
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response listTaskQueues(TaskQueueType type, Integer limit, @Nullable String pageToken) {
         final Page<org.dependencytrack.dex.engine.api.TaskQueue> taskQueuesPage =
                 dexEngine.listTaskQueues(new ListTaskQueuesRequest(convert(type))
@@ -76,17 +74,11 @@ public final class TaskQueuesResource extends AbstractApiResource implements Tas
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE})
     public Response updateTaskQueue(TaskQueueType type, String name, UpdateTaskQueueRequest request) {
-        final boolean updated = dexEngine.updateTaskQueue(
-                new org.dependencytrack.dex.engine.api.request.UpdateTaskQueueRequest(
-                        convert(type),
-                        name,
-                        convert(request.getStatus()),
-                        request.getCapacity()));
+        final boolean updated =
+                dexEngine.updateTaskQueue(new org.dependencytrack.dex.engine.api.request.UpdateTaskQueueRequest(
+                        convert(type), name, convert(request.getStatus()), request.getCapacity()));
         if (updated) {
             LOGGER.info(
                     SecurityMarkers.SECURITY_AUDIT,
@@ -111,7 +103,8 @@ public final class TaskQueuesResource extends AbstractApiResource implements Tas
         };
     }
 
-    private static org.dependencytrack.dex.engine.api.@Nullable TaskQueueStatus convert(@Nullable TaskQueueStatus status) {
+    private static org.dependencytrack.dex.engine.api.@Nullable TaskQueueStatus convert(
+            @Nullable TaskQueueStatus status) {
         return switch (status) {
             case ACTIVE -> org.dependencytrack.dex.engine.api.TaskQueueStatus.ACTIVE;
             case PAUSED -> org.dependencytrack.dex.engine.api.TaskQueueStatus.PAUSED;
@@ -122,17 +115,15 @@ public final class TaskQueuesResource extends AbstractApiResource implements Tas
     private static TaskQueue convert(org.dependencytrack.dex.engine.api.TaskQueue queue) {
         return TaskQueue.builder()
                 .name(queue.name())
-                .status(switch (queue.status()) {
-                    case ACTIVE -> TaskQueueStatus.ACTIVE;
-                    case PAUSED -> TaskQueueStatus.PAUSED;
-                })
+                .status(
+                        switch (queue.status()) {
+                            case ACTIVE -> TaskQueueStatus.ACTIVE;
+                            case PAUSED -> TaskQueueStatus.PAUSED;
+                        })
                 .capacity(queue.capacity())
                 .depth(queue.depth())
                 .createdAt(queue.createdAt().toEpochMilli())
-                .updatedAt(queue.updatedAt() != null
-                        ? queue.updatedAt().toEpochMilli()
-                        : null)
+                .updatedAt(queue.updatedAt() != null ? queue.updatedAt().toEpochMilli() : null)
                 .build();
     }
-
 }

@@ -24,12 +24,11 @@ import java.util.Set;
 interface TaskWorker extends Closeable {
 
     enum Status {
-
         CREATED(1, 3), // 0
-        STARTING(2),   // 1
-        RUNNING(3),    // 2
-        STOPPING(4),   // 3
-        STOPPED(1);    // 4
+        STARTING(2), // 1
+        RUNNING(3), // 2
+        STOPPING(4), // 3
+        STOPPED; // 4
 
         private final Set<Integer> allowedTransitions;
 
@@ -44,7 +43,6 @@ interface TaskWorker extends Closeable {
         boolean isStoppingOrStopped() {
             return equals(STOPPING) || equals(STOPPED);
         }
-
     }
 
     void start();
@@ -55,5 +53,4 @@ interface TaskWorker extends Closeable {
 
     @Override
     void close();
-
 }

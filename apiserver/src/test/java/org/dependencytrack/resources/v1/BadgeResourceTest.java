@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Project;
@@ -32,6 +31,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.core.Response;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -52,15 +53,18 @@ public class BadgeResourceTest extends ResourceTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(BadgeResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+            new ResourceConfig(BadgeResource.class).register(ApiFilter.class).register(AuthFeature.class));
 
     @BeforeEach
     @Override
     public void before() throws Exception {
         super.before();
-        qm.createConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName(), "true", IConfigProperty.PropertyType.BOOLEAN, "Public access to badge enabled");
+        qm.createConfigProperty(
+                GENERAL_BADGE_ENABLED.getGroupName(),
+                GENERAL_BADGE_ENABLED.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                "Public access to badge enabled");
     }
 
     @Test
@@ -84,7 +88,8 @@ public class BadgeResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturn403ForVulnBadgeByUuidWhenDisabled() {
-        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName()).setPropertyValue("false");
+        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName())
+                .setPropertyValue("false");
         final Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false);
         final Response response = jersey.target(V1_BADGE + "/vulns/project/" + project.getUuid())
                 .request()
@@ -122,7 +127,8 @@ public class BadgeResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturn403ForVulnBadgeByNameAndVersionWhenDisabled() {
-        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName()).setPropertyValue("false");
+        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName())
+                .setPropertyValue("false");
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false);
         final Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example/1.0.0")
                 .request()
@@ -151,7 +157,8 @@ public class BadgeResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturn403ForViolationsBadgeByUuidWhenDisabled() {
-        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName()).setPropertyValue("false");
+        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName())
+                .setPropertyValue("false");
         final Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false);
         final Response response = jersey.target(V1_BADGE + "/violations/project/" + project.getUuid())
                 .request()
@@ -189,7 +196,8 @@ public class BadgeResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturn403ForViolationsBadgeByNameAndVersionWhenDisabled() {
-        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName()).setPropertyValue("false");
+        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName())
+                .setPropertyValue("false");
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false);
         final Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0")
                 .request()
@@ -201,8 +209,7 @@ public class BadgeResourceTest extends ResourceTest {
     public void shouldReturnVulnBadgeWithAggregatedMetricsForCollectionProjectByUuid() {
         final Project collection = createCollectionProjectWithChildMetrics();
 
-        final Response response = jersey
-                .target(V1_BADGE + "/vulns/project/" + collection.getUuid())
+        final Response response = jersey.target(V1_BADGE + "/vulns/project/" + collection.getUuid())
                 .request()
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
@@ -214,12 +221,8 @@ public class BadgeResourceTest extends ResourceTest {
     public void shouldReturnVulnBadgeWithAggregatedMetricsForCollectionProjectByNameAndVersion() {
         final Project collection = createCollectionProjectWithChildMetrics();
 
-        final Response response = jersey
-                .target(V1_BADGE
-                        + "/vulns/project/"
-                        + collection.getName()
-                        + "/"
-                        + collection.getVersion())
+        final Response response = jersey.target(
+                        V1_BADGE + "/vulns/project/" + collection.getName() + "/" + collection.getVersion())
                 .request()
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
@@ -231,8 +234,7 @@ public class BadgeResourceTest extends ResourceTest {
     public void shouldReturnViolationsBadgeWithAggregatedMetricsForCollectionProjectByUuid() {
         final Project collection = createCollectionProjectWithChildMetrics();
 
-        final Response response = jersey
-                .target(V1_BADGE + "/violations/project/" + collection.getUuid())
+        final Response response = jersey.target(V1_BADGE + "/violations/project/" + collection.getUuid())
                 .request()
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
@@ -244,12 +246,8 @@ public class BadgeResourceTest extends ResourceTest {
     public void shouldReturnViolationsBadgeWithAggregatedMetricsForCollectionProjectByNameAndVersion() {
         final Project collection = createCollectionProjectWithChildMetrics();
 
-        final Response response = jersey
-                .target(V1_BADGE
-                        + "/violations/project/"
-                        + collection.getName()
-                        + "/"
-                        + collection.getVersion())
+        final Response response = jersey.target(
+                        V1_BADGE + "/violations/project/" + collection.getName() + "/" + collection.getVersion())
                 .request()
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
@@ -313,18 +311,12 @@ public class BadgeResourceTest extends ResourceTest {
 
     private void assertThatBodyContainsAggregatedVulnMetrics(String body) {
         assertThat(isLikelySvg(body)).isTrue();
-        assertThat(body)
-                .contains(">3</text>")
-                .contains(">7</text>")
-                .contains(">6</text>");
+        assertThat(body).contains(">3</text>").contains(">7</text>").contains(">6</text>");
     }
 
     private void assertThatBodyContainsAggregatedViolationMetrics(String body) {
         assertThat(isLikelySvg(body)).isTrue();
-        assertThat(body)
-                .contains(">3</text>")
-                .contains(">4</text>")
-                .contains(">3</text>");
+        assertThat(body).contains(">3</text>").contains(">4</text>").contains(">3</text>");
     }
 
     private boolean isLikelySvg(String body) {

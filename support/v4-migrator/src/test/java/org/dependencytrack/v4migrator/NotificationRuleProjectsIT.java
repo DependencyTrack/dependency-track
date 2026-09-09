@@ -92,23 +92,23 @@ class NotificationRuleProjectsIT {
                         'INFORMATIONAL', TRUE, NULL, 1, NULL, 'PORTFOLIO',
                         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
                 """);
-            h.execute("INSERT INTO \"NOTIFICATIONRULE_PROJECTS\" (\"NOTIFICATIONRULE_ID\", \"PROJECT_ID\") VALUES (10, 5)");
-            h.execute("INSERT INTO \"NOTIFICATIONRULE_PROJECTS\" (\"NOTIFICATIONRULE_ID\", \"PROJECT_ID\") VALUES (10, NULL)");
+            h.execute(
+                    "INSERT INTO \"NOTIFICATIONRULE_PROJECTS\" (\"NOTIFICATIONRULE_ID\", \"PROJECT_ID\") VALUES (10, 5)");
+            h.execute(
+                    "INSERT INTO \"NOTIFICATIONRULE_PROJECTS\" (\"NOTIFICATIONRULE_ID\", \"PROJECT_ID\") VALUES (10, NULL)");
         });
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "NOTIFICATIONRULE_ID", "PROJECT_ID"
                       FROM "NOTIFICATIONRULE_PROJECTS"
                      ORDER BY "PROJECT_ID" NULLS FIRST
                     """).mapToMap().list());
-        assertThat(rows).extracting("notificationrule_id", "project_id")
-            .containsExactly(
-                tuple(10L, null),
-                tuple(10L, 5L)
-            );
+        assertThat(rows)
+                .extracting("notificationrule_id", "project_id")
+                .containsExactly(tuple(10L, null), tuple(10L, 5L));
     }
 
     private void runPipeline() throws Exception {

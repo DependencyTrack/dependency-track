@@ -67,5 +67,4 @@ final class PolledActivityTaskRowMapper implements RowMapper<PolledActivityTask>
                 instantColumnMapper.map(rs, "locked_until", ctx),
                 rs.getInt("lock_version"));
     }
-
 }

@@ -38,5 +38,4 @@ public interface DeploymentConfig {
     <T> T getValue(final String propertyName, final Class<T> propertyType);
 
     <T> Optional<T> getOptionalValue(final String propertyName, final Class<T> propertyType);
-
 }

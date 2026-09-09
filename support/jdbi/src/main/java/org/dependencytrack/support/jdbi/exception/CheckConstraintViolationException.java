@@ -34,5 +34,4 @@ public final class CheckConstraintViolationException extends ConstraintViolation
             String sqlState) {
         super(message, cause, constraintName, tableName, columnName, sqlState);
     }
-
 }

@@ -56,13 +56,12 @@ final class PypiPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
-        final String fileName = purl.getQualifiers() != null
-                ? purl.getQualifiers().get("file_name") : null;
+        final String fileName =
+                purl.getQualifiers() != null ? purl.getQualifiers().get("file_name") : null;
 
         final PypiPackageDocument doc = fetchDocument(purl, repository);
         if (doc == null) {
@@ -100,7 +99,8 @@ final class PypiPackageMetadataResolver implements PackageMetadataResolver {
                             if (mostRecentUploadTime == null || instant.isAfter(mostRecentUploadTime)) {
                                 mostRecentUploadTime = instant;
                             }
-                        } catch (DateTimeParseException _) {}
+                        } catch (DateTimeParseException _) {
+                        }
                     }
                 }
                 latestVersionPublishedAt = mostRecentUploadTime;
@@ -110,9 +110,8 @@ final class PypiPackageMetadataResolver implements PackageMetadataResolver {
         return buildResult(latestVersion, latestVersionPublishedAt, resolvedAt, matched);
     }
 
-    private @Nullable PypiPackageDocument fetchDocument(
-            PackageURL purl,
-            PackageRepository repository) throws InterruptedException {
+    private @Nullable PypiPackageDocument fetchDocument(PackageURL purl, PackageRepository repository)
+            throws InterruptedException {
         final String url = UrlUtils.join(repository.url(), "pypi", purl.getName(), "json");
 
         final HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
@@ -171,7 +170,6 @@ final class PypiPackageMetadataResolver implements PackageMetadataResolver {
         return new PackageMetadata(latestVersion, latestVersionPublishedAt, resolvedAt, artifactMetadata);
     }
 
-    private record ArtifactHashes(@Nullable String md5, @Nullable String sha256) {
-    }
-
+    private record ArtifactHashes(
+            @Nullable String md5, @Nullable String sha256) {}
 }

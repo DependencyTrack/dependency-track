@@ -66,34 +66,36 @@ class OidcGroupDedupIT {
     @Test
     void migratesOidcGroupsAndBuildsCanonicalMap() throws Exception {
         source.jdbi().useHandle(h -> {
-            h.execute("INSERT INTO \"OIDCGROUP\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'admins',     '11111111-1111-1111-1111-111111111111')");
-            h.execute("INSERT INTO \"OIDCGROUP\" (\"ID\", \"NAME\", \"UUID\") VALUES (2, 'developers', '22222222-2222-2222-2222-222222222222')");
-            h.execute("INSERT INTO \"OIDCGROUP\" (\"ID\", \"NAME\", \"UUID\") VALUES (7, 'auditors',   '77777777-7777-7777-7777-777777777777')");
+            h.execute(
+                    "INSERT INTO \"OIDCGROUP\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'admins',     '11111111-1111-1111-1111-111111111111')");
+            h.execute(
+                    "INSERT INTO \"OIDCGROUP\" (\"ID\", \"NAME\", \"UUID\") VALUES (2, 'developers', '22222222-2222-2222-2222-222222222222')");
+            h.execute(
+                    "INSERT INTO \"OIDCGROUP\" (\"ID\", \"NAME\", \"UUID\") VALUES (7, 'auditors',   '77777777-7777-7777-7777-777777777777')");
         });
 
         runPipeline();
 
-        final List<Map<String, Object>> groups = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT \"ID\", \"NAME\", \"UUID\" FROM \"OIDCGROUP\" ORDER BY \"ID\"").mapToMap().list());
-        assertThat(groups).extracting("id", "name", "uuid")
-            .containsExactly(
-                tuple(1L, "admins",     "11111111-1111-1111-1111-111111111111"),
-                tuple(2L, "developers", "22222222-2222-2222-2222-222222222222"),
-                tuple(7L, "auditors",   "77777777-7777-7777-7777-777777777777")
-            );
+        final List<Map<String, Object>> groups = target.jdbi()
+                .withHandle(h -> h.createQuery("SELECT \"ID\", \"NAME\", \"UUID\" FROM \"OIDCGROUP\" ORDER BY \"ID\"")
+                        .mapToMap()
+                        .list());
+        assertThat(groups)
+                .extracting("id", "name", "uuid")
+                .containsExactly(
+                        tuple(1L, "admins", "11111111-1111-1111-1111-111111111111"),
+                        tuple(2L, "developers", "22222222-2222-2222-2222-222222222222"),
+                        tuple(7L, "auditors", "77777777-7777-7777-7777-777777777777"));
 
-        final List<Map<String, Object>> map = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> map =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT orig_id, canonical_id
                       FROM "dt_v4_migration".oidcgroup_canonical_id_map
                      ORDER BY orig_id
                     """).mapToMap().list());
-        assertThat(map).extracting("orig_id", "canonical_id")
-            .containsExactly(
-                tuple(1L, 1L),
-                tuple(2L, 2L),
-                tuple(7L, 7L)
-            );
+        assertThat(map)
+                .extracting("orig_id", "canonical_id")
+                .containsExactly(tuple(1L, 1L), tuple(2L, 2L), tuple(7L, 7L));
     }
 
     private void runPipeline() throws Exception {

@@ -31,16 +31,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.dependencytrack.model.Cwe;
+import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.resources.AbstractApiResource;
+import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.dependencytrack.model.Cwe;
-import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.resources.AbstractApiResource;
-import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 
 /**
  * JAX-RS resources for processing CWEs.
@@ -50,10 +51,7 @@ import org.dependencytrack.resources.v1.openapi.PaginatedApi;
  */
 @Path("/v1/cwe")
 @Tag(name = "cwe")
-@SecurityRequirements({
-        @SecurityRequirement(name = "ApiKeyAuth"),
-        @SecurityRequirement(name = "BearerAuth")
-})
+@SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class CweResource extends AbstractApiResource {
 
     @GET
@@ -63,50 +61,55 @@ public class CweResource extends AbstractApiResource {
     @Parameter(
             name = "searchText",
             in = ParameterIn.QUERY,
-            description = "Case-insensitive substring filter matched against CWE name and CWE-ID."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "A list of all CWEs",
-                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of CWEs", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Cwe.class)))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
+            description = "Case-insensitive substring filter matched against CWE name and CWE-ID.")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A list of all CWEs",
+                        headers =
+                                @Header(
+                                        name = TOTAL_COUNT_HEADER,
+                                        description = "The total number of CWEs",
+                                        schema = @Schema(format = "integer")),
+                        content = @Content(array = @ArraySchema(schema = @Schema(implementation = Cwe.class)))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized")
+            })
     public Response getCwes() {
-        final PaginatedResult cwes = CweResolver.getInstance().all(
-                getAlpineRequest().getFilter(),
-                getAlpineRequest().getOrderBy(),
-                getAlpineRequest().getOrderDirection(),
-                getAlpineRequest().getPagination());
-        return Response.ok(cwes.getObjects()).header(TOTAL_COUNT_HEADER, cwes.getTotal()).build();
+        final PaginatedResult cwes = CweResolver.getInstance()
+                .all(
+                        getAlpineRequest().getFilter(),
+                        getAlpineRequest().getOrderBy(),
+                        getAlpineRequest().getOrderDirection(),
+                        getAlpineRequest().getPagination());
+        return Response.ok(cwes.getObjects())
+                .header(TOTAL_COUNT_HEADER, cwes.getTotal())
+                .build();
     }
 
     @GET
     @Path("/{cweId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Returns a specific CWE"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "A CWE matching the provided ID",
-                    content = @Content(schema = @Schema(implementation = Cwe.class))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "The CWE could not be found")
-    })
+    @Operation(summary = "Returns a specific CWE")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A CWE matching the provided ID",
+                        content = @Content(schema = @Schema(implementation = Cwe.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(responseCode = "404", description = "The CWE could not be found")
+            })
     public Response getCwe(
-            @Parameter(description = "The CWE ID of the CWE to retrieve", required = true)
-            @PathParam("cweId") int cweId) {
+            @Parameter(description = "The CWE ID of the CWE to retrieve", required = true) @PathParam("cweId")
+                    int cweId) {
         final Cwe cwe = CweResolver.getInstance().lookup(cweId);
         if (cwe != null) {
             return Response.ok(cwe).build();
         } else {
-            return Response.status(Response.Status.NOT_FOUND).entity("The CWE could not be found.").build();
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("The CWE could not be found.")
+                    .build();
         }
     }
-
 }

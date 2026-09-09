@@ -43,5 +43,4 @@ public @interface WorkflowSpec {
      * @return Name of the default queue where tasks of this workflow will be scheduled.
      */
     String defaultTaskQueue() default "default";
-
 }

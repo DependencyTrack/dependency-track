@@ -73,5 +73,4 @@ public interface ConfigRegistry {
                 .map(configClass::cast)
                 .orElseThrow(() -> new NoSuchElementException("No runtime config found"));
     }
-
 }

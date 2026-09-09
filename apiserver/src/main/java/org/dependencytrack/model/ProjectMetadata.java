@@ -54,7 +54,11 @@ public class ProjectMetadata {
     private long id;
 
     @Persistent
-    @ForeignKey(name = "PROJECT_METADATA_PROJECT_ID_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "PROJECT_METADATA_PROJECT_ID_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Unique(name = "PROJECT_METADATA_PROJECT_ID_IDX")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @JsonIgnore
@@ -114,5 +118,4 @@ public class ProjectMetadata {
     public void setTools(final Tools tools) {
         this.tools = tools;
     }
-
 }

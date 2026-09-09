@@ -29,6 +29,7 @@ import org.slf4j.MDC;
 
 import java.util.UUID;
 
+import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 
 /**
@@ -40,7 +41,7 @@ public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPo
     private final CelPolicyEngine policyEngine;
 
     public EvalProjectPoliciesActivity(CelPolicyEngine policyEngine) {
-        this.policyEngine = policyEngine;
+        this.policyEngine = requireNonNull(policyEngine, "policyEngine must not be null");
     }
 
     @Override
@@ -55,5 +56,4 @@ public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPo
 
         return null;
     }
-
 }

@@ -35,8 +35,7 @@ public final class PaginationConfig implements JdbiConfig<PaginationConfig> {
     }
 
     @SuppressWarnings("unused") // Used by JDBI to instantiate the class via reflection.
-    public PaginationConfig() {
-    }
+    public PaginationConfig() {}
 
     @Override
     public PaginationConfig createCopy() {
@@ -50,5 +49,4 @@ public final class PaginationConfig implements JdbiConfig<PaginationConfig> {
     public PageTokenEncoder getPageTokenEncoder() {
         return pageTokenEncoder;
     }
-
 }

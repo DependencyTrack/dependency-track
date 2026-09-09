@@ -24,8 +24,4 @@ import java.util.List;
  * @since 5.0.0
  */
 record ComponentReport(
-        String coordinates,
-        String description,
-        String reference,
-        List<ComponentReportVulnerability> vulnerabilities) {
-}
+        String coordinates, String description, String reference, List<ComponentReportVulnerability> vulnerabilities) {}

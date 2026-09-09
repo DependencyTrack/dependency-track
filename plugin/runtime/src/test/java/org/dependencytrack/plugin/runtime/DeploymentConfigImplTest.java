@@ -34,14 +34,12 @@ class DeploymentConfigImplTest {
             .withDefaultValue("dt.extension-point-name.extension-name.foo", "bar")
             .build();
     private final DeploymentConfig deploymentConfig =
-            new DeploymentConfigImpl(
-                    delegateConfig, "extension-point-name", "extension-name");
+            new DeploymentConfigImpl(delegateConfig, "extension-point-name", "extension-name");
 
     @Test
     void shouldThrowWhenDelegateIsNull() {
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> new DeploymentConfigImpl(
-                        null, "extension-point-name", "extension-name"))
+                .isThrownBy(() -> new DeploymentConfigImpl(null, "extension-point-name", "extension-name"))
                 .withMessage("delegate must not be null");
     }
 
@@ -52,10 +50,7 @@ class DeploymentConfigImplTest {
 
     @Test
     void shouldResolveGetOptionalValueAgainstNamespacedKey() {
-        assertThat(deploymentConfig.getOptionalValue("foo", String.class))
-                .isEqualTo(Optional.of("bar"));
-        assertThat(deploymentConfig.getOptionalValue("missing", String.class))
-                .isEmpty();
+        assertThat(deploymentConfig.getOptionalValue("foo", String.class)).isEqualTo(Optional.of("bar"));
+        assertThat(deploymentConfig.getOptionalValue("missing", String.class)).isEmpty();
     }
-
 }

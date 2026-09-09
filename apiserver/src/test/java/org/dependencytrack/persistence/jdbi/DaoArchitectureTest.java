@@ -55,71 +55,74 @@ class DaoArchitectureTest {
             "org.dependencytrack.common.pagination.Page");
 
     @ArchTest
-    static final ArchRule daoQueryMethodsMustNotReturnJdoModelClasses =
-            FreezingArchRule.freeze(
-                    methods()
-                            .that().areDeclaredInClassesThat().haveSimpleNameEndingWith("Dao")
-                            .and().areDeclaredInClassesThat().resideInAPackage("org.dependencytrack.persistence.jdbi")
-                            .and().areNotAnnotatedWith(SqlUpdate.class)
-                            .and().areNotAnnotatedWith(SqlBatch.class)
-                            .should(new ArchCondition<>("not return model classes") {
-                                @Override
-                                public void check(JavaMethod method, ConditionEvents events) {
-                                    for (JavaClass leafType : extractLeafTypes(method.getReturnType())) {
-                                        if (isModelClass(leafType)) {
-                                            events.add(SimpleConditionEvent.violated(
-                                                    method,
-                                                    "%s returns model class %s".formatted(
-                                                            method.getFullName(), leafType.getName())));
-                                        }
-                                    }
-                                }
-                            }));
+    static final ArchRule daoQueryMethodsMustNotReturnJdoModelClasses = FreezingArchRule.freeze(methods()
+            .that()
+            .areDeclaredInClassesThat()
+            .haveSimpleNameEndingWith("Dao")
+            .and()
+            .areDeclaredInClassesThat()
+            .resideInAPackage("org.dependencytrack.persistence.jdbi")
+            .and()
+            .areNotAnnotatedWith(SqlUpdate.class)
+            .and()
+            .areNotAnnotatedWith(SqlBatch.class)
+            .should(new ArchCondition<>("not return model classes") {
+                @Override
+                public void check(JavaMethod method, ConditionEvents events) {
+                    for (JavaClass leafType : extractLeafTypes(method.getReturnType())) {
+                        if (isModelClass(leafType)) {
+                            events.add(SimpleConditionEvent.violated(
+                                    method,
+                                    "%s returns model class %s".formatted(method.getFullName(), leafType.getName())));
+                        }
+                    }
+                }
+            }));
 
     @ArchTest
-    static final ArchRule daosMustNotUseBeanMapperWithJdoClasses =
-            FreezingArchRule.freeze(
-                    classes()
-                            .that().haveSimpleNameEndingWith("Dao")
-                            .and().resideInAPackage("org.dependencytrack.persistence.jdbi")
-                            .should(new ArchCondition<>("not use @RegisterBeanMapper with model classes") {
-                                @Override
-                                public void check(JavaClass daoClass, ConditionEvents events) {
-                                    for (JavaAnnotation<?> annotation : daoClass.getAnnotations()) {
-                                        checkBeanMapperAnnotation(daoClass, "<class>", annotation, events);
-                                    }
-                                    daoClass.getMethods().forEach(method -> {
-                                        for (JavaAnnotation<?> annotation : method.getAnnotations()) {
-                                            checkBeanMapperAnnotation(daoClass, method.getName(), annotation, events);
-                                        }
-                                    });
-                                }
-                            }));
+    static final ArchRule daosMustNotUseBeanMapperWithJdoClasses = FreezingArchRule.freeze(classes()
+            .that()
+            .haveSimpleNameEndingWith("Dao")
+            .and()
+            .resideInAPackage("org.dependencytrack.persistence.jdbi")
+            .should(new ArchCondition<>("not use @RegisterBeanMapper with model classes") {
+                @Override
+                public void check(JavaClass daoClass, ConditionEvents events) {
+                    for (JavaAnnotation<?> annotation : daoClass.getAnnotations()) {
+                        checkBeanMapperAnnotation(daoClass, "<class>", annotation, events);
+                    }
+                    daoClass.getMethods().forEach(method -> {
+                        for (JavaAnnotation<?> annotation : method.getAnnotations()) {
+                            checkBeanMapperAnnotation(daoClass, method.getName(), annotation, events);
+                        }
+                    });
+                }
+            }));
 
     @ArchTest
-    static final ArchRule rowMappersMustNotTargetJdoModelClasses =
-            FreezingArchRule.freeze(
-                    classes()
-                            .that().resideInAPackage("org.dependencytrack.persistence.jdbi..")
-                            .and().implement(org.jdbi.v3.core.mapper.RowMapper.class)
-                            .should(new ArchCondition<>("not target model classes") {
-                                @Override
-                                public void check(JavaClass mapperClass, ConditionEvents events) {
-                                    for (JavaType iface : mapperClass.getInterfaces()) {
-                                        if (iface instanceof final JavaParameterizedType paramType
-                                                && paramType.toErasure().isEquivalentTo(org.jdbi.v3.core.mapper.RowMapper.class)) {
-                                            for (JavaType arg : paramType.getActualTypeArguments()) {
-                                                if (arg instanceof final JavaClass targetClass && isModelClass(targetClass)) {
-                                                    events.add(SimpleConditionEvent.violated(
-                                                            mapperClass,
-                                                            "%s maps to model class %s".formatted(
-                                                                    mapperClass.getName(), targetClass.getName())));
-                                                }
-                                            }
-                                        }
-                                    }
+    static final ArchRule rowMappersMustNotTargetJdoModelClasses = FreezingArchRule.freeze(classes()
+            .that()
+            .resideInAPackage("org.dependencytrack.persistence.jdbi..")
+            .and()
+            .implement(org.jdbi.v3.core.mapper.RowMapper.class)
+            .should(new ArchCondition<>("not target model classes") {
+                @Override
+                public void check(JavaClass mapperClass, ConditionEvents events) {
+                    for (JavaType iface : mapperClass.getInterfaces()) {
+                        if (iface instanceof final JavaParameterizedType paramType
+                                && paramType.toErasure().isEquivalentTo(org.jdbi.v3.core.mapper.RowMapper.class)) {
+                            for (JavaType arg : paramType.getActualTypeArguments()) {
+                                if (arg instanceof final JavaClass targetClass && isModelClass(targetClass)) {
+                                    events.add(SimpleConditionEvent.violated(
+                                            mapperClass,
+                                            "%s maps to model class %s"
+                                                    .formatted(mapperClass.getName(), targetClass.getName())));
                                 }
-                            }));
+                            }
+                        }
+                    }
+                }
+            }));
 
     private static boolean isModelClass(JavaClass javaClass) {
         // NB: Records in the model package (FindingKey etc.) are the migration target, not the problem.
@@ -157,9 +160,10 @@ class DaoArchitectureTest {
         if ("org.jdbi.v3.sqlobject.config.RegisterBeanMapper".equals(annotationType)) {
             annotation.get("value").ifPresent(value -> {
                 if (value instanceof final JavaClass targetClass && isModelClass(targetClass)) {
-                    events.add(SimpleConditionEvent.violated(owner,
-                            "%s#%s uses @RegisterBeanMapper with model class %s".formatted(
-                                    owner.getName(), location, targetClass.getName())));
+                    events.add(SimpleConditionEvent.violated(
+                            owner,
+                            "%s#%s uses @RegisterBeanMapper with model class %s"
+                                    .formatted(owner.getName(), location, targetClass.getName())));
                 }
             });
         } else if ("org.jdbi.v3.sqlobject.config.RegisterBeanMappers".equals(annotationType)) {
@@ -172,5 +176,4 @@ class DaoArchitectureTest {
             });
         }
     }
-
 }

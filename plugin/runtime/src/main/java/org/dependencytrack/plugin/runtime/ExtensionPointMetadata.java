@@ -23,7 +23,4 @@ import org.dependencytrack.plugin.api.ExtensionPoint;
 /**
  * @since 5.0.0
  */
-public record ExtensionPointMetadata(
-        String name,
-        Class<? extends ExtensionPoint> clazz) {
-}
+public record ExtensionPointMetadata(String name, Class<? extends ExtensionPoint> clazz) {}

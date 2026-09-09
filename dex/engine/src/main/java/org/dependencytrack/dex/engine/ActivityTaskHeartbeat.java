@@ -22,8 +22,4 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
 record ActivityTaskHeartbeat(
-        ActivityTaskId taskId,
-        TaskLock lock,
-        Duration lockTimeout,
-        CompletableFuture<TaskLock> future) {
-}
+        ActivityTaskId taskId, TaskLock lock, Duration lockTimeout, CompletableFuture<TaskLock> future) {}

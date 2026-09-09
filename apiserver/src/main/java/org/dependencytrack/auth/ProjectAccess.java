@@ -31,8 +31,7 @@ public final class ProjectAccess {
 
     private static final ScopedValue<Boolean> UNRESTRICTED = ScopedValue.newInstance();
 
-    private ProjectAccess() {
-    }
+    private ProjectAccess() {}
 
     public static <T> T unrestricted(Supplier<T> supplier) {
         if (isUnrestricted()) {
@@ -45,5 +44,4 @@ public final class ProjectAccess {
     public static boolean isUnrestricted() {
         return UNRESTRICTED.isBound() && UNRESTRICTED.get();
     }
-
 }

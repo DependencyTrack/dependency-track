@@ -173,3 +173,7 @@ Each run will be executed until completion before the next run is started.
 > The order in which the runs will execute is determined by:
 > * Their priority
 > * Their creation timestamp
+>
+> Priority only orders runs that are waiting for the key to become free.
+> It does not interrupt the run currently holding it. A run created with a higher
+> priority while a lower-priority run is executing waits for that run to complete.

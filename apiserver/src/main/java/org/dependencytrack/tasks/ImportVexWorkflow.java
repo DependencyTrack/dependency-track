@@ -45,17 +45,15 @@ import static org.dependencytrack.common.MdcKeys.MDC_VEX_UPLOAD_TOKEN;
 public final class ImportVexWorkflow implements Workflow<ImportVexArg, Void> {
 
     @Override
-    public @Nullable Void execute(
-            WorkflowContext<ImportVexArg> ctx,
-            @Nullable ImportVexArg arg) throws Exception {
+    public @Nullable Void execute(WorkflowContext<ImportVexArg> ctx, @Nullable ImportVexArg arg) throws Exception {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
         try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid());
-             var _ = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
-             var _ = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
-             var _ = MDC.putCloseable(MDC_VEX_UPLOAD_TOKEN, arg.getVexUploadToken())) {
+                var _ = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
+                var _ = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
+                var _ = MDC.putCloseable(MDC_VEX_UPLOAD_TOKEN, arg.getVexUploadToken())) {
             ctx.logger().info("Starting VEX import");
 
             try {
@@ -80,11 +78,8 @@ public final class ImportVexWorkflow implements Workflow<ImportVexArg, Void> {
                             .build())
                     .await();
         } catch (RuntimeException e) {
-            ctx.logger().warn(
-                    "Failed to delete VEX file {}; Will need manual cleanup",
-                    vexFileMetadata.getLocation(),
-                    e);
+            ctx.logger()
+                    .warn("Failed to delete VEX file {}; Will need manual cleanup", vexFileMetadata.getLocation(), e);
         }
     }
-
 }

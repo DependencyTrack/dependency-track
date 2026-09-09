@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
@@ -49,8 +50,7 @@ public class Tag implements Serializable {
 
     private static final long serialVersionUID = -7798359808664731988L;
 
-    public Tag() {
-    }
+    public Tag() {}
 
     public Tag(final String name) {
         this.name = name;
@@ -67,7 +67,9 @@ public class Tag implements Serializable {
     @NotBlank
     @Size(min = 1, max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The name may only contain printable characters")
     private String name;
 
     @Persistent

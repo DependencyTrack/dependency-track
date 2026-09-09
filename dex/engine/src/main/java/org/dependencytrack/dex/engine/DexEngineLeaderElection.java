@@ -42,48 +42,30 @@ final class DexEngineLeaderElection implements Closeable {
     private final Jdbi jdbi;
     private final Duration leaseDuration;
     private final Duration checkInterval;
-    private final MeterRegistry meterRegistry;
+    private final Counter leadershipAcquiredCounter;
+    private final Counter leadershipLostCounter;
 
     private @Nullable ScheduledExecutorService executor;
-    private @Nullable Counter leadershipAcquiredCounter;
-    private @Nullable Counter leadershipLostCounter;
     private volatile boolean isLeader;
 
     DexEngineLeaderElection(
-            String instanceId,
-            Jdbi jdbi,
-            Duration leaseDuration,
-            Duration checkInterval,
-            MeterRegistry meterRegistry) {
+            String instanceId, Jdbi jdbi, Duration leaseDuration, Duration checkInterval, MeterRegistry meterRegistry) {
         this.instanceId = instanceId;
         this.jdbi = jdbi;
         this.leaseDuration = leaseDuration;
         this.checkInterval = checkInterval;
-        this.meterRegistry = meterRegistry;
+        this.leadershipAcquiredCounter =
+                Counter.builder("dt.dex.engine.leadership.acquired").register(meterRegistry);
+        this.leadershipLostCounter =
+                Counter.builder("dt.dex.engine.leadership.lost").register(meterRegistry);
+        Gauge.builder("dt.dex.engine.leadership.status", this, it -> it.isLeader ? 1 : 0)
+                .register(meterRegistry);
     }
 
     void start() {
-        Gauge
-                .builder("dt.dex.engine.leadership.status", this, it -> it.isLeader ? 1 : 0)
-                .register(meterRegistry);
-
-        leadershipAcquiredCounter = Counter
-                .builder("dt.dex.engine.leadership.acquired")
-                .register(meterRegistry);
-
-        leadershipLostCounter = Counter
-                .builder("dt.dex.engine.leadership.lost")
-                .register(meterRegistry);
-
         executor = Executors.newSingleThreadScheduledExecutor(
-                Thread.ofPlatform()
-                        .name(getClass().getSimpleName())
-                        .factory());
-        executor.scheduleAtFixedRate(
-                this::checkAndRenewLease,
-                0,
-                checkInterval.toMillis(),
-                TimeUnit.MILLISECONDS);
+                Thread.ofPlatform().name(getClass().getSimpleName()).factory());
+        executor.scheduleAtFixedRate(this::checkAndRenewLease, 0, checkInterval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -118,8 +100,7 @@ final class DexEngineLeaderElection implements Closeable {
     private void checkAndRenewLease() {
         try {
             final boolean leaseAcquired = jdbi.inTransaction(
-                    handle -> new LeaseDao(handle).tryAcquireLease(
-                            LEASE_NAME, instanceId, leaseDuration));
+                    handle -> new LeaseDao(handle).tryAcquireLease(LEASE_NAME, instanceId, leaseDuration));
 
             if (leaseAcquired && !isLeader) {
                 LOGGER.info("Leadership lease acquired");
@@ -143,5 +124,4 @@ final class DexEngineLeaderElection implements Closeable {
             }
         }
     }
-
 }

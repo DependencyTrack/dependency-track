@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import org.dependencytrack.model.Cwe;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ public class CweDeserializer extends JsonDeserializer<List<Integer>> {
     public List<Integer> deserialize(JsonParser jsonParser, DeserializationContext ctx) throws IOException {
         if (jsonParser.getCurrentToken() == JsonToken.START_ARRAY) {
             final List<Integer> cweIds = new ArrayList<>();
-            while(jsonParser.nextToken() != JsonToken.END_ARRAY) {
+            while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
                 if (jsonParser.getCurrentToken() == JsonToken.START_OBJECT) {
                     final Cwe cwe = jsonParser.readValueAs(Cwe.class);
                     if (cwe.getCweId() > 0) {

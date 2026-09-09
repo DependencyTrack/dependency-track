@@ -40,5 +40,4 @@ public final class MemoryFileStorageProvider implements FileStorageProvider {
     public FileStorage create(Config config, ProxySelector proxySelector) {
         return new MemoryFileStorage();
     }
-
 }

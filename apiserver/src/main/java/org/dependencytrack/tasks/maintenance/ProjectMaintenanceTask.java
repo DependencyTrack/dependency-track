@@ -45,10 +45,8 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
 
     @Override
     public void run() {
-        final Optional<String> retentionType = withJdbiHandle(
-                handle -> handle
-                        .attach(ConfigPropertyDao.class)
-                        .getOptionalValue(MAINTENANCE_PROJECTS_RETENTION_TYPE, String.class));
+        final Optional<String> retentionType = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getOptionalValue(MAINTENANCE_PROJECTS_RETENTION_TYPE, String.class));
 
         if (retentionType.isEmpty() || retentionType.get().isEmpty()) {
             LOGGER.debug("Inactive project deletion is disabled; nothing to do");
@@ -56,14 +54,11 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
         }
 
         if ("AGE".equals(retentionType.get())) {
-            final int retentionDays = withJdbiHandle(
-                    handle -> handle
-                            .attach(ConfigPropertyDao.class)
-                            .getValue(MAINTENANCE_PROJECTS_RETENTION_DAYS, Integer.class));
+            final int retentionDays = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                    .getValue(MAINTENANCE_PROJECTS_RETENTION_DAYS, Integer.class));
             final Instant retentionCutOff = Instant.now().minus(Duration.ofDays(retentionDays));
             final int deleted = runBatched(BATCH_SIZE, handle -> {
-                final List<ProjectDao.DeletedProject> deletedProjects = handle
-                        .attach(ProjectDao.class)
+                final List<ProjectDao.DeletedProject> deletedProjects = handle.attach(ProjectDao.class)
                         .deleteInactiveProjectsForRetentionDuration(retentionCutOff, BATCH_SIZE);
                 logDeletedProjects(deletedProjects);
                 return deletedProjects.size();
@@ -76,15 +71,12 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
             return;
         }
 
-        final int versionCountThreshold = withJdbiHandle(
-                handle -> handle
-                        .attach(ConfigPropertyDao.class)
-                        .getValue(MAINTENANCE_PROJECTS_RETENTION_VERSIONS, Integer.class));
+        final int versionCountThreshold = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getValue(MAINTENANCE_PROJECTS_RETENTION_VERSIONS, Integer.class));
 
         final int deleted = runBatched(BATCH_SIZE, handle -> {
-            final List<ProjectDao.DeletedProject> deletedProjects = handle
-                    .attach(ProjectDao.class)
-                    .deleteExcessProjectVersions(versionCountThreshold, BATCH_SIZE);
+            final List<ProjectDao.DeletedProject> deletedProjects =
+                    handle.attach(ProjectDao.class).deleteExcessProjectVersions(versionCountThreshold, BATCH_SIZE);
             logDeletedProjects(deletedProjects);
             return deletedProjects.size();
         });
@@ -102,5 +94,4 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
                 deletedProject.inactiveSince(),
                 deletedProject.uuid()));
     }
-
 }

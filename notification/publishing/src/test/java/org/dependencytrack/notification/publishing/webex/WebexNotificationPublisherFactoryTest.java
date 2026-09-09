@@ -20,10 +20,10 @@ package org.dependencytrack.notification.publishing.webex;
 
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherFactoryTest;
 
-class WebexNotificationPublisherFactoryTest extends AbstractNotificationPublisherFactoryTest<WebexNotificationPublisherFactory> {
+class WebexNotificationPublisherFactoryTest
+        extends AbstractNotificationPublisherFactoryTest<WebexNotificationPublisherFactory> {
 
     protected WebexNotificationPublisherFactoryTest() {
         super(WebexNotificationPublisherFactory.class);
     }
-
 }

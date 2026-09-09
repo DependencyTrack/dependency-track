@@ -69,5 +69,4 @@ public final class TestDatabaseExtension implements BeforeAllCallback, BeforeEac
     public @Nullable String password() {
         return TestDatabaseManager.getPassword();
     }
-
 }

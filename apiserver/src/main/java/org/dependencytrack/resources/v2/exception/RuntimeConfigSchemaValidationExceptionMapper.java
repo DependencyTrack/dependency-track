@@ -19,10 +19,11 @@
 package org.dependencytrack.resources.v2.exception;
 
 import com.networknt.schema.Error;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.model.JsonSchemaValidationError;
 import org.dependencytrack.api.v2.model.JsonSchemaValidationProblemDetails;
 import org.dependencytrack.plugin.config.RuntimeConfigSchemaValidationException;
+
+import jakarta.ws.rs.ext.Provider;
 
 import java.util.ArrayList;
 
@@ -31,19 +32,20 @@ import java.util.ArrayList;
  */
 @Provider
 public final class RuntimeConfigSchemaValidationExceptionMapper
-        extends ProblemDetailsExceptionMapper<RuntimeConfigSchemaValidationException, JsonSchemaValidationProblemDetails> {
+        extends ProblemDetailsExceptionMapper<
+                RuntimeConfigSchemaValidationException, JsonSchemaValidationProblemDetails> {
 
     @Override
     public JsonSchemaValidationProblemDetails map(final RuntimeConfigSchemaValidationException exception) {
-        final var errors = new ArrayList<JsonSchemaValidationError>(exception.getValidationErrors().size());
+        final var errors = new ArrayList<JsonSchemaValidationError>(
+                exception.getValidationErrors().size());
 
         for (final Error validationError : exception.getValidationErrors()) {
-            final var errorBuilder =
-                    JsonSchemaValidationError.builder()
-                            .message(validationError.getMessage());
+            final var errorBuilder = JsonSchemaValidationError.builder().message(validationError.getMessage());
 
             if (validationError.getInstanceLocation() != null) {
-                errorBuilder.instanceLocation(validationError.getInstanceLocation().toString());
+                errorBuilder.instanceLocation(
+                        validationError.getInstanceLocation().toString());
             }
             if (validationError.getEvaluationPath() != null) {
                 errorBuilder.evaluationPath(validationError.getEvaluationPath().toString());
@@ -65,5 +67,4 @@ public final class RuntimeConfigSchemaValidationExceptionMapper
                 .errors(errors)
                 .build();
     }
-
 }

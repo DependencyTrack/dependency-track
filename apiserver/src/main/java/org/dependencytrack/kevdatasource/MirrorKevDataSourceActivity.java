@@ -56,9 +56,7 @@ public final class MirrorKevDataSourceActivity implements Activity<MirrorKevData
     }
 
     @Override
-    public @Nullable Void execute(
-            ActivityContext ctx,
-            @Nullable MirrorKevDataSourceArg arg) throws Exception {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable MirrorKevDataSourceArg arg) throws Exception {
         if (arg == null || arg.getDataSourceName().isEmpty()) {
             throw new TerminalApplicationFailureException("No argument or data source name provided");
         }
@@ -87,10 +85,8 @@ public final class MirrorKevDataSourceActivity implements Activity<MirrorKevData
             try (final KevDataSource dataSource = factory.create()) {
                 while (dataSource.hasNext()) {
                     if (Thread.interrupted()) {
-                        throw new InterruptedException(
-                                "Interrupted before all KEV assertions could be consumed");
+                        throw new InterruptedException("Interrupted before all KEV assertions could be consumed");
                     }
-                    ctx.maybeHeartbeat();
 
                     final KevAssertion assertion = dataSource.next();
                     batch.add(assertion);
@@ -129,5 +125,4 @@ public final class MirrorKevDataSourceActivity implements Activity<MirrorKevData
     private static void upsertBatch(String asserter, List<KevAssertion> batch) {
         useJdbiTransaction(handle -> handle.attach(KevDao.class).upsertBatch(asserter, batch));
     }
-
 }

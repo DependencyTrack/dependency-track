@@ -41,8 +41,7 @@ public record UbuntuDistribution(String series, String version) implements OsDis
     private static final List<UbuntuDistribution> KNOWN_DISTRIBUTIONS = loadKnownDistributions();
     private static final Pattern SERIES_PATTERN = Pattern.compile("^[A-Za-z]+$");
     private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+\\.\\d+)(\\.\\d+)?$");
-    private static final Pattern QUALIFIER_PATTERN =
-            Pattern.compile("(?:ubuntu-)?(.+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern QUALIFIER_PATTERN = Pattern.compile("(?:ubuntu-)?(.+)", Pattern.CASE_INSENSITIVE);
 
     public UbuntuDistribution {
         requireNonNull(series, "series must not be null");
@@ -106,7 +105,9 @@ public record UbuntuDistribution(String series, String version) implements OsDis
     }
 
     private static Optional<UbuntuDistribution> ofUnknownSeries(@Nullable String series) {
-        if (series == null || series.isEmpty() || !SERIES_PATTERN.matcher(series).matches()) {
+        if (series == null
+                || series.isEmpty()
+                || !SERIES_PATTERN.matcher(series).matches()) {
             return Optional.empty();
         }
 
@@ -135,7 +136,7 @@ public record UbuntuDistribution(String series, String version) implements OsDis
 
             final List<UbuntuDistribution> distros = new ArrayList<>();
             try (final var isReader = new InputStreamReader(is, StandardCharsets.UTF_8);
-                 final var bufferedReader = new BufferedReader(isReader)) {
+                    final var bufferedReader = new BufferedReader(isReader)) {
                 final String header = bufferedReader.readLine();
                 if (header == null) {
                     throw new IllegalStateException("CSV file is empty");
@@ -176,5 +177,4 @@ public record UbuntuDistribution(String series, String version) implements OsDis
             throw new IllegalStateException("Failed to load CSV file", e);
         }
     }
-
 }

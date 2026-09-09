@@ -37,9 +37,7 @@ class RuntimeConfigMapperTest {
 
         @Test
         void shouldSerializeToJson() {
-            final var config = new TestRuntimeConfig()
-                    .withRequiredString("foo")
-                    .withEmailString("foo@example.com");
+            final var config = new TestRuntimeConfig().withRequiredString("foo").withEmailString("foo@example.com");
 
             final String configJson = runtimeConfigMapper.serialize(config);
 
@@ -58,7 +56,6 @@ class RuntimeConfigMapperTest {
                     .isThrownBy(() -> runtimeConfigMapper.serialize(null))
                     .withMessage("config must not be null");
         }
-
     }
 
     @Nested
@@ -66,11 +63,9 @@ class RuntimeConfigMapperTest {
 
         @Test
         void shouldNotThrowWhenConfigIsValid() {
-            final var config = new TestRuntimeConfig()
-                    .withRequiredString("foo");
+            final var config = new TestRuntimeConfig().withRequiredString("foo");
 
-            assertThatNoException()
-                    .isThrownBy(() -> runtimeConfigMapper.validate(config, configSpec));
+            assertThatNoException().isThrownBy(() -> runtimeConfigMapper.validate(config, configSpec));
         }
 
         @Test
@@ -94,7 +89,6 @@ class RuntimeConfigMapperTest {
                     .isThrownBy(() -> runtimeConfigMapper.validate(new TestRuntimeConfig(), null))
                     .withMessage("configSpec must not be null");
         }
-
     }
 
     @Nested
@@ -108,8 +102,7 @@ class RuntimeConfigMapperTest {
                                       "requiredString": "foo",
                                       "emailString": "foo@example.com"
                                     }
-                                    """,
-                            configSpec));
+                                    """, configSpec));
         }
 
         @Test
@@ -119,10 +112,8 @@ class RuntimeConfigMapperTest {
                                     {
                                       "requiredString": null
                                     }
-                                    """,
-                            configSpec));
+                                    """, configSpec));
         }
-
     }
 
     @Nested
@@ -141,8 +132,7 @@ class RuntimeConfigMapperTest {
                                 "nestedSecretString": "mySecret"
                               }
                             }
-                            """,
-                    configSpec);
+                            """, configSpec);
 
             runtimeConfigMapper.resolveSecretRefs(configNode, configSpec, mySecret -> "mySecretValue");
 
@@ -167,15 +157,11 @@ class RuntimeConfigMapperTest {
                               "requiredString": "foo",
                               "secretString": "mySecret"
                             }
-                            """,
-                    configSpec);
+                            """, configSpec);
 
             assertThatExceptionOfType(UnresolvableSecretException.class)
                     .isThrownBy(() -> runtimeConfigMapper.resolveSecretRefs(configNode, configSpec, mySecret -> null))
                     .withMessage("Secret 'mySecret' referenced at path '/secretString' does not exist");
         }
-
     }
-
-
 }

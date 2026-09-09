@@ -30,5 +30,4 @@ public final class NoSuchExtensionPointException extends NoSuchElementException 
     NoSuchExtensionPointException(Class<? extends ExtensionPoint> clazz) {
         super("%s is not a known extension point".formatted(clazz.getName()));
     }
-
 }

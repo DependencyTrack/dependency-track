@@ -32,5 +32,4 @@ public final class InternalStatusCelPolicyScriptSourceBuilder implements CelPoli
             default -> null;
         };
     }
-
 }

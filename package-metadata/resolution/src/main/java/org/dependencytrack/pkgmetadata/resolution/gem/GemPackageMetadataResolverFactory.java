@@ -22,14 +22,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolverFactory;
 import org.dependencytrack.pkgmetadata.resolution.cache.CachingHttpClient;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.jspecify.annotations.Nullable;
-
-import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static java.util.Objects.requireNonNull;
@@ -42,6 +39,11 @@ public final class GemPackageMetadataResolverFactory implements PackageMetadataR
     @Override
     public String extensionName() {
         return "gem";
+    }
+
+    @Override
+    public String displayName() {
+        return "RubyGems";
     }
 
     @Override
@@ -75,17 +77,14 @@ public final class GemPackageMetadataResolverFactory implements PackageMetadataR
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        objectMapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    public void init(ExtensionContext context) {
+        objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
-                serviceRegistry.require(HttpClient.class),
-                serviceRegistry.require(CacheManager.class).getCache("responses"));
+                context.httpClient(), context.cacheManager().getCache("responses"));
     }
 
     @Override
     public PackageMetadataResolver create() {
         return new GemPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

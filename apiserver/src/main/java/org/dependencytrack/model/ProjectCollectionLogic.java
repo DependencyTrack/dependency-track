@@ -44,5 +44,4 @@ public enum ProjectCollectionLogic {
      * Aggregate all direct children marked with isLatest flag.
      */
     AGGREGATE_LATEST_VERSION_CHILDREN
-
 }

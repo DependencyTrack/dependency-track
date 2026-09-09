@@ -45,7 +45,7 @@ public final class LicenseGroupCelPolicyScriptSourceBuilder implements CelPolicy
         if (licensesInGroup == null) {
             return null;
         }
-        
+
         final String licenseIds = licensesInGroup.stream()
                 .map(ConditionLicense::licenseId)
                 .filter(Objects::nonNull)
@@ -76,9 +76,7 @@ public final class LicenseGroupCelPolicyScriptSourceBuilder implements CelPolicy
 
     private static List<ConditionLicense> tryLookupLicensesOfGroup(String groupUuid) {
         try {
-            return withJdbiHandle(
-                    handle -> handle
-                            .createQuery("""
+            return withJdbiHandle(handle -> handle.createQuery("""
                                     SELECT l."LICENSEID"
                                          , l."NAME"
                                       FROM "LICENSE" AS l
@@ -88,15 +86,12 @@ public final class LicenseGroupCelPolicyScriptSourceBuilder implements CelPolicy
                                         ON lg."ID" = lgl."LICENSEGROUP_ID"
                                      WHERE lg."UUID" = CAST(:uuid AS UUID)
                                     """)
-                            .bind("uuid", groupUuid)
-                            .map((rs, _) -> new ConditionLicense(
-                                    rs.getString(1),
-                                    rs.getString(2)))
-                            .list());
+                    .bind("uuid", groupUuid)
+                    .map((rs, _) -> new ConditionLicense(rs.getString(1), rs.getString(2)))
+                    .list());
         } catch (RuntimeException e) {
             LOGGER.warn("Failed to look up license group with UUID {}", groupUuid, e);
             return null;
         }
     }
-
 }

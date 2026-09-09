@@ -85,14 +85,10 @@ public final class PackageArtifactMetadataDao {
             sha1s[i] = pam.sha1();
             sha256s[i] = pam.sha256();
             sha512s[i] = pam.sha512();
-            publishedAts[i] = pam.publishedAt() != null
-                    ? Timestamp.from(pam.publishedAt())
-                    : null;
+            publishedAts[i] = pam.publishedAt() != null ? Timestamp.from(pam.publishedAt()) : null;
             resolvedBys[i] = pam.resolvedBy();
             resolvedFroms[i] = pam.resolvedFrom();
-            resolvedAts[i] = pam.resolvedAt() != null
-                    ? Timestamp.from(pam.resolvedAt())
-                    : null;
+            resolvedAts[i] = pam.resolvedAt() != null ? Timestamp.from(pam.resolvedAt()) : null;
             i++;
         }
 
@@ -147,5 +143,4 @@ public final class PackageArtifactMetadataDao {
                 .bind("resolvedAts", resolvedAts)
                 .execute();
     }
-
 }

@@ -45,14 +45,10 @@ final class KeyValueStoreImpl implements KeyValueStore {
     private final String extensionPointName;
     private final String extensionName;
 
-    KeyValueStoreImpl(
-            Jdbi jdbi,
-            String extensionPointName,
-            String extensionName) {
+    KeyValueStoreImpl(Jdbi jdbi, String extensionPointName, String extensionName) {
         this.jdbi = requireNonNull(jdbi, "jdbi must not be null");
         this.extensionPointName = requireNonNull(extensionPointName, "extensionPointName must not be null");
         this.extensionName = requireNonNull(extensionName, "extensionName must not be null");
-
     }
 
     @Override
@@ -89,10 +85,7 @@ final class KeyValueStoreImpl implements KeyValueStore {
     }
 
     @Override
-    public CompareAndPutResult compareAndPut(
-            String key,
-            String value,
-            @Nullable Long expectedVersion) {
+    public CompareAndPutResult compareAndPut(String key, String value, @Nullable Long expectedVersion) {
         if (expectedVersion == null) {
             return compareAndPutCreate(key, value);
         }
@@ -109,8 +102,9 @@ final class KeyValueStoreImpl implements KeyValueStore {
                     RETURNING "VERSION"
                     """);
 
-            return update
-                    .define("queryName", "%s#compareAndPutCreate".formatted(getClass().getSimpleName()))
+            return update.define(
+                            "queryName",
+                            "%s#compareAndPutCreate".formatted(getClass().getSimpleName()))
                     .bind("extensionPointName", extensionPointName)
                     .bind("extensionName", extensionName)
                     .bind("key", key)
@@ -126,10 +120,7 @@ final class KeyValueStoreImpl implements KeyValueStore {
                 : new CompareAndPutResult.Failure(CompareAndPutResult.Failure.Reason.ALREADY_EXISTS);
     }
 
-    private CompareAndPutResult compareAndPutUpdate(
-            String key,
-            String value,
-            long expectedVersion) {
+    private CompareAndPutResult compareAndPutUpdate(String key, String value, long expectedVersion) {
         final Long newVersion = jdbi.inTransaction(handle -> {
             final Update update = handle.createUpdate("""
                     UPDATE "EXTENSION_KV_STORE"
@@ -143,8 +134,9 @@ final class KeyValueStoreImpl implements KeyValueStore {
                     RETURNING "VERSION"
                     """);
 
-            return update
-                    .define("queryName", "%s#compareAndPutUpdate".formatted(getClass().getSimpleName()))
+            return update.define(
+                            "queryName",
+                            "%s#compareAndPutUpdate".formatted(getClass().getSimpleName()))
                     .bind("extensionPointName", extensionPointName)
                     .bind("extensionName", extensionName)
                     .bind("key", key)
@@ -175,8 +167,7 @@ final class KeyValueStoreImpl implements KeyValueStore {
                        AND "EXTENSION" = :extensionName
                     """);
 
-            return query
-                    .define("queryName", "%s#getAll".formatted(getClass().getSimpleName()))
+            return query.define("queryName", "%s#getAll".formatted(getClass().getSimpleName()))
                     .bind("extensionPointName", extensionPointName)
                     .bind("extensionName", extensionName)
                     .map(ConstructorMapper.of(Entry.class))
@@ -204,8 +195,7 @@ final class KeyValueStoreImpl implements KeyValueStore {
                        AND "KEY" = ANY(:keys)
                     """);
 
-            return query
-                    .define("queryName", "%s#getMany".formatted(getClass().getSimpleName()))
+            return query.define("queryName", "%s#getMany".formatted(getClass().getSimpleName()))
                     .bind("extensionPointName", extensionPointName)
                     .bind("extensionName", extensionName)
                     .bindArray("keys", String.class, keys)
@@ -229,8 +219,7 @@ final class KeyValueStoreImpl implements KeyValueStore {
                        AND "KEY" = ANY(:keys)
                     """);
 
-            update
-                    .define("queryName", "%s#deleteMany".formatted(getClass().getSimpleName()))
+            update.define("queryName", "%s#deleteMany".formatted(getClass().getSimpleName()))
                     .bind("extensionPointName", extensionPointName)
                     .bind("extensionName", extensionName)
                     .bindArray("keys", String.class, keys)
@@ -239,9 +228,7 @@ final class KeyValueStoreImpl implements KeyValueStore {
     }
 
     @Override
-    public CompareAndDeleteResult compareAndDelete(
-            String key,
-            long expectedVersion) {
+    public CompareAndDeleteResult compareAndDelete(String key, long expectedVersion) {
         requireNonNull(key, "key must not be null");
 
         final int modifiedRows = jdbi.inTransaction(handle -> {
@@ -254,8 +241,9 @@ final class KeyValueStoreImpl implements KeyValueStore {
                        AND "VERSION" = :expectedVersion
                     """);
 
-            return update
-                    .define("queryName", "%s#compareAndDelete".formatted(getClass().getSimpleName()))
+            return update.define(
+                            "queryName",
+                            "%s#compareAndDelete".formatted(getClass().getSimpleName()))
                     .bind("extensionPointName", extensionPointName)
                     .bind("extensionName", extensionName)
                     .bind("key", key)
@@ -267,5 +255,4 @@ final class KeyValueStoreImpl implements KeyValueStore {
                 ? new CompareAndDeleteResult.Success()
                 : new CompareAndDeleteResult.Failure(CompareAndDeleteResult.Failure.Reason.VERSION_MISMATCH);
     }
-
 }

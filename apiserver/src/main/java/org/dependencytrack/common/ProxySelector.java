@@ -71,7 +71,5 @@ public class ProxySelector extends java.net.ProxySelector {
     }
 
     @Override
-    public void connectFailed(final URI uri, final SocketAddress sa, final IOException ioe) {
-    }
-
+    public void connectFailed(final URI uri, final SocketAddress sa, final IOException ioe) {}
 }

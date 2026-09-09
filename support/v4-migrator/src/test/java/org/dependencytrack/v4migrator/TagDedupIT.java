@@ -73,28 +73,24 @@ class TagDedupIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> tags = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT \"ID\", \"NAME\" FROM \"TAG\" ORDER BY \"ID\"").mapToMap().list());
-        assertThat(tags).extracting("id", "name")
-            .containsExactly(
-                tuple(1L, "frontend"),
-                tuple(2L, "backend"),
-                tuple(5L, "security")
-            );
+        final List<Map<String, Object>> tags = target.jdbi()
+                .withHandle(h -> h.createQuery("SELECT \"ID\", \"NAME\" FROM \"TAG\" ORDER BY \"ID\"")
+                        .mapToMap()
+                        .list());
+        assertThat(tags)
+                .extracting("id", "name")
+                .containsExactly(tuple(1L, "frontend"), tuple(2L, "backend"), tuple(5L, "security"));
 
         // Canonical map exists, has a row per source tag, and every orig_id maps to itself.
-        final List<Map<String, Object>> map = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> map =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT orig_id, canonical_id
                       FROM "dt_v4_migration".tag_canonical_id_map
                      ORDER BY orig_id
                     """).mapToMap().list());
-        assertThat(map).extracting("orig_id", "canonical_id")
-            .containsExactly(
-                tuple(1L, 1L),
-                tuple(2L, 2L),
-                tuple(5L, 5L)
-            );
+        assertThat(map)
+                .extracting("orig_id", "canonical_id")
+                .containsExactly(tuple(1L, 1L), tuple(2L, 2L), tuple(5L, 5L));
     }
 
     private void runPipeline() throws Exception {

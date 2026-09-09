@@ -29,14 +29,12 @@ public final class ConfigBuilderCustomizer implements SmallRyeConfigBuilderCusto
 
     @Override
     public void configBuilder(final SmallRyeConfigBuilder builder) {
-        builder.withInterceptors(
-                new FallbackConfigSourceInterceptor(name -> {
-                    if (name.startsWith("dt.datasource.default.")) {
-                        return name.replaceFirst("^dt\\.datasource\\.default\\.", "dt.datasource.");
-                    }
+        builder.withInterceptors(new FallbackConfigSourceInterceptor(name -> {
+            if (name.startsWith("dt.datasource.default.")) {
+                return name.replaceFirst("^dt\\.datasource\\.default\\.", "dt.datasource.");
+            }
 
-                    return name;
-                }));
+            return name;
+        }));
     }
-
 }

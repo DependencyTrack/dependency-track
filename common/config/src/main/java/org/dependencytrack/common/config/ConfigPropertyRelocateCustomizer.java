@@ -56,8 +56,6 @@ public final class ConfigPropertyRelocateCustomizer implements SmallRyeConfigBui
                 // NB: Must be just below ProfileConfigSourceInterceptor (LIBRARY + 200).
                 return OptionalInt.of(Priorities.LIBRARY + 200 - 10);
             }
-
         });
     }
-
 }

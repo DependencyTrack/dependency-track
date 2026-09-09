@@ -42,7 +42,13 @@ public class AffectedProject {
 
     private final List<UUID> affectedComponentUuids;
 
-    public AffectedProject(UUID uuid, boolean dependencyGraphAvailable, String name, String version, boolean active, List<UUID> affectedComponentUuids) {
+    public AffectedProject(
+            UUID uuid,
+            boolean dependencyGraphAvailable,
+            String name,
+            String version,
+            boolean active,
+            List<UUID> affectedComponentUuids) {
         this.uuid = uuid;
         this.dependencyGraphAvailable = dependencyGraphAvailable;
         this.name = name;
@@ -58,6 +64,7 @@ public class AffectedProject {
     public boolean isDependencyGraphAvailable() {
         return dependencyGraphAvailable;
     }
+
     public String getName() {
         return name;
     }

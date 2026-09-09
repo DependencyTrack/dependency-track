@@ -37,5 +37,4 @@ class VoidPayloadConverterTest {
         assertThat(converter.convertFromPayload(null)).isNull();
         assertThat(converter.convertFromPayload(Payload.getDefaultInstance())).isNull();
     }
-
 }

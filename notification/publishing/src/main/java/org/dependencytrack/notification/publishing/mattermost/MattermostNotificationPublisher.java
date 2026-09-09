@@ -30,5 +30,4 @@ final class MattermostNotificationPublisher extends AbstractHttpNotificationPubl
     MattermostNotificationPublisher(HttpClient httpClient) {
         super(httpClient);
     }
-
 }

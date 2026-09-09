@@ -48,5 +48,4 @@ public final class MemoryCacheProvider implements CacheProvider {
     public CacheManager create() {
         return new MemoryCacheManager(config);
     }
-
 }

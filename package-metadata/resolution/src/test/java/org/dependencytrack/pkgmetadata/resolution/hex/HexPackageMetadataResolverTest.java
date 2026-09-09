@@ -21,22 +21,16 @@ package org.dependencytrack.pkgmetadata.resolution.hex;
 import com.github.packageurl.PackageURLBuilder;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import org.dependencytrack.cache.api.CacheManager;
-import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.http.HttpClient;
 import java.time.Instant;
-import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -54,10 +48,7 @@ class HexPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         resolverFactory = new HexPackageMetadataResolverFactory();
-        resolverFactory.init(new MutableServiceRegistry()
-                .register(CacheManager.class, new NoopCacheManager())
-                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        resolverFactory.init(new ExtensionContextBuilder().build());
         resolver = resolverFactory.create();
     }
 
@@ -92,15 +83,14 @@ class HexPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.7.14");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-08-01T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-08-01T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-05-01T10:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-05-01T10:00:00Z"));
     }
 
     @Test
-    void shouldResolveLatestVersionWithoutArtifactMetadataWhenVersionNotFound(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldResolveLatestVersionWithoutArtifactMetadataWhenVersionNotFound(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubFor(get(urlPathEqualTo("/api/packages/phoenix"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                 {
@@ -121,8 +111,7 @@ class HexPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.7.14");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-08-01T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-08-01T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 
@@ -151,8 +140,7 @@ class HexPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -187,5 +175,4 @@ class HexPackageMetadataResolverTest {
         assertThatExceptionOfType(RetryableResolutionException.class)
                 .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
-
 }

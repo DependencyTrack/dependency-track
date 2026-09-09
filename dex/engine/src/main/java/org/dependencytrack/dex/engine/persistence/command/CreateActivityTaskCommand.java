@@ -31,5 +31,4 @@ public record CreateActivityTaskCommand(
         String queueName,
         int priority,
         @Nullable Payload argument,
-        RetryPolicy retryPolicy) {
-}
+        RetryPolicy retryPolicy) {}

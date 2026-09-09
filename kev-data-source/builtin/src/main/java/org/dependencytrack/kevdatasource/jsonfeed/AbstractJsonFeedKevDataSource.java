@@ -51,10 +51,7 @@ public abstract class AbstractJsonFeedKevDataSource implements KevDataSource {
     private final Logger logger;
     private @Nullable Iterator<KevAssertion> delegate;
 
-    protected AbstractJsonFeedKevDataSource(
-            HttpClient httpClient,
-            ObjectMapper objectMapper,
-            URI feedUrl) {
+    protected AbstractJsonFeedKevDataSource(HttpClient httpClient, ObjectMapper objectMapper, URI feedUrl) {
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
         this.feedUrl = feedUrl;
@@ -98,8 +95,7 @@ public abstract class AbstractJsonFeedKevDataSource implements KevDataSource {
 
         if (response.statusCode() != 200) {
             throw new IllegalStateException(
-                    "Requesting feed failed with unexpected response code: "
-                            + response.statusCode());
+                    "Requesting feed failed with unexpected response code: " + response.statusCode());
         }
 
         try (final InputStream body = response.body()) {
@@ -117,5 +113,4 @@ public abstract class AbstractJsonFeedKevDataSource implements KevDataSource {
     }
 
     protected abstract List<KevAssertion> parseEntries(JsonParser jsonParser) throws IOException;
-
 }

@@ -47,5 +47,4 @@ public interface InitTask {
      * @throws Exception When the task execution failed.
      */
     void execute(InitTaskContext ctx) throws Exception;
-
 }

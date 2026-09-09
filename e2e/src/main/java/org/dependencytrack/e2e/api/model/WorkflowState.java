@@ -23,5 +23,4 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record WorkflowState(UUID token, String step, String status) {
-}
+public record WorkflowState(UUID token, String step, String status) {}

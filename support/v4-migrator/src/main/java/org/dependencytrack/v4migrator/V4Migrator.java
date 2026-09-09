@@ -29,20 +29,19 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @Command(
-    name = "v4-migrator",
-    description = "Dependency-Track v4 → v5 data migration CLI.",
-    mixinStandardHelpOptions = true,
-    versionProvider = V4Migrator.VersionProvider.class,
-    subcommands = {
-        BootstrapCommand.class,
-        ExtractCommand.class,
-        TransformCommand.class,
-        LoadCommand.class,
-        VerifyCommand.class,
-        CleanupCommand.class,
-        RunCommand.class,
-    }
-)
+        name = "v4-migrator",
+        description = "Dependency-Track v4 → v5 data migration CLI.",
+        mixinStandardHelpOptions = true,
+        versionProvider = V4Migrator.VersionProvider.class,
+        subcommands = {
+            BootstrapCommand.class,
+            ExtractCommand.class,
+            TransformCommand.class,
+            LoadCommand.class,
+            VerifyCommand.class,
+            CleanupCommand.class,
+            RunCommand.class,
+        })
 public final class V4Migrator {
 
     public static void main(final String[] args) {
@@ -54,7 +53,7 @@ public final class V4Migrator {
         @Override
         public String[] getVersion() {
             final String version = V4Migrator.class.getPackage().getImplementationVersion();
-            return new String[]{version != null ? version : "dev"};
+            return new String[] {version != null ? version : "dev"};
         }
     }
 }

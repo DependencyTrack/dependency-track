@@ -20,5 +20,4 @@ package org.dependencytrack.e2e.api.model;
 
 import java.util.Map;
 
-public record UpdateExtensionConfigRequest(Map<String, Object> config) {
-}
+public record UpdateExtensionConfigRequest(Map<String, Object> config) {}

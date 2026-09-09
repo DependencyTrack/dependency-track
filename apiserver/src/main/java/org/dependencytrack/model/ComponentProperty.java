@@ -24,13 +24,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.MoreObjects;
+import org.apache.commons.lang3.StringUtils;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.ForeignKey;
+import javax.jdo.annotations.ForeignKeyAction;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -53,7 +56,6 @@ public class ComponentProperty implements IConfigProperty, Serializable {
         public Identity(final ComponentProperty property) {
             this(property.getGroupName(), property.getPropertyName(), property.getPropertyValue());
         }
-
     }
 
     @PrimaryKey
@@ -62,6 +64,11 @@ public class ComponentProperty implements IConfigProperty, Serializable {
     private long id;
 
     @Persistent
+    @ForeignKey(
+            name = "COMPONENT_PROPERTY_COMPONENT_ID_FK",
+            deferred = "true",
+            deleteAction = ForeignKeyAction.CASCADE,
+            updateAction = ForeignKeyAction.NONE)
     @Column(name = "COMPONENT_ID", allowsNull = "false")
     @JsonIgnore
     private Component component;
@@ -184,5 +191,4 @@ public class ComponentProperty implements IConfigProperty, Serializable {
                 .omitNullValues()
                 .toString();
     }
-
 }

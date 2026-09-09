@@ -21,11 +21,6 @@ package org.dependencytrack;
 import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.server.auth.PasswordService;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
@@ -34,10 +29,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import jakarta.ws.rs.core.Response;
+
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-
 
 public abstract class ResourceTest {
 
@@ -78,12 +78,14 @@ public abstract class ResourceTest {
     protected final String PAGE = "page";
     protected final String SIZE = "size";
     protected final String TOTAL_COUNT_HEADER = "X-Total-Count";
+    protected final String TOTAL_COUNT_TYPE_HEADER = "X-Total-Count-Type";
     protected final String X_API_KEY = "X-Api-Key";
     protected final String API_KEY = "apiKey";
     protected final String V1_TAG = "/v1/tag";
 
     // Hashing is expensive. Do it once and re-use across tests as much as possible.
-    protected static final String TEST_USER_PASSWORD_HASH = new String(PasswordService.createHash("testuser".toCharArray()));
+    protected static final String TEST_USER_PASSWORD_HASH =
+            new String(PasswordService.createHash("testuser".toCharArray()));
 
     protected QueryManager qm;
     protected Team team;
@@ -129,8 +131,7 @@ public abstract class ResourceTest {
                 ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
                 "true",
                 ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                null
-        );
+                null);
     }
 
     protected String getPlainTextBody(Response response) {

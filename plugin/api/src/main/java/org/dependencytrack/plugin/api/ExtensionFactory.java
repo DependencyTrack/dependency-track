@@ -34,6 +34,12 @@ public interface ExtensionFactory<T extends ExtensionPoint> extends Closeable {
     String extensionName();
 
     /**
+     * @return Human-readable name of the extension, for display purposes.
+     * @since 5.1.0
+     */
+    String displayName();
+
+    /**
      * @return {@link Class} of the extension.
      */
     Class<? extends T> extensionClass();
@@ -47,9 +53,9 @@ public interface ExtensionFactory<T extends ExtensionPoint> extends Closeable {
     /**
      * Initialize the factory. This method is called <em>once</em> during application startup.
      *
-     * @param serviceRegistry The {@link ServiceRegistry} providing platform services to the extension.
+     * @param context The {@link ExtensionContext} providing platform services to the extension.
      */
-    void init(ServiceRegistry serviceRegistry);
+    void init(ExtensionContext context);
 
     /**
      * Creates a new extension instance.
@@ -70,5 +76,4 @@ public interface ExtensionFactory<T extends ExtensionPoint> extends Closeable {
     default void close() {
         // Default no-op to remove checked exception from method signature.
     }
-
 }

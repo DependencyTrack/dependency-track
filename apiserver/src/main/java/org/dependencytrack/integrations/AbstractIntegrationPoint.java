@@ -32,13 +32,13 @@ public abstract class AbstractIntegrationPoint implements IntegrationPoint {
         this.qm = qm;
     }
 
-    public void handleUnexpectedHttpResponse(final Logger logger, final String url, final int statusCode, final String statusText) {
+    public void handleUnexpectedHttpResponse(
+            final Logger logger, final String url, final int statusCode, final String statusText) {
         logger.error("An error occurred while communicating with the " + name() + " integration point");
         logger.error("HTTP Status : " + statusCode + " " + statusText);
         logger.error("Request URL : " + url);
 
-        new JdoNotificationEmitter(qm).emit(
-                createIntegrationErrorNotification("""
+        new JdoNotificationEmitter(qm).emit(createIntegrationErrorNotification("""
                         An error occurred while communicating with the %s integration point. \
                         URL: %s - HTTP Status: %s. Check log for details.""".formatted(name(), url, statusCode)));
     }
@@ -46,8 +46,7 @@ public abstract class AbstractIntegrationPoint implements IntegrationPoint {
     public void handleException(final Logger logger, final Exception e) {
         logger.error("An error occurred with the " + name() + " integration point", e);
 
-        new JdoNotificationEmitter(qm).emit(
-                createIntegrationErrorNotification("""
+        new JdoNotificationEmitter(qm).emit(createIntegrationErrorNotification("""
                         An error occurred with the %s integration point. \
                         Check log for details. %s""".formatted(name(), e)));
     }

@@ -43,5 +43,4 @@ public class NotificationComponentRowMapper implements RowMapper<Component> {
         maybeSet(rs, "componentSha512", ResultSet::getString, builder::setSha512);
         return builder.build();
     }
-
 }

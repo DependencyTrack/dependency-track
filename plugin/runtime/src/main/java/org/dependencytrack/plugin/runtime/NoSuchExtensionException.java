@@ -26,12 +26,11 @@ import java.util.NoSuchElementException;
 public final class NoSuchExtensionException extends NoSuchElementException {
 
     NoSuchExtensionException(String extensionPointName, String extensionName) {
-        super("No extension named '%s' exists for the extension point '%s'".formatted(
-                extensionName, extensionPointName));
+        super("No extension named '%s' exists for the extension point '%s'"
+                .formatted(extensionName, extensionPointName));
     }
 
     NoSuchExtensionException(String extensionPointName) {
         super("No extension exists for the extension point '%s'".formatted(extensionPointName));
     }
-
 }

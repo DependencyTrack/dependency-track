@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.parser.common.resolver.CweResolver;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -38,7 +39,7 @@ public class CweSerializer extends JsonSerializer<List<Integer>> {
             throws IOException, JsonProcessingException {
 
         jsonGenerator.writeStartArray();
-        for (final Integer cweId: cweIds) {
+        for (final Integer cweId : cweIds) {
             final Cwe cwe = CweResolver.getInstance().lookup(cweId);
             if (cwe != null) {
                 jsonGenerator.writeObject(cwe);

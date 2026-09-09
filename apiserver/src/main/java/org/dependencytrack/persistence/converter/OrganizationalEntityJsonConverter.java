@@ -41,5 +41,4 @@ public class OrganizationalEntityJsonConverter extends AbstractJsonConverter<Org
         // Overriding is required for DataNucleus to correctly detect the return type.
         return super.convertToAttribute(datastoreValue);
     }
-
 }

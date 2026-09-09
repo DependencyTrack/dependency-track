@@ -46,8 +46,7 @@ import static org.dependencytrack.util.VulnerabilityUtil.getUniqueAliases;
  */
 public final class NotificationModelConverter {
 
-    private NotificationModelConverter() {
-    }
+    private NotificationModelConverter() {}
 
     public static Group convert(NotificationGroup group) {
         return switch (group) {
@@ -137,9 +136,8 @@ public final class NotificationModelConverter {
     }
 
     public static Component convert(org.dependencytrack.model.Component component) {
-        final Component.Builder builder = Component.newBuilder()
-                .setUuid(component.getUuid().toString())
-                .setName(component.getName());
+        final Component.Builder builder =
+                Component.newBuilder().setUuid(component.getUuid().toString()).setName(component.getName());
         if (component.getGroup() != null) {
             builder.setGroup(component.getGroup());
         }
@@ -226,8 +224,7 @@ public final class NotificationModelConverter {
     }
 
     public static UserSubject convert(User user) {
-        final var builder = UserSubject.newBuilder()
-                .setUsername(user.getUsername());
+        final var builder = UserSubject.newBuilder().setUsername(user.getUsername());
         if (user.getEmail() != null) {
             builder.setEmail(user.getEmail());
         }
@@ -235,8 +232,7 @@ public final class NotificationModelConverter {
     }
 
     public static Bom convert(final org.dependencytrack.model.Vex vex) {
-        final var builder = Bom.newBuilder()
-                .setContent("(Omitted)");
+        final var builder = Bom.newBuilder().setContent("(Omitted)");
         if (vex.getVexFormat() != null) {
             builder.setFormat(vex.getVexFormat());
         }
@@ -294,10 +290,12 @@ public final class NotificationModelConverter {
             builder.setOwaspRrLikelihood(vuln.getOwaspRRLikelihoodScore().doubleValue());
         }
         if (vuln.getOwaspRRTechnicalImpactScore() != null) {
-            builder.setOwaspRrTechnicalImpact(vuln.getOwaspRRTechnicalImpactScore().doubleValue());
+            builder.setOwaspRrTechnicalImpact(
+                    vuln.getOwaspRRTechnicalImpactScore().doubleValue());
         }
         if (vuln.getOwaspRRBusinessImpactScore() != null) {
-            builder.setOwaspRrBusinessImpact(vuln.getOwaspRRBusinessImpactScore().doubleValue());
+            builder.setOwaspRrBusinessImpact(
+                    vuln.getOwaspRRBusinessImpactScore().doubleValue());
         }
         if (vuln.getOwaspRRVector() != null) {
             builder.setOwaspRrVector(vuln.getOwaspRRVector());
@@ -334,5 +332,4 @@ public final class NotificationModelConverter {
                 .setSuppressed(analysis.isSuppressed())
                 .build();
     }
-
 }

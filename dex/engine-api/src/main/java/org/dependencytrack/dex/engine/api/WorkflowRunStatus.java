@@ -30,18 +30,15 @@ import static org.dependencytrack.dex.proto.common.v1.WorkflowRunStatus.WORKFLOW
 import static org.dependencytrack.dex.proto.common.v1.WorkflowRunStatus.WORKFLOW_RUN_STATUS_SUSPENDED;
 
 public enum WorkflowRunStatus {
-
-    CREATED(1, 3),       // 0
+    CREATED(1, 3), // 0
     RUNNING(2, 3, 4, 5), // 1
-    SUSPENDED(1, 3),     // 2
-    CANCELLED,           // 3
-    COMPLETED,           // 4
-    FAILED;              // 5
+    SUSPENDED(1, 3), // 2
+    CANCELLED, // 3
+    COMPLETED, // 4
+    FAILED; // 5
 
     public static final Set<WorkflowRunStatus> NON_TERMINAL_STATUSES =
-            Arrays.stream(values())
-                    .filter(status -> !status.isTerminal())
-                    .collect(Collectors.toUnmodifiableSet());
+            Arrays.stream(values()).filter(status -> !status.isTerminal()).collect(Collectors.toUnmodifiableSet());
 
     private final Set<Integer> allowedTransitions;
 
@@ -57,8 +54,7 @@ public enum WorkflowRunStatus {
         return !equals(CREATED) && !equals(RUNNING) && !equals(SUSPENDED);
     }
 
-    public static WorkflowRunStatus fromProto(
-            org.dependencytrack.dex.proto.common.v1.WorkflowRunStatus protoStatus) {
+    public static WorkflowRunStatus fromProto(org.dependencytrack.dex.proto.common.v1.WorkflowRunStatus protoStatus) {
         return switch (protoStatus) {
             case WORKFLOW_RUN_STATUS_CREATED -> CREATED;
             case WORKFLOW_RUN_STATUS_RUNNING -> RUNNING;
@@ -80,5 +76,4 @@ public enum WorkflowRunStatus {
             case FAILED -> WORKFLOW_RUN_STATUS_FAILED;
         };
     }
-
 }

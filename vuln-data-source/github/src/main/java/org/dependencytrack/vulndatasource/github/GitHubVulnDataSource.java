@@ -111,15 +111,13 @@ final class GitHubVulnDataSource implements VulnDataSource {
         requireNonNull(bov, "bov must not be null");
         if (bov.getVulnerabilitiesCount() != 1) {
             throw new IllegalArgumentException(
-                    "BOV must have exactly one vulnerability, but has "
-                            + bov.getVulnerabilitiesCount());
+                    "BOV must have exactly one vulnerability, but has " + bov.getVulnerabilitiesCount());
         }
 
         final Vulnerability vuln = bov.getVulnerabilities(0);
 
-        final Instant updatedAt = vuln.hasUpdated()
-                ? Instant.ofEpochMilli(Timestamps.toMillis(vuln.getUpdated()))
-                : null;
+        final Instant updatedAt =
+                vuln.hasUpdated() ? Instant.ofEpochMilli(Timestamps.toMillis(vuln.getUpdated())) : null;
         watermarkManager.maybeAdvance(updatedAt);
 
         // Advisories are retrieved in ascending modification date order,
@@ -139,5 +137,4 @@ final class GitHubVulnDataSource implements VulnDataSource {
             throw new IllegalStateException("Failed to close client", e);
         }
     }
-
 }

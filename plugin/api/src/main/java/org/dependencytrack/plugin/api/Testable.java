@@ -37,5 +37,4 @@ public interface Testable {
      * @return The test result.
      */
     ExtensionTestResult test(@Nullable RuntimeConfig runtimeConfig);
-
 }

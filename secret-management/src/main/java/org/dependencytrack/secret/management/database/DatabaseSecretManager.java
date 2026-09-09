@@ -56,10 +56,7 @@ final class DatabaseSecretManager implements SecretManager {
     private final Crypto crypto;
     private final PageTokenEncoder pageTokenEncoder;
 
-    DatabaseSecretManager(
-            DataSource dataSource,
-            Crypto crypto,
-            PageTokenEncoder pageTokenEncoder) {
+    DatabaseSecretManager(DataSource dataSource, Crypto crypto, PageTokenEncoder pageTokenEncoder) {
         this.dataSource = requireNonNull(dataSource, "dataSource must not be null");
         this.crypto = requireNonNull(crypto, "crypto must not be null");
         this.pageTokenEncoder = requireNonNull(pageTokenEncoder, "pageTokenEncoder must not be null");
@@ -76,10 +73,7 @@ final class DatabaseSecretManager implements SecretManager {
     }
 
     @Override
-    public void createSecret(
-            String name,
-            @Nullable String description,
-            String value) {
+    public void createSecret(String name, @Nullable String description, String value) {
         requireValidName(name);
         requireNonNull(value, "value must not be null");
 
@@ -92,7 +86,7 @@ final class DatabaseSecretManager implements SecretManager {
 
         final int rowsModified;
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      INSERT INTO "SECRET" ("NAME", "DESCRIPTION", "VALUE", "DEK", "CREATED_AT")
                      VALUES (?, ?, ?, ?, NOW())
                      ON CONFLICT ("NAME") DO NOTHING
@@ -112,10 +106,7 @@ final class DatabaseSecretManager implements SecretManager {
     }
 
     @Override
-    public boolean updateSecret(
-            String name,
-            @Nullable String description,
-            @Nullable String value) {
+    public boolean updateSecret(String name, @Nullable String description, @Nullable String value) {
         requireValidName(name);
 
         if (description == null && value == null) {
@@ -136,7 +127,7 @@ final class DatabaseSecretManager implements SecretManager {
         final boolean exists;
         final boolean updated;
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      WITH
                      existing AS (
                        SELECT "NAME", "DESCRIPTION", "VALUE"
@@ -193,7 +184,7 @@ final class DatabaseSecretManager implements SecretManager {
 
         final int rowsModified;
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      DELETE
                        FROM "SECRET"
                       WHERE "NAME" = ?
@@ -212,7 +203,7 @@ final class DatabaseSecretManager implements SecretManager {
     @Override
     public @Nullable SecretMetadata getSecretMetadata(String name) {
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      SELECT "NAME"
                           , "DESCRIPTION"
                           , "CREATED_AT"
@@ -249,7 +240,7 @@ final class DatabaseSecretManager implements SecretManager {
         final byte[] serializedDek;
 
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      SELECT "VALUE"
                           , "DEK"
                        FROM "SECRET"
@@ -275,8 +266,7 @@ final class DatabaseSecretManager implements SecretManager {
         }
     }
 
-    record ListSecretsPageToken(String lastName) implements PageToken {
-    }
+    record ListSecretsPageToken(String lastName) implements PageToken {}
 
     @Override
     public Page<SecretMetadata> listSecretMetadata(ListSecretsRequest request) {
@@ -286,12 +276,12 @@ final class DatabaseSecretManager implements SecretManager {
         final var secrets = new ArrayList<SecretMetadata>();
 
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement countQuery = connection.prepareStatement("""
+                final PreparedStatement countQuery = connection.prepareStatement("""
                      SELECT COUNT(*)
                        FROM "SECRET"
                       WHERE (? IS NULL OR LOWER("NAME") LIKE (LOWER(?) || '%'))
                      """);
-             final PreparedStatement listQuery = connection.prepareStatement("""
+                final PreparedStatement listQuery = connection.prepareStatement("""
                      SELECT "NAME"
                           , "DESCRIPTION"
                           , "CREATED_AT"
@@ -316,31 +306,28 @@ final class DatabaseSecretManager implements SecretManager {
 
             final ResultSet rs = listQuery.executeQuery();
             while (rs.next()) {
-                secrets.add(
-                        new SecretMetadata(
-                                rs.getString(1),
-                                rs.getString(2),
-                                rs.getTimestamp(3) != null
-                                        ? Instant.ofEpochMilli(rs.getTimestamp(3).getTime())
-                                        : null,
-                                rs.getTimestamp(4) != null
-                                        ? Instant.ofEpochMilli(rs.getTimestamp(4).getTime())
-                                        : null));
+                secrets.add(new SecretMetadata(
+                        rs.getString(1),
+                        rs.getString(2),
+                        rs.getTimestamp(3) != null
+                                ? Instant.ofEpochMilli(rs.getTimestamp(3).getTime())
+                                : null,
+                        rs.getTimestamp(4) != null
+                                ? Instant.ofEpochMilli(rs.getTimestamp(4).getTime())
+                                : null));
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to query secret metadata", e);
         }
 
-        final var resultItems = secrets.size() > request.limit()
-                ? secrets.subList(0, request.limit())
-                : secrets;
+        final var resultItems = secrets.size() > request.limit() ? secrets.subList(0, request.limit()) : secrets;
 
         final String nextPageToken = secrets.size() > request.limit()
-                ? pageTokenEncoder.encode(new ListSecretsPageToken(resultItems.getLast().name()))
+                ? pageTokenEncoder.encode(
+                        new ListSecretsPageToken(resultItems.getLast().name()))
                 : null;
 
-        return new Page<>(resultItems, nextPageToken)
-                .withTotalCount(totalCount, Page.TotalCount.Type.EXACT);
+        return new Page<>(resultItems, nextPageToken).withTotalCount(totalCount, Page.TotalCount.Type.EXACT);
     }
 
     @Override
@@ -353,5 +340,4 @@ final class DatabaseSecretManager implements SecretManager {
             }
         }
     }
-
 }

@@ -31,7 +31,8 @@ class TaskSchedulerHealthCheckTest {
 
     @Test
     void shouldReportUpWhenSchedulerIsStarted() {
-        final HealthCheckResponse response = healthCheckFor(/* started */ true, /* shuttingDown */ false).call();
+        final HealthCheckResponse response =
+                healthCheckFor(/* started */ true, /* shuttingDown */ false).call();
 
         assertThat(response.getName()).isEqualTo("task-scheduler");
         assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.UP);
@@ -39,14 +40,16 @@ class TaskSchedulerHealthCheckTest {
 
     @Test
     void shouldReportDownWhenSchedulerIsNotStarted() {
-        final HealthCheckResponse response = healthCheckFor(/* started */ false, /* shuttingDown */ false).call();
+        final HealthCheckResponse response =
+                healthCheckFor(/* started */ false, /* shuttingDown */ false).call();
 
         assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.DOWN);
     }
 
     @Test
     void shouldReportDownWhenSchedulerIsShuttingDown() {
-        final HealthCheckResponse response = healthCheckFor(/* started */ true, /* shuttingDown */ true).call();
+        final HealthCheckResponse response =
+                healthCheckFor(/* started */ true, /* shuttingDown */ true).call();
 
         assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.DOWN);
     }
@@ -61,5 +64,4 @@ class TaskSchedulerHealthCheckTest {
 
         return new TaskSchedulerHealthCheck(scheduler);
     }
-
 }

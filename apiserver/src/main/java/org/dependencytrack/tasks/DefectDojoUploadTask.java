@@ -37,5 +37,4 @@ public final class DefectDojoUploadTask extends VulnerabilityManagementUploadTas
     public void run() {
         runUpload(new DefectDojoUploader(httpClient, secretManager));
     }
-
 }

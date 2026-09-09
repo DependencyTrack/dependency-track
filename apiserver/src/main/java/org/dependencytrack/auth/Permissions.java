@@ -25,10 +25,10 @@ package org.dependencytrack.auth;
  * @since 3.0.0
  */
 public enum Permissions {
-
     BOM_UPLOAD("Allows the ability to upload CycloneDX Software Bill of Materials (SBOM)"),
     VIEW_PORTFOLIO("Provides the ability to view the portfolio of projects, components, and licenses"),
-    PORTFOLIO_ACCESS_CONTROL_BYPASS("Provides the ability to bypass portfolio access control, granting access to all projects"),
+    PORTFOLIO_ACCESS_CONTROL_BYPASS(
+            "Provides the ability to bypass portfolio access control, granting access to all projects"),
     PORTFOLIO_MANAGEMENT("Allows the creation, modification, and deletion of data in the portfolio"),
     PORTFOLIO_MANAGEMENT_CREATE("Allows the creation of data in the portfolio"),
     PORTFOLIO_MANAGEMENT_READ("Allows the reading of data in the portfolio"),
@@ -38,7 +38,8 @@ public enum Permissions {
     VULNERABILITY_ANALYSIS("Provides all abilities to make analysis decisions on vulnerabilities"),
     VULNERABILITY_ANALYSIS_CREATE("Provides the ability to upload supported VEX documents to a project"),
     VULNERABILITY_ANALYSIS_READ("Provides the ability read the VEX document for a project"),
-    VULNERABILITY_ANALYSIS_UPDATE("Provides the ability to make analysis decisions on vulnerabilities and upload supported VEX documents for a project"),
+    VULNERABILITY_ANALYSIS_UPDATE(
+            "Provides the ability to make analysis decisions on vulnerabilities and upload supported VEX documents for a project"),
     VIEW_POLICY_VIOLATION("Provides the ability to view policy violations"),
     VULNERABILITY_MANAGEMENT("Allows all management permissions of internally-defined vulnerabilities"),
     VULNERABILITY_MANAGEMENT_CREATE("Allows creation of internally-defined vulnerabilities"),
@@ -55,12 +56,18 @@ public enum Permissions {
     SECRET_MANAGEMENT_CREATE("Grants the ability to create secrets"),
     SECRET_MANAGEMENT_UPDATE("Grants the ability to update secrets"),
     SECRET_MANAGEMENT_DELETE("Grants the ability to delete secrets"),
-    SYSTEM_CONFIGURATION("Allows all access to configuration of the system including notifications, repositories, and email settings"),
-    SYSTEM_CONFIGURATION_CREATE("Allows creating configuration of the system including notifications, repositories, and email settings"),
-    SYSTEM_CONFIGURATION_READ("Allows reading the configuration of the system including notifications, repositories, and email settings"),
-    SYSTEM_CONFIGURATION_UPDATE("Allows updating the configuration of the system including notifications, repositories, and email settings"),
-    SYSTEM_CONFIGURATION_DELETE("Allows deleting the configuration of the system including notifications, repositories, and email settings"),
-    PROJECT_CREATION_UPLOAD("Provides the ability to optionally create project (if non-existent) on BOM or scan upload"),
+    SYSTEM_CONFIGURATION(
+            "Allows all access to configuration of the system including notifications, repositories, and email settings"),
+    SYSTEM_CONFIGURATION_CREATE(
+            "Allows creating configuration of the system including notifications, repositories, and email settings"),
+    SYSTEM_CONFIGURATION_READ(
+            "Allows reading the configuration of the system including notifications, repositories, and email settings"),
+    SYSTEM_CONFIGURATION_UPDATE(
+            "Allows updating the configuration of the system including notifications, repositories, and email settings"),
+    SYSTEM_CONFIGURATION_DELETE(
+            "Allows deleting the configuration of the system including notifications, repositories, and email settings"),
+    PROJECT_CREATION_UPLOAD(
+            "Provides the ability to optionally create project (if non-existent) on BOM or scan upload"),
     POLICY_MANAGEMENT("Allows the creation, modification, and deletion of policy"),
     POLICY_MANAGEMENT_CREATE("Allows the creation of a policy"),
     POLICY_MANAGEMENT_READ("Allows reading of policies"),
@@ -123,5 +130,4 @@ public enum Permissions {
         public static final String TAG_MANAGEMENT = "TAG_MANAGEMENT";
         public static final String TAG_MANAGEMENT_DELETE = "TAG_MANAGEMENT_DELETE";
     }
-
 }

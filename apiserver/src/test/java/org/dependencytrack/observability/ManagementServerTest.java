@@ -93,17 +93,13 @@ class ManagementServerTest {
                 new MockReadinessCheck(() -> HealthCheckResponse.up("foo")),
                 new MockReadinessCheck(() -> HealthCheckResponse.up("bar"))));
         startServer(
-                registry,
-                new PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
-                new SmallRyeConfigBuilder().build());
+                registry, new PrometheusMeterRegistry(PrometheusConfig.DEFAULT), new SmallRyeConfigBuilder().build());
 
         final HttpResponse<String> response = get("/health");
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.headers().firstValue("Content-Type")).hasValue("application/json");
-        assertThatJson(response.body())
-                .when(Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(response.body()).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                         {
                           "status": "UP",
                           "checks": [
@@ -128,17 +124,13 @@ class ManagementServerTest {
                 new MockReadinessCheck(() -> HealthCheckResponse.up("foo")),
                 new MockReadinessCheck(() -> HealthCheckResponse.down("bar"))));
         startServer(
-                registry,
-                new PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
-                new SmallRyeConfigBuilder().build());
+                registry, new PrometheusMeterRegistry(PrometheusConfig.DEFAULT), new SmallRyeConfigBuilder().build());
 
         final HttpResponse<String> response = get("/health");
 
         assertThat(response.statusCode()).isEqualTo(503);
         assertThat(response.headers().firstValue("Content-Type")).hasValue("application/json");
-        assertThatJson(response.body())
-                .when(Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(response.body()).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                         {
                           "status": "DOWN",
                           "checks": [
@@ -159,15 +151,12 @@ class ManagementServerTest {
 
     @Test
     void shouldReturnInternalServerErrorWhenCheckThrows() throws Exception {
-        final var registry = new HealthCheckRegistry(List.of(
-                new MockReadinessCheck(() -> HealthCheckResponse.up("foo")),
-                new MockReadinessCheck(() -> {
+        final var registry = new HealthCheckRegistry(
+                List.of(new MockReadinessCheck(() -> HealthCheckResponse.up("foo")), new MockReadinessCheck(() -> {
                     throw new IllegalStateException("Simulated check exception");
                 })));
         startServer(
-                registry,
-                new PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
-                new SmallRyeConfigBuilder().build());
+                registry, new PrometheusMeterRegistry(PrometheusConfig.DEFAULT), new SmallRyeConfigBuilder().build());
 
         final HttpResponse<String> response = get("/health");
 
@@ -182,16 +171,12 @@ class ManagementServerTest {
                 new MockStartupCheck(() -> HealthCheckResponse.up("start")),
                 new MockAllTypesCheck(() -> HealthCheckResponse.up("all"))));
         startServer(
-                registry,
-                new PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
-                new SmallRyeConfigBuilder().build());
+                registry, new PrometheusMeterRegistry(PrometheusConfig.DEFAULT), new SmallRyeConfigBuilder().build());
 
         final HttpResponse<String> response = get("/health/live");
 
         assertThat(response.statusCode()).isEqualTo(200);
-        assertThatJson(response.body())
-                .when(Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(response.body()).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                         {
                           "status": "UP",
                           "checks": [
@@ -218,16 +203,12 @@ class ManagementServerTest {
                 new MockStartupCheck(() -> HealthCheckResponse.up("start")),
                 new MockAllTypesCheck(() -> HealthCheckResponse.up("all"))));
         startServer(
-                registry,
-                new PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
-                new SmallRyeConfigBuilder().build());
+                registry, new PrometheusMeterRegistry(PrometheusConfig.DEFAULT), new SmallRyeConfigBuilder().build());
 
         final HttpResponse<String> response = get("/health/ready");
 
         assertThat(response.statusCode()).isEqualTo(200);
-        assertThatJson(response.body())
-                .when(Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(response.body()).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                         {
                           "status": "UP",
                           "checks": [
@@ -254,16 +235,12 @@ class ManagementServerTest {
                 new MockStartupCheck(() -> HealthCheckResponse.up("start")),
                 new MockAllTypesCheck(() -> HealthCheckResponse.up("all"))));
         startServer(
-                registry,
-                new PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
-                new SmallRyeConfigBuilder().build());
+                registry, new PrometheusMeterRegistry(PrometheusConfig.DEFAULT), new SmallRyeConfigBuilder().build());
 
         final HttpResponse<String> response = get("/health/started");
 
         assertThat(response.statusCode()).isEqualTo(200);
-        assertThatJson(response.body())
-                .when(Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(response.body()).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                         {
                           "status": "UP",
                           "checks": [
@@ -290,16 +267,12 @@ class ManagementServerTest {
                 new MockStartupCheck(() -> HealthCheckResponse.up("start")),
                 new MockAllTypesCheck(() -> HealthCheckResponse.up("all"))));
         startServer(
-                registry,
-                new PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
-                new SmallRyeConfigBuilder().build());
+                registry, new PrometheusMeterRegistry(PrometheusConfig.DEFAULT), new SmallRyeConfigBuilder().build());
 
         final HttpResponse<String> response = get("/health");
 
         assertThat(response.statusCode()).isEqualTo(200);
-        assertThatJson(response.body())
-                .when(Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(response.body()).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                         {
                           "status": "UP",
                           "checks": [
@@ -368,8 +341,7 @@ class ManagementServerTest {
                 .build();
         startServer(new HealthCheckRegistry(), meterRegistry, config);
 
-        final String credentials = Base64.getEncoder()
-                .encodeToString("metrics-user:metrics-password".getBytes(UTF_8));
+        final String credentials = Base64.getEncoder().encodeToString("metrics-user:metrics-password".getBytes(UTF_8));
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/metrics"))
                 .header("Authorization", "Basic " + credentials)
@@ -391,8 +363,7 @@ class ManagementServerTest {
                 .build();
         startServer(new HealthCheckRegistry(), meterRegistry, config);
 
-        final String credentials = Base64.getEncoder()
-                .encodeToString("foo:bar".getBytes(UTF_8));
+        final String credentials = Base64.getEncoder().encodeToString("foo:bar".getBytes(UTF_8));
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/metrics"))
                 .header("Authorization", "Basic " + credentials)
@@ -401,24 +372,19 @@ class ManagementServerTest {
         final HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         assertThat(response.statusCode()).isEqualTo(401);
-        assertThat(response.headers().firstValue("Www-authenticate"))
-                .hasValue("Basic realm=\"metrics\"");
+        assertThat(response.headers().firstValue("Www-authenticate")).hasValue("Basic realm=\"metrics\"");
     }
 
-    private void startServer(
-            HealthCheckRegistry registry,
-            PrometheusMeterRegistry meterRegistry,
-            Config config) throws Exception {
+    private void startServer(HealthCheckRegistry registry, PrometheusMeterRegistry meterRegistry, Config config)
+            throws Exception {
         managementServer = new ManagementServer("127.0.0.1", 0, registry, meterRegistry, config);
         managementServer.start();
         baseUrl = "http://localhost:" + managementServer.getPort();
     }
 
     private HttpResponse<String> get(String path) throws Exception {
-        final HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + path))
-                .GET()
-                .build();
+        final HttpRequest request =
+                HttpRequest.newBuilder().uri(URI.create(baseUrl + path)).GET().build();
         return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
@@ -434,7 +400,6 @@ class ManagementServerTest {
         public HealthCheckResponse call() {
             return responseSupplier.get();
         }
-
     }
 
     @Liveness
@@ -443,7 +408,6 @@ class ManagementServerTest {
         private MockLivenessCheck(Supplier<HealthCheckResponse> responseSupplier) {
             super(responseSupplier);
         }
-
     }
 
     @Readiness
@@ -452,7 +416,6 @@ class ManagementServerTest {
         private MockReadinessCheck(Supplier<HealthCheckResponse> responseSupplier) {
             super(responseSupplier);
         }
-
     }
 
     @Startup
@@ -461,7 +424,6 @@ class ManagementServerTest {
         private MockStartupCheck(Supplier<HealthCheckResponse> responseSupplier) {
             super(responseSupplier);
         }
-
     }
 
     @Liveness
@@ -472,7 +434,5 @@ class ManagementServerTest {
         private MockAllTypesCheck(Supplier<HealthCheckResponse> responseSupplier) {
             super(responseSupplier);
         }
-
     }
-
 }

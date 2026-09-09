@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.resources.v2;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -38,6 +36,9 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -55,14 +56,12 @@ class TaskQueuesResourceTest extends ResourceTest {
     private static final DexEngine DEX_ENGINE_MOCK = mock(DexEngine.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(new AbstractBinder() {
+        @Override
+        protected void configure() {
+            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+        }
+    }));
 
     @AfterEach
     void afterEach() {
@@ -83,10 +82,10 @@ class TaskQueuesResourceTest extends ResourceTest {
                 Instant.ofEpochMilli(2000000));
 
         doReturn(new Page<>(List.of(queue), null).withTotalCount(1, TotalCount.Type.EXACT))
-                .when(DEX_ENGINE_MOCK).listTaskQueues(any(ListTaskQueuesRequest.class));
+                .when(DEX_ENGINE_MOCK)
+                .listTaskQueues(any(ListTaskQueuesRequest.class));
 
-        final Response response = jersey
-                .target("/internal/task-queues/ACTIVITY")
+        final Response response = jersey.target("/internal/task-queues/ACTIVITY")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -116,19 +115,13 @@ class TaskQueuesResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
         final var queue = new TaskQueue(
-                TaskType.WORKFLOW,
-                "wf-queue",
-                TaskQueueStatus.PAUSED,
-                5,
-                0,
-                Instant.ofEpochMilli(3000000),
-                null);
+                TaskType.WORKFLOW, "wf-queue", TaskQueueStatus.PAUSED, 5, 0, Instant.ofEpochMilli(3000000), null);
 
         doReturn(new Page<>(List.of(queue), null).withTotalCount(1, TotalCount.Type.EXACT))
-                .when(DEX_ENGINE_MOCK).listTaskQueues(any(ListTaskQueuesRequest.class));
+                .when(DEX_ENGINE_MOCK)
+                .listTaskQueues(any(ListTaskQueuesRequest.class));
 
-        final Response response = jersey
-                .target("/internal/task-queues/WORKFLOW")
+        final Response response = jersey.target("/internal/task-queues/WORKFLOW")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -156,11 +149,9 @@ class TaskQueuesResourceTest extends ResourceTest {
     void shouldPassPaginationParametersWhenListingTaskQueues() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        doReturn(Page.empty())
-                .when(DEX_ENGINE_MOCK).listTaskQueues(any(ListTaskQueuesRequest.class));
+        doReturn(Page.empty()).when(DEX_ENGINE_MOCK).listTaskQueues(any(ListTaskQueuesRequest.class));
 
-        final Response response = jersey
-                .target("/internal/task-queues/ACTIVITY")
+        final Response response = jersey.target("/internal/task-queues/ACTIVITY")
                 .queryParam("limit", 25)
                 .queryParam("page_token", "nextToken")
                 .request()
@@ -181,11 +172,9 @@ class TaskQueuesResourceTest extends ResourceTest {
     void shouldUpdateTaskQueueStatus() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        doReturn(true)
-                .when(DEX_ENGINE_MOCK).updateTaskQueue(any(UpdateTaskQueueRequest.class));
+        doReturn(true).when(DEX_ENGINE_MOCK).updateTaskQueue(any(UpdateTaskQueueRequest.class));
 
-        final Response response = jersey
-                .target("/internal/task-queues/ACTIVITY/test-queue")
+        final Response response = jersey.target("/internal/task-queues/ACTIVITY/test-queue")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .method("PATCH", Entity.json(/* language=JSON */ """
@@ -209,11 +198,9 @@ class TaskQueuesResourceTest extends ResourceTest {
     void shouldUpdateTaskQueueCapacity() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        doReturn(true)
-                .when(DEX_ENGINE_MOCK).updateTaskQueue(any(UpdateTaskQueueRequest.class));
+        doReturn(true).when(DEX_ENGINE_MOCK).updateTaskQueue(any(UpdateTaskQueueRequest.class));
 
-        final Response response = jersey
-                .target("/internal/task-queues/WORKFLOW/wf-queue")
+        final Response response = jersey.target("/internal/task-queues/WORKFLOW/wf-queue")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .method("PATCH", Entity.json(/* language=JSON */ """
@@ -238,10 +225,10 @@ class TaskQueuesResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
         doThrow(new NoSuchElementException("Queue does not exist"))
-                .when(DEX_ENGINE_MOCK).updateTaskQueue(any(UpdateTaskQueueRequest.class));
+                .when(DEX_ENGINE_MOCK)
+                .updateTaskQueue(any(UpdateTaskQueueRequest.class));
 
-        final Response response = jersey
-                .target("/internal/task-queues/ACTIVITY/nonexistent")
+        final Response response = jersey.target("/internal/task-queues/ACTIVITY/nonexistent")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .method("PATCH", Entity.json(/* language=JSON */ """
@@ -256,11 +243,9 @@ class TaskQueuesResourceTest extends ResourceTest {
     void shouldReturnNoContentWhenNoFieldsProvided() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        doReturn(false)
-                .when(DEX_ENGINE_MOCK).updateTaskQueue(any(UpdateTaskQueueRequest.class));
+        doReturn(false).when(DEX_ENGINE_MOCK).updateTaskQueue(any(UpdateTaskQueueRequest.class));
 
-        final Response response = jersey
-                .target("/internal/task-queues/ACTIVITY/test-queue")
+        final Response response = jersey.target("/internal/task-queues/ACTIVITY/test-queue")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .method("PATCH", Entity.json(/* language=JSON */ """
@@ -277,5 +262,4 @@ class TaskQueuesResourceTest extends ResourceTest {
         assertThat(capturedRequest.status()).isNull();
         assertThat(capturedRequest.capacity()).isNull();
     }
-
 }

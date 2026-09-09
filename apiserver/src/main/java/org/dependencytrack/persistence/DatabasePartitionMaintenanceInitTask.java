@@ -43,5 +43,4 @@ public final class DatabasePartitionMaintenanceInitTask implements InitTask {
         final var jdbi = JdbiFactory.createLocalJdbi(ctx.dataSource());
         jdbi.useTransaction(handle -> handle.attach(MetricsDao.class).createMetricsPartitions());
     }
-
 }

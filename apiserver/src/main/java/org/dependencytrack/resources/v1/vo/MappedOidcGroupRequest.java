@@ -30,15 +30,20 @@ import jakarta.validation.constraints.Pattern;
  */
 public class MappedOidcGroupRequest {
 
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The team must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The team must be a valid 36 character UUID")
     private String team;
 
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The group must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The group must be a valid 36 character UUID")
     private String group;
 
     @JsonCreator
-    public MappedOidcGroupRequest(@JsonProperty(value = "team", required = true) final String team,
-                                  @JsonProperty(value = "group", required = true) final String group) {
+    public MappedOidcGroupRequest(
+            @JsonProperty(value = "team", required = true) final String team,
+            @JsonProperty(value = "group", required = true) final String group) {
         this.team = team;
         this.group = group;
     }
@@ -58,5 +63,4 @@ public class MappedOidcGroupRequest {
     public void setGroup(String group) {
         this.group = group;
     }
-
 }

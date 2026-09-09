@@ -47,5 +47,4 @@ public class TeamAlreadyExistsProblemDetails extends ProblemDetails {
     public String getTeamName() {
         return teamName;
     }
-
 }

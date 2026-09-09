@@ -46,28 +46,22 @@ public final class ProcessScheduledNotificationsWorkflow
     public static final String INSTANCE_ID = "process-scheduled-notifications";
 
     private static final RetryPolicy PROCESS_RULE_RETRY_POLICY =
-            new RetryPolicy(
-                    Duration.ofSeconds(5),
-                    2.0,
-                    0.3,
-                    Duration.ofMinutes(1),
-                    3);
+            new RetryPolicy(Duration.ofSeconds(5), 2.0, 0.3, Duration.ofMinutes(1), 3);
 
     @Override
     public @Nullable Void execute(
             WorkflowContext<ProcessScheduledNotificationsWorkflowArg> ctx,
-            @Nullable ProcessScheduledNotificationsWorkflowArg arg) throws Exception {
+            @Nullable ProcessScheduledNotificationsWorkflowArg arg)
+            throws Exception {
         if (arg == null || arg.getRuleNamesCount() == 0) {
             throw new TerminalApplicationFailureException("No rule names provided");
         }
 
         ctx.logger().info("Processing {} due scheduled notification rules", arg.getRuleNamesCount());
 
-        final var awaitableByRuleName =
-                new LinkedHashMap<String, Awaitable<@Nullable Void>>(arg.getRuleNamesCount());
+        final var awaitableByRuleName = new LinkedHashMap<String, Awaitable<@Nullable Void>>(arg.getRuleNamesCount());
         for (final String ruleName : arg.getRuleNamesList()) {
-            final Awaitable<@Nullable Void> awaitable = ctx
-                    .activity(ProcessScheduledNotificationRuleActivity.class)
+            final Awaitable<@Nullable Void> awaitable = ctx.activity(ProcessScheduledNotificationRuleActivity.class)
                     .call(new ActivityCallOptions<ProcessScheduledNotificationRuleArg>()
                             .withRetryPolicy(PROCESS_RULE_RETRY_POLICY)
                             .withArgument(ProcessScheduledNotificationRuleArg.newBuilder()

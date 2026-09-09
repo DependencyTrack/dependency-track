@@ -30,18 +30,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Validator;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ClientErrorException;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Policy;
@@ -58,6 +46,19 @@ import org.dependencytrack.resources.v1.vo.CreatePolicyConditionRequest;
 import org.dependencytrack.resources.v1.vo.PolicyConditionResponse;
 import org.dependencytrack.resources.v1.vo.UpdatePolicyConditionRequest;
 
+import jakarta.validation.Validator;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -69,55 +70,45 @@ import java.util.Map;
  */
 @Path("/v1/policy")
 @Tag(name = "policyCondition")
-@SecurityRequirements({
-        @SecurityRequirement(name = "ApiKeyAuth"),
-        @SecurityRequirement(name = "BearerAuth")
-})
+@SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class PolicyConditionResource extends AbstractApiResource {
 
     @PUT
     @Path("/{uuid}/condition")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Creates a new policy condition for an existing policy",
-            description = """
+    @Operation(summary = "Creates a new policy condition for an existing policy", description = """
                     <p>
                       Requires permission <strong>POLICY_MANAGEMENT</strong>
                       or <strong>POLICY_MANAGEMENT_UPDATE</strong>
                     </p>
-                    """
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "The created policy condition",
-                    content = @Content(schema = @Schema(implementation = PolicyConditionResponse.class))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "The UUID of the policy could not be found")
-    })
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_UPDATE
-    })
+                    """)
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "201",
+                        description = "The created policy condition",
+                        content = @Content(schema = @Schema(implementation = PolicyConditionResponse.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(responseCode = "404", description = "The UUID of the policy could not be found")
+            })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_UPDATE})
     public Response createPolicyCondition(
             @Parameter(
-                    description = "The UUID of the policy",
-                    schema = @Schema(type = "string", format = "uuid"),
-                    required = true)
-            @PathParam("uuid") @ValidUuid String uuid,
+                            description = "The UUID of the policy",
+                            schema = @Schema(type = "string", format = "uuid"),
+                            required = true)
+                    @PathParam("uuid")
+                    @ValidUuid
+                    String uuid,
             CreatePolicyConditionRequest request) {
         final Validator validator = super.getValidator();
-        failOnValidationError(
-                validator.validateProperty(request, "value")
-        );
+        failOnValidationError(validator.validateProperty(request, "value"));
         try (final var qm = new QueryManager(getAlpineRequest())) {
             final PolicyCondition createdCondition = qm.callInTransaction(() -> {
                 final Policy policy = qm.getObjectByUuid(Policy.class, uuid);
                 if (policy == null) {
-                    throw new ClientErrorException(Response
-                            .status(Response.Status.NOT_FOUND)
+                    throw new ClientErrorException(Response.status(Response.Status.NOT_FOUND)
                             .entity("The UUID of the policy could not be found.")
                             .build());
                 }
@@ -132,8 +123,7 @@ public class PolicyConditionResource extends AbstractApiResource {
                         request.violationType());
             });
 
-            return Response
-                    .status(Response.Status.CREATED)
+            return Response.status(Response.Status.CREATED)
                     .entity(PolicyConditionResponse.of(createdCondition))
                     .build();
         }
@@ -143,39 +133,30 @@ public class PolicyConditionResource extends AbstractApiResource {
     @Path("/condition")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Updates a policy condition",
-            description = """
+    @Operation(summary = "Updates a policy condition", description = """
                     <p>
                       Requires permission <strong>POLICY_MANAGEMENT</strong>
                       or <strong>POLICY_MANAGEMENT_UPDATE</strong>
                     </p>
-                    """
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "The updated policy condition",
-                    content = @Content(schema = @Schema(implementation = PolicyConditionResponse.class))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "The UUID of the policy condition could not be found")
-    })
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_UPDATE
-    })
+                    """)
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "The updated policy condition",
+                        content = @Content(schema = @Schema(implementation = PolicyConditionResponse.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(responseCode = "404", description = "The UUID of the policy condition could not be found")
+            })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_UPDATE})
     public Response updatePolicyCondition(UpdatePolicyConditionRequest request) {
         final Validator validator = super.getValidator();
-        failOnValidationError(
-                validator.validateProperty(request, "value")
-        );
+        failOnValidationError(validator.validateProperty(request, "value"));
         try (final var qm = new QueryManager(getAlpineRequest())) {
             final PolicyCondition updatedCondition = qm.callInTransaction(() -> {
                 final PolicyCondition existing = qm.getObjectByUuid(PolicyCondition.class, request.uuid());
                 if (existing == null) {
-                    throw new ClientErrorException(Response
-                            .status(Response.Status.NOT_FOUND)
+                    throw new ClientErrorException(Response.status(Response.Status.NOT_FOUND)
                             .entity("The UUID of the policy condition could not be found.")
                             .build());
                 }
@@ -185,9 +166,7 @@ public class PolicyConditionResource extends AbstractApiResource {
                 return qm.updatePolicyCondition(convert(request));
             });
 
-            return Response
-                    .ok(PolicyConditionResponse.of(updatedCondition))
-                    .build();
+            return Response.ok(PolicyConditionResponse.of(updatedCondition)).build();
         }
     }
 
@@ -195,38 +174,35 @@ public class PolicyConditionResource extends AbstractApiResource {
     @Path("/condition/{uuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Deletes a policy condition from an existing policy",
-            description = """
+    @Operation(summary = "Deletes a policy condition from an existing policy", description = """
                     <p>
                       Requires permission <strong>POLICY_MANAGEMENT</strong>
                       or <strong>POLICY_MANAGEMENT_UPDATE</strong>
                     </p>
-                    """
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Policy condition removed successfully"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "The UUID of the policy condition could not be found")
-    })
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_UPDATE
-    })
+                    """)
+    @ApiResponses(
+            value = {
+                @ApiResponse(responseCode = "204", description = "Policy condition removed successfully"),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(responseCode = "404", description = "The UUID of the policy condition could not be found")
+            })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_UPDATE})
     public Response deletePolicyCondition(
-            @Parameter(description = "The UUID of the policy condition to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
-            @PathParam("uuid") @ValidUuid String uuid) {
+            @Parameter(
+                            description = "The UUID of the policy condition to delete",
+                            schema = @Schema(type = "string", format = "uuid"),
+                            required = true)
+                    @PathParam("uuid")
+                    @ValidUuid
+                    String uuid) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final PolicyCondition pc = qm.getObjectByUuid(PolicyCondition.class, uuid);
                 if (pc != null) {
                     qm.delete(pc);
-                    return Response
-                            .status(Response.Status.NO_CONTENT)
-                            .build();
+                    return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
-                    return Response
-                            .status(Response.Status.NOT_FOUND)
+                    return Response.status(Response.Status.NOT_FOUND)
                             .entity("The UUID of the policy condition could not be found.")
                             .build();
                 }
@@ -245,16 +221,13 @@ public class PolicyConditionResource extends AbstractApiResource {
     }
 
     private void maybeValidateExpression(
-            PolicyCondition.Subject subject,
-            PolicyViolation.Type violationType,
-            String value) {
+            PolicyCondition.Subject subject, PolicyViolation.Type violationType, String value) {
         if (subject != PolicyCondition.Subject.EXPRESSION) {
             return;
         }
 
         if (violationType == null) {
-            throw new BadRequestException(Response
-                    .status(Response.Status.BAD_REQUEST)
+            throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST)
                     .entity("Expression conditions must define a violation type")
                     .build());
         }
@@ -270,11 +243,9 @@ public class PolicyConditionResource extends AbstractApiResource {
                         issue.getMessage()));
             }
 
-            throw new BadRequestException(Response
-                    .status(Response.Status.BAD_REQUEST)
+            throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("celErrors", celErrors))
                     .build());
         }
     }
-
 }

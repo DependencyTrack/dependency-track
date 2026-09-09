@@ -18,13 +18,14 @@
  */
 package org.dependencytrack.resources.v2;
 
-import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.SystemCapabilitiesApi;
 import org.dependencytrack.api.v2.model.SystemCapabilitiesResponse;
 import org.dependencytrack.capabilities.SystemCapabilitiesAggregator;
 import org.dependencytrack.resources.AbstractApiResource;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @since 5.0.0
@@ -46,5 +47,4 @@ public final class SystemCapabilitiesResource extends AbstractApiResource implem
                 .build();
         return Response.ok(response).build();
     }
-
 }

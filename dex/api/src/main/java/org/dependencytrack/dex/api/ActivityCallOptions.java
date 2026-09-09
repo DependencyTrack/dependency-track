@@ -29,9 +29,7 @@ import static java.util.Objects.requireNonNull;
  * @param <A>
  */
 public record ActivityCallOptions<A extends @Nullable Object>(
-        @Nullable String taskQueueName,
-        @Nullable A argument,
-        RetryPolicy retryPolicy) {
+        @Nullable String taskQueueName, @Nullable A argument, RetryPolicy retryPolicy) {
 
     public ActivityCallOptions {
         requireNonNull(retryPolicy, "retryPolicy must not be null");
@@ -52,5 +50,4 @@ public record ActivityCallOptions<A extends @Nullable Object>(
     public ActivityCallOptions<A> withRetryPolicy(final RetryPolicy retryPolicy) {
         return new ActivityCallOptions<>(this.taskQueueName, this.argument, retryPolicy);
     }
-
 }

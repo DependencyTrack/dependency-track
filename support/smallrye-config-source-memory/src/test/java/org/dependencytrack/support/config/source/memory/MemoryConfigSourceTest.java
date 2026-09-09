@@ -46,5 +46,4 @@ class MemoryConfigSourceTest {
         assertNull(config.getOptionalValue("foo.bar", String.class).orElse(null));
         assertNull(config.getOptionalValue("oof.rab", String.class).orElse(null));
     }
-
 }

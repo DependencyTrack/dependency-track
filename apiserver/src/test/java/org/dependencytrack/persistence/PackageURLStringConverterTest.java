@@ -22,14 +22,14 @@ import com.github.packageurl.PackageURL;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class PackageURLStringConverterTest { 
+public class PackageURLStringConverterTest {
 
     @Test
     public void testConvertToAttributeStr() throws Exception {
         PackageURLStringConverter converter = new PackageURLStringConverter();
         PackageURL purl = converter.convertToAttribute("pkg:maven/acme/example@1.0.0?type=jar");
         Assertions.assertEquals(purl.toString(), "pkg:maven/acme/example@1.0.0?type=jar");
-    } 
+    }
 
     @Test
     public void testConvertToDatastoreUrl() throws Exception {
@@ -37,4 +37,4 @@ public class PackageURLStringConverterTest {
         String purlString = converter.convertToDatastore(new PackageURL("pkg:maven/acme/example@1.0.0?type=jar"));
         Assertions.assertEquals("pkg:maven/acme/example@1.0.0?type=jar", purlString);
     }
-} 
+}

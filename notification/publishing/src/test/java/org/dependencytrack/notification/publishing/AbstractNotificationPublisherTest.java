@@ -25,17 +25,17 @@ import org.dependencytrack.notification.api.publishing.NotificationPublishContex
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplateRenderer;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.proto.v1.Group;
 import org.dependencytrack.notification.proto.v1.Level;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.Scope;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.config.RuntimeConfigMapper;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +43,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,14 +61,11 @@ public abstract class AbstractNotificationPublisherTest {
 
     protected abstract NotificationPublisherFactory createPublisherFactory();
 
-    protected void customizeDeploymentConfig(Map<String, String> deploymentConfig) {
-    }
+    protected void customizeDeploymentConfig(Map<String, String> deploymentConfig) {}
 
-    protected void customizeGlobalConfig(RuntimeConfig globalConfig) {
-    }
+    protected void customizeGlobalConfig(RuntimeConfig globalConfig) {}
 
-    protected void customizeRuleConfig(RuntimeConfig ruleConfig) {
-    }
+    protected void customizeRuleConfig(RuntimeConfig ruleConfig) {}
 
     @BeforeEach
     protected void beforeEach() throws Exception {
@@ -79,32 +75,27 @@ public abstract class AbstractNotificationPublisherTest {
         customizeDeploymentConfig(deploymentConfig);
 
         RuntimeConfig globalConfig = null;
-        final RuntimeConfigSpec globalConfigSpec = publisherFactory instanceof RuntimeConfigurable rc
-                ? rc.runtimeConfigSpec()
-                : null;
+        final RuntimeConfigSpec globalConfigSpec =
+                publisherFactory instanceof RuntimeConfigurable rc ? rc.runtimeConfigSpec() : null;
         if (globalConfigSpec != null) {
             globalConfig = globalConfigSpec.defaultConfig();
             customizeGlobalConfig(globalConfig);
         }
 
         final var configRegistry = new MockConfigRegistry(
-                deploymentConfig,
-                globalConfigSpec,
-                RuntimeConfigMapper.getInstance(),
-                globalConfig);
+                deploymentConfig, globalConfigSpec, RuntimeConfigMapper.getInstance(), globalConfig);
 
         publisherFactory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
         publisher = publisherFactory.create();
 
-        final var templateRendererFactory =
-                new PebbleNotificationTemplateRendererFactory(
-                        Map.of("baseUrl", () -> "https://example.com"));
+        final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
+                Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"),
+                // NB: strictVariables enabled so rendering fails when default
+                // templates reference nonexistent variables.
+                /* strictVariables */ true);
         final NotificationTemplateRenderer templateRenderer =
-                templateRendererFactory.createRenderer(
-                        publisherFactory.defaultTemplate());
+                templateRendererFactory.createRenderer(publisherFactory.defaultTemplate());
 
         RuntimeConfig ruleConfig = null;
 
@@ -130,8 +121,7 @@ public abstract class AbstractNotificationPublisherTest {
     @ParameterizedTest
     @MethodSource("testNotificationPublishArguments")
     void testNotificationPublish(Notification notification) throws Exception {
-        assertThatNoException()
-                .isThrownBy(() -> publisher.publish(publishContext, notification));
+        assertThatNoException().isThrownBy(() -> publisher.publish(publishContext, notification));
 
         validateNotificationPublish(notification);
     }
@@ -153,6 +143,10 @@ public abstract class AbstractNotificationPublisherTest {
             }
         }
 
+        // NB: GROUP_PROJECT_AUDIT_CHANGE has two possible subjects, but the supplier matrix
+        // can only provide one per scope / group / level combination.
+        notifications.add(TestNotificationFactory.createPolicyViolationAuditChangeTestNotification());
+
         return notifications.stream()
                 // Ensure notification data is deterministic.
                 .map(notification -> notification.toBuilder()
@@ -161,5 +155,4 @@ public abstract class AbstractNotificationPublisherTest {
                         .build())
                 .map(Arguments::of);
     }
-
 }

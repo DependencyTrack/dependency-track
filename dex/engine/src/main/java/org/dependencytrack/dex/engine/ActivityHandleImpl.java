@@ -52,13 +52,10 @@ final class ActivityHandleImpl<A, R> implements ActivityHandle<A, R> {
 
         return workflowContext.callActivity(
                 this.activityName,
-                options.taskQueueName() != null
-                        ? options.taskQueueName()
-                        : this.defaultTaskQueueName,
+                options.taskQueueName() != null ? options.taskQueueName() : this.defaultTaskQueueName,
                 options.argument(),
                 this.argumentConverter,
                 this.resultConverter,
                 options.retryPolicy());
     }
-
 }

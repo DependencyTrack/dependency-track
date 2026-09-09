@@ -47,5 +47,4 @@ public final class UpdateProjectMetricsActivity implements Activity<UpdateProjec
 
         return null;
     }
-
 }

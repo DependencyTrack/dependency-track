@@ -43,10 +43,14 @@ Open one PR per backport against the patch branch, using the branch name `backpo
 
 ```shell
 git checkout -b backport-pr-1234 5.0.x
-git cherry-pick -s <sha>
+git cherry-pick -x -s <sha>
 ```
 
 Resolve any conflicts, then `git cherry-pick --continue`.
+
+> [!TIP]
+> Claude Code users can run `/backport <original-PR-number> [target-branch]` to automate
+> steps 3 and 4. See [`.claude/skills/backport`](./.claude/skills/backport/SKILL.md).
 
 ### 4. Flyway migrations
 

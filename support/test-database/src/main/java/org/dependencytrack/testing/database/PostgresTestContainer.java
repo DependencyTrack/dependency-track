@@ -71,5 +71,4 @@ public final class PostgresTestContainer extends PostgreSQLContainer {
 
         new MigrationExecutor(dataSource).execute();
     }
-
 }

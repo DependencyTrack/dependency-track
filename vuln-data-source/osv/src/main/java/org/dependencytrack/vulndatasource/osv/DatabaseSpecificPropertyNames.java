@@ -26,7 +26,5 @@ final class DatabaseSpecificPropertyNames {
     static final String CWE_IDS = "cwe_ids";
     static final String SEVERITY = "severity";
 
-    private DatabaseSpecificPropertyNames() {
-    }
-
+    private DatabaseSpecificPropertyNames() {}
 }

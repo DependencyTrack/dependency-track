@@ -52,6 +52,24 @@
           "name": "Suppressed",
           "value": "{{ subject.analysis.suppressed | escape(strategy="json") }}"
         },
+        {% if subject.policyViolation is defined %}
+        {
+          "name": "Policy",
+          "value": "{{ subject.policyViolation.condition.policy.name | escape(strategy="json") }}"
+        },
+        {
+          "name": "Subject",
+          "value": "{{ subject.policyViolation.condition.subject | escape(strategy="json") }}"
+        },
+        {
+          "name": "Operator",
+          "value": "{{ subject.policyViolation.condition.operator | escape(strategy="json") }}"
+        },
+        {
+          "name": "Value",
+          "value": "{{ subject.policyViolation.condition.value | escape(strategy="json") }}"
+        },
+        {% else %}
         {
           "name": "VulnID",
           "value": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
@@ -64,6 +82,7 @@
           "name": "Source",
           "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
         },
+        {% endif %}
         {
           "name": "Component",
           "value": "{{ subject.component | summarize | escape(strategy="json") }}"
@@ -77,15 +96,15 @@
       "facts": [
         {
           "name": "Subject",
-          "value": "{{ subject.policyViolation.policyCondition.subject | escape(strategy="json") }}"
+          "value": "{{ subject.policyViolation.condition.subject | escape(strategy="json") }}"
         },
         {
           "name": "Operator",
-          "value": "{{ subject.policyViolation.policyCondition.operator | escape(strategy="json") }}"
+          "value": "{{ subject.policyViolation.condition.operator | escape(strategy="json") }}"
         },
         {
           "name": "Value",
-          "value": "{{ subject.policyViolation.policyCondition.value | escape(strategy="json") }}"
+          "value": "{{ subject.policyViolation.condition.value | escape(strategy="json") }}"
         },
         {
           "name": "Component",
@@ -119,7 +138,7 @@
           "value": "{{ baseUrl }}/projects/{{ subject.project.uuid | escape(strategy='json') }}"
         }
       ],
-      {% elseif notification.group == "BOM_VALIDATION_FAILED" %}
+      {% elseif notification.group == "GROUP_BOM_VALIDATION_FAILED" %}
       "facts": [
         {
           "name": "Level",
@@ -143,7 +162,7 @@
         },
         {
           "name": "Errors",
-          "value": "{{ subject.errors.toString | escape(strategy='json') }}"
+          "value": "{{ subject.errorsList | join(', ') | escape(strategy='json') }}"
         }
       ],
       {% else %}

@@ -61,16 +61,24 @@ class DryRunAndSampleIT {
     @Test
     void dryRunExtractPrintsPlanAndMakesNoTargetWrites() {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        final int exit = invoke(out,
-            "extract",
-            "--target-url", target.jdbcUrl(),
-            "--target-user", target.username(),
-            "--target-pass", target.password(),
-            "--source-url", source.jdbcUrl(),
-            "--source-user", source.username(),
-            "--source-pass", source.password(),
-            "--metrics-retention-days", "90",
-            "--dry-run");
+        final int exit = invoke(
+                out,
+                "extract",
+                "--target-url",
+                target.jdbcUrl(),
+                "--target-user",
+                target.username(),
+                "--target-pass",
+                target.password(),
+                "--source-url",
+                source.jdbcUrl(),
+                "--source-user",
+                source.username(),
+                "--source-pass",
+                source.password(),
+                "--metrics-retention-days",
+                "90",
+                "--dry-run");
 
         assertThat(exit).isEqualTo(0);
 
@@ -82,10 +90,11 @@ class DryRunAndSampleIT {
         assertThat(output).contains("- LICENSE");
 
         // Dry-run must not have created the staging schema.
-        final boolean stagingExists = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'dt_v4_migration')")
-                .mapTo(Boolean.class)
-                .one());
+        final boolean stagingExists = target.jdbi()
+                .withHandle(h -> h.createQuery(
+                                "SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'dt_v4_migration')")
+                        .mapTo(Boolean.class)
+                        .one());
         assertThat(stagingExists).isFalse();
     }
 
@@ -98,21 +107,32 @@ class DryRunAndSampleIT {
         });
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        final int exit = invoke(out,
-            "run",
-            "--target-url", target.jdbcUrl(),
-            "--target-user", target.username(),
-            "--target-pass", target.password(),
-            "--source-url", source.jdbcUrl(),
-            "--source-user", source.username(),
-            "--source-pass", source.password(),
-            "--metrics-retention-days", "90",
-            "--sample", "1");
+        final int exit = invoke(
+                out,
+                "run",
+                "--target-url",
+                target.jdbcUrl(),
+                "--target-user",
+                target.username(),
+                "--target-pass",
+                target.password(),
+                "--source-url",
+                source.jdbcUrl(),
+                "--source-user",
+                source.username(),
+                "--source-pass",
+                source.password(),
+                "--metrics-retention-days",
+                "90",
+                "--sample",
+                "1");
 
         assertThat(exit).isEqualTo(0);
 
-        final Long count = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT count(*) FROM \"LICENSE\"").mapTo(Long.class).one());
+        final Long count = target.jdbi()
+                .withHandle(h -> h.createQuery("SELECT count(*) FROM \"LICENSE\"")
+                        .mapTo(Long.class)
+                        .one());
         assertThat(count).isEqualTo(1L);
     }
 
@@ -123,10 +143,10 @@ class DryRunAndSampleIT {
                         INSERT INTO "LICENSE" ("ID", "ISDEPRECATED", "ISOSIAPPROVED", "NAME", "UUID")
                         VALUES (:id, FALSE, TRUE, :name, :u)
                     """)
-                    .bind("id", i)
-                    .bind("name", "License-" + i)
-                    .bind("u", UUID.randomUUID().toString())
-                    .execute();
+                        .bind("id", i)
+                        .bind("name", "License-" + i)
+                        .bind("u", UUID.randomUUID().toString())
+                        .execute();
             }
         });
     }

@@ -37,7 +37,8 @@ public final class TransformCommand extends AbstractMigratorCommand {
     protected void printPlan() {
         System.out.println("  Phase:  transform");
         System.out.println("  Staging schema: " + global.stagingSchema);
-        System.out.println("  Tables to transform (" + TableRegistry.transformed().size() + "):");
+        System.out.println(
+                "  Tables to transform (" + TableRegistry.transformed().size() + "):");
         TableRegistry.transformed().forEach(t -> System.out.println("    - " + t.name()));
     }
 }

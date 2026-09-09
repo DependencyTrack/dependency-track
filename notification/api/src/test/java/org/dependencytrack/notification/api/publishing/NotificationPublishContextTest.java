@@ -32,8 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class NotificationPublishContextTest {
 
-    private final NotificationTemplateRenderer noopTemplateRenderer =
-            (notification, additionalContext) -> null;
+    private final NotificationTemplateRenderer noopTemplateRenderer = (notification, additionalContext) -> null;
 
     @Nested
     class ConstructorTest {
@@ -51,7 +50,6 @@ class NotificationPublishContextTest {
                     .isThrownBy(() -> new NotificationPublishContext(null, null, noopTemplateRenderer))
                     .withMessage("ruleContactsSupplier must not be null");
         }
-
     }
 
     @Nested
@@ -81,7 +79,5 @@ class NotificationPublishContextTest {
             assertThat(context.ruleContacts()).isEmpty();
             assertThat(supplierInvocationCount).hasValue(1);
         }
-
     }
-
 }

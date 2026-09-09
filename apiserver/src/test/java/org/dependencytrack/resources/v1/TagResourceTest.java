@@ -20,10 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.json.JsonArray;
-import jakarta.ws.rs.HttpMethod;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -41,6 +37,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.json.JsonArray;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -56,9 +57,7 @@ class TagResourceTest extends ResourceTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(TagResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+            new ResourceConfig(TagResource.class).register(ApiFilter.class).register(AuthFeature.class));
 
     @Test
     void getTagsTest() {
@@ -68,8 +67,7 @@ class TagResourceTest extends ResourceTest {
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
                 "true",
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
+                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
 
         final var projectA = new Project();
         projectA.setName("acme-app-a");
@@ -137,10 +135,8 @@ class TagResourceTest extends ResourceTest {
         qm.persist(vulnA);
         qm.bind(vulnA, List.of(tagFoo));
 
-        final Response response = jersey.target(V1_TAG)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Response response =
+                jersey.target(V1_TAG).request().header(X_API_KEY, apiKey).get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("2");
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
@@ -372,7 +368,7 @@ class TagResourceTest extends ResourceTest {
                 .method(HttpMethod.DELETE, Entity.json(List.of("foo")));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */"""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "status": 400,
                   "title": "Tag operation failed",
@@ -406,6 +402,8 @@ class TagResourceTest extends ResourceTest {
 
         qm.getPersistenceManager().evictAll();
         assertThat(qm.getTagByName("foo")).isNull();
+        assertThat(qm.getTagByName("bar")).isNull();
+        assertThat(qm.getObjectById(Project.class, project.getId()).getTags()).isEmpty();
     }
 
     @Test
@@ -428,7 +426,7 @@ class TagResourceTest extends ResourceTest {
                 .method(HttpMethod.DELETE, Entity.json(List.of(unusedTag.getName(), usedTag.getName())));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */"""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "status": 400,
                   "title": "Tag operation failed",
@@ -452,8 +450,7 @@ class TagResourceTest extends ResourceTest {
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
                 "true",
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
+                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
 
         final Tag unusedTag = qm.createTag("foo");
         final Tag usedTag = qm.createTag("bar");
@@ -478,7 +475,7 @@ class TagResourceTest extends ResourceTest {
                 .method(HttpMethod.DELETE, Entity.json(List.of(unusedTag.getName(), usedTag.getName())));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */"""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "status": 400,
                   "title": "Tag operation failed",
@@ -578,7 +575,7 @@ class TagResourceTest extends ResourceTest {
                 .method(HttpMethod.DELETE, Entity.json(List.of(unusedTag.getName(), usedTag.getName())));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */"""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "status": 400,
                   "title": "Tag operation failed",
@@ -602,8 +599,7 @@ class TagResourceTest extends ResourceTest {
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
                 "true",
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
+                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
 
         final var projectA = new Project();
         projectA.setName("acme-app-a");
@@ -637,7 +633,7 @@ class TagResourceTest extends ResourceTest {
         assertThatJson(getPlainTextBody(response))
                 .withMatcher("projectUuidA", equalTo(projectA.getUuid().toString()))
                 .withMatcher("projectUuidB", equalTo(projectB.getUuid().toString()))
-                .isEqualTo(/* language=JSON */"""
+                .isEqualTo(/* language=JSON */ """
                         [
                           {
                             "uuid": "${json-unit.matches:projectUuidA}",
@@ -762,13 +758,14 @@ class TagResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(204);
 
         qm.getPersistenceManager().evictAll();
-        assertThat(projectA.getTags()).satisfiesExactly(
-                projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
-        assertThat(projectB.getTags()).satisfiesExactly(
-                projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
-        assertThat(projectC.getTags()).satisfiesExactlyInAnyOrder(
-                projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"),
-                projectTag -> assertThat(projectTag.getName()).isEqualTo("bar"));
+        assertThat(projectA.getTags())
+                .satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+        assertThat(projectB.getTags())
+                .satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+        assertThat(projectC.getTags())
+                .satisfiesExactlyInAnyOrder(
+                        projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"),
+                        projectTag -> assertThat(projectTag.getName()).isEqualTo("bar"));
     }
 
     @Test
@@ -823,8 +820,7 @@ class TagResourceTest extends ResourceTest {
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
                 "true",
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
+                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
 
         final var projectA = new Project();
         projectA.setName("acme-app-a");
@@ -845,7 +841,8 @@ class TagResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(204);
 
         qm.getPersistenceManager().evictAll();
-        assertThat(projectA.getTags()).satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+        assertThat(projectA.getTags())
+                .satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
         assertThat(projectB.getTags()).isEmpty();
     }
 
@@ -866,7 +863,8 @@ class TagResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(204);
 
         qm.getPersistenceManager().evictAll();
-        assertThat(project.getTags()).satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+        assertThat(project.getTags())
+                .satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
     }
 
     @Test
@@ -904,8 +902,7 @@ class TagResourceTest extends ResourceTest {
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
                 "true",
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
+                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
 
         final var projectA = new Project();
         projectA.setName("acme-app-a");
@@ -930,7 +927,8 @@ class TagResourceTest extends ResourceTest {
 
         qm.getPersistenceManager().evictAll();
         assertThat(projectA.getTags()).isEmpty();
-        assertThat(projectB.getTags()).satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+        assertThat(projectB.getTags())
+                .satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
     }
 
     @Test
@@ -1036,8 +1034,7 @@ class TagResourceTest extends ResourceTest {
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
                 "true",
                 ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
-        );
+                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
 
         final Tag tagFoo = qm.createTag("foo");
         final Tag tagBar = qm.createTag("bar");
@@ -1322,13 +1319,14 @@ class TagResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(204);
 
         qm.getPersistenceManager().evictAll();
-        assertThat(policyA.getTags()).satisfiesExactly(
-                policyTag -> assertThat(policyTag.getName()).isEqualTo("foo"));
-        assertThat(policyB.getTags()).satisfiesExactly(
-                policyTag -> assertThat(policyTag.getName()).isEqualTo("foo"));
-        assertThat(policyC.getTags()).satisfiesExactlyInAnyOrder(
-                policyTag -> assertThat(policyTag.getName()).isEqualTo("foo"),
-                policyTag -> assertThat(policyTag.getName()).isEqualTo("bar"));
+        assertThat(policyA.getTags())
+                .satisfiesExactly(policyTag -> assertThat(policyTag.getName()).isEqualTo("foo"));
+        assertThat(policyB.getTags())
+                .satisfiesExactly(policyTag -> assertThat(policyTag.getName()).isEqualTo("foo"));
+        assertThat(policyC.getTags())
+                .satisfiesExactlyInAnyOrder(
+                        policyTag -> assertThat(policyTag.getName()).isEqualTo("foo"),
+                        policyTag -> assertThat(policyTag.getName()).isEqualTo("bar"));
     }
 
     @Test
@@ -1519,8 +1517,24 @@ class TagResourceTest extends ResourceTest {
         for (int i = 1; i < 5; i++) {
             qm.createTag("Tag " + i);
         }
-        qm.createProject("Project A", null, "1", List.of(qm.getTagByName("Tag 1"), qm.getTagByName("Tag 2")), null, null, null, false);
-        qm.createProject("Project B", null, "1", List.of(qm.getTagByName("Tag 2"), qm.getTagByName("Tag 3"), qm.getTagByName("Tag 4")), null, null, null, false);
+        qm.createProject(
+                "Project A",
+                null,
+                "1",
+                List.of(qm.getTagByName("Tag 1"), qm.getTagByName("Tag 2")),
+                null,
+                null,
+                null,
+                false);
+        qm.createProject(
+                "Project B",
+                null,
+                "1",
+                List.of(qm.getTagByName("Tag 2"), qm.getTagByName("Tag 3"), qm.getTagByName("Tag 4")),
+                null,
+                null,
+                null,
+                false);
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
 
         Response response = jersey.target(V1_TAG + "/policy/" + policy.getUuid())
@@ -1542,11 +1556,16 @@ class TagResourceTest extends ResourceTest {
 
         Assertions.assertEquals(200, response.getStatus());
         Assertions.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
-        json = parseJsonArray(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals(2, json.size());
-        Assertions.assertEquals("tag 1", json.getJsonObject(0).getString("name"));
-        Assertions.assertEquals("tag 4", json.getJsonObject(1).getString("name"));
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "name": "tag 1"
+                  },
+                  {
+                    "name": "tag 4"
+                  }
+                ]
+                """);
     }
 
     @Test
@@ -1555,9 +1574,33 @@ class TagResourceTest extends ResourceTest {
         for (int i = 1; i < 5; i++) {
             qm.createTag("Tag " + i);
         }
-        qm.createProject("Project A", null, "1", List.of(qm.getTagByName("Tag 1"), qm.getTagByName("Tag 2")), null, null, null, false);
-        qm.createProject("Project B", null, "1", List.of(qm.getTagByName("Tag 1"), qm.getTagByName("Tag 3")), null, null, null, false);
-        qm.createProject("Project C", null, "1", List.of(qm.getTagByName("Tag 1"), qm.getTagByName("Tag 4")), null, null, null, false);
+        qm.createProject(
+                "Project A",
+                null,
+                "1",
+                List.of(qm.getTagByName("Tag 1"), qm.getTagByName("Tag 2")),
+                null,
+                null,
+                null,
+                false);
+        qm.createProject(
+                "Project B",
+                null,
+                "1",
+                List.of(qm.getTagByName("Tag 1"), qm.getTagByName("Tag 3")),
+                null,
+                null,
+                null,
+                false);
+        qm.createProject(
+                "Project C",
+                null,
+                "1",
+                List.of(qm.getTagByName("Tag 1"), qm.getTagByName("Tag 4")),
+                null,
+                null,
+                null,
+                false);
 
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         policy.setProjects(List.of(qm.getProject("Project A", "1"), qm.getProject("Project C", "1")));
@@ -1684,7 +1727,9 @@ class TagResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         assertThatJson(getPlainTextBody(response))
-                .withMatcher("notificationRuleUuidA", equalTo(notificationRuleA.getUuid().toString()))
+                .withMatcher(
+                        "notificationRuleUuidA",
+                        equalTo(notificationRuleA.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         [
                           {
@@ -1815,17 +1860,19 @@ class TagResourceTest extends ResourceTest {
         final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
                 .request()
                 .header(X_API_KEY, apiKey)
-                .post(Entity.json(List.of(notificationRuleA.getUuid(), notificationRuleB.getUuid(), notificationRuleC.getUuid())));
+                .post(Entity.json(List.of(
+                        notificationRuleA.getUuid(), notificationRuleB.getUuid(), notificationRuleC.getUuid())));
         assertThat(response.getStatus()).isEqualTo(204);
 
         qm.getPersistenceManager().evictAll();
-        assertThat(notificationRuleA.getTags()).satisfiesExactly(
-                ruleTag -> assertThat(ruleTag.getName()).isEqualTo("foo"));
-        assertThat(notificationRuleB.getTags()).satisfiesExactly(
-                ruleTag -> assertThat(ruleTag.getName()).isEqualTo("foo"));
-        assertThat(notificationRuleC.getTags()).satisfiesExactlyInAnyOrder(
-                ruleTag -> assertThat(ruleTag.getName()).isEqualTo("foo"),
-                ruleTag -> assertThat(ruleTag.getName()).isEqualTo("bar"));
+        assertThat(notificationRuleA.getTags())
+                .satisfiesExactly(ruleTag -> assertThat(ruleTag.getName()).isEqualTo("foo"));
+        assertThat(notificationRuleB.getTags())
+                .satisfiesExactly(ruleTag -> assertThat(ruleTag.getName()).isEqualTo("foo"));
+        assertThat(notificationRuleC.getTags())
+                .satisfiesExactlyInAnyOrder(
+                        ruleTag -> assertThat(ruleTag.getName()).isEqualTo("foo"),
+                        ruleTag -> assertThat(ruleTag.getName()).isEqualTo("bar"));
     }
 
     @Test
@@ -1900,7 +1947,9 @@ class TagResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
-                .method(HttpMethod.DELETE, Entity.json(List.of(notificationRuleA.getUuid(), notificationRuleB.getUuid())));
+                .method(
+                        HttpMethod.DELETE,
+                        Entity.json(List.of(notificationRuleA.getUuid(), notificationRuleB.getUuid())));
         assertThat(response.getStatus()).isEqualTo(204);
 
         qm.getPersistenceManager().evictAll();

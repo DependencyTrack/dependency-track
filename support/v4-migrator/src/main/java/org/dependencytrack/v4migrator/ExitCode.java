@@ -29,6 +29,5 @@ public final class ExitCode {
     public static final int SCHEMA_VERSION_MISMATCH = 3;
     public static final int PREFLIGHT_FAILED = 4;
 
-    private ExitCode() {
-    }
+    private ExitCode() {}
 }

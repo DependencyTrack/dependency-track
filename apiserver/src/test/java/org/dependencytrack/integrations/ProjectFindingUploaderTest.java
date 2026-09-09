@@ -44,6 +44,7 @@ public class ProjectFindingUploaderTest {
             public int read() throws IOException {
                 return 1;
             }
+
             @Override
             public int available() throws IOException {
                 return 1;

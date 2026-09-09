@@ -56,9 +56,8 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final byte[] latestBody = fetchLatestRelease(purl.getNamespace(), purl.getName(), repository);
@@ -71,7 +70,8 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
         if (tagName == null) {
             return null;
         }
-        final var latestVersionPublishedAt = parseArtifactDate(root.path("published_at").asText(null));
+        final var latestVersionPublishedAt =
+                parseArtifactDate(root.path("published_at").asText(null));
 
         final var resolvedAt = Instant.now();
 
@@ -84,15 +84,13 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
             // (e.g. "deadbeef"). Try the commit endpoint first, and on 404 fall through to the
             // release-by-tag lookup, so legitimate hex tags still resolve.
             if (COMMIT_SHA_PATTERN.matcher(version).matches()) {
-                final byte[] commitBody = fetchCommit(
-                        purl.getNamespace(), purl.getName(), version, repository);
+                final byte[] commitBody = fetchCommit(purl.getNamespace(), purl.getName(), version, repository);
                 if (commitBody != null) {
                     artifactMetadata = extractCommitArtifactMetadata(parseJson(commitBody), resolvedAt);
                 }
             }
             if (artifactMetadata == null) {
-                final byte[] versionBody = fetchReleaseByTag(
-                        purl.getNamespace(), purl.getName(), version, repository);
+                final byte[] versionBody = fetchReleaseByTag(purl.getNamespace(), purl.getName(), version, repository);
                 if (versionBody != null) {
                     artifactMetadata = extractReleaseArtifactMetadata(parseJson(versionBody), resolvedAt);
                 }
@@ -102,28 +100,20 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
         return new PackageMetadata(tagName, latestVersionPublishedAt, resolvedAt, artifactMetadata);
     }
 
-    private byte @Nullable [] fetchLatestRelease(
-            String owner,
-            String name,
-            PackageRepository repository) throws InterruptedException {
+    private byte @Nullable [] fetchLatestRelease(String owner, String name, PackageRepository repository)
+            throws InterruptedException {
         final String url = UrlUtils.join(repository.url(), "repos", owner, name, "releases", "latest");
         return fetch(url, repository);
     }
 
-    private byte @Nullable [] fetchReleaseByTag(
-            String owner,
-            String name,
-            String tag,
-            PackageRepository repository) throws InterruptedException {
+    private byte @Nullable [] fetchReleaseByTag(String owner, String name, String tag, PackageRepository repository)
+            throws InterruptedException {
         final String url = UrlUtils.join(repository.url(), "repos", owner, name, "releases", "tags", tag);
         return fetch(url, repository);
     }
 
-    private byte @Nullable [] fetchCommit(
-            String owner,
-            String name,
-            String sha,
-            PackageRepository repository) throws InterruptedException {
+    private byte @Nullable [] fetchCommit(String owner, String name, String sha, PackageRepository repository)
+            throws InterruptedException {
         final String url = UrlUtils.join(repository.url(), "repos", owner, name, "commits", sha);
         return fetch(url, repository);
     }
@@ -144,7 +134,7 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
 
     private static @Nullable PackageArtifactMetadata extractReleaseArtifactMetadata(JsonNode root, Instant resolvedAt) {
         var artifactDate = parseArtifactDate(root.path("published_at").asText(null));
-        return artifactDate != null ? new PackageArtifactMetadata(resolvedAt, artifactDate, Map.of()) :  null;
+        return artifactDate != null ? new PackageArtifactMetadata(resolvedAt, artifactDate, Map.of()) : null;
     }
 
     private static @Nullable PackageArtifactMetadata extractCommitArtifactMetadata(JsonNode root, Instant resolvedAt) {
@@ -161,7 +151,7 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
         }
 
         var artifactDate = parseArtifactDate(dateStr);
-        return artifactDate != null ? new PackageArtifactMetadata(resolvedAt, artifactDate, Map.of()) :  null;
+        return artifactDate != null ? new PackageArtifactMetadata(resolvedAt, artifactDate, Map.of()) : null;
     }
 
     private static @Nullable Instant parseArtifactDate(@Nullable String dateStr) {
@@ -182,5 +172,4 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
             throw new UncheckedIOException(e);
         }
     }
-
 }

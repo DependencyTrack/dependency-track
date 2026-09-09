@@ -59,8 +59,7 @@ public final class LeaseDao extends AbstractDao {
                    and not exists(select 1 from cte_acquisition)
                 """);
 
-        final String leaseHolder = query
-                .bind("name", name)
+        final String leaseHolder = query.bind("name", name)
                 .bind("instanceId", instanceId)
                 .bind("duration", duration)
                 .mapTo(String.class)
@@ -81,10 +80,6 @@ public final class LeaseDao extends AbstractDao {
                    and acquired_by = :instanceId
                 """);
 
-        return update
-                .bind("name", name)
-                .bind("instanceId", instanceId)
-                .execute() > 0;
+        return update.bind("name", name).bind("instanceId", instanceId).execute() > 0;
     }
-
 }

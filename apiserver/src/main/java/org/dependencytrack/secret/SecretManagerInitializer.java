@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.secret;
 
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
 import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.pagination.SimplePageTokenEncoder;
 import org.dependencytrack.secret.management.SecretManager;
@@ -29,6 +27,9 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import java.util.ServiceLoader;
 
@@ -56,19 +57,16 @@ public final class SecretManagerInitializer implements ServletContextListener {
         final String providerName = config.getValue(ConfigKeys.SECRET_MANAGEMENT_PROVIDER, String.class);
         LOGGER.info("Initializing secret manager for provider '{}'", providerName);
 
-        final var secretManagerProvider =
-                ServiceLoader.load(SecretManagerProvider.class).stream()
-                        .map(ServiceLoader.Provider::get)
-                        .filter(factory -> providerName.equals(factory.name()))
-                        .findAny()
-                        .orElseThrow(() -> new IllegalStateException(
-                                "No secret management provider found for name: " + providerName));
+        final var secretManagerProvider = ServiceLoader.load(SecretManagerProvider.class).stream()
+                .map(ServiceLoader.Provider::get)
+                .filter(factory -> providerName.equals(factory.name()))
+                .findAny()
+                .orElseThrow(() ->
+                        new IllegalStateException("No secret management provider found for name: " + providerName));
 
         secretManager = secretManagerProvider.create(config, new SimplePageTokenEncoder());
 
-        event.getServletContext().setAttribute(
-                SecretManager.class.getName(),
-                secretManager);
+        event.getServletContext().setAttribute(SecretManager.class.getName(), secretManager);
     }
 
     @Override
@@ -79,5 +77,4 @@ public final class SecretManagerInitializer implements ServletContextListener {
             secretManager = null;
         }
     }
-
 }

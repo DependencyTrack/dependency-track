@@ -22,9 +22,7 @@ package org.dependencytrack.common.pagination;
  * @since 5.0.0
  */
 public enum SortDirection {
-
     ASC,
 
     DESC
-
 }

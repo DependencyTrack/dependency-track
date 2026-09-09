@@ -29,18 +29,12 @@ import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.api.storage.KeyValueStore;
-import org.dependencytrack.plugin.testing.MockConfigRegistry;
-import org.dependencytrack.plugin.testing.MockKeyValueStore;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.http.HttpClient;
 import java.time.Instant;
-import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -98,11 +92,7 @@ class PypiPackageMetadataResolverTest {
 
         factory = new PypiPackageMetadataResolverFactory();
         factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                        .register(CacheManager.class, cacheManager)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+                new ExtensionContextBuilder().withCacheManager(cacheManager).build());
         resolver = factory.create();
     }
 
@@ -137,7 +127,8 @@ class PypiPackageMetadataResolverTest {
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().hashes())
                 .containsEntry(HashAlgorithm.MD5, "aaaa1111bbbb2222cccc3333dddd4444")
-                .containsEntry(HashAlgorithm.SHA256, "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222");
+                .containsEntry(
+                        HashAlgorithm.SHA256, "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222");
     }
 
     @Test
@@ -161,7 +152,8 @@ class PypiPackageMetadataResolverTest {
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().hashes())
                 .containsEntry(HashAlgorithm.MD5, "bbbb2222cccc3333dddd4444eeee5555")
-                .containsEntry(HashAlgorithm.SHA256, "bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222cccc3333");
+                .containsEntry(
+                        HashAlgorithm.SHA256, "bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222cccc3333");
     }
 
     @Test
@@ -254,8 +246,7 @@ class PypiPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -311,5 +302,4 @@ class PypiPackageMetadataResolverTest {
         assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-11-06T22:37:09.220617Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
-
 }

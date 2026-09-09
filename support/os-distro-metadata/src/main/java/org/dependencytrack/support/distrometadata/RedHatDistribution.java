@@ -157,5 +157,4 @@ public record RedHatDistribution(String majorVersion) implements OsDistribution 
                 || product.equals("rhel_virtualization")
                 || product.startsWith("rhel_extras");
     }
-
 }

@@ -87,8 +87,8 @@ class MetricsRetentionIT {
 
         runPipeline(90);
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "COMPONENT_ID",
                            date_trunc('day', "LAST_OCCURRENCE") AS d
                       FROM "DEPENDENCYMETRICS"

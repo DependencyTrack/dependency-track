@@ -34,8 +34,8 @@ public class VersionDistanceTest {
         assertEquals("1:?.?.?", new VersionDistance("1:?").toString());
         assertEquals("0:0.0.0", new VersionDistance().toString());
         assertEquals("0:0.0.0", new VersionDistance(null).toString());
-        assertEquals("0:0.0.0", new VersionDistance(0,0,0).toString());
-        assertEquals("0:1.?.?", new VersionDistance(1, -1,-1).toString());
+        assertEquals("0:0.0.0", new VersionDistance(0, 0, 0).toString());
+        assertEquals("0:1.?.?", new VersionDistance(1, -1, -1).toString());
         assertEquals("0:0.2.?", new VersionDistance(0, 2, -1).toString());
         assertEquals("0:0.2.?", new VersionDistance("0:0.2").toString());
         assertEquals("0:2.?.?", new VersionDistance("2").toString());
@@ -126,12 +126,18 @@ public class VersionDistanceTest {
 
     @Test
     public void testParse() {
-        assertEquals(Arrays.asList(new VersionDistance(0,1,-1)), VersionDistance.parse("0.1.?"));
-        assertEquals(Arrays.asList(new VersionDistance(1,-1,-1), new VersionDistance(0,1,-1)), VersionDistance.parse("1.1.?"));
-        assertEquals(Arrays.asList(new VersionDistance(1, -1,-1,-1), new VersionDistance(1,-1, -1), new VersionDistance(0,1,-1)), VersionDistance.parse("1:1.1.?"));
+        assertEquals(Arrays.asList(new VersionDistance(0, 1, -1)), VersionDistance.parse("0.1.?"));
+        assertEquals(
+                Arrays.asList(new VersionDistance(1, -1, -1), new VersionDistance(0, 1, -1)),
+                VersionDistance.parse("1.1.?"));
+        assertEquals(
+                Arrays.asList(
+                        new VersionDistance(1, -1, -1, -1),
+                        new VersionDistance(1, -1, -1),
+                        new VersionDistance(0, 1, -1)),
+                VersionDistance.parse("1:1.1.?"));
         assertEquals(Arrays.asList(), VersionDistance.parse("0:?.?.?"));
 
         assertThrows(IllegalArgumentException.class, () -> VersionDistance.parse("1.2.3a.1"));
     }
-
 }

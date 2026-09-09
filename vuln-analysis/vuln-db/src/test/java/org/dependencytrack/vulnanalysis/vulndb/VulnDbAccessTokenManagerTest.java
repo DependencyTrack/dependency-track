@@ -46,9 +46,7 @@ class VulnDbAccessTokenManagerTest {
     @BeforeEach
     void beforeEach(WireMockRuntimeInfo wmRuntimeInfo) {
         apiBaseUrl = URI.create(wmRuntimeInfo.getHttpBaseUrl());
-        tokenManager = new VulnDbAccessTokenManager(
-                HttpClient.newHttpClient(),
-                new ObjectMapper());
+        tokenManager = new VulnDbAccessTokenManager(HttpClient.newHttpClient(), new ObjectMapper());
     }
 
     @Test
@@ -136,13 +134,10 @@ class VulnDbAccessTokenManagerTest {
     @Test
     void shouldThrowOnTokenEndpointError() {
         stubFor(post(urlPathEqualTo("/oauth/token"))
-                .willReturn(aResponse()
-                        .withStatus(401)
-                        .withBody("Unauthorized")));
+                .willReturn(aResponse().withStatus(401).withBody("Unauthorized")));
 
         assertThatThrownBy(() -> tokenManager.getAccessToken(apiBaseUrl, "bad-id", "bad-secret"))
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("401");
     }
-
 }

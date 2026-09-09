@@ -18,13 +18,14 @@
  */
 package org.dependencytrack.vulndatasource;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import jakarta.servlet.ServletContext;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.ServletContext;
 
 import static java.util.Objects.requireNonNull;
 
@@ -59,9 +60,6 @@ public final class VulnDataSourceMirrorServiceBinder extends AbstractBinder {
         }
 
         @Override
-        public void dispose(VulnDataSourceMirrorService instance) {
-        }
-
+        public void dispose(VulnDataSourceMirrorService instance) {}
     }
-
 }

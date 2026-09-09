@@ -48,7 +48,8 @@ final class WorkflowRunMetadataRowMapper implements RowMapper<WorkflowRunMetadat
 
     @Override
     public void init(final ConfigRegistry registry) {
-        instantColumnMapper = registry.get(ColumnMappers.class).findFor(Instant.class).orElseThrow();
+        instantColumnMapper =
+                registry.get(ColumnMappers.class).findFor(Instant.class).orElseThrow();
         labelsJsonMapper = registry.get(JsonConfig.class).getJsonMapper().forType(LABELS_TYPE, registry);
     }
 
@@ -75,7 +76,8 @@ final class WorkflowRunMetadataRowMapper implements RowMapper<WorkflowRunMetadat
     }
 
     @SuppressWarnings("unchecked")
-    private @Nullable Map<String, String> getLabels(final ResultSet rs, final StatementContext ctx) throws SQLException {
+    private @Nullable Map<String, String> getLabels(final ResultSet rs, final StatementContext ctx)
+            throws SQLException {
         requireNonNull(labelsJsonMapper);
 
         final String labelsJson = rs.getString("labels");
@@ -85,5 +87,4 @@ final class WorkflowRunMetadataRowMapper implements RowMapper<WorkflowRunMetadat
 
         return (Map<String, String>) labelsJsonMapper.fromJson(labelsJson, ctx.getConfig());
     }
-
 }

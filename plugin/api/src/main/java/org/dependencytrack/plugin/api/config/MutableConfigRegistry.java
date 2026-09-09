@@ -45,5 +45,4 @@ public interface MutableConfigRegistry extends ConfigRegistry {
      * @return {@code true} when the config was updated, {@code false} when it wasn't.
      */
     boolean setRawRuntimeConfig(String configJson);
-
 }

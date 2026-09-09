@@ -19,7 +19,6 @@
 package org.dependencytrack.resources.v2;
 
 import com.google.protobuf.util.Timestamps;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -42,6 +41,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import jakarta.ws.rs.core.Response;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -61,14 +62,12 @@ class WorkflowsResourceTest extends ResourceTest {
     private static final DexEngine DEX_ENGINE_MOCK = mock(DexEngine.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(new AbstractBinder() {
+        @Override
+        protected void configure() {
+            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+        }
+    }));
 
     @AfterEach
     void afterEach() {
@@ -96,11 +95,9 @@ class WorkflowsResourceTest extends ResourceTest {
                 Instant.ofEpochMilli(888888),
                 null);
 
-        doReturn(workflowRunMetadata)
-                .when(DEX_ENGINE_MOCK).getRunMetadataByInstanceId(eq("foo"));
+        doReturn(workflowRunMetadata).when(DEX_ENGINE_MOCK).getRunMetadataByInstanceId(eq("foo"));
 
-        final Response response = jersey
-                .target("/internal/workflow-instances/foo")
+        final Response response = jersey.target("/internal/workflow-instances/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -129,11 +126,9 @@ class WorkflowsResourceTest extends ResourceTest {
     void getWorkflowInstanceShouldReturnNotFoundWhenNoMatchingRunExists() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        doReturn(null)
-                .when(DEX_ENGINE_MOCK).getRunMetadataByInstanceId(eq("foo"));
+        doReturn(null).when(DEX_ENGINE_MOCK).getRunMetadataByInstanceId(eq("foo"));
 
-        final Response response = jersey
-                .target("/internal/workflow-instances/foo")
+        final Response response = jersey.target("/internal/workflow-instances/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -170,11 +165,9 @@ class WorkflowsResourceTest extends ResourceTest {
                 Instant.ofEpochMilli(888888),
                 null);
 
-        doReturn(workflowRunMetadata)
-                .when(DEX_ENGINE_MOCK).getRunMetadataById(eq(runId));
+        doReturn(workflowRunMetadata).when(DEX_ENGINE_MOCK).getRunMetadataById(eq(runId));
 
-        final Response response = jersey
-                .target("/internal/workflow-runs/%s".formatted(runId))
+        final Response response = jersey.target("/internal/workflow-runs/%s".formatted(runId))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -205,11 +198,9 @@ class WorkflowsResourceTest extends ResourceTest {
 
         final var runId = UUID.fromString("724c0700-4eeb-45f0-8ff4-8bba369c0174");
 
-        doReturn(null)
-                .when(DEX_ENGINE_MOCK).getRunMetadataById(eq(runId));
+        doReturn(null).when(DEX_ENGINE_MOCK).getRunMetadataById(eq(runId));
 
-        final Response response = jersey
-                .target("/internal/workflow-runs/%s".formatted(runId))
+        final Response response = jersey.target("/internal/workflow-runs/%s".formatted(runId))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -246,16 +237,15 @@ class WorkflowsResourceTest extends ResourceTest {
                 null);
 
         doReturn(new Page<>(List.of(workflowRunMetadata), null).withTotalCount(1, TotalCount.Type.EXACT))
-                .when(DEX_ENGINE_MOCK).listRuns(any(ListWorkflowRunsRequest.class));
+                .when(DEX_ENGINE_MOCK)
+                .listRuns(any(ListWorkflowRunsRequest.class));
 
-        final Response response = jersey
-                .target("/internal/workflow-runs")
+        final Response response = jersey.target("/internal/workflow-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                         {
                           "items": [
                             {
@@ -287,11 +277,9 @@ class WorkflowsResourceTest extends ResourceTest {
     public void listWorkflowRunsShouldPassQueryParametersToDexEngine() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        doReturn(Page.empty())
-                .when(DEX_ENGINE_MOCK).listRuns(any(ListWorkflowRunsRequest.class));
+        doReturn(Page.empty()).when(DEX_ENGINE_MOCK).listRuns(any(ListWorkflowRunsRequest.class));
 
-        final Response response = jersey
-                .target("/internal/workflow-runs")
+        final Response response = jersey.target("/internal/workflow-runs")
                 .queryParam("workflow_name", "testWorkflow")
                 .queryParam("workflow_version", 42)
                 .queryParam("workflow_instance_id", "instance-123")
@@ -333,8 +321,7 @@ class WorkflowsResourceTest extends ResourceTest {
     public void listWorkflowRunsShouldReturn400WhenLabelFilterIsMalformed() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        final Response missingEquals = jersey
-                .target("/internal/workflow-runs")
+        final Response missingEquals = jersey.target("/internal/workflow-runs")
                 .queryParam("label", "noEqualsSign")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -356,8 +343,7 @@ class WorkflowsResourceTest extends ResourceTest {
                 }
                 """);
 
-        final Response emptyKey = jersey
-                .target("/internal/workflow-runs")
+        final Response emptyKey = jersey.target("/internal/workflow-runs")
                 .queryParam("label", "=value")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -384,8 +370,7 @@ class WorkflowsResourceTest extends ResourceTest {
     public void shouldReturn400WhenSortByFieldIsNotSupportedForListWorkflowRuns() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        final Response response = jersey
-                .target("/internal/workflow-runs")
+        final Response response = jersey.target("/internal/workflow-runs")
                 .queryParam("sort_by", "invalid_field")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -418,17 +403,17 @@ class WorkflowsResourceTest extends ResourceTest {
                         .build())
                 .build();
 
-        doReturn(new Page<>(List.of(new WorkflowRunHistoryEntry(0, event)), null).withTotalCount(1, TotalCount.Type.EXACT))
-                .when(DEX_ENGINE_MOCK).listRunHistory(any(ListWorkflowRunHistoryRequest.class));
+        doReturn(new Page<>(List.of(new WorkflowRunHistoryEntry(0, event)), null)
+                        .withTotalCount(1, TotalCount.Type.EXACT))
+                .when(DEX_ENGINE_MOCK)
+                .listRunHistory(any(ListWorkflowRunHistoryRequest.class));
 
-        final Response response = jersey
-                .target("/internal/workflow-runs/de10c1ec-959e-486d-a031-deb97963ff7c/events")
+        final Response response = jersey.target("/internal/workflow-runs/de10c1ec-959e-486d-a031-deb97963ff7c/events")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                         {
                           "items": [
                             {
@@ -461,11 +446,9 @@ class WorkflowsResourceTest extends ResourceTest {
     void listWorkflowRunEventsShouldPassQueryParametersToDexEngine() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        doReturn(Page.empty())
-                .when(DEX_ENGINE_MOCK).listRunHistory(any(ListWorkflowRunHistoryRequest.class));
+        doReturn(Page.empty()).when(DEX_ENGINE_MOCK).listRunHistory(any(ListWorkflowRunHistoryRequest.class));
 
-        final Response response = jersey
-                .target("/internal/workflow-runs/de10c1ec-959e-486d-a031-deb97963ff7c/events")
+        final Response response = jersey.target("/internal/workflow-runs/de10c1ec-959e-486d-a031-deb97963ff7c/events")
                 .queryParam("from_sequence_number", 42)
                 .queryParam("limit", 25)
                 .queryParam("sort_direction", "DESC")
@@ -484,5 +467,4 @@ class WorkflowsResourceTest extends ResourceTest {
         assertThat(capturedRequest.sortDirection()).isEqualTo(SortDirection.DESC);
         assertThat(capturedRequest.pageToken()).isNull();
     }
-
 }

@@ -92,5 +92,4 @@ public abstract class AbstractTest {
                         entry(PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL, "true")),
                 "test");
     }
-
 }

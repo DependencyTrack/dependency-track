@@ -30,8 +30,7 @@ public final class ConfigFactory extends SmallRyeConfigFactory {
 
     @Override
     public SmallRyeConfig getConfigFor(
-            final SmallRyeConfigProviderResolver configProviderResolver,
-            final ClassLoader classLoader) {
+            final SmallRyeConfigProviderResolver configProviderResolver, final ClassLoader classLoader) {
         return new SmallRyeConfigBuilder()
                 .forClassLoader(classLoader)
                 // Enable default config sources:
@@ -63,5 +62,4 @@ public final class ConfigFactory extends SmallRyeConfigFactory {
                 .addDiscoveredCustomizers()
                 .build();
     }
-
 }

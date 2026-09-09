@@ -44,9 +44,8 @@ final class DatabaseSecretManagerConfig {
     byte @Nullable [] getKek() {
         final String propertyName = PREFIX + "kek";
 
-        final String encodedKek = config
-                .getOptionalValue(propertyName, String.class)
-                .orElse(null);
+        final String encodedKek =
+                config.getOptionalValue(propertyName, String.class).orElse(null);
         if (encodedKek == null) {
             return null;
         }
@@ -56,14 +55,12 @@ final class DatabaseSecretManagerConfig {
             kekBytes = Base64.getDecoder().decode(encodedKek);
         } catch (IllegalArgumentException e) {
             // NB: Original exception is intentionally not logged to avoid leaking the key.
-            throw new IllegalStateException(
-                    "The provided %s value is not base64 encoded".formatted(propertyName));
+            throw new IllegalStateException("The provided %s value is not base64 encoded".formatted(propertyName));
         }
 
         if (kekBytes.length != 32) {
             throw new IllegalStateException(
-                    "KEK provided via %s must be 32 bytes, but is %d".formatted(
-                            propertyName, kekBytes.length));
+                    "KEK provided via %s must be 32 bytes, but is %d".formatted(propertyName, kekBytes.length));
         }
 
         return kekBytes;
@@ -76,5 +73,4 @@ final class DatabaseSecretManagerConfig {
     boolean isCreateKekKeysetIfMissing() {
         return config.getValue(PREFIX + "kek-keyset.create-if-missing", boolean.class);
     }
-
 }

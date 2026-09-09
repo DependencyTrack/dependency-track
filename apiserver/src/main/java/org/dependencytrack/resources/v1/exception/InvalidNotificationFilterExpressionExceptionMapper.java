@@ -18,12 +18,13 @@
  */
 package org.dependencytrack.resources.v1.exception;
 
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.ExceptionMapper;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.notification.InvalidNotificationFilterExpressionException;
 import org.dependencytrack.resources.v1.problems.InvalidNotificationFilterExpressionProblemDetails;
 import org.dependencytrack.resources.v1.vo.CelExpressionError;
+
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @since 5.0.0
@@ -35,12 +36,12 @@ public final class InvalidNotificationFilterExpressionExceptionMapper
     @Override
     public Response toResponse(InvalidNotificationFilterExpressionException exception) {
         return new InvalidNotificationFilterExpressionProblemDetails(
-                400,
-                "Bad Request",
-                "Filter expression is invalid",
-                exception.getErrors().stream()
-                        .map(e -> new CelExpressionError(e.line(), e.column(), e.message()))
-                        .toList()).toResponse();
+                        400,
+                        "Bad Request",
+                        "Filter expression is invalid",
+                        exception.getErrors().stream()
+                                .map(e -> new CelExpressionError(e.line(), e.column(), e.message()))
+                                .toList())
+                .toResponse();
     }
-
 }

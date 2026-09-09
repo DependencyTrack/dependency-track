@@ -23,7 +23,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class EmailNotificationPublisherFactoryTest extends AbstractNotificationPublisherFactoryTest<EmailNotificationPublisherFactory> {
+class EmailNotificationPublisherFactoryTest
+        extends AbstractNotificationPublisherFactoryTest<EmailNotificationPublisherFactory> {
 
     protected EmailNotificationPublisherFactoryTest() {
         super(EmailNotificationPublisherFactory.class);
@@ -35,5 +36,4 @@ class EmailNotificationPublisherFactoryTest extends AbstractNotificationPublishe
             assertThat(publisherFactory.defaultTemplate()).isNotNull();
         }
     }
-
 }

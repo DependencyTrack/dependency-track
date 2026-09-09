@@ -31,9 +31,6 @@ final class ActivityTaskIdRowMapper implements RowMapper<ActivityTaskId> {
     @Override
     public ActivityTaskId map(ResultSet rs, StatementContext ctx) throws SQLException {
         return new ActivityTaskId(
-                rs.getString("queue_name"),
-                rs.getObject("workflow_run_id", UUID.class),
-                rs.getInt("created_event_id"));
+                rs.getString("queue_name"), rs.getObject("workflow_run_id", UUID.class), rs.getInt("created_event_id"));
     }
-
 }

@@ -22,8 +22,6 @@ import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.kagkarlsson.scheduler.task.schedule.Schedule;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.smallrye.config.SmallRyeConfigBuilder;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletContextEvent;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.plugin.runtime.PluginManager;
@@ -31,6 +29,9 @@ import org.dependencytrack.secret.management.SecretManager;
 import org.dependencytrack.tasks.TaskSchedulerInitializer.TriggerOnFirstRunSchedule;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.Test;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
 
 import javax.sql.DataSource;
 import java.time.Duration;
@@ -46,35 +47,36 @@ class TaskSchedulerInitializerTest {
 
     @Test
     void shouldRegisterAllRecurringTasks() {
-        final List<RecurringTask<Void>> tasks =
-                TaskSchedulerInitializer.recurringTasks(
-                        ConfigProvider.getConfig(),
-                        mock(DexEngine.class),
-                        mock(PluginManager.class),
-                        mock(SecretManager.class));
+        final List<RecurringTask<Void>> tasks = TaskSchedulerInitializer.recurringTasks(
+                ConfigProvider.getConfig(),
+                mock(DexEngine.class),
+                mock(PluginManager.class),
+                mock(SecretManager.class));
 
-        assertThat(tasks).extracting(RecurringTask::getName).containsExactlyInAnyOrder(
-                "Defect Dojo Upload",
-                "EPSS Mirror",
-                "Expired Session Cleanup",
-                "Fortify SSC Upload",
-                "GitHub Advisories Mirror",
-                "Kenna Security Upload",
-                "KEV Mirror",
-                "Metrics Maintenance",
-                "NVD Mirror",
-                "OSV Mirror",
-                "Package Metadata Maintenance",
-                "Package Metadata Resolution",
-                "Portfolio Metrics Update",
-                "Portfolio Vulnerability Analysis",
-                "Project Maintenance",
-                "Scheduled Notification Dispatch",
-                "Tag Maintenance",
-                "Telemetry Submission",
-                "Vulnerability Database Maintenance",
-                "Vulnerability Metrics Update",
-                "Vulnerability Policy Bundle Sync");
+        assertThat(tasks)
+                .extracting(RecurringTask::getName)
+                .containsExactlyInAnyOrder(
+                        "Defect Dojo Upload",
+                        "EPSS Mirror",
+                        "Expired Session Cleanup",
+                        "Fortify SSC Upload",
+                        "GitHub Advisories Mirror",
+                        "Kenna Security Upload",
+                        "KEV Mirror",
+                        "Metrics Maintenance",
+                        "NVD Mirror",
+                        "OSV Mirror",
+                        "Package Metadata Maintenance",
+                        "Package Metadata Resolution",
+                        "Portfolio Metrics Update",
+                        "Portfolio Vulnerability Analysis",
+                        "Project Maintenance",
+                        "Scheduled Notification Dispatch",
+                        "Tag Maintenance",
+                        "Telemetry Submission",
+                        "Vulnerability Database Maintenance",
+                        "Vulnerability Metrics Update",
+                        "Vulnerability Policy Bundle Sync");
     }
 
     @Test
@@ -99,13 +101,10 @@ class TaskSchedulerInitializerTest {
 
         for (int i = 0; i < 100; i++) {
             final Instant initialExecutionTime = schedule.getInitialExecutionTime(now);
-            assertThat(initialExecutionTime)
-                    .isAfterOrEqualTo(now)
-                    .isBefore(now.plus(Duration.ofMinutes(1)));
+            assertThat(initialExecutionTime).isAfterOrEqualTo(now).isBefore(now.plus(Duration.ofMinutes(1)));
             initialExecutionTimes.add(initialExecutionTime);
         }
 
         assertThat(initialExecutionTimes).hasSizeGreaterThan(1);
     }
-
 }

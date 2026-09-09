@@ -21,21 +21,16 @@ package org.dependencytrack.pkgmetadata.resolution.cpan;
 import com.github.packageurl.PackageURLBuilder;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import org.dependencytrack.cache.api.CacheManager;
-import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.HashAlgorithm;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.http.HttpClient;
 import java.time.Instant;
 import java.util.Map;
 
@@ -55,10 +50,7 @@ class CpanPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         resolverFactory = new CpanPackageMetadataResolverFactory();
-        resolverFactory.init(new MutableServiceRegistry()
-                .register(CacheManager.class, new NoopCacheManager())
-                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        resolverFactory.init(new ExtensionContextBuilder().build());
         resolver = resolverFactory.create();
     }
 
@@ -91,18 +83,17 @@ class CpanPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.2206");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2022-06-02T18:29:43Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2022-06-02T18:29:43Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2022-06-02T18:29:43Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2022-06-02T18:29:43Z"));
         assertThat(result.artifactMetadata().hashes())
-                .containsOnly(Map.entry(HashAlgorithm.SHA256,
-                        "a856e36cbe1f56e1b8dbc1b083619aa9c002be2ae64e9613be8f37e0be1527c3"));
+                .containsOnly(Map.entry(
+                        HashAlgorithm.SHA256, "a856e36cbe1f56e1b8dbc1b083619aa9c002be2ae64e9613be8f37e0be1527c3"));
     }
 
     @Test
-    void shouldResolveLatestVersionWithoutArtifactMetadataWhenVersionDiffers(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldResolveLatestVersionWithoutArtifactMetadataWhenVersionDiffers(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubFor(get(urlPathEqualTo("/v1/release/Moose"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                         {
@@ -123,8 +114,7 @@ class CpanPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.2206");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2022-06-02T18:29:43Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2022-06-02T18:29:43Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 
@@ -153,8 +143,7 @@ class CpanPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -176,8 +165,7 @@ class CpanPackageMetadataResolverTest {
 
     @Test
     void shouldThrowRetryableExceptionOnServerError(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo("/v1/release/Moose"))
-                .willReturn(aResponse().withStatus(503)));
+        stubFor(get(urlPathEqualTo("/v1/release/Moose")).willReturn(aResponse().withStatus(503)));
 
         final var purl = PackageURLBuilder.aPackageURL()
                 .withType("cpan")
@@ -189,5 +177,4 @@ class CpanPackageMetadataResolverTest {
         assertThatExceptionOfType(RetryableResolutionException.class)
                 .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
-
 }

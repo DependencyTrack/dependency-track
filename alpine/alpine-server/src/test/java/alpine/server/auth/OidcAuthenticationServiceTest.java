@@ -25,15 +25,15 @@ import alpine.model.OidcGroup;
 import alpine.model.OidcUser;
 import alpine.model.Team;
 import alpine.persistence.AlpineQueryManager;
-import alpine.server.persistence.PersistenceManagerFactory;
 import com.nimbusds.openid.connect.sdk.claims.ClaimsSet;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import net.minidev.json.JSONObject;
 import org.assertj.core.api.Assertions;
 import org.eclipse.microprofile.config.Config;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
 import java.util.Collections;
@@ -48,6 +48,9 @@ import static org.mockito.Mockito.when;
 
 public class OidcAuthenticationServiceTest {
 
+    @RegisterExtension
+    static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
+
     private static final String USERNAME_CLAIM_NAME = "username";
     private static final String ID_TOKEN = "idToken";
     private static final String ACCESS_TOKEN = "accessToken";
@@ -61,11 +64,6 @@ public class OidcAuthenticationServiceTest {
         oidcConfigurationMock = Mockito.mock(OidcConfiguration.class);
         idTokenAuthenticatorMock = Mockito.mock(OidcIdTokenAuthenticator.class);
         userInfoAuthenticatorMock = Mockito.mock(OidcUserInfoAuthenticator.class);
-    }
-
-    @AfterEach
-    public void tearDown() {
-        PersistenceManagerFactory.tearDown();
     }
 
     /**

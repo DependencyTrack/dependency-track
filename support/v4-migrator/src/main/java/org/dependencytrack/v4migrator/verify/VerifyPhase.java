@@ -71,21 +71,18 @@ public final class VerifyPhase {
 
     private void checkFlywayHead() {
         out.println("[Schema]");
-        final Optional<String> head = target.withHandle(h ->
-            h.createQuery("""
+        final Optional<String> head =
+                target.withHandle(h -> h.createQuery("""
                     SELECT version
                       FROM flyway_schema_history
                      WHERE success = TRUE AND version IS NOT NULL
                      ORDER BY installed_rank DESC
                      LIMIT 1
-                    """)
-                .mapTo(String.class)
-                .findOne());
+                    """).mapTo(String.class).findOne());
         if (head.isEmpty()) {
             out.println("  FAIL  flyway_schema_history has no versioned rows");
         } else if (!Preflight.EXPECTED_FLYWAY_HEAD.equals(head.get())) {
-            out.println("  FAIL  expected Flyway head " + Preflight.EXPECTED_FLYWAY_HEAD
-                + " but found " + head.get());
+            out.println("  FAIL  expected Flyway head " + Preflight.EXPECTED_FLYWAY_HEAD + " but found " + head.get());
         } else {
             out.println("  OK    Flyway head = " + head.get());
         }
@@ -99,9 +96,9 @@ public final class VerifyPhase {
             final Long src = t.hasExtract() ? countOptional(qualified("src_" + t.name())) : null;
             final Long tgt = t.hasTransform() ? countOptional(qualified("tgt_" + t.name())) : null;
             final Long v5 = t.hasLoad() ? countOptional("\"" + t.name() + "\"") : null;
-            out.printf("  %-24s %12s %12s %12s  %s%n",
-                t.name(),
-                fmt(src), fmt(tgt), fmt(v5), note(t.name(), src, tgt, v5, probed));
+            out.printf(
+                    "  %-24s %12s %12s %12s  %s%n",
+                    t.name(), fmt(src), fmt(tgt), fmt(v5), note(t.name(), src, tgt, v5, probed));
         }
     }
 
@@ -120,8 +117,7 @@ public final class VerifyPhase {
      * {@code see [Probes]}; anything else renders as a neutral {@code reduction (-N), see migration
      * guide} pointer. ASCII-only to stay automation-friendly.
      */
-    static String note(final String table, final Long src, final Long tgt, final Long v5,
-                       final Set<String> probed) {
+    static String note(final String table, final Long src, final Long tgt, final Long v5, final Set<String> probed) {
         final Long first = src != null ? src : tgt;
         final Long last = v5 != null ? v5 : tgt;
         // Need a baseline and a distinct later stage to speak of a reduction.
@@ -156,8 +152,8 @@ public final class VerifyPhase {
                 UNION
                 SELECT table_name FROM "%1$s".probe_case_collisions
                 """.formatted(options.stagingSchema))
-            .mapTo(String.class)
-            .list()));
+                .mapTo(String.class)
+                .list()));
     }
 
     private void reportProbes() {
@@ -176,23 +172,21 @@ public final class VerifyPhase {
     }
 
     private boolean stagingSchemaExists() {
-        return target.withHandle(h ->
-            h.createQuery("SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = :n)")
-                .bind("n", options.stagingSchema)
-                .mapTo(Boolean.class)
-                .one());
+        return target.withHandle(
+                h -> h.createQuery("SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = :n)")
+                        .bind("n", options.stagingSchema)
+                        .mapTo(Boolean.class)
+                        .one());
     }
 
     private boolean reportProbeInvalidUuids() {
         final List<Map<String, Object>> rows = target.withHandle(h ->
-            h.createQuery("""
+                h.createQuery("""
                     SELECT table_name, count(*) AS n
                       FROM "%s".probe_invalid_uuids
                      GROUP BY table_name
                      ORDER BY table_name
-                    """.formatted(options.stagingSchema))
-                .mapToMap()
-                .list());
+                    """.formatted(options.stagingSchema)).mapToMap().list());
         for (final Map<String, Object> r : rows) {
             out.printf("  %-24s %d malformed UUID(s) dropped%n", r.get("table_name"), r.get("n"));
         }
@@ -201,34 +195,30 @@ public final class VerifyPhase {
 
     private boolean reportProbeSkippedUsers() {
         final List<Map<String, Object>> rows = target.withHandle(h ->
-            h.createQuery("""
+                h.createQuery("""
                     SELECT table_name, reason, count(*) AS n
                       FROM "%s".probe_skipped_users
                      GROUP BY table_name, reason
                      ORDER BY table_name, reason
-                    """.formatted(options.stagingSchema))
-                .mapToMap()
-                .list());
+                    """.formatted(options.stagingSchema)).mapToMap().list());
         for (final Map<String, Object> r : rows) {
-            out.printf("  %-24s %d user(s) skipped (%s)%n",
-                r.get("table_name"), r.get("n"), r.get("reason"));
+            out.printf("  %-24s %d user(s) skipped (%s)%n", r.get("table_name"), r.get("n"), r.get("reason"));
         }
         return !rows.isEmpty();
     }
 
     private boolean reportProbeCaseCollisions() {
         final List<Map<String, Object>> rows = target.withHandle(h ->
-            h.createQuery("""
+                h.createQuery("""
                     SELECT table_name, column_name, count(*) AS n
                       FROM "%s".probe_case_collisions
                      GROUP BY table_name, column_name
                      ORDER BY table_name, column_name
-                    """.formatted(options.stagingSchema))
-                .mapToMap()
-                .list());
+                    """.formatted(options.stagingSchema)).mapToMap().list());
         for (final Map<String, Object> r : rows) {
-            out.printf("  %-24s %d case-collision(s) on column %s%n",
-                r.get("table_name"), r.get("n"), r.get("column_name"));
+            out.printf(
+                    "  %-24s %d case-collision(s) on column %s%n",
+                    r.get("table_name"), r.get("n"), r.get("column_name"));
         }
         return !rows.isEmpty();
     }
@@ -239,15 +229,17 @@ public final class VerifyPhase {
         // is mostly a tripwire. We surface only NOT VALID constraints (none exist in v5 today),
         // and count CHECK constraints on the loaded tables for transparency.
         final List<TableMigration> loaded = TableRegistry.loaded();
-        final long checkCount = target.withHandle(h ->
-            h.createQuery("""
+        final long checkCount = target.withHandle(h -> h.createQuery("""
                     SELECT count(*)
                       FROM pg_constraint c
                       JOIN pg_class t ON t.oid = c.conrelid
                      WHERE c.contype = 'c'
                        AND t.relname = ANY(:names)
                     """)
-                .bindArray("names", String.class, loaded.stream().map(TableMigration::name).toArray(String[]::new))
+                .bindArray(
+                        "names",
+                        String.class,
+                        loaded.stream().map(TableMigration::name).toArray(String[]::new))
                 .mapTo(Long.class)
                 .one());
         out.printf("  %d CHECK constraint(s) hold across %d loaded table(s)%n", checkCount, loaded.size());
@@ -255,8 +247,7 @@ public final class VerifyPhase {
 
     private Long countOptional(final String qualifiedTable) {
         try {
-            return target.withHandle(h ->
-                h.createQuery("SELECT count(*) FROM " + qualifiedTable)
+            return target.withHandle(h -> h.createQuery("SELECT count(*) FROM " + qualifiedTable)
                     .mapTo(Long.class)
                     .one());
         } catch (final RuntimeException e) {

@@ -25,12 +25,10 @@ import java.util.Map;
 import java.util.Set;
 
 public record ExistsWorkflowRunRequest(
-        @Nullable Set<WorkflowRunStatus> statuses,
-        @Nullable Map<String, String> labels) {
+        @Nullable Set<WorkflowRunStatus> statuses, @Nullable Map<String, String> labels) {
 
     public ExistsWorkflowRunRequest {
-        if ((statuses == null || statuses.isEmpty())
-                && (labels == null || labels.isEmpty())) {
+        if ((statuses == null || statuses.isEmpty()) && (labels == null || labels.isEmpty())) {
             throw new IllegalArgumentException("At least one filter must be provided");
         }
     }
@@ -42,5 +40,4 @@ public record ExistsWorkflowRunRequest(
     public ExistsWorkflowRunRequest withLabels(@Nullable Map<String, String> labels) {
         return new ExistsWorkflowRunRequest(this.statuses, labels);
     }
-
 }

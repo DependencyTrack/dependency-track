@@ -69,9 +69,8 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String packageKey = purl.getNamespace() + "/" + purl.getName();
@@ -89,10 +88,8 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
             LOGGER.debug("Package is not available in this repository");
             return null;
         } else if (repoRoot.has("metadata-url")) {
-            packageVersions = fetchAndExtractPackage(
-                    repoRoot.path("metadata-url").asText(),
-                    packageKey,
-                    repository);
+            packageVersions =
+                    fetchAndExtractPackage(repoRoot.path("metadata-url").asText(), packageKey, repository);
         } else {
             // V1 path: check inline packages, then includes, then per-package URL.
             final JsonNode inlinePackages = repoRoot.path("packages");
@@ -108,7 +105,8 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
             if (packageVersions == null) {
                 LOGGER.debug(
                         "Package {} not found inline/includes for {}, falling back to V1",
-                        packageKey, repository.url());
+                        packageKey,
+                        repository.url());
                 packageVersions = fetchAndExtractPackage(V1_METADATA_URL_PATTERN, packageKey, repository);
             }
         }
@@ -171,9 +169,7 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
     }
 
     private @Nullable JsonNode fetchAndExtractPackage(
-            String urlPattern,
-            String packageKey,
-            PackageRepository repository) throws InterruptedException {
+            String urlPattern, String packageKey, PackageRepository repository) throws InterruptedException {
         final String url = buildUrl(repository, urlPattern, packageKey);
         if (url == null) {
             return null;
@@ -188,10 +184,8 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
         return packageNode.isMissingNode() || packageNode.isEmpty() ? null : packageNode;
     }
 
-    private @Nullable JsonNode loadIncludes(
-            JsonNode repoRoot,
-            PackageRepository repository,
-            int depth) throws InterruptedException {
+    private @Nullable JsonNode loadIncludes(JsonNode repoRoot, PackageRepository repository, int depth)
+            throws InterruptedException {
         if (depth >= MAX_INCLUDE_DEPTH) {
             LOGGER.warn("Max include depth ({}) reached, stopping recursive loading", MAX_INCLUDE_DEPTH);
             return null;
@@ -255,11 +249,8 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
         }
 
         final var resolvedAt = Instant.now();
-        final VersionMetadata versionMetadata = findVersionMetadata(
-                packageVersions,
-                latestVersion,
-                purl.getVersion(),
-                resolvedAt);
+        final VersionMetadata versionMetadata =
+                findVersionMetadata(packageVersions, latestVersion, purl.getVersion(), resolvedAt);
 
         return new PackageMetadata(
                 latestVersion,
@@ -319,12 +310,14 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
         if (requestedVersion != null) {
             try {
                 requested = VersionFactory.forScheme(SCHEME_COMPOSER, requestedVersion);
-            } catch (InvalidVersionException _) {}
+            } catch (InvalidVersionException _) {
+            }
         }
         if (latestVersion != null) {
             try {
                 requestedLatest = VersionFactory.forScheme(SCHEME_COMPOSER, latestVersion);
-            } catch (InvalidVersionException _) {}
+            } catch (InvalidVersionException _) {
+            }
         }
 
         Instant latestVersionPublishedAt = null;
@@ -337,7 +330,8 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
             }
 
             try {
-                if (requestedLatest != null && requestedLatest.equals(VersionFactory.forScheme(SCHEME_COMPOSER, entryVersion))) {
+                if (requestedLatest != null
+                        && requestedLatest.equals(VersionFactory.forScheme(SCHEME_COMPOSER, entryVersion))) {
                     latestVersionPublishedAt = extractPublishedAt(entry);
                 }
             } catch (InvalidVersionException _) {
@@ -385,14 +379,16 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
 
     private record VersionMetadata(
             @Nullable Instant latestVersionPublishedAt,
-            @Nullable PackageArtifactMetadata artifactMetadata) {
-    }
+            @Nullable PackageArtifactMetadata artifactMetadata) {}
 
     private static @Nullable String buildUrl(PackageRepository repository, String urlPattern, String packageKey) {
         final String resolved = urlPattern.replace("%package%", packageKey);
         if (resolved.startsWith("http://") || resolved.startsWith("https://")) {
             if (!UrlUtils.hasSameOrigin(resolved, repository.url())) {
-                LOGGER.warn("Skipping absolute URL '{}': origin does not match repository '{}'", resolved, repository.url());
+                LOGGER.warn(
+                        "Skipping absolute URL '{}': origin does not match repository '{}'",
+                        resolved,
+                        repository.url());
                 return null;
             }
 
@@ -421,8 +417,8 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
             final String authHeaderValue;
             if (repository.username() != null) {
                 final String credentials = repository.username() + ":" + repository.password();
-                authHeaderValue = "Basic " + Base64.getEncoder().encodeToString(
-                        credentials.getBytes(StandardCharsets.UTF_8));
+                authHeaderValue =
+                        "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
             } else {
                 authHeaderValue = "Bearer " + repository.password();
             }
@@ -440,5 +436,4 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
             throw new UncheckedIOException(e);
         }
     }
-
 }

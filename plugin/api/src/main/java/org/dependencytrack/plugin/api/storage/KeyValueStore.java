@@ -73,7 +73,6 @@ public interface KeyValueStore {
                 throw new IllegalArgumentException("version must not be negative");
             }
         }
-
     }
 
     /**
@@ -160,5 +159,4 @@ public interface KeyValueStore {
      * @return Result of the operation.
      */
     CompareAndDeleteResult compareAndDelete(String key, long expectedVersion);
-
 }

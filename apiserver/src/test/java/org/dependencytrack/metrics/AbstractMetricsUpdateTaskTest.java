@@ -35,9 +35,11 @@ import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCOR
 
 abstract class AbstractMetricsUpdateTaskTest extends PersistenceCapableTest {
 
-    protected PolicyViolation createPolicyViolation(final Component component, final Policy.ViolationState violationState, final PolicyViolation.Type type) {
+    protected PolicyViolation createPolicyViolation(
+            final Component component, final Policy.ViolationState violationState, final PolicyViolation.Type type) {
         final var policy = qm.createPolicy(UUID.randomUUID().toString(), Policy.Operator.ALL, violationState);
-        final var policyCondition = qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, "");
+        final var policyCondition = qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, "");
         final var policyViolation = new PolicyViolation();
 
         policyViolation.setComponent(component);
@@ -47,42 +49,36 @@ abstract class AbstractMetricsUpdateTaskTest extends PersistenceCapableTest {
         return qm.persist(policyViolation);
     }
 
-    public void createTestConfigProperties(){
+    public void createTestConfigProperties() {
         qm.createConfigProperty(
-            CUSTOM_RISK_SCORE_CRITICAL.getGroupName(), 
-            CUSTOM_RISK_SCORE_CRITICAL.getPropertyName(), 
-            CUSTOM_RISK_SCORE_CRITICAL.getDefaultPropertyValue(), 
-            CUSTOM_RISK_SCORE_CRITICAL.getPropertyType(), 
-            CUSTOM_RISK_SCORE_CRITICAL.getDescription()
-        );
+                CUSTOM_RISK_SCORE_CRITICAL.getGroupName(),
+                CUSTOM_RISK_SCORE_CRITICAL.getPropertyName(),
+                CUSTOM_RISK_SCORE_CRITICAL.getDefaultPropertyValue(),
+                CUSTOM_RISK_SCORE_CRITICAL.getPropertyType(),
+                CUSTOM_RISK_SCORE_CRITICAL.getDescription());
         qm.createConfigProperty(
-            CUSTOM_RISK_SCORE_HIGH.getGroupName(), 
-            CUSTOM_RISK_SCORE_HIGH.getPropertyName(), 
-            CUSTOM_RISK_SCORE_HIGH.getDefaultPropertyValue(), 
-            CUSTOM_RISK_SCORE_HIGH.getPropertyType(), 
-            CUSTOM_RISK_SCORE_HIGH.getDescription()
-        );
+                CUSTOM_RISK_SCORE_HIGH.getGroupName(),
+                CUSTOM_RISK_SCORE_HIGH.getPropertyName(),
+                CUSTOM_RISK_SCORE_HIGH.getDefaultPropertyValue(),
+                CUSTOM_RISK_SCORE_HIGH.getPropertyType(),
+                CUSTOM_RISK_SCORE_HIGH.getDescription());
         qm.createConfigProperty(
-            CUSTOM_RISK_SCORE_MEDIUM.getGroupName(), 
-            CUSTOM_RISK_SCORE_MEDIUM.getPropertyName(), 
-            CUSTOM_RISK_SCORE_MEDIUM.getDefaultPropertyValue(), 
-            CUSTOM_RISK_SCORE_MEDIUM.getPropertyType(), 
-            CUSTOM_RISK_SCORE_MEDIUM.getDescription()
-        );
+                CUSTOM_RISK_SCORE_MEDIUM.getGroupName(),
+                CUSTOM_RISK_SCORE_MEDIUM.getPropertyName(),
+                CUSTOM_RISK_SCORE_MEDIUM.getDefaultPropertyValue(),
+                CUSTOM_RISK_SCORE_MEDIUM.getPropertyType(),
+                CUSTOM_RISK_SCORE_MEDIUM.getDescription());
         qm.createConfigProperty(
-            CUSTOM_RISK_SCORE_LOW.getGroupName(), 
-            CUSTOM_RISK_SCORE_LOW.getPropertyName(), 
-            CUSTOM_RISK_SCORE_LOW.getDefaultPropertyValue(), 
-            CUSTOM_RISK_SCORE_LOW.getPropertyType(), 
-            CUSTOM_RISK_SCORE_LOW.getDescription()
-        );
+                CUSTOM_RISK_SCORE_LOW.getGroupName(),
+                CUSTOM_RISK_SCORE_LOW.getPropertyName(),
+                CUSTOM_RISK_SCORE_LOW.getDefaultPropertyValue(),
+                CUSTOM_RISK_SCORE_LOW.getPropertyType(),
+                CUSTOM_RISK_SCORE_LOW.getDescription());
         qm.createConfigProperty(
-            CUSTOM_RISK_SCORE_UNASSIGNED.getGroupName(), 
-            CUSTOM_RISK_SCORE_UNASSIGNED.getPropertyName(), 
-            CUSTOM_RISK_SCORE_UNASSIGNED.getDefaultPropertyValue(), 
-            CUSTOM_RISK_SCORE_UNASSIGNED.getPropertyType(), 
-            CUSTOM_RISK_SCORE_UNASSIGNED.getDescription()
-        );
+                CUSTOM_RISK_SCORE_UNASSIGNED.getGroupName(),
+                CUSTOM_RISK_SCORE_UNASSIGNED.getPropertyName(),
+                CUSTOM_RISK_SCORE_UNASSIGNED.getDefaultPropertyValue(),
+                CUSTOM_RISK_SCORE_UNASSIGNED.getPropertyType(),
+                CUSTOM_RISK_SCORE_UNASSIGNED.getDescription());
     }
-
 }

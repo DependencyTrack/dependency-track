@@ -53,10 +53,6 @@ public final class DatabaseSecretManagerProvider implements SecretManagerProvide
 
         final DataSource dataSource = dataSourceRegistry.get(secretManagerConfig.getDataSourceName());
 
-        return new DatabaseSecretManager(
-                dataSource,
-                new Crypto(dataSource, secretManagerConfig),
-                pageTokenEncoder);
+        return new DatabaseSecretManager(dataSource, new Crypto(dataSource, secretManagerConfig), pageTokenEncoder);
     }
-
 }

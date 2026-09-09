@@ -20,10 +20,6 @@ package org.dependencytrack.tasks;
 
 import alpine.model.IConfigProperty.PropertyType;
 import com.github.packageurl.PackageURL;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.dex.engine.api.DexEngine;
@@ -50,6 +46,11 @@ import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 
 import javax.jdo.JDOObjectNotFoundException;
 import java.io.ByteArrayInputStream;
@@ -82,6 +83,7 @@ import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.Mockito.mock;
 
 class ImportBomActivityTest extends PersistenceCapableTest {
@@ -130,9 +132,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         final var bomUploadToken = UUID.randomUUID();
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
         assertThat(project.getCpe()).isEqualTo("cpe:2.3:a:acme:example:1.0.0:*:*:*:*:*:*:*");
@@ -181,7 +184,9 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(components).hasSize(1);
 
         final Component component = components.get(0);
-        assertThat(component.getAuthors().get(0).getName()).isEqualTo("Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
+        assertThat(component.getAuthors().get(0).getName())
+                .isEqualTo(
+                        "Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
         assertThat(component.getPublisher()).isEqualTo("Example Incorporated");
         assertThat(component.getSupplier().getName()).isEqualTo("Foo Incorporated");
         assertThat(component.getGroup()).isEqualTo("com.example");
@@ -189,42 +194,47 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(component.getVersion()).isEqualTo("1.0.0");
         assertThat(component.getDescription()).isEqualTo("A makebelieve XML utility library");
         assertThat(component.getCpe()).isEqualTo("cpe:/a:example:xmlutil:1.0.0");
-        assertThat(component.getPurl().canonicalize()).isEqualTo("pkg:maven/com.example/xmlutil@1.0.0?download_url=https%3A%2F%2Fon-premises.url%2Frepository%2Fnpm%2F%40babel%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration-7.18.6.tgz");
+        assertThat(component.getPurl().canonicalize())
+                .isEqualTo(
+                        "pkg:maven/com.example/xmlutil@1.0.0?download_url=https%3A%2F%2Fon-premises.url%2Frepository%2Fnpm%2F%40babel%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration-7.18.6.tgz");
         assertThat(component.getResolvedLicense()).isNotNull();
         assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("Apache-2.0");
         assertThat(component.getLicense()).isNull();
         assertThat(component.getLicenseUrl()).isEqualTo("https://www.apache.org/licenses/LICENSE-2.0.txt");
 
-        assertThat(component.getProperties()).satisfiesExactlyInAnyOrder(
-                property -> {
-                    assertThat(property.getGroupName()).isEqualTo("foo");
-                    assertThat(property.getPropertyName()).isEqualTo("bar");
-                    assertThat(property.getPropertyValue()).isEqualTo("baz");
-                    assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
-                    assertThat(property.getDescription()).isNull();
-                },
-                property -> {
-                    assertThat(property.getGroupName()).isNull();
-                    assertThat(property.getPropertyName()).isEqualTo("foo");
-                    assertThat(property.getPropertyValue()).isEqualTo("bar");
-                    assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
-                    assertThat(property.getDescription()).isNull();
-                },
-                property -> {
-                    assertThat(property.getGroupName()).isEqualTo("foo");
-                    assertThat(property.getPropertyName()).isEqualTo("bar");
-                    assertThat(property.getPropertyValue()).isEqualTo("qux");
-                    assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
-                    assertThat(property.getDescription()).isNull();
-                },
-                property -> {
-                    assertThat(property.getGroupName()).isNull();
-                    assertThat(property.getPropertyName()).isEqualTo("long");
-                    assertThat(property.getPropertyValue()).isEqualTo("a".repeat(1021) + "...");
-                    assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
-                    assertThat(property.getDescription()).isNull();
-                }
-        );
+        assertThat(component.getProperties())
+                .satisfiesExactlyInAnyOrder(
+                        property -> {
+                            assertThat(property.getGroupName()).isEqualTo("foo");
+                            assertThat(property.getPropertyName()).isEqualTo("bar");
+                            assertThat(property.getPropertyValue()).isEqualTo("baz");
+                            assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
+                            assertThat(property.getDescription()).isNull();
+                        },
+                        property -> {
+                            assertThat(property.getGroupName()).isNull();
+                            assertThat(property.getPropertyName()).isEqualTo("foo");
+                            assertThat(property.getPropertyValue()).isEqualTo("bar");
+                            assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
+                            assertThat(property.getDescription()).isNull();
+                        },
+                        property -> {
+                            assertThat(property.getGroupName()).isEqualTo("foo");
+                            assertThat(property.getPropertyName()).isEqualTo("bar");
+                            assertThat(property.getPropertyValue()).isEqualTo("qux");
+                            assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
+                            assertThat(property.getDescription()).isNull();
+                        },
+                        property -> {
+                            assertThat(property.getGroupName()).isNull();
+                            assertThat(property.getPropertyName()).isEqualTo("long");
+                            assertThat(property.getPropertyValue()).isEqualTo("a".repeat(1021) + "...");
+                            assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
+                            assertThat(property.getDescription()).isNull();
+                        });
+
+        assertThat(packageMetadataResolutionStatusForPurl(component.getPurl().canonicalize()))
+                .isEqualTo("PENDING");
     }
 
     @Test
@@ -237,28 +247,34 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         final var bomFileMetadata = storeBomFile("bom-1.xml");
         final var bomUploadToken = UUID.randomUUID();
         useJdbiTransaction(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
                             new PackageURL("pkg:maven/com.example/xmlutil"),
                             "1.0.0",
                             null,
                             Instant.now(),
                             null,
                             null)));
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
-                            new PackageURL("pkg:maven/com.example/xmlutil@1.0.0?download_url=https%3A%2F%2Fon-premises.url%2Frepository%2Fnpm%2F%40babel%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration-7.18.6.tgz"),
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
+                            new PackageURL(
+                                    "pkg:maven/com.example/xmlutil@1.0.0?download_url=https%3A%2F%2Fon-premises.url%2Frepository%2Fnpm%2F%40babel%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration-7.18.6.tgz"),
                             new PackageURL("pkg:maven/com.example/xmlutil"),
-                            null, null, null, null, null,
-                            null, null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
                             Instant.now().minus(2, ChronoUnit.HOURS))));
-
         });
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
         assertThat(project.getLastBomImport()).isNotNull();
@@ -270,18 +286,94 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(components).hasSize(1);
 
         final Component component = components.get(0);
-        assertThat(component.getAuthors().get(0).getName()).isEqualTo("Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
+        assertThat(component.getAuthors().get(0).getName())
+                .isEqualTo(
+                        "Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
         assertThat(component.getPublisher()).isEqualTo("Example Incorporated");
         assertThat(component.getGroup()).isEqualTo("com.example");
         assertThat(component.getName()).isEqualTo("xmlutil");
         assertThat(component.getVersion()).isEqualTo("1.0.0");
         assertThat(component.getDescription()).isEqualTo("A makebelieve XML utility library");
         assertThat(component.getCpe()).isEqualTo("cpe:/a:example:xmlutil:1.0.0");
-        assertThat(component.getPurl().canonicalize()).isEqualTo("pkg:maven/com.example/xmlutil@1.0.0?download_url=https%3A%2F%2Fon-premises.url%2Frepository%2Fnpm%2F%40babel%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration-7.18.6.tgz");
+        assertThat(component.getPurl().canonicalize())
+                .isEqualTo(
+                        "pkg:maven/com.example/xmlutil@1.0.0?download_url=https%3A%2F%2Fon-premises.url%2Frepository%2Fnpm%2F%40babel%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration-7.18.6.tgz");
         assertThat(component.getResolvedLicense()).isNotNull();
         assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("Apache-2.0");
         assertThat(component.getLicense()).isNull();
         assertThat(component.getLicenseUrl()).isEqualTo("https://www.apache.org/licenses/LICENSE-2.0.txt");
+    }
+
+    @Test
+    void informWithCycloneDx17BomTest() throws Exception {
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final var bomFileMetadata = storeBomFile(/* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.7",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0",
+                      "purl": "pkg:maven/com.acme/acme-lib@1.0.0",
+                      "hashes": [
+                        {
+                          "alg": "Streebog-256",
+                          "content": "3F539A213E97C802CC229D474C6AA32A825A360B2A933A949FD925208D9CE1BB"
+                        },
+                        {
+                          "alg": "Streebog-512",
+                          "content": "8e945da209aa869f0455928529bcae4679e9873ab707b55315f56ceb98bef0a7362f715528356ee83cda5f2aac4c6ad2ba3a715c1bcd81cb8e9f90bf4c1c1a8a"
+                        }
+                      ],
+                      "externalReferences": [
+                        {
+                          "type": "citation",
+                          "url": "https://example.com/citation"
+                        },
+                        {
+                          "type": "patent",
+                          "url": "https://example.com/patent"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8));
+        final var bomUploadToken = UUID.randomUUID();
+        activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
+        assertBomProcessedNotification();
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
+
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getLastBomImport()).isNotNull();
+        assertThat(project.getLastBomImportFormat()).isEqualTo("CycloneDX 1.7");
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getName()).isEqualTo("acme-lib");
+
+            // NB: Hashes are expected to be normalized to lower case.
+            assertThat(component.getStreebog_256())
+                    .isEqualTo("3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb");
+            assertThat(component.getStreebog_512())
+                    .isEqualTo(
+                            "8e945da209aa869f0455928529bcae4679e9873ab707b55315f56ceb98bef0a7362f715528356ee83cda5f2aac4c6ad2ba3a715c1bcd81cb8e9f90bf4c1c1a8a");
+
+            // NB: patent and citation are external reference types introduced in CycloneDX 1.7.
+            assertThat(component.getExternalReferences())
+                    .satisfiesExactly(
+                            externalReference -> assertThat(externalReference.getType())
+                                    .isEqualTo(org.cyclonedx.model.ExternalReference.Type.CITATION),
+                            externalReference -> assertThat(externalReference.getType())
+                                    .isEqualTo(org.cyclonedx.model.ExternalReference.Type.PATENT));
+        });
     }
 
     @Test
@@ -292,9 +384,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         final var bomUploadToken = UUID.randomUUID();
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isNull();
         assertThat(project.getLastBomImport()).isNotNull();
@@ -319,10 +412,12 @@ class ImportBomActivityTest extends PersistenceCapableTest {
             assertThat(notification.getTitle()).isNotEmpty();
             assertThat(notification.getContent()).isNotEmpty();
             assertThat(notification.hasSubject()).isTrue();
-            assertThat(notification.getSubject().is(BomProcessingFailedSubject.class)).isTrue();
+            assertThat(notification.getSubject().is(BomProcessingFailedSubject.class))
+                    .isTrue();
             final var subject = notification.getSubject().unpack(BomProcessingFailedSubject.class);
             assertThat(subject.hasProject()).isTrue();
-            assertThat(subject.getProject().getUuid()).isEqualTo(project.getUuid().toString());
+            assertThat(subject.getProject().getUuid())
+                    .isEqualTo(project.getUuid().toString());
             assertThat(subject.getBom().getContent()).isEqualTo("(Omitted)");
             assertThat(subject.getBom().getFormat()).isEqualTo("CycloneDX");
             assertThat(subject.getBom().getSpecVersion()).isEmpty();
@@ -340,7 +435,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
     @Test
     void testBomProcessingShouldFailIfProjectDoesNotExists() throws Exception {
-        //project should not be persisted for this test condition
+        // project should not be persisted for this test condition
         Project project = new Project();
         project.setUuid(UUID.randomUUID());
         project.setName("test-project");
@@ -358,13 +453,27 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
         final var bomFileMetadata = storeBomFile("bom-bloated.json");
         final var bomUploadToken = UUID.randomUUID();
+
+        final int objectUpdatesBefore = getPmfStatistics().getNumberOfObjectUpdates();
+
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
+
+        // Components must be inserted with their direct dependencies already assigned.
+        // Flushing before the dependency graph is resolved turns every component that has
+        // dependencies into an insert *and* an update, which leads to thousands of additional
+        // database round trips on a BOM this size. Only the project row should be updated.
+        // If this assertion fails, something in the import logic is causing premature flushes.
+        assertThat(getPmfStatistics().getNumberOfObjectUpdates() - objectUpdatesBefore)
+                .as("BOM import must not update components after inserting them")
+                .isLessThan(100);
+
         assertBomProcessedNotification();
 
         assertThat(qm.getNotificationOutbox())
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED))
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED))
-                .noneSatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
+                .noneSatisfy(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
 
         final List<Bom> boms = qm.getAllBoms(project);
         assertThat(boms).hasSize(1);
@@ -406,7 +515,6 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 .filter(Objects::isNull)
                 .count();
         assertThat(componentsWithoutDirectDependencies).isEqualTo(6378);
-
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/2519
@@ -424,6 +532,168 @@ class ImportBomActivityTest extends PersistenceCapableTest {
             // Ensure the expected amount of components is present.
             assertThat(qm.getAllComponents(project)).hasSize(1756);
         }
+    }
+
+    @Test
+    void informWithUnchangedComponentsReimportTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "bom-ref": "root",
+                      "type": "application",
+                      "name": "acme-app"
+                    }
+                  },
+                  "components": [
+                    {
+                      "bom-ref": "a",
+                      "type": "library",
+                      "name": "acme-lib-a",
+                      "version": "1.0.0",
+                      "purl": "pkg:maven/com.acme/acme-lib-a@1.0.0",
+                      "author": "Acme Inc",
+                      "externalReferences": [
+                        { "type": "website", "url": "https://example.com", "comment": "homepage" }
+                      ]
+                    },
+                    {
+                      "bom-ref": "b",
+                      "type": "library",
+                      "name": "acme-lib-b",
+                      "version": "1.0.0",
+                      "purl": "pkg:maven/com.acme/acme-lib-b@1.0.0"
+                    }
+                  ],
+                  "dependencies": [
+                    { "ref": "root", "dependsOn": [ "a" ] },
+                    { "ref": "a", "dependsOn": [ "b" ] }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+        assertThat(qm.getAllComponents(project)).hasSize(2);
+
+        final int objectUpdatesBefore = getPmfStatistics().getNumberOfObjectUpdates();
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        // Only the project should be updated, nothing else.
+        assertThat(getPmfStatistics().getNumberOfObjectUpdates() - objectUpdatesBefore)
+                .as("re-import of an unchanged BOM must not update components")
+                .isEqualTo(1);
+    }
+
+    @Test
+    void informWithUnchangedServiceReimportTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "services": [
+                    {
+                      "bom-ref": "acme-service@2.0.0",
+                      "name": "acme-service",
+                      "version": "2.0.0",
+                      "endpoints": [ "https://example.com/api" ],
+                      "externalReferences": [
+                        { "type": "website", "url": "https://example.com" }
+                      ],
+                      "data": [
+                        { "flow": "inbound", "classification": "public" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        final int objectUpdatesBefore = getPmfStatistics().getNumberOfObjectUpdates();
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        // Only the project should be updated, nothing else.
+        assertThat(getPmfStatistics().getNumberOfObjectUpdates() - objectUpdatesBefore)
+                .as("re-import of an unchanged BOM must not update the service")
+                .isEqualTo(1);
+    }
+
+    @Test
+    void informWithChangedDependencyGraphReimportTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final String bomTemplate = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": { "bom-ref": "root", "type": "application", "name": "acme-app" }
+                  },
+                  "components": [
+                    { "bom-ref": "a", "type": "library", "name": "a", "version": "1.0.0", "purl": "pkg:maven/com.example/a@1.0.0" },
+                    { "bom-ref": "b", "type": "library", "name": "b", "version": "1.0.0", "purl": "pkg:maven/com.example/b@1.0.0" },
+                    { "bom-ref": "c", "type": "library", "name": "c", "version": "1.0.0", "purl": "pkg:maven/com.example/c@1.0.0" }
+                  ],
+                  "dependencies": [
+                    { "ref": "root", "dependsOn": [ "a" ] },
+                    { "ref": "a", "dependsOn": [ "%s" ] }
+                  ]
+                }
+                """;
+
+        activity.execute(
+                null,
+                buildArg(
+                        project,
+                        storeBomFile(bomTemplate.formatted("b").getBytes(StandardCharsets.UTF_8)),
+                        UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        activity.execute(
+                null,
+                buildArg(
+                        project,
+                        storeBomFile(bomTemplate.formatted("c").getBytes(StandardCharsets.UTF_8)),
+                        UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        qm.getPersistenceManager().evictAll();
+        final List<Component> components = qm.getAllComponents(project);
+        final Component aComponent = components.stream()
+                .filter(component -> "a".equals(component.getName()))
+                .findFirst()
+                .orElseThrow();
+        final Component cComponent = components.stream()
+                .filter(component -> "c".equals(component.getName()))
+                .findFirst()
+                .orElseThrow();
+
+        final JsonArray directDependencies = Json.createReader(new StringReader(aComponent.getDirectDependencies()))
+                .readArray();
+        assertThat(directDependencies).hasSize(1);
+        assertThat(directDependencies.getJsonObject(0).getString("uuid"))
+                .isEqualTo(cComponent.getUuid().toString());
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/2859
@@ -495,22 +765,26 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
             // Ensure all expected components are present.
             // In this particular case, both components from the BOM are supposed to NOT be merged.
-            assertThat(qm.getAllComponents(project)).satisfiesExactlyInAnyOrder(
-                    component -> {
-                        assertThat(component.getClassifier()).isEqualTo(Classifier.LIBRARY);
-                        assertThat(component.getName()).isEqualTo("cloud.google.com/go/storage");
-                        assertThat(component.getVersion()).isEqualTo("v1.13.0");
-                        assertThat(component.getPurl().canonicalize()).isEqualTo("pkg:golang/cloud.google.com/go/storage@v1.13.0?type=package");
-                        assertThat(component.getSha256()).isNull();
-                    },
-                    component -> {
-                        assertThat(component.getClassifier()).isEqualTo(Classifier.LIBRARY);
-                        assertThat(component.getName()).isEqualTo("cloud.google.com/go/storage");
-                        assertThat(component.getVersion()).isEqualTo("v1.13.0");
-                        assertThat(component.getPurl().canonicalize()).isEqualTo("pkg:golang/cloud.google.com/go/storage@v1.13.0?goarch=amd64&goos=darwin&type=module");
-                        assertThat(component.getSha256()).isEqualTo("6a63ef842388f8796da7aacfbbeeb661dc2122b8dffb7e0f29500be07c206309");
-                    }
-            );
+            assertThat(qm.getAllComponents(project))
+                    .satisfiesExactlyInAnyOrder(
+                            component -> {
+                                assertThat(component.getClassifier()).isEqualTo(Classifier.LIBRARY);
+                                assertThat(component.getName()).isEqualTo("cloud.google.com/go/storage");
+                                assertThat(component.getVersion()).isEqualTo("v1.13.0");
+                                assertThat(component.getPurl().canonicalize())
+                                        .isEqualTo("pkg:golang/cloud.google.com/go/storage@v1.13.0?type=package");
+                                assertThat(component.getSha256()).isNull();
+                            },
+                            component -> {
+                                assertThat(component.getClassifier()).isEqualTo(Classifier.LIBRARY);
+                                assertThat(component.getName()).isEqualTo("cloud.google.com/go/storage");
+                                assertThat(component.getVersion()).isEqualTo("v1.13.0");
+                                assertThat(component.getPurl().canonicalize())
+                                        .isEqualTo(
+                                                "pkg:golang/cloud.google.com/go/storage@v1.13.0?goarch=amd64&goos=darwin&type=module");
+                                assertThat(component.getSha256())
+                                        .isEqualTo("6a63ef842388f8796da7aacfbbeeb661dc2122b8dffb7e0f29500be07c206309");
+                            });
         }
     }
 
@@ -535,7 +809,6 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertBomProcessedNotification();
         assertProjectAuthors.run();
 
-
         bomFileMetadata = storeBomFile("bom-issue3309.json");
         bomUploadToken = UUID.randomUUID();
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
@@ -554,7 +827,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(qm.getNotificationOutbox())
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED))
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED))
-                .noneSatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
+                .noneSatisfy(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
 
         final List<Bom> boms = qm.getAllBoms(project);
         assertThat(boms).hasSize(1);
@@ -587,9 +861,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
         final var arg = buildArg(project, bomFileMetadata, bomUploadToken);
         new ImportBomActivity(fileStorage, dexEngineMock, /* delayBomProcessedNotification */ true).execute(null, arg);
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                // BOM_PROCESSED notification should not have been sent.
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED));
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        // BOM_PROCESSED notification should not have been sent.
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED));
     }
 
     @Test
@@ -604,8 +879,9 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         // BOM_PROCESSED notification should not have been sent eagerly.
         // It will be dispatched by DelayedBomProcessedNotificationEmitter
         // when the AnalyzeProjectWorkflow completes.
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED));
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED));
     }
 
     @Test
@@ -617,11 +893,11 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
         // No REPO_META_ANALYSIS_COMMAND event because the component doesn't have a PURL.
-
 
         assertThat(qm.getAllComponents(project))
                 .satisfiesExactly(component -> assertThat(component.getName()).isEqualTo("acme-lib"));
@@ -640,29 +916,29 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
 
-
-        assertThat(qm.getAllComponents(project)).satisfiesExactly(
-                component -> {
-                    assertThat(component.getName()).isEqualTo("acme-lib-a");
-                    assertThat(component.getResolvedLicense()).isNotNull();
-                    assertThat(component.getResolvedLicense().getName()).isEqualTo("custom license foobar");
-                    assertThat(component.getLicense()).isNull();
-                },
-                component -> {
-                    assertThat(component.getName()).isEqualTo("acme-lib-b");
-                    assertThat(component.getResolvedLicense()).isNull();
-                    assertThat(component.getLicense()).isEqualTo("does not exist");
-                },
-                component -> {
-                    assertThat(component.getName()).isEqualTo("acme-lib-c");
-                    assertThat(component.getResolvedLicense()).isNull();
-                    assertThat(component.getLicense()).isNull();
-                }
-        );
+        assertThat(qm.getAllComponents(project))
+                .satisfiesExactly(
+                        component -> {
+                            assertThat(component.getName()).isEqualTo("acme-lib-a");
+                            assertThat(component.getResolvedLicense()).isNotNull();
+                            assertThat(component.getResolvedLicense().getName()).isEqualTo("custom license foobar");
+                            assertThat(component.getLicense()).isNull();
+                        },
+                        component -> {
+                            assertThat(component.getName()).isEqualTo("acme-lib-b");
+                            assertThat(component.getResolvedLicense()).isNull();
+                            assertThat(component.getLicense()).isEqualTo("does not exist");
+                        },
+                        component -> {
+                            assertThat(component.getName()).isEqualTo("acme-lib-c");
+                            assertThat(component.getResolvedLicense()).isNull();
+                            assertThat(component.getLicense()).isNull();
+                        });
     }
 
     @Test
@@ -674,10 +950,51 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
 
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getLicense()).isNull();
+            assertThat(component.getLicenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
+            assertThat(component.getResolvedLicense()).isNull();
+        });
+    }
+
+    @Test
+    void informWithBomContainingDetailedLicenseExpressionTest() throws Exception {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final var bomFileMetadata = storeBomFile(/* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.7",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0",
+                      "licenses": [
+                        {
+                          "expression": "EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0",
+                          "expressionDetails": [
+                            {
+                              "licenseIdentifier": "EPL-2.0",
+                              "url": "https://www.eclipse.org/legal/epl-2.0/"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8));
+        final var bomUploadToken = UUID.randomUUID();
+        activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
+        assertBomProcessedNotification();
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
             assertThat(component.getLicense()).isNull();
@@ -700,10 +1017,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
-
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
             assertThat(component.getResolvedLicense()).isNotNull();
@@ -722,10 +1039,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
-
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
             assertThat(component.getLicense()).isNull();
@@ -865,7 +1182,6 @@ class ImportBomActivityTest extends PersistenceCapableTest {
             assertThat(component.getResolvedLicense()).isNotNull();
             assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo(updatedLicense.getLicenseId());
         });
-
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3498
@@ -957,10 +1273,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
-
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
 
         assertThat(qm.getAllComponents(project)).isNotEmpty();
         assertThat(qm.getAllServiceComponents(project)).isNotEmpty();
@@ -984,7 +1300,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
             assertThat(component.getName()).isEqualTo("Awesome Tool");
             assertThat(component.getVersion()).isEqualTo("9.1.2");
             assertThat(component.getSha1()).isEqualTo("25ed8e31b995bb927966616df2a42b979a2717f0");
-            assertThat(component.getSha256()).isEqualTo("a74f733635a19aefb1f73e5947cef59cd7440c6952ef0f03d09d974274cbd6df");
+            assertThat(component.getSha256())
+                    .isEqualTo("a74f733635a19aefb1f73e5947cef59cd7440c6952ef0f03d09d974274cbd6df");
         });
         assertThat(project.getMetadata().getTools().services()).isNull();
     }
@@ -1006,7 +1323,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
             assertThat(component.getName()).isEqualTo("Awesome Tool");
             assertThat(component.getVersion()).isEqualTo("9.1.2");
             assertThat(component.getSha1()).isEqualTo("25ed8e31b995bb927966616df2a42b979a2717f0");
-            assertThat(component.getSha256()).isEqualTo("a74f733635a19aefb1f73e5947cef59cd7440c6952ef0f03d09d974274cbd6df");
+            assertThat(component.getSha256())
+                    .isEqualTo("a74f733635a19aefb1f73e5947cef59cd7440c6952ef0f03d09d974274cbd6df");
         });
         assertThat(project.getMetadata().getTools().services()).satisfiesExactly(service -> {
             assertThat(service.getProvider()).isNotNull();
@@ -1015,11 +1333,9 @@ class ImportBomActivityTest extends PersistenceCapableTest {
             assertThat(service.getGroup()).isEqualTo("com.example");
             assertThat(service.getName()).isEqualTo("Acme Signing Server");
             assertThat(service.getDescription()).isEqualTo("Signs artifacts");
-            assertThat(service.getEndpoints()).containsExactlyInAnyOrder(
-                    "https://example.com/sign",
-                    "https://example.com/verify",
-                    "https://example.com/tsa"
-            );
+            assertThat(service.getEndpoints())
+                    .containsExactlyInAnyOrder(
+                            "https://example.com/sign", "https://example.com/verify", "https://example.com/tsa");
         });
     }
 
@@ -1111,6 +1427,65 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         });
     }
 
+    @Test
+    void informWithExistingComponentNoLongerPartOfBomTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var removedComponent = new Component();
+        removedComponent.setProject(project);
+        removedComponent.setName("acme-lib-removed");
+        removedComponent.setClassifier(Classifier.LIBRARY);
+        qm.persist(removedComponent);
+
+        final var removedComponentProperty = new ComponentProperty();
+        removedComponentProperty.setComponent(removedComponent);
+        removedComponentProperty.setPropertyName("foo");
+        removedComponentProperty.setPropertyValue("bar");
+        removedComponentProperty.setPropertyType(PropertyType.STRING);
+        qm.persist(removedComponentProperty);
+
+        final var removedComponentOccurrence = new ComponentOccurrence();
+        removedComponentOccurrence.setComponent(removedComponent);
+        removedComponentOccurrence.setLocation("/foo/bar/baz");
+        qm.persist(removedComponentOccurrence);
+
+        final var retainedComponent = new Component();
+        retainedComponent.setProject(project);
+        retainedComponent.setName("acme-lib-retained");
+        retainedComponent.setClassifier(Classifier.LIBRARY);
+        qm.persist(retainedComponent);
+
+        final var bomFileMetadata = storeBomFile(/* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib-retained"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8));
+        final var bomUploadToken = UUID.randomUUID();
+        activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
+        assertBomProcessedNotification();
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getAllComponents(project))
+                .satisfiesExactly(component -> assertThat(component.getName()).isEqualTo("acme-lib-retained"));
+
+        assertThat(qm.getPersistenceManager().newQuery(ComponentProperty.class).executeList())
+                .isEmpty();
+        assertThat(qm.getPersistenceManager()
+                        .newQuery(ComponentOccurrence.class)
+                        .executeList())
+                .isEmpty();
+    }
+
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3957
     void informIssue3957Test() throws Exception {
         final var licenseA = new License();
@@ -1196,8 +1571,9 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        final UUID clonedProjectUuid = inJdbiTransaction(handle -> handle.attach(ProjectDao.class).cloneProject(
-                new CloneProjectCommand(project.getUuid(), "3.2.1", true, true, true, true, true, true, true, true, true, true)));
+        final UUID clonedProjectUuid = inJdbiTransaction(handle -> handle.attach(ProjectDao.class)
+                .cloneProject(new CloneProjectCommand(
+                        project.getUuid(), "3.2.1", true, true, true, true, true, true, true, true, true, true)));
 
         bomBytes = """
                 {
@@ -1247,7 +1623,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         qm.persist(project);
-        List<String> boms = new ArrayList<>(Arrays.asList("bom-issue3936-authors.json", "bom-issue3936-author.json", "bom-issue3936-both.json"));
+        List<String> boms = new ArrayList<>(
+                Arrays.asList("bom-issue3936-authors.json", "bom-issue3936-author.json", "bom-issue3936-both.json"));
         int i = 0;
         for (String bom : boms) {
             final var bomFileMetadata = storeBomFile(bom);
@@ -1282,8 +1659,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         qm.getPersistenceManager().refresh(project);
 
         assertThat(project.getDirectDependencies()).satisfies(directDependenciesJson -> {
-            final var jsonReader = Json.createReader(
-                    new StringReader(directDependenciesJson));
+            final var jsonReader = Json.createReader(new StringReader(directDependenciesJson));
             final var directDependenciesArray = jsonReader.readArray();
 
             final var uuidsSeen = new HashSet<String>();
@@ -1291,8 +1667,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 final var directDependencyObject = directDependenciesArray.getJsonObject(i);
                 final String directDependencyUuid = directDependencyObject.getString("uuid");
                 if (!uuidsSeen.add(directDependencyUuid)) {
-                    fail("Duplicate UUID %s in project's directDependencies: %s".formatted(
-                            directDependencyUuid, directDependenciesJson));
+                    fail("Duplicate UUID %s in project's directDependencies: %s"
+                            .formatted(directDependencyUuid, directDependenciesJson));
                 }
             }
         });
@@ -1303,8 +1679,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 return;
             }
 
-            final JsonReader jsonReader = Json.createReader(
-                    new StringReader(component.getDirectDependencies()));
+            final JsonReader jsonReader = Json.createReader(new StringReader(component.getDirectDependencies()));
             final JsonArray directDependenciesArray = jsonReader.readArray();
 
             final var uuidsSeen = new HashSet<String>();
@@ -1312,8 +1687,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 final JsonObject directDependencyObject = directDependenciesArray.getJsonObject(i);
                 final String directDependencyUuid = directDependencyObject.getString("uuid");
                 if (!uuidsSeen.add(directDependencyUuid)) {
-                    fail("Duplicate UUID %s in component's directDependencies: %s".formatted(
-                            directDependencyUuid, component.getDirectDependencies()));
+                    fail("Duplicate UUID %s in component's directDependencies: %s"
+                            .formatted(directDependencyUuid, component.getDirectDependencies()));
                 }
             }
         });
@@ -1383,17 +1758,20 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
         final Component aComponent = components.stream()
                 .filter(component -> component.getPurl() != null
-                        && "pkg:maven/com.example/a@1.0.0".equals(component.getPurl().canonicalize()))
+                        && "pkg:maven/com.example/a@1.0.0"
+                                .equals(component.getPurl().canonicalize()))
                 .findFirst()
                 .orElseThrow();
         final Component bComponent = components.stream()
                 .filter(component -> component.getPurl() != null
-                        && "pkg:maven/com.example/b@1.0.0".equals(component.getPurl().canonicalize()))
+                        && "pkg:maven/com.example/b@1.0.0"
+                                .equals(component.getPurl().canonicalize()))
                 .findFirst()
                 .orElseThrow();
 
         assertThat(aComponent.getDirectDependencies()).isNotNull();
-        final JsonArray directDependencies = Json.createReader(new StringReader(aComponent.getDirectDependencies())).readArray();
+        final JsonArray directDependencies = Json.createReader(new StringReader(aComponent.getDirectDependencies()))
+                .readArray();
         assertThat(directDependencies).hasSize(1);
         assertThat(directDependencies.getJsonObject(0).getString("uuid"))
                 .isEqualTo(bComponent.getUuid().toString());
@@ -1455,8 +1833,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertBomProcessedNotification();
 
         qm.getPersistenceManager().evictAll();
-        assertThatNoException()
-                .isThrownBy(() -> qm.getPersistenceManager().refresh(componentPropertyA));
+        assertThatNoException().isThrownBy(() -> qm.getPersistenceManager().refresh(componentPropertyA));
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
                 .isThrownBy(() -> qm.getPersistenceManager().refresh(componentPropertyB));
         assertThat(component.getProperties()).satisfiesExactly(property -> {
@@ -1499,10 +1876,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertBomProcessedNotification();
 
         qm.getPersistenceManager().evictAll();
-        assertThat(qm.getAllComponents(project)).satisfiesExactly(component ->
-                assertThat(component.getName()).isEqualTo("-"));
-        assertThat(qm.getAllServiceComponents(project)).satisfiesExactly(service ->
-                assertThat(service.getName()).isEqualTo("-"));
+        assertThat(qm.getAllComponents(project))
+                .satisfiesExactly(component -> assertThat(component.getName()).isEqualTo("-"));
+        assertThat(qm.getAllServiceComponents(project))
+                .satisfiesExactly(service -> assertThat(service.getName()).isEqualTo("-"));
     }
 
     @Test
@@ -1544,22 +1921,23 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertBomProcessedNotification();
 
         qm.getPersistenceManager().evictAll();
-        assertThat(qm.getAllComponents(project)).satisfiesExactly(component ->
-                assertThat(component.getOccurrences()).satisfiesExactlyInAnyOrder(
-                        occurrence -> {
-                            assertThat(occurrence.getLocation()).isEqualTo("/foo/bar/baz");
-                            assertThat(occurrence.getLine()).isNull();
-                            assertThat(occurrence.getOffset()).isNull();
-                            assertThat(occurrence.getSymbol()).isNull();
-                            assertThat(occurrence.getCreatedAt()).isNotNull();
-                        },
-                        occurrence -> {
-                            assertThat(occurrence.getLocation()).isEqualTo("/foo/bar.js");
-                            assertThat(occurrence.getLine()).isEqualTo(5);
-                            assertThat(occurrence.getOffset()).isEqualTo(666);
-                            assertThat(occurrence.getSymbol()).isEqualTo("someSymbol");
-                            assertThat(occurrence.getCreatedAt()).isNotNull();
-                        }));
+        assertThat(qm.getAllComponents(project))
+                .satisfiesExactly(component -> assertThat(component.getOccurrences())
+                        .satisfiesExactlyInAnyOrder(
+                                occurrence -> {
+                                    assertThat(occurrence.getLocation()).isEqualTo("/foo/bar/baz");
+                                    assertThat(occurrence.getLine()).isNull();
+                                    assertThat(occurrence.getOffset()).isNull();
+                                    assertThat(occurrence.getSymbol()).isNull();
+                                    assertThat(occurrence.getCreatedAt()).isNotNull();
+                                },
+                                occurrence -> {
+                                    assertThat(occurrence.getLocation()).isEqualTo("/foo/bar.js");
+                                    assertThat(occurrence.getLine()).isEqualTo(5);
+                                    assertThat(occurrence.getOffset()).isEqualTo(666);
+                                    assertThat(occurrence.getSymbol()).isEqualTo("someSymbol");
+                                    assertThat(occurrence.getCreatedAt()).isNotNull();
+                                }));
     }
 
     @Test
@@ -1620,29 +1998,31 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertBomProcessedNotification();
 
         qm.getPersistenceManager().evictAll();
-        assertThat(qm.getAllComponents(project)).satisfiesExactly(component ->
-                assertThat(component.getOccurrences()).satisfiesExactlyInAnyOrder(
-                        occurrence -> {
-                            assertThat(occurrence.getId()).isEqualTo(existingOccurrenceB.getId());
-                            assertThat(occurrence.getLocation()).isEqualTo("/foo/bar.js");
-                            assertThat(occurrence.getLine()).isEqualTo(5);
-                            assertThat(occurrence.getOffset()).isEqualTo(666);
-                            assertThat(occurrence.getSymbol()).isEqualTo("someSymbol");
-                            assertThat(occurrence.getCreatedAt()).isNotNull();
-                        },
-                        occurrence -> {
-                            assertThat(occurrence.getLocation()).isEqualTo("/foo.js");
-                            assertThat(occurrence.getLine()).isEqualTo(666);
-                            assertThat(occurrence.getOffset()).isNull();
-                            assertThat(occurrence.getSymbol()).isNull();
-                            assertThat(occurrence.getCreatedAt()).isNotNull();
-                        }));
+        assertThat(qm.getAllComponents(project))
+                .satisfiesExactly(component -> assertThat(component.getOccurrences())
+                        .satisfiesExactlyInAnyOrder(
+                                occurrence -> {
+                                    assertThat(occurrence.getId()).isEqualTo(existingOccurrenceB.getId());
+                                    assertThat(occurrence.getLocation()).isEqualTo("/foo/bar.js");
+                                    assertThat(occurrence.getLine()).isEqualTo(5);
+                                    assertThat(occurrence.getOffset()).isEqualTo(666);
+                                    assertThat(occurrence.getSymbol()).isEqualTo("someSymbol");
+                                    assertThat(occurrence.getCreatedAt()).isNotNull();
+                                },
+                                occurrence -> {
+                                    assertThat(occurrence.getLocation()).isEqualTo("/foo.js");
+                                    assertThat(occurrence.getLine()).isEqualTo(666);
+                                    assertThat(occurrence.getOffset()).isNull();
+                                    assertThat(occurrence.getSymbol()).isNull();
+                                    assertThat(occurrence.getCreatedAt()).isNotNull();
+                                }));
     }
 
     private void assertBomProcessedNotification() throws Exception {
         try {
-            assertThat(qm.getNotificationOutbox()).anySatisfy(
-                    notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
+            assertThat(qm.getNotificationOutbox())
+                    .anySatisfy(
+                            notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
         } catch (AssertionError e) {
             final Optional<Notification> optionalNotification = qm.getNotificationOutbox().stream()
                     .filter(notification -> notification.getGroup() == GROUP_BOM_PROCESSING_FAILED)
@@ -1657,7 +2037,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
     }
 
     private FileMetadata storeBomFile(final String testFileName) throws Exception {
-        final Path bomFilePath = Paths.get(resourceToURL("/unit/" + testFileName).toURI());
+        final Path bomFilePath =
+                Paths.get(resourceToURL("/unit/" + testFileName).toURI());
 
         try (final var fileInputStream = Files.newInputStream(bomFilePath)) {
             return fileStorage.store(
@@ -1672,4 +2053,15 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 new ByteArrayInputStream(bomBytes));
     }
 
+    private static String packageMetadataResolutionStatusForPurl(String purl) {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT "STATUS"
+                          FROM "PACKAGE_METADATA_RESOLUTION"
+                         WHERE "PURL" = :purl
+                        """)
+                .bind("purl", purl)
+                .mapTo(String.class)
+                .findOne()
+                .orElse(null));
+    }
 }

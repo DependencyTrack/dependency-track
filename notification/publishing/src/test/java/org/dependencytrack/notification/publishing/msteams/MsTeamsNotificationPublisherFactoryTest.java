@@ -20,10 +20,10 @@ package org.dependencytrack.notification.publishing.msteams;
 
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherFactoryTest;
 
-class MsTeamsNotificationPublisherFactoryTest extends AbstractNotificationPublisherFactoryTest<MsTeamsNotificationPublisherFactory> {
+class MsTeamsNotificationPublisherFactoryTest
+        extends AbstractNotificationPublisherFactoryTest<MsTeamsNotificationPublisherFactory> {
 
     protected MsTeamsNotificationPublisherFactoryTest() {
         super(MsTeamsNotificationPublisherFactory.class);
     }
-
 }

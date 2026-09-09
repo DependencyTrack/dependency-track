@@ -45,5 +45,4 @@ class ActivityCallOptionsTest {
         final var callOptions = new ActivityCallOptions<>().withArgument("foo");
         assertThat(callOptions.argument()).isEqualTo("foo");
     }
-
 }

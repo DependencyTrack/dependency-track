@@ -41,5 +41,4 @@ public class NotificationProjectRowMapper implements RowMapper<Project> {
         maybeSet(rs, "isActive", ResultSet::getBoolean, builder::setIsActive);
         return builder.build();
     }
-
 }

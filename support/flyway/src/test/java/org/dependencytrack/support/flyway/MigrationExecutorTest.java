@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.support.flyway;
 
+import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.exception.FlywayValidateException;
 import org.junit.jupiter.api.Test;
 import org.postgresql.ds.PGSimpleDataSource;
@@ -40,23 +41,43 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Testcontainers
 class MigrationExecutorTest {
 
-    private static final String STAGE1_MIGRATIONS_LOCATION = "classpath:org/dependencytrack/support/flyway/outoforder/stage1";
-    private static final String STAGE2_MIGRATIONS_LOCATION = "classpath:org/dependencytrack/support/flyway/outoforder/stage2";
+    private static final String STAGE1_MIGRATIONS_LOCATION =
+            "classpath:org/dependencytrack/support/flyway/outoforder/stage1";
+    private static final String STAGE2_MIGRATIONS_LOCATION =
+            "classpath:org/dependencytrack/support/flyway/outoforder/stage2";
+    private static final String REPEATABLE_MIGRATIONS_LOCATION =
+            "classpath:org/dependencytrack/support/flyway/repeatable";
     private static final String BASELINE_SCHEMA_VERSION = "0";
 
     @Container
-    private final PostgreSQLContainer postgresContainer =
-            new PostgreSQLContainer(DockerImageName.parse("postgres:14-alpine"))
-                    .withCommand("postgres", "-c", "fsync=off", "-c", "full_page_writes=off")
-                    .withTmpFs(Map.of("/var/lib/postgresql/data", "rw"));
+    private final PostgreSQLContainer postgresContainer = new PostgreSQLContainer(
+                    DockerImageName.parse("postgres:14-alpine"))
+            .withCommand("postgres", "-c", "fsync=off", "-c", "full_page_writes=off")
+            .withTmpFs(Map.of("/var/lib/postgresql/data", "rw"));
 
     @Test
     void shouldApplyMigrationsOutOfOrder() throws Exception {
         final DataSource dataSource = createDataSource();
 
-        new MigrationExecutor(dataSource, BASELINE_SCHEMA_VERSION, STAGE1_MIGRATIONS_LOCATION, null, null, true).execute();
+        new MigrationExecutor(
+                        dataSource,
+                        BASELINE_SCHEMA_VERSION,
+                        STAGE1_MIGRATIONS_LOCATION,
+                        /* schemaHistoryTable */ null,
+                        /* targetVersion */ null,
+                        /* outOfOrder */ true,
+                        /* skipRepeatable */ false)
+                .execute();
 
-        new MigrationExecutor(dataSource, BASELINE_SCHEMA_VERSION, STAGE2_MIGRATIONS_LOCATION, null, null, true).execute();
+        new MigrationExecutor(
+                        dataSource,
+                        BASELINE_SCHEMA_VERSION,
+                        STAGE2_MIGRATIONS_LOCATION,
+                        /* schemaHistoryTable */ null,
+                        /* targetVersion */ null,
+                        /* outOfOrder */ true,
+                        /* skipRepeatable */ false)
+                .execute();
 
         final Map<String, Integer> ranksByVersion = readSchemaHistoryRanks();
         assertThat(ranksByVersion).containsKeys("001", "002", "003");
@@ -67,19 +88,77 @@ class MigrationExecutorTest {
     void shouldRejectOutOfOrderMigrationWhenOutOfOrderIsDisabled() {
         final DataSource dataSource = createDataSource();
 
-        new MigrationExecutor(dataSource, BASELINE_SCHEMA_VERSION, STAGE1_MIGRATIONS_LOCATION, null, null, false).execute();
+        new MigrationExecutor(
+                        dataSource,
+                        BASELINE_SCHEMA_VERSION,
+                        STAGE1_MIGRATIONS_LOCATION,
+                        /* schemaHistoryTable */ null,
+                        /* targetVersion */ null,
+                        /* outOfOrder */ false,
+                        /* skipRepeatable */ false)
+                .execute();
 
-        assertThatThrownBy(() ->
-                new MigrationExecutor(dataSource, BASELINE_SCHEMA_VERSION, STAGE2_MIGRATIONS_LOCATION, null, null, false).execute())
+        assertThatThrownBy(() -> new MigrationExecutor(
+                                dataSource,
+                                BASELINE_SCHEMA_VERSION,
+                                STAGE2_MIGRATIONS_LOCATION,
+                                /* schemaHistoryTable */ null,
+                                /* targetVersion */ null,
+                                /* outOfOrder */ false,
+                                /* skipRepeatable */ false)
+                        .execute())
                 .isInstanceOf(FlywayValidateException.class)
                 .hasMessageContaining("Detected resolved migration not applied to database: 002");
     }
 
     @Test
+    void shouldSkipRepeatableMigrations() {
+        final DataSource dataSource = createDataSource();
+
+        new MigrationExecutor(
+                        dataSource,
+                        BASELINE_SCHEMA_VERSION,
+                        REPEATABLE_MIGRATIONS_LOCATION,
+                        /* schemaHistoryTable */ null,
+                        /* targetVersion */ null,
+                        /* outOfOrder */ true,
+                        /* skipRepeatable */ true)
+                .execute();
+
+        assertThatThrownBy(() -> new MigrationExecutor(
+                                dataSource,
+                                BASELINE_SCHEMA_VERSION,
+                                REPEATABLE_MIGRATIONS_LOCATION,
+                                /* schemaHistoryTable */ null,
+                                /* targetVersion */ null,
+                                /* outOfOrder */ true,
+                                /* skipRepeatable */ false)
+                        .execute())
+                .isInstanceOf(FlywayException.class)
+                .hasMessageContaining("table_that_does_not_exist");
+    }
+
+    @Test
     void shouldExecuteMigrationIdempotently() {
         final DataSource dataSource = createDataSource();
-        new MigrationExecutor(dataSource, BASELINE_SCHEMA_VERSION, STAGE1_MIGRATIONS_LOCATION, null, null, true).execute();
-        new MigrationExecutor(dataSource, BASELINE_SCHEMA_VERSION, STAGE1_MIGRATIONS_LOCATION, null, null, true).execute();
+        new MigrationExecutor(
+                        dataSource,
+                        BASELINE_SCHEMA_VERSION,
+                        STAGE1_MIGRATIONS_LOCATION,
+                        /* schemaHistoryTable */ null,
+                        /* targetVersion */ null,
+                        /* outOfOrder */ true,
+                        /* skipRepeatable */ false)
+                .execute();
+        new MigrationExecutor(
+                        dataSource,
+                        BASELINE_SCHEMA_VERSION,
+                        STAGE1_MIGRATIONS_LOCATION,
+                        /* schemaHistoryTable */ null,
+                        /* targetVersion */ null,
+                        /* outOfOrder */ true,
+                        /* skipRepeatable */ false)
+                .execute();
     }
 
     private DataSource createDataSource() {
@@ -93,21 +172,18 @@ class MigrationExecutorTest {
     private Map<String, Integer> readSchemaHistoryRanks() throws SQLException {
         final var result = new LinkedHashMap<String, Integer>();
         try (final Connection connection = postgresContainer.createConnection("");
-             final Statement statement = connection.createStatement();
-             final ResultSet rs = statement.executeQuery("""
+                final Statement statement = connection.createStatement();
+                final ResultSet rs = statement.executeQuery("""
                      SELECT version
                           , installed_rank
                        FROM flyway_schema_history
                       WHERE version IS NOT NULL
                      """)) {
             while (rs.next()) {
-                result.put(
-                        rs.getString("version"),
-                        rs.getInt("installed_rank"));
+                result.put(rs.getString("version"), rs.getInt("installed_rank"));
             }
         }
 
         return result;
     }
-
 }

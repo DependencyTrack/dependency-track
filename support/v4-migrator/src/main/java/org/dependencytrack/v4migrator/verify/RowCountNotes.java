@@ -35,28 +35,35 @@ import java.util.Optional;
 final class RowCountNotes {
 
     private static final Map<String, String> NOTES = Map.ofEntries(
-        Map.entry("TEAM", "dedup by NAME"),
-        Map.entry("TAG", "dedup by NAME"),
-        Map.entry("OIDCGROUP", "dedup by NAME"),
-        Map.entry("PROJECT", "dedup by (NAME, VERSION); invalid-UUID rows dropped"),
-        Map.entry("PROJECT_METADATA", "one row per PROJECT_ID (latest by ID)"),
-        Map.entry("DEPENDENCYMETRICS", "latest snapshot per key; retention cutoff applied"),
-        Map.entry("PROJECTMETRICS", "latest snapshot per key; retention cutoff applied"),
-        Map.entry("FINDINGATTRIBUTION", "one attribution per (component, vulnerability, analyzer)"),
-        Map.entry("VULNERABLESOFTWARE", "dropped rows without vulnerability refs or with invalid UUID"),
-        Map.entry("USER", "consolidated from MANAGED/LDAP/OIDC users; invalid rows skipped"),
-        // Permission join tables: v4-only permissions are dropped during the rename remap, while
-        // v5-only permissions (PORTFOLIO_ACCESS_CONTROL_BYPASS, SECRET_MANAGEMENT) are fanned out
-        // for the v4 holders of their v4-era equivalents. The net delta is a deterministic
-        // function of the remap, not a loss indicator either way.
-        Map.entry("TEAMS_PERMISSIONS", "permissions remapped (v4-only dropped); v5-only permission fan-outs added; net delta expected"),
-        Map.entry("USERS_PERMISSIONS", "permissions remapped (v4-only dropped); v5-only permission fan-outs added; net delta expected"),
-        Map.entry("PROJECT_ACCESS_TEAMS", "dropped rows with NULL TEAM_ID; dedup on (PROJECT_ID, TEAM_ID)"),
-        Map.entry("PROJECT_ACCESS_USERS", "derived from PROJECT_ACCESS_TEAMS join USERS_TEAMS; dedup on (PROJECT_ID, USER_ID)")
-    );
+            Map.entry("TEAM", "dedup by NAME"),
+            Map.entry("TAG", "dedup by NAME"),
+            Map.entry("OIDCGROUP", "dedup by NAME"),
+            Map.entry("PROJECT", "dedup by (NAME, VERSION); invalid-UUID rows dropped"),
+            Map.entry("PROJECT_METADATA", "one row per PROJECT_ID (latest by ID)"),
+            Map.entry("PROJECT_PROPERTY", "dedup on (PROJECT_ID, GROUPNAME, PROPERTYNAME) after project collapse"),
+            Map.entry("DEPENDENCYMETRICS", "latest snapshot per key; retention cutoff applied"),
+            Map.entry("PROJECTMETRICS", "latest snapshot per key; retention cutoff applied"),
+            Map.entry("FINDINGATTRIBUTION", "one attribution per (component, vulnerability, analyzer)"),
+            Map.entry("VULNERABLESOFTWARE", "dropped rows without vulnerability refs or with invalid UUID"),
+            Map.entry("USER", "consolidated from MANAGED/LDAP/OIDC users; invalid rows skipped"),
+            Map.entry("MAPPEDLDAPGROUP", "dedup on (TEAM_ID, DN) after team collapse"),
+            Map.entry("MAPPEDOIDCGROUP", "dedup on (TEAM_ID, GROUP_ID) after team and group collapse"),
+            // Permission join tables: v4-only permissions are dropped during the rename remap, while
+            // v5-only permissions (PORTFOLIO_ACCESS_CONTROL_BYPASS, SECRET_MANAGEMENT) are fanned out
+            // for the v4 holders of their v4-era equivalents. The net delta is a deterministic
+            // function of the remap, not a loss indicator either way.
+            Map.entry(
+                    "TEAMS_PERMISSIONS",
+                    "permissions remapped (v4-only dropped); v5-only permission fan-outs added; net delta expected"),
+            Map.entry(
+                    "USERS_PERMISSIONS",
+                    "permissions remapped (v4-only dropped); v5-only permission fan-outs added; net delta expected"),
+            Map.entry("PROJECT_ACCESS_TEAMS", "dropped rows with NULL TEAM_ID; dedup on (PROJECT_ID, TEAM_ID)"),
+            Map.entry(
+                    "PROJECT_ACCESS_USERS",
+                    "derived from PROJECT_ACCESS_TEAMS join USERS_TEAMS; dedup on (PROJECT_ID, USER_ID)"));
 
-    private RowCountNotes() {
-    }
+    private RowCountNotes() {}
 
     static Optional<String> reasonFor(final String table) {
         return Optional.ofNullable(NOTES.get(table));

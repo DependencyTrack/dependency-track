@@ -75,12 +75,10 @@ public final class DelayedBomProcessedNotificationEmitter implements WorkflowRun
                 continue;
             }
 
-            final UUID projectUuid = Optional
-                    .ofNullable(labels.get(WF_LABEL_PROJECT_UUID))
+            final UUID projectUuid = Optional.ofNullable(labels.get(WF_LABEL_PROJECT_UUID))
                     .map(UUID::fromString)
                     .orElse(null);
-            final UUID bomUploadToken = Optional
-                    .ofNullable(labels.get(WF_LABEL_BOM_UPLOAD_TOKEN))
+            final UUID bomUploadToken = Optional.ofNullable(labels.get(WF_LABEL_BOM_UPLOAD_TOKEN))
                     .map(UUID::fromString)
                     .orElse(null);
             if (projectUuid != null && bomUploadToken != null) {
@@ -92,18 +90,12 @@ public final class DelayedBomProcessedNotificationEmitter implements WorkflowRun
             return;
         }
 
-        final Set<UUID> projectUuids = relevantRuns.stream()
-                .map(RelevantRun::projectUuid)
-                .collect(Collectors.toSet());
+        final Set<UUID> projectUuids =
+                relevantRuns.stream().map(RelevantRun::projectUuid).collect(Collectors.toSet());
 
-        final Map<UUID, Project> projectByUuid = withJdbiHandle(
-                handle -> handle
-                        .attach(NotificationSubjectDao.class)
-                        .getProjects(projectUuids)
-                        .stream()
-                        .collect(Collectors.toMap(
-                                project -> UUID.fromString(project.getUuid()),
-                                Function.identity())));
+        final Map<UUID, Project> projectByUuid =
+                withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class).getProjects(projectUuids).stream()
+                        .collect(Collectors.toMap(project -> UUID.fromString(project.getUuid()), Function.identity())));
 
         final var notifications = new ArrayList<Notification>(relevantRuns.size());
         for (final RelevantRun run : relevantRuns) {
@@ -113,20 +105,15 @@ public final class DelayedBomProcessedNotificationEmitter implements WorkflowRun
             }
 
             if (run.status() == WorkflowRunStatus.COMPLETED) {
-                notifications.add(
-                        createBomProcessedNotification(
-                                project,
-                                "CycloneDX",
-                                "Unknown",
-                                run.bomUploadToken().toString()));
+                notifications.add(createBomProcessedNotification(
+                        project, "CycloneDX", "Unknown", run.bomUploadToken().toString()));
             } else {
-                notifications.add(
-                        createBomProcessingFailedNotification(
-                                project,
-                                "CycloneDX",
-                                "Unknown",
-                                run.bomUploadToken().toString(),
-                                "Vulnerability analysis failed"));
+                notifications.add(createBomProcessingFailedNotification(
+                        project,
+                        "CycloneDX",
+                        "Unknown",
+                        run.bomUploadToken().toString(),
+                        "Vulnerability analysis failed"));
             }
         }
 
@@ -134,10 +121,5 @@ public final class DelayedBomProcessedNotificationEmitter implements WorkflowRun
         useJdbiTransaction(handle -> new JdbiNotificationEmitter(handle).emitAll(notifications));
     }
 
-    private record RelevantRun(
-            UUID projectUuid,
-            UUID bomUploadToken,
-            WorkflowRunStatus status) {
-    }
-
+    private record RelevantRun(UUID projectUuid, UUID bomUploadToken, WorkflowRunStatus status) {}
 }

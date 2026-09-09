@@ -22,16 +22,11 @@ import alpine.model.ManagedUser;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -50,6 +45,14 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import java.math.BigDecimal;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -68,9 +71,7 @@ class AnalysisResourceTest extends ResourceTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(AnalysisResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+            new ResourceConfig(AnalysisResource.class).register(ApiFilter.class).register(AuthFeature.class));
 
     @Test
     void retrieveAnalysisTest() {
@@ -91,18 +92,16 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vulnerability)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
-                        .withResponse(AnalysisResponse.WILL_NOT_FIX)
-                        .withDetails("Analysis details here")
-                        .withSuppress(true)
-                        .withCommenter("Jane Doe")
-                        .withComment("Analysis comment here")
-                        .withOptions(EnumSet.of(
-                                MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL,
-                                MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                .withResponse(AnalysisResponse.WILL_NOT_FIX)
+                .withDetails("Analysis details here")
+                .withSuppress(true)
+                .withCommenter("Jane Doe")
+                .withComment("Analysis comment here")
+                .withOptions(EnumSet.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", project.getUuid())
@@ -114,17 +113,85 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
 
-        final JsonObject responseJson = parseJsonObject(response);
-        assertThat(responseJson).isNotNull();
-        assertThat(responseJson.getString("analysisState")).isEqualTo(AnalysisState.NOT_AFFECTED.name());
-        assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
-        assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
-        assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
-        assertThat(responseJson.getJsonArray("analysisComments")).hasSize(1);
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(0))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
-                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Jane Doe"));
-        assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "analysisState": "NOT_AFFECTED",
+                  "analysisJustification": "CODE_NOT_REACHABLE",
+                  "analysisResponse": "WILL_NOT_FIX",
+                  "analysisDetails": "Analysis details here",
+                  "analysisComments": [
+                    {
+                      "timestamp": "${json-unit.any-number}",
+                      "comment": "Analysis comment here",
+                      "commenter": "Jane Doe"
+                    }
+                  ],
+                  "isSuppressed": true
+                }
+                """);
+    }
+
+    @Test
+    void retrieveAnalysisWithSeverityAndScoresTest() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("INT-001");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.HIGH);
+        vulnerability.setComponents(List.of(component));
+        vulnerability = qm.createVulnerability(vulnerability);
+
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+                .withState(AnalysisState.EXPLOITABLE)
+                .withOwasp("OWASP/K9:M1:O0:Z2/D1:X1:W1:L1/C1:I1:A1:T1/F1:R1:S1:P1/", new BigDecimal("4.5"))
+                .withOptions(EnumSet.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+
+        final Analysis analysis = qm.getAnalysis(component, vulnerability);
+        analysis.setSeverity(Severity.MEDIUM);
+        analysis.setCvssV2Vector("AV:N/AC:L/Au:N/C:P/I:P/A:P");
+        analysis.setCvssV2Score(new BigDecimal("7.5"));
+        analysis.setCvssV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
+        analysis.setCvssV3Score(new BigDecimal("9.8"));
+        analysis.setCvssV4Vector("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N");
+        analysis.setCvssV4Score(new BigDecimal("9.3"));
+        qm.persist(analysis);
+
+        final Response response = jersey.target(V1_ANALYSIS)
+                .queryParam("project", project.getUuid())
+                .queryParam("component", component.getUuid())
+                .queryParam("vulnerability", vulnerability.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "analysisState": "EXPLOITABLE",
+                  "analysisJustification": "NOT_SET",
+                  "analysisResponse": "NOT_SET",
+                  "analysisComments": [],
+                  "isSuppressed": false,
+                  "severity": "MEDIUM",
+                  "cvssV2Vector": "AV:N/AC:L/Au:N/C:P/I:P/A:P",
+                  "cvssV2Score": 7.5,
+                  "cvssV3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+                  "cvssV3Score": 9.8,
+                  "cvssV4Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+                  "cvssV4Score": 9.3,
+                  "owaspVector": "OWASP/K9:M1:O0:Z2/D1:X1:W1:L1/C1:I1:A1:T1/F1:R1:S1:P1/",
+                  "owaspScore": 4.5
+                }
+                """);
     }
 
     @Test
@@ -312,16 +379,14 @@ class AnalysisResourceTest extends ResourceTest {
         vuln.setSource(Vulnerability.Source.INTERNAL);
         qm.persist(vuln);
 
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vuln)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
-                        .withResponse(AnalysisResponse.WILL_NOT_FIX)
-                        .withDetails("Analysis details here")
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                .withResponse(AnalysisResponse.WILL_NOT_FIX)
+                .withDetails("Analysis details here")
+                .withSuppress(true));
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_ANALYSIS)
+        final Supplier<Response> responseSupplier = () -> jersey.target(V1_ANALYSIS)
                 .queryParam("component", component.getUuid())
                 .queryParam("vulnerability", vuln.getUuid())
                 .request()
@@ -367,9 +432,16 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+        final var analysisRequest = new AnalysisRequest(
+                project.getUuid().toString(),
+                component.getUuid().toString(),
+                vulnerability.getUuid().toString(),
+                AnalysisState.NOT_AFFECTED,
+                AnalysisJustification.CODE_NOT_REACHABLE,
+                AnalysisResponse.WILL_NOT_FIX,
+                "Analysis details here",
+                "Analysis comment here",
+                true);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -378,39 +450,55 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
 
-        final JsonObject responseJson = parseJsonObject(response);
-        assertThat(responseJson).isNotNull();
-        assertThat(responseJson.getString("analysisState")).isEqualTo(AnalysisState.NOT_AFFECTED.name());
-        assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
-        assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
-        assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
-        assertThat(responseJson.getJsonArray("analysisComments")).hasSize(6);
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(0))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: NOT_SET → NOT_AFFECTED"))
-                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(1))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Justification: NOT_SET → CODE_NOT_REACHABLE"))
-                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(2))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Vendor Response: NOT_SET → WILL_NOT_FIX"))
-                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(3))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Details: Analysis details here"))
-                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(4))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppressed"))
-                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(5))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
-                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
-        assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "analysisState": "NOT_AFFECTED",
+                  "analysisJustification": "CODE_NOT_REACHABLE",
+                  "analysisResponse": "WILL_NOT_FIX",
+                  "analysisDetails": "Analysis details here",
+                  "analysisComments": [
+                    {
+                      "timestamp": "${json-unit.any-number}",
+                      "comment": "Analysis: NOT_SET → NOT_AFFECTED",
+                      "commenter": "Test Users"
+                    },
+                    {
+                      "timestamp": "${json-unit.any-number}",
+                      "comment": "Justification: NOT_SET → CODE_NOT_REACHABLE",
+                      "commenter": "Test Users"
+                    },
+                    {
+                      "timestamp": "${json-unit.any-number}",
+                      "comment": "Vendor Response: NOT_SET → WILL_NOT_FIX",
+                      "commenter": "Test Users"
+                    },
+                    {
+                      "timestamp": "${json-unit.any-number}",
+                      "comment": "Details: Analysis details here",
+                      "commenter": "Test Users"
+                    },
+                    {
+                      "timestamp": "${json-unit.any-number}",
+                      "comment": "Suppressed",
+                      "commenter": "Test Users"
+                    },
+                    {
+                      "timestamp": "${json-unit.any-number}",
+                      "comment": "Analysis comment here",
+                      "commenter": "Test Users"
+                    }
+                  ],
+                  "isSuppressed": true
+                }
+                """);
 
         assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.getTitle()).isEqualTo("Analysis Decision: NOT_AFFECTED");
-            assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+            assertThat(notification.getContent())
+                    .isEqualTo("An analysis decision was made to a finding affecting a project");
         });
     }
 
@@ -439,9 +527,16 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+        final var analysisRequest = new AnalysisRequest(
+                project.getUuid().toString(),
+                component.getUuid().toString(),
+                vulnerability.getUuid().toString(),
+                AnalysisState.NOT_AFFECTED,
+                AnalysisJustification.CODE_NOT_REACHABLE,
+                AnalysisResponse.WILL_NOT_FIX,
+                "Analysis details here",
+                "Analysis comment here",
+                true);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -453,7 +548,8 @@ class AnalysisResourceTest extends ResourceTest {
         final JsonObject responseJson = parseJsonObject(response);
         assertThat(responseJson).isNotNull();
         assertThat(responseJson.getString("analysisState")).isEqualTo(AnalysisState.NOT_AFFECTED.name());
-        assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
+        assertThat(responseJson.getString("analysisJustification"))
+                .isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
         assertThat(responseJson.getJsonArray("analysisComments")).hasSize(6);
@@ -482,7 +578,8 @@ class AnalysisResourceTest extends ResourceTest {
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.getTitle()).isEqualTo("Analysis Decision: NOT_AFFECTED");
-            assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+            assertThat(notification.getContent())
+                    .isEqualTo("An analysis decision was made to a finding affecting a project");
         });
     }
 
@@ -505,8 +602,16 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), null, null, null, null, null, null);
+        final var analysisRequest = new AnalysisRequest(
+                project.getUuid().toString(),
+                component.getUuid().toString(),
+                vulnerability.getUuid().toString(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -548,22 +653,27 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vulnerability)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
-                        .withResponse(AnalysisResponse.WILL_NOT_FIX)
-                        .withDetails("Analysis details here")
-                        .withSuppress(true)
-                        .withCommenter("Jane Doe")
-                        .withComment("Analysis comment here")
-                        .withOptions(EnumSet.of(
-                                MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL,
-                                MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                .withResponse(AnalysisResponse.WILL_NOT_FIX)
+                .withDetails("Analysis details here")
+                .withSuppress(true)
+                .withCommenter("Jane Doe")
+                .withComment("Analysis comment here")
+                .withOptions(EnumSet.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
 
-        final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), AnalysisState.EXPLOITABLE, AnalysisJustification.NOT_SET,
-                AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false);
+        final var analysisRequest = new AnalysisRequest(
+                project.getUuid().toString(),
+                component.getUuid().toString(),
+                vulnerability.getUuid().toString(),
+                AnalysisState.EXPLOITABLE,
+                AnalysisJustification.NOT_SET,
+                AnalysisResponse.UPDATE,
+                "New analysis details here",
+                "New analysis comment here",
+                false);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -609,7 +719,8 @@ class AnalysisResourceTest extends ResourceTest {
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.getTitle()).isEqualTo("Analysis Decision: EXPLOITABLE");
-            assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+            assertThat(notification.getContent())
+                    .isEqualTo("An analysis decision was made to a finding affecting a project");
         });
     }
 
@@ -632,22 +743,27 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vulnerability)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
-                        .withResponse(AnalysisResponse.WILL_NOT_FIX)
-                        .withDetails("Analysis details here")
-                        .withSuppress(true)
-                        .withCommenter("Jane Doe")
-                        .withComment("Analysis comment here")
-                        .withOptions(EnumSet.of(
-                                MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL,
-                                MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                .withResponse(AnalysisResponse.WILL_NOT_FIX)
+                .withDetails("Analysis details here")
+                .withSuppress(true)
+                .withCommenter("Jane Doe")
+                .withComment("Analysis comment here")
+                .withOptions(EnumSet.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
 
-        final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", null, true);
+        final var analysisRequest = new AnalysisRequest(
+                project.getUuid().toString(),
+                component.getUuid().toString(),
+                vulnerability.getUuid().toString(),
+                AnalysisState.NOT_AFFECTED,
+                AnalysisJustification.CODE_NOT_REACHABLE,
+                AnalysisResponse.WILL_NOT_FIX,
+                "Analysis details here",
+                null,
+                true);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -659,7 +775,8 @@ class AnalysisResourceTest extends ResourceTest {
         final JsonObject responseJson = parseJsonObject(response);
         assertThat(responseJson).isNotNull();
         assertThat(responseJson.getString("analysisState")).isEqualTo(AnalysisState.NOT_AFFECTED.name());
-        assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
+        assertThat(responseJson.getString("analysisJustification"))
+                .isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
 
@@ -693,21 +810,27 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vulnerability)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
-                        .withResponse(AnalysisResponse.WILL_NOT_FIX)
-                        .withDetails("Analysis details here")
-                        .withSuppress(true)
-                        .withCommenter("Jane Doe")
-                        .withComment("Analysis comment here")
-                        .withOptions(EnumSet.of(
-                                MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL,
-                                MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                .withResponse(AnalysisResponse.WILL_NOT_FIX)
+                .withDetails("Analysis details here")
+                .withSuppress(true)
+                .withCommenter("Jane Doe")
+                .withComment("Analysis comment here")
+                .withOptions(EnumSet.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
 
-        final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), null, null, null, null, null, null);
+        final var analysisRequest = new AnalysisRequest(
+                project.getUuid().toString(),
+                component.getUuid().toString(),
+                vulnerability.getUuid().toString(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -743,7 +866,8 @@ class AnalysisResourceTest extends ResourceTest {
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.getTitle()).isEqualTo("Analysis Decision: NOT_SET");
-            assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+            assertThat(notification.getContent())
+                    .isEqualTo("An analysis decision was made to a finding affecting a project");
         });
     }
 
@@ -766,9 +890,16 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), UUID.randomUUID().toString(),
-                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+        final var analysisRequest = new AnalysisRequest(
+                project.getUuid().toString(),
+                UUID.randomUUID().toString(),
+                vulnerability.getUuid().toString(),
+                AnalysisState.NOT_AFFECTED,
+                AnalysisJustification.CODE_NOT_REACHABLE,
+                AnalysisResponse.WILL_NOT_FIX,
+                "Analysis details here",
+                "Analysis comment here",
+                true);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -798,9 +929,16 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                UUID.randomUUID().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+        final var analysisRequest = new AnalysisRequest(
+                project.getUuid().toString(),
+                component.getUuid().toString(),
+                UUID.randomUUID().toString(),
+                AnalysisState.NOT_AFFECTED,
+                AnalysisJustification.CODE_NOT_REACHABLE,
+                AnalysisResponse.WILL_NOT_FIX,
+                "Analysis details here",
+                "Analysis comment here",
+                true);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -836,16 +974,21 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vulnerability)
-                        .withState(AnalysisState.IN_TRIAGE)
-                        .withOptions(EnumSet.of(
-                                MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL,
-                                MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+                .withState(AnalysisState.IN_TRIAGE)
+                .withOptions(EnumSet.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
 
-        final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
-                AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false);
+        final var analysisRequest = new AnalysisRequest(
+                project.getUuid().toString(),
+                component.getUuid().toString(),
+                vulnerability.getUuid().toString(),
+                AnalysisState.NOT_AFFECTED,
+                AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
+                AnalysisResponse.UPDATE,
+                "New analysis details here",
+                "New analysis comment here",
+                false);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -857,7 +1000,8 @@ class AnalysisResourceTest extends ResourceTest {
         final JsonObject responseJson = parseJsonObject(response);
         assertThat(responseJson).isNotNull();
         assertThat(responseJson.getString("analysisState")).isEqualTo(AnalysisState.NOT_AFFECTED.name());
-        assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL.name());
+        assertThat(responseJson.getString("analysisJustification"))
+                .isEqualTo(AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL.name());
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.UPDATE.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("New analysis details here");
 
@@ -867,7 +1011,8 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: IN_TRIAGE → NOT_AFFECTED"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(analysisComments.getJsonObject(1))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Justification: NOT_SET → PROTECTED_BY_MITIGATING_CONTROL"))
+                .hasFieldOrPropertyWithValue(
+                        "comment", Json.createValue("Justification: NOT_SET → PROTECTED_BY_MITIGATING_CONTROL"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(analysisComments.getJsonObject(2))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Vendor Response: NOT_SET → UPDATE"))
@@ -885,15 +1030,23 @@ class AnalysisResourceTest extends ResourceTest {
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.getTitle()).isEqualTo("Analysis Decision: NOT_AFFECTED");
-            assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+            assertThat(notification.getContent())
+                    .isEqualTo("An analysis decision was made to a finding affecting a project");
         });
     }
 
     @Test
     void updateAnalysisUnauthorizedTest() {
-        final var analysisRequest = new AnalysisRequest(UUID.randomUUID().toString(), UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
-                AnalysisResponse.UPDATE, "Analysis details here", "Analysis comment here", false);
+        final var analysisRequest = new AnalysisRequest(
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                AnalysisState.NOT_AFFECTED,
+                AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
+                AnalysisResponse.UPDATE,
+                "Analysis details here",
+                "Analysis comment here",
+                false);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -923,11 +1076,11 @@ class AnalysisResourceTest extends ResourceTest {
         vuln.setSource(Vulnerability.Source.INTERNAL);
         qm.persist(vuln);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_ANALYSIS)
+        final Supplier<Response> responseSupplier = () -> jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.json(/* language=JSON */ """
+                .put(Entity.json(
+                        /* language=JSON */ """
                         {
                           "project": "%s",
                           "component": "%s",
@@ -973,10 +1126,9 @@ class AnalysisResourceTest extends ResourceTest {
         qm.persist(vuln);
 
         qm.addVulnerability(vuln, component, "internal");
-        final long analysisId = qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vuln)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withSuppress(true));
+        final long analysisId = qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withSuppress(true));
 
         final VulnPolicyIdentityRow vulnPolicy = withJdbiHandle(handle -> {
             final var policyAnalysis = new VulnerabilityPolicyAnalysis();
@@ -1006,15 +1158,16 @@ class AnalysisResourceTest extends ResourceTest {
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
+                .put(Entity.entity(
+                        """
                         {
                           "project": "%s",
                           "component": "%s",
                           "vulnerability": "%s",
                           "comment": "foo"
                         }
-                        """.formatted(project.getUuid(), component.getUuid(), vuln.getUuid()), MediaType.APPLICATION_JSON));
+                        """.formatted(project.getUuid(), component.getUuid(), vuln.getUuid()),
+                        MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(200);
     }
-
 }

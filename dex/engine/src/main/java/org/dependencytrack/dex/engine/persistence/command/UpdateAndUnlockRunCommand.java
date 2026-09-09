@@ -34,6 +34,4 @@ public record UpdateAndUnlockRunCommand(
         @Nullable Instant updatedAt,
         @Nullable Instant startedAt,
         @Nullable Instant completedAt,
-        int lockVersion) {
-
-}
+        int lockVersion) {}

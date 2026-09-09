@@ -22,12 +22,6 @@ import alpine.server.auth.PermissionRequired;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.inject.Inject;
-import jakarta.json.Json;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.ExtensionsApi;
 import org.dependencytrack.api.v2.model.GetExtensionConfigResponse;
 import org.dependencytrack.api.v2.model.ListExtensionPointsResponse;
@@ -60,6 +54,13 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.json.Json;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Comparator;
@@ -89,29 +90,22 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response listExtensionPoints() {
-        final SequencedCollection<ExtensionPointMetadata> extensionPoints =
-                pluginManager.getExtensionPoints();
+        final SequencedCollection<ExtensionPointMetadata> extensionPoints = pluginManager.getExtensionPoints();
 
         final var response = ListExtensionPointsResponse.builder()
-                .items(
-                        extensionPoints.stream()
-                                .map(ExtensionPointMetadata::name)
-                                .sorted()
-                                .<ListExtensionPointsResponseItem>map(
-                                        name -> ListExtensionPointsResponseItem.builder()
-                                                .name(name)
-                                                .build())
-                                .toList())
-                .total(
-                        TotalCount.builder()
-                                .count((long) extensionPoints.size())
-                                .type(TotalCountType.EXACT)
+                .items(extensionPoints.stream()
+                        .map(ExtensionPointMetadata::name)
+                        .sorted()
+                        .<ListExtensionPointsResponseItem>map(name -> ListExtensionPointsResponseItem.builder()
+                                .name(name)
                                 .build())
+                        .toList())
+                .total(TotalCount.builder()
+                        .count((long) extensionPoints.size())
+                        .type(TotalCountType.EXACT)
+                        .build())
                 .build();
 
         return Response.ok(response).build();
@@ -119,53 +113,39 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response listExtensions(String extensionPointName) {
-        final Class<? extends ExtensionPoint> extensionPointClass =
-                getExtensionPointClass(extensionPointName);
+        final Class<? extends ExtensionPoint> extensionPointClass = getExtensionPointClass(extensionPointName);
 
         final SequencedCollection<ExtensionFactory> extensionFactories =
                 pluginManager.getFactories(extensionPointClass);
 
         final var response = ListExtensionsResponse.builder()
-                .items(
-                        extensionFactories.stream()
-                                .sorted(Comparator.comparing(ExtensionFactory::extensionName))
-                                .<ListExtensionsResponseItem>map(
-                                        extensionFactory -> ListExtensionsResponseItem.builder()
-                                                .name(extensionFactory.extensionName())
-                                                .configurable(extensionFactory instanceof RuntimeConfigurable)
-                                                .testable(extensionFactory instanceof Testable)
-                                                .build())
-                                .toList())
-                .total(
-                        TotalCount.builder()
-                                .count((long) extensionFactories.size())
-                                .type(TotalCountType.EXACT)
+                .items(extensionFactories.stream()
+                        .sorted(Comparator.comparing(ExtensionFactory::extensionName))
+                        .<ListExtensionsResponseItem>map(extensionFactory -> ListExtensionsResponseItem.builder()
+                                .name(extensionFactory.extensionName())
+                                .displayName(extensionFactory.displayName())
+                                .configurable(extensionFactory instanceof RuntimeConfigurable)
+                                .testable(extensionFactory instanceof Testable)
                                 .build())
+                        .toList())
+                .total(TotalCount.builder()
+                        .count((long) extensionFactories.size())
+                        .type(TotalCountType.EXACT)
+                        .build())
                 .build();
 
         return Response.ok(response).build();
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
-    public Response getExtensionConfig(
-            String extensionPointName,
-            String extensionName) {
-        final Class<? extends ExtensionPoint> extensionPointClass =
-                getExtensionPointClass(extensionPointName);
-        final ExtensionFactory<?> extensionFactory =
-                getExtensionFactory(extensionPointClass, extensionName);
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
+    public Response getExtensionConfig(String extensionPointName, String extensionName) {
+        final Class<? extends ExtensionPoint> extensionPointClass = getExtensionPointClass(extensionPointName);
+        final ExtensionFactory<?> extensionFactory = getExtensionFactory(extensionPointClass, extensionName);
 
-        if (!(extensionFactory instanceof RuntimeConfigurable rc)
-                || rc.runtimeConfigSpec() == null) {
+        if (!(extensionFactory instanceof RuntimeConfigurable rc) || rc.runtimeConfigSpec() == null) {
             throw new NotFoundException();
         }
 
@@ -179,44 +159,34 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
         final ObjectMapper jsonMapper = RuntimeConfigMapper.getInstance().getJsonMapper();
         final Map<String, Object> parsedConfigJson;
         try {
-            parsedConfigJson = jsonMapper.readValue(configJson, new TypeReference<>() {
-            });
+            parsedConfigJson = jsonMapper.readValue(configJson, new TypeReference<>() {});
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
 
-        final var response = GetExtensionConfigResponse.builder()
-                .config(parsedConfigJson)
-                .build();
+        final var response =
+                GetExtensionConfigResponse.builder().config(parsedConfigJson).build();
 
         return Response.ok(response).build();
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE})
     public Response updateExtensionConfig(
-            String extensionPointName,
-            String extensionName,
-            UpdateExtensionConfigRequest request) {
-        final Class<? extends ExtensionPoint> extensionPointClass =
-                getExtensionPointClass(extensionPointName);
-        final ExtensionFactory<?> extensionFactory =
-                getExtensionFactory(extensionPointClass, extensionName);
+            String extensionPointName, String extensionName, UpdateExtensionConfigRequest request) {
+        final Class<? extends ExtensionPoint> extensionPointClass = getExtensionPointClass(extensionPointName);
+        final ExtensionFactory<?> extensionFactory = getExtensionFactory(extensionPointClass, extensionName);
 
         final RuntimeConfigSpec runtimeConfigSpec =
-                extensionFactory instanceof RuntimeConfigurable rc
-                        ? rc.runtimeConfigSpec()
-                        : null;
+                extensionFactory instanceof RuntimeConfigurable rc ? rc.runtimeConfigSpec() : null;
         if (runtimeConfigSpec == null) {
             throw new BadRequestException();
         }
 
         // Unfortunately we can't receive the config object as raw string,
         // so we have to serialize it first.
-        final String configJson = Json.createObjectBuilder(request.getConfig()).build().toString();
+        final String configJson =
+                Json.createObjectBuilder(request.getConfig()).build().toString();
 
         // Throws when config is invalid or secrets cannot be resolved.
         final JsonNode configNode = validateConfigAndResolveSecrets(configJson, runtimeConfigSpec);
@@ -234,31 +204,19 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
         }
 
         LOGGER.info(
-                SecurityMarkers.SECURITY_AUDIT,
-                "Updated config of extension {}/{}",
-                extensionPointName,
-                extensionName);
+                SecurityMarkers.SECURITY_AUDIT, "Updated config of extension {}/{}", extensionPointName, extensionName);
 
         return Response.noContent().build();
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
-    public Response getExtensionConfigSchema(
-            String extensionPointName,
-            String extensionName) {
-        final Class<? extends ExtensionPoint> extensionPointClass =
-                getExtensionPointClass(extensionPointName);
-        final ExtensionFactory<?> extensionFactory =
-                getExtensionFactory(extensionPointClass, extensionName);
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
+    public Response getExtensionConfigSchema(String extensionPointName, String extensionName) {
+        final Class<? extends ExtensionPoint> extensionPointClass = getExtensionPointClass(extensionPointName);
+        final ExtensionFactory<?> extensionFactory = getExtensionFactory(extensionPointClass, extensionName);
 
         final RuntimeConfigSpec runtimeConfigSpec =
-                extensionFactory instanceof RuntimeConfigurable rc
-                        ? rc.runtimeConfigSpec()
-                        : null;
+                extensionFactory instanceof RuntimeConfigurable rc ? rc.runtimeConfigSpec() : null;
         if (runtimeConfigSpec == null) {
             return Response.noContent().build();
         }
@@ -267,18 +225,10 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE
-    })
-    public Response testExtension(
-            String extensionPointName,
-            String extensionName,
-            TestExtensionRequest request) {
-        final Class<? extends ExtensionPoint> extensionPointClass =
-                getExtensionPointClass(extensionPointName);
-        final ExtensionFactory<?> extensionFactory =
-                getExtensionFactory(extensionPointClass, extensionName);
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE})
+    public Response testExtension(String extensionPointName, String extensionName, TestExtensionRequest request) {
+        final Class<? extends ExtensionPoint> extensionPointClass = getExtensionPointClass(extensionPointName);
+        final ExtensionFactory<?> extensionFactory = getExtensionFactory(extensionPointClass, extensionName);
 
         try (var _ = new MdcScope(Map.ofEntries(
                 Map.entry(MDC_EXTENSION_POINT_NAME, extensionPointName),
@@ -291,15 +241,14 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
 
         RuntimeConfig runtimeConfig = null;
         final RuntimeConfigSpec runtimeConfigSpec =
-                extensionFactory instanceof RuntimeConfigurable rc
-                        ? rc.runtimeConfigSpec()
-                        : null;
+                extensionFactory instanceof RuntimeConfigurable rc ? rc.runtimeConfigSpec() : null;
         if (runtimeConfigSpec == null) {
             if (request.getConfig() != null) {
                 throw new BadRequestException("The extension does not support configuration");
             }
         } else {
-            final String configJson = Json.createObjectBuilder(request.getConfig()).build().toString();
+            final String configJson =
+                    Json.createObjectBuilder(request.getConfig()).build().toString();
             final JsonNode configNode = validateConfigAndResolveSecrets(configJson, runtimeConfigSpec);
             runtimeConfig = configMapper.convert(configNode, runtimeConfigSpec.configClass());
             if (runtimeConfigSpec.validator() != null) {
@@ -331,8 +280,7 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
     }
 
     private ExtensionFactory<?> getExtensionFactory(
-            Class<? extends ExtensionPoint> extensionPointClass,
-            String extensionName) {
+            Class<? extends ExtensionPoint> extensionPointClass, String extensionName) {
         return pluginManager.getFactories(extensionPointClass).stream()
                 .filter(factory -> factory.extensionName().equals(extensionName))
                 .findAny()
@@ -354,13 +302,13 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
     private static org.dependencytrack.api.v2.model.ExtensionTestCheck convert(ExtensionTestCheck check) {
         return org.dependencytrack.api.v2.model.ExtensionTestCheck.builder()
                 .name(check.name())
-                .status(switch (check.status()) {
-                    case FAILED -> org.dependencytrack.api.v2.model.ExtensionTestCheckStatus.FAILED;
-                    case PASSED -> org.dependencytrack.api.v2.model.ExtensionTestCheckStatus.PASSED;
-                    case SKIPPED -> org.dependencytrack.api.v2.model.ExtensionTestCheckStatus.SKIPPED;
-                })
+                .status(
+                        switch (check.status()) {
+                            case FAILED -> org.dependencytrack.api.v2.model.ExtensionTestCheckStatus.FAILED;
+                            case PASSED -> org.dependencytrack.api.v2.model.ExtensionTestCheckStatus.PASSED;
+                            case SKIPPED -> org.dependencytrack.api.v2.model.ExtensionTestCheckStatus.SKIPPED;
+                        })
                 .message(check.message())
                 .build();
     }
-
 }

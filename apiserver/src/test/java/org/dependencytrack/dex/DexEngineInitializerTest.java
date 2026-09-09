@@ -20,8 +20,6 @@ package org.dependencytrack.dex;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.smallrye.config.SmallRyeConfigBuilder;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletContextEvent;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
@@ -34,6 +32,7 @@ import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
+import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,9 +43,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+
 import java.net.http.HttpClient;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -60,12 +63,14 @@ class DexEngineInitializerTest {
     @Container
     private final PostgreSQLContainer postgresContainer =
             new PostgreSQLContainer(DockerImageName.parse("postgres:14-alpine"));
+
+    private PGSimpleDataSource dataSource;
     private DataSourceRegistry dataSourceRegistry;
     private DexEngineInitializer initializer;
 
     @BeforeEach
     void beforeEach() {
-        final var dataSource = new PGSimpleDataSource();
+        dataSource = new PGSimpleDataSource();
         dataSource.setUrl(postgresContainer.getJdbcUrl());
         dataSource.setUser(postgresContainer.getUsername());
         dataSource.setPassword(postgresContainer.getPassword());
@@ -85,12 +90,11 @@ class DexEngineInitializerTest {
     @Test
     void shouldStartEngine() throws Exception {
         final var config = new SmallRyeConfigBuilder()
-                .withDefaultValues(Map.ofEntries(
-                        Map.entry("dt.dex-engine.datasource.name", "foo"),
-                        Map.entry("dt.datasource.foo.url", postgresContainer.getJdbcUrl()),
-                        Map.entry("dt.datasource.foo.username", postgresContainer.getUsername()),
-                        Map.entry("dt.datasource.foo.password", postgresContainer.getPassword()),
-                        Map.entry("dt.notification.outbox-relay.large-notification-threshold-bytes", "65536")))
+                .addDefaultSources()
+                .withSources(configSource(Map.of(
+                        "dt.datasource.default.url", postgresContainer.getJdbcUrl(),
+                        "dt.datasource.default.username", postgresContainer.getUsername(),
+                        "dt.datasource.default.password", postgresContainer.getPassword())))
                 .build();
 
         dataSourceRegistry = new DataSourceRegistry(config);
@@ -99,24 +103,25 @@ class DexEngineInitializerTest {
         final var secretManager = new TestSecretManager();
 
         final var servletContextMock = mock(ServletContext.class);
-        doReturn(cacheManager)
-                .when(servletContextMock).getAttribute(eq(CacheManager.class.getName()));
-        doReturn(new MemoryFileStorage())
-                .when(servletContextMock).getAttribute(eq(FileStorage.class.getName()));
-        doReturn(new PluginManager(config, cacheManager, secretManager::getSecretValue,
-                JdbiFactory.createJdbi(),
-                HttpClient.newHttpClient(), Collections.emptyList()))
-                .when(servletContextMock).getAttribute(eq(PluginManager.class.getName()));
-        doReturn(secretManager)
-                .when(servletContextMock).getAttribute(eq(SecretManager.class.getName()));
+        doReturn(cacheManager).when(servletContextMock).getAttribute(eq(CacheManager.class.getName()));
+        doReturn(new MemoryFileStorage()).when(servletContextMock).getAttribute(eq(FileStorage.class.getName()));
+        doReturn(new PluginManager(
+                        config,
+                        cacheManager,
+                        secretManager::getSecretValue,
+                        JdbiFactory.createLocalJdbi(dataSource),
+                        HttpClient.newHttpClient(),
+                        Collections.emptyList()))
+                .when(servletContextMock)
+                .getAttribute(eq(PluginManager.class.getName()));
+        doReturn(secretManager).when(servletContextMock).getAttribute(eq(SecretManager.class.getName()));
 
-        initializer = new DexEngineInitializer(config, dataSourceRegistry, new SimpleMeterRegistry(), healthCheckRegistry);
+        initializer =
+                new DexEngineInitializer(config, dataSourceRegistry, new SimpleMeterRegistry(), healthCheckRegistry);
         initializer.contextInitialized(new ServletContextEvent(servletContextMock));
 
         final var engineCaptor = ArgumentCaptor.forClass(DexEngine.class);
-        verify(servletContextMock).setAttribute(
-                eq(DexEngine.class.getName()),
-                engineCaptor.capture());
+        verify(servletContextMock).setAttribute(eq(DexEngine.class.getName()), engineCaptor.capture());
 
         assertThat(healthCheckRegistry.getChecks())
                 .satisfiesExactly(healthCheck -> assertThat(healthCheck).isInstanceOf(DexEngineHealthCheck.class));
@@ -126,4 +131,32 @@ class DexEngineInitializerTest {
         engine.close();
     }
 
+    private static ConfigSource configSource(Map<String, String> properties) {
+        return new ConfigSource() {
+            @Override
+            public Map<String, String> getProperties() {
+                return properties;
+            }
+
+            @Override
+            public Set<String> getPropertyNames() {
+                return properties.keySet();
+            }
+
+            @Override
+            public String getValue(String propertyName) {
+                return properties.get(propertyName);
+            }
+
+            @Override
+            public String getName() {
+                return DexEngineInitializerTest.class.getSimpleName();
+            }
+
+            @Override
+            public int getOrdinal() {
+                return 500;
+            }
+        };
+    }
 }

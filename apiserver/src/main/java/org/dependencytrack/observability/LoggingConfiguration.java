@@ -43,5 +43,4 @@ public final class LoggingConfiguration {
             loggerContext.getLogger(loggerName).setLevel(level);
         }
     }
-
 }

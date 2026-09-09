@@ -48,5 +48,4 @@ public class CompositeDecoder implements Decoder {
             return reader.lines().collect(Collectors.joining());
         }
     }
-
 }

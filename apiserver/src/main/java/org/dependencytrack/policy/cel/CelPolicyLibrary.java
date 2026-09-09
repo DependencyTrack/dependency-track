@@ -121,7 +121,8 @@ final class CelPolicyLibrary implements CelCompilerLibrary, CelRuntimeLibrary {
                 CelFunctionBinding.from(
                         "compare_age_bool",
                         List.of(Component.class, String.class, String.class),
-                        args -> CelPolicyFunctions.isComponentOld((Component) args[0], (String) args[1], (String) args[2]))),
+                        args -> CelPolicyFunctions.isComponentOld(
+                                (Component) args[0], (String) args[1], (String) args[2]))),
         VERSION_DISTANCE(
                 CelFunctionDecl.newFunctionDeclaration(
                         "version_distance",
@@ -132,7 +133,8 @@ final class CelPolicyLibrary implements CelCompilerLibrary, CelRuntimeLibrary {
                 CelFunctionBinding.from(
                         "matches_version_distance_bool",
                         List.of(Component.class, String.class, VersionDistance.class),
-                        args -> CelPolicyFunctions.matchesVersionDistance((Component) args[0], (String) args[1], (VersionDistance) args[2]))),
+                        args -> CelPolicyFunctions.matchesVersionDistance(
+                                (Component) args[0], (String) args[1], (VersionDistance) args[2]))),
         HAS_PACKAGE_ARTIFACT_HASH_MISMATCH(
                 CelFunctionDecl.newFunctionDeclaration(
                         "has_package_artifact_hash_mismatch",
@@ -196,5 +198,4 @@ final class CelPolicyLibrary implements CelCompilerLibrary, CelRuntimeLibrary {
             runtimeBuilder.addFunctionBindings(function.functionBindings);
         }
     }
-
 }

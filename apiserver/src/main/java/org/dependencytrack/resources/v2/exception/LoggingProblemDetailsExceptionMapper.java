@@ -27,7 +27,8 @@ import jakarta.ws.rs.ServerErrorException;
 /**
  * @since 5.0.0
  */
-abstract class LoggingProblemDetailsExceptionMapper<E extends Exception, P extends ProblemDetails> extends ProblemDetailsExceptionMapper<E, P> {
+abstract class LoggingProblemDetailsExceptionMapper<E extends Exception, P extends ProblemDetails>
+        extends ProblemDetailsExceptionMapper<E, P> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -51,5 +52,4 @@ abstract class LoggingProblemDetailsExceptionMapper<E extends Exception, P exten
                 .detail("An error occurred that was not anticipated.")
                 .build();
     }
-
 }

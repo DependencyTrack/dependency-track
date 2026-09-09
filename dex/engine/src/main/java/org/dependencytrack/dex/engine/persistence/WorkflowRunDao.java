@@ -25,6 +25,7 @@ import org.dependencytrack.common.pagination.SortDirection;
 import org.dependencytrack.dex.engine.api.WorkflowRunHistoryEntry;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
 import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
+import org.dependencytrack.dex.engine.api.request.CountWorkflowRunsRequest;
 import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ListWorkflowRunHistoryRequest;
 import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
@@ -56,8 +57,8 @@ public final class WorkflowRunDao extends AbstractDao {
             @Nullable Long lastCompletedAt,
             ListWorkflowRunsRequest.SortBy sortBy,
             SortDirection sortDirection,
-            TotalCount totalCount) implements PageToken {
-    }
+            TotalCount totalCount)
+            implements PageToken {}
 
     public boolean existsRun(ExistsWorkflowRunRequest request) {
         requireNonNull(request, "request must not be null");
@@ -81,22 +82,63 @@ public final class WorkflowRunDao extends AbstractDao {
         if (request.statuses() != null && !request.statuses().isEmpty()) {
             query.bind(
                     "statuses",
-                    request.statuses().stream()
-                            .map(WorkflowRunStatus::name)
-                            .toArray(String[]::new));
+                    request.statuses().stream().map(WorkflowRunStatus::name).toArray(String[]::new));
         }
         if (request.labels() != null && !request.labels().isEmpty()) {
             final JsonMapper.TypedJsonMapper jsonMapper = jdbiHandle
-                    .getConfig(JsonConfig.class).getJsonMapper()
-                    .forType(new GenericType<Map<String, String>>() {
-                    }.getType(), jdbiHandle.getConfig());
-            query.bind("labels", jsonMapper.toJson(
-                    request.labels(), jdbiHandle.getConfig()));
+                    .getConfig(JsonConfig.class)
+                    .getJsonMapper()
+                    .forType(new GenericType<Map<String, String>>() {}.getType(), jdbiHandle.getConfig());
+            query.bind("labels", jsonMapper.toJson(request.labels(), jdbiHandle.getConfig()));
         }
 
-        return query
+        return query.defineNamedBindings().mapTo(boolean.class).one();
+    }
+
+    public long countRuns(CountWorkflowRunsRequest request) {
+        requireNonNull(request, "request must not be null");
+
+        final Query query = jdbiHandle.createQuery(/* language=InjectedFreeMarker */ """
+                <#-- @ftlvariable name="workflowName" type="boolean" -->
+                <#-- @ftlvariable name="statuses" type="boolean" -->
+                <#-- @ftlvariable name="labels" type="boolean" -->
+                select count(*)
+                  from (
+                    select 1
+                      from dex_workflow_run
+                     where true
+                    <#if workflowName!false>
+                       and workflow_name = :workflowName
+                    </#if>
+                    <#if statuses!false>
+                       and status = ANY(:statuses)
+                    </#if>
+                    <#if labels!false>
+                       and labels @> cast(:labels as jsonb)
+                    </#if>
+                     limit :limit
+                  ) as matching_run
+                """);
+
+        if (request.workflowName() != null && !request.workflowName().isEmpty()) {
+            query.bind("workflowName", request.workflowName());
+        }
+        if (request.statuses() != null && !request.statuses().isEmpty()) {
+            query.bind(
+                    "statuses",
+                    request.statuses().stream().map(WorkflowRunStatus::name).toArray(String[]::new));
+        }
+        if (request.labels() != null && !request.labels().isEmpty()) {
+            final JsonMapper.TypedJsonMapper jsonMapper = jdbiHandle
+                    .getConfig(JsonConfig.class)
+                    .getJsonMapper()
+                    .forType(new GenericType<Map<String, String>>() {}.getType(), jdbiHandle.getConfig());
+            query.bind("labels", jsonMapper.toJson(request.labels(), jdbiHandle.getConfig()));
+        }
+
+        return query.bind("limit", request.limit())
                 .defineNamedBindings()
-                .mapTo(boolean.class)
+                .mapTo(long.class)
                 .one();
     }
 
@@ -124,17 +166,14 @@ public final class WorkflowRunDao extends AbstractDao {
             whereConditions.add("status = ANY(:statuses)");
             queryParams.put(
                     "statuses",
-                    request.statuses().stream()
-                            .map(WorkflowRunStatus::name)
-                            .toArray(String[]::new));
+                    request.statuses().stream().map(WorkflowRunStatus::name).toArray(String[]::new));
         }
         if (request.labels() != null && !request.labels().isEmpty()) {
             final JsonMapper.TypedJsonMapper jsonMapper = jdbiHandle
-                    .getConfig(JsonConfig.class).getJsonMapper()
-                    .forType(new GenericType<Map<String, String>>() {
-                    }.getType(), jdbiHandle.getConfig());
-            final String labelsJson = jsonMapper.toJson(
-                    request.labels(), jdbiHandle.getConfig());
+                    .getConfig(JsonConfig.class)
+                    .getJsonMapper()
+                    .forType(new GenericType<Map<String, String>>() {}.getType(), jdbiHandle.getConfig());
+            final String labelsJson = jsonMapper.toJson(request.labels(), jdbiHandle.getConfig());
 
             whereConditions.add("labels @> cast(:labels as jsonb)");
             queryParams.put("labels", labelsJson);
@@ -199,15 +238,9 @@ public final class WorkflowRunDao extends AbstractDao {
                     .one();
             totalCount = new TotalCount(
                     Math.min(totalCountValue, 5000),
-                    totalCountValue > 5000
-                            ? TotalCount.Type.AT_LEAST
-                            : TotalCount.Type.EXACT);
-            sortBy = request.sortBy() == null
-                    ? ListWorkflowRunsRequest.SortBy.ID
-                    : request.sortBy();
-            sortDirection = request.sortDirection() == null
-                    ? SortDirection.DESC
-                    : request.sortDirection();
+                    totalCountValue > 5000 ? TotalCount.Type.AT_LEAST : TotalCount.Type.EXACT);
+            sortBy = request.sortBy() == null ? ListWorkflowRunsRequest.SortBy.ID : request.sortBy();
+            sortDirection = request.sortDirection() == null ? SortDirection.DESC : request.sortDirection();
         }
 
         final Query query = jdbiHandle.createQuery(/* language=InjectedFreeMarker */ """
@@ -260,8 +293,7 @@ public final class WorkflowRunDao extends AbstractDao {
                  limit (:limit + 1)
                 """);
 
-        final List<WorkflowRunMetadata> rows = query
-                .bindMap(queryParams)
+        final List<WorkflowRunMetadata> rows = query.bindMap(queryParams)
                 .bind("lastId", lastId)
                 .bind("lastCreatedAt", lastCreatedAt)
                 .bind("lastCompletedAt", lastCompletedAt)
@@ -273,30 +305,27 @@ public final class WorkflowRunDao extends AbstractDao {
                 .mapTo(WorkflowRunMetadata.class)
                 .list();
 
-        final List<WorkflowRunMetadata> resultItems = rows.size() > 1
-                ? rows.subList(0, Math.min(rows.size(), request.limit()))
-                : rows;
+        final List<WorkflowRunMetadata> resultItems =
+                rows.size() > 1 ? rows.subList(0, Math.min(rows.size(), request.limit())) : rows;
 
         final ListRunsPageToken nextPageToken = rows.size() == (request.limit() + 1)
                 ? new ListRunsPageToken(
-                resultItems.getLast().id(),
-                resultItems.getLast().createdAt().toEpochMilli(),
-                resultItems.getLast().completedAt() != null
-                        ? resultItems.getLast().completedAt().toEpochMilli()
-                        : null,
-                sortBy,
-                sortDirection,
-                totalCount)
+                        resultItems.getLast().id(),
+                        resultItems.getLast().createdAt().toEpochMilli(),
+                        resultItems.getLast().completedAt() != null
+                                ? resultItems.getLast().completedAt().toEpochMilli()
+                                : null,
+                        sortBy,
+                        sortDirection,
+                        totalCount)
                 : null;
 
         return new Page<>(resultItems, encodePageToken(nextPageToken), totalCount);
     }
 
     record ListRunHistoryPageToken(
-            @Nullable Integer fromSequenceNumber,
-            int lastSequenceNumber,
-            SortDirection sortDirection) implements PageToken {
-    }
+            @Nullable Integer fromSequenceNumber, int lastSequenceNumber, SortDirection sortDirection)
+            implements PageToken {}
 
     public Page<WorkflowRunHistoryEntry> listRunHistory(ListWorkflowRunHistoryRequest request) {
         requireNonNull(request, "request must not be null");
@@ -342,8 +371,7 @@ public final class WorkflowRunDao extends AbstractDao {
                  limit :limit
                 """);
 
-        final List<WorkflowRunHistoryEntry> rows = query
-                .bind("runId", request.runId())
+        final List<WorkflowRunHistoryEntry> rows = query.bind("runId", request.runId())
                 .bind("fromSequenceNumber", fromSequenceNumber)
                 .bind("lastSequenceNumber", lastSequenceNumber)
                 .bind("limit", request.limit() + 1)
@@ -352,18 +380,14 @@ public final class WorkflowRunDao extends AbstractDao {
                 .mapTo(WorkflowRunHistoryEntry.class)
                 .list();
 
-        final List<WorkflowRunHistoryEntry> resultRows = rows.size() > 1
-                ? rows.subList(0, Math.min(rows.size(), request.limit()))
-                : rows;
+        final List<WorkflowRunHistoryEntry> resultRows =
+                rows.size() > 1 ? rows.subList(0, Math.min(rows.size(), request.limit())) : rows;
 
         final ListRunHistoryPageToken nextPageToken = rows.size() == (request.limit() + 1)
                 ? new ListRunHistoryPageToken(
-                fromSequenceNumber,
-                resultRows.getLast().sequenceNumber(),
-                sortDirection)
+                        fromSequenceNumber, resultRows.getLast().sequenceNumber(), sortDirection)
                 : null;
 
         return new Page<>(resultRows, encodePageToken(nextPageToken));
     }
-
 }

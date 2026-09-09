@@ -45,17 +45,15 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
 public final class ImportBomWorkflow implements Workflow<ImportBomArg, Void> {
 
     @Override
-    public @Nullable Void execute(
-            WorkflowContext<ImportBomArg> ctx,
-            @Nullable ImportBomArg arg) throws Exception {
+    public @Nullable Void execute(WorkflowContext<ImportBomArg> ctx, @Nullable ImportBomArg arg) throws Exception {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
         try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid());
-             var _ = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
-             var _ = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
-             var _ = MDC.putCloseable(MDC_BOM_UPLOAD_TOKEN, arg.getBomUploadToken())) {
+                var _ = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
+                var _ = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
+                var _ = MDC.putCloseable(MDC_BOM_UPLOAD_TOKEN, arg.getBomUploadToken())) {
             ctx.logger().info("Starting BOM import");
 
             try {
@@ -80,11 +78,8 @@ public final class ImportBomWorkflow implements Workflow<ImportBomArg, Void> {
                             .build())
                     .await();
         } catch (RuntimeException e) {
-            ctx.logger().warn(
-                    "Failed to delete BOM file {}; Will need manual cleanup",
-                    bomFileMetadata.getLocation(),
-                    e);
+            ctx.logger()
+                    .warn("Failed to delete BOM file {}; Will need manual cleanup", bomFileMetadata.getLocation(), e);
         }
     }
-
 }

@@ -58,5 +58,4 @@ public interface TagDao extends SqlObject {
              )
             """)
     int deleteUnused(@Bind int batchSize);
-
 }

@@ -23,11 +23,12 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.jspecify.annotations.NullMarked;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.jspecify.annotations.NullMarked;
 
 import java.util.UUID;
 
@@ -36,12 +37,17 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record UpdateLicenseGroupRequest(
         @NotNull
-        @Schema(description = "UUID of the license group to update", requiredMode = Schema.RequiredMode.REQUIRED, format = "uuid")
+        @Schema(
+                description = "UUID of the license group to update",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                format = "uuid")
         UUID uuid,
+
         @NotBlank
         @Size(min = 1, max = 255)
-        @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+        @Pattern(
+                regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+                message = "The name may only contain printable characters")
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "New name of the license group", requiredMode = Schema.RequiredMode.REQUIRED)
-        String name) {
-}
+        String name) {}

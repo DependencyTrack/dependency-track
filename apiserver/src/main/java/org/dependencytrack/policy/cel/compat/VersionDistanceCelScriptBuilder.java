@@ -37,7 +37,6 @@ public class VersionDistanceCelScriptBuilder implements CelPolicyScriptSourceBui
                 """.formatted(comparator(policyCondition.getOperator()), toProtoString(policyCondition.getValue()));
     }
 
-
     private String toProtoString(String conditionValue) {
         try {
             VersionDistance.Builder structBuilder = VersionDistance.newBuilder();
@@ -52,10 +51,22 @@ public class VersionDistanceCelScriptBuilder implements CelPolicyScriptSourceBui
     private String convertToString(VersionDistance versionDistance) {
         StringBuilder sbf = new StringBuilder();
         if (!StringUtils.isEmpty(versionDistance.getEpoch())) {
-            sbf.append("epoch:").append("\"").append(versionDistance.getEpoch()).append("\"").append(",");
+            sbf.append("epoch:")
+                    .append("\"")
+                    .append(versionDistance.getEpoch())
+                    .append("\"")
+                    .append(",");
         }
-        sbf.append("major:").append("\"").append(versionDistance.getMajor()).append("\"").append(",");
-        sbf.append("minor:").append("\"").append(versionDistance.getMinor()).append("\"").append(",");
+        sbf.append("major:")
+                .append("\"")
+                .append(versionDistance.getMajor())
+                .append("\"")
+                .append(",");
+        sbf.append("minor:")
+                .append("\"")
+                .append(versionDistance.getMinor())
+                .append("\"")
+                .append(",");
         sbf.append("patch:").append("\"").append(versionDistance.getPatch()).append("\"");
         return "v1.VersionDistance{" + sbf + "}";
     }

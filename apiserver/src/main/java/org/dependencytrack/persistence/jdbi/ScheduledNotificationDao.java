@@ -22,7 +22,6 @@ import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.persistence.jdbi.mapping.NotificationRuleRowMapper;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
-
 import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
@@ -136,13 +135,10 @@ public final class ScheduledNotificationDao {
             Instant attributedOn,
             String referenceUrl,
             String analysisState,
-            boolean suppressed) {
-    }
+            boolean suppressed) {}
 
     public List<NewFinding> getNewFindingsSince(
-            Collection<Long> projectIds,
-            Instant sinceAttributedOn,
-            Instant beforeAttributedOn) {
+            Collection<Long> projectIds, Instant sinceAttributedOn, Instant beforeAttributedOn) {
         return jdbiHandle
                 .createQuery(/* language=SQL */ """
                         SELECT c."PROJECT_ID" AS project_id
@@ -188,13 +184,10 @@ public final class ScheduledNotificationDao {
             String violationType,
             Instant timestamp,
             String analysisState,
-            boolean suppressed) {
-    }
+            boolean suppressed) {}
 
     public List<NewPolicyViolation> getNewPolicyViolationsSince(
-            Collection<Long> projectIds,
-            Instant sinceTimestamp,
-            Instant beforeTimestamp) {
+            Collection<Long> projectIds, Instant sinceTimestamp, Instant beforeTimestamp) {
         return jdbiHandle
                 .createQuery(/* language=SQL */ """
                         SELECT pv."UUID" AS uuid
@@ -232,5 +225,4 @@ public final class ScheduledNotificationDao {
                 .mapTo(boolean.class)
                 .one();
     }
-
 }

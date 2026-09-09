@@ -25,6 +25,5 @@ module org.dependencytrack.common.pagination {
 
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.dataformat.cbor;
-
     requires transitive org.jspecify;
 }

@@ -131,4 +131,4 @@ public class ProjectMetricsTest {
         metric.setLastOccurrence(date);
         Assertions.assertEquals(date, metric.getLastOccurrence());
     }
-} 
+}

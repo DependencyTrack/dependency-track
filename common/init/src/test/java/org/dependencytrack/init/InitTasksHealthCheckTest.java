@@ -56,9 +56,10 @@ class InitTasksHealthCheckTest {
         final HealthCheckResponse response = healthCheck.call();
         assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.DOWN);
         assertThat(response.getData()).isPresent();
-        assertThat(response.getData().get()).containsAllEntriesOf(Map.of(
-                "db-migration", "COMPLETED",
-                "seeding", "COMPLETED"));
+        assertThat(response.getData().get())
+                .containsAllEntriesOf(Map.of(
+                        "db-migration", "COMPLETED",
+                        "seeding", "COMPLETED"));
     }
 
     @Test
@@ -70,9 +71,9 @@ class InitTasksHealthCheckTest {
         final HealthCheckResponse response = healthCheck.call();
         assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.DOWN);
         assertThat(response.getData()).isPresent();
-        assertThat(response.getData().get()).containsAllEntriesOf(Map.of(
-                "db-migration", "COMPLETED",
-                "seeding", "FAILED"));
+        assertThat(response.getData().get())
+                .containsAllEntriesOf(Map.of(
+                        "db-migration", "COMPLETED",
+                        "seeding", "FAILED"));
     }
-
 }

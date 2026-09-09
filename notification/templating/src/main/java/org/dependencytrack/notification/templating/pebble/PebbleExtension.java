@@ -80,5 +80,4 @@ final class PebbleExtension implements Extension {
     public @Nullable List<AttributeResolver> getAttributeResolver() {
         return null;
     }
-
 }

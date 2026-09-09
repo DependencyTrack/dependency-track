@@ -36,7 +36,10 @@ public final class ClusterInfo {
     private static volatile String clusterId;
 
     public static String getClusterId() {
-        if (ConfigProvider.getConfig().unwrap(SmallRyeConfig.class).getProfiles().contains("test")) {
+        if (ConfigProvider.getConfig()
+                .unwrap(SmallRyeConfig.class)
+                .getProfiles()
+                .contains("test")) {
             return UUID.randomUUID().toString();
         }
 
@@ -63,8 +66,7 @@ public final class ClusterInfo {
             query.setFilter("groupName == :groupName && propertyName == :propertyName");
             query.setParameters(
                     ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getGroupName(),
-                    ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getPropertyName()
-            );
+                    ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getPropertyName());
             query.setResult("propertyValue");
 
             try {
@@ -75,5 +77,4 @@ public final class ClusterInfo {
             }
         }
     }
-
 }

@@ -40,7 +40,9 @@ public final class PostgresTestContainer extends PostgreSQLContainer {
         withUsername("dex");
         withPassword("dex");
         withDatabaseName("dex");
-        withLabel("owner", "dex-" + /* JVM name */ ManagementFactory.getRuntimeMXBean().getName());
+        withLabel(
+                "owner",
+                "dex-" + /* JVM name */ ManagementFactory.getRuntimeMXBean().getName());
         withUrlParam("reWriteBatchedInserts", "true");
         withTmpFs(Map.of("/var/lib/postgresql/data", "rw"));
 
@@ -80,7 +82,7 @@ public final class PostgresTestContainer extends PostgreSQLContainer {
 
     public void truncateTables() {
         try (final Connection connection = createConnection("");
-             final Statement statement = connection.createStatement()) {
+                final Statement statement = connection.createStatement()) {
             statement.execute("""
                     DO $$ DECLARE
                         r RECORD;

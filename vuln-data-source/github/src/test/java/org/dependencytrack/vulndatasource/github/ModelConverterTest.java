@@ -40,8 +40,9 @@ class ModelConverterTest {
     @Test
     void shouldConvertAdvisoryToBom() throws IOException {
 
-        //given
-        var securityAdvisory = MAPPER.readValue(getClass().getResourceAsStream("/advisory.json"), SecurityAdvisory.class);
+        // given
+        var securityAdvisory =
+                MAPPER.readValue(getClass().getResourceAsStream("/advisory.json"), SecurityAdvisory.class);
 
         Bom bom = ModelConverter.convert(securityAdvisory, true);
 
@@ -113,8 +114,9 @@ class ModelConverterTest {
     @Test
     void shouldConvertAdvisoryWithCweAndMultipleExternalReferences() throws IOException {
 
-        //given
-        var securityAdvisory = MAPPER.readValue(getClass().getResourceAsStream("/advisory-02.json"), SecurityAdvisory.class);
+        // given
+        var securityAdvisory =
+                MAPPER.readValue(getClass().getResourceAsStream("/advisory-02.json"), SecurityAdvisory.class);
 
         Bom bom = ModelConverter.convert(securityAdvisory, true);
 
@@ -189,8 +191,9 @@ class ModelConverterTest {
     @Test
     public void testAliasSyncDisabled() throws IOException {
 
-        //given
-        SecurityAdvisory securityAdvisory = MAPPER.readValue(getClass().getResourceAsStream("/advisory-02.json"), SecurityAdvisory.class);
+        // given
+        SecurityAdvisory securityAdvisory =
+                MAPPER.readValue(getClass().getResourceAsStream("/advisory-02.json"), SecurityAdvisory.class);
 
         Bom bom = ModelConverter.convert(securityAdvisory, false);
 
@@ -259,8 +262,9 @@ class ModelConverterTest {
     @Test
     void shouldConvertCvssV4Rating() throws IOException {
 
-        //given
-        var securityAdvisory = MAPPER.readValue(getClass().getResourceAsStream("/advisory-03.json"), SecurityAdvisory.class);
+        // given
+        var securityAdvisory =
+                MAPPER.readValue(getClass().getResourceAsStream("/advisory-03.json"), SecurityAdvisory.class);
 
         Bom bom = ModelConverter.convert(securityAdvisory, true);
 
@@ -306,7 +310,8 @@ class ModelConverterTest {
 
     @Test
     void shouldEmitBothCvssV3AndCvssV4RatingsWhenBothPresent() throws IOException {
-        var securityAdvisory = MAPPER.readValue(getClass().getResourceAsStream("/advisory-04.json"), SecurityAdvisory.class);
+        var securityAdvisory =
+                MAPPER.readValue(getClass().getResourceAsStream("/advisory-04.json"), SecurityAdvisory.class);
 
         Bom bom = ModelConverter.convert(securityAdvisory, true);
 

@@ -35,7 +35,9 @@ import java.util.UUID;
  * @since 3.1.0
  */
 @PersistenceCapable(table = "REPOSITORY")
-@Unique(name = "REPOSITORY_COMPOUND_IDX", members = {"type", "identifier"})
+@Unique(
+        name = "REPOSITORY_COMPOUND_IDX",
+        members = {"type", "identifier"})
 public class Repository implements Serializable {
 
     private static final long serialVersionUID = -3875882921059813747L;

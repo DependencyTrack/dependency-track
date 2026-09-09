@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.model.ApiKey;
-import alpine.model.User;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.UserPrincipal;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.Component;
@@ -108,8 +108,11 @@ final class PolicyQueryManager extends QueryManager {
      * @param violationState the violation state
      * @return the created Policy
      */
-    public Policy createPolicy(String name, Policy.Operator operator, Policy.ViolationState violationState,
-                               boolean onlyLatestProjectVersion) {
+    public Policy createPolicy(
+            String name,
+            Policy.Operator operator,
+            Policy.ViolationState violationState,
+            boolean onlyLatestProjectVersion) {
         final Policy policy = new Policy();
         policy.setName(name);
         policy.setOperator(operator);
@@ -122,8 +125,11 @@ final class PolicyQueryManager extends QueryManager {
      * Creates a policy condition for the specified Project.
      * @return the created PolicyCondition object
      */
-    public PolicyCondition createPolicyCondition(final Policy policy, final PolicyCondition.Subject subject,
-                                                 final PolicyCondition.Operator operator, final String value) {
+    public PolicyCondition createPolicyCondition(
+            final Policy policy,
+            final PolicyCondition.Subject subject,
+            final PolicyCondition.Operator operator,
+            final String value) {
         return createPolicyCondition(policy, subject, operator, value, null);
     }
 
@@ -131,9 +137,12 @@ final class PolicyQueryManager extends QueryManager {
      * Creates a policy condition for the specified Project.
      * @return the created PolicyCondition object
      */
-    public PolicyCondition createPolicyCondition(final Policy policy, final PolicyCondition.Subject subject,
-                                                 final PolicyCondition.Operator operator, final String value,
-                                                 final PolicyViolation.Type violationType) {
+    public PolicyCondition createPolicyCondition(
+            final Policy policy,
+            final PolicyCondition.Subject subject,
+            final PolicyCondition.Operator operator,
+            final String value,
+            final PolicyViolation.Type violationType) {
         final PolicyCondition pc = new PolicyCondition();
         pc.setPolicy(policy);
         pc.setSubject(subject);
@@ -212,7 +221,7 @@ final class PolicyQueryManager extends QueryManager {
         if (orderBy == null) {
             query.setOrdering("timestamp desc, component.name, component.version");
         }
-        return (List<PolicyViolation>)query.execute(project.getId());
+        return (List<PolicyViolation>) query.execute(project.getId());
     }
 
     /**
@@ -223,23 +232,30 @@ final class PolicyQueryManager extends QueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
         PaginatedResult result;
-        final String queryFilter = includeSuppressed ? "project.id == :pid" : "project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null)";
+        final String queryFilter = includeSuppressed
+                ? "project.id == :pid"
+                : "project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null)";
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
         if (orderBy == null) {
             query.setOrdering("timestamp desc, component.name, component.version");
         }
         if (filter != null) {
-            query.setFilter(queryFilter + " && (policyCondition.policy.name.toLowerCase().matches(:filter) || component.name.toLowerCase().matches(:filter))");
+            query.setFilter(
+                    queryFilter
+                            + " && (policyCondition.policy.name.toLowerCase().matches(:filter) || component.name.toLowerCase().matches(:filter))");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             result = execute(query, project.getId(), filterString);
         } else {
             query.setFilter(queryFilter);
             result = execute(query, project.getId());
         }
-        for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
+        for (final PolicyViolation violation : result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
-            violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
-            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
+            violation
+                    .getComponent()
+                    .getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.setAnalysis(getViolationAnalysis(
+                    violation.getComponent(), violation)); // Include the violation analysis by default
         }
         return result;
     }
@@ -261,10 +277,13 @@ final class PolicyQueryManager extends QueryManager {
             query.setOrdering("timestamp desc");
         }
         final PaginatedResult result = execute(query, component.getId());
-        for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
+        for (final PolicyViolation violation : result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
-            violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
-            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
+            violation
+                    .getComponent()
+                    .getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.setAnalysis(getViolationAnalysis(
+                    violation.getComponent(), violation)); // Include the violation analysis by default
         }
         return result;
     }
@@ -274,7 +293,8 @@ final class PolicyQueryManager extends QueryManager {
      * @return a List of all Policy violations
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getPolicyViolations(boolean includeSuppressed, boolean showInactive, Map<String, String> filters) {
+    public PaginatedResult getPolicyViolations(
+            boolean includeSuppressed, boolean showInactive, Map<String, String> filters) {
         final PaginatedResult result;
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
         final Map<String, Object> params = new HashMap<>();
@@ -292,10 +312,13 @@ final class PolicyQueryManager extends QueryManager {
         final String queryFilter = String.join(" && ", filterCriteria);
         preprocessACLs(query, queryFilter, params);
         result = execute(query, params);
-        for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
+        for (final PolicyViolation violation : result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to be included since it's not the default
-            violation.getComponent().getResolvedLicense(); // force resolved license to be included since it's not the default
-            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
+            violation
+                    .getComponent()
+                    .getResolvedLicense(); // force resolved license to be included since it's not the default
+            violation.setAnalysis(getViolationAnalysis(
+                    violation.getComponent(), violation)); // Include the violation analysis by default
         }
         return result;
     }
@@ -307,7 +330,8 @@ final class PolicyQueryManager extends QueryManager {
      * @return a ViolationAnalysis object, or null if not found
      */
     public ViolationAnalysis getViolationAnalysis(Component component, PolicyViolation policyViolation) {
-        final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class, "component == :component && policyViolation == :policyViolation");
+        final Query<ViolationAnalysis> query =
+                pm.newQuery(ViolationAnalysis.class, "component == :component && policyViolation == :policyViolation");
         query.setRange(0, 1);
         return singleResult(query.execute(component, policyViolation));
     }
@@ -357,8 +381,8 @@ final class PolicyQueryManager extends QueryManager {
 
             if (!command.options().contains(MakeViolationAnalysisCommand.Option.OMIT_NOTIFICATION)
                     && (stateChanged || suppressionChanged)) {
-                new JdoNotificationEmitter(this).emit(
-                        createPolicyViolationAnalysisDecisionChangeNotification(
+                new JdoNotificationEmitter(this)
+                        .emit(createPolicyViolationAnalysisDecisionChangeNotification(
                                 NotificationModelConverter.convert(analysis.getProject()),
                                 NotificationModelConverter.convert(analysis.getComponent()),
                                 NotificationModelConverter.convert(analysis.getPolicyViolation()),
@@ -372,9 +396,7 @@ final class PolicyQueryManager extends QueryManager {
     }
 
     private void createViolationAnalysisComments(
-            final ViolationAnalysis analysis,
-            final String commenter,
-            final List<String> comments) {
+            final ViolationAnalysis analysis, final String commenter, final List<String> comments) {
         assertPersistent(analysis, "analysis must be persistent");
 
         if (comments == null || comments.isEmpty()) {
@@ -386,11 +408,12 @@ final class PolicyQueryManager extends QueryManager {
         final String commenterToUse;
         if (commenter == null) {
             commenterToUse = switch (principal) {
-                case User user -> user.getUsername();
-                case ApiKey apiKey -> apiKey.getTeams().get(0).getName();
+                case UserPrincipal user -> user.username();
+                case ApiKeyPrincipal apiKey ->
+                    apiKey.teams().isEmpty()
+                            ? apiKey.maskedKey()
+                            : apiKey.teams().getFirst().name();
                 case null -> null;
-                default -> throw new IllegalStateException(
-                        "Unexpected principal type: " + principal.getClass().getName());
             };
         } else {
             commenterToUse = commenter;
@@ -508,21 +531,37 @@ final class PolicyQueryManager extends QueryManager {
         return bind(policy, tags, /* keepExisting */ false);
     }
 
-    private void processViolationsFilters(Map<String, String> filters, Map<String, Object> params, List<String> filterCriteria) {
+    private void processViolationsFilters(
+            Map<String, String> filters, Map<String, Object> params, List<String> filterCriteria) {
         for (Map.Entry<String, String> filter : filters.entrySet()) {
             switch (filter.getKey()) {
-                case "violationState" -> processArrayFilter(params, filterCriteria, "violationState", filter.getValue(), "policyCondition.policy.violationState");
+                case "violationState" ->
+                    processArrayFilter(
+                            params,
+                            filterCriteria,
+                            "violationState",
+                            filter.getValue(),
+                            "policyCondition.policy.violationState");
                 case "riskType" -> processArrayFilter(params, filterCriteria, "riskType", filter.getValue(), "type");
-                case "policy" -> processArrayFilter(params, filterCriteria, "policy", filter.getValue(), "policyCondition.policy.uuid");
-                case "analysisState" -> processArrayFilter(params, filterCriteria, "analysisState", filter.getValue(), "analysis.analysisState");
-                case "occurredOnDateFrom" -> processDateFilter(params, filterCriteria, "occuredOnDateFrom", filter.getValue(), true);
-                case "occurredOnDateTo" -> processDateFilter(params, filterCriteria, "occuredOnDateTo", filter.getValue(), false);
-                case "textSearchField" -> processInputFilter(params, filterCriteria, "textInput", filter.getValue(), filters.get("textSearchInput"));
+                case "policy" ->
+                    processArrayFilter(
+                            params, filterCriteria, "policy", filter.getValue(), "policyCondition.policy.uuid");
+                case "analysisState" ->
+                    processArrayFilter(
+                            params, filterCriteria, "analysisState", filter.getValue(), "analysis.analysisState");
+                case "occurredOnDateFrom" ->
+                    processDateFilter(params, filterCriteria, "occuredOnDateFrom", filter.getValue(), true);
+                case "occurredOnDateTo" ->
+                    processDateFilter(params, filterCriteria, "occuredOnDateTo", filter.getValue(), false);
+                case "textSearchField" ->
+                    processInputFilter(
+                            params, filterCriteria, "textInput", filter.getValue(), filters.get("textSearchInput"));
             }
         }
     }
 
-    private void processArrayFilter(Map<String, Object> params, List<String> filterCriteria, String paramName, String filter, String column) {
+    private void processArrayFilter(
+            Map<String, Object> params, List<String> filterCriteria, String paramName, String filter, String column) {
         if (filter != null && !filter.isEmpty()) {
             StringBuilder filterBuilder = new StringBuilder("(");
             String[] arrayFilter = filter.split(",");
@@ -548,14 +587,20 @@ final class PolicyQueryManager extends QueryManager {
         }
     }
 
-    private void processDateFilter(Map<String, Object> params, List<String> filterCriteria, String paramName, String filter, boolean fromValue) {
+    private void processDateFilter(
+            Map<String, Object> params,
+            List<String> filterCriteria,
+            String paramName,
+            String filter,
+            boolean fromValue) {
         if (filter != null && !filter.isEmpty()) {
             params.put(paramName, DateUtil.fromISO8601(filter + (fromValue ? "T00:00:00" : "T23:59:59")));
             filterCriteria.add("(timestamp " + (fromValue ? ">= :" : "<= :") + paramName + ")");
         }
     }
 
-    private void processInputFilter(Map<String, Object> params, List<String> filterCriteria, String paramName, String filter, String input) {
+    private void processInputFilter(
+            Map<String, Object> params, List<String> filterCriteria, String paramName, String filter, String input) {
         if (filter != null && !filter.isEmpty() && input != null && !input.isEmpty()) {
             StringBuilder filterBuilder = new StringBuilder("(");
             String[] inputFilter = filter.split(",");
@@ -563,10 +608,21 @@ final class PolicyQueryManager extends QueryManager {
                 switch (inputFilter[i].toLowerCase()) {
                     case "policy_name" -> filterBuilder.append("policyCondition.policy.name");
                     case "component" -> filterBuilder.append("component.name");
-                    case "license" -> filterBuilder.append("component.resolvedLicense.licenseId.toLowerCase().matches(:").append(paramName).append(") || component.license");
-                    case "project_name" -> filterBuilder.append("project.name.toLowerCase().matches(:").append(paramName).append(") || project.version");
+                    case "license" ->
+                        filterBuilder
+                                .append("component.resolvedLicense.licenseId.toLowerCase().matches(:")
+                                .append(paramName)
+                                .append(") || component.license");
+                    case "project_name" ->
+                        filterBuilder
+                                .append("project.name.toLowerCase().matches(:")
+                                .append(paramName)
+                                .append(") || project.version");
                 }
-                filterBuilder.append(".toLowerCase().matches(:").append(paramName).append(")");
+                filterBuilder
+                        .append(".toLowerCase().matches(:")
+                        .append(paramName)
+                        .append(")");
                 if (i < inputFilterLength - 1) {
                     filterBuilder.append(" || ");
                 }
@@ -576,5 +632,4 @@ final class PolicyQueryManager extends QueryManager {
             filterCriteria.add(filterBuilder.toString());
         }
     }
-
 }

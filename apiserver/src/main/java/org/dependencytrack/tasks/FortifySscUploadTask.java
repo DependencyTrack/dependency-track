@@ -37,5 +37,4 @@ public final class FortifySscUploadTask extends VulnerabilityManagementUploadTas
     public void run() {
         runUpload(new FortifySscUploader(httpClient, secretManager));
     }
-
 }

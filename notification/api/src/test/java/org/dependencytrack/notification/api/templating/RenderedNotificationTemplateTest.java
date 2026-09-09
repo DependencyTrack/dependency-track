@@ -41,7 +41,5 @@ class RenderedNotificationTemplateTest {
                     .isThrownBy(() -> new RenderedNotificationTemplate("content", null))
                     .withMessage("mimeType must not be null");
         }
-
     }
-
 }

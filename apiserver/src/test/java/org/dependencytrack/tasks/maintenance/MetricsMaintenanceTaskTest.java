@@ -72,8 +72,7 @@ public class MetricsMaintenanceTaskTest extends PersistenceCapableTest {
                 MAINTENANCE_METRICS_RETENTION_DAYS.getPropertyName(),
                 MAINTENANCE_METRICS_RETENTION_DAYS.getDefaultPropertyValue(),
                 MAINTENANCE_METRICS_RETENTION_DAYS.getPropertyType(),
-                MAINTENANCE_METRICS_RETENTION_DAYS.getDescription()
-        );
+                MAINTENANCE_METRICS_RETENTION_DAYS.getDescription());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -126,11 +125,13 @@ public class MetricsMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new MetricsMaintenanceTask();
         assertThatNoException().isThrownBy(() -> task.run());
 
-        assertThat(metricsDao.getDependencyMetricsSince(component.getId(), now.minus(91, ChronoUnit.DAYS))).satisfiesExactly(
-                metrics -> assertThat(metrics.getVulnerabilities()).isEqualTo(89));
+        assertThat(metricsDao.getDependencyMetricsSince(component.getId(), now.minus(91, ChronoUnit.DAYS)))
+                .satisfiesExactly(
+                        metrics -> assertThat(metrics.getVulnerabilities()).isEqualTo(89));
 
-        assertThat(metricsDao.getProjectMetricsSince(project.getId(), now.minus(91, ChronoUnit.DAYS))).satisfiesExactly(
-                metrics -> assertThat(metrics.getVulnerabilities()).isEqualTo(89));
+        assertThat(metricsDao.getProjectMetricsSince(project.getId(), now.minus(91, ChronoUnit.DAYS)))
+                .satisfiesExactly(
+                        metrics -> assertThat(metrics.getVulnerabilities()).isEqualTo(89));
     }
 
     @Test

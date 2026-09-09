@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1.vo;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -34,5 +35,4 @@ public record UpdateNotificationPublisherRequest(
         String description,
         String template,
         String templateMimeType,
-        @NotNull UUID uuid) {
-}
+        @NotNull UUID uuid) {}

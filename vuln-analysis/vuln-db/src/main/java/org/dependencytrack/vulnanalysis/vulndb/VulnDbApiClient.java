@@ -19,6 +19,7 @@
 package org.dependencytrack.vulnanalysis.vulndb;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.vulndb.VulnDbApiResponse.PaginatedResponse;
 import org.dependencytrack.vulnanalysis.vulndb.VulnDbApiResponse.Vulnerability;
 
@@ -69,11 +70,10 @@ final class VulnDbApiClient {
         int page = 1;
 
         while (true) {
-            final var uri = URI.create(
-                    apiBaseUrl + "/api/v1/vulnerabilities/find_by_cpe"
-                            + "?cpe=" + URLEncoder.encode(cpe, StandardCharsets.UTF_8)
-                            + "&size=" + PAGE_SIZE
-                            + "&page=" + page);
+            final var uri = URI.create(apiBaseUrl + "/api/v1/vulnerabilities/find_by_cpe"
+                    + "?cpe=" + URLEncoder.encode(cpe, StandardCharsets.UTF_8)
+                    + "&size=" + PAGE_SIZE
+                    + "&page=" + page);
 
             final String accessToken = tokenManager.getAccessToken(apiBaseUrl, clientId, clientSecret);
 
@@ -85,7 +85,8 @@ final class VulnDbApiClient {
                     .GET()
                     .build();
 
-            final HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            final HttpResponse<InputStream> response =
+                    httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
             try (final InputStream body = response.body()) {
                 if (response.statusCode() == 200) {
@@ -108,11 +109,12 @@ final class VulnDbApiClient {
                 if (response.statusCode() == 404) {
                     return List.of();
                 }
+
+                RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
                 throw new IOException("VulnDB API request failed with status " + response.statusCode());
             }
         }
 
         return allVulnerabilities;
     }
-
 }

@@ -55,10 +55,7 @@ public final class MultipartBodyPublisher {
     }
 
     public MultipartBodyPublisher addFilePart(
-            String name,
-            String filename,
-            InputStream inputStream,
-            String contentType) {
+            String name, String filename, InputStream inputStream, String contentType) {
         parts.add(new FilePart(name, filename, inputStream, contentType));
         return this;
     }
@@ -85,12 +82,11 @@ public final class MultipartBodyPublisher {
 
         @Override
         public void writeTo(ByteArrayOutputStream outputStream) throws IOException {
-            final String contentDisposition = FormDataContentDisposition.name(name).build().toString();
-            outputStream.write(
-                    ("Content-Disposition: %s\r\n\r\n%s\r\n".formatted(
-                            contentDisposition, value)).getBytes(StandardCharsets.UTF_8));
+            final String contentDisposition =
+                    FormDataContentDisposition.name(name).build().toString();
+            outputStream.write(("Content-Disposition: %s\r\n\r\n%s\r\n".formatted(contentDisposition, value))
+                    .getBytes(StandardCharsets.UTF_8));
         }
-
     }
 
     private record FilePart(String name, String filename, InputStream inputStream, String contentType) implements Part {
@@ -98,17 +94,12 @@ public final class MultipartBodyPublisher {
         @Override
         public void writeTo(ByteArrayOutputStream outputStream) throws IOException {
             final var contentDisposition =
-                    FormDataContentDisposition
-                            .name(name)
-                            .fileName(filename)
-                            .build();
+                    FormDataContentDisposition.name(name).fileName(filename).build();
             outputStream.write(
-                    ("Content-Disposition: %s\r\nContent-Type: %s\r\n\r\n".formatted(
-                            contentDisposition, contentType)).getBytes(StandardCharsets.UTF_8));
+                    ("Content-Disposition: %s\r\nContent-Type: %s\r\n\r\n".formatted(contentDisposition, contentType))
+                            .getBytes(StandardCharsets.UTF_8));
             inputStream.transferTo(outputStream);
             outputStream.write("\r\n".getBytes(StandardCharsets.UTF_8));
         }
-
     }
-
 }

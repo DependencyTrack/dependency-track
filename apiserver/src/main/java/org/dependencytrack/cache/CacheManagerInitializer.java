@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.cache;
 
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.api.CacheProvider;
 import org.dependencytrack.common.ConfigKeys;
@@ -28,6 +26,9 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import java.io.IOException;
 import java.util.ServiceLoader;
@@ -56,18 +57,14 @@ public final class CacheManagerInitializer implements ServletContextListener {
         final String providerName = config.getValue(ConfigKeys.CACHE_PROVIDER, String.class);
         LOGGER.info("Initializing cache manager for provider '{}'", providerName);
 
-        final CacheProvider cacheProvider =
-                ServiceLoader.load(CacheProvider.class).stream()
-                        .map(ServiceLoader.Provider::get)
-                        .filter(factory -> providerName.equals(factory.name()))
-                        .findAny()
-                        .orElseThrow(() -> new IllegalStateException(
-                                "No cache provider found for name: " + providerName));
+        final CacheProvider cacheProvider = ServiceLoader.load(CacheProvider.class).stream()
+                .map(ServiceLoader.Provider::get)
+                .filter(factory -> providerName.equals(factory.name()))
+                .findAny()
+                .orElseThrow(() -> new IllegalStateException("No cache provider found for name: " + providerName));
 
         cacheManager = cacheProvider.create();
-        event.getServletContext().setAttribute(
-                CacheManager.class.getName(),
-                cacheManager);
+        event.getServletContext().setAttribute(CacheManager.class.getName(), cacheManager);
     }
 
     @Override
@@ -82,5 +79,4 @@ public final class CacheManagerInitializer implements ServletContextListener {
             cacheManager = null;
         }
     }
-
 }

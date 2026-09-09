@@ -29,8 +29,7 @@ public final class UrlUtils {
 
     private static final Pattern LEADING_TRAILING_SLASHES = Pattern.compile("^/+|/+$");
 
-    private UrlUtils() {
-    }
+    private UrlUtils() {}
 
     public static String join(String base, String... segments) {
         final var sb = new StringBuilder();
@@ -122,5 +121,4 @@ public final class UrlUtils {
     private static boolean isHttpScheme(@Nullable String scheme) {
         return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
     }
-
 }

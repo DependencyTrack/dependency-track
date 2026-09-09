@@ -52,10 +52,7 @@ final class DatabaseCacheMaintenanceWorker implements Closeable {
     private final Map<String, DatabaseCache> cacheByName;
     private @Nullable ScheduledExecutorService executor;
 
-    DatabaseCacheMaintenanceWorker(
-            DataSource dataSource,
-            Duration initialDelay,
-            Duration interval) {
+    DatabaseCacheMaintenanceWorker(DataSource dataSource, Duration initialDelay, Duration interval) {
         this.dataSource = dataSource;
         this.initialDelay = initialDelay;
         this.interval = interval;
@@ -68,9 +65,7 @@ final class DatabaseCacheMaintenanceWorker implements Closeable {
         }
 
         executor = Executors.newSingleThreadScheduledExecutor(
-                Thread.ofPlatform()
-                        .name(getClass().getSimpleName(), 0)
-                        .factory());
+                Thread.ofPlatform().name(getClass().getSimpleName(), 0).factory());
         executor.scheduleAtFixedRate(
                 () -> {
                     try {
@@ -113,7 +108,7 @@ final class DatabaseCacheMaintenanceWorker implements Closeable {
                   FROM cte_expired
                  GROUP BY "CACHE_NAME"
                 """);
-             final ResultSet rs = ps.executeQuery()) {
+                final ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 final String cacheName = rs.getString(1);
                 final int entriesEvicted = rs.getInt(2);
@@ -174,5 +169,4 @@ final class DatabaseCacheMaintenanceWorker implements Closeable {
             executor.close();
         }
     }
-
 }

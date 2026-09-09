@@ -22,5 +22,4 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
-record SnykIssuesResponse(@Nullable List<SnykIssue> data) {
-}
+record SnykIssuesResponse(@Nullable List<SnykIssue> data) {}

@@ -49,5 +49,4 @@ public enum HealthCheckType {
      * Probes that either do not specify their type, or apply to all types.
      */
     ALL
-
 }

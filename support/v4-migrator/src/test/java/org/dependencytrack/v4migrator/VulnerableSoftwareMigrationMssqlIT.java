@@ -92,28 +92,26 @@ class VulnerableSoftwareMigrationMssqlIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> probe = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> probe =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT table_name, orig_id, bad_uuid
                       FROM "dt_v4_migration".probe_invalid_uuids
                      WHERE table_name = 'VULNERABLESOFTWARE'
                      ORDER BY orig_id
                     """).mapToMap().list());
         assertThat(probe).hasSize(1);
-        assertThat(probe.get(0))
-            .containsEntry("orig_id", 2L)
-            .containsEntry("bad_uuid", "not-a-uuid");
+        assertThat(probe.get(0)).containsEntry("orig_id", 2L).containsEntry("bad_uuid", "not-a-uuid");
 
-        final List<Map<String, Object>> map = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> map =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT orig_id, canonical_id
                       FROM dt_v4_migration.vulnerablesoftware_canonical_id_map
                      ORDER BY orig_id
                     """).mapToMap().list());
         assertThat(map).extracting("orig_id", "canonical_id").containsExactly(tuple(1L, 1L));
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "UUID", "PART", "VENDOR", "PRODUCT", "VERSION", "PURL",
                            "CPE23", "VULNERABLE"
                       FROM "VULNERABLESOFTWARE"
@@ -121,15 +119,15 @@ class VulnerableSoftwareMigrationMssqlIT {
                     """).mapToMap().list());
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0))
-            .containsEntry("id", 1L)
-            .containsEntry("uuid", UUID.fromString("00000000-0000-0000-0000-000000000001"))
-            .containsEntry("part", "application")
-            .containsEntry("vendor", "foo")
-            .containsEntry("product", "bar")
-            .containsEntry("version", "1.2.3")
-            .containsEntry("purl", "pkg:maven/foo/bar@1.2.3")
-            .containsEntry("cpe23", "cpe:2.3:a:foo:bar:1.2.3:*:*:*:*:*:*:*")
-            .containsEntry("vulnerable", true);
+                .containsEntry("id", 1L)
+                .containsEntry("uuid", UUID.fromString("00000000-0000-0000-0000-000000000001"))
+                .containsEntry("part", "application")
+                .containsEntry("vendor", "foo")
+                .containsEntry("product", "bar")
+                .containsEntry("version", "1.2.3")
+                .containsEntry("purl", "pkg:maven/foo/bar@1.2.3")
+                .containsEntry("cpe23", "cpe:2.3:a:foo:bar:1.2.3:*:*:*:*:*:*:*")
+                .containsEntry("vulnerable", true);
     }
 
     private void runPipeline() throws Exception {

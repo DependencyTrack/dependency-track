@@ -26,10 +26,20 @@ import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
  * @since 4.12.0
  */
 public record TagListResponseItem(
-        @Schema(description = "Name of the tag", requiredMode = REQUIRED) String name,
-        @Schema(description = "Number of projects assigned to this tag", requiredMode = REQUIRED) long projectCount,
-        @Schema(description = "Number of collection projects assigned to this tag", requiredMode = REQUIRED) long collectionProjectCount,
-        @Schema(description = "Number of policies assigned to this tag", requiredMode = REQUIRED) long policyCount,
-        @Schema(description = "Number of notification rules assigned to this tag", requiredMode = REQUIRED) long notificationRuleCount,
-        @Schema(description = "Number of vulnerabilities assigned to this tag", requiredMode = REQUIRED) long vulnerabilityCount) {
-}
+        @Schema(description = "Name of the tag", requiredMode = REQUIRED)
+        String name,
+
+        @Schema(description = "Number of projects assigned to this tag", requiredMode = REQUIRED)
+        long projectCount,
+
+        @Schema(description = "Number of collection projects assigned to this tag", requiredMode = REQUIRED)
+        long collectionProjectCount,
+
+        @Schema(description = "Number of policies assigned to this tag", requiredMode = REQUIRED)
+        long policyCount,
+
+        @Schema(description = "Number of notification rules assigned to this tag", requiredMode = REQUIRED)
+        long notificationRuleCount,
+
+        @Schema(description = "Number of vulnerabilities assigned to this tag", requiredMode = REQUIRED)
+        long vulnerabilityCount) {}

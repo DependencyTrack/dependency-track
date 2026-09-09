@@ -32,7 +32,8 @@ public interface PageTokenEncoder {
      * @return The encoded page token, or {@code null} if {@code pageToken} was {@code null}.
      * @throws IllegalStateException When encoding failed.
      */
-    @Nullable String encode(@Nullable PageToken pageToken);
+    @Nullable
+    String encode(@Nullable PageToken pageToken);
 
     /**
      * Decode a page token.
@@ -44,5 +45,4 @@ public interface PageTokenEncoder {
      * @throws InvalidPageTokenException When decoding failed.
      */
     <T extends PageToken> @Nullable T decode(@Nullable String encoded, Class<T> pageTokenClass);
-
 }

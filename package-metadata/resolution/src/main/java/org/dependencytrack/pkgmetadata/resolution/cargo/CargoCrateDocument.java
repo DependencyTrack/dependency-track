@@ -23,19 +23,14 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
-record CargoCrateDocument(
-        @JsonProperty("crate") Crate crate,
-        List<Version> versions) {
+record CargoCrateDocument(@JsonProperty("crate") Crate crate, List<Version> versions) {
 
     record Crate(
             @JsonProperty("newest_version") @Nullable String newestVersion,
-            @JsonProperty("max_stable_version") @Nullable String maxStableVersion) {
-    }
+            @JsonProperty("max_stable_version") @Nullable String maxStableVersion) {}
 
     record Version(
             @Nullable String num,
             @JsonProperty("created_at") @Nullable String createdAt,
-            @Nullable String checksum) {
-    }
-
+            @Nullable String checksum) {}
 }

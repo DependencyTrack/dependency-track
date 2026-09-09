@@ -119,6 +119,25 @@ class PropertyTablesIT {
                 VALUES (3, 'g', 1, 'k3', 'ENCRYPTED_BLOB', 'x')
                 """);
 
+            // A second project collapsing into project 1. Both carry the same property key,
+            // which is distinct in v4 only by PROJECT_ID, and becomes a duplicate of the v5
+            // UNIQUE (PROJECT_ID, GROUPNAME, PROPERTYNAME) once rewritten.
+            h.execute("""
+                INSERT INTO "PROJECT" ("ID", "NAME", "VERSION", "UUID", "LAST_BOM_IMPORTED")
+                VALUES (2, 'P', '1.0', '00000000-0000-0000-0000-000000000002',
+                        '2023-01-01T00:00:00Z')
+                """);
+            h.execute("""
+                INSERT INTO "PROJECT_PROPERTY"
+                    ("ID", "GROUPNAME", "PROJECT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE")
+                VALUES (10, 'g', 2, 'dup', 'STRING', 'from-discarded')
+                """);
+            h.execute("""
+                INSERT INTO "PROJECT_PROPERTY"
+                    ("ID", "GROUPNAME", "PROJECT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE")
+                VALUES (11, 'g', 1, 'dup', 'STRING', 'from-survivor')
+                """);
+
             // COMPONENT_PROPERTY row (single happy path; pattern identical to PROJECT_PROPERTY).
             h.execute("""
                 INSERT INTO "COMPONENT_PROPERTY"
@@ -130,47 +149,50 @@ class PropertyTablesIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> cfg = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> cfg =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "GROUPNAME", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE"
                       FROM "CONFIGPROPERTY"
                      ORDER BY "ID"
                     """).mapToMap().list());
         // (1) STRING preserved, (2) ENCRYPTEDSTRING wiped, (3) defectdojo wiped,
         // (4) unknown PROPERTYTYPE dropped, (5) search-indexes deleted by replay.
-        assertThat(cfg).extracting("id", "groupname", "propertyname", "propertytype", "propertyvalue")
-            .containsExactly(
-                tuple(1L, "general", "maintenance.mode", "BOOLEAN", "false"),
-                tuple(2L, "integrations", "webhook.secret", "STRING", null),
-                tuple(3L, "integrations", "defectdojo.apiKey", "STRING", null)
-            );
+        assertThat(cfg)
+                .extracting("id", "groupname", "propertyname", "propertytype", "propertyvalue")
+                .containsExactly(
+                        tuple(1L, "general", "maintenance.mode", "BOOLEAN", "false"),
+                        tuple(2L, "integrations", "webhook.secret", "STRING", null),
+                        tuple(3L, "integrations", "defectdojo.apiKey", "STRING", null));
 
-        final List<Map<String, Object>> pp = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> pp =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "PROJECT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE"
                       FROM "PROJECT_PROPERTY"
                      ORDER BY "ID"
                     """).mapToMap().list());
-        assertThat(pp).extracting("id", "project_id", "propertyname", "propertytype", "propertyvalue")
-            .containsExactly(
-                tuple(1L, 1L, "k1", "STRING", "v"),
-                tuple(2L, 1L, "k2", "STRING", null)
-            );
+        assertThat(pp)
+                .extracting("id", "project_id", "propertyname", "propertytype", "propertyvalue")
+                .containsExactly(
+                        tuple(1L, 1L, "k1", "STRING", "v"),
+                        tuple(2L, 1L, "k2", "STRING", null),
+                        // The surviving project's own value is kept, not the one belonging to
+                        // the project the collapse discarded.
+                        tuple(11L, 1L, "dup", "STRING", "from-survivor"));
 
-        final List<Map<String, Object>> cp = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> cp =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "COMPONENT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE", "UUID"
                       FROM "COMPONENT_PROPERTY"
                      ORDER BY "ID"
                     """).mapToMap().list());
         assertThat(cp).hasSize(1);
         assertThat(cp.get(0))
-            .containsEntry("id", 1L)
-            .containsEntry("component_id", 10L)
-            .containsEntry("propertyname", "k")
-            .containsEntry("propertytype", "STRING")
-            .containsEntry("propertyvalue", "v")
-            .containsEntry("uuid", UUID.fromString("00000000-0000-0000-0000-0000000000aa"));
+                .containsEntry("id", 1L)
+                .containsEntry("component_id", 10L)
+                .containsEntry("propertyname", "k")
+                .containsEntry("propertytype", "STRING")
+                .containsEntry("propertyvalue", "v")
+                .containsEntry("uuid", UUID.fromString("00000000-0000-0000-0000-0000000000aa"));
     }
 
     private void runPipeline() throws Exception {

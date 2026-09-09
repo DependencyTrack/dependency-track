@@ -21,7 +21,7 @@ package org.dependencytrack.notification.publishing.webhook;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplate;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.jspecify.annotations.Nullable;
@@ -45,13 +45,18 @@ public final class WebhookNotificationPublisherFactory implements NotificationPu
     }
 
     @Override
+    public String displayName() {
+        return "Webhook";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return WebhookNotificationPublisher.class;
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(ExtensionContext context) {
+        this.httpClient = context.httpClient();
     }
 
     @Override
@@ -63,18 +68,15 @@ public final class WebhookNotificationPublisherFactory implements NotificationPu
     @Override
     public RuntimeConfigSpec ruleConfigSpec() {
         return RuntimeConfigSpec.of(
-                new WebhookNotificationPublisherRuleConfigV1()
-                        .withDestinationUrl(URI.create("https://example.com")),
+                new WebhookNotificationPublisherRuleConfigV1().withDestinationUrl(URI.create("https://example.com")),
                 config -> {
                     final String authHeaderName = config.getAuthHeaderName();
                     final String authHeaderValue = config.getAuthHeaderValue();
                     if (authHeaderName != null && authHeaderName.isBlank()) {
-                        throw new InvalidRuntimeConfigException(
-                                "authHeaderName must not be blank");
+                        throw new InvalidRuntimeConfigException("authHeaderName must not be blank");
                     }
                     if (authHeaderValue != null && authHeaderValue.isBlank()) {
-                        throw new InvalidRuntimeConfigException(
-                                "authHeaderValue must not be blank");
+                        throw new InvalidRuntimeConfigException("authHeaderValue must not be blank");
                     }
                     if (authHeaderValue != null && authHeaderName == null) {
                         throw new InvalidRuntimeConfigException(
@@ -91,5 +93,4 @@ public final class WebhookNotificationPublisherFactory implements NotificationPu
     public NotificationTemplate defaultTemplate() {
         return new NotificationTemplate(loadDefaultTemplate(extensionClass()), "application/json");
     }
-
 }

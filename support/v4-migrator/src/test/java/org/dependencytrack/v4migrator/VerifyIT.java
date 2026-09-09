@@ -70,15 +70,19 @@ class VerifyIT {
             h.createUpdate("""
                 INSERT INTO "LICENSE" ("ID", "ISDEPRECATED", "ISOSIAPPROVED", "NAME", "UUID")
                 VALUES (1, FALSE, TRUE, 'Apache 2.0', :u)
-                """).bind("u", "c5b25734-69ce-4e9b-a4f3-1f0fa5b27d5f").execute();
+                """)
+                    .bind("u", "c5b25734-69ce-4e9b-a4f3-1f0fa5b27d5f")
+                    .execute();
             h.createUpdate("""
                 INSERT INTO "LICENSE" ("ID", "ISDEPRECATED", "ISOSIAPPROVED", "NAME", "UUID")
                 VALUES (2, FALSE, TRUE, 'Bad', :u)
                 """).bind("u", "garbage").execute();
 
             // Two teams sharing NAME so dedup kicks in.
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Eng', '11111111-1111-1111-1111-111111111111')");
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (2, 'Eng', '22222222-2222-2222-2222-222222222222')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Eng', '11111111-1111-1111-1111-111111111111')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (2, 'Eng', '22222222-2222-2222-2222-222222222222')");
         });
 
         final GlobalOptions global = new GlobalOptions();

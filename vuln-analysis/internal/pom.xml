@@ -22,18 +22,14 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>vuln-analysis-parent</artifactId>
-        <version>5.1.0-SNAPSHOT</version>
+        <version>5.2.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>vuln-analyzer-internal</artifactId>
     <packaging>jar</packaging>
-
     <name>Vulnerability Analysis :: Analyzer :: Internal</name>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/../..</project.parentBaseDir>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.dependencytrack</groupId>
@@ -69,34 +65,28 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.jdbi</groupId>
             <artifactId>jdbi3-core</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -106,7 +96,6 @@
             <artifactId>slf4j-simple</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-junit-jupiter</artifactId>
@@ -117,28 +106,29 @@
             <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>io.github.nscuro</groupId>
             <artifactId>versatile-core</artifactId>
         </dependency>
-
         <dependency>
             <groupId>us.springett</groupId>
             <artifactId>cpe-parser</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.github.package-url</groupId>
             <artifactId>packageurl-java</artifactId>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>org.jsonschema2pojo</groupId>
                 <artifactId>jsonschema2pojo-maven-plugin</artifactId>
+                <configuration>
+                    <sourceDirectory>${basedir}/src/main/resources/org/dependencytrack/vulnanalysis/internal</sourceDirectory>
+                    <targetPackage>org.dependencytrack.vulnanalysis.internal</targetPackage>
+                    <generateBuilders>true</generateBuilders>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -146,14 +136,7 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <sourceDirectory>${basedir}/src/main/resources/org/dependencytrack/vulnanalysis/internal
-                    </sourceDirectory>
-                    <targetPackage>org.dependencytrack.vulnanalysis.internal</targetPackage>
-                    <generateBuilders>true</generateBuilders>
-                </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>

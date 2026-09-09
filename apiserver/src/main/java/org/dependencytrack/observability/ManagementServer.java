@@ -60,14 +60,11 @@ public final class ManagementServer implements Closeable {
         this.port = port;
         this.healthCheckRegistry = requireNonNull(healthCheckRegistry, "healthCheckRegistry must not be null");
         this.meterRegistry = requireNonNull(meterRegistry, "meterRegistry must not be null");
-        this.metricsEnabled = config
-                .getOptionalValue(ConfigKeys.METRICS_ENABLED, boolean.class)
+        this.metricsEnabled = config.getOptionalValue(ConfigKeys.METRICS_ENABLED, boolean.class)
                 .orElse(false);
-        this.basicAuthUsername = config
-                .getOptionalValue(ConfigKeys.METRICS_AUTH_USERNAME, String.class)
+        this.basicAuthUsername = config.getOptionalValue(ConfigKeys.METRICS_AUTH_USERNAME, String.class)
                 .orElse(null);
-        this.basicAuthPassword = config
-                .getOptionalValue(ConfigKeys.METRICS_AUTH_PASSWORD, String.class)
+        this.basicAuthPassword = config.getOptionalValue(ConfigKeys.METRICS_AUTH_PASSWORD, String.class)
                 .orElse(null);
     }
 
@@ -109,5 +106,4 @@ public final class ManagementServer implements Closeable {
             executor.close();
         }
     }
-
 }

@@ -71,17 +71,14 @@ final class AnalysisReconciler {
     private final @Nullable String owaspVector;
     private final @Nullable Double owaspScore;
 
-    AnalysisReconciler(
-            long projectId,
-            long componentId,
-            long vulnDbId,
-            @Nullable Analysis existing) {
+    AnalysisReconciler(long projectId, long componentId, long vulnDbId, @Nullable Analysis existing) {
         this.projectId = projectId;
         this.componentId = componentId;
         this.vulnDbId = vulnDbId;
         this.vulnPolicyId = existing != null ? existing.vulnPolicyId() : null;
         this.state = Optional.ofNullable(existing).map(Analysis::state).orElse(AnalysisState.NOT_SET);
-        this.justification = Optional.ofNullable(existing).map(Analysis::justification).orElse(AnalysisJustification.NOT_SET);
+        this.justification =
+                Optional.ofNullable(existing).map(Analysis::justification).orElse(AnalysisJustification.NOT_SET);
         this.response = Optional.ofNullable(existing).map(Analysis::response).orElse(AnalysisResponse.NOT_SET);
         this.details = existing != null ? existing.details() : null;
         this.suppressed = existing != null && existing.suppressed();
@@ -96,7 +93,8 @@ final class AnalysisReconciler {
         this.owaspScore = existing != null ? existing.owaspScore() : null;
     }
 
-    @Nullable Result reconcile(VulnerabilityPolicy policy) {
+    @Nullable
+    Result reconcile(VulnerabilityPolicy policy) {
         requireNonNull(policy, "policy must not be null");
 
         try (var _ = MDC.putCloseable(MDC_VULN_POLICY_NAME, policy.getName())) {
@@ -106,34 +104,37 @@ final class AnalysisReconciler {
                 return null;
             }
 
-            final AnalysisState desiredState = switch (policyAnalysis.getState()) {
-                case EXPLOITABLE -> AnalysisState.EXPLOITABLE;
-                case FALSE_POSITIVE -> AnalysisState.FALSE_POSITIVE;
-                case IN_TRIAGE -> AnalysisState.IN_TRIAGE;
-                case NOT_AFFECTED -> AnalysisState.NOT_AFFECTED;
-                case RESOLVED -> AnalysisState.RESOLVED;
-                case null -> AnalysisState.NOT_SET;
-            };
-            final AnalysisJustification desiredJustification = switch (policyAnalysis.getJustification()) {
-                case CODE_NOT_PRESENT -> AnalysisJustification.CODE_NOT_PRESENT;
-                case CODE_NOT_REACHABLE -> AnalysisJustification.CODE_NOT_REACHABLE;
-                case PROTECTED_AT_PERIMETER -> AnalysisJustification.PROTECTED_AT_PERIMETER;
-                case PROTECTED_AT_RUNTIME -> AnalysisJustification.PROTECTED_AT_RUNTIME;
-                case PROTECTED_BY_COMPILER -> AnalysisJustification.PROTECTED_BY_COMPILER;
-                case PROTECTED_BY_MITIGATING_CONTROL -> AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL;
-                case REQUIRES_CONFIGURATION -> AnalysisJustification.REQUIRES_CONFIGURATION;
-                case REQUIRES_DEPENDENCY -> AnalysisJustification.REQUIRES_DEPENDENCY;
-                case REQUIRES_ENVIRONMENT -> AnalysisJustification.REQUIRES_ENVIRONMENT;
-                case null -> AnalysisJustification.NOT_SET;
-            };
-            final AnalysisResponse desiredResponse = switch (policyAnalysis.getVendorResponse()) {
-                case CAN_NOT_FIX -> AnalysisResponse.CAN_NOT_FIX;
-                case ROLLBACK -> AnalysisResponse.ROLLBACK;
-                case UPDATE -> AnalysisResponse.UPDATE;
-                case WILL_NOT_FIX -> AnalysisResponse.WILL_NOT_FIX;
-                case WORKAROUND_AVAILABLE -> AnalysisResponse.WORKAROUND_AVAILABLE;
-                case null -> AnalysisResponse.NOT_SET;
-            };
+            final AnalysisState desiredState =
+                    switch (policyAnalysis.getState()) {
+                        case EXPLOITABLE -> AnalysisState.EXPLOITABLE;
+                        case FALSE_POSITIVE -> AnalysisState.FALSE_POSITIVE;
+                        case IN_TRIAGE -> AnalysisState.IN_TRIAGE;
+                        case NOT_AFFECTED -> AnalysisState.NOT_AFFECTED;
+                        case RESOLVED -> AnalysisState.RESOLVED;
+                        case null -> AnalysisState.NOT_SET;
+                    };
+            final AnalysisJustification desiredJustification =
+                    switch (policyAnalysis.getJustification()) {
+                        case CODE_NOT_PRESENT -> AnalysisJustification.CODE_NOT_PRESENT;
+                        case CODE_NOT_REACHABLE -> AnalysisJustification.CODE_NOT_REACHABLE;
+                        case PROTECTED_AT_PERIMETER -> AnalysisJustification.PROTECTED_AT_PERIMETER;
+                        case PROTECTED_AT_RUNTIME -> AnalysisJustification.PROTECTED_AT_RUNTIME;
+                        case PROTECTED_BY_COMPILER -> AnalysisJustification.PROTECTED_BY_COMPILER;
+                        case PROTECTED_BY_MITIGATING_CONTROL -> AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL;
+                        case REQUIRES_CONFIGURATION -> AnalysisJustification.REQUIRES_CONFIGURATION;
+                        case REQUIRES_DEPENDENCY -> AnalysisJustification.REQUIRES_DEPENDENCY;
+                        case REQUIRES_ENVIRONMENT -> AnalysisJustification.REQUIRES_ENVIRONMENT;
+                        case null -> AnalysisJustification.NOT_SET;
+                    };
+            final AnalysisResponse desiredResponse =
+                    switch (policyAnalysis.getVendorResponse()) {
+                        case CAN_NOT_FIX -> AnalysisResponse.CAN_NOT_FIX;
+                        case ROLLBACK -> AnalysisResponse.ROLLBACK;
+                        case UPDATE -> AnalysisResponse.UPDATE;
+                        case WILL_NOT_FIX -> AnalysisResponse.WILL_NOT_FIX;
+                        case WORKAROUND_AVAILABLE -> AnalysisResponse.WORKAROUND_AVAILABLE;
+                        case null -> AnalysisResponse.NOT_SET;
+                    };
             final String desiredDetails = policyAnalysis.getDetails();
             final boolean desiredSuppressed = policyAnalysis.isSuppress();
 
@@ -167,13 +168,14 @@ final class AnalysisReconciler {
                     }
 
                     // Retain the highest severity among all ratings.
-                    final Severity ratingSeverity = switch (rating.getSeverity()) {
-                        case INFO -> Severity.INFO;
-                        case LOW -> Severity.LOW;
-                        case MEDIUM -> Severity.MEDIUM;
-                        case HIGH -> Severity.HIGH;
-                        case CRITICAL -> Severity.CRITICAL;
-                    };
+                    final Severity ratingSeverity =
+                            switch (rating.getSeverity()) {
+                                case INFO -> Severity.INFO;
+                                case LOW -> Severity.LOW;
+                                case MEDIUM -> Severity.MEDIUM;
+                                case HIGH -> Severity.HIGH;
+                                case CRITICAL -> Severity.CRITICAL;
+                            };
                     if (desiredSeverity == null || ratingSeverity.getLevel() > desiredSeverity.getLevel()) {
                         desiredSeverity = ratingSeverity;
                     }
@@ -214,7 +216,8 @@ final class AnalysisReconciler {
             hasChanged |= diffField(comments, AnalysisCommentField.JUSTIFICATION, justification, desiredJustification);
             hasChanged |= diffField(comments, AnalysisCommentField.RESPONSE, response, desiredResponse);
             hasChanged |= diffField(comments, AnalysisCommentField.DETAILS, details, desiredDetails);
-            final boolean suppressionChanged = diffField(comments, AnalysisCommentField.SUPPRESSED, suppressed, desiredSuppressed);
+            final boolean suppressionChanged =
+                    diffField(comments, AnalysisCommentField.SUPPRESSED, suppressed, desiredSuppressed);
             hasChanged |= suppressionChanged;
             hasChanged |= diffField(comments, AnalysisCommentField.SEVERITY, severity, desiredSeverity);
             hasChanged |= diffField(comments, AnalysisCommentField.CVSSV2_VECTOR, cvssV2Vector, desiredCvssV2Vector);
@@ -264,13 +267,16 @@ final class AnalysisReconciler {
         }
     }
 
-    @Nullable Result reconcileForNoPolicy() {
+    @Nullable
+    Result reconcileForNoPolicy() {
         final var comments = new ArrayList<String>();
         boolean hasChanged = false;
 
-        final boolean analysisStateChanged = diffField(comments, AnalysisCommentField.STATE, state, AnalysisState.NOT_SET);
+        final boolean analysisStateChanged =
+                diffField(comments, AnalysisCommentField.STATE, state, AnalysisState.NOT_SET);
         hasChanged |= analysisStateChanged;
-        hasChanged |= diffField(comments, AnalysisCommentField.JUSTIFICATION, justification, AnalysisJustification.NOT_SET);
+        hasChanged |=
+                diffField(comments, AnalysisCommentField.JUSTIFICATION, justification, AnalysisJustification.NOT_SET);
         hasChanged |= diffField(comments, AnalysisCommentField.RESPONSE, response, AnalysisResponse.NOT_SET);
         hasChanged |= diffField(comments, AnalysisCommentField.DETAILS, details, null);
         final boolean suppressionChanged = diffField(comments, AnalysisCommentField.SUPPRESSED, suppressed, false);
@@ -325,10 +331,7 @@ final class AnalysisReconciler {
     }
 
     private static boolean diffField(
-            List<String> comments,
-            AnalysisCommentField field,
-            @Nullable Object oldValue,
-            @Nullable Object newValue) {
+            List<String> comments, AnalysisCommentField field, @Nullable Object oldValue, @Nullable Object newValue) {
         if (!Objects.equals(oldValue, newValue)) {
             comments.add(AnalysisCommentFormatter.formatComment(field, oldValue, newValue));
             return true;
@@ -351,5 +354,4 @@ final class AnalysisReconciler {
                     .toList();
         }
     }
-
 }

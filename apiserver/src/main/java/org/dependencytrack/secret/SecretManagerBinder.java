@@ -18,12 +18,13 @@
  */
 package org.dependencytrack.secret;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import jakarta.servlet.ServletContext;
 import org.dependencytrack.secret.management.SecretManager;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.ServletContext;
 
 import static java.util.Objects.requireNonNull;
 
@@ -34,9 +35,7 @@ public final class SecretManagerBinder extends AbstractBinder {
 
     @Override
     protected void configure() {
-        bindFactory(SecretManagerFactory.class)
-                .to(SecretManager.class)
-                .in(Singleton.class);
+        bindFactory(SecretManagerFactory.class).to(SecretManager.class).in(Singleton.class);
     }
 
     private static final class SecretManagerFactory implements Factory<SecretManager> {
@@ -58,7 +57,5 @@ public final class SecretManagerBinder extends AbstractBinder {
         public void dispose(SecretManager instance) {
             // Lifecycle is managed by SecretManagerInitializer.
         }
-
     }
-
 }

@@ -27,20 +27,23 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class GemPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest<PackageMetadataResolver, GemPackageMetadataResolverFactory> {
+class GemPackageMetadataResolverFactoryTest
+        extends AbstractExtensionFactoryTest<PackageMetadataResolver, GemPackageMetadataResolverFactory> {
 
     protected GemPackageMetadataResolverFactoryTest() {
         super(GemPackageMetadataResolverFactory.class);
     }
 
     @ParameterizedTest
-    @CsvSource(nullValues = "", value = {
-            "pkg:gem/foo@1.0, pkg:gem/foo@1.0",
-            "pkg:gem/ns/foo@1.0, pkg:gem/ns/foo@1.0",
-            "pkg:npm/foo@1.0, ",
-            "pkg:gem/foo, ",
-            "pkg:gem/ns/foo@1.0?key=value#sub/path, pkg:gem/ns/foo@1.0",
-    })
+    @CsvSource(
+            nullValues = "",
+            value = {
+                "pkg:gem/foo@1.0, pkg:gem/foo@1.0",
+                "pkg:gem/ns/foo@1.0, pkg:gem/ns/foo@1.0",
+                "pkg:npm/foo@1.0, ",
+                "pkg:gem/foo, ",
+                "pkg:gem/ns/foo@1.0?key=value#sub/path, pkg:gem/ns/foo@1.0",
+            })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))
                 .isEqualTo(expected != null ? new PackageURL(expected) : null);
@@ -50,5 +53,4 @@ class GemPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest
     void shouldRequireRepository() {
         assertThat(factory.requiresRepository()).isTrue();
     }
-
 }

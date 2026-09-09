@@ -35,8 +35,7 @@ import java.util.List;
  */
 final class SqlStatementSplitter {
 
-    private SqlStatementSplitter() {
-    }
+    private SqlStatementSplitter() {}
 
     static List<String> split(final String sql) {
         final List<String> out = new ArrayList<>();

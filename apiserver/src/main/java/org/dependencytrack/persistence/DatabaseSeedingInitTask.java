@@ -20,10 +20,6 @@ package org.dependencytrack.persistence;
 
 import alpine.config.AlpineConfigKeys;
 import alpine.server.auth.PasswordService;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 import org.apache.commons.lang3.SerializationUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.init.InitTask;
@@ -39,6 +35,11 @@ import org.jdbi.v3.core.statement.PreparedBatch;
 import org.jdbi.v3.core.statement.Update;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,19 +60,17 @@ public final class DatabaseSeedingInitTask implements InitTask {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseSeedingInitTask.class);
 
     private static final Map<String, List<String>> DEFAULT_TEAM_PERMISSIONS = Map.of(
-            "Administrators", Stream.of(Permissions.values())
-                    .map(Permissions::name)
-                    .toList(),
-            "Portfolio Managers", List.of(
-                    Permissions.Constants.VIEW_PORTFOLIO,
-                    Permissions.Constants.PORTFOLIO_MANAGEMENT,
-                    Permissions.Constants.PORTFOLIO_MANAGEMENT_CREATE,
-                    Permissions.Constants.PORTFOLIO_MANAGEMENT_READ,
-                    Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE,
-                    Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE),
-            "Automation", List.of(
-                    Permissions.Constants.VIEW_PORTFOLIO,
-                    Permissions.Constants.BOM_UPLOAD));
+            "Administrators",
+                    Stream.of(Permissions.values()).map(Permissions::name).toList(),
+            "Portfolio Managers",
+                    List.of(
+                            Permissions.Constants.VIEW_PORTFOLIO,
+                            Permissions.Constants.PORTFOLIO_MANAGEMENT,
+                            Permissions.Constants.PORTFOLIO_MANAGEMENT_CREATE,
+                            Permissions.Constants.PORTFOLIO_MANAGEMENT_READ,
+                            Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE,
+                            Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE),
+            "Automation", List.of(Permissions.Constants.VIEW_PORTFOLIO, Permissions.Constants.BOM_UPLOAD));
 
     @Override
     public int priority() {
@@ -90,8 +89,10 @@ public final class DatabaseSeedingInitTask implements InitTask {
         jdbi.useTransaction(handle -> {
             final var configPropertyDao = handle.attach(ConfigPropertyDao.class);
 
-            final String appBuildUuid = ctx.config().getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_UUID, String.class);
-            final String appBuildTimestamp = ctx.config().getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_TIMESTAMP, String.class);
+            final String appBuildUuid =
+                    ctx.config().getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_UUID, String.class);
+            final String appBuildTimestamp =
+                    ctx.config().getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_TIMESTAMP, String.class);
             final String defaultObjectsVersion = configPropertyDao
                     .getOptionalValue(INTERNAL_DEFAULT_OBJECTS_VERSION)
                     .orElse(null);
@@ -115,9 +116,7 @@ public final class DatabaseSeedingInitTask implements InitTask {
                 seedDefaultLicenseGroups(handle);
             }
 
-            configPropertyDao.setValue(
-                    INTERNAL_DEFAULT_OBJECTS_VERSION,
-                    appBuildUuid);
+            configPropertyDao.setValue(INTERNAL_DEFAULT_OBJECTS_VERSION, appBuildUuid);
         });
     }
 
@@ -133,7 +132,8 @@ public final class DatabaseSeedingInitTask implements InitTask {
             preparedBatch.add();
         }
 
-        final int configPropertiesCreated = Arrays.stream(preparedBatch.execute()).sum();
+        final int configPropertiesCreated =
+                Arrays.stream(preparedBatch.execute()).sum();
         LOGGER.debug("Created {} config properties", configPropertiesCreated);
     }
 
@@ -188,8 +188,7 @@ public final class DatabaseSeedingInitTask implements InitTask {
             }
         }
 
-        update
-                .bindArray("teamNames", String.class, teamNames)
+        update.bindArray("teamNames", String.class, teamNames)
                 .bindArray("permissionNames", String.class, permissionNames)
                 .execute();
     }
@@ -200,7 +199,8 @@ public final class DatabaseSeedingInitTask implements InitTask {
         // an upgraded v4 instance whose admin user was renamed (e.g. to avoid
         // collisions with OIDC users) would otherwise get a fresh 'admin' user
         // with the default password, despite already having users. See #6392.
-        final Optional<Long> adminUserId = jdbiHandle.createUpdate("""
+        final Optional<Long> adminUserId = jdbiHandle
+                .createUpdate("""
                         INSERT INTO "USER" (
                           "TYPE", "USERNAME", "EMAIL", "PASSWORD", "LAST_PASSWORD_CHANGE"
                         , "FORCE_PASSWORD_CHANGE", "NON_EXPIRY_PASSWORD", "SUSPENDED")
@@ -222,16 +222,12 @@ public final class DatabaseSeedingInitTask implements InitTask {
         jdbiHandle.createUpdate("""
                         INSERT INTO "USERS_TEAMS" ("USER_ID", "TEAM_ID")
                         SELECT :adminUserId, (SELECT "ID" FROM "TEAM" WHERE "NAME" = 'Administrators')
-                        """)
-                .bind("adminUserId", adminUserId.get())
-                .execute();
+                        """).bind("adminUserId", adminUserId.get()).execute();
 
         jdbiHandle.createUpdate("""
                         INSERT INTO "USERS_PERMISSIONS" ("USER_ID", "PERMISSION_ID")
                         SELECT :adminUserId, "PERMISSION"."ID" FROM "PERMISSION"
-                        """)
-                .bind("adminUserId", adminUserId.get())
-                .execute();
+                        """).bind("adminUserId", adminUserId.get()).execute();
     }
 
     public static void seedDefaultLicenses(final Handle jdbiHandle) {
@@ -280,9 +276,7 @@ public final class DatabaseSeedingInitTask implements InitTask {
             preparedBatch.bindBean(license);
             preparedBatch.bind(
                     "seeAlsoSerialized",
-                    license.getSeeAlso() != null
-                            ? SerializationUtils.serialize(license.getSeeAlso())
-                            : null);
+                    license.getSeeAlso() != null ? SerializationUtils.serialize(license.getSeeAlso()) : null);
             preparedBatch.add();
         }
 
@@ -318,8 +312,9 @@ public final class DatabaseSeedingInitTask implements InitTask {
                 """);
 
         final JsonArray groupDefsJson;
-        try (final InputStream inputStream = DatabaseSeedingInitTask.class.getResourceAsStream("/default-objects/licenseGroups.json");
-             final JsonReader jsonReader = Json.createReader(inputStream)) {
+        try (final InputStream inputStream =
+                        DatabaseSeedingInitTask.class.getResourceAsStream("/default-objects/licenseGroups.json");
+                final JsonReader jsonReader = Json.createReader(inputStream)) {
             groupDefsJson = jsonReader.readArray();
         } catch (IOException e) {
             throw new IllegalStateException("Failed to parse license group definition", e);
@@ -342,8 +337,7 @@ public final class DatabaseSeedingInitTask implements InitTask {
             }
         }
 
-        update
-                .bindArray("groupNames", String.class, groupNames)
+        update.bindArray("groupNames", String.class, groupNames)
                 .bindArray("groupRiskWeights", Integer.class, groupRiskWeights)
                 .bindArray("licenseIds", String.class, licenseIds)
                 .execute();
@@ -368,5 +362,4 @@ public final class DatabaseSeedingInitTask implements InitTask {
         final int reposCreated = Arrays.stream(preparedBatch.execute()).sum();
         LOGGER.debug("Created {} repositories", reposCreated);
     }
-
 }

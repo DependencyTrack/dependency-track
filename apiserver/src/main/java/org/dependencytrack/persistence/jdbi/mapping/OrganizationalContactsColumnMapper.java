@@ -33,5 +33,4 @@ public final class OrganizationalContactsColumnMapper implements ColumnMapper<Li
     public List<OrganizationalContact> map(ResultSet r, int columnNumber, StatementContext ctx) throws SQLException {
         return new OrganizationalContactsJsonConverter().convertToAttribute(r.getString(columnNumber));
     }
-
 }

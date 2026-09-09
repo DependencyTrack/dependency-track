@@ -18,23 +18,18 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
-import java.util.Set;
-
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.validation.ValidUuid;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Set;
+
 public record TeamPermissionsSetRequest(
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank
-        @ValidUuid
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank @ValidUuid
         String team,
 
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotNull
-        Set<Permissions> permissions) {
-}
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @NotNull
+        Set<Permissions> permissions) {}

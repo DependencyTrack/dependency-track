@@ -160,8 +160,15 @@ public class VulnerableSoftware implements ICpe, Serializable {
     private boolean vulnerable;
 
     @Persistent(table = "VULNERABLESOFTWARE_VULNERABILITIES", mappedBy = "vulnerableSoftware")
-    @Join(column = "VULNERABLESOFTWARE_ID", foreignKey = "VULNERABLESOFTWARE_VULNERABILITIES_VULNERABLESOFTWARE_FK", deleteAction = ForeignKeyAction.CASCADE)
-    @Element(column = "VULNERABILITY_ID", foreignKey = "VULNERABLESOFTWARE_VULNERABILITIES_VULNERABILITY_FK", deleteAction = ForeignKeyAction.CASCADE, dependent = "false")
+    @Join(
+            column = "VULNERABLESOFTWARE_ID",
+            foreignKey = "VULNERABLESOFTWARE_VULNERABILITIES_VULNERABLESOFTWARE_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
+    @Element(
+            column = "VULNERABILITY_ID",
+            foreignKey = "VULNERABLESOFTWARE_VULNERABILITIES_VULNERABILITY_FK",
+            deleteAction = ForeignKeyAction.CASCADE,
+            dependent = "false")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Vulnerability> vulnerabilities;
 
@@ -406,6 +413,7 @@ public class VulnerableSoftware implements ICpe, Serializable {
     public List<AffectedVersionAttribution> getAffectedVersionAttributions() {
         return affectedVersionAttributions;
     }
+
     public void setAffectedVersionAttributions(List<AffectedVersionAttribution> affectedVersionAttributions) {
         this.affectedVersionAttributions = affectedVersionAttributions;
     }
@@ -421,28 +429,28 @@ public class VulnerableSoftware implements ICpe, Serializable {
     public boolean equalsIgnoringDatastoreIdentity(final VulnerableSoftware otherVs) {
         // NB: The full purl string and purlVersion are intentionally excluded.
         return Objects.equals(otherVs.getPurlType(), this.getPurlType())
-               && Objects.equals(otherVs.getPurlNamespace(), this.getPurlNamespace())
-               && Objects.equals(otherVs.getPurlName(), this.getPurlName())
-               && Objects.equals(otherVs.getPurlQualifiers(), this.getPurlQualifiers())
-               && Objects.equals(otherVs.getPurlSubpath(), this.getPurlSubpath())
-               && Objects.equals(otherVs.getCpe22(), this.getCpe22())
-               && Objects.equals(otherVs.getCpe23(), this.getCpe23())
-               && Objects.equals(otherVs.getPart(), this.getPart())
-               && Objects.equals(otherVs.getVendor(), this.getVendor())
-               && Objects.equals(otherVs.getProduct(), this.getProduct())
-               && Objects.equals(otherVs.getVersion(), this.getVersion())
-               && Objects.equals(otherVs.getUpdate(), this.getUpdate())
-               && Objects.equals(otherVs.getEdition(), this.getEdition())
-               && Objects.equals(otherVs.getLanguage(), this.getLanguage())
-               && Objects.equals(otherVs.getSwEdition(), this.getSwEdition())
-               && Objects.equals(otherVs.getTargetSw(), this.getTargetSw())
-               && Objects.equals(otherVs.getTargetHw(), this.getTargetHw())
-               && Objects.equals(otherVs.getOther(), this.getOther())
-               && Objects.equals(otherVs.getVersionEndExcluding(), this.getVersionEndExcluding())
-               && Objects.equals(otherVs.getVersionEndIncluding(), this.getVersionEndIncluding())
-               && Objects.equals(otherVs.getVersionStartExcluding(), this.getVersionStartExcluding())
-               && Objects.equals(otherVs.getVersionStartIncluding(), this.getVersionStartIncluding())
-               && Objects.equals(otherVs.isVulnerable(), this.isVulnerable());
+                && Objects.equals(otherVs.getPurlNamespace(), this.getPurlNamespace())
+                && Objects.equals(otherVs.getPurlName(), this.getPurlName())
+                && Objects.equals(otherVs.getPurlQualifiers(), this.getPurlQualifiers())
+                && Objects.equals(otherVs.getPurlSubpath(), this.getPurlSubpath())
+                && Objects.equals(otherVs.getCpe22(), this.getCpe22())
+                && Objects.equals(otherVs.getCpe23(), this.getCpe23())
+                && Objects.equals(otherVs.getPart(), this.getPart())
+                && Objects.equals(otherVs.getVendor(), this.getVendor())
+                && Objects.equals(otherVs.getProduct(), this.getProduct())
+                && Objects.equals(otherVs.getVersion(), this.getVersion())
+                && Objects.equals(otherVs.getUpdate(), this.getUpdate())
+                && Objects.equals(otherVs.getEdition(), this.getEdition())
+                && Objects.equals(otherVs.getLanguage(), this.getLanguage())
+                && Objects.equals(otherVs.getSwEdition(), this.getSwEdition())
+                && Objects.equals(otherVs.getTargetSw(), this.getTargetSw())
+                && Objects.equals(otherVs.getTargetHw(), this.getTargetHw())
+                && Objects.equals(otherVs.getOther(), this.getOther())
+                && Objects.equals(otherVs.getVersionEndExcluding(), this.getVersionEndExcluding())
+                && Objects.equals(otherVs.getVersionEndIncluding(), this.getVersionEndIncluding())
+                && Objects.equals(otherVs.getVersionStartExcluding(), this.getVersionStartExcluding())
+                && Objects.equals(otherVs.getVersionStartIncluding(), this.getVersionStartIncluding())
+                && Objects.equals(otherVs.isVulnerable(), this.isVulnerable());
     }
 
     /**
@@ -477,8 +485,7 @@ public class VulnerableSoftware implements ICpe, Serializable {
                 this.getVersionEndIncluding(),
                 this.getVersionStartExcluding(),
                 this.getVersionStartIncluding(),
-                this.isVulnerable()
-        );
+                this.isVulnerable());
     }
 
     @Override
@@ -514,5 +521,4 @@ public class VulnerableSoftware implements ICpe, Serializable {
                 .add("uuid", uuid)
                 .toString();
     }
-
 }

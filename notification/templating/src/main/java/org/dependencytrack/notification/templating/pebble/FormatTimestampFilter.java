@@ -39,11 +39,7 @@ final class FormatTimestampFilter implements Filter {
 
     @Override
     public Object apply(
-            Object input,
-            Map<String, Object> args,
-            PebbleTemplate self,
-            EvaluationContext context,
-            int lineNumber) {
+            Object input, Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         if (!(input instanceof Timestamp ts)) {
             return input;
         }
@@ -57,5 +53,4 @@ final class FormatTimestampFilter implements Filter {
     public List<String> getArgumentNames() {
         return List.of("pattern");
     }
-
 }

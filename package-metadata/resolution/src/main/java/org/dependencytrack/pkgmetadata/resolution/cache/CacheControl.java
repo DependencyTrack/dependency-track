@@ -28,7 +28,8 @@ import java.util.Locale;
  * @see <a href="https://www.rfc-editor.org/rfc/rfc9111.html#name-cache-control">RFC 9111 - Cache Control</a>
  * @since 5.0.0
  */
-record CacheControl(boolean noStore, boolean noCache, @Nullable Long maxAgeSeconds) {
+record CacheControl(
+        boolean noStore, boolean noCache, @Nullable Long maxAgeSeconds) {
 
     static final CacheControl ABSENT = new CacheControl(false, false, null);
 
@@ -53,7 +54,8 @@ record CacheControl(boolean noStore, boolean noCache, @Nullable Long maxAgeSecon
                 }
 
                 final int equalsIndex = trimmed.indexOf('=');
-                final String name = (equalsIndex < 0 ? trimmed : trimmed.substring(0, equalsIndex)).toLowerCase(Locale.ROOT);
+                final String name =
+                        (equalsIndex < 0 ? trimmed : trimmed.substring(0, equalsIndex)).toLowerCase(Locale.ROOT);
 
                 switch (name) {
                     case "no-store" -> noStore = true;
@@ -93,5 +95,4 @@ record CacheControl(boolean noStore, boolean noCache, @Nullable Long maxAgeSecon
             return null;
         }
     }
-
 }

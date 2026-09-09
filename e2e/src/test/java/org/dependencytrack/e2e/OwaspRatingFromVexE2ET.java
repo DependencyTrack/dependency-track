@@ -39,20 +39,17 @@ class OwaspRatingFromVexE2ET extends AbstractE2ET {
 
     @Test
     void shouldSurfaceOwaspRatingFromVexInFindings() throws Exception {
-        apiClient.createVulnerability(
-                new CreateVulnerabilityRequest(
-                        "INT-001",
-                        "CVSS:3.0/AV:N/AC:H/PR:L/UI:R/S:U/C:H/I:H/A:H",
-                        null,
-                        List.of(new AffectedComponent("PURL", "pkg:maven/commons-io/commons-io@2.11.0", "EXACT"))));
+        apiClient.createVulnerability(new CreateVulnerabilityRequest(
+                "INT-001",
+                "CVSS:3.0/AV:N/AC:H/PR:L/UI:R/S:U/C:H/I:H/A:H",
+                null,
+                List.of(new AffectedComponent("PURL", "pkg:maven/commons-io/commons-io@2.11.0", "EXACT"))));
 
-        final byte[] bomBytes = getClass().getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json").readAllBytes();
+        final byte[] bomBytes = getClass()
+                .getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json")
+                .readAllBytes();
         final EventTokenResponse bomUpload = apiClient.uploadBom(
-                new BomUploadRequest(
-                        "foo",
-                        "bar",
-                        true,
-                        Base64.getEncoder().encodeToString(bomBytes)));
+                new BomUploadRequest("foo", "bar", true, Base64.getEncoder().encodeToString(bomBytes)));
         awaitProcessed("BOM processing", bomUpload.token());
 
         final Project project = apiClient.lookupProject("foo", "bar");
@@ -62,12 +59,11 @@ class OwaspRatingFromVexE2ET extends AbstractE2ET {
             assertThat(finding.vulnerability().owaspRRVector()).isNull();
         });
 
-        final EventTokenResponse vexUploadResponse = apiClient.uploadVex(
-                new VexSubmitRequest(
-                        project.uuid().toString(),
-                        null,
-                        null,
-                        Base64.getEncoder().encodeToString(/* language=JSON */ """
+        final EventTokenResponse vexUploadResponse = apiClient.uploadVex(new VexSubmitRequest(
+                project.uuid().toString(),
+                null,
+                null,
+                Base64.getEncoder().encodeToString(/* language=JSON */ """
                                 {
                                   "bomFormat": "CycloneDX",
                                   "specVersion": "1.4",
@@ -106,15 +102,20 @@ class OwaspRatingFromVexE2ET extends AbstractE2ET {
 
         await("OWASP rating applied to finding")
                 .atMost(Duration.ofSeconds(15))
-                .untilAsserted(() -> assertThat(apiClient.getFindings(project.uuid(), true)).anySatisfy(finding -> {
-                    assertThat(finding.vulnerability().vulnId()).isEqualTo("INT-001");
-                    assertThat(finding.vulnerability().owaspRRVector()).isEqualTo(
-                            "OWASP/SL:1/M:1/O:0/S:2/ED:1/EE:1/A:1/ID:1/LC:2/LI:1/LAV:1/LAC:1/FD:1/RD:1/NC:2/PV:3");
-                    assertThat(finding.vulnerability().owaspBusinessImpactScore()).isEqualTo(7.5);
-                    assertThat(finding.vulnerability().owaspLikelihoodScore()).isEqualTo(7.5);
-                    assertThat(finding.vulnerability().owaspTechnicalImpactScore()).isEqualTo(7.5);
-                    assertThat(finding.vulnerability().severity()).isEqualTo("HIGH");
-                }));
+                .untilAsserted(() -> assertThat(apiClient.getFindings(project.uuid(), true))
+                        .anySatisfy(finding -> {
+                            assertThat(finding.vulnerability().vulnId()).isEqualTo("INT-001");
+                            assertThat(finding.vulnerability().owaspRRVector())
+                                    .isEqualTo(
+                                            "OWASP/SL:1/M:1/O:0/S:2/ED:1/EE:1/A:1/ID:1/LC:2/LI:1/LAV:1/LAC:1/FD:1/RD:1/NC:2/PV:3");
+                            assertThat(finding.vulnerability().owaspBusinessImpactScore())
+                                    .isEqualTo(7.5);
+                            assertThat(finding.vulnerability().owaspLikelihoodScore())
+                                    .isEqualTo(7.5);
+                            assertThat(finding.vulnerability().owaspTechnicalImpactScore())
+                                    .isEqualTo(7.5);
+                            assertThat(finding.vulnerability().severity()).isEqualTo("HIGH");
+                        }));
     }
 
     private void awaitProcessed(String description, String token) {
@@ -126,5 +127,4 @@ class OwaspRatingFromVexE2ET extends AbstractE2ET {
                     assertThat(processing.processing()).isFalse();
                 });
     }
-
 }

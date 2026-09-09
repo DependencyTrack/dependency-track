@@ -27,20 +27,23 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ComposerPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest<PackageMetadataResolver, ComposerPackageMetadataResolverFactory> {
+class ComposerPackageMetadataResolverFactoryTest
+        extends AbstractExtensionFactoryTest<PackageMetadataResolver, ComposerPackageMetadataResolverFactory> {
 
     protected ComposerPackageMetadataResolverFactoryTest() {
         super(ComposerPackageMetadataResolverFactory.class);
     }
 
     @ParameterizedTest
-    @CsvSource(nullValues = "", value = {
-            "pkg:composer/foo@1.0, ",
-            "pkg:composer/ns/foo@1.0, pkg:composer/ns/foo@1.0",
-            "pkg:npm/foo@1.0, ",
-            "pkg:composer/foo, ",
-            "pkg:composer/ns/foo@1.0?key=value#sub/path, pkg:composer/ns/foo@1.0",
-    })
+    @CsvSource(
+            nullValues = "",
+            value = {
+                "pkg:composer/foo@1.0, ",
+                "pkg:composer/ns/foo@1.0, pkg:composer/ns/foo@1.0",
+                "pkg:npm/foo@1.0, ",
+                "pkg:composer/foo, ",
+                "pkg:composer/ns/foo@1.0?key=value#sub/path, pkg:composer/ns/foo@1.0",
+            })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))
                 .isEqualTo(expected != null ? new PackageURL(expected) : null);
@@ -50,5 +53,4 @@ class ComposerPackageMetadataResolverFactoryTest extends AbstractExtensionFactor
     void shouldRequireRepository() {
         assertThat(factory.requiresRepository()).isTrue();
     }
-
 }

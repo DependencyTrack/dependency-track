@@ -35,7 +35,9 @@ class MultipartBodyPublisherTest {
         final var publisher = new MultipartBodyPublisher("test-boundary");
         publisher.addFormField("field1", "value1");
         publisher.addFormField("field2", "value2");
-        publisher.addFilePart("attachment", "data.bin",
+        publisher.addFilePart(
+                "attachment",
+                "data.bin",
                 new ByteArrayInputStream("binary-data".getBytes(StandardCharsets.UTF_8)),
                 "application/octet-stream");
 
@@ -81,14 +83,11 @@ class MultipartBodyPublisherTest {
             }
 
             @Override
-            public void onError(Throwable throwable) {
-            }
+            public void onError(Throwable throwable) {}
 
             @Override
-            public void onComplete() {
-            }
+            public void onComplete() {}
         });
         return outputStream.toString(StandardCharsets.UTF_8);
     }
-
 }

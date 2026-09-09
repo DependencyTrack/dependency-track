@@ -51,9 +51,7 @@ public final class MockConfigRegistry implements MutableConfigRegistry {
             @Nullable RuntimeConfigMapper runtimeConfigMapper,
             @Nullable RuntimeConfig runtimeConfig) {
         this.deploymentConfig = new DelegatingDeploymentConfig(
-                new SmallRyeConfigBuilder()
-                        .withDefaultValues(deploymentConfigs)
-                        .build());
+                new SmallRyeConfigBuilder().withDefaultValues(deploymentConfigs).build());
         this.runtimeConfigSpec = runtimeConfigSpec;
         this.runtimeConfigMapper = runtimeConfigMapper;
         if (runtimeConfig != null) {
@@ -65,9 +63,7 @@ public final class MockConfigRegistry implements MutableConfigRegistry {
         this(deploymentConfigs, null, null, null);
     }
 
-    public MockConfigRegistry(
-            @Nullable RuntimeConfigSpec runtimeConfigSpec,
-            @Nullable RuntimeConfig runtimeConfig) {
+    public MockConfigRegistry(@Nullable RuntimeConfigSpec runtimeConfigSpec, @Nullable RuntimeConfig runtimeConfig) {
         this(
                 Collections.emptyMap(),
                 runtimeConfigSpec,
@@ -119,7 +115,8 @@ public final class MockConfigRegistry implements MutableConfigRegistry {
             throw new IllegalArgumentException("""
                     The provided config of type %s is not an instance of the \
                     extension's declared config type %s\
-                    """.formatted(config.getClass().getName(), runtimeConfigSpec.configClass().getName()));
+                    """.formatted(
+                    config.getClass().getName(), runtimeConfigSpec.configClass().getName()));
         }
 
         runtimeConfigMapper.validate(config, runtimeConfigSpec);
@@ -131,5 +128,4 @@ public final class MockConfigRegistry implements MutableConfigRegistry {
         this.runtimeConfig = config;
         return true;
     }
-
 }

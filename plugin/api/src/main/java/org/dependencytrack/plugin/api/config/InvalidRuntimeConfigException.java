@@ -28,5 +28,4 @@ public class InvalidRuntimeConfigException extends IllegalArgumentException {
     public InvalidRuntimeConfigException(String message) {
         super(requireNonNull(message, "message must not be null"));
     }
-
 }

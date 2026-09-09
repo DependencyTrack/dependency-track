@@ -78,7 +78,6 @@ public @interface AllowApiOrdering {
          * This name will not be quoted automatically.
          */
         String queryName() default "";
-
     }
 
     @Documented
@@ -95,29 +94,27 @@ public @interface AllowApiOrdering {
          * Optional sort direction for the tiebreaker.
          */
         OrderDirection direction() default OrderDirection.UNSPECIFIED;
-
     }
 
     final class ExtensionConfigurer extends SimpleExtensionConfigurer {
 
         @Override
-        public void configure(final ConfigRegistry configRegistry, final Annotation annotation, final Class<?> extensionType) {
+        public void configure(
+                final ConfigRegistry configRegistry, final Annotation annotation, final Class<?> extensionType) {
             final var allowOrderingAnnotation = (AllowApiOrdering) annotation;
 
             final var config = configRegistry.get(ApiRequestConfig.class);
-            final String alwaysByQueryName = trimToNull(allowOrderingAnnotation.alwaysBy().queryName());
+            final String alwaysByQueryName =
+                    trimToNull(allowOrderingAnnotation.alwaysBy().queryName());
             config.setOrderingAlwaysBy(
                     alwaysByQueryName != null
-                            ? new ApiRequestConfig.AlwaysByOrdering(alwaysByQueryName, allowOrderingAnnotation.alwaysBy().direction())
+                            ? new ApiRequestConfig.AlwaysByOrdering(
+                                    alwaysByQueryName,
+                                    allowOrderingAnnotation.alwaysBy().direction())
                             : null);
             config.setOrderingAllowedColumns(Arrays.stream(allowOrderingAnnotation.by())
-                    .map(column -> new ApiRequestConfig.OrderingColumn(
-                            column.name(),
-                            trimToNull(column.queryName())
-                    ))
+                    .map(column -> new ApiRequestConfig.OrderingColumn(column.name(), trimToNull(column.queryName())))
                     .collect(Collectors.toSet()));
         }
-
     }
-
 }

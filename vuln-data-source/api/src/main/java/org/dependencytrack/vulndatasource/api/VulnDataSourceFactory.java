@@ -29,5 +29,4 @@ public interface VulnDataSourceFactory extends ExtensionFactory<VulnDataSource> 
      * @return Whether the data source provided by this factory is enabled.
      */
     boolean isDataSourceEnabled();
-
 }

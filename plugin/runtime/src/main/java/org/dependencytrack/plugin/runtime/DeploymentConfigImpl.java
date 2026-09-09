@@ -33,10 +33,7 @@ final class DeploymentConfigImpl implements DeploymentConfig {
 
     private final Config delegate;
 
-    DeploymentConfigImpl(
-            Config delegate,
-            String extensionPointName,
-            String extensionName) {
+    DeploymentConfigImpl(Config delegate, String extensionPointName, String extensionName) {
         requireNonNull(extensionPointName, "extensionPointName must not be null");
         requireNonNull(extensionName, "extensionName must not be null");
         this.delegate = new NamespacedConfig(delegate, "dt.%s.%s".formatted(extensionPointName, extensionName));
@@ -51,5 +48,4 @@ final class DeploymentConfigImpl implements DeploymentConfig {
     public <T> Optional<T> getOptionalValue(String propertyName, Class<T> propertyType) {
         return delegate.getOptionalValue(propertyName, propertyType);
     }
-
 }

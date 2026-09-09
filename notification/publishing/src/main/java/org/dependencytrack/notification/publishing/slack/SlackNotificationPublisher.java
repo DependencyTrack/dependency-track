@@ -30,5 +30,4 @@ final class SlackNotificationPublisher extends AbstractHttpNotificationPublisher
     SlackNotificationPublisher(HttpClient httpClient) {
         super(httpClient);
     }
-
 }

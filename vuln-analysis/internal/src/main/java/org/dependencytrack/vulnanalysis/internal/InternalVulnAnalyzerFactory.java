@@ -19,8 +19,8 @@
 package org.dependencytrack.vulnanalysis.internal;
 
 import org.dependencytrack.common.datasource.DataSourceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.support.jdbi.mapping.PurlColumnMapper;
@@ -58,17 +58,20 @@ final class InternalVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
     }
 
     @Override
+    public String displayName() {
+        return "Internal";
+    }
+
+    @Override
     public Class<? extends VulnAnalyzer> extensionClass() {
         return InternalVulnAnalyzer.class;
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        configRegistry = serviceRegistry.require(ConfigRegistry.class);
+    public void init(ExtensionContext context) {
+        configRegistry = context.configRegistry();
 
-        final String dataSourceName = configRegistry
-                .getDeploymentConfig()
-                .getValue("datasource.name", String.class);
+        final String dataSourceName = configRegistry.getDeploymentConfig().getValue("datasource.name", String.class);
         final DataSource dataSource = dataSourceRegistry.get(dataSourceName);
         jdbi = Jdbi.create(dataSource)
                 .registerRowMapper(new MatchingCriteria.RowMapper())
@@ -86,20 +89,18 @@ final class InternalVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
     @Override
     public boolean isEnabled() {
         requireNonNull(configRegistry);
-        return configRegistry.getRuntimeConfig(InternalVulnAnalyzerConfigV1.class).isEnabled();
+        return configRegistry
+                .getRuntimeConfig(InternalVulnAnalyzerConfigV1.class)
+                .isEnabled();
     }
 
     @Override
     public EnumSet<VulnAnalyzerRequirement> analyzerRequirements() {
-        return EnumSet.of(
-                VulnAnalyzerRequirement.COMPONENT_CPE,
-                VulnAnalyzerRequirement.COMPONENT_PURL);
+        return EnumSet.of(VulnAnalyzerRequirement.COMPONENT_CPE, VulnAnalyzerRequirement.COMPONENT_PURL);
     }
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new InternalVulnAnalyzerConfigV1().withEnabled(true));
+        return RuntimeConfigSpec.of(new InternalVulnAnalyzerConfigV1().withEnabled(true));
     }
-
 }

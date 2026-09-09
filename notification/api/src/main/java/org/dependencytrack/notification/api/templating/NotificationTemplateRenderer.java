@@ -37,9 +37,8 @@ public interface NotificationTemplateRenderer {
      * @return The rendered template, or {@code null} when no template was configured.
      * @throws UncheckedIOException When rendering failed due to an I/O issue.
      */
-    @Nullable RenderedNotificationTemplate render(
-            Notification notification,
-            @Nullable Map<String, Object> additionalContext);
+    @Nullable
+    RenderedNotificationTemplate render(Notification notification, @Nullable Map<String, Object> additionalContext);
 
     /**
      * Render a template for a given notification without additional context.
@@ -49,5 +48,4 @@ public interface NotificationTemplateRenderer {
     default @Nullable RenderedNotificationTemplate render(Notification notification) {
         return render(notification, null);
     }
-
 }

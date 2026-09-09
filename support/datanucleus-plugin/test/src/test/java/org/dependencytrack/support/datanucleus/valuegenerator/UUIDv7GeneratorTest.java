@@ -40,5 +40,4 @@ class UUIDv7GeneratorTest extends AbstractTest {
             assertThat(uuidsSeen.add(person.getUuid())).isTrue();
         }
     }
-
 }

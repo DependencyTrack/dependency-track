@@ -49,9 +49,7 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
 
     @RegisterExtension
     private static final WireMockExtension wireMock =
-            WireMockExtension.newInstance()
-                    .options(options().dynamicPort())
-                    .build();
+            WireMockExtension.newInstance().options(options().dynamicPort()).build();
 
     private static HttpClient httpClient;
 
@@ -94,9 +92,7 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
         }
 
         wireMock.stubFor(get(urlPathEqualTo("/epss_scores-current.csv.gz"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody(compressedFeedOutputStream.toByteArray())));
+                .willReturn(aResponse().withStatus(200).withBody(compressedFeedOutputStream.toByteArray())));
 
         // Create an existing EPSS record for CVE-1999-0001.
         // It must be updated as part of the mirroring operation.
@@ -107,22 +103,23 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
 
         final List<Epss> epssRecords = findAllEpss();
 
-        assertThat(epssRecords).satisfiesExactlyInAnyOrder(
-                epssRecord -> {
-                    assertThat(epssRecord.getCve()).isEqualTo("CVE-1999-0001");
-                    assertThat(epssRecord.getScore()).isEqualByComparingTo("0.01141");
-                    assertThat(epssRecord.getPercentile()).isEqualByComparingTo("0.7769");
-                },
-                epssRecord -> {
-                    assertThat(epssRecord.getCve()).isEqualTo("CVE-1999-0002");
-                    assertThat(epssRecord.getScore()).isEqualByComparingTo("0.15347");
-                    assertThat(epssRecord.getPercentile()).isEqualByComparingTo("0.94405");
-                },
-                epssRecord -> {
-                    assertThat(epssRecord.getCve()).isEqualTo("CVE-1999-0003");
-                    assertThat(epssRecord.getScore()).isEqualByComparingTo("0.90362");
-                    assertThat(epssRecord.getPercentile()).isEqualByComparingTo("0.99581");
-                });
+        assertThat(epssRecords)
+                .satisfiesExactlyInAnyOrder(
+                        epssRecord -> {
+                            assertThat(epssRecord.getCve()).isEqualTo("CVE-1999-0001");
+                            assertThat(epssRecord.getScore()).isEqualByComparingTo("0.01141");
+                            assertThat(epssRecord.getPercentile()).isEqualByComparingTo("0.7769");
+                        },
+                        epssRecord -> {
+                            assertThat(epssRecord.getCve()).isEqualTo("CVE-1999-0002");
+                            assertThat(epssRecord.getScore()).isEqualByComparingTo("0.15347");
+                            assertThat(epssRecord.getPercentile()).isEqualByComparingTo("0.94405");
+                        },
+                        epssRecord -> {
+                            assertThat(epssRecord.getCve()).isEqualTo("CVE-1999-0003");
+                            assertThat(epssRecord.getScore()).isEqualByComparingTo("0.90362");
+                            assertThat(epssRecord.getPercentile()).isEqualByComparingTo("0.99581");
+                        });
     }
 
     @Test
@@ -150,12 +147,9 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
         }
 
         wireMock.stubFor(get(urlPathEqualTo("/epss_scores-current.csv.gz"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody(compressedFeedOutputStream.toByteArray())));
+                .willReturn(aResponse().withStatus(200).withBody(compressedFeedOutputStream.toByteArray())));
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(new EpssMirrorTask(httpClient)::run);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(new EpssMirrorTask(httpClient)::run);
 
         assertThat(findAllEpss()).isEmpty();
     }
@@ -181,14 +175,12 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
     }
 
     private static List<Epss> findAllEpss() {
-        return withJdbiHandle(handle -> handle.createQuery("""
+        return withJdbiHandle(
+                handle -> handle.createQuery("""
                         SELECT "CVE" AS "cve"
                              , "SCORE" AS "score"
                              , "PERCENTILE" AS "percentile"
                           FROM "EPSS"
-                        """)
-                .map(BeanMapper.of(Epss.class))
-                .list());
+                        """).map(BeanMapper.of(Epss.class)).list());
     }
-
 }

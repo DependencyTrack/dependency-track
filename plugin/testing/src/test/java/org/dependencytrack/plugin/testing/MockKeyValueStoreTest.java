@@ -53,32 +53,29 @@ class MockKeyValueStoreTest {
                 assertThat(entry.updatedAt()).isNull();
             });
 
-            kvStore.putMany(
-                    Map.ofEntries(
-                            Map.entry("someKey", "someOtherValue"),
-                            Map.entry("abc", "def")));
+            kvStore.putMany(Map.ofEntries(Map.entry("someKey", "someOtherValue"), Map.entry("abc", "def")));
 
-            assertThat(kvStore.getAll()).satisfiesExactlyInAnyOrder(
-                    entry -> {
-                        assertThat(entry.key()).isEqualTo("someKey");
-                        assertThat(entry.value()).isEqualTo("someOtherValue");
-                        assertThat(entry.createdAt()).isNotNull();
-                        assertThat(entry.updatedAt()).isNotNull();
-                        assertThat(entry.version()).isOne();
-                    },
-                    entry -> {
-                        assertThat(entry.key()).isEqualTo("abc");
-                        assertThat(entry.value()).isEqualTo("def");
-                        assertThat(entry.createdAt()).isNotNull();
-                        assertThat(entry.updatedAt()).isNull();
-                        assertThat(entry.version()).isZero();
-                    });
+            assertThat(kvStore.getAll())
+                    .satisfiesExactlyInAnyOrder(
+                            entry -> {
+                                assertThat(entry.key()).isEqualTo("someKey");
+                                assertThat(entry.value()).isEqualTo("someOtherValue");
+                                assertThat(entry.createdAt()).isNotNull();
+                                assertThat(entry.updatedAt()).isNotNull();
+                                assertThat(entry.version()).isOne();
+                            },
+                            entry -> {
+                                assertThat(entry.key()).isEqualTo("abc");
+                                assertThat(entry.value()).isEqualTo("def");
+                                assertThat(entry.createdAt()).isNotNull();
+                                assertThat(entry.updatedAt()).isNull();
+                                assertThat(entry.version()).isZero();
+                            });
         }
 
         @Test
         void shouldDoNothingWhenKvPairsIsEmpty() {
-            assertThatNoException()
-                    .isThrownBy(() -> kvStore.putMany(Collections.emptyMap()));
+            assertThatNoException().isThrownBy(() -> kvStore.putMany(Collections.emptyMap()));
             assertThat(kvStore.getAll()).isEmpty();
         }
 
@@ -88,7 +85,6 @@ class MockKeyValueStoreTest {
                     .isThrownBy(() -> kvStore.putMany(null))
                     .withMessage("kvPairs must not be null");
         }
-
     }
 
     @Nested
@@ -161,7 +157,6 @@ class MockKeyValueStoreTest {
             final var failureResult = (CompareAndPutResult.Failure) result;
             assertThat(failureResult.reason()).isEqualTo(CompareAndPutResult.Failure.Reason.VERSION_MISMATCH);
         }
-
     }
 
     @Nested
@@ -169,29 +164,25 @@ class MockKeyValueStoreTest {
 
         @Test
         void shouldReturnAllEntries() {
-            kvStore.putMany(
-                    Map.ofEntries(
-                            Map.entry("abc", "def"),
-                            Map.entry("123", "456")));
+            kvStore.putMany(Map.ofEntries(Map.entry("abc", "def"), Map.entry("123", "456")));
 
-            assertThat(kvStore.getAll()).satisfiesExactlyInAnyOrder(
-                    entry -> {
-                        assertThat(entry.key()).isEqualTo("abc");
-                        assertThat(entry.value()).isEqualTo("def");
-                        assertThat(entry.createdAt()).isNotNull();
-                        assertThat(entry.updatedAt()).isNull();
-                        assertThat(entry.version()).isZero();
-                    },
-                    entry -> {
-                        assertThat(entry.key()).isEqualTo("123");
-                        assertThat(entry.value()).isEqualTo("456");
-                        assertThat(entry.createdAt()).isNotNull();
-                        assertThat(entry.updatedAt()).isNull();
-                        assertThat(entry.version()).isZero();
-                    }
-            );
+            assertThat(kvStore.getAll())
+                    .satisfiesExactlyInAnyOrder(
+                            entry -> {
+                                assertThat(entry.key()).isEqualTo("abc");
+                                assertThat(entry.value()).isEqualTo("def");
+                                assertThat(entry.createdAt()).isNotNull();
+                                assertThat(entry.updatedAt()).isNull();
+                                assertThat(entry.version()).isZero();
+                            },
+                            entry -> {
+                                assertThat(entry.key()).isEqualTo("123");
+                                assertThat(entry.value()).isEqualTo("456");
+                                assertThat(entry.createdAt()).isNotNull();
+                                assertThat(entry.updatedAt()).isNull();
+                                assertThat(entry.version()).isZero();
+                            });
         }
-
     }
 
     @Nested
@@ -199,25 +190,22 @@ class MockKeyValueStoreTest {
 
         @Test
         void shouldReturnOfRequestedKeys() {
-            kvStore.putMany(
-                    Map.ofEntries(
-                            Map.entry("abc", "def"),
-                            Map.entry("123", "456"),
-                            Map.entry("xxx", "yyy")));
+            kvStore.putMany(Map.ofEntries(Map.entry("abc", "def"), Map.entry("123", "456"), Map.entry("xxx", "yyy")));
 
-            assertThat(kvStore.getMany(List.of("123", "abc", "000")).entrySet()).satisfiesExactlyInAnyOrder(
-                    mapEntry -> {
-                        assertThat(mapEntry.getKey()).isEqualTo("abc");
-                        assertThat(mapEntry.getValue().value()).isEqualTo("def");
-                        assertThat(mapEntry.getValue().createdAt()).isNotNull();
-                        assertThat(mapEntry.getValue().updatedAt()).isNull();
-                    },
-                    mapEntry -> {
-                        assertThat(mapEntry.getKey()).isEqualTo("123");
-                        assertThat(mapEntry.getValue().value()).isEqualTo("456");
-                        assertThat(mapEntry.getValue().createdAt()).isNotNull();
-                        assertThat(mapEntry.getValue().updatedAt()).isNull();
-                    });
+            assertThat(kvStore.getMany(List.of("123", "abc", "000")).entrySet())
+                    .satisfiesExactlyInAnyOrder(
+                            mapEntry -> {
+                                assertThat(mapEntry.getKey()).isEqualTo("abc");
+                                assertThat(mapEntry.getValue().value()).isEqualTo("def");
+                                assertThat(mapEntry.getValue().createdAt()).isNotNull();
+                                assertThat(mapEntry.getValue().updatedAt()).isNull();
+                            },
+                            mapEntry -> {
+                                assertThat(mapEntry.getKey()).isEqualTo("123");
+                                assertThat(mapEntry.getValue().value()).isEqualTo("456");
+                                assertThat(mapEntry.getValue().createdAt()).isNotNull();
+                                assertThat(mapEntry.getValue().updatedAt()).isNull();
+                            });
         }
 
         @Test
@@ -236,7 +224,6 @@ class MockKeyValueStoreTest {
                     .isThrownBy(() -> kvStore.getMany(null))
                     .withMessage("keys must not be null");
         }
-
     }
 
     @Nested
@@ -254,10 +241,8 @@ class MockKeyValueStoreTest {
 
         @Test
         void shouldDoNothingWhenKeysIsEmpty() {
-            assertThatNoException()
-                    .isThrownBy(() -> kvStore.deleteMany(Collections.emptyList()));
+            assertThatNoException().isThrownBy(() -> kvStore.deleteMany(Collections.emptyList()));
         }
-
     }
 
     @Nested
@@ -295,7 +280,5 @@ class MockKeyValueStoreTest {
             final var failureResult = (CompareAndDeleteResult.Failure) result;
             assertThat(failureResult.reason()).isEqualTo(CompareAndDeleteResult.Failure.Reason.VERSION_MISMATCH);
         }
-
     }
-
 }

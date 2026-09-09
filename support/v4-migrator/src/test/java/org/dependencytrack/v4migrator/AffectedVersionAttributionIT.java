@@ -109,22 +109,22 @@ class AffectedVersionAttributionIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "SOURCE", "VULNERABILITY", "VULNERABLE_SOFTWARE"
                       FROM "AFFECTEDVERSIONATTRIBUTION"
                      ORDER BY "ID"
                     """).mapToMap().list());
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0))
-            .containsEntry("id", 100L)
-            .containsEntry("source", "NVD")
-            .containsEntry("vulnerability", 1L)
-            .containsEntry("vulnerable_software", 10L);
+                .containsEntry("id", 100L)
+                .containsEntry("source", "NVD")
+                .containsEntry("vulnerability", 1L)
+                .containsEntry("vulnerable_software", 10L);
 
         // v5 table has no UUID column; selecting it must fail.
-        final List<String> columns = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<String> columns = target.jdbi()
+                .withHandle(h -> h.createQuery("""
                     SELECT column_name
                       FROM information_schema.columns
                      WHERE table_name = 'AFFECTEDVERSIONATTRIBUTION'

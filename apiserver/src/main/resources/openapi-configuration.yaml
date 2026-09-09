@@ -64,6 +64,29 @@ openAPI:
       The total number of items in the collection across all pages is
       returned in the `X-Total-Count` response header.
 
+      ### Bounded total counts
+
+      An exact `X-Total-Count` gets more expensive as a collection grows, and on large
+      collections it can time out. Some endpoints therefore accept an optional `totalCount`
+      query parameter that caps the cost of counting:
+
+      | `totalCount` | Description                                                        |
+      |--------------|--------------------------------------------------------------------|
+      | `EXACT`      | Count every matching item. The default. Can time out.              |
+      | `BOUNDED`    | Stop counting at a server-side cap. May return only a lower bound. |
+
+      Any other value is rejected with `400`. Each endpoint documents how it computes the
+      bounded count, on its `totalCount` parameter.
+
+      Endpoints that accept `totalCount` also return an `X-Total-Count-Type` header saying
+      how to read `X-Total-Count`. They return it on every collection response, including
+      ones that did not opt in.
+
+      | `X-Total-Count-Type` | Meaning                                                              |
+      |----------------------|----------------------------------------------------------------------|
+      | `EXACT`              | `X-Total-Count` is the true total.                                   |
+      | `AT_LEAST`           | `X-Total-Count` is only a lower bound. The true total may be higher. |
+
       ## HTTP Methods
 
       | Method   | Semantics                                |
@@ -84,6 +107,15 @@ openAPI:
       status `201 Created` and `200 OK` respectively.
 
       Delete (`DELETE`) operations typically return `204 No Content`.
+
+      ## Timeouts
+
+      A request that takes too long to complete is aborted and answered
+      with `504 Gateway Timeout` and a problem details body. Any operation
+      can time out, so operations do not document it individually.
+
+      Requesting a bounded total count can avoid the timeout where the
+      operation supports it, because counting is often the expensive part.
 
       ## Deprecations
 
@@ -106,6 +138,16 @@ openAPI:
   servers:
   - url: /api
   components:
+    headers:
+      TotalCountType:
+        description: >-
+          Whether `X-Total-Count` is exact (`EXACT`) or a lower bound (`AT_LEAST`).
+          `AT_LEAST` with a count of 0 means the total is unknown.
+        schema:
+          type: string
+          enum:
+          - EXACT
+          - AT_LEAST
     securitySchemes:
       ApiKeyAuth:
         description: Authentication via API key.

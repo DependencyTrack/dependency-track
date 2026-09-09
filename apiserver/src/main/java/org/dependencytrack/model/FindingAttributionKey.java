@@ -26,12 +26,9 @@ import static java.util.Objects.requireNonNull;
  * @param findingKey   Key of the finding.
  * @param analyzerName Name of the analyzer attributed to the finding.
  */
-public record FindingAttributionKey(
-        FindingKey findingKey,
-        String analyzerName) {
+public record FindingAttributionKey(FindingKey findingKey, String analyzerName) {
 
     public FindingAttributionKey {
         requireNonNull(analyzerName, "analyzerName must not be null");
     }
-
 }

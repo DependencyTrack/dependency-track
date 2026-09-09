@@ -31,10 +31,7 @@ public non-sealed class ApplicationFailureException extends FailureException {
     private final @Nullable Duration retryAfter;
 
     private ApplicationFailureException(
-            @Nullable String message,
-            @Nullable Throwable cause,
-            boolean isTerminal,
-            @Nullable Duration retryAfter) {
+            @Nullable String message, @Nullable Throwable cause, boolean isTerminal, @Nullable Duration retryAfter) {
         super(message, null, cause);
         if (isTerminal && retryAfter != null) {
             throw new IllegalArgumentException("retryAfter must not be set for terminal failures");
@@ -46,23 +43,16 @@ public non-sealed class ApplicationFailureException extends FailureException {
         this.retryAfter = retryAfter;
     }
 
-    public ApplicationFailureException(
-            @Nullable String message,
-            @Nullable Throwable cause,
-            boolean isTerminal) {
+    public ApplicationFailureException(@Nullable String message, @Nullable Throwable cause, boolean isTerminal) {
         this(message, cause, isTerminal, null);
     }
 
     public ApplicationFailureException(
-            @Nullable String message,
-            @Nullable Throwable cause,
-            @Nullable Duration retryAfter) {
+            @Nullable String message, @Nullable Throwable cause, @Nullable Duration retryAfter) {
         this(message, cause, false, retryAfter);
     }
 
-    public ApplicationFailureException(
-            @Nullable String message,
-            @Nullable Throwable cause) {
+    public ApplicationFailureException(@Nullable String message, @Nullable Throwable cause) {
         this(message, cause, false);
     }
 
@@ -73,5 +63,4 @@ public non-sealed class ApplicationFailureException extends FailureException {
     public @Nullable Duration retryAfter() {
         return retryAfter;
     }
-
 }

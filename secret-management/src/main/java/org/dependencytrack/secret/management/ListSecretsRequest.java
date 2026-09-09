@@ -29,9 +29,7 @@ import org.jspecify.annotations.Nullable;
  * @since 5.0.0
  */
 public record ListSecretsRequest(
-        @Nullable String searchText,
-        @Nullable String pageToken,
-        int limit) {
+        @Nullable String searchText, @Nullable String pageToken, int limit) {
 
     public ListSecretsRequest {
         if (limit <= 0) {
@@ -54,5 +52,4 @@ public record ListSecretsRequest(
     public ListSecretsRequest withLimit(int limit) {
         return new ListSecretsRequest(this.searchText, this.pageToken, limit);
     }
-
 }

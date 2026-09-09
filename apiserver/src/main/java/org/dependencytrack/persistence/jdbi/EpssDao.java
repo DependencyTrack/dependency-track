@@ -52,12 +52,10 @@ public interface EpssDao extends SqlObject {
             percentiles.add(epssRecord.getPercentile());
         }
 
-        return update
-                .registerArrayType(BigDecimal.class, "numeric")
+        return update.registerArrayType(BigDecimal.class, "numeric")
                 .bindArray("cves", String.class, cves)
                 .bindArray("scores", BigDecimal.class, scores)
                 .bindArray("percentiles", BigDecimal.class, percentiles)
                 .execute();
     }
-
 }

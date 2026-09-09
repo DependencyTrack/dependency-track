@@ -38,14 +38,14 @@ public final class V5TargetContainer implements AutoCloseable {
 
     public V5TargetContainer() {
         this.container = new PostgreSQLContainer<>(IMAGE)
-            .withDatabaseName("dtrackv5")
-            .withUsername("dt")
-            .withPassword("dt");
+                .withDatabaseName("dtrackv5")
+                .withUsername("dt")
+                .withPassword("dt");
     }
 
     public V5TargetContainer start() {
         container.start();
-        new MigrationExecutor(dataSource(), Preflight.EXPECTED_FLYWAY_HEAD).execute();
+        new MigrationExecutor(dataSource(), Preflight.EXPECTED_FLYWAY_HEAD, /* skipRepeatable */ true).execute();
         // Mimic the bootstrap step. PermissionCatalog.seed is what the BootstrapCommand
         // invokes immediately after applying Flyway, so downstream phases see the full
         // v5 PERMISSION catalog.
@@ -66,11 +66,13 @@ public final class V5TargetContainer implements AutoCloseable {
     }
 
     public DataSource dataSource() {
-        return new org.postgresql.ds.PGSimpleDataSource() {{
-            setUrl(container.getJdbcUrl());
-            setUser(container.getUsername());
-            setPassword(container.getPassword());
-        }};
+        return new org.postgresql.ds.PGSimpleDataSource() {
+            {
+                setUrl(container.getJdbcUrl());
+                setUser(container.getUsername());
+                setPassword(container.getPassword());
+            }
+        };
     }
 
     public Jdbi jdbi() {

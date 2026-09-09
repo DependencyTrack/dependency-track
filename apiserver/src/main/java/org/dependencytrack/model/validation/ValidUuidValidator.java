@@ -20,6 +20,7 @@ package org.dependencytrack.model.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+
 import java.util.UUID;
 
 /**
@@ -41,5 +42,4 @@ public class ValidUuidValidator implements ConstraintValidator<ValidUuid, String
             return false;
         }
     }
-
 }

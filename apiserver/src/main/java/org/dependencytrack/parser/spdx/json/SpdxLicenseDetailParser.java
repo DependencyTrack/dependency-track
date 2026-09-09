@@ -62,7 +62,11 @@ public class SpdxLicenseDetailParser {
 
         final Path codeSource;
         try {
-            codeSource = Path.of(getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+            codeSource = Path.of(getClass()
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .toURI());
         } catch (URISyntaxException e) {
             throw new IOException(e);
         }
@@ -88,10 +92,7 @@ public class SpdxLicenseDetailParser {
         }
 
         try (final var files = Files.list(dir)) {
-            return files
-                    .map(SpdxLicenseDetailParser::parse)
-                    .toList();
+            return files.map(SpdxLicenseDetailParser::parse).toList();
         }
     }
-
 }

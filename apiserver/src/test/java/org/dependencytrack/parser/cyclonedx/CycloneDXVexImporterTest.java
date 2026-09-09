@@ -19,7 +19,7 @@
 package org.dependencytrack.parser.cyclonedx;
 
 import org.apache.commons.io.IOUtils;
-import org.assertj.core.api.Assertions;
+import org.cyclonedx.Version;
 import org.cyclonedx.exception.ParseException;
 import org.cyclonedx.parsers.BomParserFactory;
 import org.dependencytrack.PersistenceCapableTest;
@@ -32,6 +32,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.junit.jupiter.api.Test;
 
 import javax.jdo.Query;
@@ -41,6 +42,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CycloneDXVexImporterTest extends PersistenceCapableTest {
 
@@ -108,7 +111,9 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
             var analysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
             analysis.setState(org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.FALSE_POSITIVE);
             analysis.setDetail("Unit test");
-            analysis.setJustification(org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.PROTECTED_BY_MITIGATING_CONTROL);
+            analysis.setJustification(
+                    org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification
+                            .PROTECTED_BY_MITIGATING_CONTROL);
             audit.setAnalysis(analysis);
             var affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
             affect.setRef(vex.getMetadata().getComponent().getBomRef());
@@ -123,27 +128,54 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
 
         // Assert
         final Query<Analysis> query = qm.getPersistenceManager().newQuery(Analysis.class, "project == :project");
-        var analyses = (List<Analysis>) query.execute(project);
-        // CVE-2020-256[49|50|51] are not audited otherwise analyses.size would have been equal to sources.size()+3
-        org.junit.jupiter.api.Assertions.assertEquals(sources.size(), analyses.size());
-        Assertions.assertThat(analyses).allSatisfy(analysis -> {
-            Assertions.assertThat(analysis.getVulnerability().getVulnId()).isNotEqualTo("CVE-2020-25649");
-            Assertions.assertThat(analysis.getVulnerability().getVulnId()).isNotEqualTo("CVE-2020-25650");
-            Assertions.assertThat(analysis.isSuppressed()).isTrue();
-            Assertions.assertThat(analysis.getAnalysisComments()).satisfiesExactlyInAnyOrder(comment -> {
-                Assertions.assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                Assertions.assertThat(comment.getComment()).isEqualTo(String.format("Analysis: %s → %s", AnalysisState.NOT_SET, AnalysisState.FALSE_POSITIVE));
-            }, comment -> {
-                Assertions.assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                Assertions.assertThat(comment.getComment()).isEqualTo("Details: Unit test");
-            }, comment -> {
-                Assertions.assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                Assertions.assertThat(comment.getComment()).isEqualTo(String.format("Justification: %s → %s", AnalysisJustification.NOT_SET, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL));
-            }, comment -> {
-                Assertions.assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                Assertions.assertThat(comment.getComment()).isEqualTo("Suppressed");
-            });
-            Assertions.assertThat(analysis.getAnalysisDetails()).isEqualTo("Unit test");
+        query.setParameters(project);
+        final List<Analysis> analyses = query.executeList();
+
+        // The VEX names sources three ways, and none of them matches how
+        // Dependency-Track recorded the vulnerability:
+        //
+        // * "National Vulnerability Database" is not a name it uses.
+        // * "OSSINDEX" is a name it uses but not for these vulnerabilities.
+        // * The third entry has no source at all.
+        //
+        // All three resolve, because the vulnerability ID identifies them on its own.
+        assertThat(analyses)
+                .filteredOn(analysis -> analysis.getVulnerability().getVulnId().startsWith("CVE-"))
+                .extracting(analysis -> analysis.getVulnerability().getVulnId())
+                .containsExactlyInAnyOrder("CVE-2020-25649", "CVE-2020-25650", "CVE-2020-25651");
+
+        final List<Analysis> sourceAudits = analyses.stream()
+                .filter(analysis -> !analysis.getVulnerability().getVulnId().startsWith("CVE-"))
+                .toList();
+        assertThat(sources.size()).isEqualTo(sourceAudits.size());
+        assertThat(sourceAudits).allSatisfy(analysis -> {
+            assertThat(analysis.isSuppressed()).isTrue();
+            assertThat(analysis.getAnalysisComments())
+                    .satisfiesExactlyInAnyOrder(
+                            comment -> {
+                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.getComment())
+                                        .isEqualTo(String.format(
+                                                "Analysis: %s → %s",
+                                                AnalysisState.NOT_SET, AnalysisState.FALSE_POSITIVE));
+                            },
+                            comment -> {
+                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.getComment()).isEqualTo("Details: Unit test");
+                            },
+                            comment -> {
+                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.getComment())
+                                        .isEqualTo(String.format(
+                                                "Justification: %s → %s",
+                                                AnalysisJustification.NOT_SET,
+                                                AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL));
+                            },
+                            comment -> {
+                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.getComment()).isEqualTo("Suppressed");
+                            });
+            assertThat(analysis.getAnalysisDetails()).isEqualTo("Unit test");
         });
     }
 
@@ -198,10 +230,387 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         vexImporter.applyVex(qm, vex, project);
 
         final Analysis analysis = qm.getAnalysis(component, vuln);
-        Assertions.assertThat(analysis.getAnalysisResponse()).isEqualTo(AnalysisResponse.UPDATE);
-        Assertions.assertThat(analysis.getAnalysisComments())
+        assertThat(analysis.getAnalysisResponse()).isEqualTo(AnalysisResponse.UPDATE);
+        assertThat(analysis.getAnalysisComments())
                 .extracting(AnalysisComment::getComment)
                 .containsExactly("Vendor Response: NOT_SET → UPDATE");
+    }
+
+    @Test
+    public void shouldApplyExportedVexAnalysisOnlyToAnalyzedComponent() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("acme-lib-a");
+        componentA.setVersion("1.0.0");
+        qm.persist(componentA);
+
+        final var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("acme-lib-b");
+        componentB.setVersion("1.0.0");
+        qm.persist(componentB);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(componentA, componentB));
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, componentA, "none");
+        qm.addVulnerability(vuln, componentB, "none");
+
+        qm.makeAnalysis(new MakeAnalysisCommand(componentA, vuln)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE));
+
+        final var exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VEX, qm);
+        final byte[] vexBytes = exporter.export(
+                        exporter.create(project, Version.VERSION_16), CycloneDXExporter.Format.JSON, Version.VERSION_16)
+                .getBytes(StandardCharsets.UTF_8);
+
+        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+
+        assertThat(qm.getAnalysis(componentA, vuln))
+                .extracting(Analysis::getAnalysisState, Analysis::getAnalysisJustification)
+                .containsExactly(AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE);
+        assertThat(qm.getAnalysis(componentB, vuln)).isNull();
+    }
+
+    @Test
+    public void shouldApplyAnalysisWhenSourceNameIsNotADependencyTrackSourceName() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0001",
+                      "source": {
+                        "name": "National Vulnerability Database"
+                      },
+                      "analysis": {
+                        "state": "not_affected",
+                        "justification": "code_not_reachable"
+                      },
+                      "affects": [
+                        { "ref": "project" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+
+        assertThat(qm.getAnalysis(component, vuln))
+                .extracting(Analysis::getAnalysisState)
+                .isEqualTo(AnalysisState.NOT_AFFECTED);
+    }
+
+    @Test
+    public void shouldApplyAnalysisWhenSourceIsAbsent() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0001",
+                      "analysis": {
+                        "state": "not_affected",
+                        "justification": "code_not_reachable"
+                      },
+                      "affects": [
+                        { "ref": "project" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+
+        assertThat(qm.getAnalysis(component, vuln))
+                .extracting(Analysis::getAnalysisState)
+                .isEqualTo(AnalysisState.NOT_AFFECTED);
+    }
+
+    @Test
+    public void shouldApplyAnalysisWhenSourceIsKnownButNotTheOneHoldingTheVulnerability() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0001",
+                      "source": { "name": "OSSINDEX" },
+                      "analysis": {
+                        "state": "not_affected",
+                        "justification": "code_not_reachable"
+                      },
+                      "affects": [
+                        { "ref": "project" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+
+        assertThat(qm.getAnalysis(component, vuln))
+                .extracting(Analysis::getAnalysisState)
+                .isEqualTo(AnalysisState.NOT_AFFECTED);
+    }
+
+    @Test
+    public void shouldUseSourceToDisambiguateVulnerabilityIdSharedByMultipleSources() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var nvdVuln = new Vulnerability();
+        nvdVuln.setVulnId("CVE-2099-0001");
+        nvdVuln.setSource(Vulnerability.Source.NVD);
+        nvdVuln.setSeverity(Severity.HIGH);
+        qm.persist(nvdVuln);
+        qm.addVulnerability(nvdVuln, component, "none");
+
+        final var osvVuln = new Vulnerability();
+        osvVuln.setVulnId("CVE-2099-0001");
+        osvVuln.setSource(Vulnerability.Source.OSV);
+        osvVuln.setSeverity(Severity.HIGH);
+        qm.persist(osvVuln);
+        qm.addVulnerability(osvVuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0001",
+                      "source": { "name": "NVD" },
+                      "analysis": { "state": "not_affected", "justification": "code_not_reachable" },
+                      "affects": [{ "ref": "project" }]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+
+        assertThat(qm.getAnalysis(component, nvdVuln))
+                .extracting(Analysis::getAnalysisState)
+                .isEqualTo(AnalysisState.NOT_AFFECTED);
+        assertThat(qm.getAnalysis(component, osvVuln)).isNull();
+    }
+
+    @Test
+    public void shouldSkipWhenSourcelessVulnerabilityIdIsAmbiguous() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var nvdVuln = new Vulnerability();
+        nvdVuln.setVulnId("CVE-2099-0001");
+        nvdVuln.setSource(Vulnerability.Source.NVD);
+        nvdVuln.setSeverity(Severity.HIGH);
+        qm.persist(nvdVuln);
+        qm.addVulnerability(nvdVuln, component, "none");
+
+        final var osvVuln = new Vulnerability();
+        osvVuln.setVulnId("CVE-2099-0001");
+        osvVuln.setSource(Vulnerability.Source.OSV);
+        osvVuln.setSeverity(Severity.HIGH);
+        qm.persist(osvVuln);
+        qm.addVulnerability(osvVuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0001",
+                      "source": { "name": "Some Other Scanner" },
+                      "analysis": {
+                        "state": "not_affected",
+                        "justification": "code_not_reachable"
+                      },
+                      "affects": [
+                        { "ref": "project" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+
+        // Guessing either one would be wrong, so neither is analyzed.
+        assertThat(qm.getAnalysis(component, nvdVuln)).isNull();
+        assertThat(qm.getAnalysis(component, osvVuln)).isNull();
+    }
+
+    @Test
+    public void shouldSkipUnresolvableRefWhenSourceIsAbsent() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0001",
+                      "analysis": {
+                        "state": "not_affected",
+                        "justification": "code_not_reachable"
+                      },
+                      "affects": [
+                        { "ref": "no-such-ref" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+
+        assertThat(qm.getAnalysis(component, vuln)).isNull();
     }
 
     private static final String OWASP_VECTOR =
@@ -254,15 +663,13 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         vexImporter.applyVex(qm, vex, project);
 
         final Analysis analysis = qm.getAnalysis(component, vuln);
-        Assertions.assertThat(analysis.getOwaspVector()).isEqualTo(OWASP_VECTOR);
-        Assertions.assertThat(analysis.getOwaspScore()).isEqualByComparingTo(new BigDecimal("7.5"));
+        assertThat(analysis.getOwaspVector()).isEqualTo(OWASP_VECTOR);
+        assertThat(analysis.getOwaspScore()).isEqualByComparingTo(new BigDecimal("7.5"));
         // An OWASP rating import must not override the finding severity; it falls back to the vulnerability.
-        Assertions.assertThat(analysis.getSeverity()).isNull();
-        Assertions.assertThat(analysis.getAnalysisComments())
+        assertThat(analysis.getSeverity()).isNull();
+        assertThat(analysis.getAnalysisComments())
                 .extracting(AnalysisComment::getComment)
-                .contains(
-                        "OWASP Vector: (None) → " + OWASP_VECTOR,
-                        "OWASP Score: (None) → 7.5");
+                .contains("OWASP Vector: (None) → " + OWASP_VECTOR, "OWASP Score: (None) → 7.5");
     }
 
     @Test
@@ -311,11 +718,11 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         vexImporter.applyVex(qm, vex, project);
 
         final Analysis analysis = qm.getAnalysis(component, vuln);
-        Assertions.assertThat(analysis).isNotNull();
-        Assertions.assertThat(analysis.getOwaspVector()).isEqualTo(OWASP_VECTOR);
-        Assertions.assertThat(analysis.getOwaspScore()).isEqualByComparingTo(new BigDecimal("4.2"));
-        Assertions.assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_SET);
-        Assertions.assertThat(analysis.isSuppressed()).isFalse();
+        assertThat(analysis).isNotNull();
+        assertThat(analysis.getOwaspVector()).isEqualTo(OWASP_VECTOR);
+        assertThat(analysis.getOwaspScore()).isEqualByComparingTo(new BigDecimal("4.2"));
+        assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_SET);
+        assertThat(analysis.isSuppressed()).isFalse();
     }
 
     @Test
@@ -365,8 +772,7 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         vexImporter.applyVex(qm, vex, project);
 
         final Analysis analysis = qm.getAnalysis(component, vuln);
-        Assertions.assertThat(analysis.getOwaspVector()).isNull();
-        Assertions.assertThat(analysis.getOwaspScore()).isNull();
+        assertThat(analysis.getOwaspVector()).isNull();
+        assertThat(analysis.getOwaspScore()).isNull();
     }
-
 }

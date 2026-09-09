@@ -20,19 +20,21 @@ package org.dependencytrack.notification.publishing.email;
 
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetup;
-import jakarta.mail.Address;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import org.dependencytrack.notification.api.publishing.NotificationPublishContext;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplate;
 import org.dependencytrack.notification.api.templating.NotificationTemplateRenderer;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherTest;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.mail.Address;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -48,9 +50,8 @@ import static org.dependencytrack.notification.api.TestNotificationFactory.creat
 class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
     @RegisterExtension
-    private static final GreenMailExtension GREEN_MAIL =
-            new GreenMailExtension(ServerSetup.SMTP.dynamicPort())
-                    .withConfiguration(aConfig().withUser("username", "password"));
+    private static final GreenMailExtension GREEN_MAIL = new GreenMailExtension(ServerSetup.SMTP.dynamicPort())
+            .withConfiguration(aConfig().withUser("username", "password"));
 
     @Override
     protected NotificationPublisherFactory createPublisherFactory() {
@@ -98,20 +99,20 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
         assertThat(message.subject()).isEqualTo("[Dependency-Track] Bill of Materials Consumed");
         assertThat(message.content()).isEqualToNormalizingNewlines("""
                 Bill of Materials Consumed
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Project:           projectName
                 Version:           projectVersion
                 Description:       projectDescription
                 Project URL:       https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 A CycloneDX BOM was consumed and will be processed
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 2006-06-06T06:06:06.666Z\
                 """);
     }
@@ -122,25 +123,25 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
         assertThat(message.subject()).isEqualTo("[Dependency-Track] Bill of Materials Processing Failed");
         assertThat(message.content()).isEqualToNormalizingNewlines("""
                 Bill of Materials Processing Failed
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Project:           projectName
                 Version:           projectVersion
                 Description:       projectDescription
                 Project URL:       https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Cause:
                 cause
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 An error occurred while processing a BOM
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 2006-06-06T06:06:06.666Z\
                 """);
     }
@@ -151,29 +152,29 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
         assertThat(message.subject()).isEqualTo("[Dependency-Track] Bill of Materials Validation Failed");
         assertThat(message.content()).isEqualToNormalizingNewlines("""
                 Bill of Materials Validation Failed
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Project:           projectName
                 Version:           projectVersion
                 Description:       projectDescription
                 Project URL:       https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Errors:
-                
+
                 cause 1
-                
+
                 cause 2
-                
-                
+
+
                 --------------------------------------------------------------------------------
-                
+
                 An error occurred while validating a BOM
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 2006-06-06T06:06:06.666Z\
                 """);
     }
@@ -181,12 +182,14 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
     private void validateNewVulnerabilityNotificationPublish() {
         final ReceivedMessage message = getReceivedMessage();
         assertThat(message.from()).containsExactly("dependencytrack@example.com");
-        assertThat(message.subject()).isEqualTo("[Dependency-Track] New Vulnerability Identified on Project: [projectName : projectVersion]");
+        assertThat(message.subject())
+                .isEqualTo(
+                        "[Dependency-Track] New Vulnerability Identified on Project: [projectName : projectVersion]");
         assertThat(message.content()).isEqualToNormalizingNewlines("""
                 New Vulnerability Identified on Project: [projectName : projectVersion]
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Vulnerability ID:  INT-001
                 Vulnerability URL: https://example.com/vulnerability/?source=INTERNAL&vulnId=INT-001
                 Severity:          MEDIUM
@@ -198,15 +201,15 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 Description:       projectDescription
                 Project URL:       https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
                 --------------------------------------------------------------------------------
-                
+
                 Other affected projects: https://example.com/vulnerabilities/INTERNAL/INT-001/affectedProjects
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 vulnerabilityDescription
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 2006-06-06T06:06:06.666Z\
                 """);
     }
@@ -214,34 +217,36 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
     private void validateNewVulnerableDependencyNotificationPublish() {
         final ReceivedMessage message = getReceivedMessage();
         assertThat(message.from()).containsExactly("dependencytrack@example.com");
-        assertThat(message.subject()).isEqualTo("[Dependency-Track] Vulnerable Dependency Introduced on Project: [projectName : projectVersion]");
+        assertThat(message.subject())
+                .isEqualTo(
+                        "[Dependency-Track] Vulnerable Dependency Introduced on Project: [projectName : projectVersion]");
         assertThat(message.content()).isEqualToNormalizingNewlines("""
                 Vulnerable Dependency Introduced on Project: [projectName : projectVersion]
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Project:           projectName : projectVersion
                 Project URL:       https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
                 Component:         componentName : componentVersion
                 Component URL:     https://example.com/component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6
-                
+
                 Vulnerabilities
-                
+
                 Vulnerability ID:  INT-001
                 Vulnerability URL: https://example.com/vulnerability/?source=INTERNAL&vulnId=INT-001
                 Severity:          MEDIUM
                 Source:            INTERNAL
                 Description:
                 vulnerabilityDescription
-                
-                
-                
+
+
+
                 --------------------------------------------------------------------------------
-                
+
                 A dependency was introduced that contains 1 known vulnerability
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 2006-06-06T06:06:06.666Z\
                 """);
     }
@@ -252,31 +257,31 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
         assertThat(message.subject()).isEqualTo("[Dependency-Track] New Vulnerabilities Summary");
         assertThat(message.content()).isEqualToIgnoringWhitespace("""
                 New Vulnerabilities Summary
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Overview:
                 - New Vulnerabilities: 1 (Suppressed: 1)
                 - Affected Projects:   1
                 - Affected Components: 1
                 - Since:               1970-01-01T00:01:06Z
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Project Summaries:
-                
+
                 - Project: [projectName : projectVersion]
                   Project URL: https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                
+
                   + New Vulnerabilities Of Severity MEDIUM: 1 (Suppressed: 1)
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Vulnerability Details:
-                
+
                 - Project: [projectName : projectVersion]
                   Project URL: https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                
+
                   + Vulnerability ID:       INT-001
                     Vulnerability Source:   INTERNAL
                     Vulnerability Severity: MEDIUM
@@ -286,13 +291,13 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                     Timestamp:              1970-01-01T18:31:06Z
                     Analysis State:         FALSE_POSITIVE
                     Suppressed:             true
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 A summary of new vulnerabilities has been generated
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 2006-06-06T06:06:06.666Z\
                 """);
     }
@@ -303,32 +308,32 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
         assertThat(message.subject()).isEqualTo("[Dependency-Track] New Policy Violations Summary");
         assertThat(message.content()).isEqualToIgnoringWhitespace("""
                 New Policy Violations Summary
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Overview:
                 - New Violations:      1 (Suppressed: 0)
                   - Of Type LICENSE: 1
                 - Affected Projects:   1
                 - Affected Components: 1
                 - Since:               1970-01-01T00:01:06Z
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Project Summaries:
-                
+
                 - Project: [projectName : projectVersion]
                   Project URL: https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                
+
                   + New Violations Of Type LICENSE: 1 (Suppressed: 0)
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 Violation Details:
-                
+
                 - Project: [projectName : projectVersion]
                   Project URL: https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                
+
                   + Policy:                policyName
                     Policy Condition:      AGE NUMERIC_EQUAL P666D
                     Policy Violation Type: LICENSE
@@ -337,31 +342,28 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                     Timestamp:             1970-01-01T18:31:06Z
                     Analysis State:        APPROVED
                     Suppressed:            false
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 A summary of new policy violations has been generated
-                
+
                 --------------------------------------------------------------------------------
-                
+
                 2006-06-06T06:06:06.666Z\
                 """);
     }
 
     @Test
     void shouldSendHtmlBodyWhenTemplateMimeTypeIsHtml() throws Exception {
-        final var htmlTemplate = new NotificationTemplate(/* language=HTML */ """
-                <html><body><p>{{ notification.title }}</p></body></html>\
-                """,
+        final var htmlTemplate = new NotificationTemplate(
+                /* language=HTML */ """
+                <html><body><p>{{ %s.title }}</p></body></html>\
+                """.formatted(NotificationTemplateVariables.NOTIFICATION),
                 "text/html; charset=utf-8");
-        final NotificationTemplateRenderer htmlRenderer =
-                new PebbleNotificationTemplateRendererFactory(
-                        Map.of("baseUrl", () -> "https://example.com"))
-                        .createRenderer(htmlTemplate);
-        final var publishCtx =
-                new NotificationPublishContext(
-                        publishContext.ruleConfig(),
-                        htmlRenderer);
+        final NotificationTemplateRenderer htmlRenderer = new PebbleNotificationTemplateRendererFactory(
+                        Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"))
+                .createRenderer(htmlTemplate);
+        final var publishCtx = new NotificationPublishContext(publishContext.ruleConfig(), htmlRenderer);
 
         publisher.publish(publishCtx, createBomConsumedTestNotification());
 
@@ -376,8 +378,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 """);
     }
 
-    private record ReceivedMessage(List<String> from, String subject, String content) {
-    }
+    private record ReceivedMessage(List<String> from, String subject, String content) {}
 
     private ReceivedMessage getReceivedMessage() {
         final MimeMessage[] messages = GREEN_MAIL.getReceivedMessages();
@@ -389,9 +390,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
             final Address[] from = message.getFrom();
             return new ReceivedMessage(
-                    from != null
-                            ? Arrays.stream(from).map(Address::toString).toList()
-                            : List.of(),
+                    from != null ? Arrays.stream(from).map(Address::toString).toList() : List.of(),
                     message.getSubject(),
                     (String) message.getContent());
         } catch (IOException e) {
@@ -400,5 +399,4 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
             throw new IllegalStateException(e);
         }
     }
-
 }

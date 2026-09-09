@@ -145,15 +145,13 @@ final class NvdVulnDataSource implements VulnDataSource {
         requireNonNull(bov, "bov must not be null");
         if (bov.getVulnerabilitiesCount() != 1) {
             throw new IllegalArgumentException(
-                    "BOV must have exactly one vulnerability, but has "
-                            + bov.getVulnerabilitiesCount());
+                    "BOV must have exactly one vulnerability, but has " + bov.getVulnerabilitiesCount());
         }
 
         final Vulnerability vuln = bov.getVulnerabilities(0);
 
-        final Instant updatedAt = vuln.hasUpdated()
-                ? Instant.ofEpochMilli(Timestamps.toMillis(vuln.getUpdated()))
-                : null;
+        final Instant updatedAt =
+                vuln.hasUpdated() ? Instant.ofEpochMilli(Timestamps.toMillis(vuln.getUpdated())) : null;
         watermarkManager.maybeAdvance(updatedAt);
     }
 
@@ -255,10 +253,13 @@ final class NvdVulnDataSource implements VulnDataSource {
                 }
 
                 defCveItem = objectMapper.readValue(currentJsonParser, DefCveItem.class);
-                final Instant cveLastModified = defCveItem.getCve().getLastModified().toInstant();
+                final Instant cveLastModified =
+                        defCveItem.getCve().getLastModified().toInstant();
 
                 if (watermark != null && !watermark.isBefore(cveLastModified)) {
-                    LOGGER.debug("Skipping CVE {}: Below watermark", defCveItem.getCve().getId());
+                    LOGGER.debug(
+                            "Skipping CVE {}: Below watermark",
+                            defCveItem.getCve().getId());
                     currentFeedCvesSkipped++;
                     defCveItem = null;
                 }
@@ -278,7 +279,9 @@ final class NvdVulnDataSource implements VulnDataSource {
 
         LOGGER.info(
                 "Finished {}: processed {} CVE(s), skipped {} below watermark",
-                currentFeed, currentFeedCvesProcessed, currentFeedCvesSkipped);
+                currentFeed,
+                currentFeedCvesProcessed,
+                currentFeedCvesSkipped);
     }
 
     private void recordCurrentFeedDigest() {
@@ -306,8 +309,7 @@ final class NvdVulnDataSource implements VulnDataSource {
     }
 
     private NvdDataFeedMetadata retrieveFeedMetadata(final NvdDataFeed feed) {
-        final var feedMetadataUri = URI.create(
-                "%s/json/cve/2.0/nvdcve-2.0-%s.meta".formatted(feedsUrl, feed.name()));
+        final var feedMetadataUri = URI.create("%s/json/cve/2.0/nvdcve-2.0-%s.meta".formatted(feedsUrl, feed.name()));
 
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(feedMetadataUri)
@@ -317,28 +319,23 @@ final class NvdVulnDataSource implements VulnDataSource {
 
         final HttpResponse<String> response;
         try {
-            response = httpClient.send(
-                    request, HttpResponse.BodyHandlers.ofString());
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
-            throw new IllegalStateException(
-                    "Failed to retrieve feed metadata from " + feedMetadataUri, e);
+            throw new IllegalStateException("Failed to retrieve feed metadata from " + feedMetadataUri, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException(
-                    "Interrupted while retrieving feed metadata from " + feedMetadataUri, e);
+            throw new IllegalStateException("Interrupted while retrieving feed metadata from " + feedMetadataUri, e);
         }
 
         if (response.statusCode() != 200) {
-            throw new IllegalStateException(
-                    "Unexpected response code: " + response.statusCode());
+            throw new IllegalStateException("Unexpected response code: " + response.statusCode());
         }
 
         return NvdDataFeedMetadata.of(response.body());
     }
 
     private Path downloadFeedFile(final NvdDataFeed feed) {
-        final var feedFileUri = URI.create(
-                "%s/json/cve/2.0/nvdcve-2.0-%s.json.gz".formatted(feedsUrl, feed.name()));
+        final var feedFileUri = URI.create("%s/json/cve/2.0/nvdcve-2.0-%s.json.gz".formatted(feedsUrl, feed.name()));
 
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(feedFileUri)
@@ -356,24 +353,20 @@ final class NvdVulnDataSource implements VulnDataSource {
         LOGGER.info("Downloading feed {} from {}", feed, feedFileUri);
         LOGGER.debug("Download destination: {}", tempFile);
         try {
-            final HttpResponse<Path> response = httpClient.send(
-                    request, HttpResponse.BodyHandlers.ofFile(tempFile));
+            final HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
 
             if (response.statusCode() != 200) {
-                throw new IllegalStateException(
-                        "Unexpected response code: " + response.statusCode());
+                throw new IllegalStateException("Unexpected response code: " + response.statusCode());
             }
 
             return response.body();
         } catch (IOException e) {
             tryDelete(tempFile);
-            throw new IllegalStateException(
-                    "Failed to download feed file from " + feedFileUri, e);
+            throw new IllegalStateException("Failed to download feed file from " + feedFileUri, e);
         } catch (InterruptedException e) {
             tryDelete(tempFile);
             Thread.currentThread().interrupt();
-            throw new IllegalStateException(
-                    "Interrupted while downloading feed file from " + feedFileUri, e);
+            throw new IllegalStateException("Interrupted while downloading feed file from " + feedFileUri, e);
         } catch (RuntimeException e) {
             tryDelete(tempFile);
             throw e;
@@ -387,5 +380,4 @@ final class NvdVulnDataSource implements VulnDataSource {
             LOGGER.warn("Failed to delete temp file {}", filePath, e);
         }
     }
-
 }

@@ -24,5 +24,4 @@ import java.util.List;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record Team(UUID uuid, String name, List<ApiKey> apiKeys) {
-}
+public record Team(UUID uuid, String name, List<ApiKey> apiKeys) {}

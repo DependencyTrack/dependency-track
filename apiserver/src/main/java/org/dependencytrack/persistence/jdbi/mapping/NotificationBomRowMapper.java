@@ -37,5 +37,4 @@ public class NotificationBomRowMapper implements RowMapper<Bom> {
         maybeSet(rs, "bomContent", ResultSet::getString, builder::setContent);
         return builder.build();
     }
-
 }

@@ -26,5 +26,4 @@ public class ProjectAccessDeniedException extends RuntimeException {
     public ProjectAccessDeniedException(final String message) {
         super(message);
     }
-
 }

@@ -47,5 +47,4 @@ class NamespacedCacheManagerTest {
 
         verify(delegateMock, never()).close();
     }
-
 }

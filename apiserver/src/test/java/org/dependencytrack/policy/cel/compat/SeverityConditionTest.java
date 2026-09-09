@@ -40,25 +40,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SeverityConditionTest extends PersistenceCapableTest {
 
     private static Object[] parameters() {
-        return new Object[]{
-                // IS with exact match
-                new Object[]{Operator.IS, "CRITICAL", "CRITICAL", true},
-                // IS with regex match (regex is not supported by this condition)
-                new Object[]{Operator.IS, "CRI[A-Z]+", "CRITICAL", false},
-                // IS with no match
-                new Object[]{Operator.IS, "CRITICAL", "LOW", false},
-                // IS_NOT with no match
-                new Object[]{Operator.IS_NOT, "CRITICAL", "LOW", true},
-                // IS_NOT with exact match
-                new Object[]{Operator.IS_NOT, "UNASSIGNED", "UNASSIGNED", false},
-                // IS with quotes (actualSeverity can't have quotes because it's an enum)
-                new Object[]{Operator.IS, "\"CRITICAL", "CRITICAL", false}
+        return new Object[] {
+            // IS with exact match
+            new Object[] {Operator.IS, "CRITICAL", "CRITICAL", true},
+            // IS with regex match (regex is not supported by this condition)
+            new Object[] {Operator.IS, "CRI[A-Z]+", "CRITICAL", false},
+            // IS with no match
+            new Object[] {Operator.IS, "CRITICAL", "LOW", false},
+            // IS_NOT with no match
+            new Object[] {Operator.IS_NOT, "CRITICAL", "LOW", true},
+            // IS_NOT with exact match
+            new Object[] {Operator.IS_NOT, "UNASSIGNED", "UNASSIGNED", false},
+            // IS with quotes (actualSeverity can't have quotes because it's an enum)
+            new Object[] {Operator.IS, "\"CRITICAL", "CRITICAL", false}
         };
     }
 
     @ParameterizedTest
     @MethodSource("parameters")
-    public void testCondition(final Operator operator, final String conditionSeverity, final String actualSeverity, final boolean expectViolation) {
+    public void testCondition(
+            final Operator operator,
+            final String conditionSeverity,
+            final String actualSeverity,
+            final boolean expectViolation)
+            throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, operator, conditionSeverity);
 
@@ -94,7 +99,7 @@ public class SeverityConditionTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testSeverityCalculation() {
+    public void testSeverityCalculation() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, ViolationState.FAIL);
         qm.createPolicyCondition(policy, Subject.SEVERITY, Operator.IS, Severity.CRITICAL.name(), Type.SECURITY);
 
@@ -139,5 +144,4 @@ public class SeverityConditionTest extends PersistenceCapableTest {
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
-
 }

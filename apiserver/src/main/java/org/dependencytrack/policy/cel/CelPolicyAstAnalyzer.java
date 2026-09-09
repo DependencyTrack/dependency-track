@@ -22,56 +22,52 @@ import dev.cel.common.CelAbstractSyntaxTree;
 import dev.cel.common.ast.CelExpr;
 import dev.cel.common.navigation.CelNavigableAst;
 import dev.cel.common.types.CelType;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 final class CelPolicyAstAnalyzer {
 
-    record FunctionSignature(String function, @Nullable CelType targetType, List<@Nullable CelType> argumentTypes) {
-    }
+    record FunctionSignature(String function, @Nullable CelType targetType, List<@Nullable CelType> argumentTypes) {}
 
     private final CelAbstractSyntaxTree ast;
-    private final MultiValuedMap<CelType, String> accessedFieldsByType;
+    private final Map<CelType, Set<String>> accessedFieldsByType;
     private final Set<FunctionSignature> usedFunctionSignatures;
 
     CelPolicyAstAnalyzer(CelAbstractSyntaxTree ast) {
         this.ast = ast;
-        this.accessedFieldsByType = new HashSetValuedHashMap<>();
+        this.accessedFieldsByType = new HashMap<>();
         this.usedFunctionSignatures = new HashSet<>();
     }
 
     void analyze() {
-        CelNavigableAst.fromAst(ast).getRoot().allNodes()
-                .forEach(node -> {
-                    final CelExpr expr = node.expr();
-                    switch (expr.exprKind().getKind()) {
-                        case SELECT -> visitSelect(expr);
-                        case CALL -> visitCall(expr);
-                        default -> {
-                        }
-                    }
-                });
+        CelNavigableAst.fromAst(ast).getRoot().allNodes().forEach(node -> {
+            final CelExpr expr = node.expr();
+            switch (expr.exprKind().getKind()) {
+                case SELECT -> visitSelect(expr);
+                case CALL -> visitCall(expr);
+                default -> {}
+            }
+        });
     }
 
     private void visitSelect(CelExpr expr) {
         final CelExpr.CelSelect selectExpr = expr.select();
-        final @Nullable CelType operandType = ast.getType(selectExpr.operand().id()).orElse(null);
-        if (operandType != null) {
-            accessedFieldsByType.put(operandType, selectExpr.field());
-        }
+        ast.getType(selectExpr.operand().id())
+                .ifPresent(operandType -> accessedFieldsByType
+                        .computeIfAbsent(operandType, _ -> new HashSet<>())
+                        .add(selectExpr.field()));
     }
 
     private void visitCall(CelExpr expr) {
         final CelExpr.CelCall callExpr = expr.call();
 
-        final @Nullable CelType targetType = callExpr.target()
-                .flatMap(target -> ast.getType(target.id()))
-                .orElse(null);
+        final CelType targetType =
+                callExpr.target().flatMap(target -> ast.getType(target.id())).orElse(null);
 
         final List<@Nullable CelType> argumentTypes = callExpr.args().stream()
                 .map(arg -> ast.getType(arg.id()).orElse(null))
@@ -80,12 +76,11 @@ final class CelPolicyAstAnalyzer {
         usedFunctionSignatures.add(new FunctionSignature(callExpr.function(), targetType, argumentTypes));
     }
 
-    MultiValuedMap<CelType, String> getAccessedFieldsByType() {
+    Map<CelType, Set<String>> getAccessedFieldsByType() {
         return this.accessedFieldsByType;
     }
 
     Set<FunctionSignature> getUsedFunctionSignatures() {
         return this.usedFunctionSignatures;
     }
-
 }

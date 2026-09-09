@@ -18,12 +18,13 @@
  */
 package org.dependencytrack.model.validation;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
@@ -33,8 +34,7 @@ public class ValidUuidValidatorTest {
 
     private Validator validator;
 
-    private record TestRecord(@ValidUuid String uuid) {
-    }
+    private record TestRecord(@ValidUuid String uuid) {}
 
     @BeforeEach
     public void setUp() {
@@ -44,13 +44,15 @@ public class ValidUuidValidatorTest {
 
     @Test
     public void testWithValidUuidV4() {
-        final Set<ConstraintViolation<TestRecord>> violations = validator.validate(new TestRecord("6a80b854-8083-47ea-869c-321018c0ff76"));
+        final Set<ConstraintViolation<TestRecord>> violations =
+                validator.validate(new TestRecord("6a80b854-8083-47ea-869c-321018c0ff76"));
         assertThat(violations).isEmpty();
     }
 
     @Test
     public void testWithValidUuidV7() {
-        final Set<ConstraintViolation<TestRecord>> violations = validator.validate(new TestRecord("01942307-ebc3-7ec8-a66e-1a40d595c097"));
+        final Set<ConstraintViolation<TestRecord>> violations =
+                validator.validate(new TestRecord("01942307-ebc3-7ec8-a66e-1a40d595c097"));
         assertThat(violations).isEmpty();
     }
 
@@ -65,5 +67,4 @@ public class ValidUuidValidatorTest {
         final Set<ConstraintViolation<TestRecord>> violations = validator.validate(new TestRecord(null));
         assertThat(violations).isEmpty();
     }
-
 }

@@ -27,7 +27,8 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.metadata.MemberMetadata;
 import javax.jdo.metadata.TypeMetadata;
-import java.security.Principal;
+import alpine.model.auth.Principal;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,7 +51,7 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
     private static final Lock IPMF_LOCK = new ReentrantLock();
     private static IPersistenceManagerFactory IPMF;
 
-    protected final Principal principal;
+    protected final @Nullable Principal principal;
     protected final Pagination pagination;
     protected final String filter;
     protected final String orderBy;

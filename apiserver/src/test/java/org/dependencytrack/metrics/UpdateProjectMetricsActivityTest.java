@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.metrics;
 
+import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
@@ -28,10 +29,13 @@ import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
+import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.junit.jupiter.api.Test;
 
@@ -39,9 +43,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
@@ -59,7 +65,8 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
 
         executeActivity(project);
 
-        final ProjectMetrics metrics = withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
+        final ProjectMetrics metrics =
+                withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
         assertThat(metrics.getComponents()).isZero();
         assertThat(metrics.getVulnerableComponents()).isZero();
         assertThat(metrics.getCritical()).isZero();
@@ -67,6 +74,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getMedium()).isZero();
         assertThat(metrics.getLow()).isZero();
         assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getKev()).isZero();
         assertThat(metrics.getVulnerabilities()).isZero();
         assertThat(metrics.getSuppressed()).isZero();
         assertThat(metrics.getFindingsTotal()).isZero();
@@ -110,21 +118,16 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         // Record initial metrics
         executeActivity(project);
 
-        final ProjectMetrics initialProjectMetrics = withJdbiHandle(
-                handle -> handle
-                        .attach(MetricsDao.class)
-                        .getMostRecentProjectMetrics(project.getId()));
-        assertThat(initialProjectMetrics.getLastOccurrence())
-                .isEqualTo(initialProjectMetrics.getFirstOccurrence());
+        final ProjectMetrics initialProjectMetrics =
+                withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
+        assertThat(initialProjectMetrics.getLastOccurrence()).isEqualTo(initialProjectMetrics.getFirstOccurrence());
 
         // Run the task a second time, without any metric being changed
         executeActivity(project);
 
         // No new row must have been created, and the existing row's timestamp must remain untouched
         final List<ProjectMetrics> projectMetrics = withJdbiHandle(
-                handle -> handle
-                        .attach(MetricsDao.class)
-                        .getProjectMetricsSince(project.getId(), Instant.EPOCH));
+                handle -> handle.attach(MetricsDao.class).getProjectMetricsSince(project.getId(), Instant.EPOCH));
         assertThat(projectMetrics)
                 .hasSize(1)
                 .first()
@@ -132,9 +135,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
                 .isEqualTo(initialProjectMetrics.getLastOccurrence());
 
         final List<DependencyMetrics> componentMetrics = withJdbiHandle(
-                handle -> handle
-                        .attach(MetricsDao.class)
-                        .getDependencyMetricsSince(component.getId(), Instant.EPOCH));
+                handle -> handle.attach(MetricsDao.class).getDependencyMetricsSince(component.getId(), Instant.EPOCH));
         assertThat(componentMetrics).hasSize(1);
     }
 
@@ -168,9 +169,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
 
         // New rows must be created despite snapshots existing for the current day.
         final List<ProjectMetrics> projectMetrics = withJdbiHandle(
-                handle -> handle
-                        .attach(MetricsDao.class)
-                        .getProjectMetricsSince(project.getId(), Instant.EPOCH));
+                handle -> handle.attach(MetricsDao.class).getProjectMetricsSince(project.getId(), Instant.EPOCH));
         assertThat(projectMetrics)
                 .hasSize(2)
                 .last()
@@ -178,9 +177,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
                 .isEqualTo(1);
 
         final List<DependencyMetrics> componentMetrics = withJdbiHandle(
-                handle -> handle
-                        .attach(MetricsDao.class)
-                        .getDependencyMetricsSince(component.getId(), Instant.EPOCH));
+                handle -> handle.attach(MetricsDao.class).getDependencyMetricsSince(component.getId(), Instant.EPOCH));
         assertThat(componentMetrics)
                 .hasSize(2)
                 .last()
@@ -203,6 +200,10 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln);
 
+        useJdbiHandle(handle -> handle.attach(KevDao.class)
+                .upsertBatch(
+                        "cisa", List.of(new KevAssertion("INTERNAL", "INTERNAL-001", null, null, null, null, null))));
+
         // Create a component with an unaudited vulnerability.
         var componentUnaudited = new Component();
         componentUnaudited.setProject(project);
@@ -216,9 +217,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         componentAudited.setName("acme-lib-b");
         qm.createComponent(componentAudited, false);
         qm.addVulnerability(vuln, componentAudited, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentAudited, vuln)
-                        .withState(AnalysisState.NOT_AFFECTED));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentAudited, vuln).withState(AnalysisState.NOT_AFFECTED));
 
         // Create a component with a suppressed vulnerability.
         var componentSuppressed = new Component();
@@ -226,10 +225,9 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         componentSuppressed.setName("acme-lib-c");
         qm.createComponent(componentSuppressed, false);
         qm.addVulnerability(vuln, componentSuppressed, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentSuppressed, vuln)
-                        .withState(AnalysisState.FALSE_POSITIVE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentSuppressed, vuln)
+                .withState(AnalysisState.FALSE_POSITIVE)
+                .withSuppress(true));
 
         // Create "old" metrics data points for all three components.
         // When calculating project metrics, only the latest data point for each component
@@ -264,7 +262,8 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
 
         executeActivity(project);
 
-        final ProjectMetrics metrics = withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
+        final ProjectMetrics metrics =
+                withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
         assertThat(metrics.getComponents()).isEqualTo(3);
         assertThat(metrics.getVulnerableComponents()).isEqualTo(2); // Finding for one component is suppressed
         assertThat(metrics.getCritical()).isZero();
@@ -272,6 +271,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getMedium()).isZero();
         assertThat(metrics.getLow()).isZero();
         assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getKev()).isEqualTo(2); // One is suppressed
         assertThat(metrics.getVulnerabilities()).isEqualTo(2); // One is suppressed
         assertThat(metrics.getSuppressed()).isEqualTo(1);
         assertThat(metrics.getFindingsTotal()).isEqualTo(2); // One is suppressed
@@ -322,21 +322,21 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         componentAudited.setProject(project);
         componentAudited.setName("acme-lib-b");
         qm.createComponent(componentAudited, false);
-        final var violationAudited = createPolicyViolation(componentAudited, Policy.ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
-        qm.makeViolationAnalysis(
-                new MakeViolationAnalysisCommand(componentAudited, violationAudited)
-                        .withState(ViolationAnalysisState.APPROVED));
+        final var violationAudited =
+                createPolicyViolation(componentAudited, Policy.ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
+        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentAudited, violationAudited)
+                .withState(ViolationAnalysisState.APPROVED));
 
         // Create a component with a suppressed violation.
         var componentSuppressed = new Component();
         componentSuppressed.setProject(project);
         componentSuppressed.setName("acme-lib-c");
         qm.createComponent(componentSuppressed, false);
-        final var violationSuppressed = createPolicyViolation(componentSuppressed, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
-        qm.makeViolationAnalysis(
-                new MakeViolationAnalysisCommand(componentSuppressed, violationSuppressed)
-                        .withState(ViolationAnalysisState.REJECTED)
-                        .withSuppress(true));
+        final var violationSuppressed =
+                createPolicyViolation(componentSuppressed, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
+        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentSuppressed, violationSuppressed)
+                .withState(ViolationAnalysisState.REJECTED)
+                .withSuppress(true));
 
         // Create "old" metrics data points for all three components.
         // When calculating project metrics, only the latest data point for each component
@@ -371,7 +371,8 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
 
         executeActivity(project);
 
-        final ProjectMetrics metrics = withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
+        final ProjectMetrics metrics =
+                withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
         assertThat(metrics.getComponents()).isEqualTo(3);
         assertThat(metrics.getVulnerableComponents()).isZero();
         assertThat(metrics.getCritical()).isZero();
@@ -379,6 +380,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getMedium()).isZero();
         assertThat(metrics.getLow()).isZero();
         assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getKev()).isZero();
         assertThat(metrics.getVulnerabilities()).isZero();
         assertThat(metrics.getSuppressed()).isZero();
         assertThat(metrics.getFindingsTotal()).isZero();
@@ -446,53 +448,41 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         componentVulnAudited.setName("acme-lib-vuln-audited");
         qm.createComponent(componentVulnAudited, false);
         qm.addVulnerability(vuln, componentVulnAudited, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentVulnAudited, vuln)
-                        .withState(AnalysisState.NOT_AFFECTED));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentVulnAudited, vuln).withState(AnalysisState.NOT_AFFECTED));
 
         final var componentVulnSuppressed = new Component();
         componentVulnSuppressed.setProject(project);
         componentVulnSuppressed.setName("acme-lib-vuln-suppressed");
         qm.createComponent(componentVulnSuppressed, false);
         qm.addVulnerability(vuln, componentVulnSuppressed, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentVulnSuppressed, vuln)
-                        .withState(AnalysisState.FALSE_POSITIVE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentVulnSuppressed, vuln)
+                .withState(AnalysisState.FALSE_POSITIVE)
+                .withSuppress(true));
 
         final var componentViolationUnaudited = new Component();
         componentViolationUnaudited.setProject(project);
         componentViolationUnaudited.setName("acme-lib-violation-unaudited");
         qm.createComponent(componentViolationUnaudited, false);
-        createPolicyViolation(
-                componentViolationUnaudited,
-                Policy.ViolationState.FAIL,
-                PolicyViolation.Type.LICENSE);
+        createPolicyViolation(componentViolationUnaudited, Policy.ViolationState.FAIL, PolicyViolation.Type.LICENSE);
 
         final var componentViolationAudited = new Component();
         componentViolationAudited.setProject(project);
         componentViolationAudited.setName("acme-lib-violation-audited");
         qm.createComponent(componentViolationAudited, false);
         final var violationAudited = createPolicyViolation(
-                componentViolationAudited,
-                Policy.ViolationState.WARN,
-                PolicyViolation.Type.OPERATIONAL);
-        qm.makeViolationAnalysis(
-                new MakeViolationAnalysisCommand(componentViolationAudited, violationAudited)
-                        .withState(ViolationAnalysisState.APPROVED));
+                componentViolationAudited, Policy.ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
+        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentViolationAudited, violationAudited)
+                .withState(ViolationAnalysisState.APPROVED));
 
         final var componentViolationSuppressed = new Component();
         componentViolationSuppressed.setProject(project);
         componentViolationSuppressed.setName("acme-lib-violation-suppressed");
         qm.createComponent(componentViolationSuppressed, false);
         final var violationSuppressed = createPolicyViolation(
-                componentViolationSuppressed,
-                Policy.ViolationState.INFO,
-                PolicyViolation.Type.SECURITY);
-        qm.makeViolationAnalysis(
-                new MakeViolationAnalysisCommand(componentViolationSuppressed, violationSuppressed)
-                        .withState(ViolationAnalysisState.REJECTED)
-                        .withSuppress(true));
+                componentViolationSuppressed, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
+        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentViolationSuppressed, violationSuppressed)
+                .withState(ViolationAnalysisState.REJECTED)
+                .withSuppress(true));
 
         final List<Component> components = List.of(
                 componentClean,
@@ -506,9 +496,8 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         executeActivity(project);
 
         final List<DependencyMetrics> projectLevelMetrics = components.stream()
-                .map(component -> withJdbiHandle(handle -> handle
-                        .attach(MetricsDao.class)
-                        .getMostRecentDependencyMetrics(component.getId())))
+                .map(component -> withJdbiHandle(
+                        handle -> handle.attach(MetricsDao.class).getMostRecentDependencyMetrics(component.getId())))
                 .toList();
 
         // Wipe all component metrics so the single-component procedure's
@@ -523,9 +512,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         for (int i = 0; i < components.size(); i++) {
             final long componentId = components.get(i).getId();
             final DependencyMetrics componentMetrics = withJdbiHandle(
-                    handle -> handle
-                            .attach(MetricsDao.class)
-                            .getMostRecentDependencyMetrics(componentId));
+                    handle -> handle.attach(MetricsDao.class).getMostRecentDependencyMetrics(componentId));
             assertThat(componentMetrics)
                     .usingRecursiveComparison()
                     .ignoringFields("firstOccurrence", "lastOccurrence")
@@ -575,16 +562,12 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         executeActivity(project);
 
         final List<ProjectMetrics> projectMetrics = withJdbiHandle(
-                handle -> handle
-                        .attach(MetricsDao.class)
-                        .getProjectMetricsSince(project.getId(), Instant.EPOCH));
+                handle -> handle.attach(MetricsDao.class).getProjectMetricsSince(project.getId(), Instant.EPOCH));
         assertThat(projectMetrics).hasSize(2);
         assertThat(projectMetrics.getLast().getLastOccurrence()).isAfter(yesterday);
 
         final List<DependencyMetrics> componentMetrics = withJdbiHandle(
-                handle -> handle
-                        .attach(MetricsDao.class)
-                        .getDependencyMetricsSince(component.getId(), Instant.EPOCH));
+                handle -> handle.attach(MetricsDao.class).getDependencyMetricsSince(component.getId(), Instant.EPOCH));
         assertThat(componentMetrics).hasSize(2);
         assertThat(componentMetrics.getLast().getLastOccurrence()).isAfter(yesterday);
     }
@@ -623,24 +606,63 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
                                  , "FINDINGS_UNAUDITED" = NULL
                                  , "UNASSIGNED_SEVERITY" = NULL
                              WHERE "COMPONENT_ID" = :componentId
-                            """)
-                    .bind("componentId", component.getId())
-                    .execute();
+                            """).bind("componentId", component.getId()).execute();
         });
 
         executeActivity(project);
 
         final List<DependencyMetrics> componentMetrics = withJdbiHandle(
-                handle -> handle
-                        .attach(MetricsDao.class)
-                        .getDependencyMetricsSince(component.getId(), Instant.EPOCH));
+                handle -> handle.attach(MetricsDao.class).getDependencyMetricsSince(component.getId(), Instant.EPOCH));
         assertThat(componentMetrics).hasSize(2);
     }
 
-    private void executeActivity(Project project) throws Exception {
-        activity.execute(null, UpdateProjectMetricsArg.newBuilder()
-                .setProjectUuid(project.getUuid().toString())
-                .build());
+    @Test
+    void shouldCountAliasedVulnerabilitiesOnce() throws Exception {
+        var project = new Project();
+        project.setName("acme-app");
+        qm.createProject(project, List.of(), false);
+
+        createTestConfigProperties();
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib-a");
+        component = qm.createComponent(component, false);
+
+        var vulnA = new Vulnerability();
+        vulnA.setVulnId("CVE-100");
+        vulnA.setSource(Vulnerability.Source.NVD);
+        vulnA.setSeverity(Severity.HIGH);
+        vulnA = qm.createVulnerability(vulnA);
+        qm.addVulnerability(vulnA, component, "none");
+
+        var vulnB = new Vulnerability();
+        vulnB.setVulnId("GHSA-100");
+        vulnB.setSource(Vulnerability.Source.GITHUB);
+        vulnB.setSeverity(Severity.HIGH);
+        vulnB = qm.createVulnerability(vulnB);
+        qm.addVulnerability(vulnB, component, "none");
+
+        useJdbiTransaction(handle -> new VulnerabilityAliasDao(handle)
+                .syncAssertions(
+                        "TEST",
+                        new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
+                        Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB))));
+
+        executeActivity(project);
+
+        final ProjectMetrics metrics =
+                withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
+        assertThat(metrics.getVulnerabilities()).isEqualTo(1);
+        assertThat(metrics.getHigh()).isEqualTo(1);
+        assertThat(metrics.getVulnerableComponents()).isEqualTo(1);
     }
 
+    private void executeActivity(Project project) throws Exception {
+        activity.execute(
+                null,
+                UpdateProjectMetricsArg.newBuilder()
+                        .setProjectUuid(project.getUuid().toString())
+                        .build());
+    }
 }

@@ -99,5 +99,4 @@ record SpdxLicenseId(String id, boolean orLater) {
 
         return false;
     }
-
 }

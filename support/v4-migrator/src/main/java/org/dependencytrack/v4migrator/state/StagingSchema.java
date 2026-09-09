@@ -107,11 +107,8 @@ public final class StagingSchema {
     /**
      * Names of all known probe tables. Used by verify and the downstream-invalidation rule.
      */
-    public static final java.util.List<String> PROBE_TABLES = java.util.List.of(
-        "probe_invalid_uuids",
-        "probe_skipped_users",
-        "probe_case_collisions"
-    );
+    public static final java.util.List<String> PROBE_TABLES =
+            java.util.List.of("probe_invalid_uuids", "probe_skipped_users", "probe_case_collisions");
 
     public void drop() {
         target.useHandle(h -> h.execute("DROP SCHEMA IF EXISTS \"" + schema + "\" CASCADE"));

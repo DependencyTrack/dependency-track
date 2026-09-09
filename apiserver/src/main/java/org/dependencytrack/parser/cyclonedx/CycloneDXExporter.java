@@ -33,6 +33,7 @@ import org.dependencytrack.persistence.jdbi.FindingDao;
 
 import javax.jdo.FetchGroup;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -47,45 +48,78 @@ public class CycloneDXExporter {
         XML
     }
 
+    public enum Capability {
+        EMITS_ANALYSIS,
+        EMITS_COMPONENT_DETAILS,
+        EMITS_DEPENDENCY_GRAPH,
+        EMITS_FINDINGS,
+        EMITS_SERVICES,
+        FILTERS_TO_VULNERABLE_COMPONENTS
+    }
+
     public enum Variant {
-        INVENTORY,
-        INVENTORY_WITH_VULNERABILITIES,
-        VDR,
-        VEX
+        INVENTORY(Capability.EMITS_COMPONENT_DETAILS, Capability.EMITS_SERVICES, Capability.EMITS_DEPENDENCY_GRAPH),
+        INVENTORY_WITH_VULNERABILITIES(
+                Capability.EMITS_FINDINGS,
+                Capability.EMITS_COMPONENT_DETAILS,
+                Capability.EMITS_SERVICES,
+                Capability.EMITS_DEPENDENCY_GRAPH),
+        VDR(
+                Capability.FILTERS_TO_VULNERABLE_COMPONENTS,
+                Capability.EMITS_FINDINGS,
+                Capability.EMITS_ANALYSIS,
+                Capability.EMITS_COMPONENT_DETAILS,
+                Capability.EMITS_SERVICES,
+                Capability.EMITS_DEPENDENCY_GRAPH),
+        VEX(Capability.FILTERS_TO_VULNERABLE_COMPONENTS, Capability.EMITS_FINDINGS, Capability.EMITS_ANALYSIS);
+
+        private final Set<Capability> capabilities;
+
+        Variant(Capability... capabilities) {
+            final Set<Capability> set = EnumSet.noneOf(Capability.class);
+            set.addAll(List.of(capabilities));
+            this.capabilities = set;
+        }
+
+        public boolean hasCapability(Capability capability) {
+            return capabilities.contains(capability);
+        }
     }
 
     private final QueryManager qm;
-    private final CycloneDXExporter.Variant variant;
+    private final Variant variant;
 
-    public CycloneDXExporter(final CycloneDXExporter.Variant variant, final QueryManager qm) {
+    public CycloneDXExporter(final Variant variant, final QueryManager qm) {
         this.variant = variant;
         this.qm = qm;
     }
 
-    public Bom create(final Project project) {
+    public Bom create(final Project project, final Version version) {
         final List<Component> components;
         final List<ServiceComponent> services;
-        try (var _ = new ScopedCustomization(qm.getPersistenceManager())
-                .withFetchGroup(FetchGroup.ALL)) {
+        try (var _ = new ScopedCustomization(qm.getPersistenceManager()).withFetchGroup(FetchGroup.ALL)) {
             components = qm.getAllComponents(project);
             services = qm.getAllServiceComponents(project);
         }
-        final List<Finding> findings = switch (variant) {
-            case INVENTORY_WITH_VULNERABILITIES, VDR, VEX -> withJdbiHandle(handle ->
-                    handle.attach(FindingDao.class).getFindings(project.getId(), true));
-            default -> null;
-        };
-        return create(components, services, findings, project);
+        final List<Finding> findings = variant.hasCapability(Capability.EMITS_FINDINGS)
+                ? withJdbiHandle(handle -> handle.attach(FindingDao.class).getFindings(project.getId(), true))
+                : null;
+        return create(components, services, findings, project, version);
     }
 
-    public Bom create(final Component component) {
+    public Bom create(final Component component, final Version version) {
         final List<Component> components = new ArrayList<>();
         components.add(component);
-        return create(components, null, null, null);
+        return create(components, null, null, null, version);
     }
 
-    private Bom create(List<Component>components, final List<ServiceComponent> services, final List<Finding> findings, final Project project) {
-        if (Variant.VDR == variant) {
+    private Bom create(
+            List<Component> components,
+            final List<ServiceComponent> services,
+            final List<Finding> findings,
+            final Project project,
+            final Version version) {
+        if (variant.hasCapability(Capability.FILTERS_TO_VULNERABLE_COMPONENTS)) {
             final Set<UUID> vulnerableComponentUuids = findings.stream()
                     .map(finding -> (UUID) finding.getComponent().get("uuid"))
                     .collect(Collectors.toSet());
@@ -93,16 +127,28 @@ public class CycloneDXExporter {
                     .filter(component -> vulnerableComponentUuids.contains(component.getUuid()))
                     .toList();
         }
-        final List<org.cyclonedx.model.Component> cycloneComponents = (Variant.VEX != variant && components != null) ? components.stream().map(component -> ModelConverter.convert(component)).collect(Collectors.toList()) : null;
-        final List<org.cyclonedx.model.Service> cycloneServices = (Variant.VEX != variant && services != null) ? services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList()) : null;
+        final List<org.cyclonedx.model.Component> cycloneComponents = components != null
+                ? components.stream()
+                        .map(
+                                variant.hasCapability(Capability.EMITS_COMPONENT_DETAILS)
+                                        ? ModelConverter::convert
+                                        : ModelConverter::convertIdentity)
+                        .collect(Collectors.toList())
+                : null;
+        final List<org.cyclonedx.model.Service> cycloneServices =
+                (variant.hasCapability(Capability.EMITS_SERVICES) && services != null)
+                        ? services.stream()
+                                .map(service -> ModelConverter.convert(qm, service))
+                                .collect(Collectors.toList())
+                        : null;
         final Bom bom = new Bom();
         bom.setSerialNumber("urn:uuid:" + UUID.randomUUID());
         bom.setVersion(1);
-        bom.setMetadata(ModelConverter.createMetadata(project));
+        bom.setMetadata(ModelConverter.createMetadata(project, version));
         bom.setComponents(cycloneComponents);
         bom.setServices(cycloneServices);
         bom.setVulnerabilities(ModelConverter.generateVulnerabilities(qm, variant, findings));
-        if (cycloneComponents != null) {
+        if (variant.hasCapability(Capability.EMITS_DEPENDENCY_GRAPH) && cycloneComponents != null) {
             bom.setDependencies(ModelConverter.generateDependencies(project, components));
         }
         return bom;
@@ -115,5 +161,4 @@ public class CycloneDXExporter {
 
         return BomGeneratorFactory.createXml(version, bom).toXmlString();
     }
-
 }

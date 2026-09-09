@@ -77,7 +77,8 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
 
     @Override
     public boolean isEnabled() {
-        final ConfigProperty connector = qm.getConfigProperty(KENNA_CONNECTOR_ID.getGroupName(), KENNA_CONNECTOR_ID.getPropertyName());
+        final ConfigProperty connector =
+                qm.getConfigProperty(KENNA_CONNECTOR_ID.getGroupName(), KENNA_CONNECTOR_ID.getPropertyName());
         if (qm.isEnabled(KENNA_ENABLED) && connector != null && connector.getPropertyValue() != null) {
             connectorId = connector.getPropertyValue();
             return true;
@@ -98,15 +99,17 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
             }
 
             for (final Project project : projects) {
-                try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
-                     var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
-                     var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
+                try (var _ = MDC.putCloseable(
+                                MDC_PROJECT_UUID, project.getUuid().toString());
+                        var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
+                        var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
                     if (Thread.currentThread().isInterrupted()) {
                         LOGGER.warn("Interrupted before project could be processed");
                         break;
                     }
 
-                    final ProjectProperty externalId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
+                    final ProjectProperty externalId =
+                            qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
                     if (externalId != null && externalId.getPropertyValue() != null) {
                         LOGGER.debug("Transforming findings to KDI format");
                         kdi.process(project, externalId.getPropertyValue());
@@ -124,8 +127,10 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
     @Override
     public void upload(final InputStream payload) {
         LOGGER.debug("Uploading payload to KennaSecurity");
-        final ConfigProperty apiUrlProperty = qm.getConfigProperty(KENNA_API_URL.getGroupName(), KENNA_API_URL.getPropertyName());
-        final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
+        final ConfigProperty apiUrlProperty =
+                qm.getConfigProperty(KENNA_API_URL.getGroupName(), KENNA_API_URL.getPropertyName());
+        final ConfigProperty tokenProperty =
+                qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
         if (tokenProperty == null) {
             LOGGER.warn("Kenna Security token not specified. Aborting");
             return;
@@ -147,15 +152,15 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                     .addFilePart("file", "findings.json", payload, "application/json");
 
             final var request = HttpRequest.newBuilder()
-                    .uri(URI.create("%s/connectors/%s/data_file".formatted(apiUrlProperty.getPropertyValue(), connectorId)))
+                    .uri(URI.create(
+                            "%s/connectors/%s/data_file".formatted(apiUrlProperty.getPropertyValue(), connectorId)))
                     .header("X-Risk-Token", tokenValue)
                     .header("Accept", "application/json")
                     .header("Content-Type", multipart.contentType())
                     .POST(multipart.build())
                     .build();
 
-            final HttpResponse<String> response = httpClient
-                    .send(request, HttpResponse.BodyHandlers.ofString());
+            final HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200 && response.body() != null) {
                 final JsonNode root = Mappers.jsonMapper().readTree(response.body());
                 if ("true".equals(root.path("success").asText())) {
@@ -189,5 +194,4 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
             query.closeAll();
         }
     }
-
 }

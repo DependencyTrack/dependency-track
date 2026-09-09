@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
-
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
@@ -211,7 +210,8 @@ public class AffectedComponentTest {
             ava.setFirstSeen(Date.from(Instant.now()));
             vs.setAffectedVersionAttributions(List.of(ava));
             final var affectedComponent = new AffectedComponent(vs);
-            assertThat(affectedComponent.getAffectedVersionAttributions().get(0).getSource()).isEqualTo(Vulnerability.Source.SNYK);
+            assertThat(affectedComponent.getAffectedVersionAttributions().get(0).getSource())
+                    .isEqualTo(Vulnerability.Source.SNYK);
         }
     }
 
@@ -354,5 +354,4 @@ public class AffectedComponentTest {
             assertThat(vs.getVersionEndExcluding()).isEqualTo("qux");
         }
     }
-
 }

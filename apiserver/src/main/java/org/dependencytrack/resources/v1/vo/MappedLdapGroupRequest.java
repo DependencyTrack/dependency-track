@@ -32,10 +32,14 @@ import jakarta.validation.constraints.Pattern;
  */
 public class MappedLdapGroupRequest {
 
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The team must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The team must be a valid 36 character UUID")
     private String team;
 
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The dn may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS,
+            message = "The dn may only contain printable characters")
     private String dn;
 
     @JsonCreator

@@ -56,19 +56,21 @@ class InitTaskExecutorTest {
         pgDataSource.setPassword(postgresContainer.getPassword());
         dataSource = pgDataSource;
 
-        config = new SmallRyeConfigBuilder()
-                .withDefaultValues(Map.of())
-                .build();
+        config = new SmallRyeConfigBuilder().withDefaultValues(Map.of()).build();
     }
 
     @Test
     void shouldExecuteTasksInPriorityOrder() {
         final var executedTaskNames = new ArrayList<String>(3);
 
-        final var executor = new InitTaskExecutor(config, dataSource, List.of(
-                new TestInitTask(1, "a", () -> executedTaskNames.add("a")),
-                new TestInitTask(5, "b", () -> executedTaskNames.add("b")),
-                new TestInitTask(3, "c", () -> executedTaskNames.add("c"))), null);
+        final var executor = new InitTaskExecutor(
+                config,
+                dataSource,
+                List.of(
+                        new TestInitTask(1, "a", () -> executedTaskNames.add("a")),
+                        new TestInitTask(5, "b", () -> executedTaskNames.add("b")),
+                        new TestInitTask(3, "c", () -> executedTaskNames.add("c"))),
+                null);
         executor.execute();
 
         assertThat(executedTaskNames).containsExactly("b", "c", "a");
@@ -78,9 +80,8 @@ class InitTaskExecutorTest {
     void shouldNotifyListenerOnTaskCompletion() {
         final var listener = mock(InitTaskListener.class);
 
-        final var executor = new InitTaskExecutor(config, dataSource, List.of(
-                new TestInitTask(2, "first"),
-                new TestInitTask(1, "second")), listener);
+        final var executor = new InitTaskExecutor(
+                config, dataSource, List.of(new TestInitTask(2, "first"), new TestInitTask(1, "second")), listener);
         executor.execute();
 
         verify(listener).onTaskCompleted("first");
@@ -92,23 +93,28 @@ class InitTaskExecutorTest {
         final var listener = mock(InitTaskListener.class);
         final var cause = new IllegalStateException("boom");
 
-        final var executor = new InitTaskExecutor(config, dataSource, List.of(
-                new TestInitTask(1, "test", () -> {
+        final var executor = new InitTaskExecutor(
+                config,
+                dataSource,
+                List.of(new TestInitTask(1, "test", () -> {
                     throw cause;
-                })), listener);
+                })),
+                listener);
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(executor::execute);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(executor::execute);
 
         verify(listener).onTaskFailed("test");
     }
 
     @Test
     void shouldThrowWhenTaskExecutionFails() {
-        final var executor = new InitTaskExecutor(config, dataSource, List.of(
-                new TestInitTask(1, "test", () -> {
+        final var executor = new InitTaskExecutor(
+                config,
+                dataSource,
+                List.of(new TestInitTask(1, "test", () -> {
                     throw new IllegalStateException("boom");
-                })), null);
+                })),
+                null);
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(executor::execute)
@@ -118,9 +124,8 @@ class InitTaskExecutorTest {
 
     @Test
     void shouldThrowOnDuplicateTaskName() {
-        final var executor = new InitTaskExecutor(config, dataSource, List.of(
-                new TestInitTask(1, "test"),
-                new TestInitTask(2, "test")), null);
+        final var executor = new InitTaskExecutor(
+                config, dataSource, List.of(new TestInitTask(1, "test"), new TestInitTask(2, "test")), null);
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(executor::execute)
@@ -133,8 +138,7 @@ class InitTaskExecutorTest {
 
     @Test
     void shouldThrowOnInvalidTaskPriority() {
-        final var executor = new InitTaskExecutor(config, dataSource, List.of(
-                new TestInitTask(-1, "test")), null);
+        final var executor = new InitTaskExecutor(config, dataSource, List.of(new TestInitTask(-1, "test")), null);
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(executor::execute)
@@ -173,7 +177,5 @@ class InitTaskExecutorTest {
                 runnable.run();
             }
         }
-
     }
-
 }

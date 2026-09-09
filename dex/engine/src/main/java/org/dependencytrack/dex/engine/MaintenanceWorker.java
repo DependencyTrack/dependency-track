@@ -62,10 +62,9 @@ final class MaintenanceWorker implements Closeable {
     }
 
     void start() {
-        executor = Executors.newSingleThreadScheduledExecutor(
-                Thread.ofPlatform()
-                        .name(MaintenanceWorker.class.getSimpleName())
-                        .factory());
+        executor = Executors.newSingleThreadScheduledExecutor(Thread.ofPlatform()
+                .name(MaintenanceWorker.class.getSimpleName())
+                .factory());
         executor.scheduleAtFixedRate(
                 () -> {
                     try {
@@ -119,23 +118,18 @@ final class MaintenanceWorker implements Closeable {
                          where id in (select id from cte_candidates)
                         """);
 
-                return update
-                        .bind("retentionDuration", runRetentionDuration)
+                return update.bind("retentionDuration", runRetentionDuration)
                         .bind("batchSize", runDeletionBatchSize)
                         .execute();
             });
 
             totalDeleted += batchDeleted;
-        } while (batchDeleted == runDeletionBatchSize
-                && ++batchesExecuted < runDeletionMaxBatchesPerCycle);
+        } while (batchDeleted == runDeletionBatchSize && ++batchesExecuted < runDeletionMaxBatchesPerCycle);
 
         if (totalDeleted > 0) {
-            LOGGER.info(
-                    "Deleted {} completed workflow run(s) in {} batch(es)",
-                    totalDeleted, batchesExecuted);
+            LOGGER.info("Deleted {} completed workflow run(s) in {} batch(es)", totalDeleted, batchesExecuted);
         } else {
             LOGGER.debug("No completed workflow runs deleted");
         }
     }
-
 }

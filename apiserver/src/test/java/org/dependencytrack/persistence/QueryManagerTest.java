@@ -82,5 +82,4 @@ public class QueryManagerTest extends PersistenceCapableTest {
 
         assertThat(updated.getCollectionTag()).isNull();
     }
-
 }

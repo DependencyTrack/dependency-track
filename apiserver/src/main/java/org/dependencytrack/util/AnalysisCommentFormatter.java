@@ -28,7 +28,6 @@ import java.util.Optional;
 public final class AnalysisCommentFormatter {
 
     public enum AnalysisCommentField {
-
         STATE("Analysis", AnalysisState.NOT_SET.name()),
         JUSTIFICATION("Justification", AnalysisJustification.NOT_SET.name()),
         RESPONSE("Vendor Response", AnalysisResponse.NOT_SET.name()),
@@ -51,19 +50,21 @@ public final class AnalysisCommentFormatter {
             this.displayName = displayName;
             this.nullValue = nullValue;
         }
-
     }
 
-    private AnalysisCommentFormatter() {
-    }
+    private AnalysisCommentFormatter() {}
 
     public static String formatComment(final AnalysisCommentField field, final Object oldValue, final Object newValue) {
         if (field == AnalysisCommentField.SUPPRESSED) {
-            return (newValue instanceof final Boolean newValueBoolean && newValueBoolean) ? "Suppressed" : "Unsuppressed";
+            return (newValue instanceof final Boolean newValueBoolean && newValueBoolean)
+                    ? "Suppressed"
+                    : "Unsuppressed";
         }
 
-        final String oldValueString = Optional.ofNullable(oldValue).map(Object::toString).orElse(field.nullValue);
-        final String newValueString = Optional.ofNullable(newValue).map(Object::toString).orElse(field.nullValue);
+        final String oldValueString =
+                Optional.ofNullable(oldValue).map(Object::toString).orElse(field.nullValue);
+        final String newValueString =
+                Optional.ofNullable(newValue).map(Object::toString).orElse(field.nullValue);
         if (field == AnalysisCommentField.DETAILS) {
             // Details can be fairly long, so we're just recording the new value,
             // without repeating the previous value.
@@ -72,5 +73,4 @@ public final class AnalysisCommentFormatter {
 
         return "%s: %s → %s".formatted(field.displayName, oldValueString, newValueString);
     }
-
 }

@@ -18,24 +18,20 @@
  */
 package org.dependencytrack.vulndatasource.osv;
 
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
-import org.dependencytrack.plugin.testing.MockKeyValueStore;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.net.http.HttpClient;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class OsvVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull VulnDataSource, @NonNull OsvVulnDataSourceFactory> {
+class OsvVulnDataSourceFactoryTest
+        extends AbstractExtensionFactoryTest<@NonNull VulnDataSource, @NonNull OsvVulnDataSourceFactory> {
 
     protected OsvVulnDataSourceFactoryTest() {
         super(OsvVulnDataSourceFactory.class);
@@ -59,46 +55,40 @@ class OsvVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void isDataSourceEnabledShouldReturnTrueWhenEnabledAndFalseOtherwise(final boolean isEnabled) {
-        final var config = (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
+        final var config =
+                (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
         config.setEnabled(isEnabled);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .build());
         assertThat(factory.isDataSourceEnabled()).isEqualTo(isEnabled);
     }
 
     @Test
     void createShouldReturnNullWhenDisabled() {
-        final var config = (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
+        final var config =
+                (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
         config.setEnabled(false);
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
         factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(factory::create);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
 
     @Test
     void createShouldReturnDataSource() {
-        final var config = (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
+        final var config =
+                (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
         config.setEnabled(true);
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
         factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
 
         final VulnDataSource dataSource = factory.create();
         assertThat(dataSource).isNotNull();
@@ -107,17 +97,15 @@ class OsvVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
 
     @Test
     void createWhenIncrementalMirroringDisabledShouldCreateDataSourceWithNullWatermarkManager() {
-        final var config = (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
+        final var config =
+                (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
         config.setEnabled(true);
         config.setIncrementalMirroringEnabled(false);
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
         factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
 
         try (VulnDataSource dataSource = factory.create()) {
             assertThat(dataSource).isNotNull();
@@ -127,22 +115,19 @@ class OsvVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
 
     @Test
     void createWhenIncrementalMirroringEnabledShouldCreateDataSourceWithWatermarkManager() {
-        final var config = (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
+        final var config =
+                (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
         config.setEnabled(true);
         config.setIncrementalMirroringEnabled(true);
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
         factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
 
         try (VulnDataSource dataSource = factory.create()) {
             assertThat(dataSource).isNotNull();
             assertThat(((OsvVulnDataSource) dataSource).getWatermarkManager()).isNotNull();
         }
     }
-
 }

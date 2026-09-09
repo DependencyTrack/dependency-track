@@ -44,9 +44,7 @@ public final class DeleteFilesActivity implements Activity<DeleteFilesArgument, 
     }
 
     @Override
-    public @Nullable Void execute(
-            ActivityContext ctx,
-            @Nullable DeleteFilesArgument argument) throws Exception {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable DeleteFilesArgument argument) throws Exception {
         if (argument == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -62,5 +60,4 @@ public final class DeleteFilesActivity implements Activity<DeleteFilesArgument, 
 
         return null;
     }
-
 }

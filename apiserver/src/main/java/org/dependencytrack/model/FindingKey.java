@@ -35,5 +35,4 @@ public record FindingKey(long componentId, long vulnDbId) {
             throw new IllegalArgumentException("vulnDbId must be positive");
         }
     }
-
 }

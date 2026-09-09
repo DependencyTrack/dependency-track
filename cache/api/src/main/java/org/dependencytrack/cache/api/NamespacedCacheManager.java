@@ -32,9 +32,8 @@ public final class NamespacedCacheManager implements CacheManager {
         this.delegate = requireNonNull(delegate, "delegate must not be null");
         this.namespace = requireNonNull(namespace, "namespace must not be null");
         if (!VALID_NAME_PATTERN.matcher(namespace).matches()) {
-            throw new IllegalArgumentException(
-                    "namespace does not match expected pattern %s: %s".formatted(
-                            VALID_NAME_PATTERN.pattern(), namespace));
+            throw new IllegalArgumentException("namespace does not match expected pattern %s: %s"
+                    .formatted(VALID_NAME_PATTERN.pattern(), namespace));
         }
     }
 
@@ -44,7 +43,5 @@ public final class NamespacedCacheManager implements CacheManager {
     }
 
     @Override
-    public void close() {
-    }
-
+    public void close() {}
 }

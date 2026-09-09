@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.plugin.runtime;
 
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionFactory;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.jspecify.annotations.NonNull;
 
@@ -29,6 +29,11 @@ class DummyTestExtensionFactory implements ExtensionFactory<@NonNull TestExtensi
 
     @Override
     public @NonNull String extensionName() {
+        return DummyTestExtension.NAME;
+    }
+
+    @Override
+    public @NonNull String displayName() {
         return DummyTestExtension.NAME;
     }
 
@@ -43,13 +48,15 @@ class DummyTestExtensionFactory implements ExtensionFactory<@NonNull TestExtensi
     }
 
     @Override
-    public void init(@NonNull ServiceRegistry serviceRegistry) {
-        this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
+    public void init(@NonNull ExtensionContext context) {
+        this.configRegistry = context.configRegistry();
     }
 
     @Override
     public DummyTestExtension create() {
-        return new DummyTestExtension(configRegistry.getDeploymentConfig().getOptionalValue("bar", String.class).orElse(null));
+        return new DummyTestExtension(configRegistry
+                .getDeploymentConfig()
+                .getOptionalValue("bar", String.class)
+                .orElse(null));
     }
-
 }

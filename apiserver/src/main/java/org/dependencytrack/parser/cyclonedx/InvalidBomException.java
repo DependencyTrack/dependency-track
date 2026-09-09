@@ -48,5 +48,4 @@ public class InvalidBomException extends RuntimeException {
     public List<String> getValidationErrors() {
         return validationErrors;
     }
-
 }

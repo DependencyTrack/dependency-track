@@ -73,4 +73,4 @@ public class ComponentPropertyTest {
         property.setDescription("Property Description");
         Assertions.assertEquals("Property Description", property.getDescription());
     }
-} 
+}

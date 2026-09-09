@@ -69,15 +69,17 @@ public class JdbiFactory {
         useJdbiHandle(/* apiRequest */ null, handleConsumer);
     }
 
-    public static <X extends Exception> void useJdbiHandle(final AlpineRequest apiRequest, final HandleConsumer<X> handleConsumer) throws X {
+    public static <X extends Exception> void useJdbiHandle(
+            final AlpineRequest apiRequest, final HandleConsumer<X> handleConsumer) throws X {
         createJdbi().useHandle(handle -> handleConsumer.useHandle(forApiRequest(handle, apiRequest)));
     }
 
     public static <T, X extends Exception> T withJdbiHandle(final HandleCallback<T, X> handleCallback) throws X {
-        return withJdbiHandle(/* apiRequest */  null, handleCallback);
+        return withJdbiHandle(/* apiRequest */ null, handleCallback);
     }
 
-    public static <T, X extends Exception> T withJdbiHandle(final AlpineRequest apiRequest, final HandleCallback<T, X> handleCallback) throws X {
+    public static <T, X extends Exception> T withJdbiHandle(
+            final AlpineRequest apiRequest, final HandleCallback<T, X> handleCallback) throws X {
         return createJdbi().withHandle(handle -> handleCallback.withHandle(forApiRequest(handle, apiRequest)));
     }
 
@@ -85,20 +87,26 @@ public class JdbiFactory {
         useJdbiTransaction(/* apiRequest */ null, handleConsumer);
     }
 
-    public static <X extends Exception> void useJdbiTransaction(final AlpineRequest apiRequest, final HandleConsumer<X> handleConsumer) throws X {
+    public static <X extends Exception> void useJdbiTransaction(
+            final AlpineRequest apiRequest, final HandleConsumer<X> handleConsumer) throws X {
         createJdbi().useTransaction(handle -> handleConsumer.useHandle(forApiRequest(handle, apiRequest)));
     }
 
     public static <T, X extends Exception> T inJdbiTransaction(final HandleCallback<T, X> handleCallback) throws X {
-        return inJdbiTransaction(/* apiRequest */  null, handleCallback);
+        return inJdbiTransaction(/* apiRequest */ null, handleCallback);
     }
 
-    public static <T, X extends Exception> T inJdbiTransaction(final AlpineRequest apiRequest, final HandleCallback<T, X> handleCallback) throws X {
+    public static <T, X extends Exception> T inJdbiTransaction(
+            final AlpineRequest apiRequest, final HandleCallback<T, X> handleCallback) throws X {
         return createJdbi().inTransaction(handle -> handleCallback.withHandle(forApiRequest(handle, apiRequest)));
     }
 
     private static Handle forApiRequest(final Handle handle, final AlpineRequest apiRequest) {
-        return handle.addCustomizer(new ApiRequestStatementCustomizer(apiRequest));
+        if (apiRequest != null) {
+            handle.getConfig(ApiRequestConfig.class).setApiRequest(apiRequest);
+        }
+
+        return handle.addCustomizer(new ApiRequestStatementCustomizer());
     }
 
     /**
@@ -116,7 +124,8 @@ public class JdbiFactory {
     public static Jdbi createJdbi() {
         return GLOBAL_INSTANCE_HOLDER
                 .updateAndGet(previous -> {
-                    final DataSource dataSource = DataSourceRegistry.getInstance().getDefault();
+                    final DataSource dataSource =
+                            DataSourceRegistry.getInstance().getDefault();
                     if (previous == null || previous.dataSource() != dataSource) {
                         // The PMF reference does not usually change, unless it has been recreated,
                         // or multiple PMFs exist in the same application. The latter is not the case
@@ -135,12 +144,10 @@ public class JdbiFactory {
         return customizeJdbi(Jdbi.create(dataSource));
     }
 
-    private record GlobalInstanceHolder(Jdbi jdbi, DataSource dataSource) {
-    }
+    private record GlobalInstanceHolder(Jdbi jdbi, DataSource dataSource) {}
 
     private static Jdbi customizeJdbi(final Jdbi jdbi) {
-        final Jdbi preparedJdbi = jdbi
-                .installPlugin(new SqlObjectPlugin())
+        final Jdbi preparedJdbi = jdbi.installPlugin(new SqlObjectPlugin())
                 .installPlugin(new PostgresPlugin())
                 .installPlugin(new Jackson2Plugin())
                 .installPlugin(new ExceptionTranslationPlugin())
@@ -156,9 +163,7 @@ public class JdbiFactory {
                 .registerRowMapper(new PackageMetadataRowMapper())
                 .registerRowMapper(new PackageArtifactMetadataRowMapper());
 
-        preparedJdbi
-                .getConfig(PaginationConfig.class)
-                .setPageTokenEncoder(new SimplePageTokenEncoder());
+        preparedJdbi.getConfig(PaginationConfig.class).setPageTokenEncoder(new SimplePageTokenEncoder());
         preparedJdbi.getConfig(Jackson2Config.class).setMapper(createJsonMapper());
         preparedJdbi
                 .getConfig(FreemarkerConfig.class)
@@ -175,5 +180,4 @@ public class JdbiFactory {
                 .addModule(new JavaTimeModule())
                 .build();
     }
-
 }

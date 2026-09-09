@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/jvn-vuln-data-source-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the JVN (Japan Vulnerability Notes) data source should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "feedBaseUrl": {
+      "type": "string",
+      "title": "JVN data feed base URL",
+      "description": "Base URL of the JVN data feeds (the `.../ja/feed` directory). The yearly detail feeds (`detail/jvndb_detail_YYYY.rdf`) and `checksum.txt` are read from here. Defaults to `https://jvndb.jvn.jp/ja/feed`.",
+      "format": "uri",
+      "minLength": 1
+    },
+    "startYear": {
+      "type": "integer",
+      "title": "Backfill start year",
+      "description": "First publication year to mirror from the yearly detail feeds (JVN iPedia data reaches back to 1998). Defaults to 1998."
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

@@ -46,5 +46,4 @@ record NvdDataFeedMetadata(Instant lastModifiedAt, @Nullable String sha256) {
 
         return new NvdDataFeedMetadata(lastModifiedAt, sha256);
     }
-
 }

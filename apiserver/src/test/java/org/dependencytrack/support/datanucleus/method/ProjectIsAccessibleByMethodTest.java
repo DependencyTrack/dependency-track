@@ -57,7 +57,7 @@ class ProjectIsAccessibleByMethodTest extends PersistenceCapableTest {
 
         final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
         query.setFilter("this.isAccessibleBy(:teamIds)");
-        query.setNamedParameters(Map.of("teamIds", new Long[]{teamA.getId(), teamB.getId()}));
+        query.setNamedParameters(Map.of("teamIds", new Long[] {teamA.getId(), teamB.getId()}));
 
         final List<Project> projects = query.executeList();
         assertThat(projects).hasSize(1);
@@ -82,7 +82,7 @@ class ProjectIsAccessibleByMethodTest extends PersistenceCapableTest {
 
         final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
         query.setFilter("name == 'acme-app' && this.isAccessibleBy(:teamIds)");
-        query.setNamedParameters(Map.of("teamIds", new Long[]{team.getId()}));
+        query.setNamedParameters(Map.of("teamIds", new Long[] {team.getId()}));
 
         final List<Project> projects = query.executeList();
         assertThat(projects).hasSize(1);
@@ -112,7 +112,7 @@ class ProjectIsAccessibleByMethodTest extends PersistenceCapableTest {
 
         final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
         query.setFilter("name == 'acme-app' && this.isAccessibleBy(:teamIds)");
-        query.setNamedParameters(Map.of("teamIds", new Long[]{team.getId()}));
+        query.setNamedParameters(Map.of("teamIds", new Long[] {team.getId()}));
 
         final List<Project> projects = query.executeList();
         assertThat(projects).hasSize(1);
@@ -136,7 +136,7 @@ class ProjectIsAccessibleByMethodTest extends PersistenceCapableTest {
 
         final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
         query.setFilter("this.isAccessibleBy(:teamIds)");
-        query.setNamedParameters(Map.of("teamIds", new Long[]{teamB.getId()}));
+        query.setNamedParameters(Map.of("teamIds", new Long[] {teamB.getId()}));
 
         final List<Project> projects = query.executeList();
         assertThat(projects).isEmpty();
@@ -161,7 +161,7 @@ class ProjectIsAccessibleByMethodTest extends PersistenceCapableTest {
 
         final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
         query.setFilter("name == 'acme-app-parent' && this.isAccessibleBy(:teamIds)");
-        query.setNamedParameters(Map.of("teamIds", new Long[]{team.getId()}));
+        query.setNamedParameters(Map.of("teamIds", new Long[] {team.getId()}));
 
         final List<Project> projects = query.executeList();
         assertThat(projects).hasSize(0);
@@ -186,7 +186,7 @@ class ProjectIsAccessibleByMethodTest extends PersistenceCapableTest {
 
         final Query<Component> query = qm.getPersistenceManager().newQuery(Component.class);
         query.setFilter("project.isAccessibleBy(:teamIds)");
-        query.setNamedParameters(Map.of("teamIds", new Long[]{team.getId()}));
+        query.setNamedParameters(Map.of("teamIds", new Long[] {team.getId()}));
 
         final List<Component> components = query.executeList();
         assertThat(components).hasSize(1);
@@ -309,7 +309,7 @@ class ProjectIsAccessibleByMethodTest extends PersistenceCapableTest {
     void shouldThrowWhenArgIsOfUnexpectedArrayType() {
         final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
         query.setFilter("this.isAccessibleBy(:teamIdStrings)");
-        query.setNamedParameters(Map.of("teamIdsStrings", new String[]{"1", "2", "3"}));
+        query.setNamedParameters(Map.of("teamIdsStrings", new String[] {"1", "2", "3"}));
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(query::execute)
                 .withMessage("""
@@ -317,5 +317,4 @@ class ProjectIsAccessibleByMethodTest extends PersistenceCapableTest {
                         org.datanucleus.store.rdbms.sql.expression.IntegerLiteral, \
                         but got org.datanucleus.store.rdbms.sql.expression.ParameterLiteral""");
     }
-
 }

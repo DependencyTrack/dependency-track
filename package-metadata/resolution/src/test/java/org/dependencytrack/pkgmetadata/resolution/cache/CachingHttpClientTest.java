@@ -92,7 +92,8 @@ class CachingHttpClientTest {
     @Test
     void shouldGetAndCacheOnColdMiss(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"abc\"")
                         .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")
                         .withBody("hello")));
@@ -107,7 +108,8 @@ class CachingHttpClientTest {
     @Test
     void shouldReturnCachedBodyWithoutHttpWhenFresh(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"abc\"")
                         .withBody("hello")));
 
@@ -125,9 +127,7 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("revalidate")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", etag)
-                        .withBody("hello"))
+                .willReturn(aResponse().withStatus(200).withHeader("ETag", etag).withBody("hello"))
                 .willSetStateTo("warmed"));
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("revalidate")
@@ -142,8 +142,7 @@ class CachingHttpClientTest {
 
         assertThat(body).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
         verify(2, getRequestedFor(urlPathEqualTo(PATH)));
-        verify(getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("If-None-Match", equalTo(etag)));
+        verify(getRequestedFor(urlPathEqualTo(PATH)).withHeader("If-None-Match", equalTo(etag)));
     }
 
     @Test
@@ -151,7 +150,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("if-mod-since")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")
                         .withBody("hello"))
                 .willSetStateTo("warmed"));
@@ -176,16 +176,14 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("refresh")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("first"))
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("first"))
                 .willSetStateTo("changed"));
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("refresh")
                 .whenScenarioStateIs("changed")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v2\"")
-                        .withBody("second")));
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v2\"").withBody("second")));
 
         final var clock = new MutableClock();
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
@@ -194,14 +192,12 @@ class CachingHttpClientTest {
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         assertThat(body).isEqualTo("second".getBytes(StandardCharsets.UTF_8));
-        verify(getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("If-None-Match", equalTo("\"v1\"")));
+        verify(getRequestedFor(urlPathEqualTo(PATH)).withHeader("If-None-Match", equalTo("\"v1\"")));
     }
 
     @Test
     void shouldGetUnconditionallyWhenEntryHasNoValidators(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200).withBody("hello")));
+        stubFor(get(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(200).withBody("hello")));
 
         final var clock = new MutableClock();
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
@@ -209,15 +205,16 @@ class CachingHttpClientTest {
         clock.advance(Duration.ofMinutes(2));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
-        verify(2, getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("If-None-Match", absent())
-                .withHeader("If-Modified-Since", absent()));
+        verify(
+                2,
+                getRequestedFor(urlPathEqualTo(PATH))
+                        .withHeader("If-None-Match", absent())
+                        .withHeader("If-Modified-Since", absent()));
     }
 
     @Test
     void shouldThrowRetryableExceptionOn503(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(503)));
+        stubFor(get(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(503)));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         assertThatExceptionOfType(RetryableResolutionException.class)
@@ -227,19 +224,19 @@ class CachingHttpClientTest {
     @ParameterizedTest
     @ValueSource(ints = {404, 410})
     void shouldCacheNegativeStatus(int status, WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(status)));
+        stubFor(get(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(status)));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
-        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isNull();
-        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isNull();
+        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null))
+                .isNull();
+        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null))
+                .isNull();
         verify(1, getRequestedFor(urlPathEqualTo(PATH)));
     }
 
     @Test
     void shouldRefetchExpiredNegativeEntryWithoutValidators(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(404)));
+        stubFor(get(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(404)));
 
         final var clock = new MutableClock();
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
@@ -247,9 +244,11 @@ class CachingHttpClientTest {
         clock.advance(Duration.ofMinutes(2));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
-        verify(2, getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("If-None-Match", absent())
-                .withHeader("If-Modified-Since", absent()));
+        verify(
+                2,
+                getRequestedFor(urlPathEqualTo(PATH))
+                        .withHeader("If-None-Match", absent())
+                        .withHeader("If-Modified-Since", absent()));
     }
 
     @Test
@@ -257,9 +256,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("gone")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("hello"))
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("hello"))
                 .willSetStateTo("gone"));
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("gone")
@@ -282,8 +280,7 @@ class CachingHttpClientTest {
     @Test
     void shouldNotCacheNegativeWhenNoStoreDirectivePresent(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(404)
-                        .withHeader("Cache-Control", "no-store")));
+                .willReturn(aResponse().withStatus(404).withHeader("Cache-Control", "no-store")));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -302,13 +299,13 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("late-publish")
                 .whenScenarioStateIs("published")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("hello")));
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("hello")));
 
         final var clock = new MutableClock();
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
-        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isNull();
+        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null))
+                .isNull();
         clock.advance(Duration.ofMinutes(2));
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
@@ -322,7 +319,8 @@ class CachingHttpClientTest {
     @Test
     void shouldHonorUpstreamMaxAgeWhenShorterThanCap(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"v1\"")
                         .withHeader("Cache-Control", "public, max-age=60")
                         .withBody("hello")));
@@ -340,14 +338,14 @@ class CachingHttpClientTest {
         clock.advance(Duration.ofSeconds(60));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         verify(2, getRequestedFor(urlPathEqualTo(PATH)));
-        verify(getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("If-None-Match", equalTo("\"v1\"")));
+        verify(getRequestedFor(urlPathEqualTo(PATH)).withHeader("If-None-Match", equalTo("\"v1\"")));
     }
 
     @Test
     void shouldCapUpstreamMaxAgeAtFreshnessCap(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"v1\"")
                         .withHeader("Cache-Control", "max-age=86400")
                         .withBody("hello")));
@@ -365,9 +363,8 @@ class CachingHttpClientTest {
     @Test
     void shouldFallBackToCapWhenCacheControlAbsent(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("hello")));
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("hello")));
 
         final var clock = new MutableClock();
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), clock);
@@ -381,7 +378,8 @@ class CachingHttpClientTest {
     @Test
     void shouldNotCacheResponsesWithNoStore(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"v1\"")
                         .withHeader("Cache-Control", "no-store")
                         .withBody("hello")));
@@ -392,8 +390,7 @@ class CachingHttpClientTest {
 
         assertThat(firstBody).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
         assertThat(secondBody).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
-        verify(2, getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("If-None-Match", absent()));
+        verify(2, getRequestedFor(urlPathEqualTo(PATH)).withHeader("If-None-Match", absent()));
     }
 
     @Test
@@ -401,7 +398,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("no-cache")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"v1\"")
                         .withHeader("Cache-Control", "no-cache")
                         .withBody("hello"))
@@ -418,8 +416,7 @@ class CachingHttpClientTest {
         final byte[] secondBody = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         assertThat(secondBody).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
-        verify(getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("If-None-Match", equalTo("\"v1\"")));
+        verify(getRequestedFor(urlPathEqualTo(PATH)).withHeader("If-None-Match", equalTo("\"v1\"")));
     }
 
     @Test
@@ -427,7 +424,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("refresh-cc")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"v1\"")
                         .withHeader("Cache-Control", "max-age=60")
                         .withBody("hello"))
@@ -435,8 +433,7 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("refresh-cc")
                 .whenScenarioStateIs("revalidated")
-                .willReturn(aResponse().withStatus(304)
-                        .withHeader("Cache-Control", "max-age=600")));
+                .willReturn(aResponse().withStatus(304).withHeader("Cache-Control", "max-age=600")));
 
         final var clock = new MutableClock();
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), clock);
@@ -457,7 +454,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("retain-cc")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"v1\"")
                         .withHeader("Cache-Control", "max-age=60")
                         .withBody("hello"))
@@ -500,7 +498,11 @@ class CachingHttpClientTest {
                 .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ofHours(1), -1, -1));
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new CachingHttpClient(
-                        httpClient, cache, Duration.ofHours(1), (long) Integer.MAX_VALUE + 1, (long) Integer.MAX_VALUE + 1));
+                        httpClient,
+                        cache,
+                        Duration.ofHours(1),
+                        (long) Integer.MAX_VALUE + 1,
+                        (long) Integer.MAX_VALUE + 1));
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ofHours(1), 1024, 512));
         assertThatExceptionOfType(IllegalArgumentException.class)
@@ -512,7 +514,8 @@ class CachingHttpClientTest {
     void shouldThrowWhenResponseBodyExceedsMaxCompressedBytes(WireMockRuntimeInfo wmRuntimeInfo) {
         final byte[] payload = new byte[2048];
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"big\"")
                         .withBody(payload)));
 
@@ -523,8 +526,7 @@ class CachingHttpClientTest {
 
         assertThatExceptionOfType(UncheckedIOException.class)
                 .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null));
-        verify(2, getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("If-None-Match", absent()));
+        verify(2, getRequestedFor(urlPathEqualTo(PATH)).withHeader("If-None-Match", absent()));
     }
 
     @Test
@@ -553,26 +555,27 @@ class CachingHttpClientTest {
 
     @ParameterizedTest(name = "[{index}] {0}")
     @CsvSource({
-            "io-error, -1, 0",
-            "503,      503, 0",
-            "429,      429, 30",
+        "io-error, -1, 0",
+        "503,      503, 0",
+        "429,      429, 30",
     })
     void shouldServeStaleBodyOnRevalidationFailure(
-            String label, int failureStatus, int retryAfterSeconds, WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+            String label, int failureStatus, int retryAfterSeconds, WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario(label)
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("hello"))
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("hello"))
                 .willSetStateTo("broken"));
 
         final var failureResponse = failureStatus < 0
                 ? aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)
                 : retryAfterSeconds > 0
-                  ? aResponse().withStatus(failureStatus)
-                .withHeader("Retry-After", String.valueOf(retryAfterSeconds))
-                  : aResponse().withStatus(failureStatus);
+                        ? aResponse()
+                                .withStatus(failureStatus)
+                                .withHeader("Retry-After", String.valueOf(retryAfterSeconds))
+                        : aResponse().withStatus(failureStatus);
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario(label)
                 .whenScenarioStateIs("broken")
@@ -594,9 +597,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("stale-on-timeout")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("hello"))
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("hello"))
                 .willSetStateTo("slow"));
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("stale-on-timeout")
@@ -619,13 +621,12 @@ class CachingHttpClientTest {
     }
 
     @Test
-    void shouldRethrowIoExceptionWhenNoCachedEntry(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
+    void shouldThrowRetryableExceptionOnConnectionResetWhenNoCachedEntry(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(get(urlPathEqualTo(PATH)).willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
 
-        assertThatExceptionOfType(UncheckedIOException.class)
+        assertThatExceptionOfType(RetryableResolutionException.class)
                 .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null));
     }
 
@@ -643,7 +644,8 @@ class CachingHttpClientTest {
 
         final var clock = new MutableClock();
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
-        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isNull();
+        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null))
+                .isNull();
         clock.advance(Duration.ofMinutes(2));
 
         assertThatExceptionOfType(RetryableResolutionException.class)
@@ -655,9 +657,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("stale-then-recover")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("hello"))
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("hello"))
                 .willSetStateTo("down"));
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("stale-then-recover")
@@ -687,22 +688,22 @@ class CachingHttpClientTest {
 
         assertThat(body).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
         verify(3, getRequestedFor(urlPathEqualTo(PATH)));
-        verify(2, getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("If-None-Match", equalTo("\"v1\"")));
+        verify(2, getRequestedFor(urlPathEqualTo(PATH)).withHeader("If-None-Match", equalTo("\"v1\"")));
     }
 
     @Test
     void shouldHeadAndCacheValidatorsAndFilteredHeaders(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(head(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"v1\"")
                         .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")
                         .withHeader("Content-Length", "1234")
                         .withHeader("Server", "nginx")));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
-        final HttpHeaders headers = cachingHttpClient.head(
-                headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
+        final HttpHeaders headers =
+                cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
 
         assertThat(headers).isNotNull();
         assertThat(headers.firstValue("ETag")).hasValue("\"v1\"");
@@ -711,8 +712,8 @@ class CachingHttpClientTest {
         assertThat(headers.firstValue("Server")).isEmpty();
 
         // Second call within freshness must be served from cache.
-        final HttpHeaders cached = cachingHttpClient.head(
-                headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
+        final HttpHeaders cached =
+                cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
 
         assertThat(cached.firstValue("ETag")).hasValue("\"v1\"");
         assertThat(cached.firstValue("Last-Modified")).hasValue("Sat, 04 Nov 2023 12:00:00 GMT");
@@ -721,15 +722,16 @@ class CachingHttpClientTest {
     }
 
     @Test
-    void shouldHeadReturnEtagAndLastModifiedEvenWhenPredicateRejectsThem(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldHeadReturnEtagAndLastModifiedEvenWhenPredicateRejectsThem(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubFor(head(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"v1\"")
                         .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
-        final HttpHeaders headers = cachingHttpClient.head(
-                headRequestBuilderFor(wmRuntimeInfo), null, name -> false);
+        final HttpHeaders headers = cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, name -> false);
 
         assertThat(headers.firstValue("ETag")).hasValue("\"v1\"");
         assertThat(headers.firstValue("Last-Modified")).hasValue("Sat, 04 Nov 2023 12:00:00 GMT");
@@ -740,9 +742,8 @@ class CachingHttpClientTest {
         stubFor(head(urlPathEqualTo(PATH))
                 .inScenario("head-revalidate")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withHeader("Content-Length", "42"))
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withHeader("Content-Length", "42"))
                 .willSetStateTo("warmed"));
         stubFor(head(urlPathEqualTo(PATH))
                 .inScenario("head-revalidate")
@@ -753,24 +754,24 @@ class CachingHttpClientTest {
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
         clock.advance(Duration.ofMinutes(2));
-        final HttpHeaders headers = cachingHttpClient.head(
-                headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
+        final HttpHeaders headers =
+                cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
 
         assertThat(headers.firstValue("ETag")).hasValue("\"v1\"");
         assertThat(headers.firstValue("Content-Length")).hasValue("42");
         verify(2, headRequestedFor(urlPathEqualTo(PATH)));
-        verify(headRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("If-None-Match", equalTo("\"v1\"")));
+        verify(headRequestedFor(urlPathEqualTo(PATH)).withHeader("If-None-Match", equalTo("\"v1\"")));
     }
 
     @Test
     void shouldHeadCache404(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(head(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(404)));
+        stubFor(head(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(404)));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
-        assertThat(cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, name -> false)).isNull();
-        assertThat(cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, name -> false)).isNull();
+        assertThat(cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, name -> false))
+                .isNull();
+        assertThat(cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, name -> false))
+                .isNull();
 
         verify(1, headRequestedFor(urlPathEqualTo(PATH)));
     }
@@ -780,9 +781,8 @@ class CachingHttpClientTest {
         stubFor(head(urlPathEqualTo(PATH))
                 .inScenario("head-stale")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withHeader("Content-Length", "42"))
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withHeader("Content-Length", "42"))
                 .willSetStateTo("down"));
         stubFor(head(urlPathEqualTo(PATH))
                 .inScenario("head-stale")
@@ -794,8 +794,8 @@ class CachingHttpClientTest {
         cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
         clock.advance(Duration.ofMinutes(2));
 
-        final HttpHeaders stale = cachingHttpClient.head(
-                headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
+        final HttpHeaders stale =
+                cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
 
         assertThat(stale.firstValue("ETag")).hasValue("\"v1\"");
         assertThat(stale.firstValue("Content-Length")).hasValue("42");
@@ -803,30 +803,30 @@ class CachingHttpClientTest {
 
     @Test
     void shouldHeadThrowOn304WithoutCachedEntry(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(head(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(304)));
+        stubFor(head(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(304)));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         assertThatExceptionOfType(UncheckedIOException.class)
-                .isThrownBy(() -> cachingHttpClient.head(
-                        headRequestBuilderFor(wmRuntimeInfo), null, name -> false));
+                .isThrownBy(() -> cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, name -> false));
     }
 
     @Test
     void shouldHeadAndGetUseDistinctCacheKeysForSameUri(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"get\"")
                         .withBody("hello")));
         stubFor(head(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("ETag", "\"head\"")
                         .withHeader("Content-Length", "5")));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
-        final HttpHeaders headers = cachingHttpClient.head(
-                headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
+        final HttpHeaders headers =
+                cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
 
         assertThat(headers.firstValue("ETag")).hasValue("\"head\"");
         verify(1, getRequestedFor(urlPathEqualTo(PATH)));
@@ -835,20 +835,17 @@ class CachingHttpClientTest {
 
     @Test
     void shouldSendAcceptEncodingGzipOnEveryRequest(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200).withBody("hello")));
+        stubFor(get(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(200).withBody("hello")));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
-        verify(getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("Accept-Encoding", equalTo("gzip")));
+        verify(getRequestedFor(urlPathEqualTo(PATH)).withHeader("Accept-Encoding", equalTo("gzip")));
     }
 
     @Test
     void shouldOverrideCallerSuppliedAcceptEncoding(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200).withBody("hello")));
+        stubFor(get(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(200).withBody("hello")));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         cachingHttpClient.get(
@@ -859,8 +856,7 @@ class CachingHttpClientTest {
                         .GET(),
                 null);
 
-        verify(getRequestedFor(urlPathEqualTo(PATH))
-                .withHeader("Accept-Encoding", equalTo("gzip")));
+        verify(getRequestedFor(urlPathEqualTo(PATH)).withHeader("Accept-Encoding", equalTo("gzip")));
     }
 
     @Test
@@ -869,7 +865,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("gzip-revalidate")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("Content-Encoding", "gzip")
                         .withHeader("ETag", "\"v1\"")
                         .withBody(gzipped))
@@ -895,7 +892,8 @@ class CachingHttpClientTest {
         final byte[] payload = new byte[64 * 1024];
         final byte[] gzipped = gzip(payload);
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("Content-Encoding", "gzip")
                         .withBody(gzipped)));
 
@@ -906,15 +904,16 @@ class CachingHttpClientTest {
     }
 
     @Test
-    void shouldAcceptGzipDecodedBodyWhenWithinDecodedCapButExceedingCompressedCap(
-            WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldAcceptGzipDecodedBodyWhenWithinDecodedCapButExceedingCompressedCap(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         // 64 KiB of zeros compresses to ~80 bytes.
         // Passes the 1 KiB wire cap, and the 128 KiB decoded
         // cap accommodates the uncompressed payload.
         final byte[] payload = new byte[64 * 1024];
         final byte[] gzipped = gzip(payload);
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("Content-Encoding", "gzip")
                         .withBody(gzipped)));
 
@@ -926,11 +925,11 @@ class CachingHttpClientTest {
 
     @ParameterizedTest(name = "[{index}] Content-Encoding={0}")
     @CsvSource({
-            "absent, plain",
-            "br,     opaque",
+        "absent, plain",
+        "br,     opaque",
     })
-    void shouldPassThroughBodyWhenNotGzipEncoded(
-            String encoding, String body, WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldPassThroughBodyWhenNotGzipEncoded(String encoding, String body, WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         final var stub = aResponse().withStatus(200).withBody(body);
         if (!"absent".equals(encoding)) {
             stub.withHeader("Content-Encoding", encoding);
@@ -947,9 +946,8 @@ class CachingHttpClientTest {
     void shouldStoreCompressedBodyEvenWhenUpstreamServesPlain(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         final byte[] payload = new byte[4 * 1024];
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody(payload)));
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody(payload)));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -966,16 +964,20 @@ class CachingHttpClientTest {
     void shouldDecodeOnEveryFreshCacheHit(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         final byte[] gzipped = gzip("hello".getBytes(StandardCharsets.UTF_8));
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("Content-Encoding", "gzip")
                         .withHeader("ETag", "\"v1\"")
                         .withBody(gzipped)));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final byte[] expected = "hello".getBytes(StandardCharsets.UTF_8);
-        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isEqualTo(expected);
-        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isEqualTo(expected);
-        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isEqualTo(expected);
+        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null))
+                .isEqualTo(expected);
+        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null))
+                .isEqualTo(expected);
+        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null))
+                .isEqualTo(expected);
 
         verify(1, getRequestedFor(urlPathEqualTo(PATH)));
     }
@@ -993,11 +995,11 @@ class CachingHttpClientTest {
         final String cacheKey = "GET:" + wmRuntimeInfo.getHttpBaseUrl() + PATH;
         cache.put(cacheKey, bodyless.toByteArray());
 
-        stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(304)));
+        stubFor(get(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(304)));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
-        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isNull();
+        assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null))
+                .isNull();
 
         // Refreshed entry must remain bodyless, not a cached empty 200.
         final CacheEntry refreshed = CacheEntry.parseFrom(cache.get(cacheKey));
@@ -1016,9 +1018,8 @@ class CachingHttpClientTest {
         cache.put(cacheKey, legacy.toByteArray());
 
         stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("fresh")));
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("fresh")));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -1032,9 +1033,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("backoff")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("hello"))
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("hello"))
                 .willSetStateTo("limited"));
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("backoff")
@@ -1057,8 +1057,7 @@ class CachingHttpClientTest {
 
     @Test
     void shouldGateHostAfter429AndThrowWhenNoStale(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "60")));
+        stubFor(get(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(429).withHeader("Retry-After", "60")));
 
         final var clock = new MutableClock();
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), clock);
@@ -1076,9 +1075,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("backoff-release")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("hello"))
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("hello"))
                 .willSetStateTo("limited"));
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("backoff-release")
@@ -1108,9 +1106,8 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("backoff-5xx")
                 .whenScenarioStateIs("Started")
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("ETag", "\"v1\"")
-                        .withBody("hello"))
+                .willReturn(
+                        aResponse().withStatus(200).withHeader("ETag", "\"v1\"").withBody("hello"))
                 .willSetStateTo("overloaded"));
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario("backoff-5xx")
@@ -1177,5 +1174,4 @@ class CachingHttpClientTest {
                 .timeout(Duration.ofSeconds(5))
                 .GET();
     }
-
 }

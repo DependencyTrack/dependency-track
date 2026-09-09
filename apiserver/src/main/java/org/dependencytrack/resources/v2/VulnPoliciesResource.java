@@ -21,11 +21,6 @@ package org.dependencytrack.resources.v2;
 import alpine.server.auth.PermissionRequired;
 import dev.cel.common.CelIssue;
 import dev.cel.common.CelValidationException;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.ForbiddenException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.VulnPoliciesApi;
 import org.dependencytrack.api.v2.model.CreateVulnPolicy201Response;
 import org.dependencytrack.api.v2.model.CreateVulnPolicyRequest;
@@ -75,6 +70,12 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -105,17 +106,10 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_READ
-    })
-    public Response listVulnPolicies(
-            Integer limit,
-            String pageToken,
-            String name) {
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_READ})
+    public Response listVulnPolicies(Integer limit, String pageToken, String name) {
         final Page<ListVulnPoliciesRow> page = inJdbiTransaction(
-                handle -> handle.attach(VulnerabilityPolicyDao.class)
-                        .listVulnPolicies(limit, pageToken, name));
+                handle -> handle.attach(VulnerabilityPolicyDao.class).listVulnPolicies(limit, pageToken, name));
 
         final var response = ListVulnPoliciesResponse.builder()
                 .items(page.items().stream()
@@ -137,10 +131,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_READ
-    })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_READ})
     public Response getVulnPolicy(UUID uuid) {
         final VulnPolicyDetailRow policy = withJdbiHandle(
                 handle -> handle.attach(VulnerabilityPolicyDao.class).getByUuid(uuid));
@@ -152,10 +143,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_CREATE
-    })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_CREATE})
     public Response createVulnPolicy(CreateVulnPolicyRequest request) {
         validateCelCondition(request.getCondition());
 
@@ -173,20 +161,21 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
 
         LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Created vulnerability policy {}", created.uuid());
         return Response.status(Response.Status.CREATED)
-                .header("Location", getUriInfo()
-                        .getBaseUriBuilder()
-                        .path("/vuln-policies/{uuid}")
-                        .resolveTemplate("uuid", created.uuid())
+                .header(
+                        "Location",
+                        getUriInfo()
+                                .getBaseUriBuilder()
+                                .path("/vuln-policies/{uuid}")
+                                .resolveTemplate("uuid", created.uuid())
+                                .build())
+                .entity(CreateVulnPolicy201Response.builder()
+                        .uuid(created.uuid())
                         .build())
-                .entity(CreateVulnPolicy201Response.builder().uuid(created.uuid()).build())
                 .build();
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_UPDATE
-    })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_UPDATE})
     public Response updateVulnPolicy(UUID uuid, UpdateVulnPolicyRequest request) {
         validateCelCondition(request.getCondition());
 
@@ -217,70 +206,53 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_DELETE
-    })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_DELETE})
     public Response deleteVulnPolicy(UUID uuid) {
         final VulnerabilityPolicyDao.DeleteResult result = inJdbiTransaction(
                 handle -> handle.attach(VulnerabilityPolicyDao.class).unassignAndDeleteByUuid(uuid));
 
         return switch (result) {
             case NOT_FOUND -> throw new NotFoundException();
-            case BUNDLE_MANAGED -> throw new ForbiddenException(
-                    "Bundle-managed policies cannot be deleted");
+            case BUNDLE_MANAGED -> throw new ForbiddenException("Bundle-managed policies cannot be deleted");
             case DELETED -> {
-                LOGGER.info(
-                        SecurityMarkers.SECURITY_AUDIT,
-                        "Deleted vulnerability policy {}", uuid);
+                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted vulnerability policy {}", uuid);
                 yield Response.noContent().build();
             }
         };
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_READ
-    })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_READ})
     public Response listVulnPolicyBundles() {
         final List<VulnPolicyBundleRow> bundles = inJdbiTransaction(
                 handle -> handle.attach(VulnerabilityPolicyDao.class).listAllBundles());
 
         final List<ListVulnPolicyBundlesResponseItem> items = bundles.stream()
-                .<ListVulnPolicyBundlesResponseItem>map(
-                        bundle -> ListVulnPolicyBundlesResponseItem.builder()
-                                .uuid(bundle.uuid())
-                                .url(bundle.url())
-                                .hash(bundle.hash())
-                                .lastSuccessfulSync(bundle.lastSuccessfulSync() != null
+                .<ListVulnPolicyBundlesResponseItem>map(bundle -> ListVulnPolicyBundlesResponseItem.builder()
+                        .uuid(bundle.uuid())
+                        .url(bundle.url())
+                        .hash(bundle.hash())
+                        .lastSuccessfulSync(
+                                bundle.lastSuccessfulSync() != null
                                         ? bundle.lastSuccessfulSync().toEpochMilli()
                                         : null)
-                                .created(bundle.created() != null
-                                        ? bundle.created().toEpochMilli()
-                                        : null)
-                                .updated(bundle.updated() != null
-                                        ? bundle.updated().toEpochMilli()
-                                        : null)
-                                .build())
+                        .created(bundle.created() != null ? bundle.created().toEpochMilli() : null)
+                        .updated(bundle.updated() != null ? bundle.updated().toEpochMilli() : null)
+                        .build())
                 .toList();
 
-        return Response.ok(
-                        ListVulnPolicyBundlesResponse.builder()
-                                .items(items)
-                                .total(TotalCount.builder()
-                                        .count((long) items.size())
-                                        .type(TotalCountType.EXACT)
-                                        .build())
+        return Response.ok(ListVulnPolicyBundlesResponse.builder()
+                        .items(items)
+                        .total(TotalCount.builder()
+                                .count((long) items.size())
+                                .type(TotalCountType.EXACT)
                                 .build())
+                        .build())
                 .build();
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_DELETE
-    })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_DELETE})
     public Response deleteVulnPolicyBundle(UUID uuid) {
         final VulnPolicyBundleRow deletedBundle = inJdbiTransaction(handle -> {
             final var dao = handle.attach(VulnerabilityPolicyDao.class);
@@ -293,18 +265,12 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
             return bundle;
         });
 
-        LOGGER.info(
-                SecurityMarkers.SECURITY_AUDIT,
-                "Deleted vulnerability policy bundle {}",
-                deletedBundle.uuid());
+        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted vulnerability policy bundle {}", deletedBundle.uuid());
         return Response.noContent().build();
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_READ
-    })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_READ})
     public Response getLatestVulnPolicyBundleSyncRun(UUID uuid) {
         if (!VulnerabilityPolicyDao.DEFAULT_BUNDLE_UUID.equals(uuid)) {
             final VulnPolicyBundleRow bundle = withJdbiHandle(
@@ -315,12 +281,11 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
         }
 
         final String instanceId = "sync-vuln-policy-bundle:" + uuid;
-        final Page<WorkflowRunMetadata> runsPage = dexEngine.listRuns(
-                new ListWorkflowRunsRequest()
-                        .withWorkflowInstanceId(instanceId)
-                        .withSortBy(ListWorkflowRunsRequest.SortBy.CREATED_AT)
-                        .withSortDirection(SortDirection.DESC)
-                        .withLimit(1));
+        final Page<WorkflowRunMetadata> runsPage = dexEngine.listRuns(new ListWorkflowRunsRequest()
+                .withWorkflowInstanceId(instanceId)
+                .withSortBy(ListWorkflowRunsRequest.SortBy.CREATED_AT)
+                .withSortDirection(SortDirection.DESC)
+                .withLimit(1));
 
         if (runsPage.items().isEmpty()) {
             throw new NotFoundException();
@@ -330,11 +295,12 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
         String failureMessage = null;
 
         if (runMetadata.status() == WorkflowRunStatus.FAILED) {
-            final WorkflowRun run = dexEngine.getRunById(runsPage.items().getFirst().id());
+            final WorkflowRun run =
+                    dexEngine.getRunById(runsPage.items().getFirst().id());
             if (run != null && run.failure() != null) {
                 failureMessage = switch (run.failure().getFailureDetailsCase()) {
-                    case ACTIVITY_FAILURE_DETAILS,
-                         CHILD_WORKFLOW_FAILURE_DETAILS -> run.failure().getCause().getMessage();
+                    case ACTIVITY_FAILURE_DETAILS, CHILD_WORKFLOW_FAILURE_DETAILS ->
+                        run.failure().getCause().getMessage();
                     default -> run.failure().getMessage();
                 };
             }
@@ -342,12 +308,14 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
 
         final var syncStatus = VulnPolicyBundleSyncStatus.builder()
                 .status(convertSyncStatus(runMetadata.status()))
-                .startedAt(runMetadata.startedAt() != null
-                        ? runMetadata.startedAt().toEpochMilli()
-                        : null)
-                .completedAt(runMetadata.completedAt() != null
-                        ? runMetadata.completedAt().toEpochMilli()
-                        : null)
+                .startedAt(
+                        runMetadata.startedAt() != null
+                                ? runMetadata.startedAt().toEpochMilli()
+                                : null)
+                .completedAt(
+                        runMetadata.completedAt() != null
+                                ? runMetadata.completedAt().toEpochMilli()
+                                : null)
                 .failureReason(failureMessage)
                 .build();
 
@@ -364,10 +332,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.POLICY_MANAGEMENT,
-            Permissions.Constants.POLICY_MANAGEMENT_UPDATE
-    })
+    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_UPDATE})
     public Response triggerVulnPolicyBundleSyncRun(UUID uuid) {
         if (!VulnerabilityPolicyDao.DEFAULT_BUNDLE_UUID.equals(uuid)) {
             final VulnPolicyBundleRow bundle = withJdbiHandle(
@@ -377,14 +342,12 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
             }
         }
 
-        final UUID runId = dexEngine.createRun(
-                new CreateWorkflowRunRequest<>(SyncVulnPolicyBundleWorkflow.class)
-                        .withWorkflowInstanceId("sync-vuln-policy-bundle:" + uuid)
-                        .withLabels(Map.of(WF_LABEL_TRIGGERED_BY, getPrincipal().getName()))
-                        .withArgument(
-                                SyncVulnPolicyBundleArg.newBuilder()
-                                        .setBundleUuid(uuid.toString())
-                                        .build()));
+        final UUID runId = dexEngine.createRun(new CreateWorkflowRunRequest<>(SyncVulnPolicyBundleWorkflow.class)
+                .withWorkflowInstanceId("sync-vuln-policy-bundle:" + uuid)
+                .withLabels(Map.of(WF_LABEL_TRIGGERED_BY, getPrincipal().getName()))
+                .withArgument(SyncVulnPolicyBundleArg.newBuilder()
+                        .setBundleUuid(uuid.toString())
+                        .build()));
         if (runId == null) {
             throw ProblemDetailsException.of(
                     ProblemType.VULN_POLICY_BUNDLE_SYNC_ALREADY_RUNNING,
@@ -392,13 +355,14 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
         }
 
         LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Triggered vulnerability policy bundle sync");
-        return Response
-                .accepted()
-                .header("Location", getUriInfo()
-                        .getBaseUriBuilder()
-                        .path("/vuln-policy-bundles/{uuid}/sync-runs/latest")
-                        .resolveTemplate("uuid", uuid)
-                        .build())
+        return Response.accepted()
+                .header(
+                        "Location",
+                        getUriInfo()
+                                .getBaseUriBuilder()
+                                .path("/vuln-policy-bundles/{uuid}/sync-runs/latest")
+                                .resolveTemplate("uuid", uuid)
+                                .build())
                 .build();
     }
 
@@ -416,13 +380,12 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
                         .build());
             }
 
-            throw new ProblemDetailsException(
-                    InvalidVulnPolicyConditionProblemDetails.builder()
-                            .status(Response.Status.BAD_REQUEST.getStatusCode())
-                            .title("Bad Request")
-                            .detail("Condition is invalid.")
-                            .errors(errors)
-                            .build());
+            throw new ProblemDetailsException(InvalidVulnPolicyConditionProblemDetails.builder()
+                    .status(Response.Status.BAD_REQUEST.getStatusCode())
+                    .title("Bad Request")
+                    .detail("Condition is invalid.")
+                    .errors(errors)
+                    .build());
         }
     }
 
@@ -472,9 +435,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
         policy.setCondition(condition);
         policy.setAnalysis(convert(analysis));
         policy.setRatings(convertRatings(ratings));
-        policy.setOperationMode(operationMode != null
-                ? convert(operationMode)
-                : VulnerabilityPolicyOperation.APPLY);
+        policy.setOperationMode(operationMode != null ? convert(operationMode) : VulnerabilityPolicyOperation.APPLY);
         policy.setPriority(priority != null ? priority : 0);
         policy.setValidFrom(convertTimestamp(validFrom));
         policy.setValidUntil(convertTimestamp(validUntil));
@@ -490,21 +451,11 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
                 .condition(policy.condition())
                 .operationMode(convert(policy.operationMode()))
                 .priority(policy.priority())
-                .source(policy.bundleId() != null
-                        ? VulnPolicySource.BUNDLE
-                        : VulnPolicySource.USER)
-                .created(policy.created() != null
-                        ? policy.created().toEpochMilli()
-                        : null)
-                .updated(policy.updated() != null
-                        ? policy.updated().toEpochMilli()
-                        : null)
-                .validFrom(policy.validFrom() != null
-                        ? policy.validFrom().toEpochMilli()
-                        : null)
-                .validUntil(policy.validUntil() != null
-                        ? policy.validUntil().toEpochMilli()
-                        : null);
+                .source(policy.bundleId() != null ? VulnPolicySource.BUNDLE : VulnPolicySource.USER)
+                .created(policy.created() != null ? policy.created().toEpochMilli() : null)
+                .updated(policy.updated() != null ? policy.updated().toEpochMilli() : null)
+                .validFrom(policy.validFrom() != null ? policy.validFrom().toEpochMilli() : null)
+                .validUntil(policy.validUntil() != null ? policy.validUntil().toEpochMilli() : null);
 
         if (policy.analysis() != null) {
             final var analysis = policy.analysis();
@@ -523,13 +474,12 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
 
         if (policy.ratings() != null) {
             builder.ratings(policy.ratings().stream()
-                    .<VulnPolicyRating>map(
-                            r -> VulnPolicyRating.builder()
-                                    .method(convert(r.getMethod()))
-                                    .severity(convert(r.getSeverity()))
-                                    .vector(r.getVector())
-                                    .score(r.getScore())
-                                    .build())
+                    .<VulnPolicyRating>map(r -> VulnPolicyRating.builder()
+                            .method(convert(r.getMethod()))
+                            .severity(convert(r.getSeverity()))
+                            .vector(r.getVector())
+                            .score(r.getScore())
+                            .build())
                     .toList());
         }
 
@@ -559,9 +509,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
             return List.of();
         }
 
-        return apiRatings.stream()
-                .map(VulnPoliciesResource::convert)
-                .toList();
+        return apiRatings.stream().map(VulnPoliciesResource::convert).toList();
     }
 
     private static VulnerabilityPolicyRating convert(VulnPolicyRating apiRating) {
@@ -569,9 +517,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
         rating.setMethod(convert(apiRating.getMethod()));
         rating.setSeverity(convert(apiRating.getSeverity()));
         rating.setVector(apiRating.getVector());
-        rating.setScore(apiRating.getScore() != null
-                ? apiRating.getScore().doubleValue()
-                : null);
+        rating.setScore(apiRating.getScore() != null ? apiRating.getScore().doubleValue() : null);
         return rating;
     }
 
@@ -611,7 +557,8 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
         };
     }
 
-    private static VulnPolicyAnalysis.JustificationEnum convert(VulnerabilityPolicyAnalysis.Justification justification) {
+    private static VulnPolicyAnalysis.JustificationEnum convert(
+            VulnerabilityPolicyAnalysis.Justification justification) {
         return switch (justification) {
             case CODE_NOT_PRESENT -> VulnPolicyAnalysis.JustificationEnum.CODE_NOT_PRESENT;
             case CODE_NOT_REACHABLE -> VulnPolicyAnalysis.JustificationEnum.CODE_NOT_REACHABLE;
@@ -622,11 +569,12 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
             case PROTECTED_AT_RUNTIME -> VulnPolicyAnalysis.JustificationEnum.PROTECTED_AT_RUNTIME;
             case PROTECTED_AT_PERIMETER -> VulnPolicyAnalysis.JustificationEnum.PROTECTED_AT_PERIMETER;
             case PROTECTED_BY_MITIGATING_CONTROL ->
-                    VulnPolicyAnalysis.JustificationEnum.PROTECTED_BY_MITIGATING_CONTROL;
+                VulnPolicyAnalysis.JustificationEnum.PROTECTED_BY_MITIGATING_CONTROL;
         };
     }
 
-    private static VulnerabilityPolicyAnalysis.Justification convert(VulnPolicyAnalysis.JustificationEnum apiJustification) {
+    private static VulnerabilityPolicyAnalysis.Justification convert(
+            VulnPolicyAnalysis.JustificationEnum apiJustification) {
         return switch (apiJustification) {
             case CODE_NOT_PRESENT -> VulnerabilityPolicyAnalysis.Justification.CODE_NOT_PRESENT;
             case CODE_NOT_REACHABLE -> VulnerabilityPolicyAnalysis.Justification.CODE_NOT_REACHABLE;
@@ -637,7 +585,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
             case PROTECTED_AT_RUNTIME -> VulnerabilityPolicyAnalysis.Justification.PROTECTED_AT_RUNTIME;
             case PROTECTED_AT_PERIMETER -> VulnerabilityPolicyAnalysis.Justification.PROTECTED_AT_PERIMETER;
             case PROTECTED_BY_MITIGATING_CONTROL ->
-                    VulnerabilityPolicyAnalysis.Justification.PROTECTED_BY_MITIGATING_CONTROL;
+                VulnerabilityPolicyAnalysis.Justification.PROTECTED_BY_MITIGATING_CONTROL;
         };
     }
 
@@ -706,5 +654,4 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
 
         return ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneOffset.UTC);
     }
-
 }

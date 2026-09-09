@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LicenseGroupConditionTest extends PersistenceCapableTest {
 
     @Test
-    public void hasMatch() {
+    public void hasMatch() throws Exception {
         License license = new License();
         license.setName("Apache 2.0");
         license.setUuid(UUID.randomUUID());
@@ -46,7 +46,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                lg.getUuid().toString());
 
         qm.detach(Policy.class, policy.getId());
         qm.detach(PolicyCondition.class, condition.getId());
@@ -66,7 +70,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void noMatch() {
+    public void noMatch() throws Exception {
         License license = new License();
         license.setName("Apache 2.0");
         license.setUuid(UUID.randomUUID());
@@ -75,7 +79,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                lg.getUuid().toString());
         qm.detach(Policy.class, policy.getId());
         qm.detach(PolicyCondition.class, condition.getId());
 
@@ -94,12 +102,16 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void unknownLicenseViolateWhitelist() {
+    public void unknownLicenseViolateWhitelist() throws Exception {
         LicenseGroup lg = qm.createLicenseGroup("Test License Group");
         lg = qm.persist(lg);
         lg = qm.detach(LicenseGroup.class, lg.getId());
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS_NOT, lg.getUuid().toString());
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS_NOT,
+                lg.getUuid().toString());
         qm.detach(Policy.class, policy.getId());
         qm.detach(PolicyCondition.class, condition.getId());
 
@@ -118,7 +130,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void wrongOperator() {
+    public void wrongOperator() throws Exception {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -128,7 +140,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg.setLicenses(Collections.singletonList(license));
         lg = qm.persist(lg);
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.MATCHES, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.MATCHES,
+                lg.getUuid().toString());
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -144,7 +160,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
     }
 
     @Test
-    void shouldMatchLicenseGroupByLicenseExpression() {
+    void shouldMatchLicenseGroupByLicenseExpression() throws Exception {
         final var mit = new License();
         mit.setName("MIT License");
         mit.setLicenseId("MIT");
@@ -155,7 +171,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                lg.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -172,7 +192,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
     }
 
     @Test
-    void shouldMatchLicenseGroupByLicenseName() {
+    void shouldMatchLicenseGroupByLicenseName() throws Exception {
         final var mit = new License();
         mit.setName("MIT License");
         mit.setLicenseId("MIT");
@@ -183,7 +203,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                lg.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -200,7 +224,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
     }
 
     @Test
-    void shouldNotViolateIsNotWhenOrExpressionPermitsGroupMember() {
+    void shouldNotViolateIsNotWhenOrExpressionPermitsGroupMember() throws Exception {
         final var mit = new License();
         mit.setName("MIT License");
         mit.setLicenseId("MIT");
@@ -211,7 +235,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS_NOT, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS_NOT,
+                lg.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -228,7 +256,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
     }
 
     @Test
-    void shouldViolateIsWhenAndExpressionContainsGroupMember() {
+    void shouldViolateIsWhenAndExpressionContainsGroupMember() throws Exception {
         final var gpl = new License();
         gpl.setName("GNU General Public License v2.0");
         gpl.setLicenseId("GPL-2.0");
@@ -239,7 +267,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                lg.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -256,14 +288,18 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void licenseGroupDoesNotExist() {
+    public void licenseGroupDoesNotExist() throws Exception {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
         license.setUuid(UUID.randomUUID());
         license = qm.persist(license);
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, UUID.randomUUID().toString());
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                UUID.randomUUID().toString());
         qm.detach(Policy.class, policy.getId());
         qm.detach(PolicyCondition.class, condition.getId());
         final var project = new Project();

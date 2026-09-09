@@ -93,15 +93,14 @@ public final class CelPolicyProjectRowMapper implements RowMapper<Project> {
 
         final var toolsBuilder = Tools.newBuilder();
         if (modelTools.components() != null) {
-            modelTools.components().stream()
-                    .map(PolicyProtoMapper::mapToProto)
-                    .forEach(toolsBuilder::addComponents);
+            modelTools.components().stream().map(PolicyProtoMapper::mapToProto).forEach(toolsBuilder::addComponents);
         }
 
         return toolsBuilder.build();
     }
 
-    private static List<Project.Property> maybeConvertProperties(final ResultSet rs, final String columnName) throws SQLException {
+    private static List<Project.Property> maybeConvertProperties(final ResultSet rs, final String columnName)
+            throws SQLException {
         final String jsonString = rs.getString(columnName);
         if (isBlank(jsonString)) {
             return Collections.emptyList();
@@ -131,5 +130,4 @@ public final class CelPolicyProjectRowMapper implements RowMapper<Project> {
         }
         return properties;
     }
-
 }

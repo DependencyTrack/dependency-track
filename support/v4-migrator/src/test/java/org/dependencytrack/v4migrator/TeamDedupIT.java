@@ -66,9 +66,12 @@ class TeamDedupIT {
     void collapsesDuplicateTeamsByName() throws Exception {
         source.jdbi().useHandle(h -> {
             // Two TEAMs share NAME 'Engineering'; canonical = ID 1 (MIN(ID)).
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '11111111-1111-1111-1111-111111111111')");
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (5, 'Engineering', '55555555-5555-5555-5555-555555555555')");
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (7, 'Security',    '77777777-7777-7777-7777-777777777777')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '11111111-1111-1111-1111-111111111111')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (5, 'Engineering', '55555555-5555-5555-5555-555555555555')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (7, 'Security',    '77777777-7777-7777-7777-777777777777')");
 
             // Two managed users; one belongs to canonical TEAM 1, the other to the
             // non-canonical TEAM 5 (which must be rewired to 1).
@@ -94,26 +97,24 @@ class TeamDedupIT {
         runPipeline();
 
         // v5 TEAM: canonical IDs only (1, 7).
-        final List<Map<String, Object>> teams = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT \"ID\", \"NAME\" FROM \"TEAM\" ORDER BY \"ID\"").mapToMap().list());
-        assertThat(teams).extracting("id", "name")
-            .containsExactly(tuple(1L, "Engineering"), tuple(7L, "Security"));
+        final List<Map<String, Object>> teams = target.jdbi()
+                .withHandle(h -> h.createQuery("SELECT \"ID\", \"NAME\" FROM \"TEAM\" ORDER BY \"ID\"")
+                        .mapToMap()
+                        .list());
+        assertThat(teams).extracting("id", "name").containsExactly(tuple(1L, "Engineering"), tuple(7L, "Security"));
 
         // USERS_TEAMS: alice → 1, bob → 1 (rewired from 5), bob → 7. ON CONFLICT DO NOTHING
         // collapses any redundant (USER_ID, TEAM_ID) pairs.
-        final List<Map<String, Object>> userTeams = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> userTeams =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT u."USERNAME", ut."TEAM_ID"
                       FROM "USERS_TEAMS" ut
                       JOIN "USER" u ON u."ID" = ut."USER_ID"
                      ORDER BY u."USERNAME", ut."TEAM_ID"
                     """).mapToMap().list());
-        assertThat(userTeams).extracting("username", "team_id")
-            .containsExactly(
-                tuple("alice", 1L),
-                tuple("bob",   1L),
-                tuple("bob",   7L)
-            );
+        assertThat(userTeams)
+                .extracting("username", "team_id")
+                .containsExactly(tuple("alice", 1L), tuple("bob", 1L), tuple("bob", 7L));
     }
 
     private void runPipeline() throws Exception {

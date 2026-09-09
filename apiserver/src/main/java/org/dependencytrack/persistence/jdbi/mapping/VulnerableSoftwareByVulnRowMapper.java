@@ -31,10 +31,10 @@ public class VulnerableSoftwareByVulnRowMapper implements RowMapper<Vulnerabilit
     private final VulnerableSoftwareRowMapper vsMapper = new VulnerableSoftwareRowMapper();
 
     @Override
-    public VulnerabilityDao.VulnerableSoftwareByVuln map(final ResultSet rs, final StatementContext ctx) throws SQLException {
+    public VulnerabilityDao.VulnerableSoftwareByVuln map(final ResultSet rs, final StatementContext ctx)
+            throws SQLException {
         final VulnerableSoftware vs = vsMapper.map(rs, ctx);
         final UUID uuid = rs.getObject("vulnUuid", UUID.class);
         return new VulnerabilityDao.VulnerableSoftwareByVuln(uuid, vs);
     }
 }
-

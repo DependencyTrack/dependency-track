@@ -110,12 +110,12 @@ public final class MemoryFileStorage implements FileStorage {
     private static String resolveFileName(FileMetadata fileMetadata) {
         final URI locationUri = URI.create(fileMetadata.getLocation());
         if (!MemoryFileStorageProvider.NAME.equals(locationUri.getScheme())) {
-            throw new IllegalArgumentException("%s: Unexpected scheme %s, expected %s".formatted(
-                    locationUri, locationUri.getScheme(), MemoryFileStorageProvider.NAME));
+            throw new IllegalArgumentException("%s: Unexpected scheme %s, expected %s"
+                    .formatted(locationUri, locationUri.getScheme(), MemoryFileStorageProvider.NAME));
         }
         if (locationUri.getHost() != null) {
-            throw new IllegalArgumentException(
-                    "%s: Host portion is not allowed for scheme %s".formatted(locationUri, MemoryFileStorageProvider.NAME));
+            throw new IllegalArgumentException("%s: Host portion is not allowed for scheme %s"
+                    .formatted(locationUri, MemoryFileStorageProvider.NAME));
         }
         if (locationUri.getPath() == null) {
             throw new IllegalArgumentException(
@@ -126,5 +126,4 @@ public final class MemoryFileStorage implements FileStorage {
         // Remove it to prevent the path from erroneously be interpreted as absolute.
         return normalizeFileName(locationUri.getPath().replaceFirst("^/", ""));
     }
-
 }

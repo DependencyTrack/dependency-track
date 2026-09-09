@@ -111,8 +111,8 @@ class PolicyViolationIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "COMPONENT_ID", "POLICYCONDITION_ID", "PROJECT_ID",
                            "TEXT", "TYPE", "UUID"
                       FROM "POLICYVIOLATION"
@@ -120,13 +120,13 @@ class PolicyViolationIT {
                     """).mapToMap().list());
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0))
-            .containsEntry("id", 2L)
-            .containsEntry("component_id", 10L)
-            .containsEntry("policycondition_id", 500L)
-            .containsEntry("project_id", 1L)
-            .containsEntry("text", "newer")
-            .containsEntry("type", "LICENSE")
-            .containsEntry("uuid", newerUuid);
+                .containsEntry("id", 2L)
+                .containsEntry("component_id", 10L)
+                .containsEntry("policycondition_id", 500L)
+                .containsEntry("project_id", 1L)
+                .containsEntry("text", "newer")
+                .containsEntry("type", "LICENSE")
+                .containsEntry("uuid", newerUuid);
     }
 
     private void runPipeline() throws Exception {

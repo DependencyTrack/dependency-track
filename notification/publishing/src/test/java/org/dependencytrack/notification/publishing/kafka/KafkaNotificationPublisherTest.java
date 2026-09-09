@@ -32,7 +32,6 @@ import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.Scope;
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherTest;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -57,6 +56,8 @@ class KafkaNotificationPublisherTest extends AbstractNotificationPublisherTest {
     @Container
     private static final KafkaContainer kafkaContainer = new KafkaContainer("apache/kafka:4.1.1");
 
+    private String topicName;
+
     @Override
     protected NotificationPublisherFactory createPublisherFactory() {
         return new KafkaNotificationPublisherFactory();
@@ -77,22 +78,22 @@ class KafkaNotificationPublisherTest extends AbstractNotificationPublisherTest {
     @BeforeEach
     @Override
     protected void beforeEach() throws Exception {
-        try (final var adminClient = AdminClient.create(Map.of(
-                BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers()))) {
-            adminClient.createTopics(List.of(new NewTopic("dependencytrack-notifications", 1, (short) 1))).all().get();
+        topicName = "dependencytrack-notifications-" + UUID.randomUUID();
+
+        try (final var adminClient =
+                AdminClient.create(Map.of(BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers()))) {
+            adminClient
+                    .createTopics(List.of(new NewTopic(topicName, 1, (short) 1)))
+                    .all()
+                    .get();
         }
 
         super.beforeEach();
     }
 
-    @AfterEach
-    protected void afterEach() {
-        try (final var adminClient = AdminClient.create(Map.of(
-                BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers()))) {
-            adminClient.deleteTopics(List.of("dependencytrack-notifications"));
-        }
-
-        super.afterEach();
+    @Override
+    protected void customizeRuleConfig(RuntimeConfig ruleConfig) {
+        ((KafkaNotificationPublisherRuleConfigV1) ruleConfig).setTopicName(topicName);
     }
 
     @Override
@@ -111,7 +112,8 @@ class KafkaNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 assertThat(record.key()).isNull();
             }
         }
-        assertThat(record.headers()).containsExactly(new RecordHeader("content-type", "application/protobuf".getBytes()));
+        assertThat(record.headers())
+                .containsExactly(new RecordHeader("content-type", "application/protobuf".getBytes()));
         assertThat(Notification.parseFrom(record.value())).isEqualTo(notification);
     }
 
@@ -122,7 +124,7 @@ class KafkaNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 Map.entry(AUTO_OFFSET_RESET_CONFIG, "earliest"),
                 Map.entry(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName()),
                 Map.entry(VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName())))) {
-            consumer.subscribe(List.of("dependencytrack-notifications"));
+            consumer.subscribe(List.of(topicName));
 
             final ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofSeconds(1));
             assertThat(records).hasSize(1);
@@ -130,5 +132,4 @@ class KafkaNotificationPublisherTest extends AbstractNotificationPublisherTest {
             return records.iterator().next();
         }
     }
-
 }

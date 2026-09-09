@@ -28,8 +28,7 @@ import picocli.CommandLine.Option;
 @Command(name = "load", description = "INSERT...SELECT staging.tgt_* into the v5 schema.")
 public final class LoadCommand extends AbstractMigratorCommand {
 
-    @Option(names = "--drop-staging",
-        description = "Drop the staging schema after a successful load.")
+    @Option(names = "--drop-staging", description = "Drop the staging schema after a successful load.")
     boolean dropStaging;
 
     @Override
@@ -43,7 +42,8 @@ public final class LoadCommand extends AbstractMigratorCommand {
         System.out.println("  Phase:  load");
         System.out.println("  Staging schema: " + global.stagingSchema);
         System.out.println("  Drop staging after: " + dropStaging);
-        System.out.println("  Tables to load (FK-respecting order, " + TableRegistry.loaded().size() + "):");
+        System.out.println("  Tables to load (FK-respecting order, "
+                + TableRegistry.loaded().size() + "):");
         TableRegistry.loaded().forEach(t -> System.out.println("    - " + t.name()));
     }
 }

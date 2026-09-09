@@ -20,7 +20,4 @@ package org.dependencytrack.dex.engine.api;
 
 import org.dependencytrack.dex.proto.event.v1.WorkflowEvent;
 
-public record WorkflowRunHistoryEntry(
-        int sequenceNumber,
-        WorkflowEvent event) {
-}
+public record WorkflowRunHistoryEntry(int sequenceNumber, WorkflowEvent event) {}

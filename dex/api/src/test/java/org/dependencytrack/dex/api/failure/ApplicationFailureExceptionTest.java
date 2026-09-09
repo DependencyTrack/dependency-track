@@ -38,5 +38,4 @@ class ApplicationFailureExceptionTest {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new ApplicationFailureException(null, null, Duration.of(0, ChronoUnit.SECONDS)));
     }
-
 }

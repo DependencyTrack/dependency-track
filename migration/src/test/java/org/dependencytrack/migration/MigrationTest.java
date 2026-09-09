@@ -33,10 +33,10 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 class MigrationTest {
 
     @Container
-    private final PostgreSQLContainer postgresContainer =
-            new PostgreSQLContainer(DockerImageName.parse("postgres:14-alpine"))
-                    .withCommand("postgres", "-c", "fsync=off", "-c", "full_page_writes=off")
-                    .withTmpFs(Map.of("/var/lib/postgresql/data", "rw"));
+    private final PostgreSQLContainer postgresContainer = new PostgreSQLContainer(
+                    DockerImageName.parse("postgres:14-alpine"))
+            .withCommand("postgres", "-c", "fsync=off", "-c", "full_page_writes=off")
+            .withTmpFs(Map.of("/var/lib/postgresql/data", "rw"));
 
     @Test
     void shouldExecuteMigration() {
@@ -51,5 +51,4 @@ class MigrationTest {
         // Re-running must be a no-op (idempotent).
         assertThatNoException().isThrownBy(executor::execute);
     }
-
 }

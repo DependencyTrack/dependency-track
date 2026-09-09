@@ -40,8 +40,7 @@ public final class SpdxExpressionParser {
     private static final SpdxExpressionParser INSTANCE = new SpdxExpressionParser();
     private static final Pattern TOKEN_PATTERN = Pattern.compile("[()]|[^\\s()]+");
 
-    private SpdxExpressionParser() {
-    }
+    private SpdxExpressionParser() {}
 
     public static SpdxExpressionParser getInstance() {
         return INSTANCE;
@@ -63,8 +62,7 @@ public final class SpdxExpressionParser {
 
         final SpdxExpression result = parseOrExpression(cursor);
         if (cursor.hasNext()) {
-            throw new SpdxExpressionParseException(
-                    "Unexpected token after expression: " + cursor.next());
+            throw new SpdxExpressionParseException("Unexpected token after expression: " + cursor.next());
         }
 
         return result;
@@ -161,10 +159,8 @@ public final class SpdxExpressionParser {
             // Per the SPDX spec, WITH requires a simple license ID (or id+) on
             // the left. The RHS should be an exception ID, but we intentionally
             // accept any expression to handle malformed real-world SBOMs.
-            if (!(lhs instanceof SpdxExpression.Identifier)
-                    && !(lhs instanceof SpdxExpression.OrLater)) {
-                throw new SpdxExpressionParseException(
-                        "WITH requires a license ID on the left hand side");
+            if (!(lhs instanceof SpdxExpression.Identifier) && !(lhs instanceof SpdxExpression.OrLater)) {
+                throw new SpdxExpressionParseException("WITH requires a license ID on the left hand side");
             }
             final SpdxExpression rhs = parseUnaryExpression(cursor);
             return new SpdxExpression.With(lhs, rhs);
@@ -200,8 +196,7 @@ public final class SpdxExpressionParser {
             return expr;
         }
 
-        throw new SpdxExpressionParseException(
-                "Expected license ID or '(', but got: " + token);
+        throw new SpdxExpressionParseException("Expected license ID or '(', but got: " + token);
     }
 
     private static final class TokenCursor {
@@ -239,11 +234,8 @@ public final class SpdxExpressionParser {
         private void expect(SpdxExpressionToken expected) {
             final SpdxExpressionToken token = next();
             if (!token.equals(expected)) {
-                throw new SpdxExpressionParseException(
-                        "Expected %s, but got: %s".formatted(expected, token));
+                throw new SpdxExpressionParseException("Expected %s, but got: %s".formatted(expected, token));
             }
         }
-
     }
-
 }

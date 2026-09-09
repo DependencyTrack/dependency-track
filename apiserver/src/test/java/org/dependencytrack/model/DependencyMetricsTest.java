@@ -133,4 +133,4 @@ public class DependencyMetricsTest {
         metric.setLastOccurrence(date);
         Assertions.assertEquals(date, metric.getLastOccurrence());
     }
-} 
+}

@@ -27,5 +27,4 @@ public class PayloadConversionException extends RuntimeException {
     public PayloadConversionException(final String message, final Throwable cause) {
         super(message, cause);
     }
-
 }

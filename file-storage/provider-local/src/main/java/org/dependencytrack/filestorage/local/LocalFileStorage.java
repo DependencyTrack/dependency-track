@@ -78,10 +78,12 @@ final class LocalFileStorage implements FileStorage {
         }
 
         final Path relativeFilePath = baseDirPath.relativize(filePath);
-        final URI locationUri = URI.create(
-                "%s:///%s".formatted(
+        final URI locationUri = URI.create("%s:///%s"
+                .formatted(
                         LocalFileStorageProvider.NAME,
-                        relativeFilePath.toString().replace(relativeFilePath.getFileSystem().getSeparator(), "/")));
+                        relativeFilePath
+                                .toString()
+                                .replace(relativeFilePath.getFileSystem().getSeparator(), "/")));
 
         final MessageDigest messageDigest;
         try {
@@ -91,9 +93,9 @@ final class LocalFileStorage implements FileStorage {
         }
 
         try (final var fileOutputStream = openOutputStream(filePath);
-             final var bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
-             final var digestOutputStream = new DigestOutputStream(bufferedOutputStream, messageDigest);
-             final var zstdOutputStream = new ZstdOutputStream(digestOutputStream, compressionLevel)) {
+                final var bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+                final var digestOutputStream = new DigestOutputStream(bufferedOutputStream, messageDigest);
+                final var zstdOutputStream = new ZstdOutputStream(digestOutputStream, compressionLevel)) {
             contentStream.transferTo(zstdOutputStream);
         }
 
@@ -191,12 +193,12 @@ final class LocalFileStorage implements FileStorage {
     Path resolveFilePath(FileMetadata fileMetadata) {
         final URI locationUri = URI.create(fileMetadata.getLocation());
         if (!LocalFileStorageProvider.NAME.equals(locationUri.getScheme())) {
-            throw new IllegalArgumentException("%s: Unexpected scheme %s, expected %s".formatted(
-                    locationUri, locationUri.getScheme(), LocalFileStorageProvider.NAME));
+            throw new IllegalArgumentException("%s: Unexpected scheme %s, expected %s"
+                    .formatted(locationUri, locationUri.getScheme(), LocalFileStorageProvider.NAME));
         }
         if (locationUri.getHost() != null) {
-            throw new IllegalArgumentException(
-                    "%s: Host portion is not allowed for scheme %s".formatted(locationUri, LocalFileStorageProvider.NAME));
+            throw new IllegalArgumentException("%s: Host portion is not allowed for scheme %s"
+                    .formatted(locationUri, LocalFileStorageProvider.NAME));
         }
         if (locationUri.getPath() == null || locationUri.getPath().equals("/")) {
             throw new IllegalArgumentException(
@@ -207,5 +209,4 @@ final class LocalFileStorage implements FileStorage {
         // Remove it to prevent the path from erroneously be interpreted as absolute.
         return resolveFilePath(locationUri.getPath().replaceFirst("^/", ""));
     }
-
 }

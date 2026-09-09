@@ -101,32 +101,29 @@ class ProjectDedupIT {
         runPipeline();
 
         // canonical_id_map: all three Foo/1.0 rows map to 3; Foo/2.0 maps to 10; Bar/1.0 maps to 20.
-        final List<Map<String, Object>> map = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> map =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT orig_id, canonical_id
                       FROM dt_v4_migration.project_canonical_id_map
                      ORDER BY orig_id
                     """).mapToMap().list());
-        assertThat(map).extracting("orig_id", "canonical_id").containsExactly(
-            tuple(1L, 3L),
-            tuple(2L, 3L),
-            tuple(3L, 3L),
-            tuple(10L, 10L),
-            tuple(20L, 20L)
-        );
+        assertThat(map)
+                .extracting("orig_id", "canonical_id")
+                .containsExactly(tuple(1L, 3L), tuple(2L, 3L), tuple(3L, 3L), tuple(10L, 10L), tuple(20L, 20L));
 
         // v5 PROJECT: only canonicals (3, 10, 20). IS_LATEST=TRUE on (3) only.
-        final List<Map<String, Object>> projects = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> projects =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "NAME", "VERSION", "IS_LATEST"
                       FROM "PROJECT"
                      ORDER BY "ID"
                     """).mapToMap().list());
-        assertThat(projects).extracting("id", "name", "version", "is_latest").containsExactly(
-            tuple(3L, "Foo", "1.0", true),
-            tuple(10L, "Foo", "2.0", false),
-            tuple(20L, "Bar", "1.0", false)
-        );
+        assertThat(projects)
+                .extracting("id", "name", "version", "is_latest")
+                .containsExactly(
+                        tuple(3L, "Foo", "1.0", true),
+                        tuple(10L, "Foo", "2.0", false),
+                        tuple(20L, "Bar", "1.0", false));
     }
 
     private void runPipeline() throws Exception {

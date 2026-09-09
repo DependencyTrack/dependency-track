@@ -23,10 +23,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-record CpeFilterCondition(CpeAttribute attribute, Operator operator, @Nullable String value) {
+record CpeFilterCondition(
+        CpeAttribute attribute, Operator operator, @Nullable String value) {
 
     private enum Operator {
-
         EQUALS("="),
         IS_NOT("IS NOT");
 
@@ -35,7 +35,6 @@ record CpeFilterCondition(CpeAttribute attribute, Operator operator, @Nullable S
         Operator(final String sql) {
             this.sql = sql;
         }
-
     }
 
     String toSql(String parameterName) {
@@ -100,5 +99,4 @@ record CpeFilterCondition(CpeAttribute attribute, Operator operator, @Nullable S
 
         return conditions;
     }
-
 }

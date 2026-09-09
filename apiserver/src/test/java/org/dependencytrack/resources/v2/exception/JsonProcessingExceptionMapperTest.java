@@ -20,6 +20,11 @@ package org.dependencytrack.resources.v2.exception;
 
 import alpine.server.auth.AuthenticationNotRequired;
 import com.fasterxml.jackson.core.JsonGenerationException;
+import org.dependencytrack.JerseyTestExtension;
+import org.dependencytrack.resources.v2.ResourceConfig;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -27,10 +32,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.dependencytrack.JerseyTestExtension;
-import org.dependencytrack.resources.v2.ResourceConfig;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,9 +40,7 @@ import static org.dependencytrack.resources.v2.OpenApiValidationClientResponseFi
 public class JsonProcessingExceptionMapperTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(TestResource.class));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(TestResource.class));
 
     @Test
     public void shouldReturnInternalServerErrorForServerSideJsonException() {
@@ -80,8 +79,7 @@ public class JsonProcessingExceptionMapperTest {
     @Path("/test")
     public static class TestResource {
 
-        public record TestRequest(String name) {
-        }
+        public record TestRequest(String name) {}
 
         @POST
         @Path("/")
@@ -98,7 +96,5 @@ public class JsonProcessingExceptionMapperTest {
         public Response jsonGeneration() throws Exception {
             throw new JsonGenerationException("boom");
         }
-
     }
-
 }

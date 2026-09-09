@@ -31,9 +31,8 @@ public class TagQueryManagerTest extends PersistenceCapableTest {
 
     @Test
     public void testTagIsCreated() {
-        assertThat(qm.createTag("test-tag")).satisfies(
-                tagCreated -> assertThat(tagCreated.getName()).isEqualTo("test-tag")
-        );
+        assertThat(qm.createTag("test-tag"))
+                .satisfies(tagCreated -> assertThat(tagCreated.getName()).isEqualTo("test-tag"));
     }
 
     @Test
@@ -41,9 +40,8 @@ public class TagQueryManagerTest extends PersistenceCapableTest {
         Tag tag = new Tag();
         tag.setName("test-tag");
         Tag result = qm.persist(tag);
-        assertThat(qm.getTagByName(result.getName())).satisfies(
-                tagFetched -> assertThat(tagFetched.getName()).isEqualTo("test-tag")
-        );
+        assertThat(qm.getTagByName(result.getName()))
+                .satisfies(tagFetched -> assertThat(tagFetched.getName()).isEqualTo("test-tag"));
     }
 
     @Test
@@ -61,17 +59,17 @@ public class TagQueryManagerTest extends PersistenceCapableTest {
         Tag tag2 = new Tag();
         tag2.setName("test-tag-2");
 
-        assertThat(qm.resolveTags(List.of(tag1, tag2))).satisfiesExactlyInAnyOrder(
-                tag -> assertThat(tag.getName()).isEqualTo(tag1.getName()),
-                tag -> assertThat(tag.getName()).isEqualTo(tag2.getName())
-        );
+        assertThat(qm.resolveTags(List.of(tag1, tag2)))
+                .satisfiesExactlyInAnyOrder(
+                        tag -> assertThat(tag.getName()).isEqualTo(tag1.getName()),
+                        tag -> assertThat(tag.getName()).isEqualTo(tag2.getName()));
 
         // Update name of one tag and resolve again.
         tag1.setName("test-tag-updated");
-        assertThat(qm.resolveTags(List.of(tag1, tag2))).satisfiesExactlyInAnyOrder(
-                tag -> assertThat(tag.getName()).isEqualTo(tag1.getName()),
-                tag -> assertThat(tag.getName()).isEqualTo(tag2.getName())
-        );
+        assertThat(qm.resolveTags(List.of(tag1, tag2)))
+                .satisfiesExactlyInAnyOrder(
+                        tag -> assertThat(tag.getName()).isEqualTo(tag1.getName()),
+                        tag -> assertThat(tag.getName()).isEqualTo(tag2.getName()));
     }
 
     @Test
@@ -84,9 +82,9 @@ public class TagQueryManagerTest extends PersistenceCapableTest {
         Tag tag2 = new Tag();
         tag2.setName("test-tag-2");
 
-        assertThat(qm.resolveTagsByName(List.of("test-tag-1", "test-tag-2"))).satisfiesExactlyInAnyOrder(
-                tag -> assertThat(tag.getName()).isEqualTo(tag1.getName()),
-                tag -> assertThat(tag.getName()).isEqualTo(tag2.getName())
-        );
+        assertThat(qm.resolveTagsByName(List.of("test-tag-1", "test-tag-2")))
+                .satisfiesExactlyInAnyOrder(
+                        tag -> assertThat(tag.getName()).isEqualTo(tag1.getName()),
+                        tag -> assertThat(tag.getName()).isEqualTo(tag2.getName()));
     }
 }

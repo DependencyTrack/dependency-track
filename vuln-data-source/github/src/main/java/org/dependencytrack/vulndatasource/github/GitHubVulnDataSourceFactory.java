@@ -22,8 +22,8 @@ import io.github.jeremylong.openvulnerability.client.HttpAsyncClientSupplier;
 import io.github.jeremylong.openvulnerability.client.ghsa.GitHubSecurityAdvisoryClient;
 import io.github.jeremylong.openvulnerability.client.ghsa.GitHubSecurityAdvisoryClientBuilder;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
@@ -58,6 +58,11 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
     }
 
     @Override
+    public String displayName() {
+        return "GitHub Advisories";
+    }
+
+    @Override
     public Class<? extends VulnDataSource> extensionClass() {
         return GitHubVulnDataSource.class;
     }
@@ -68,17 +73,19 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        this.kvStore = serviceRegistry.require(KeyValueStore.class);
-        this.httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(ExtensionContext context) {
+        this.configRegistry = context.configRegistry();
+        this.kvStore = context.keyValueStore();
+        this.httpClient = context.httpClient();
         this.proxySelector = httpClient.proxy().orElse(null);
     }
 
     @Override
     public boolean isDataSourceEnabled() {
         requireNonNull(configRegistry, "configRegistry must not be null");
-        return configRegistry.getRuntimeConfig(GithubVulnDataSourceConfigV1.class).isEnabled();
+        return configRegistry
+                .getRuntimeConfig(GithubVulnDataSourceConfigV1.class)
+                .isEnabled();
     }
 
     @Override
@@ -152,13 +159,13 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
                 throw new InvalidRuntimeConfigException(
                         "No authentication configured; provide an API Token or GitHub App credentials");
             }
-            if (hasApp && (config.getAppId() == null
-                    || config.getInstallationId() == null
-                    || config.getAppPrivateKey() == null)) {
+            if (hasApp
+                    && (config.getAppId() == null
+                            || config.getInstallationId() == null
+                            || config.getAppPrivateKey() == null)) {
                 throw new InvalidRuntimeConfigException(
                         "GitHub App authentication requires App ID, Installation ID and App Private Key");
             }
         });
     }
-
 }

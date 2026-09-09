@@ -44,11 +44,9 @@ class PluginManagerTest {
     @RegisterExtension
     private static final TestDatabaseExtension database = new TestDatabaseExtension();
 
-    interface UnknownExtensionPoint extends ExtensionPoint {
-    }
+    interface UnknownExtensionPoint extends ExtensionPoint {}
 
-    private final Jdbi jdbi = Jdbi
-            .create(database.jdbcUrl(), database.username(), database.password())
+    private final Jdbi jdbi = Jdbi.create(database.jdbcUrl(), database.username(), database.password())
             .installPlugin(new PostgresPlugin());
     private PluginManager pluginManager;
 
@@ -73,16 +71,14 @@ class PluginManagerTest {
 
     @Test
     void testGetLoadedPlugins() {
-        final SequencedCollection<Plugin> loadedPlugins =
-                pluginManager.getLoadedPlugins();
+        final SequencedCollection<Plugin> loadedPlugins = pluginManager.getLoadedPlugins();
         assertThat(loadedPlugins).isNotEmpty();
         assertThat(loadedPlugins).isUnmodifiable();
     }
 
     @Test
     void testGetExtensionByName() {
-        final TestExtensionPoint extension =
-                pluginManager.getExtension(TestExtensionPoint.class, "dummy");
+        final TestExtensionPoint extension = pluginManager.getExtension(TestExtensionPoint.class, "dummy");
         assertThat(extension).isNotNull();
     }
 
@@ -97,8 +93,8 @@ class PluginManagerTest {
     void testGetFactories() {
         final SequencedCollection<ExtensionFactory<TestExtensionPoint>> factories =
                 pluginManager.getFactories(TestExtensionPoint.class);
-        assertThat(factories).satisfiesExactly(factory ->
-                assertThat(factory).isExactlyInstanceOf(DummyTestExtensionFactory.class));
+        assertThat(factories)
+                .satisfiesExactly(factory -> assertThat(factory).isExactlyInstanceOf(DummyTestExtensionFactory.class));
     }
 
     @Test
@@ -109,8 +105,7 @@ class PluginManagerTest {
 
     @Test
     void testGetKVStore() {
-        final KeyValueStore kvStore =
-                pluginManager.getKVStore(TestExtensionPoint.class, "dummy");
+        final KeyValueStore kvStore = pluginManager.getKVStore(TestExtensionPoint.class, "dummy");
         assertThat(kvStore).isInstanceOf(KeyValueStoreImpl.class);
     }
 
@@ -132,5 +127,4 @@ class PluginManagerTest {
                 .isThrownBy(() -> pluginManager.loadPlugins(List.of(new DummyPlugin())))
                 .withMessage("Plugins were already loaded; Unload them first");
     }
-
 }

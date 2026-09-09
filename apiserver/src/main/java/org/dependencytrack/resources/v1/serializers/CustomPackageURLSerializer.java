@@ -48,5 +48,4 @@ public class CustomPackageURLSerializer extends StdSerializer<PackageURL> {
             throws IOException, JsonProcessingException {
         gen.writeString(purl.canonicalize());
     }
-
 }

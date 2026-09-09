@@ -25,6 +25,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
+
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -32,7 +33,8 @@ import java.util.Set;
  * @since 5.0.0
  */
 @Provider
-public final class ConstraintViolationExceptionMapper extends ProblemDetailsExceptionMapper<ConstraintViolationException, InvalidRequestProblemDetails> {
+public final class ConstraintViolationExceptionMapper
+        extends ProblemDetailsExceptionMapper<ConstraintViolationException, InvalidRequestProblemDetails> {
 
     @Override
     public InvalidRequestProblemDetails map(final ConstraintViolationException exception) {
@@ -41,14 +43,14 @@ public final class ConstraintViolationExceptionMapper extends ProblemDetailsExce
         final var errors = new ArrayList<ConstraintViolationError>(violations.size());
 
         for (final ConstraintViolation<?> violation : violations) {
-            errors.add(
-                    ConstraintViolationError.builder()
-                            .path(violation.getPropertyPath().toString())
-                            .value(violation.getInvalidValue() != null
+            errors.add(ConstraintViolationError.builder()
+                    .path(violation.getPropertyPath().toString())
+                    .value(
+                            violation.getInvalidValue() != null
                                     ? violation.getInvalidValue().toString()
                                     : null)
-                            .message(violation.getMessage())
-                            .build());
+                    .message(violation.getMessage())
+                    .build());
         }
 
         return InvalidRequestProblemDetails.builder()
@@ -58,5 +60,4 @@ public final class ConstraintViolationExceptionMapper extends ProblemDetailsExce
                 .errors(errors)
                 .build();
     }
-
 }

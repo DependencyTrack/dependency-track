@@ -61,10 +61,7 @@ public @interface DefineApiProjectAclCondition {
 
         @Override
         public SqlStatementCustomizer createForMethod(
-                final Annotation annotation,
-                final Class<?> sqlObjectType,
-                final Method method
-        ) {
+                final Annotation annotation, final Class<?> sqlObjectType, final Method method) {
             return statement -> {
                 if (!(annotation instanceof final DefineApiProjectAclCondition defineAnnotation)) {
                     return;
@@ -75,7 +72,8 @@ public @interface DefineApiProjectAclCondition {
                     throw new IllegalArgumentException("name must not be blank");
                 }
 
-                final String projectIdColumn = defineAnnotation.projectIdColumn().trim();
+                final String projectIdColumn =
+                        defineAnnotation.projectIdColumn().trim();
                 if (projectIdColumn.isEmpty()) {
                     throw new IllegalArgumentException("project id column must not be blank");
                 }
@@ -83,7 +81,6 @@ public @interface DefineApiProjectAclCondition {
                 statement.addCustomizer(new StatementCustomizer(attributeName, projectIdColumn));
             };
         }
-
     }
 
     final class StatementCustomizer implements org.jdbi.v3.core.statement.StatementCustomizer {
@@ -112,12 +109,16 @@ public @interface DefineApiProjectAclCondition {
                 throw new IllegalArgumentException("project id column must be different from default column name");
             }
 
-            if (ctx.getBinding().findForName(PARAMETER_PROJECT_ACL_API_KEY_ID, ctx).isPresent()) {
+            if (ctx.getBinding()
+                    .findForName(PARAMETER_PROJECT_ACL_API_KEY_ID, ctx)
+                    .isPresent()) {
                 // The existing condition has defined an API key ID for the ACL check already,
                 // so it's not a trivial TRUE or FALSE. Re-use that binding by defining
                 // a new condition, using the chosen project table alias.
                 ctx.define(attributeName, TEMPLATE_API_KEY_PROJECT_ACL_CONDITION.formatted(projectIdColumn));
-            } else if (ctx.getBinding().findForName(PARAMETER_PROJECT_ACL_USER_ID, ctx).isPresent()) {
+            } else if (ctx.getBinding()
+                    .findForName(PARAMETER_PROJECT_ACL_USER_ID, ctx)
+                    .isPresent()) {
                 // The existing condition has defined a user ID for the ACL check already,
                 // so it's not a trivial TRUE or FALSE. Re-use that binding by defining
                 // a new condition, using the chosen project table alias.
@@ -127,7 +128,5 @@ public @interface DefineApiProjectAclCondition {
                 ctx.define(attributeName, aclCondition);
             }
         }
-
     }
-
 }

@@ -69,16 +69,14 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
-        final String baseUrl = join(repository.url(),
-                Stream.concat(
-                        Stream.of(purl.getNamespace().split("\\.")),
-                        Stream.of(purl.getName())
-                ).toArray(String[]::new));
+        final String baseUrl = join(
+                repository.url(),
+                Stream.concat(Stream.of(purl.getNamespace().split("\\.")), Stream.of(purl.getName()))
+                        .toArray(String[]::new));
 
         final Instant resolvedAt = Instant.now();
 
@@ -93,9 +91,7 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
         // Prior is only trustworthy for stable versions of the same PURL.
         // Snapshot versions are mutable, so artifact metadata can change.
         final PackageArtifactMetadata usablePrior =
-                (prior != null && purl.getVersion() != null && !isSnapshotVersion(purl.getVersion()))
-                        ? prior
-                        : null;
+                (prior != null && purl.getVersion() != null && !isSnapshotVersion(purl.getVersion())) ? prior : null;
         final Instant priorPublishedAt = usablePrior != null ? usablePrior.publishedAt() : null;
         final boolean priorMatchesLatest =
                 usablePrior != null && purl.getVersion().equals(latestVersion);
@@ -126,12 +122,8 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
             throw new InterruptedException();
         }
 
-        final String priorSha1 = usablePrior != null
-                ? usablePrior.hashes().get(HashAlgorithm.SHA1)
-                : null;
-        final String sha1 = priorSha1 == null
-                ? fetchSha1Hash(artifactUrl, repository)
-                : priorSha1;
+        final String priorSha1 = usablePrior != null ? usablePrior.hashes().get(HashAlgorithm.SHA1) : null;
+        final String sha1 = priorSha1 == null ? fetchSha1Hash(artifactUrl, repository) : priorSha1;
         var hashes = new EnumMap<HashAlgorithm, String>(HashAlgorithm.class);
         if (sha1 != null) {
             hashes.put(HashAlgorithm.SHA1, sha1);
@@ -146,14 +138,11 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
                         : null);
     }
 
-    private @Nullable String resolveLatestVersion(
-            String baseUrl,
-            PackageRepository repository)
+    private @Nullable String resolveLatestVersion(String baseUrl, PackageRepository repository)
             throws InterruptedException {
         final URI uri = URI.create(UrlUtils.join(baseUrl, "maven-metadata.xml"));
 
-        final byte[] xmlBytes = cachingHttpClient.get(
-                newRequestBuilder(uri, repository, "GET"), repository);
+        final byte[] xmlBytes = cachingHttpClient.get(newRequestBuilder(uri, repository, "GET"), repository);
         if (xmlBytes == null) {
             return null;
         }
@@ -220,13 +209,11 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
                 return;
             }
 
-            if (parsed.isStable()
-                    && (highestStableVersion == null || parsed.compareTo(highestStableVersion) > 0)) {
+            if (parsed.isStable() && (highestStableVersion == null || parsed.compareTo(highestStableVersion) > 0)) {
                 highestStableRaw = normalized;
                 highestStableVersion = parsed;
             }
         }
-
     }
 
     private static @Nullable String firstMatch(String input, Pattern pattern) {
@@ -239,9 +226,8 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
         return !match.isEmpty() ? match : null;
     }
 
-    private @Nullable Instant resolvePublishedAt(
-            String artifactUrl,
-            PackageRepository repository) throws InterruptedException {
+    private @Nullable Instant resolvePublishedAt(String artifactUrl, PackageRepository repository)
+            throws InterruptedException {
         // NB: The Last-Modified timestamp is not suuuuuper reliable
         // because artifacts can technically be modified after they've
         // first been published. Also, repository proxies can have different
@@ -262,12 +248,10 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
                 .orElse(null);
     }
 
-    private @Nullable String fetchSha1Hash(
-            String artifactUrl,
-            PackageRepository repository) throws InterruptedException {
+    private @Nullable String fetchSha1Hash(String artifactUrl, PackageRepository repository)
+            throws InterruptedException {
         final byte[] body = cachingHttpClient.get(
-                newRequestBuilder(URI.create(artifactUrl + ".sha1"), repository, "GET"),
-                repository);
+                newRequestBuilder(URI.create(artifactUrl + ".sha1"), repository, "GET"), repository);
         if (body == null) {
             LOGGER.debug("No SHA-1 hash file found");
             return null;
@@ -305,8 +289,8 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
         final String authHeaderValue;
         if (repository.username() != null) {
             final String credentials = repository.username() + ":" + repository.password();
-            authHeaderValue = "Basic " + Base64.getEncoder().encodeToString(
-                    credentials.getBytes(StandardCharsets.UTF_8));
+            authHeaderValue =
+                    "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         } else {
             authHeaderValue = "Bearer " + repository.password();
         }
@@ -314,17 +298,11 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
         builder.header("Authorization", authHeaderValue);
     }
 
-    private static String formatArtifactFileName(
-            PackageURL purl,
-            @Nullable String versionOverride) {
+    private static String formatArtifactFileName(PackageURL purl, @Nullable String versionOverride) {
         final Map<String, String> qualifiers = purl.getQualifiers();
 
-        final String extension = qualifiers != null
-                ? qualifiers.getOrDefault("type", "jar")
-                : "jar";
-        final String classifier = qualifiers != null
-                ? qualifiers.get("classifier")
-                : null;
+        final String extension = qualifiers != null ? qualifiers.getOrDefault("type", "jar") : "jar";
+        final String classifier = qualifiers != null ? qualifiers.get("classifier") : null;
 
         final var sb = new StringBuilder()
                 .append(purl.getName())
@@ -343,11 +321,11 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
 
     private static @Nullable Instant parseHttpDate(String value) {
         try {
-            return ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant();
+            return ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME)
+                    .toInstant();
         } catch (DateTimeParseException e) {
             LOGGER.debug("Failed to parse Last-Modified header: {}", value, e);
             return null;
         }
     }
-
 }

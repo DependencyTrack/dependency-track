@@ -23,12 +23,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record Finding(Component component, UUID project, Vulnerability vulnerability, Attribution attribution,
-                      Analysis analysis) {
+public record Finding(
+        Component component, UUID project, Vulnerability vulnerability, Attribution attribution, Analysis analysis) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Component(UUID uuid, String name, String version) {
-    }
+    public record Component(UUID uuid, String name, String version) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Vulnerability(
@@ -39,16 +38,12 @@ public record Finding(Component component, UUID project, Vulnerability vulnerabi
             Double owaspBusinessImpactScore,
             Double owaspLikelihoodScore,
             Double owaspTechnicalImpactScore,
-            String owaspRRVector) {
-    }
+            String owaspRRVector) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Attribution(String analyzerIdentity, String attributedOn, String alternateIdentifier,
-                              String referenceUrl) {
-    }
+    public record Attribution(
+            String analyzerIdentity, String attributedOn, String alternateIdentifier, String referenceUrl) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Analysis(String state, Boolean isSuppressed) {
-    }
-
+    public record Analysis(String state, Boolean isSuppressed) {}
 }

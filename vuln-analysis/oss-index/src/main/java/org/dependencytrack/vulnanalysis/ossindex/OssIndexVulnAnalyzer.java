@@ -29,6 +29,7 @@ import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.cache.api.Cache;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -69,9 +70,20 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
     private static final int REQUEST_BATCH_SIZE = 128;
     private static final int CACHE_BATCH_SIZE = 500;
     private static final Set<String> SUPPORTED_PURL_TYPES = Set.of(
-            "cargo", "cocoapods", "composer", "conan", "conda",
-            "cran", "gem", "golang", "maven", "npm", "nuget",
-            "pypi", "rpm", "swift");
+            "cargo",
+            "cocoapods",
+            "composer",
+            "conan",
+            "conda",
+            "cran",
+            "gem",
+            "golang",
+            "maven",
+            "npm",
+            "nuget",
+            "pypi",
+            "rpm",
+            "swift");
 
     private final Cache resultsCache;
     private final HttpClient httpClient;
@@ -93,8 +105,8 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
         this.objectMapper = objectMapper;
         this.apiUrl = apiUrl;
         if (username != null && apiToken != null) {
-            final String basicAuthCredentials = Base64.getEncoder().encodeToString(
-                    "%s:%s".formatted(username, apiToken).getBytes(StandardCharsets.UTF_8));
+            final String basicAuthCredentials = Base64.getEncoder()
+                    .encodeToString("%s:%s".formatted(username, apiToken).getBytes(StandardCharsets.UTF_8));
             this.authHeaderValue = "Basic " + basicAuthCredentials;
         } else {
             this.authHeaderValue = "Bearer " + apiToken;
@@ -158,14 +170,20 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
             }
             if (component.getPropertiesCount() > 0
                     && component.getPropertiesList().stream()
-                    .map(Property::getName)
-                    .anyMatch("dependencytrack:internal:is-internal-component"::equalsIgnoreCase)) {
+                            .map(Property::getName)
+                            .anyMatch("dependencytrack:internal:is-internal-component"::equalsIgnoreCase)) {
                 continue;
             }
 
             try {
                 final var purl = new PackageURL(component.getPurl());
                 if (!SUPPORTED_PURL_TYPES.contains(purl.getType())) {
+                    LOGGER.debug(
+                            "Type '{}' of PURL '{}' is not supported; Skipping", purl.getType(), component.getPurl());
+                    continue;
+                }
+                if (purl.getVersion() == null) {
+                    LOGGER.debug("PURL '{}' has no version; Skipping", component.getPurl());
                     continue;
                 }
 
@@ -180,17 +198,16 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
         return bomRefsByPurl;
     }
 
-    private Map<String, List<ComponentReportVulnerability>> analyzePurls(
-            Collection<String> purls) throws InterruptedException {
+    private Map<String, List<ComponentReportVulnerability>> analyzePurls(Collection<String> purls)
+            throws InterruptedException {
         if (purls.isEmpty()) {
             return Map.of();
         }
 
         final var reportedVulnsByPurl = new HashMap<String, List<ComponentReportVulnerability>>(purls.size());
 
-        for (final var purlBatch : (Iterable<List<String>>) () -> purls.stream()
-                .gather(Gatherers.windowFixed(REQUEST_BATCH_SIZE))
-                .iterator()) {
+        for (final var purlBatch : (Iterable<List<String>>) () ->
+                purls.stream().gather(Gatherers.windowFixed(REQUEST_BATCH_SIZE)).iterator()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before all components could be analyzed");
             }
@@ -201,8 +218,8 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
         return reportedVulnsByPurl;
     }
 
-    private Map<String, List<ComponentReportVulnerability>> analyzePurlBatch(
-            Collection<String> purlBatch) throws InterruptedException {
+    private Map<String, List<ComponentReportVulnerability>> analyzePurlBatch(Collection<String> purlBatch)
+            throws InterruptedException {
         if (purlBatch.isEmpty()) {
             return Map.of();
         }
@@ -213,6 +230,7 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
         try {
             batchReports = getComponentReports(purlBatch);
         } catch (IOException e) {
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, "Failed to retrieve component report");
             throw new UncheckedIOException("Failed to retrieve component report", e);
         }
 
@@ -225,7 +243,10 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
                 try {
                     entriesToCache.put(report.coordinates(), objectMapper.writeValueAsBytes(report.vulnerabilities()));
                 } catch (IOException e) {
-                    LOGGER.warn("Failed to serialize component report for PURL '{}'; Skipping cache", report.coordinates(), e);
+                    LOGGER.warn(
+                            "Failed to serialize component report for PURL '{}'; Skipping cache",
+                            report.coordinates(),
+                            e);
                 }
             }
         }
@@ -240,7 +261,8 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
         return reportedVulnsByPurl;
     }
 
-    private List<ComponentReport> getComponentReports(Collection<String> coordinates) throws InterruptedException, IOException {
+    private List<ComponentReport> getComponentReports(Collection<String> coordinates)
+            throws InterruptedException, IOException {
         if (coordinates.isEmpty()) {
             return List.of();
         }
@@ -257,13 +279,20 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
                 .POST(BodyPublishers.ofByteArray(requestBytes))
                 .build();
 
-        final HttpResponse<InputStream> response = httpClient.send(request, BodyHandlers.ofInputStream());
+        final HttpResponse<InputStream> response;
+        try {
+            response = httpClient.send(request, BodyHandlers.ofInputStream());
+        } catch (IOException e) {
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, "OSS Index API request failed");
+            throw new UncheckedIOException("OSS Index API request failed", e);
+        }
 
         try (final InputStream bodyInputStream = response.body()) {
             if (response.statusCode() == 200) {
                 return objectMapper.readValue(bodyInputStream, COMPONENT_REPORTS_TYPE);
             }
 
+            RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
             throw new IOException("OSS Index API request failed with status " + response.statusCode());
         }
     }
@@ -286,27 +315,20 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
             }
 
             for (final var reportedVuln : reportedVulns) {
-                final Vulnerability.Builder vulnBuilder =
-                        vulnBuilderByVulnId.computeIfAbsent(
-                                reportedVuln.id(),
-                                _ -> OssIndexModelConverter.convert(reportedVuln, aliasSyncEnabled));
+                final Vulnerability.Builder vulnBuilder = vulnBuilderByVulnId.computeIfAbsent(
+                        reportedVuln.id(), _ -> OssIndexModelConverter.convert(reportedVuln, aliasSyncEnabled));
 
                 for (final String bomRef : bomRefs) {
                     vulnBuilder.addAffects(
-                            VulnerabilityAffects.newBuilder()
-                                    .setRef(bomRef)
-                                    .build());
+                            VulnerabilityAffects.newBuilder().setRef(bomRef).build());
                 }
             }
         }
 
-        return Bom
-                .newBuilder()
-                .addAllVulnerabilities(
-                        vulnBuilderByVulnId.values().stream()
-                                .map(Vulnerability.Builder::build)
-                                .toList())
+        return Bom.newBuilder()
+                .addAllVulnerabilities(vulnBuilderByVulnId.values().stream()
+                        .map(Vulnerability.Builder::build)
+                        .toList())
                 .build();
     }
-
 }

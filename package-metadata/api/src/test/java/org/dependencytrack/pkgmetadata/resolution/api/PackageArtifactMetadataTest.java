@@ -30,17 +30,15 @@ class PackageArtifactMetadataTest {
     @Test
     void shouldThrowWhenResolvedAtIsNull() {
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> new PackageArtifactMetadata(
-                        /* resolvedAt */ null, /* publishedAt */ null, Map.of()))
+                .isThrownBy(() -> new PackageArtifactMetadata(/* resolvedAt */ null, /* publishedAt */ null, Map.of()))
                 .withMessage("resolvedAt must not be null");
     }
 
     @Test
     void shouldThrowWhenHashesIsNull() {
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> new PackageArtifactMetadata(
-                        /* resolvedAt */ Instant.now(), /* publishedAt */ null, null))
+                .isThrownBy(
+                        () -> new PackageArtifactMetadata(/* resolvedAt */ Instant.now(), /* publishedAt */ null, null))
                 .withMessage("hashes must not be null");
     }
-
 }

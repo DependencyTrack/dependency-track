@@ -18,18 +18,12 @@
  */
 package org.dependencytrack.notification.publishing.email;
 
-import jakarta.mail.AuthenticationFailedException;
-import jakarta.mail.Authenticator;
-import jakarta.mail.MessagingException;
-import jakarta.mail.PasswordAuthentication;
-import jakarta.mail.Session;
-import jakarta.mail.Transport;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplate;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionTestResult;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.Testable;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
@@ -38,6 +32,13 @@ import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.mail.AuthenticationFailedException;
+import jakarta.mail.Authenticator;
+import jakarta.mail.MessagingException;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
 
 import javax.net.ssl.SSLSocketFactory;
 import java.net.InetAddress;
@@ -52,7 +53,8 @@ import static org.dependencytrack.notification.api.publishing.NotificationPublis
 /**
  * @since 5.0.0
  */
-public final class EmailNotificationPublisherFactory implements NotificationPublisherFactory, RuntimeConfigurable, Testable {
+public final class EmailNotificationPublisherFactory
+        implements NotificationPublisherFactory, RuntimeConfigurable, Testable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailNotificationPublisherFactory.class);
 
@@ -62,8 +64,7 @@ public final class EmailNotificationPublisherFactory implements NotificationPubl
     private boolean localConnectionsAllowed;
 
     EmailNotificationPublisherFactory(
-            Map<String, String> overrideMailProperties,
-            Class<? extends SSLSocketFactory> sslSocketFactoryClass) {
+            Map<String, String> overrideMailProperties, Class<? extends SSLSocketFactory> sslSocketFactoryClass) {
         this.overrideMailProperties = Map.copyOf(overrideMailProperties);
         this.sslSocketFactoryClass = sslSocketFactoryClass;
     }
@@ -78,13 +79,18 @@ public final class EmailNotificationPublisherFactory implements NotificationPubl
     }
 
     @Override
+    public String displayName() {
+        return "Email";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return EmailNotificationPublisher.class;
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        configRegistry = serviceRegistry.require(ConfigRegistry.class);
+    public void init(ExtensionContext context) {
+        configRegistry = context.configRegistry();
         localConnectionsAllowed = configRegistry
                 .getDeploymentConfig()
                 .getOptionalValue("allow-local-connections", boolean.class)
@@ -107,29 +113,25 @@ public final class EmailNotificationPublisherFactory implements NotificationPubl
                     but local connections are not allowed""");
         }
 
-        return new EmailNotificationPublisher(
-                createSession(globalConfig),
-                globalConfig.getSenderAddress());
+        return new EmailNotificationPublisher(createSession(globalConfig), globalConfig.getSenderAddress());
     }
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new EmailNotificationPublisherGlobalConfigV1(),
-                config -> {
-                    if (!config.isEnabled()) {
-                        return;
-                    }
-                    if (config.getHost() == null) {
-                        throw new InvalidRuntimeConfigException("No host provided");
-                    }
-                    if (config.getPort() == null) {
-                        throw new InvalidRuntimeConfigException("No port provided");
-                    }
-                    if (config.getSenderAddress() == null) {
-                        throw new InvalidRuntimeConfigException("No sender address provided");
-                    }
-                });
+        return RuntimeConfigSpec.of(new EmailNotificationPublisherGlobalConfigV1(), config -> {
+            if (!config.isEnabled()) {
+                return;
+            }
+            if (config.getHost() == null) {
+                throw new InvalidRuntimeConfigException("No host provided");
+            }
+            if (config.getPort() == null) {
+                throw new InvalidRuntimeConfigException("No port provided");
+            }
+            if (config.getSenderAddress() == null) {
+                throw new InvalidRuntimeConfigException("No sender address provided");
+            }
+        });
     }
 
     @Override
@@ -168,8 +170,7 @@ public final class EmailNotificationPublisherFactory implements NotificationPubl
     @Override
     public RuntimeConfigSpec ruleConfigSpec() {
         return RuntimeConfigSpec.of(
-                new EmailNotificationPublisherRuleConfigV1()
-                        .withSubjectPrefix("[Dependency-Track]"));
+                new EmailNotificationPublisherRuleConfigV1().withSubjectPrefix("[Dependency-Track]"));
     }
 
     @Override
@@ -196,9 +197,7 @@ public final class EmailNotificationPublisherFactory implements NotificationPubl
             props.put("mail.smtp.starttls.enable", true);
         }
 
-        final boolean authenticated =
-                config.getUsername() != null
-                        && config.getPassword() != null;
+        final boolean authenticated = config.getUsername() != null && config.getPassword() != null;
 
         Authenticator authenticator = null;
         if (authenticated) {
@@ -206,9 +205,7 @@ public final class EmailNotificationPublisherFactory implements NotificationPubl
             authenticator = new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(
-                            config.getUsername(),
-                            config.getPassword());
+                    return new PasswordAuthentication(config.getUsername(), config.getPassword());
                 }
             };
         }
@@ -230,5 +227,4 @@ public final class EmailNotificationPublisherFactory implements NotificationPubl
             return false;
         }
     }
-
 }

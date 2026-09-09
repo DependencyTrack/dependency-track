@@ -123,8 +123,8 @@ class FindingAttributionIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "ANALYZERIDENTITY", "COMPONENT_ID", "VULNERABILITY_ID",
                            "REFERENCE_URL", "MATCHING_PERCENTAGE", "DELETED_AT"
                       FROM "FINDINGATTRIBUTION"
@@ -132,22 +132,22 @@ class FindingAttributionIT {
                     """).mapToMap().list());
         assertThat(rows).hasSize(2);
         assertThat(rows.get(0))
-            .containsEntry("id", 2L)
-            .containsEntry("analyzeridentity", "oss-index")
-            .containsEntry("component_id", 10L)
-            .containsEntry("vulnerability_id", 100L)
-            .containsEntry("reference_url", "https://example.org/newer")
-            .containsEntry("matching_percentage", null)
-            .containsEntry("deleted_at", null);
+                .containsEntry("id", 2L)
+                .containsEntry("analyzeridentity", "oss-index")
+                .containsEntry("component_id", 10L)
+                .containsEntry("vulnerability_id", 100L)
+                .containsEntry("reference_url", "https://example.org/newer")
+                .containsEntry("matching_percentage", null)
+                .containsEntry("deleted_at", null);
         assertThat(rows.get(1))
-            .containsEntry("id", 3L)
-            .containsEntry("analyzeridentity", "snyk")
-            .containsEntry("component_id", 10L)
-            .containsEntry("vulnerability_id", 101L);
+                .containsEntry("id", 3L)
+                .containsEntry("analyzeridentity", "snyk")
+                .containsEntry("component_id", 10L)
+                .containsEntry("vulnerability_id", 101L);
 
         // v5 has no UUID column on FINDINGATTRIBUTION.
-        final List<String> columns = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<String> columns = target.jdbi()
+                .withHandle(h -> h.createQuery("""
                     SELECT column_name
                       FROM information_schema.columns
                      WHERE table_name = 'FINDINGATTRIBUTION'

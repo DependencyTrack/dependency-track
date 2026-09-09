@@ -31,20 +31,20 @@ import java.util.UUID;
 @NullMarked
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ComponentPropertyResponse(
-        @Schema(description = "Group the property belongs to")
-        @Nullable String groupName,
+        @Schema(description = "Group the property belongs to") @Nullable
+        String groupName,
 
         @Schema(description = "Name of the property", requiredMode = Schema.RequiredMode.REQUIRED)
         String propertyName,
 
-        @Schema(description = "Value of the property")
-        @Nullable String propertyValue,
+        @Schema(description = "Value of the property") @Nullable
+        String propertyValue,
 
         @Schema(description = "Type of the property", requiredMode = Schema.RequiredMode.REQUIRED)
         IConfigProperty.PropertyType propertyType,
 
-        @Schema(description = "Description of the property")
-        @Nullable String description,
+        @Schema(description = "Description of the property") @Nullable
+        String description,
 
         @Schema(description = "UUID of the property", requiredMode = Schema.RequiredMode.REQUIRED)
         UUID uuid) {
@@ -58,5 +58,4 @@ public record ComponentPropertyResponse(
                 property.getDescription(),
                 property.getUuid());
     }
-
 }

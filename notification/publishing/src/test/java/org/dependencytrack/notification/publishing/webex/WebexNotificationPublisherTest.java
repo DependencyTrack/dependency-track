@@ -61,9 +61,7 @@ class WebexNotificationPublisherTest extends AbstractNotificationPublisherTest {
     protected void beforeEach() throws Exception {
         super.beforeEach();
 
-        WIREMOCK.stubFor(post(anyUrl())
-                .willReturn(aResponse()
-                        .withStatus(200)));
+        WIREMOCK.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(200)));
     }
 
     @Override
@@ -82,7 +80,7 @@ class WebexNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withRequestBody(equalToJson(/* language=JSON */ """
                         {
-                          "markdown": "**Bill of Materials Consumed**\\n[View Component](https://example.com/component/?uuid=)\\n**Description:** A CycloneDX BOM was consumed and will be processed"
+                          "markdown": "**Bill of Materials Consumed**\\n**Description:** A CycloneDX BOM was consumed and will be processed"
                         }
                         """)));
     }
@@ -92,7 +90,7 @@ class WebexNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withRequestBody(equalToJson(/* language=JSON */ """
                         {
-                          "markdown": "**Bill of Materials Processing Failed**\\n[View Component](https://example.com/component/?uuid=)\\n**Description:** An error occurred while processing a BOM"
+                          "markdown": "**Bill of Materials Processing Failed**\\n**Description:** An error occurred while processing a BOM"
                         }
                         """)));
     }
@@ -102,7 +100,7 @@ class WebexNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withRequestBody(equalToJson(/* language=JSON */ """
                         {
-                          "markdown": "**Bill of Materials Validation Failed**\\n[View Component](https://example.com/component/?uuid=)\\n**Description:** An error occurred while validating a BOM"
+                          "markdown": "**Bill of Materials Validation Failed**\\n**Description:** An error occurred while validating a BOM"
                         }
                         """)));
     }
@@ -126,5 +124,4 @@ class WebexNotificationPublisherTest extends AbstractNotificationPublisherTest {
                         }
                         """)));
     }
-
 }

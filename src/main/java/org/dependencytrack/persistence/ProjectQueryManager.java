@@ -52,6 +52,7 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
+import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.ServiceComponent;
@@ -126,7 +127,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (onlyRoot){
             filterBuilder.excludeChildProjects();
-            query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+            query.getFetchPlan().addGroup(Project.FetchGroup.ROOT_LIST.name());
         }
 
         if(notAssignedToTeam != null) {
@@ -153,9 +154,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
+            // Runs on the managed objects: the metrics query binds by identity, which a detached
+            // copy does not satisfy — withRootChildren carries the result over.
             for (Project project : result.getList(Project.class)) {
                 project.setMetrics(getMostRecentProjectMetrics(project));
             }
+        }
+        if (onlyRoot) {
+            withRootChildren(result);
         }
         return result;
     }
@@ -196,7 +202,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (onlyRoot) {
             filterBuilder.excludeChildProjects();
-            query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+            query.getFetchPlan().addGroup(Project.FetchGroup.ROOT_LIST.name());
         }
 
         if(notAssignedToTeam != null) {
@@ -207,7 +213,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Map<String, Object> params = filterBuilder.getParams();
 
         preprocessACLs(query, queryFilter, params, false);
-        return execute(query, params);
+        final PaginatedResult result = execute(query, params);
+        return onlyRoot ? withRootChildren(result) : result;
     }
 
     /**
@@ -308,14 +315,15 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (onlyRoot){
             filterBuilder.excludeChildProjects();
-            query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+            query.getFetchPlan().addGroup(Project.FetchGroup.ROOT_LIST.name());
         }
 
         final String queryFilter = filterBuilder.buildFilter();
         final Map<String, Object> params = filterBuilder.getParams();
 
         preprocessACLs(query, queryFilter, params, bypass);
-        return execute(query, params);
+        final PaginatedResult result = execute(query, params);
+        return onlyRoot ? withRootChildren(result) : result;
     }
 
     /**
@@ -337,7 +345,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (onlyRoot){
             filterBuilder.excludeChildProjects();
-            query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+            query.getFetchPlan().addGroup(Project.FetchGroup.ROOT_LIST.name());
         }
 
         if (filter != null) {
@@ -353,9 +361,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
+            // Runs on the managed objects: the metrics query binds by identity, which a detached
+            // copy does not satisfy — withRootChildren carries the result over.
             for (Project project : result.getList(Project.class)) {
                 project.setMetrics(getMostRecentProjectMetrics(project));
             }
+        }
+        if (onlyRoot) {
+            withRootChildren(result);
         }
         return result;
     }
@@ -379,7 +392,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (onlyRoot){
             filterBuilder.excludeChildProjects();
-            query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+            query.getFetchPlan().addGroup(Project.FetchGroup.ROOT_LIST.name());
         }
 
         final String queryFilter = filterBuilder.buildFilter();
@@ -390,10 +403,83 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
+            // Runs on the managed objects: the metrics query binds by identity, which a detached
+            // copy does not satisfy — withRootChildren carries the result over.
             for (Project project : result.getList(Project.class)) {
                 project.setMetrics(getMostRecentProjectMetrics(project));
             }
         }
+        if (onlyRoot) {
+            withRootChildren(result);
+        }
+        return result;
+    }
+
+    /**
+     * Root-only listings used to add {@link Project.FetchGroup#ALL} to the fetch plan so that
+     * {@code children} is populated for the UI's expander. That materialised every descendant
+     * Project with its default fetch group for one page of roots (80–100 s on a 2.5k-project
+     * portfolio). The UI only inspects {@code children[].active} / {@code .classifier}, so we
+     * attach lightweight stubs from one projection query instead.
+     * <p>
+     * Stubs are attached to DETACHED copies: setting a persistent field on a managed object
+     * outside a transaction would be flushed by DataNucleus.
+     */
+    private PaginatedResult withRootChildren(final PaginatedResult result) {
+        final List<Project> roots = result.getList(Project.class);
+        if (roots.isEmpty()) {
+            return result;
+        }
+
+        // metrics is transient, so detachCopy drops it — remember it per id and put it back.
+        final Map<Long, ProjectMetrics> metricsByProjectId = new HashMap<>();
+        for (final Project root : roots) {
+            if (root.getMetrics() != null) {
+                metricsByProjectId.put(root.getId(), root.getMetrics());
+            }
+        }
+
+        final FetchPlan fetchPlan = pm.getFetchPlan();
+        final Set<String> previousGroups = new HashSet<>(fetchPlan.getGroups());
+        final List<Project> detachedRoots;
+        try {
+            fetchPlan.setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+            fetchPlan.setGroups(FetchPlan.DEFAULT, Project.FetchGroup.ROOT_LIST.name());
+            detachedRoots = new ArrayList<>(pm.detachCopyAll(roots));
+        } finally {
+            fetchPlan.setGroups(previousGroups);
+        }
+        for (final Project root : detachedRoots) {
+            root.setMetrics(metricsByProjectId.get(root.getId()));
+        }
+
+        final List<Long> parentIds = detachedRoots.stream().map(Project::getId).toList();
+        final Map<Long, List<Project>> childrenByParentId = new HashMap<>();
+        final Query<Project> query = pm.newQuery(Project.class);
+        try {
+            query.setFilter(":parentIds.contains(parent.id)");
+            query.setResult("parent.id, uuid, name, version, active, isLatest, classifier");
+            query.setOrdering("name asc, version desc");
+            @SuppressWarnings("unchecked")
+            final List<Object[]> rows = (List<Object[]>) query.executeWithMap(Map.of("parentIds", parentIds));
+            for (final Object[] row : rows) {
+                final Project stub = new Project();
+                stub.setUuid((UUID) row[1]);
+                stub.setName((String) row[2]);
+                stub.setVersion((String) row[3]);
+                stub.setActive((Boolean) row[4]);
+                stub.setIsLatest((Boolean) row[5]);
+                stub.setClassifier((Classifier) row[6]);
+                childrenByParentId.computeIfAbsent((Long) row[0], k -> new ArrayList<>()).add(stub);
+            }
+        } finally {
+            query.closeAll();
+        }
+
+        for (final Project root : detachedRoots) {
+            root.setChildren(childrenByParentId.getOrDefault(root.getId(), List.of()));
+        }
+        result.setObjects(detachedRoots);
         return result;
     }
 

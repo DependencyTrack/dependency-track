@@ -132,4 +132,52 @@ class ProjectQueryManagerTest extends PersistenceCapableTest {
         }
     }
 
+    @Test
+    void getRootProjectsAttachesShallowChildrenTest() {
+        final Project root = qm.createProject("root", null, "1.0", null, null, null, true, false);
+        final Project activeChild = qm.createProject("child-active", null, "1.0", null, root, null, true, false);
+        final Project inactiveChild = qm.createProject("child-inactive", null, "1.0", null, root, null, false, false);
+        qm.createProject("grandchild", null, "1.0", null, activeChild, null, true, false);
+        final Project childless = qm.createProject("childless", null, "1.0", null, null, null, true, false);
+        // The dependency-graph CLOB is in the default fetch group; the old code hauled it in for every child.
+        activeChild.setDirectDependencies("[{\"uuid\":\"00000000-0000-0000-0000-000000000000\"}]");
+        qm.persist(activeChild);
+        final long projectCountBefore = qm.getProjects(false, false, false, null).getTotal();
+        // includeMetrics=true must still populate metrics on the (detached) root rows.
+        final ProjectMetrics rootMetrics = new ProjectMetrics();
+        rootMetrics.setProject(root);
+        rootMetrics.setVulnerabilities(3);
+        rootMetrics.setFirstOccurrence(new Date());
+        rootMetrics.setLastOccurrence(new Date());
+        qm.persist(rootMetrics);
+
+        final List<Project> roots = qm.getProjects(true, false, true, null).getList(Project.class);
+
+        Assertions.assertEquals(2, roots.size());
+        final Project rootResult = roots.stream()
+                .filter(p -> p.getUuid().equals(root.getUuid())).findFirst().orElseThrow();
+        Assertions.assertNotNull(rootResult.getChildren());
+        Assertions.assertEquals(2, rootResult.getChildren().size());
+        Assertions.assertNotNull(rootResult.getMetrics(), "metrics must survive the detach");
+        Assertions.assertEquals(3, rootResult.getMetrics().getVulnerabilities());
+
+        final Project activeChildStub = rootResult.getChildren().stream()
+                .filter(c -> c.getUuid().equals(activeChild.getUuid())).findFirst().orElseThrow();
+        Assertions.assertEquals("child-active", activeChildStub.getName());
+        Assertions.assertEquals("1.0", activeChildStub.getVersion());
+        Assertions.assertTrue(activeChildStub.isActive());
+        Assertions.assertNull(activeChildStub.getChildren(), "child stubs must not carry their own subtree");
+        Assertions.assertNull(activeChildStub.getDirectDependencies(), "child stubs must not carry the dependency-graph CLOB");
+
+        Assertions.assertTrue(rootResult.getChildren().stream()
+                .anyMatch(c -> c.getUuid().equals(inactiveChild.getUuid()) && !c.isActive()));
+
+        final Project childlessResult = roots.stream()
+                .filter(p -> p.getUuid().equals(childless.getUuid())).findFirst().orElseThrow();
+        Assertions.assertNotNull(childlessResult.getChildren(), "childless roots keep an empty array for the frontend");
+        Assertions.assertTrue(childlessResult.getChildren().isEmpty());
+
+        Assertions.assertEquals(projectCountBefore, qm.getProjects(false, false, false, null).getTotal(), "listing must not persist stub children");
+    }
+
 }

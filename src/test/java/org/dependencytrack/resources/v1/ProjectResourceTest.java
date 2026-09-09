@@ -1837,6 +1837,29 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void getRootProjectsChildrenAreShallowStubsTest() {
+        Project parent = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        Project child = qm.createProject("DEF", null, "1.0", null, parent, null, true, false);
+        qm.createProject("GHI", null, "1.0", null, child, null, true, false);
+        Response response = jersey.target(V1_PROJECT)
+                .queryParam("onlyRoot", true)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonArray children = parseJsonArray(response).getJsonObject(0).getJsonArray("children");
+        Assertions.assertEquals(1, children.size());
+        JsonObject childJson = children.getJsonObject(0);
+        Assertions.assertEquals("DEF", childJson.getString("name"));
+        Assertions.assertEquals("1.0", childJson.getString("version"));
+        Assertions.assertEquals(child.getUuid().toString(), childJson.getString("uuid"));
+        Assertions.assertTrue(childJson.getBoolean("active"));
+        Assertions.assertFalse(childJson.getBoolean("isLatest"));
+        Assertions.assertFalse(childJson.containsKey("children"), "stubs must not serialise a subtree");
+        Assertions.assertFalse(childJson.containsKey("directDependencies"), "stubs must not serialise the dependency graph");
+    }
+
+    @Test
     void getChildrenProjectsTest() {
         Project parent = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Project child = qm.createProject("DEF", null, "1.0", null, parent, null, true, false);

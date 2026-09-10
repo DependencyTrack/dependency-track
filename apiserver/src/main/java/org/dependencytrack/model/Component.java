@@ -502,7 +502,7 @@ public class Component implements Serializable {
     private transient RepositoryMetaComponent repositoryMeta;
 
     private transient boolean isNew;
-    private transient Set<String> dependencyGraph;
+    private transient Set<UUID> dependencyGraph;
     private transient boolean expandDependencyGraph;
     private transient String author;
 
@@ -1009,11 +1009,11 @@ public class Component implements Serializable {
         this.licenseCandidates = licenseCandidates;
     }
 
-    public Set<String> getDependencyGraph() {
+    public Set<UUID> getDependencyGraph() {
         return dependencyGraph;
     }
 
-    public void setDependencyGraph(Set<String> dependencyGraph) {
+    public void setDependencyGraph(Set<UUID> dependencyGraph) {
         this.dependencyGraph = dependencyGraph;
     }
 

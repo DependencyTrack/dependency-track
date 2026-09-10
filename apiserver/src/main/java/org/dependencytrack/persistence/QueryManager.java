@@ -559,10 +559,6 @@ public class QueryManager extends AlpineQueryManager {
         getComponentQueryManager().seedPackageMetadataResolution(project);
     }
 
-    public Map<String, Component> getDependencyGraphForComponents(Project project, List<Component> components) {
-        return getComponentQueryManager().getDependencyGraphForComponents(project, components);
-    }
-
     public PaginatedResult getLicenses() {
         return getLicenseQueryManager().getLicenses();
     }

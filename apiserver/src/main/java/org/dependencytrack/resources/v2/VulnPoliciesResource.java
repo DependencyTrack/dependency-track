@@ -34,6 +34,7 @@ import org.dependencytrack.api.v2.model.TotalCount;
 import org.dependencytrack.api.v2.model.TotalCountType;
 import org.dependencytrack.api.v2.model.UpdateVulnPolicyRequest;
 import org.dependencytrack.api.v2.model.VulnPolicyAnalysis;
+import org.dependencytrack.api.v2.model.VulnPolicyAnnotation;
 import org.dependencytrack.api.v2.model.VulnPolicyBundleSyncStatus;
 import org.dependencytrack.api.v2.model.VulnPolicyConditionError;
 import org.dependencytrack.api.v2.model.VulnPolicyOperationMode;
@@ -49,6 +50,7 @@ import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
 import org.dependencytrack.exception.AlreadyExistsException;
+import org.dependencytrack.model.PolicyAnnotation;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.ListVulnPoliciesRow;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyBundleRow;
@@ -469,6 +471,11 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
             if (analysis.getVendorResponse() != null) {
                 analysisBuilder.vendorResponse(convert(analysis.getVendorResponse()));
             }
+            if (analysis.getAnnotations() != null && !analysis.getAnnotations().isEmpty()) {
+                analysisBuilder.annotations(analysis.getAnnotations().stream()
+                        .map(VulnPoliciesResource::convert)
+                        .toList());
+            }
             builder.analysis(analysisBuilder.build());
         }
 
@@ -501,7 +508,24 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
         }
         result.setDetails(apiAnalysis.getDetails());
         result.setSuppress(apiAnalysis.getSuppress() != null && apiAnalysis.getSuppress());
+        if (apiAnalysis.getAnnotations() != null
+                && !apiAnalysis.getAnnotations().isEmpty()) {
+            result.setAnnotations(apiAnalysis.getAnnotations().stream()
+                    .map(VulnPoliciesResource::convert)
+                    .toList());
+        }
         return result;
+    }
+
+    private static VulnPolicyAnnotation convert(final PolicyAnnotation annotation) {
+        return VulnPolicyAnnotation.builder()
+                .key(annotation.key())
+                .value(annotation.value())
+                .build();
+    }
+
+    private static PolicyAnnotation convert(final VulnPolicyAnnotation annotation) {
+        return new PolicyAnnotation(annotation.getKey(), annotation.getValue());
     }
 
     private static List<VulnerabilityPolicyRating> convertRatings(List<VulnPolicyRating> apiRatings) {

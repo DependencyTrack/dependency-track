@@ -65,7 +65,9 @@ public final class ImportBomWorkflow implements Workflow<ImportBomArg, Void> {
                 throw e;
             }
 
-            tryDeleteBomFile(ctx, arg.getBomFileMetadata());
+            if (!arg.getRetainBomFile()) {
+                tryDeleteBomFile(ctx, arg.getBomFileMetadata());
+            }
 
             ctx.logger().info("BOM import completed");
             return null;

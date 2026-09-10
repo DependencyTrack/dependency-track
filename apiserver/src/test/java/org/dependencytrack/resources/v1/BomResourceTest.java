@@ -36,6 +36,7 @@ import net.javacrumbs.jsonunit.core.Option;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
+import org.cyclonedx.CycloneDxMediaType;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -43,6 +44,7 @@ import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
 import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
 import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
+import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.model.AnalysisResponse;
@@ -65,6 +67,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.proto.v1.BomValidationFailedSubject;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
@@ -79,6 +82,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -87,6 +91,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
@@ -110,6 +115,10 @@ import static org.apache.commons.io.IOUtils.resourceToByteArray;
 import static org.apache.commons.io.IOUtils.resourceToString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_BOM_UPLOAD_TOKEN;
+import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
@@ -120,9 +129,11 @@ import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 
 class BomResourceTest extends ResourceTest {
 
@@ -1200,6 +1211,158 @@ class BomResourceTest extends ResourceTest {
                         }
                         """);
     }
+
+    @ParameterizedTest
+    @MethodSource("originalBomRetentionParameters")
+    void uploadBomSetsOriginalRetentionFlag(
+          String configuredValue,
+          boolean expectedRetention) throws Exception {
+      initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+      if (configuredValue != null) {
+          qm.createConfigProperty(
+                  BOM_ORIGINAL_RETENTION_ENABLED.getGroupName(),
+                  BOM_ORIGINAL_RETENTION_ENABLED.getPropertyName(),
+                  configuredValue,
+                  BOM_ORIGINAL_RETENTION_ENABLED.getPropertyType(),
+                  BOM_ORIGINAL_RETENTION_ENABLED.getDescription());
+      }
+
+      final Project project = qm.createProject(
+              "Acme Example",
+              null,
+              "1.0",
+              null,
+              null,
+              null,
+              null,
+              false);
+      final String bomString = Base64.getEncoder().encodeToString(
+              resourceToByteArray("/unit/bom-1.xml"));
+      final var request = new BomSubmitRequest(
+              project.getUuid().toString(), null, null, null, false, false, true, bomString);
+
+      final Response response = jersey.target(V1_BOM)
+              .request()
+              .header(X_API_KEY, apiKey)
+              .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+
+      assertThat(response.getStatus()).isEqualTo(200);
+
+      @SuppressWarnings("unchecked")
+      final ArgumentCaptor<CreateWorkflowRunRequest<?>> captor =
+              ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+      verify(DEX_ENGINE_MOCK).createRun(captor.capture());
+
+      final CreateWorkflowRunRequest<?> workflowRequest =
+              captor.getValue();
+      final var workflowArg =
+              (ImportBomArg) workflowRequest.argument();
+
+      assertThat(workflowArg.getRetainBomFile())
+              .isEqualTo(expectedRetention);
+      assertThat(workflowRequest.concurrencyKey())
+              .isEqualTo("import-bom:" + project.getUuid());
+      assertThat(workflowRequest.labels())
+              .containsEntry(
+                      WF_LABEL_PROJECT_UUID,
+                      project.getUuid().toString())
+              .containsEntry(
+                      WF_LABEL_BOM_UPLOAD_TOKEN,
+                      workflowArg.getBomUploadToken());
+  }
+
+  private static Object[] originalBomRetentionParameters() {
+      return new Object[] {
+              new Object[] { null, false },
+              new Object[] { "false", false },
+              new Object[] { "true", true },
+              new Object[] { "invalid", false },
+      };
+  }
+
+    @ParameterizedTest
+    @MethodSource("bomMediaTypeParameters")
+    void uploadBomSetsCycloneDxMediaType(
+            String resourcePath,
+            String expectedMediaType) throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        final Project project = qm.createProject( "Acme Example", null,"1.0", null, null, null, null, false);
+        final String bomString = Base64.getEncoder().encodeToString(
+                resourceToByteArray(resourcePath));
+        final var request = new BomSubmitRequest( project.getUuid().toString(), null, null, null, false, false, true, bomString);
+
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        @SuppressWarnings("unchecked")
+        final ArgumentCaptor<CreateWorkflowRunRequest<?>> captor =
+                ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(DEX_ENGINE_MOCK).createRun(captor.capture());
+
+        final var workflowArg =
+                (ImportBomArg) captor.getValue().argument();
+
+        assertThat(workflowArg.getBomFileMetadata().getMediaType())
+                .isEqualTo(expectedMediaType);
+    }
+
+    private static Object[] bomMediaTypeParameters() {
+    return new Object[] {
+            new Object[] {
+                    "/unit/bom-1.xml",
+                    CycloneDxMediaType.APPLICATION_CYCLONEDX_XML
+            },
+            new Object[] {
+                    "/unit/cyclonedx/valid-bom-1.5.json",
+                    CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON
+            },
+        };
+    }
+
+    @Test
+    void uploadBomCleansUpFileWhenWorkflowStartFailsTest()throws Exception {
+      initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+      qm.createConfigProperty(
+              BOM_ORIGINAL_RETENTION_ENABLED.getGroupName(),
+              BOM_ORIGINAL_RETENTION_ENABLED.getPropertyName(),
+              "true",
+              BOM_ORIGINAL_RETENTION_ENABLED.getPropertyType(),
+              BOM_ORIGINAL_RETENTION_ENABLED.getDescription());
+
+      doThrow(new IllegalStateException("Workflow start failed"))
+              .when(DEX_ENGINE_MOCK)
+              .createRun(any());
+
+      final Project project = qm.createProject( "Acme Example", null, "1.0", null, null, null, null, false);
+      final String bomString = Base64.getEncoder().encodeToString( resourceToByteArray("/unit/bom-1.xml"));
+      final var request = new BomSubmitRequest( project.getUuid().toString(), null, null, null, false, false, true, bomString);
+
+      final Response response = jersey.target(V1_BOM)
+              .request()
+              .header(X_API_KEY, apiKey)
+              .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+
+      assertThat(response.getStatus()).isEqualTo(500);
+
+      @SuppressWarnings("unchecked")
+      final ArgumentCaptor<CreateWorkflowRunRequest<?>> captor =
+              ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+      verify(DEX_ENGINE_MOCK).createRun(captor.capture());
+
+      final var workflowArg =
+              (ImportBomArg) captor.getValue().argument();
+
+      assertThatThrownBy(() ->
+              fileStorage.get(workflowArg.getBomFileMetadata()))
+              .isInstanceOf(NoSuchFileException.class);
+  }
 
     @Test
     void uploadNonCycloneDxBomTest() {
@@ -2748,5 +2911,15 @@ class BomResourceTest extends ResourceTest {
                   "projectUuid": "${json-unit.any-string}"
                 }
                 """);
+        @SuppressWarnings("unchecked")
+        final ArgumentCaptor<CreateWorkflowRunRequest<?>> captor =
+                ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(DEX_ENGINE_MOCK).createRun(captor.capture());
+
+        final var workflowArg = (ImportBomArg) captor.getValue().argument();
+
+        assertThat(workflowArg.getBomFileMetadata().getMediaType())
+                .isEqualTo(CycloneDxMediaType.APPLICATION_CYCLONEDX_XML);
     }
+
 }

@@ -47,6 +47,7 @@ public enum ConfigPropertyConstants {
     VULNERABILITY_SOURCE_EPSS_ENABLED("vuln-source", "epss.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable Exploit Prediction Scoring System", ConfigPropertyAccessMode.READ_WRITE),
     VULNERABILITY_SOURCE_EPSS_FEEDS_URL("vuln-source", "epss.feeds.url", "https://epss.empiricalsecurity.com", PropertyType.URL, "A base URL pointing to the hostname and path of the EPSS feeds", ConfigPropertyAccessMode.READ_WRITE),
     ACCEPT_ARTIFACT_CYCLONEDX("artifact", "cyclonedx.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable the systems ability to accept CycloneDX uploads", ConfigPropertyAccessMode.READ_WRITE),
+    BOM_ORIGINAL_RETENTION_ENABLED("artifact", "bom.original.retention.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable original BOM documents retention", ConfigPropertyAccessMode.READ_WRITE),
     BOM_VALIDATION_MODE("artifact", "bom.validation.mode", BomValidationMode.ENABLED.name(), PropertyType.STRING, "Flag to control the BOM validation mode", ConfigPropertyAccessMode.READ_WRITE),
     BOM_VALIDATION_TAGS_INCLUSIVE("artifact", "bom.validation.tags.inclusive", "[]", PropertyType.STRING, "JSON array of tags for which BOM validation shall be performed", ConfigPropertyAccessMode.READ_WRITE),
     BOM_VALIDATION_TAGS_EXCLUSIVE("artifact", "bom.validation.tags.exclusive", "[]", PropertyType.STRING, "JSON array of tags for which BOM validation shall NOT be performed", ConfigPropertyAccessMode.READ_WRITE),

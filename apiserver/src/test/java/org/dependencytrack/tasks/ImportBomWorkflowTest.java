@@ -32,6 +32,7 @@ import org.dependencytrack.dex.testing.WorkflowTestExtension;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
+import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
@@ -53,6 +55,7 @@ import java.util.UUID;
 
 import static org.apache.commons.io.IOUtils.resourceToURL;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_BOM_UPLOAD_TOKEN;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.protoConverter;
@@ -131,19 +134,7 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         final var bomFileMetadata = storeBomFile("bom-1.xml");
-        final var bomUploadToken = UUID.randomUUID();
-        final var runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ImportBomWorkflow.class)
-                        .withLabels(Map.ofEntries(
-                                Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, bomUploadToken.toString()),
-                                Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString())))
-                        .withArgument(ImportBomArg.newBuilder()
-                                .setProjectUuid(project.getUuid().toString())
-                                .setProjectName(project.getName())
-                                .setProjectVersion(project.getVersion() != null ? project.getVersion() : "")
-                                .setBomUploadToken(bomUploadToken.toString())
-                                .setBomFileMetadata(bomFileMetadata)
-                                .build()));
+        final var runId = startWorkflow(project, bomFileMetadata, false);
 
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED, Duration.ofSeconds(60));
 
@@ -158,25 +149,57 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
 
         final List<Component> components = qm.getAllComponents(project);
         assertThat(components).hasSize(1);
+        assertThat(qm.getAllBoms(project))
+                .singleElement()
+                .extracting(Bom::getOriginalFileMetadata)
+                .isNull();
+
+        assertThatThrownBy(() -> fileStorage.get(bomFileMetadata))
+                .isInstanceOf(NoSuchFileException.class);
+    }
+
+   @Test
+   void shouldRetainFileAfterSuccessfulImport() throws Exception {
+      useJdbiTransaction(DatabaseSeedingInitTask::seedDefaultLicenses);
+
+      final Project project = qm.createProject(
+              "Acme Example",
+              null,
+              "1.0",
+              null,
+              null,
+              null,
+              null,
+              false);
+      final FileMetadata bomFileMetadata = storeBomFile("bom-1.xml")
+              .toBuilder()
+              .putAdditionalMetadata(
+                      "encryption-key-id",
+                      "test-key")
+              .build();
+
+      final var runId = startWorkflow(
+              project,
+              bomFileMetadata,
+              true);
+      workflowTest.awaitRunStatus(
+              runId,
+              WorkflowRunStatus.COMPLETED,
+              Duration.ofSeconds(60));
+
+      try (final var ignored =
+                   fileStorage.get(bomFileMetadata)) {}
+
+      final Bom bom = qm.getAllBoms(project).getFirst();
+      assertThat(bom.getOriginalFileMetadata())
+              .isEqualTo(bomFileMetadata.toByteArray());
     }
 
     @Test
     void shouldCleanUpFilesOnFailure() throws Exception {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         final var bomFileMetadata = storeBomFile("bom-invalid.json");
-        final var bomUploadToken = UUID.randomUUID();
-        final var runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ImportBomWorkflow.class)
-                        .withLabels(Map.ofEntries(
-                                Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, bomUploadToken.toString()),
-                                Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString())))
-                        .withArgument(ImportBomArg.newBuilder()
-                                .setProjectUuid(project.getUuid().toString())
-                                .setProjectName(project.getName())
-                                .setProjectVersion(project.getVersion() != null ? project.getVersion() : "")
-                                .setBomUploadToken(bomUploadToken.toString())
-                                .setBomFileMetadata(bomFileMetadata)
-                                .build()));
+        final var runId = startWorkflow(project,bomFileMetadata,true);
 
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED, Duration.ofSeconds(60));
 
@@ -190,6 +213,10 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
 
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getLastBomImport()).isNull();
+          assertThat(qm.getAllBoms(project)).isEmpty();
+
+        assertThatThrownBy(() -> fileStorage.get(bomFileMetadata))
+          .isInstanceOf(NoSuchFileException.class);
     }
 
     @Test
@@ -220,6 +247,33 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
         assertThat(project.getLastBomImport()).isNotNull();
 
         assertThat(qm.getAllComponents(project)).isEmpty();
+    }
+
+    private UUID startWorkflow(
+            Project project,
+            FileMetadata bomFileMetadata,
+            boolean retainBomFile) {
+        final var bomUploadToken = UUID.randomUUID();
+
+        return workflowTest.getEngine().createRun(
+                new CreateWorkflowRunRequest<>(ImportBomWorkflow.class)
+                        .withLabels(Map.ofEntries(
+                                Map.entry(
+                                        WF_LABEL_BOM_UPLOAD_TOKEN,
+                                        bomUploadToken.toString()),
+                                Map.entry(
+                                        WF_LABEL_PROJECT_UUID,
+                                        project.getUuid().toString())))
+                        .withArgument(ImportBomArg.newBuilder()
+                                .setProjectUuid(project.getUuid().toString())
+                                .setProjectName(project.getName())
+                                .setProjectVersion(project.getVersion() != null
+                                        ? project.getVersion()
+                                        : "")
+                                .setBomUploadToken(bomUploadToken.toString())
+                                .setBomFileMetadata(bomFileMetadata)
+                                .setRetainBomFile(retainBomFile)
+                                .build()));
     }
 
     private FileMetadata storeBomFile(final String testFileName) throws Exception {

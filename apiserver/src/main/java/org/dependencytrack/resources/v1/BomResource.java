@@ -55,6 +55,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
+import org.cyclonedx.exception.ParseException;
+import org.cyclonedx.parsers.BomParserFactory;
+import org.cyclonedx.parsers.JsonParser;
+import org.cyclonedx.parsers.XmlParser;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.dex.engine.api.DexEngine;
@@ -77,6 +81,7 @@ import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.parser.cyclonedx.InvalidBomException;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.NotificationSubjectDao;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
@@ -121,9 +126,11 @@ import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_ENABLED;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomValidationFailedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 /**
@@ -748,6 +755,12 @@ public class BomResource extends AbstractApiResource {
 
         final UUID bomUploadToken = Generators.timeBasedEpochRandomGenerator().generate();
 
+        final boolean retainBomFile = withJdbiHandle(getAlpineRequest(), handle -> handle
+            .attach(ConfigPropertyDao.class)
+            .getOptionalValue(BOM_ORIGINAL_RETENTION_ENABLED, Boolean.class)
+            .orElseGet(() -> Boolean.parseBoolean(
+                BOM_ORIGINAL_RETENTION_ENABLED.getDefaultPropertyValue())));
+
         final FileMetadata bomFileMetadata;
         try {
             // TODO: Provide mediaType to FileStorage#store. Should be any of:
@@ -757,6 +770,7 @@ public class BomResource extends AbstractApiResource {
             //  See https://cyclonedx.org/specification/overview/ -> Media Types.
             bomFileMetadata = fileStorage.store(
                     "bom-upload/%s".formatted(bomUploadToken),
+                    determineBomMediaType(bomBytes),
                     new ByteArrayInputStream(bomBytes));
         } catch (IOException e) {
             LOGGER.error("Failed to store BOM for project: {}", project.uuid(), e);
@@ -778,6 +792,7 @@ public class BomResource extends AbstractApiResource {
                                     .setProjectVersion(project.version() != null ? project.version() : "")
                                     .setBomUploadToken(bomUploadToken.toString())
                                     .setBomFileMetadata(bomFileMetadata)
+                                    .setRetainBomFile(retainBomFile)
                                     .build()));
 
             try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.uuid().toString());
@@ -798,6 +813,21 @@ public class BomResource extends AbstractApiResource {
 
         return response;
     }
+
+    private static String determineBomMediaType(byte[] bomBytes) {
+        try {
+            final var parser = BomParserFactory.createParser(bomBytes);
+            if (parser instanceof JsonParser) {
+                return CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON;
+            }
+            if (parser instanceof XmlParser) {
+                return CycloneDxMediaType.APPLICATION_CYCLONEDX_XML;
+            }
+        } catch (ParseException ignored) {
+        }
+
+      return MediaType.APPLICATION_OCTET_STREAM;
+  }
 
     static void validate(byte[] bomBytes, Project project) {
         final List<String> tagNames = project.getTags() != null

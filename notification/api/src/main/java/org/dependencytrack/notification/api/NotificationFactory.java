@@ -238,11 +238,16 @@ public final class NotificationFactory {
 
     @SuppressWarnings("deprecation")
     public static Notification createNewVulnerabilityNotification(
-            Project project, Component component, Vulnerability vulnerability, AnalysisTrigger analysisTrigger) {
+            Project project,
+            Component component,
+            Vulnerability vulnerability,
+            AnalysisTrigger analysisTrigger,
+            String analyzerIdentity) {
         requireNonNull(project, "project must not be null");
         requireNonNull(component, "component must not be null");
         requireNonNull(vulnerability, "vulnerability must not be null");
         requireNonNull(analysisTrigger, "analysisTrigger must not be null");
+        requireNonNull(analyzerIdentity, "analyzerIdentity must not be null");
 
         var title = "New Vulnerability Identified on Project: [" + project.getName();
         if (project.hasVersion()) {
@@ -258,6 +263,7 @@ public final class NotificationFactory {
                         .setComponent(component)
                         .setVulnerability(vulnerability)
                         .setAnalysisTrigger(analysisTrigger)
+                        .setAnalyzerIdentity(analyzerIdentity)
                         .setVulnerabilityAnalysisLevel(
                                 switch (analysisTrigger) {
                                     case ANALYSIS_TRIGGER_BOM_UPLOAD -> "BOM_UPLOAD_ANALYSIS";

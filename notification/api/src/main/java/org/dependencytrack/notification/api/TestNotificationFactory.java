@@ -197,7 +197,7 @@ public final class TestNotificationFactory {
 
     public static Notification createNewVulnerabilityTestNotification() {
         return createNewVulnerabilityNotification(
-                createProject(), createComponent(), createVulnerability(), ANALYSIS_TRIGGER_BOM_UPLOAD);
+                createProject(), createComponent(), createVulnerability(), ANALYSIS_TRIGGER_BOM_UPLOAD, "internal");
     }
 
     public static Notification createNewVulnerableDependencyTestNotification() {

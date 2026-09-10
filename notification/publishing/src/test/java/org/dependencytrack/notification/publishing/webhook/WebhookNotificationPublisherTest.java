@@ -277,6 +277,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
                               },
                               "vulnerabilityAnalysisLevel": "BOM_UPLOAD_ANALYSIS",
                               "analysisTrigger": "ANALYSIS_TRIGGER_BOM_UPLOAD",
+                              "analyzerIdentity": "internal",
                               "affectedProjects": [
                                 {
                                   "uuid": "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",

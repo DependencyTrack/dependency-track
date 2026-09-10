@@ -25,12 +25,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Top-level {@code meta} object from Snyk's batch packages/issues response.
+ * Top-level {@code meta} object from Snyk's packages/issues responses.
+ *
+ * <p>{@code packages} is populated by the batch POST endpoint. {@code match} and {@code package}
+ * are populated by the per-package GET endpoint.
  *
  * @since 5.1.0
  */
 record SnykIssuesMeta(
-        @Nullable List<Error> errors, @Nullable Map<String, PackageMetaEntry> packages) {
+        @Nullable List<Error> errors,
+        @Nullable Map<String, PackageMetaEntry> packages,
+        @Nullable Match match,
+        @JsonProperty("package") @Nullable PackageInfo packageInfo) {
 
     /**
      * JSON:API error object from {@code meta.errors}.

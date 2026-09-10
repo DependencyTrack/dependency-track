@@ -154,6 +154,13 @@ public class Policy implements Serializable {
     @Column(name = "INCLUDE_CHILDREN", allowsNull = "true") // New column, must allow nulls on existing data bases)
     private boolean includeChildren;
 
+    /**
+     * Apply the policy to all projects except those carrying the policy's tags.
+     */
+    @Persistent
+    @Column(name = "INVERT_TAG_MATCH", defaultValue = "false")
+    private boolean invertTagMatch = false;
+
     @Persistent
     @Column(name = "ONLY_LATEST_PROJECT_VERSION", defaultValue = "false")
     private boolean onlyLatestProjectVersion = false;
@@ -231,6 +238,14 @@ public class Policy implements Serializable {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public boolean isInvertTagMatch() {
+        return invertTagMatch;
+    }
+
+    public void setInvertTagMatch(boolean invertTagMatch) {
+        this.invertTagMatch = invertTagMatch;
     }
 
     public boolean isIncludeChildren() {

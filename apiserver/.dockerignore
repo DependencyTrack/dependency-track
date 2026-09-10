@@ -8,4 +8,5 @@ src/
 target/
 !target/*.jar
 !target/lib/*.jar
+!target/lib-internal/*.jar
 /*.md

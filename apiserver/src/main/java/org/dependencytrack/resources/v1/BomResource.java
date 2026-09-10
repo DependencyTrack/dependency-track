@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.model.ConfigProperty;
+import alpine.model.auth.Principal;
 import alpine.server.auth.PermissionRequired;
 import com.fasterxml.uuid.Generators;
 import com.github.luben.zstd.ZstdInputStream;
@@ -38,10 +39,11 @@ import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
+import org.dependencytrack.common.pagination.SortDirection;
 import org.dependencytrack.dex.engine.api.DexEngine;
-import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
+import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
-import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
+import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.model.BomValidationMode;
@@ -98,7 +100,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
@@ -975,17 +976,21 @@ public class BomResource extends AbstractApiResource {
                     String uuid) {
         final UUID token = UUID.fromString(uuid);
 
-        final boolean isProcessing;
-        if (dexEngine.existsRun(new ExistsWorkflowRunRequest(
-                WorkflowRunStatus.NON_TERMINAL_STATUSES, Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, token.toString())))) {
-            isProcessing = true;
-        } else {
-            final var runMetadata = dexEngine.getRunMetadataById(token);
-            isProcessing = runMetadata != null && !runMetadata.status().isTerminal();
-        }
+        final var page = dexEngine.listRuns(new ListWorkflowRunsRequest()
+                .withLabels(Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, token.toString()))
+                .withSortBy(ListWorkflowRunsRequest.SortBy.CREATED_AT)
+                .withSortDirection(SortDirection.DESC)
+                .withLimit(1));
+        final WorkflowRunMetadata runMetadata =
+                !page.items().isEmpty() ? page.items().getFirst() : dexEngine.getRunMetadataById(token);
 
         final var response = new IsTokenBeingProcessedResponse();
-        response.setProcessing(isProcessing);
+        if (runMetadata != null) {
+            response.setProcessing(!runMetadata.status().isTerminal());
+            response.setStatus(IsTokenBeingProcessedResponse.Status.of(runMetadata.status()));
+        } else {
+            response.setProcessing(false);
+        }
         return Response.ok(response).build();
     }
 

@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources;
 
+import alpine.model.auth.Principal;
 import alpine.server.resources.AlpineResource;
 import org.dependencytrack.api.v2.model.TotalCount;
 import org.dependencytrack.api.v2.model.TotalCountType;
@@ -35,7 +36,6 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

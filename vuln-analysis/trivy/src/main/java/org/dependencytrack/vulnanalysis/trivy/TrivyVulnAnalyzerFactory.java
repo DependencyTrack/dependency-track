@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.vulnanalysis.trivy;
 
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
@@ -54,9 +54,9 @@ final class TrivyVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConf
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(ExtensionContext context) {
+        configRegistry = context.configRegistry();
+        httpClient = context.httpClient();
     }
 
     @Override
@@ -106,9 +106,6 @@ final class TrivyVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConf
                     }
                     if (config.getApiUrl() == null) {
                         throw new InvalidRuntimeConfigException("No API URL provided");
-                    }
-                    if (config.getApiToken() == null) {
-                        throw new InvalidRuntimeConfigException("No API token provided");
                     }
                 });
     }

@@ -24,11 +24,11 @@ import alpine.persistence.Transaction.Isolation;
 import alpine.persistence.Transaction.Options;
 import alpine.persistence.Transaction.Propagation;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import javax.jdo.JDOHelper;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static alpine.persistence.Transaction.defaultOptions;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,12 +37,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TransactionTest {
 
+    @RegisterExtension
+    static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
+
     private JDOPersistenceManagerFactory pmf;
     private AlpineQueryManager qm;
 
     @BeforeEach
     public void setUp() {
-        pmf = (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(JdoProperties.unit(), "Alpine");
+        pmf = TestPersistenceManagerFactory.create(DATABASE);
         qm = new AlpineQueryManager(pmf.getPersistenceManager());
     }
 

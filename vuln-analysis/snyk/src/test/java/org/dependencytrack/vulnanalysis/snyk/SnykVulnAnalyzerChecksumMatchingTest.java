@@ -26,8 +26,7 @@ import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.memory.MemoryCacheProvider;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.junit.jupiter.api.AfterEach;
@@ -35,17 +34,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -80,15 +81,40 @@ class SnykVulnAnalyzerChecksumMatchingTest {
                         .withEnabled(true)
                         .withAliasSyncEnabled(true)
                         .withChecksumMatchingEnabled(true)
+                        .withBatchRequestsEnabled(true)
                         .withApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
                         .withOrgId("test-org-id")
                         .withApiToken("test-api-token"));
 
-        analyzerFactory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(CacheManager.class, cacheManager)
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(configRegistry)
+                .withCacheManager(cacheManager)
+                .build());
 
+        analyzer = analyzerFactory.create();
+    }
+
+    private void useAnalyzer(
+            WireMockRuntimeInfo wmRuntimeInfo, boolean checksumMatchingEnabled, boolean batchRequestsEnabled)
+            throws Exception {
+        analyzerFactory.close();
+        analyzerFactory = new SnykVulnAnalyzerFactory();
+
+        final var configRegistry = new MockConfigRegistry(
+                analyzerFactory.runtimeConfigSpec(),
+                new SnykVulnAnalyzerConfigV1()
+                        .withEnabled(true)
+                        .withAliasSyncEnabled(true)
+                        .withChecksumMatchingEnabled(checksumMatchingEnabled)
+                        .withBatchRequestsEnabled(batchRequestsEnabled)
+                        .withApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
+                        .withOrgId("test-org-id")
+                        .withApiToken("test-api-token"));
+
+        analyzerFactory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(configRegistry)
+                .withCacheManager(cacheManager)
+                .build());
         analyzer = analyzerFactory.create();
     }
 
@@ -298,14 +324,15 @@ class SnykVulnAnalyzerChecksumMatchingTest {
                         .withEnabled(true)
                         .withAliasSyncEnabled(true)
                         .withChecksumMatchingEnabled(false)
+                        .withBatchRequestsEnabled(true)
                         .withApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
                         .withOrgId("test-org-id")
                         .withApiToken("test-api-token"));
 
-        analyzerFactory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(CacheManager.class, cacheManager)
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(configRegistry)
+                .withCacheManager(cacheManager)
+                .build());
         analyzer = analyzerFactory.create();
 
         stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
@@ -484,5 +511,102 @@ class SnykVulnAnalyzerChecksumMatchingTest {
 
         assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
         verify(0, postRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void shouldAttachIssuesOnPerPackageFullMatch(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        useAnalyzer(wmRuntimeInfo, true, false);
+        stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.api+json")
+                        .withBodyFile("snyk-per-package-checksum-full-match-with-issues.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jboss-logging")
+                        .setPurl(CHECKSUM_PURL)
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr.getVulnerabilitiesCount()).isEqualTo(1);
+        assertThat(vdr.getVulnerabilities(0).getId()).isEqualTo("SNYK-JAVA-ORGJBOSSLOGGING-0000001");
+
+        final Bom cachedVdr = analyzer.analyze(bom);
+        assertThat(cachedVdr.getVulnerabilitiesCount()).isEqualTo(1);
+
+        verify(1, getRequestedFor(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues")));
+        verify(0, postRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void shouldAttachFindingsOnPerPackagePartialMatch(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        useAnalyzer(wmRuntimeInfo, true, false);
+        stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.api+json")
+                        .withBodyFile("snyk-per-package-checksum-partial-match.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("woodstox-core")
+                        .setPurl(PARTIAL_CHECKSUM_PURL)
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr.getVulnerabilitiesList()).hasSize(2);
+        assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).hasSize(2);
+
+        verify(1, getRequestedFor(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues")));
+    }
+
+    @Test
+    void shouldSkipFindingsButCachePerPackageNoneMatch(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        useAnalyzer(wmRuntimeInfo, true, false);
+        stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.api+json")
+                        .withBodyFile("snyk-per-package-checksum-none-match.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("unknown")
+                        .setPurl(NONE_CHECKSUM_PURL)
+                        .build())
+                .build();
+
+        assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
+        assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
+
+        verify(1, getRequestedFor(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues")));
+    }
+
+    @Test
+    void shouldAttachPerPackageIssuesWhenMatchMetadataIsAbsent(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        useAnalyzer(wmRuntimeInfo, true, false);
+        stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.api+json")
+                        .withBodyFile("snyk-per-package-one-issue-response.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jboss-logging")
+                        .setPurl(CHECKSUM_PURL)
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr.getVulnerabilitiesList()).isNotEmpty();
+        assertThat(vdr.getVulnerabilities(0).getId()).isEqualTo("SNYK-JAVA-COMFASTERXMLJACKSONCORE-3038426");
     }
 }

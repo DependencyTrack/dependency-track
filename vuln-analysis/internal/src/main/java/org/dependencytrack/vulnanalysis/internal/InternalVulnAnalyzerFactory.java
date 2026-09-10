@@ -19,8 +19,8 @@
 package org.dependencytrack.vulnanalysis.internal;
 
 import org.dependencytrack.common.datasource.DataSourceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.support.jdbi.mapping.PurlColumnMapper;
@@ -68,8 +68,8 @@ final class InternalVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        configRegistry = serviceRegistry.require(ConfigRegistry.class);
+    public void init(ExtensionContext context) {
+        configRegistry = context.configRegistry();
 
         final String dataSourceName = configRegistry.getDeploymentConfig().getValue("datasource.name", String.class);
         final DataSource dataSource = dataSourceRegistry.get(dataSourceName);

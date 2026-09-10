@@ -21,7 +21,7 @@ package org.dependencytrack.notification.publishing.console;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplate;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.jspecify.annotations.Nullable;
 
@@ -60,7 +60,7 @@ public final class ConsoleNotificationPublisherFactory implements NotificationPu
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {}
+    public void init(ExtensionContext context) {}
 
     @Override
     public NotificationPublisher create() {

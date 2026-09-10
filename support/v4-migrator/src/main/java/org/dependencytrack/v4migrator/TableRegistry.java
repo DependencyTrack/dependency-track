@@ -955,6 +955,10 @@ public final class TableRegistry {
      * §5.1 {@code CLASSIFIER}: {@code NONE} and any value outside the v5 enum set become NULL.
      * §5.2 {@code COLLECTION_LOGIC}: {@code NONE} becomes NULL; column reference renamed
      * to {@code COLLECTION_TAG_ID} (rewritten through {@code tag_canonical_id_map}).
+     * v5 additionally enforces {@code PROJECT_COLLECTION_TAG_REQUIRED_check}, which v4 has
+     * no equivalent of, so the two columns are reconciled before load:
+     * {@code AGGREGATE_DIRECT_CHILDREN_WITH_TAG} without a resolvable tag drops the logic
+     * (it cannot aggregate anything), and a tag carried by any other logic is dropped.
      * §5.3 mutual exclusivity: if both CLASSIFIER and COLLECTION_LOGIC survive, NULL the
      * CLASSIFIER and keep COLLECTION_LOGIC.
      * §5.4 {@code ACTIVE} → {@code INACTIVE_SINCE}: {@code FALSE} → epoch, else NULL.
@@ -1137,8 +1141,17 @@ public final class TableRegistry {
                        ) THEN p."CLASSIFIER"
                        ELSE NULL
                    END AS "CLASSIFIER",
-                   CASE WHEN p."COLLECTION_LOGIC" = 'NONE' THEN NULL ELSE p."COLLECTION_LOGIC" END AS "COLLECTION_LOGIC",
-                   tag_map.canonical_id AS "COLLECTION_TAG_ID",
+                   CASE
+                       WHEN p."COLLECTION_LOGIC" = 'NONE' THEN NULL
+                       WHEN p."COLLECTION_LOGIC" = 'AGGREGATE_DIRECT_CHILDREN_WITH_TAG'
+                            AND tag_map.canonical_id IS NULL THEN NULL
+                       ELSE p."COLLECTION_LOGIC"
+                   END AS "COLLECTION_LOGIC",
+                   CASE
+                       WHEN p."COLLECTION_LOGIC" = 'AGGREGATE_DIRECT_CHILDREN_WITH_TAG'
+                           THEN tag_map.canonical_id
+                       ELSE NULL
+                   END AS "COLLECTION_TAG_ID",
                    p."CPE",
                    p."DESCRIPTION",
                    "%1$s".try_jsonb(p."DIRECT_DEPENDENCIES") AS "DIRECT_DEPENDENCIES",
@@ -5073,6 +5086,13 @@ public final class TableRegistry {
      * {@code project_canonical_id_map}. Applies the ENCRYPTEDSTRING wipe and drops rows whose
      * {@code PROPERTYTYPE} is outside the v5 enum (schema-changes §5.9 / §7.8). v4 has no
      * UUID column on this table.
+     *
+     * <p>v5 enforces {@code UNIQUE (PROJECT_ID, GROUPNAME, PROPERTYNAME)}, but the project
+     * collapse can turn two rows that were distinct in v4 into the same triple (same group
+     * and property name on two same-named projects). {@code DISTINCT ON} keeps the row that
+     * belonged to the surviving project, so the collapse does not hand it a value from a
+     * project that was just discarded. Where only discarded projects carried the property,
+     * the lowest {@code ID} wins, to keep reruns deterministic.
      */
     private static final TableMigration PROJECT_PROPERTY = new TableMigration(
             "PROJECT_PROPERTY",
@@ -5115,6 +5135,7 @@ public final class TableRegistry {
                  , p."DESCRIPTION"
                  , p."GROUPNAME"
                  , pm.canonical_id AS "PROJECT_ID"
+                 , p."PROJECT_ID" AS orig_project_id
                  , p."PROPERTYNAME"
                  , CASE WHEN p."PROPERTYTYPE" = 'ENCRYPTEDSTRING' THEN 'STRING' ELSE p."PROPERTYTYPE" END AS "PROPERTYTYPE"
                  , CASE WHEN p."PROPERTYTYPE" = 'ENCRYPTEDSTRING' THEN NULL ELSE p."PROPERTYVALUE" END AS "PROPERTYVALUE"
@@ -5130,8 +5151,16 @@ public final class TableRegistry {
              , "PROPERTYNAME"
              , "PROPERTYTYPE"
              , "PROPERTYVALUE"
-          FROM rewritten
-         WHERE "PROPERTYTYPE" IN ('BOOLEAN', 'INTEGER', 'NUMBER', 'STRING', 'TIMESTAMP', 'URL', 'UUID')
+          FROM (
+            SELECT DISTINCT ON ("PROJECT_ID", "GROUPNAME", "PROPERTYNAME") *
+              FROM rewritten
+             WHERE "PROPERTYTYPE" IN ('BOOLEAN', 'INTEGER', 'NUMBER', 'STRING', 'TIMESTAMP', 'URL', 'UUID')
+             ORDER BY "PROJECT_ID"
+                    , "GROUPNAME"
+                    , "PROPERTYNAME"
+                    , (orig_project_id = "PROJECT_ID") DESC
+                    , "ID"
+          ) AS deduped
         """,
             """
         INSERT INTO "PROJECT_PROPERTY"

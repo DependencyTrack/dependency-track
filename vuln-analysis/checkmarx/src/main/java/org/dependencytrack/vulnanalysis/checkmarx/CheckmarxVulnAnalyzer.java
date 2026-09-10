@@ -221,6 +221,11 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
 
             try {
                 final var purl = new PackageURL(component.getPurl());
+                if (purl.getVersion() == null) {
+                    LOGGER.debug("PURL '{}' has no version; Skipping", component.getPurl());
+                    continue;
+                }
+
                 // Lowercase PURL coordinates for consistent cache keys
                 bomRefsByPurl
                         .computeIfAbsent(purl.getCoordinates().toLowerCase(), _ -> new HashSet<>())
@@ -245,7 +250,8 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
             if (bomRefs == null) {
                 LOGGER.warn("""
                         Received vulnerabilities for PURL '{}', but no component \
-                        with this PURL was submitted for analysis""", purl);
+                        with this PURL was submitted for analysis\
+                        """, purl);
                 continue;
             }
 

@@ -31,6 +31,9 @@ public record RetryPolicy(
         Duration maxDelay,
         int maxAttempts) {
 
+    private static final RetryPolicy DEFAULT =
+            new RetryPolicy(Duration.ofSeconds(5), 1.5, 0.3, Duration.ofMinutes(30), 6);
+
     public RetryPolicy {
         requireNonNull(initialDelay, "initialDelay must not be null");
         if (initialDelay.isZero() || initialDelay.isNegative()) {
@@ -52,7 +55,7 @@ public record RetryPolicy(
     }
 
     public static RetryPolicy ofDefault() {
-        return new RetryPolicy(Duration.ofSeconds(5), 1.5, 0.3, Duration.ofMinutes(30), 6);
+        return DEFAULT;
     }
 
     public static RetryPolicy fromProto(final org.dependencytrack.dex.proto.common.v1.RetryPolicy protoPolicy) {

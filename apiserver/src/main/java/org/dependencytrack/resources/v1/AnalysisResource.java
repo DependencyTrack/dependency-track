@@ -42,6 +42,7 @@ import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
+import org.dependencytrack.resources.v1.vo.AnalysisTrailResponse;
 
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
@@ -74,7 +75,7 @@ public class AnalysisResource extends AbstractApiResource {
                 @ApiResponse(
                         responseCode = "200",
                         description = "An analysis trail",
-                        content = @Content(schema = @Schema(implementation = Analysis.class))),
+                        content = @Content(schema = @Schema(implementation = AnalysisTrailResponse.class))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(
                         responseCode = "403",
@@ -143,7 +144,7 @@ public class AnalysisResource extends AbstractApiResource {
                         .entity("No analysis exists.")
                         .build();
             }
-            return Response.ok(analysis).build();
+            return Response.ok(AnalysisTrailResponse.of(analysis)).build();
         }
     }
 
@@ -159,7 +160,7 @@ public class AnalysisResource extends AbstractApiResource {
                 @ApiResponse(
                         responseCode = "200",
                         description = "The created analysis",
-                        content = @Content(schema = @Schema(implementation = Analysis.class))),
+                        content = @Content(schema = @Schema(implementation = AnalysisTrailResponse.class))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(
                         responseCode = "403",
@@ -213,7 +214,8 @@ public class AnalysisResource extends AbstractApiResource {
                         .withSuppress(request.isSuppressed())
                         .withComment(request.getComment()));
 
-                return Response.ok(qm.getObjectById(Analysis.class, analysisId)).build();
+                return Response.ok(AnalysisTrailResponse.of(qm.getObjectById(Analysis.class, analysisId)))
+                        .build();
             });
         }
     }

@@ -22,8 +22,8 @@ import io.github.jeremylong.openvulnerability.client.HttpAsyncClientSupplier;
 import io.github.jeremylong.openvulnerability.client.ghsa.GitHubSecurityAdvisoryClient;
 import io.github.jeremylong.openvulnerability.client.ghsa.GitHubSecurityAdvisoryClientBuilder;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
@@ -73,10 +73,10 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        this.kvStore = serviceRegistry.require(KeyValueStore.class);
-        this.httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(ExtensionContext context) {
+        this.configRegistry = context.configRegistry();
+        this.kvStore = context.keyValueStore();
+        this.httpClient = context.httpClient();
         this.proxySelector = httpClient.proxy().orElse(null);
     }
 

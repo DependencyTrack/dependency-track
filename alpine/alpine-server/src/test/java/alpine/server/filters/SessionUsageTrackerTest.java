@@ -19,16 +19,24 @@
 package alpine.server.filters;
 
 import alpine.model.ManagedUser;
-import alpine.model.UserSession;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.auth.SessionTokenService;
-import alpine.server.persistence.PersistenceManagerFactory;
+import org.dependencytrack.common.datasource.DataSourceRegistry;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HexFormat;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,10 +44,12 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class SessionUsageTrackerTest {
 
+    @RegisterExtension
+    static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
+
     @AfterEach
     void tearDown() {
         SessionUsageTracker.EVENT_QUEUE.clear();
-        PersistenceManagerFactory.tearDown();
     }
 
     @Test
@@ -56,10 +66,7 @@ class SessionUsageTrackerTest {
         final var tracker = new SessionUsageTracker();
         tracker.flush();
 
-        try (final var qm = new AlpineQueryManager()) {
-            final var session = qm.getObjectById(UserSession.class, tokenHash);
-            assertThat(session.getLastUsedAt()).isNotNull();
-        }
+        assertThat(lastUsedAt(tokenHash)).isNotNull();
     }
 
     @Test
@@ -78,10 +85,7 @@ class SessionUsageTrackerTest {
         final var tracker = new SessionUsageTracker();
         tracker.flush();
 
-        try (final var qm = new AlpineQueryManager()) {
-            final var session = qm.getObjectById(UserSession.class, tokenHash);
-            assertThat(session.getLastUsedAt()).isNotNull();
-        }
+        assertThat(lastUsedAt(tokenHash)).isNotNull();
     }
 
     @Test
@@ -101,10 +105,8 @@ class SessionUsageTrackerTest {
         final var tracker = new SessionUsageTracker();
         tracker.flush();
 
-        try (final var qm = new AlpineQueryManager()) {
-            assertThat(qm.getObjectById(UserSession.class, tokenHashA).getLastUsedAt()).isNotNull();
-            assertThat(qm.getObjectById(UserSession.class, tokenHashB).getLastUsedAt()).isNotNull();
-        }
+        assertThat(lastUsedAt(tokenHashA)).isNotNull();
+        assertThat(lastUsedAt(tokenHashB)).isNotNull();
     }
 
     @Test
@@ -117,10 +119,7 @@ class SessionUsageTrackerTest {
         }
 
         final var futureDate = new SimpleDateFormat("yyyy-MM-dd").parse("2099-01-01");
-        try (final var qm = new AlpineQueryManager()) {
-            final var session = qm.getObjectById(UserSession.class, tokenHash);
-            session.setLastUsedAt(futureDate);
-        }
+        setLastUsedAt(tokenHash, futureDate);
 
         // Queue an event whose timestamp will be earlier than 2099.
         SessionUsageTracker.onSessionUsed(tokenHash);
@@ -128,10 +127,7 @@ class SessionUsageTrackerTest {
         final var tracker = new SessionUsageTracker();
         tracker.flush();
 
-        try (final var qm = new AlpineQueryManager()) {
-            final var session = qm.getObjectById(UserSession.class, tokenHash);
-            assertThat(session.getLastUsedAt()).isEqualTo(futureDate);
-        }
+        assertThat(lastUsedAt(tokenHash)).isEqualTo(futureDate);
     }
 
     @Test
@@ -155,4 +151,39 @@ class SessionUsageTrackerTest {
         return HexFormat.of().formatHex(hash);
     }
 
+    private static @Nullable Date lastUsedAt(String tokenHash) {
+        try (final Connection connection =
+                        DataSourceRegistry.getInstance().getDefault().getConnection();
+                final PreparedStatement ps = connection.prepareStatement(/* language=SQL */ """
+                    SELECT "LAST_USED_AT"
+                      FROM "USER_SESSION"
+                     WHERE "TOKEN_HASH" = ?
+                    """)) {
+            ps.setString(1, tokenHash);
+
+            try (final ResultSet rs = ps.executeQuery()) {
+                assertThat(rs.next()).isTrue();
+                final Timestamp lastUsedAt = rs.getTimestamp("LAST_USED_AT");
+                return lastUsedAt != null ? new Date(lastUsedAt.getTime()) : null;
+            }
+        } catch (SQLException e) {
+            throw new AssertionError("Failed to read session " + tokenHash, e);
+        }
+    }
+
+    private static void setLastUsedAt(String tokenHash, Date lastUsedAt) {
+        try (final Connection connection =
+                        DataSourceRegistry.getInstance().getDefault().getConnection();
+                final PreparedStatement ps = connection.prepareStatement(/* language=SQL */ """
+                    UPDATE "USER_SESSION"
+                       SET "LAST_USED_AT" = ?
+                     WHERE "TOKEN_HASH" = ?
+                    """)) {
+            ps.setTimestamp(1, new Timestamp(lastUsedAt.getTime()));
+            ps.setString(2, tokenHash);
+            assertThat(ps.executeUpdate()).isEqualTo(1);
+        } catch (SQLException e) {
+            throw new AssertionError("Failed to update session " + tokenHash, e);
+        }
+    }
 }

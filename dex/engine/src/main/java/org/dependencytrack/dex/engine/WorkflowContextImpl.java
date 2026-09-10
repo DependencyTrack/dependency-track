@@ -19,6 +19,7 @@
 package org.dependencytrack.dex.engine;
 
 import com.google.protobuf.DebugFormat;
+import com.google.protobuf.Timestamp;
 import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivityHandle;
 import org.dependencytrack.dex.api.Awaitable;
@@ -105,13 +106,12 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
     private final Logger logger;
     private int currentEventIndex;
     private int currentEventId;
-    private @Nullable Instant currentTime;
+    private @Nullable Timestamp currentTime;
     private @Nullable A argument;
     private boolean isInSideEffect;
     private boolean isReplaying;
     private boolean isSuspended;
     private @Nullable String customStatus;
-    private int randomCounter;
 
     WorkflowContextImpl(
             final UUID runId,
@@ -173,7 +173,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
             throw new IllegalStateException("currentTime was not initialized");
         }
 
-        return currentTime;
+        return toInstant(currentTime);
     }
 
     @Override
@@ -473,7 +473,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
     }
 
     private void onWorkflowTaskStarted(final WorkflowEvent event) {
-        currentTime = toInstant(event.getTimestamp());
+        currentTime = event.getTimestamp();
     }
 
     private void onRunCreated(final WorkflowEvent event) {

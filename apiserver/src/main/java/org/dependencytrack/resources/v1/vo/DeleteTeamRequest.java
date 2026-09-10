@@ -16,19 +16,19 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.support.datanucleus.method;
+package org.dependencytrack.resources.v1.vo;
 
-import org.datanucleus.store.rdbms.sql.SQLStatement;
-import org.datanucleus.store.rdbms.sql.expression.SQLExpression;
-import org.datanucleus.store.rdbms.sql.expression.StringExpression;
-import org.datanucleus.store.rdbms.sql.method.SQLMethod;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.jspecify.annotations.NullMarked;
 
-import java.util.List;
+import jakarta.validation.constraints.NotNull;
 
-abstract class AbstractJsonbMethod implements SQLMethod {
+import java.util.UUID;
 
-    SQLExpression castAsJsonb(final SQLStatement stmt, final StringExpression expression) {
-        final var stringTypeMapping = stmt.getSQLExpressionFactory().getMappingForType(String.class);
-        return new StringExpression(stmt, stringTypeMapping, "CAST", List.of(expression), List.of("JSONB"));
-    }
-}
+/// @since 5.2.0
+@NullMarked
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record DeleteTeamRequest(
+        @NotNull @Schema(description = "UUID of the team to delete", requiredMode = Schema.RequiredMode.REQUIRED)
+        UUID uuid) {}

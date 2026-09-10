@@ -95,6 +95,20 @@ class ProjectValueRemapsIT {
                 INSERT INTO "PROJECT" ("ID", "NAME", "UUID", "COLLECTION_LOGIC")
                 VALUES (5, 'P-LogicNone', '00000000-0000-0000-0000-000000000005', 'NONE')
                 """);
+            // Row 6: WITH_TAG but no tag. v4 permits this, v5's
+            // PROJECT_COLLECTION_TAG_REQUIRED_check does not, so the logic is dropped.
+            h.execute("""
+                INSERT INTO "PROJECT" ("ID", "NAME", "UUID", "COLLECTION_LOGIC", "COLLECTION_TAG")
+                VALUES (6, 'P-TagMissing', '00000000-0000-0000-0000-000000000006',
+                        'AGGREGATE_DIRECT_CHILDREN_WITH_TAG', NULL)
+                """);
+            // Row 7: a tag carried by a logic that does not use one. Also rejected by the
+            // same check, so the tag is dropped and the logic kept.
+            h.execute("""
+                INSERT INTO "PROJECT" ("ID", "NAME", "UUID", "COLLECTION_LOGIC", "COLLECTION_TAG")
+                VALUES (7, 'P-StrayTag', '00000000-0000-0000-0000-000000000007',
+                        'AGGREGATE_DIRECT_CHILDREN', 42)
+                """);
         });
 
         runPipeline();
@@ -107,7 +121,7 @@ class ProjectValueRemapsIT {
                      ORDER BY "ID"
                     """).mapToMap().list());
 
-        assertThat(rows).hasSize(4);
+        assertThat(rows).hasSize(6);
 
         assertThat(rows.get(0))
                 .containsEntry("name", "P-Lib")
@@ -129,6 +143,16 @@ class ProjectValueRemapsIT {
 
         assertThat(rows.get(3)).containsEntry("name", "P-LogicNone").containsEntry("collection_logic", null);
 
+        assertThat(rows.get(4))
+                .containsEntry("name", "P-TagMissing")
+                .containsEntry("collection_logic", null)
+                .containsEntry("collection_tag_id", null);
+
+        assertThat(rows.get(5))
+                .containsEntry("name", "P-StrayTag")
+                .containsEntry("collection_logic", "AGGREGATE_DIRECT_CHILDREN")
+                .containsEntry("collection_tag_id", null);
+
         // Sanity check the canonical_id_map exists with one entry per orig (all unique
         // (NAME, VERSION) here, so each row maps to itself).
         final List<Map<String, Object>> map =
@@ -139,7 +163,8 @@ class ProjectValueRemapsIT {
                     """).mapToMap().list());
         assertThat(map)
                 .extracting("orig_id", "canonical_id")
-                .containsExactly(tuple(1L, 1L), tuple(2L, 2L), tuple(4L, 4L), tuple(5L, 5L));
+                .containsExactly(
+                        tuple(1L, 1L), tuple(2L, 2L), tuple(4L, 4L), tuple(5L, 5L), tuple(6L, 6L), tuple(7L, 7L));
     }
 
     private void runPipeline() throws Exception {

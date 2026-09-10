@@ -1556,11 +1556,16 @@ class TagResourceTest extends ResourceTest {
 
         Assertions.assertEquals(200, response.getStatus());
         Assertions.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
-        json = parseJsonArray(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals(2, json.size());
-        Assertions.assertEquals("tag 1", json.getJsonObject(0).getString("name"));
-        Assertions.assertEquals("tag 4", json.getJsonObject(1).getString("name"));
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "name": "tag 1"
+                  },
+                  {
+                    "name": "tag 4"
+                  }
+                ]
+                """);
     }
 
     @Test

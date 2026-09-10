@@ -38,7 +38,11 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.AbstractApiResource;
+import org.dependencytrack.resources.v1.vo.CreateOidcGroupRequest;
 import org.dependencytrack.resources.v1.vo.MappedOidcGroupRequest;
+import org.dependencytrack.resources.v1.vo.MappedOidcGroupResponse;
+import org.dependencytrack.resources.v1.vo.OidcGroupResponse;
+import org.dependencytrack.resources.v1.vo.UpdateOidcGroupRequest;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,13 +99,18 @@ public class OidcResource extends AbstractApiResource {
                 @ApiResponse(
                         responseCode = "200",
                         description = "A list of all groups",
-                        content = @Content(array = @ArraySchema(schema = @Schema(implementation = OidcGroup.class)))),
+                        content =
+                                @Content(
+                                        array =
+                                                @ArraySchema(
+                                                        schema = @Schema(implementation = OidcGroupResponse.class)))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_READ})
     public Response retrieveGroups() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final List<OidcGroup> oidcGroups = qm.getOidcGroups();
+            final List<OidcGroupResponse> oidcGroups =
+                    qm.getOidcGroups().stream().map(OidcGroupResponse::of).toList();
             return Response.ok(oidcGroups).build();
         }
     }
@@ -119,19 +128,21 @@ public class OidcResource extends AbstractApiResource {
                 @ApiResponse(
                         responseCode = "201",
                         description = "The created group",
-                        content = @Content(schema = @Schema(implementation = OidcGroup.class))),
+                        content = @Content(schema = @Schema(implementation = OidcGroupResponse.class))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_CREATE})
-    public Response createGroup(final OidcGroup jsonGroup) {
+    public Response createGroup(final CreateOidcGroupRequest request) {
         final Validator validator = super.getValidator();
-        failOnValidationError(validator.validateProperty(jsonGroup, "name"));
+        failOnValidationError(validator.validateProperty(request, "name"));
 
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            if (qm.getOidcGroup(jsonGroup.getName()) == null) {
-                final OidcGroup group = qm.createOidcGroup(jsonGroup.getName());
+            if (qm.getOidcGroup(request.name()) == null) {
+                final OidcGroup group = qm.createOidcGroup(request.name());
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Group created: " + group.getName());
-                return Response.status(Response.Status.CREATED).entity(group).build();
+                return Response.status(Response.Status.CREATED)
+                        .entity(OidcGroupResponse.of(group))
+                        .build();
             } else {
                 return Response.status(Response.Status.CONFLICT)
                         .entity("A group with the same name already exists. Cannot create new group")
@@ -153,22 +164,21 @@ public class OidcResource extends AbstractApiResource {
                 @ApiResponse(
                         responseCode = "200",
                         description = "The updated group",
-                        content = @Content(schema = @Schema(implementation = OidcGroup.class))),
+                        content = @Content(schema = @Schema(implementation = OidcGroupResponse.class))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_UPDATE})
-    public Response updateGroup(final OidcGroup jsonGroup) {
+    public Response updateGroup(final UpdateOidcGroupRequest request) {
         final Validator validator = super.getValidator();
-        failOnValidationError(
-                validator.validateProperty(jsonGroup, "uuid"), validator.validateProperty(jsonGroup, "name"));
+        failOnValidationError(validator.validateProperty(request, "uuid"), validator.validateProperty(request, "name"));
 
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            OidcGroup oidcGroup = qm.getObjectByUuid(OidcGroup.class, jsonGroup.getUuid());
+            OidcGroup oidcGroup = qm.getObjectByUuid(OidcGroup.class, request.uuid());
             if (oidcGroup != null) {
-                oidcGroup.setName(jsonGroup.getName());
+                oidcGroup.setName(request.name());
                 oidcGroup = qm.updateOidcGroup(oidcGroup);
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Group updated: " + oidcGroup.getName());
-                return Response.ok(oidcGroup).build();
+                return Response.ok(OidcGroupResponse.of(oidcGroup)).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("An OpenID Connect group with the specified UUID does not exists.")
@@ -272,7 +282,7 @@ public class OidcResource extends AbstractApiResource {
                 @ApiResponse(
                         responseCode = "200",
                         description = "The created mapping",
-                        content = @Content(schema = @Schema(implementation = MappedOidcGroup.class))),
+                        content = @Content(schema = @Schema(implementation = MappedOidcGroupResponse.class))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(responseCode = "404", description = "The UUID of the team or group could not be found"),
                 @ApiResponse(
@@ -308,9 +318,11 @@ public class OidcResource extends AbstractApiResource {
                             LOGGER,
                             SecurityMarkers.SECURITY_AUDIT,
                             "Mapping created for group " + group.getName() + " and team " + team.getName());
-                    return Response.ok(mappedOidcGroup).build();
+                    return Response.ok(MappedOidcGroupResponse.of(mappedOidcGroup))
+                            .build();
                 } else {
-                    return Response.ok(existingMapping).build();
+                    return Response.ok(MappedOidcGroupResponse.of(existingMapping))
+                            .build();
                 }
             });
         }

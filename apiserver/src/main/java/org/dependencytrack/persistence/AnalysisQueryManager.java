@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.model.ApiKey;
-import alpine.model.User;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.UserPrincipal;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
@@ -184,12 +184,12 @@ public class AnalysisQueryManager extends QueryManager {
         final String commenterToUse;
         if (commenter == null) {
             commenterToUse = switch (principal) {
-                case User user -> user.getUsername();
-                case ApiKey apiKey -> apiKey.getTeams().get(0).getName();
+                case UserPrincipal user -> user.username();
+                case ApiKeyPrincipal apiKey ->
+                    apiKey.teams().isEmpty()
+                            ? apiKey.maskedKey()
+                            : apiKey.teams().getFirst().name();
                 case null -> null;
-                default ->
-                    throw new IllegalStateException(
-                            "Unexpected principal type: " + principal.getClass().getName());
             };
         } else {
             commenterToUse = commenter;

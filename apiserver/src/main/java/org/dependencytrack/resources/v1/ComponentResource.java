@@ -47,6 +47,8 @@ import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.DependencyGraphDao;
+import org.dependencytrack.persistence.jdbi.DependencyGraphDao.GraphComponent;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
@@ -70,10 +72,16 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_TRIGGERED_BY;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
@@ -717,7 +725,11 @@ public class ComponentResource extends AbstractApiResource {
                 @ApiResponse(
                         responseCode = "404",
                         description =
-                                "- The UUID of the project could not be found\n- The UUID of the component could not be found")
+                                "- The UUID of the project could not be found\n- The UUID of the component could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON))
             })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getDependencyGraphForComponent(
@@ -735,29 +747,79 @@ public class ComponentResource extends AbstractApiResource {
                     @PathParam("componentUuids")
                     @ValidUuid
                     String componentUuids) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
-            if (project == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("The UUID of the project could not be found.")
-                        .build();
-            }
-            requireAccess(qm, project);
+        final var parsedProjectUuid = UUID.fromString(projectUuid);
 
-            final String[] componentUuidsSplit = componentUuids.split("\\|");
-            final List<Component> components = new ArrayList<>();
-            for (String uuid : componentUuidsSplit) {
-                final Component component = qm.getObjectByUuid(Component.class, uuid);
-                if (component == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The UUID of the component could not be found.")
-                            .build();
-                }
-                components.add(component);
+        final Set<UUID> parsedComponentUuids = Arrays.stream(componentUuids.split("\\|"))
+                .map(UUID::fromString)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        return withJdbiHandle(getAlpineRequest(), handle -> {
+            requireProjectAccess(handle, parsedProjectUuid);
+
+            final Set<UUID> existingUuids = handle.attach(ComponentDao.class).getExistingUuids(parsedComponentUuids);
+            if (!existingUuids.containsAll(parsedComponentUuids)) {
+                throw new NoSuchElementException("The UUID of the component could not be found");
             }
-            Map<String, Component> dependencyGraph = qm.getDependencyGraphForComponents(project, components);
-            return Response.ok(dependencyGraph).build();
-        }
+
+            final Map<UUID, GraphComponent> graph =
+                    handle.attach(DependencyGraphDao.class).getDependencyGraph(parsedProjectUuid, parsedComponentUuids);
+
+            // Enrich nodes with latest package version information.
+            // The frontend uses this to display "Outdated Component" warnings.
+            //
+            // We currently pay for the cost regardless of whether clients even want this information.
+            // A future API version should make this optional.
+            final Map<UUID, String> packagePurlByComponentUuid = graph.values().stream()
+                    .filter(graphComponent -> graphComponent.purl() != null)
+                    .collect(Collectors.toMap(
+                            GraphComponent::uuid, graphComponent -> PurlUtil.purlPackageOnly(graphComponent.purl())));
+            final Map<String, String> latestVersionByPackagePurl = new PackageMetadataDao(handle)
+                    .getAll(new HashSet<>(packagePurlByComponentUuid.values())).stream()
+                            .filter(pkgMetadata -> pkgMetadata.latestVersion() != null)
+                            .collect(Collectors.toMap(
+                                    pkgMetadata -> pkgMetadata.purl().canonicalize(), PackageMetadata::latestVersion));
+            final Map<UUID, String> latestVersionByComponentUuid = packagePurlByComponentUuid.entrySet().stream()
+                    .map(entry -> {
+                        final UUID componentUuid = entry.getKey();
+                        final String packagePurl = entry.getValue();
+
+                        final String latestVersion = latestVersionByPackagePurl.get(packagePurl);
+                        if (latestVersion == null) {
+                            return null;
+                        }
+
+                        return Map.entry(componentUuid, latestVersion);
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            final Map<UUID, Component> responseGraph = graph.entrySet().stream()
+                    .map(entry -> {
+                        final UUID componentUuid = entry.getKey();
+                        final GraphComponent graphComponent = entry.getValue();
+
+                        final var component = new Component();
+                        component.setUuid(graphComponent.uuid());
+                        component.setName(graphComponent.name());
+                        component.setVersion(graphComponent.version());
+                        component.setPurl(graphComponent.purl());
+                        component.setPurlCoordinates(graphComponent.purlCoordinates());
+                        component.setDependencyGraph(graphComponent.directDependencyUuids());
+                        component.setExpandDependencyGraph(graphComponent.onSearchPath());
+
+                        final String latestVersion = latestVersionByComponentUuid.get(componentUuid);
+                        if (latestVersion != null) {
+                            final var repositoryMeta = new RepositoryMetaComponent();
+                            repositoryMeta.setLatestVersion(latestVersion);
+                            component.setRepositoryMeta(repositoryMeta);
+                        }
+
+                        return Map.entry(componentUuid, component);
+                    })
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            return Response.ok(responseGraph).build();
+        });
     }
 
     @GET

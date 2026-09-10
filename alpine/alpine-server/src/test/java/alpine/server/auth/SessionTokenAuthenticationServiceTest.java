@@ -20,31 +20,38 @@ package alpine.server.auth;
 
 import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
-import alpine.model.Permission;
 import alpine.model.Team;
-import alpine.model.User;
+import alpine.model.auth.TeamRef;
+import alpine.model.auth.UserPrincipal;
+import alpine.model.auth.UserType;
 import alpine.persistence.AlpineQueryManager;
-import alpine.server.persistence.PersistenceManagerFactory;
 import io.smallrye.config.SmallRyeConfigBuilder;
+import org.dependencytrack.common.datasource.DataSourceRegistry;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.glassfish.jersey.server.ContainerRequest;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.security.Principal;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class SessionTokenAuthenticationServiceTest {
 
-    @AfterEach
-    void tearDown() {
-        PersistenceManagerFactory.tearDown();
-    }
+    @RegisterExtension
+    static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
 
     @Test
     void shouldAuthenticateWithValidSessionToken() throws Exception {
@@ -168,7 +175,7 @@ class SessionTokenAuthenticationServiceTest {
     }
 
     @Test
-    void shouldReturnDetachedUserWithTeamsAndPermissionsLoaded() throws Exception {
+    void shouldReturnSelfContainedPrincipal() throws Exception {
         final String rawToken;
         try (final var qm = new AlpineQueryManager()) {
             final OidcUser user = qm.callInTransaction(() -> {
@@ -179,8 +186,11 @@ class SessionTokenAuthenticationServiceTest {
                 final Team team = qm.createTeam("team-a");
                 qm.addUserToTeam(created, team);
 
-                final Permission permission = qm.createPermission("FOO", null);
-                created.setPermissions(List.of(permission));
+                // BAR comes from the team, FOO directly, and FOO also from the team,
+                // so the union has to collapse it rather than report it twice.
+                final var foo = qm.createPermission("FOO", null);
+                team.setPermissions(List.of(qm.createPermission("BAR", null), foo));
+                created.setPermissions(List.of(foo));
 
                 return created;
             });
@@ -192,16 +202,13 @@ class SessionTokenAuthenticationServiceTest {
         when(request.getRequestHeader("Authorization")).thenReturn(List.of("Bearer " + rawToken));
         final var authService = new SessionTokenAuthenticationService(request);
 
-        final Principal principal = authService.authenticate();
-        assertThat(principal).isInstanceOf(User.class);
-
-        final var user = (User) principal;
-        assertThat(user.getTeams())
-                .extracting(Team::getName)
-                .containsExactly("team-a");
-        assertThat(user.getPermissions())
-                .extracting(Permission::getName)
-                .containsExactly("FOO");
+        final UserPrincipal principal = authService.authenticate();
+        assertThat(principal).isNotNull();
+        assertThat(principal.username()).isEqualTo("testuser");
+        assertThat(principal.type()).isEqualTo(UserType.OIDC);
+        assertThat(principal.teams()).extracting(TeamRef::name).containsExactly("team-a");
+        assertThat(principal.effectivePermissions()).containsExactlyInAnyOrder("FOO", "BAR");
+        assertThat(authService.isPortfolioAccessControlEnabled()).isFalse();
     }
 
     @Test
@@ -213,4 +220,109 @@ class SessionTokenAuthenticationServiceTest {
         assertThatNoException().isThrownBy(authService::authenticate);
     }
 
+    @Test
+    void shouldResolvePrincipalWithoutTeamsOrPermissions() throws Exception {
+        final String rawToken;
+        try (final var qm = new AlpineQueryManager()) {
+            rawToken = new SessionTokenService()
+                    .createSession(
+                            qm.createManagedUser("lonely", "passwordHash").getId());
+        }
+
+        final UserPrincipal principal = authenticate(rawToken);
+
+        assertThat(principal).isNotNull();
+        assertThat(principal.teams()).isEmpty();
+        assertThat(principal.effectivePermissions()).isEmpty();
+    }
+
+    @Test
+    void shouldResolveEveryUserType() throws Exception {
+        final String managedToken;
+        final String ldapToken;
+        final String oidcToken;
+        try (final var qm = new AlpineQueryManager()) {
+            final var sessionTokenService = new SessionTokenService();
+            managedToken = sessionTokenService.createSession(
+                    qm.createManagedUser("managed", "passwordHash").getId());
+            ldapToken =
+                    sessionTokenService.createSession(qm.createLdapUser("ldap").getId());
+            oidcToken =
+                    sessionTokenService.createSession(qm.createOidcUser("oidc").getId());
+        }
+
+        assertThat(authenticate(managedToken).type()).isEqualTo(UserType.MANAGED);
+        assertThat(authenticate(ldapToken).type()).isEqualTo(UserType.LDAP);
+        assertThat(authenticate(oidcToken).type()).isEqualTo(UserType.OIDC);
+    }
+
+    @Test
+    void shouldThrowWhenPortfolioAccessControlIsQueriedBeforeAuthenticating() {
+        final var request = mock(ContainerRequest.class);
+        when(request.getRequestHeader("Authorization")).thenReturn(List.of("Bearer whatever"));
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(new SessionTokenAuthenticationService(request)::isPortfolioAccessControlEnabled);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true,true", "TRUE,true", " true ,true", "1,true", "false,false", "0,false", "yes,false"})
+    void shouldReportWhetherPortfolioAccessControlIsEnabled(String propertyValue, boolean expected) throws Exception {
+        final String rawToken;
+        try (final var qm = new AlpineQueryManager()) {
+            rawToken = new SessionTokenService()
+                    .createSession(
+                            qm.createManagedUser("testuser", "passwordHash").getId());
+        }
+        executeUpdate(/* language=SQL */ """
+            INSERT INTO "CONFIGPROPERTY" ("GROUPNAME", "PROPERTYNAME", "PROPERTYVALUE", "PROPERTYTYPE")
+            VALUES ('access-management', 'acl.enabled', '%s', 'BOOLEAN')
+            """.formatted(propertyValue));
+
+        final var request = mock(ContainerRequest.class);
+        when(request.getRequestHeader("Authorization")).thenReturn(List.of("Bearer " + rawToken));
+        final var authService = new SessionTokenAuthenticationService(request);
+        authService.authenticate();
+
+        assertThat(authService.isPortfolioAccessControlEnabled()).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldAuthenticateWithASingleStatement() throws Exception {
+        final String rawToken;
+        try (final var qm = new AlpineQueryManager()) {
+            final ManagedUser user = qm.callInTransaction(() -> {
+                final ManagedUser created = qm.createManagedUser("testuser", "passwordHash");
+                final Team team = qm.createTeam("team");
+                team.setPermissions(List.of(qm.createPermission("PERM", null)));
+                qm.addUserToTeam(created, team);
+                return created;
+            });
+            rawToken = new SessionTokenService().createSession(user.getId());
+        }
+
+        final var statementCount = new AtomicInteger();
+        final var request = mock(ContainerRequest.class);
+        when(request.getRequestHeader("Authorization")).thenReturn(List.of("Bearer " + rawToken));
+        final var authService = new SessionTokenAuthenticationService(
+                request,
+                CountingDataSource.wrap(DataSourceRegistry.getInstance().getDefault(), statementCount));
+
+        assertThat(authService.authenticate()).isNotNull();
+        assertThat(statementCount.get()).isEqualTo(1);
+    }
+
+    private static UserPrincipal authenticate(String rawToken) throws Exception {
+        final var request = mock(ContainerRequest.class);
+        when(request.getRequestHeader("Authorization")).thenReturn(List.of("Bearer " + rawToken));
+        return new SessionTokenAuthenticationService(request).authenticate();
+    }
+
+    private static void executeUpdate(String sql) throws SQLException {
+        try (final Connection connection =
+                        DataSourceRegistry.getInstance().getDefault().getConnection();
+                final Statement statement = connection.createStatement()) {
+            statement.executeUpdate(sql);
+        }
+    }
 }

@@ -59,17 +59,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up JDK
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # tag=v5.7.0
-        with:
-          distribution: 'temurin'
-          java-version: '25'
-          cache: 'maven'
-
       - name: Parse Version from POM
         id: parse
         run: |-
-          VERSION=$(mvn -q -Dexec.skip=true help:evaluate -Dexpression=project.version -DforceStdout)
+          VERSION=$(yq -p xml -oy '.project.version' pom.xml)
           MAJOR="${VERSION%%.*}"
           echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
 
@@ -77,7 +70,7 @@ jobs:
     name: Build
     needs:
       - read-version
-    uses: ./.github/workflows/_meta-build.yaml
+    uses: $/.github/workflows/_meta-build.yaml
     with:
       app-version: ${{ inputs.app-version || format('{0}-snapshot', needs.read-version.outputs.major) }}
       publish-container: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'feature-') }}

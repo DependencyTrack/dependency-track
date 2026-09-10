@@ -23,10 +23,11 @@ import alpine.server.filters.AuthFeature;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
 import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
-import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
+import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.AfterEach;
@@ -37,6 +38,7 @@ import org.mockito.Mockito;
 import jakarta.ws.rs.core.Response;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -84,7 +86,7 @@ class EventResourceTest extends ResourceTest {
                 Instant.now(),
                 null,
                 null);
-        doReturn(false).when(DEX_ENGINE_MOCK).existsRun(any(ExistsWorkflowRunRequest.class));
+        doReturn(new Page<>(List.of())).when(DEX_ENGINE_MOCK).listRuns(any(ListWorkflowRunsRequest.class));
         doReturn(runMetadata).when(DEX_ENGINE_MOCK).getRunMetadataById(runId);
 
         final Response response = jersey.target(V1_EVENT + "/token/6214c0c2-660c-4615-8b3a-174a64e4abe4")
@@ -94,17 +96,31 @@ class EventResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
-                  "processing": true
+                  "processing": true,
+                  "status": "RUNNING"
                 }
                 """);
     }
 
     @Test
     void isTokenBeingProcessedDexRunByLabelTest() {
-        final var bomUploadToken = UUID.fromString("2ff20ad6-587c-4db6-8788-cca7a9b0dc1b");
-
-        doReturn(null).when(DEX_ENGINE_MOCK).getRunMetadataById(bomUploadToken);
-        doReturn(true).when(DEX_ENGINE_MOCK).existsRun(any(ExistsWorkflowRunRequest.class));
+        final var runMetadata = new WorkflowRunMetadata(
+                UUID.randomUUID(),
+                null,
+                "import-bom",
+                1,
+                null,
+                "default",
+                WorkflowRunStatus.RUNNING,
+                null,
+                0,
+                null,
+                null,
+                Instant.now(),
+                Instant.now(),
+                null,
+                null);
+        doReturn(new Page<>(List.of(runMetadata))).when(DEX_ENGINE_MOCK).listRuns(any(ListWorkflowRunsRequest.class));
 
         final Response response = jersey.target(V1_EVENT + "/token/2ff20ad6-587c-4db6-8788-cca7a9b0dc1b")
                 .request()
@@ -113,15 +129,49 @@ class EventResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
-                  "processing": true
+                  "processing": true,
+                  "status": "RUNNING"
+                }
+                """);
+    }
+
+    @Test
+    void isTokenBeingProcessedFailedTest() {
+        final var runMetadata = new WorkflowRunMetadata(
+                UUID.randomUUID(),
+                null,
+                "import-bom",
+                1,
+                null,
+                "default",
+                WorkflowRunStatus.FAILED,
+                null,
+                0,
+                null,
+                null,
+                Instant.now(),
+                Instant.now(),
+                null,
+                Instant.now());
+        doReturn(new Page<>(List.of(runMetadata))).when(DEX_ENGINE_MOCK).listRuns(any(ListWorkflowRunsRequest.class));
+
+        final Response response = jersey.target(V1_EVENT + "/token/2ff20ad6-587c-4db6-8788-cca7a9b0dc1b")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "processing": false,
+                  "status": "FAILED"
                 }
                 """);
     }
 
     @Test
     void isTokenBeingProcessedNotExistsTest() {
+        doReturn(new Page<>(List.of())).when(DEX_ENGINE_MOCK).listRuns(any(ListWorkflowRunsRequest.class));
         doReturn(null).when(DEX_ENGINE_MOCK).getRunMetadataById(any());
-        doReturn(false).when(DEX_ENGINE_MOCK).existsRun(any(ExistsWorkflowRunRequest.class));
 
         final Response response = jersey.target(V1_EVENT + "/token/089dcdbe-31cf-489a-a8f3-0743ea7f3cc5")
                 .request()

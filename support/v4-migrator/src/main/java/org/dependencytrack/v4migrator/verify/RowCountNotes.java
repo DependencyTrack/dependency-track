@@ -40,6 +40,7 @@ final class RowCountNotes {
             Map.entry("OIDCGROUP", "dedup by NAME"),
             Map.entry("PROJECT", "dedup by (NAME, VERSION); invalid-UUID rows dropped"),
             Map.entry("PROJECT_METADATA", "one row per PROJECT_ID (latest by ID)"),
+            Map.entry("PROJECT_PROPERTY", "dedup on (PROJECT_ID, GROUPNAME, PROPERTYNAME) after project collapse"),
             Map.entry("DEPENDENCYMETRICS", "latest snapshot per key; retention cutoff applied"),
             Map.entry("PROJECTMETRICS", "latest snapshot per key; retention cutoff applied"),
             Map.entry("FINDINGATTRIBUTION", "one attribution per (component, vulnerability, analyzer)"),

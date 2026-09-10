@@ -20,9 +20,9 @@ package org.dependencytrack.vulnanalysis.ossindex;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.cache.api.CacheManager;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionTestResult;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.Testable;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
@@ -80,10 +80,10 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        cacheManager = serviceRegistry.require(CacheManager.class);
-        httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(ExtensionContext context) {
+        configRegistry = context.configRegistry();
+        cacheManager = context.cacheManager();
+        httpClient = context.httpClient();
         objectMapper = new ObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES);
         localConnectionsAllowed = configRegistry
                 .getDeploymentConfig()

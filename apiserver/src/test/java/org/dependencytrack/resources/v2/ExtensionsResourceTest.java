@@ -24,12 +24,12 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionFactory;
 import org.dependencytrack.plugin.api.ExtensionPoint;
 import org.dependencytrack.plugin.api.ExtensionPointSpec;
 import org.dependencytrack.plugin.api.ExtensionTestResult;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.Testable;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
@@ -615,7 +615,7 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public @NonNull DummyExtensionPoint create() {
@@ -646,7 +646,7 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public @NonNull DummyExtensionPoint create() {
@@ -680,7 +680,7 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public @NonNull DummyExtensionPoint create() {
@@ -744,7 +744,7 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public @NonNull RuntimeConfigSpec runtimeConfigSpec() {

@@ -16,17 +16,9 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.support.datanucleus.method;
+package alpine.model.auth;
 
-import org.datanucleus.store.query.expression.Expression.DyadicOperator;
+import java.util.UUID;
 
-/**
- * @see <a href="https://www.postgresql.org/docs/current/functions-json.html">JSON Functions and Operators</a>
- */
-final class JsonbOperators {
-
-    // '{"a":1, "b":2}'::jsonb @> '{"b":2}'::jsonb
-    static final DyadicOperator JSONB_CONTAINS_JSONB = new DyadicOperator("@>", 1, false);
-
-    private JsonbOperators() {}
-}
+/// @since 5.2.0
+public record TeamRef(long id, String name, UUID uuid) {}

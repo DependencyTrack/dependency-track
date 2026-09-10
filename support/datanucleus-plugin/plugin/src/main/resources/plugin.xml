@@ -20,13 +20,6 @@
 <plugin id="org.dependencytrack.support.datanucleus" name="Dependency-Track DataNucleus Plugin" provider-name="OWASP">
     <extension point="org.datanucleus.store.rdbms.sql_method">
         <sql-method
-                class="java.lang.String"
-                method="jsonbContains"
-                evaluator="org.dependencytrack.support.datanucleus.method.JsonbContainsMethod"/>
-    </extension>
-
-    <extension point="org.datanucleus.store.rdbms.sql_method">
-        <sql-method
                 class="java.lang.Object"
                 method="isAccessibleBy"
                 evaluator="org.dependencytrack.support.datanucleus.method.ProjectIsAccessibleByMethod"/>

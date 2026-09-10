@@ -19,11 +19,10 @@
 package org.dependencytrack.kevdatasource.enisa;
 
 import org.dependencytrack.kevdatasource.api.KevDataSource;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigValidator;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
@@ -31,7 +30,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -99,9 +97,9 @@ class EnisaKevDataSourceFactoryTest
         final EnisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(isEnabled);
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .build());
 
         assertThat(factory.isEnabled()).isEqualTo(isEnabled);
     }
@@ -111,9 +109,9 @@ class EnisaKevDataSourceFactoryTest
         final EnisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(false);
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .build());
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
@@ -123,9 +121,9 @@ class EnisaKevDataSourceFactoryTest
         final EnisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(true);
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .build());
 
         try (final KevDataSource dataSource = factory.create()) {
             assertThat(dataSource).isInstanceOf(EnisaKevDataSource.class);

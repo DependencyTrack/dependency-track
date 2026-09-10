@@ -37,11 +37,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -87,6 +89,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     private final String apiVersion;
     private final boolean aliasSyncEnabled;
     private final boolean checksumMatchingEnabled;
+    private final boolean batchRequestsEnabled;
 
     SnykVulnAnalyzer(
             Cache resultsCache,
@@ -97,7 +100,8 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             String apiToken,
             String apiVersion,
             boolean aliasSyncEnabled,
-            boolean checksumMatchingEnabled) {
+            boolean checksumMatchingEnabled,
+            boolean batchRequestsEnabled) {
         this.resultsCache = resultsCache;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
@@ -107,6 +111,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         this.apiVersion = apiVersion;
         this.aliasSyncEnabled = aliasSyncEnabled;
         this.checksumMatchingEnabled = checksumMatchingEnabled;
+        this.batchRequestsEnabled = batchRequestsEnabled;
     }
 
     @Override
@@ -136,14 +141,19 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
                 purlsToAnalyze.remove(purl);
 
-                final SnykCachedPurlResult cached = deserializeCachedResult(purl, cachedBytes);
-                if (cached == null) {
-                    // Corrupt entry — re-fetch.
-                    purlsToAnalyze.add(purl);
+                if (cachedBytes == null) {
                     continue;
                 }
 
-                applyCachedResult(purl, cached, issuesByPurl);
+                try {
+                    final SnykIssue[] issues = objectMapper.readValue(cachedBytes, SnykIssue[].class);
+                    if (issues.length > 0) {
+                        issuesByPurl.put(purl, List.of(issues));
+                    }
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to deserialize cached issues for PURL '{}'; Will re-fetch", purl, e);
+                    purlsToAnalyze.add(purl);
+                }
             }
         }
 
@@ -169,6 +179,12 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             try {
                 final var purl = new PackageURL(component.getPurl());
                 if (!SUPPORTED_PURL_TYPES.contains(purl.getType())) {
+                    LOGGER.debug(
+                            "Type '{}' of PURL '{}' is not supported; Skipping", purl.getType(), component.getPurl());
+                    continue;
+                }
+                if (purl.getVersion() == null) {
+                    LOGGER.debug("PURL '{}' has no version; Skipping", component.getPurl());
                     continue;
                 }
 
@@ -210,53 +226,44 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
         LOGGER.debug("Fetching Snyk issues for {} PURLs", purlBatch.size());
 
-        final SnykIssuesResponse response;
+        final var entriesToCache = new HashMap<String, byte @Nullable []>(purlBatch.size());
         try {
-            response = fetchIssues(purlBatch);
+            if (batchRequestsEnabled) {
+                final SnykIssuesResponse response = fetchIssues(purlBatch);
+                logMetaErrors(response);
+                applyBatchResponse(purlBatch, response, bomRefsByPurl, issuesByPurl, entriesToCache);
+            } else {
+                for (final String purl : purlBatch) {
+                    if (Thread.interrupted()) {
+                        throw new InterruptedException("Interrupted before all packages could be analyzed");
+                    }
+
+                    final SnykIssuesResponse response = fetchIssuesForPackage(purl);
+                    logMetaErrors(response);
+                    applyPerPackageResponse(purl, response, issuesByPurl, entriesToCache);
+                }
+            }
         } catch (IOException e) {
             final var message = "Failed to fetch Snyk issues";
             RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
             throw new UncheckedIOException(message, e);
         }
 
-        if (response.meta() != null && response.meta().errors() != null) {
-            for (final SnykIssuesMeta.Error error : response.meta().errors()) {
-                LOGGER.warn("Snyk meta error: id={}, status={}, detail={}", error.id(), error.status(), error.detail());
-            }
-        }
+        resultsCache.putMany(entriesToCache);
+    }
 
+    private void applyBatchResponse(
+            Collection<String> purlBatch,
+            SnykIssuesResponse response,
+            Map<String, Set<String>> bomRefsByPurl,
+            Map<String, List<SnykIssue>> issuesByPurl,
+            Map<String, byte @Nullable []> entriesToCache) {
         final Map<String, SnykIssuesMeta.PackageMetaEntry> metaByNormalizedPurl = indexMetaPackages(response.meta());
-
-        final var issuesByIssuePurl = new HashMap<String, List<SnykIssue>>();
-        if (response.data() != null) {
-            for (final SnykIssue issue : response.data()) {
-                final String issuePurl = SnykModelConverter.getIssuePurl(issue);
-                if (issuePurl == null) {
-                    LOGGER.warn("Unable to extract PURL from issue {}; Skipping", issue.id());
-                    continue;
-                }
-
-                final String lowerIssuePurl = issuePurl.toLowerCase();
-                issuesByIssuePurl
-                        .computeIfAbsent(lowerIssuePurl, _ -> new ArrayList<>())
-                        .add(issue);
-                final String normalizedIssuePurl = SnykPurlUtil.normalizePurlKey(issuePurl);
-                if (normalizedIssuePurl != null && !normalizedIssuePurl.equals(lowerIssuePurl)) {
-                    issuesByIssuePurl
-                            .computeIfAbsent(normalizedIssuePurl, _ -> new ArrayList<>())
-                            .add(issue);
-                }
-            }
-        }
-
-        final var entriesToCache = new HashMap<String, byte @Nullable []>(purlBatch.size());
-        final boolean hasMetaErrors = response.meta() != null
-                && response.meta().errors() != null
-                && !response.meta().errors().isEmpty();
+        final Map<String, List<SnykIssue>> issuesByIssuePurl = indexIssuesByPurl(response.data());
+        final boolean hasMetaErrors = hasMetaErrors(response.meta());
 
         for (final String requestPurl : purlBatch) {
-            final boolean checksumPath = isChecksumQualifiedRequestPurl(requestPurl);
-            if (checksumPath) {
+            if (isChecksumQualifiedRequestPurl(requestPurl)) {
                 processChecksumQualifiedPurl(
                         requestPurl,
                         metaByNormalizedPurl,
@@ -268,8 +275,27 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                 processCoordinatesOnlyPurl(requestPurl, bomRefsByPurl, issuesByIssuePurl, issuesByPurl, entriesToCache);
             }
         }
+    }
 
-        resultsCache.putMany(entriesToCache);
+    /**
+     * The per-package GET endpoint belongs to a single PURL. Issues in {@code data} are for that
+     * package; match quality is reported as {@code meta.match} (not {@code meta.packages}).
+     */
+    private void applyPerPackageResponse(
+            String requestPurl,
+            SnykIssuesResponse response,
+            Map<String, List<SnykIssue>> issuesByPurl,
+            Map<String, byte @Nullable []> entriesToCache) {
+        if (isChecksumQualifiedRequestPurl(requestPurl)) {
+            final SnykIssuesMeta.Match match =
+                    response.meta() != null ? response.meta().match() : null;
+            if (match != null && match.type() != null) {
+                applyChecksumMatch(requestPurl, match, issuesOf(response), issuesByPurl, entriesToCache);
+                return;
+            }
+        }
+
+        processDirectPackageIssues(requestPurl, issuesOf(response), issuesByPurl, entriesToCache);
     }
 
     private void processChecksumQualifiedPurl(
@@ -285,7 +311,6 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
         if (metaEntry == null || metaEntry.match() == null || metaEntry.match().type() == null) {
             if (hasMetaErrors) {
-                // Permanent meta failure for this PURL (e.g. unsupported ecosystem): negative-cache.
                 LOGGER.warn("""
                         No usable meta.packages entry for checksum-qualified PURL '{}' \
                         and meta.errors was non-empty; Skipping findings and negative-caching""", requestPurl);
@@ -298,9 +323,17 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             return;
         }
 
-        final SnykIssuesMeta.Match match = metaEntry.match();
-        final SnykMatchType matchType = requireNonNull(match.type());
+        final List<SnykIssue> issues = resolveIssuesForRequestPurl(requestPurl, metaEntry, issuesByIssuePurl);
+        applyChecksumMatch(requestPurl, requireNonNull(metaEntry.match()), issues, issuesByRequestPurl, entriesToCache);
+    }
 
+    private void applyChecksumMatch(
+            String requestPurl,
+            SnykIssuesMeta.Match match,
+            List<SnykIssue> issues,
+            Map<String, List<SnykIssue>> issuesByRequestPurl,
+            Map<String, byte @Nullable []> entriesToCache) {
+        final SnykMatchType matchType = requireNonNull(match.type());
         switch (matchType) {
             case FULL, PARTIAL -> {
                 if (matchType == SnykMatchType.PARTIAL) {
@@ -310,10 +343,9 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                             match.description(),
                             match.details());
                 }
-                final List<SnykIssue> issues = resolveIssuesForRequestPurl(requestPurl, metaEntry, issuesByIssuePurl);
                 if (!issues.isEmpty()) {
                     issuesByRequestPurl.put(requestPurl, issues);
-                    putCachedResult(entriesToCache, requestPurl, SnykCachedPurlResult.of(matchType, issues, match));
+                    cacheIssues(entriesToCache, requestPurl, issues);
                 } else {
                     entriesToCache.put(requestPurl, null);
                 }
@@ -353,9 +385,17 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             }
         }
 
+        processDirectPackageIssues(requestPurl, issues, issuesByRequestPurl, entriesToCache);
+    }
+
+    private void processDirectPackageIssues(
+            String requestPurl,
+            List<SnykIssue> issues,
+            Map<String, List<SnykIssue>> issuesByRequestPurl,
+            Map<String, byte @Nullable []> entriesToCache) {
         if (!issues.isEmpty()) {
             issuesByRequestPurl.put(requestPurl, issues);
-            putCachedResult(entriesToCache, requestPurl, SnykCachedPurlResult.full(issues));
+            cacheIssues(entriesToCache, requestPurl, issues);
         } else {
             entriesToCache.put(requestPurl, null);
         }
@@ -365,7 +405,6 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             String requestPurl,
             SnykIssuesMeta.PackageMetaEntry metaEntry,
             Map<String, List<SnykIssue>> issuesByIssuePurl) {
-        // Prefer correlating via package URL from meta.
         if (metaEntry.packageInfo() != null && metaEntry.packageInfo().url() != null) {
             final String packageUrl = metaEntry.packageInfo().url();
             final String packageKey = SnykPurlUtil.normalizePurlKey(packageUrl);
@@ -374,7 +413,6 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                 if (byNormalized != null && !byNormalized.isEmpty()) {
                     return byNormalized;
                 }
-                // Issue map keys are lowercase raw strings; try lowercase package URL too.
                 final List<SnykIssue> byLower = issuesByIssuePurl.get(packageUrl.toLowerCase());
                 if (byLower != null && !byLower.isEmpty()) {
                     return byLower;
@@ -382,7 +420,6 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             }
         }
 
-        // Direct key match (issue PURL equals request PURL).
         final List<SnykIssue> direct = issuesByIssuePurl.get(requestPurl);
         if (direct != null && !direct.isEmpty()) {
             return direct;
@@ -398,8 +435,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
         // Snyk often keys issues by coordinates-only PURLs even when the request was
         // checksum-qualified. Look up that exact coordinates key only — do not match other
-        // checksum-qualified keys that share coordinates (that would attribute issues for
-        // checksum A onto a request with checksum B).
+        // checksum-qualified keys that share coordinates.
         final String requestCoords = coordinatesLower(requestPurl);
         if (requestCoords != null) {
             final List<SnykIssue> byCoords = issuesByIssuePurl.get(requestCoords);
@@ -409,6 +445,34 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         }
 
         return List.of();
+    }
+
+    private Map<String, List<SnykIssue>> indexIssuesByPurl(@Nullable List<SnykIssue> data) {
+        final var issuesByIssuePurl = new HashMap<String, List<SnykIssue>>();
+        if (data == null) {
+            return issuesByIssuePurl;
+        }
+
+        for (final SnykIssue issue : data) {
+            final String issuePurl = SnykModelConverter.getIssuePurl(issue);
+            if (issuePurl == null) {
+                LOGGER.warn("Unable to extract PURL from issue {}; Skipping", issue.id());
+                continue;
+            }
+
+            final String lowerIssuePurl = issuePurl.toLowerCase();
+            issuesByIssuePurl
+                    .computeIfAbsent(lowerIssuePurl, _ -> new ArrayList<>())
+                    .add(issue);
+            final String normalizedIssuePurl = SnykPurlUtil.normalizePurlKey(issuePurl);
+            if (normalizedIssuePurl != null && !normalizedIssuePurl.equals(lowerIssuePurl)) {
+                issuesByIssuePurl
+                        .computeIfAbsent(normalizedIssuePurl, _ -> new ArrayList<>())
+                        .add(issue);
+            }
+        }
+
+        return issuesByIssuePurl;
     }
 
     private static @Nullable String coordinatesLower(@Nullable String purl) {
@@ -422,15 +486,6 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         }
     }
 
-    private void applyCachedResult(
-            String requestPurl, SnykCachedPurlResult cached, Map<String, List<SnykIssue>> issuesByPurl) {
-        // NONE outcomes are cached as null and never reach here as structured results.
-        // FULL and PARTIAL with issues: attach cached findings.
-        if (cached.issues() != null && !cached.issues().isEmpty()) {
-            issuesByPurl.put(requestPurl, cached.issues());
-        }
-    }
-
     private boolean isChecksumQualifiedRequestPurl(String requestPurl) {
         if (!checksumMatchingEnabled) {
             return false;
@@ -438,8 +493,6 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         try {
             return SnykPurlUtil.requiresChecksumMeta(new PackageURL(requestPurl), true);
         } catch (MalformedPackageURLException e) {
-            // Request PURLs always come from SnykPurlUtil.toSnykRequestPurl and should
-            // already be valid; do not substring-match "checksum=" (false positives).
             return false;
         }
     }
@@ -468,37 +521,76 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         return indexed;
     }
 
-    private void putCachedResult(
-            Map<String, byte @Nullable []> entriesToCache, String purl, SnykCachedPurlResult result) {
-        if (result.issues() == null || result.issues().isEmpty()) {
-            entriesToCache.put(purl, null);
-            return;
-        }
+    private void cacheIssues(Map<String, byte @Nullable []> entriesToCache, String purl, List<SnykIssue> issues) {
         try {
-            entriesToCache.put(purl, objectMapper.writeValueAsBytes(result));
+            entriesToCache.put(purl, objectMapper.writeValueAsBytes(issues));
         } catch (IOException e) {
-            LOGGER.warn("Failed to serialize cached result for PURL '{}'; Skipping cache", purl, e);
+            LOGGER.warn("Failed to serialize issues for PURL '{}'; Skipping cache", purl, e);
         }
     }
 
-    private @Nullable SnykCachedPurlResult deserializeCachedResult(String purl, byte @Nullable [] cachedBytes) {
-        if (cachedBytes == null) {
-            // Negative cache (FULL/PARTIAL empty, NONE, or meta-error permanent failure).
-            return SnykCachedPurlResult.full(List.of());
+    private static List<SnykIssue> issuesOf(SnykIssuesResponse response) {
+        if (response.data() == null || response.data().isEmpty()) {
+            return List.of();
         }
+        return List.copyOf(response.data());
+    }
 
-        try {
-            return objectMapper.readValue(cachedBytes, SnykCachedPurlResult.class);
-        } catch (IOException ignored) {
-            // Fall through to legacy SnykIssue[] format.
+    private static boolean hasMetaErrors(@Nullable SnykIssuesMeta meta) {
+        return meta != null && meta.errors() != null && !meta.errors().isEmpty();
+    }
+
+    private static void logMetaErrors(SnykIssuesResponse response) {
+        if (response.meta() == null || response.meta().errors() == null) {
+            return;
         }
+        for (final SnykIssuesMeta.Error error : response.meta().errors()) {
+            LOGGER.warn("Snyk meta error: id={}, status={}, detail={}", error.id(), error.status(), error.detail());
+        }
+    }
 
+    /**
+     * Fetches issues one package at a time, using the endpoint Dependency-Track 4.x used.
+     *
+     * <p>Only used when the batch endpoint is not available to the organization.
+     */
+    private SnykIssuesResponse fetchIssuesForPackage(String purl) throws InterruptedException, IOException {
+        final String encodedPurl = URLEncoder.encode(purl, StandardCharsets.UTF_8);
+
+        final var request = HttpRequest.newBuilder()
+                .uri(URI.create("%s/rest/orgs/%s/packages/%s/issues?version=%s"
+                        .formatted(apiBaseUrl, orgId, encodedPurl, apiVersion)))
+                .header("Authorization", "token " + apiToken)
+                .header("Accept", "application/vnd.api+json")
+                .timeout(Duration.ofSeconds(10))
+                .GET()
+                .build();
+
+        final HttpResponse<InputStream> response;
         try {
-            final SnykIssue[] issues = objectMapper.readValue(cachedBytes, SnykIssue[].class);
-            return SnykCachedPurlResult.full(List.of(issues));
+            response = httpClient.send(request, BodyHandlers.ofInputStream());
         } catch (IOException e) {
-            LOGGER.warn("Failed to deserialize cached issues for PURL '{}'; Will re-fetch", purl, e);
-            return null;
+            final var message = "Snyk API request failed";
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
+            throw new UncheckedIOException(message, e);
+        }
+
+        try (final InputStream bodyInputStream = response.body()) {
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(bodyInputStream, SnykIssuesResponse.class);
+            }
+
+            // Snyk answers 404 for packages it does not know. The batch endpoint simply
+            // omits them, so treat them as having no issues rather than failing the
+            // analysis over a single unknown package.
+            if (response.statusCode() == 404) {
+                LOGGER.debug("Snyk does not know package '{}'", purl);
+                return new SnykIssuesResponse(List.of());
+            }
+
+            RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
+            throw new IOException(
+                    "Snyk API request for package '%s' failed with status %d".formatted(purl, response.statusCode()));
         }
     }
 

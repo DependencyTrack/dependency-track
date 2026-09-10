@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * Response envelope for Snyk's batch packages/issues API.
+ * Response envelope for Snyk's packages/issues APIs.
  *
  * @since 5.0.0
  */

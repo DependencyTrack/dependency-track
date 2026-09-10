@@ -848,6 +848,10 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().removeVulnerability(vulnerability, component);
     }
 
+    public void removeStaleInternalFindings(Vulnerability vulnerability) {
+        getVulnerabilityQueryManager().removeStaleInternalFindings(vulnerability);
+    }
+
     public FindingAttribution getFindingAttribution(Vulnerability vulnerability, Component component) {
         return getVulnerabilityQueryManager().getFindingAttribution(vulnerability, component);
     }

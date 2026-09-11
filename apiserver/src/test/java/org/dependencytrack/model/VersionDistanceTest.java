@@ -118,10 +118,23 @@ public class VersionDistanceTest {
         // optional build numbers are ignored:
         assertEquals(new VersionDistance("0.0.0"), VersionDistance.getVersionDistance("0.0.0.1", "0.0.0.5"));
 
+        // letters appended to a numeric version part are ignored, like build numbers above:
+        assertEquals(new VersionDistance("0.2.?"), VersionDistance.getVersionDistance("1a.2.3", "1"));
+        assertEquals(new VersionDistance("0.2.?"), VersionDistance.getVersionDistance("1.2a.3", "1"));
+        assertEquals(new VersionDistance("0.2.?"), VersionDistance.getVersionDistance("1.2.3a", "1"));
+
+        // a non-numeric epoch is still invalid:
         assertThrows(NumberFormatException.class, () -> VersionDistance.getVersionDistance("a:", "1"));
-        assertThrows(NumberFormatException.class, () -> VersionDistance.getVersionDistance("1a.2.3", "1"));
-        assertThrows(NumberFormatException.class, () -> VersionDistance.getVersionDistance("1.2a.3", "1"));
-        assertThrows(NumberFormatException.class, () -> VersionDistance.getVersionDistance("1.2.3a", "1"));
+    }
+
+    @Test
+    public void testGetVersionDistanceWithLetterSuffixedVersionParts() {
+        assertEquals(new VersionDistance("0.0.0"), VersionDistance.getVersionDistance("1.2.3a", "1.2.3"));
+
+        // A part that is entirely non-numeric is skipped rather than ending the match,
+        // so the parts after it are still recognised. Previously everything from the
+        // non-numeric part onwards was ignored, and "1.abc.3" was read as "1.0.0".
+        assertEquals(new VersionDistance("0.0.3"), VersionDistance.getVersionDistance("1.abc.3", "1.0.0"));
     }
 
     @Test

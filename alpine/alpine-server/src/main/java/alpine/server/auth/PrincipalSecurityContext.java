@@ -18,16 +18,15 @@
  */
 package alpine.server.auth;
 
-import alpine.model.auth.ApiKeyPrincipal;
 import alpine.model.auth.Principal;
-import alpine.model.auth.UserPrincipal;
 import org.jspecify.annotations.NullMarked;
 
 import jakarta.ws.rs.core.SecurityContext;
 
 /// @since 5.2.0
 @NullMarked
-public record PrincipalSecurityContext(Principal principal, boolean secure, boolean portfolioAccessControlEnabled)
+public record PrincipalSecurityContext(
+        Principal principal, boolean secure, boolean portfolioAccessControlEnabled, String authenticationScheme)
         implements SecurityContext {
 
     public static final String API_KEY_AUTH = "API_KEY";
@@ -54,9 +53,6 @@ public record PrincipalSecurityContext(Principal principal, boolean secure, bool
 
     @Override
     public String getAuthenticationScheme() {
-        return switch (principal) {
-            case ApiKeyPrincipal _ -> API_KEY_AUTH;
-            case UserPrincipal _ -> BEARER_AUTH;
-        };
+        return authenticationScheme;
     }
 }

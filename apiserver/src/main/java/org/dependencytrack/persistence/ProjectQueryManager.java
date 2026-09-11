@@ -23,6 +23,7 @@ import alpine.model.auth.ApiKeyPrincipal;
 import alpine.model.auth.Principal;
 import alpine.model.auth.TeamRef;
 import alpine.model.auth.UserPrincipal;
+import alpine.model.auth.UserType;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
@@ -562,9 +563,9 @@ final class ProjectQueryManager extends QueryManager {
     }
 
     /**
-     * Updates a Project ACL to add the principals Team to the AccessTeams
-     * This only happens if Portfolio Access Control is enabled and the @param principal is an ApyKey
-     * For a User we don't know which Team(s) to add to the ACL,
+     * Updates a Project ACL to add the principal's first team to the AccessTeams.
+     * This only happens if Portfolio Access Control is enabled, and only for machine principals,
+     * i.e. API keys and service accounts. For a human user we don't know which Team(s) to add,
      * See https://github.com/DependencyTrack/dependency-track/issues/1435
      *
      * @param project
@@ -573,20 +574,26 @@ final class ProjectQueryManager extends QueryManager {
      */
     @Override
     public boolean updateNewProjectACL(Project project, Principal principal) {
-        if (principal instanceof final ApiKeyPrincipal apiKey
-                && (request != null && request.isPortfolioAccessControlEnabled())) {
-            final var apiTeam = apiKey.teams().stream().findFirst();
-            if (apiTeam.isPresent()) {
-                LOGGER.debug("adding Team to ACL of newly created project");
-                final Team team = getObjectByUuid(Team.class, apiTeam.get().uuid());
-                project.addAccessTeam(team);
-                persist(project);
-                return true;
-            } else {
-                LOGGER.warn("API Key without a Team, unable to assign team ACL to project.");
-            }
+        if (principal == null || request == null || !request.isPortfolioAccessControlEnabled()) {
+            return false;
         }
-        return false;
+
+        final List<TeamRef> teams =
+                switch (principal) {
+                    case ApiKeyPrincipal apiKey -> apiKey.teams();
+                    case UserPrincipal user when user.type() == UserType.SERVICE -> user.teams();
+                    case UserPrincipal _ -> List.of();
+                };
+        if (teams.isEmpty()) {
+            LOGGER.warn("{} has no team, unable to assign team ACL to project.", principal.displayName());
+            return false;
+        }
+
+        LOGGER.debug("adding Team to ACL of newly created project");
+        final Team team = getObjectByUuid(Team.class, teams.getFirst().uuid());
+        project.addAccessTeam(team);
+        persist(project);
+        return true;
     }
 
     /**

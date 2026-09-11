@@ -25,12 +25,21 @@ import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.Tag;
 import org.junit.jupiter.api.Test;
 
+import javax.jdo.JDODataStoreException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class QueryManagerTest extends PersistenceCapableTest {
+
+    @Test
+    public void createManagedUserShouldRejectReservedServiceAccountPrefixRegardlessOfCase() {
+        assertThatExceptionOfType(JDODataStoreException.class)
+                .isThrownBy(() -> qm.createManagedUser("SVC-ci", "hash"))
+                .withMessageContaining("user_service_check");
+    }
 
     @Test
     public void shouldRejectConvertingProjectWithComponentsToCollection() {

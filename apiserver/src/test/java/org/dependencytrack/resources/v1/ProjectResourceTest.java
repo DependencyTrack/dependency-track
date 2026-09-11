@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.model.ManagedUser;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
@@ -4637,6 +4638,34 @@ class ProjectResourceTest extends ResourceTest {
 
         final Response response =
                 jersey.target(V1_PROJECT).request().header(X_API_KEY, apiKey).put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        assertThat(qm.getProject("acme-app", null))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
+    }
+
+    @Test
+    void shouldAutoAssignServiceAccountTeamWhenCreatingProjectWithAclEnabled() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+        enablePortfolioAccessControl();
+
+        final var serviceAccount = new ServiceAccount();
+        serviceAccount.setUsername("svc-ci");
+        serviceAccount.setSuspended(false);
+        qm.persist(serviceAccount);
+        qm.addUserToTeam(serviceAccount, team);
+        final String serviceAccountKey = qm.createApiKey(serviceAccount, null).getKey();
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, serviceAccountKey)
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "name": "acme-app"
                         }

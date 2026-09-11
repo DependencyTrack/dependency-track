@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.model.User;
 import alpine.server.auth.SessionTokenService;
@@ -364,6 +365,24 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                     """));
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(getPlainTextBody(response)).isEqualTo("The user could not be found.");
+    }
+
+    @Test
+    void createManagedUserShouldRejectReservedUsernamePrefix() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+
+        final var user = new ManagedUser();
+        user.setFullname("Captain BlackBeard");
+        user.setEmail("blackbeard@example.com");
+        user.setUsername("SVC-blackbeard");
+        user.setNewPassword("password");
+        user.setConfirmPassword("password");
+        final Response response = jersey.target(V1_USER + "/managed")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .put(Entity.entity(user, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("The username prefix svc- is reserved for service accounts.");
     }
 
     @Test
@@ -801,6 +820,31 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertFalse(json.getBoolean("forcePasswordChange"));
         Assertions.assertFalse(json.getBoolean("nonExpiryPassword"));
         Assertions.assertFalse(json.getBoolean("suspended"));
+    }
+
+    @Test
+    void addTeamToUserShouldSupportServiceAccounts() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_UPDATE);
+
+        final Team team = qm.createTeam("Pirates");
+        final var serviceAccount = new ServiceAccount();
+        serviceAccount.setUsername("svc-ci");
+        serviceAccount.setSuspended(false);
+        qm.persist(serviceAccount);
+
+        final var ido = new IdentifiableObject();
+        ido.setUuid(team.getUuid().toString());
+
+        final Response response = jersey.target(V1_USER + "/svc-ci/membership")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(ido, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json.getString("username")).isEqualTo("svc-ci");
+        assertThat(json.getJsonArray("teams").getJsonObject(0).getString("name"))
+                .isEqualTo("Pirates");
     }
 
     @Test

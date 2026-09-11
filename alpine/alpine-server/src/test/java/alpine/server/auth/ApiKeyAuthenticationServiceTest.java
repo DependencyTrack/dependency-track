@@ -19,9 +19,13 @@
 package alpine.server.auth;
 
 import alpine.model.ApiKey;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
 import alpine.model.auth.TeamRef;
+import alpine.model.auth.UserPrincipal;
+import alpine.model.auth.UserType;
 import alpine.persistence.AlpineQueryManager;
 import alpine.security.ApiKeyDecoder;
 import alpine.security.ApiKeyGenerator;
@@ -62,7 +66,7 @@ public class ApiKeyAuthenticationServiceTest {
         when(containerRequestMock.getHeaderString("X-Api-Key")).thenReturn(apiKey.getKey());
         final var authService = new ApiKeyAuthenticationService(containerRequestMock);
 
-        final ApiKeyPrincipal authenticatedApiKey = authService.authenticate();
+        final var authenticatedApiKey = (ApiKeyPrincipal) authService.authenticate();
         assertThat(authenticatedApiKey).isNotNull();
         assertThat(authenticatedApiKey.id()).isEqualTo(apiKey.getId());
     }
@@ -82,7 +86,7 @@ public class ApiKeyAuthenticationServiceTest {
         when(containerRequestMock.getHeaderString("X-Api-Key")).thenReturn(keyWithDifferentPrefix);
         final var authService = new ApiKeyAuthenticationService(containerRequestMock);
 
-        final ApiKeyPrincipal authenticatedApiKey = authService.authenticate();
+        final var authenticatedApiKey = (ApiKeyPrincipal) authService.authenticate();
         assertThat(authenticatedApiKey).isNotNull();
         assertThat(authenticatedApiKey.id()).isEqualTo(apiKey.getId());
     }
@@ -99,7 +103,7 @@ public class ApiKeyAuthenticationServiceTest {
         when(containerRequestMock.getHeaderString("X-Api-Key")).thenReturn(apiKey.getKey());
         final var authService = new ApiKeyAuthenticationService(containerRequestMock);
 
-        final ApiKeyPrincipal authenticatedApiKey = authService.authenticate();
+        final var authenticatedApiKey = (ApiKeyPrincipal) authService.authenticate();
         assertThat(authenticatedApiKey).isNotNull();
         assertThat(authenticatedApiKey.id()).isEqualTo(apiKey.getId());
     }
@@ -112,7 +116,7 @@ public class ApiKeyAuthenticationServiceTest {
         when(containerRequestMock.getHeaderString("X-Api-Key")).thenReturn(apiKey.getKey());
         final var authService = new ApiKeyAuthenticationService(containerRequestMock);
 
-        final ApiKeyPrincipal authenticatedApiKey = authService.authenticate();
+        final var authenticatedApiKey = (ApiKeyPrincipal) authService.authenticate();
         assertThat(authenticatedApiKey).isNotNull();
         assertThat(authenticatedApiKey.id()).isEqualTo(apiKey.getId());
     }
@@ -125,7 +129,7 @@ public class ApiKeyAuthenticationServiceTest {
         when(containerRequestMock.getHeaderString("X-Api-Key")).thenReturn(apiKey.getKey());
         final var authService = new ApiKeyAuthenticationService(containerRequestMock);
 
-        final ApiKeyPrincipal authenticatedApiKey = authService.authenticate();
+        final var authenticatedApiKey = (ApiKeyPrincipal) authService.authenticate();
         assertThat(authenticatedApiKey).isNotNull();
         assertThat(authenticatedApiKey.id()).isEqualTo(apiKey.getId());
     }
@@ -269,7 +273,7 @@ public class ApiKeyAuthenticationServiceTest {
             rawKey = created.getKey();
         }
 
-        final ApiKeyPrincipal principal = authenticate(rawKey);
+        final var principal = (ApiKeyPrincipal) authenticate(rawKey);
 
         assertThat(principal.teams()).extracting(TeamRef::name).containsExactly("alpha", "bravo");
         assertThat(principal.teams()).allSatisfy(team -> {
@@ -291,7 +295,7 @@ public class ApiKeyAuthenticationServiceTest {
         }
         executeUpdate(/* language=SQL */ "DELETE FROM \"APIKEYS_TEAMS\" WHERE \"APIKEY_ID\" = " + apiKeyId);
 
-        final ApiKeyPrincipal principal = authenticate(rawKey);
+        final var principal = (ApiKeyPrincipal) authenticate(rawKey);
 
         assertThat(principal.teams()).isEmpty();
         assertThat(principal.effectivePermissions()).isEmpty();
@@ -357,7 +361,43 @@ public class ApiKeyAuthenticationServiceTest {
         assertThat(statementCount.get()).isEqualTo(1);
     }
 
-    private static ApiKeyPrincipal authenticate(String key) throws AuthenticationException {
+    @Test
+    void shouldAuthenticateKeyOwnedByServiceAccountAsUserPrincipal() throws Exception {
+        final long serviceAccountId;
+        final String rawKey;
+        try (final var qm = new AlpineQueryManager()) {
+            final Team team = qm.createTeam("builders");
+            team.setPermissions(List.of(qm.createPermission("TEAM_PERM", null)));
+            qm.persist(team);
+
+            final var serviceAccount = new ServiceAccount();
+            serviceAccount.setUsername("svc-ci");
+            serviceAccount.setSuspended(false);
+            serviceAccount.setTeams(List.of(team));
+            serviceAccount.setPermissions(List.of(qm.createPermission("DIRECT_PERM", null)));
+            serviceAccountId = qm.persist(serviceAccount).getId();
+
+            rawKey = qm.createApiKey(serviceAccount, null).getKey();
+        }
+
+        final var statementCount = new AtomicInteger();
+        final var containerRequestMock = mock(ContainerRequest.class);
+        when(containerRequestMock.getHeaderString("X-Api-Key")).thenReturn(rawKey);
+        final var authService = new ApiKeyAuthenticationService(
+                containerRequestMock,
+                CountingDataSource.wrap(DataSourceRegistry.getInstance().getDefault(), statementCount));
+
+        assertThat(authService.authenticate()).isInstanceOfSatisfying(UserPrincipal.class, user -> {
+            assertThat(user.id()).isEqualTo(serviceAccountId);
+            assertThat(user.username()).isEqualTo("svc-ci");
+            assertThat(user.type()).isEqualTo(UserType.SERVICE);
+            assertThat(user.teams()).extracting(TeamRef::name).containsExactly("builders");
+            assertThat(user.effectivePermissions()).containsExactlyInAnyOrder("DIRECT_PERM", "TEAM_PERM");
+        });
+        assertThat(statementCount.get()).isEqualTo(1);
+    }
+
+    private static Principal authenticate(String key) throws AuthenticationException {
         final var containerRequestMock = mock(ContainerRequest.class);
         when(containerRequestMock.getHeaderString("X-Api-Key")).thenReturn(key);
         return new ApiKeyAuthenticationService(containerRequestMock).authenticate();

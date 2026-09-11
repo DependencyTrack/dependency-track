@@ -20,6 +20,7 @@ package alpine.server.auth;
 
 import alpine.config.AlpineConfigKeys;
 import alpine.model.LdapUser;
+import alpine.model.ServiceAccount;
 import alpine.persistence.AlpineQueryManager;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -86,6 +87,13 @@ public class LdapAuthenticationService implements AuthenticationService<LdapUser
      */
     public LdapUser authenticate() throws AlpineAuthenticationException {
         LOGGER.debug("Attempting to authenticate user: {}", username);
+        if (username != null && ServiceAccount.hasReservedPrefix(username)) {
+            LOGGER.warn(
+                    "Refusing to authenticate user: the username prefix {} is reserved for service accounts",
+                    ServiceAccount.USERNAME_PREFIX);
+            throw new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT);
+        }
+
         final LdapConnectionWrapper ldap = new LdapConnectionWrapper(config);
         if (validateCredentials(ldap)) {
             try (AlpineQueryManager qm = new AlpineQueryManager()) {

@@ -32,7 +32,7 @@
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
         <maven.install.skip>true</maven.install.skip>
         <!-- Dependency Versions -->
-        <lib.cloud-sql-postgres-socket-factory.version>1.29.0</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.30.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.javacron.version>1.4.0</lib.javacron.version>
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>

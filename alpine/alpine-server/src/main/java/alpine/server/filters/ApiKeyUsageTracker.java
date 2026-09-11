@@ -18,7 +18,6 @@
  */
 package alpine.server.filters;
 
-import alpine.model.auth.ApiKeyPrincipal;
 import alpine.persistence.AlpineQueryManager;
 import org.glassfish.jersey.server.monitoring.ApplicationEvent;
 import org.glassfish.jersey.server.monitoring.ApplicationEventListener;
@@ -96,13 +95,13 @@ public class ApiKeyUsageTracker implements ApplicationEventListener {
         return null;
     }
 
-    static void onApiKeyUsed(final ApiKeyPrincipal apiKey) {
-        final var event = new ApiKeyUsedEvent(apiKey.id(), Instant.now().toEpochMilli());
+    static void onApiKeyUsed(long apiKeyId) {
+        final var event = new ApiKeyUsedEvent(apiKeyId, Instant.now().toEpochMilli());
         if (!EVENT_QUEUE.offer(event)) {
             // Prefer lost events over blocking when the queue is saturated.
             // We do not want to add additional latency to requests.
-            LOGGER.debug("Usage of API key %s can not be tracked because the event queue is already saturated"
-                    .formatted(apiKey.maskedKey()));
+            LOGGER.debug("Usage of API key %d can not be tracked because the event queue is already saturated"
+                    .formatted(apiKeyId));
         }
     }
 

@@ -16,12 +16,28 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package alpine.model.auth;
+package alpine.model;
 
-/// @since 5.2.0
-public enum UserType {
-    MANAGED,
-    LDAP,
-    OIDC,
-    SERVICE
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class ServiceAccountTest {
+
+    @ParameterizedTest
+    @CsvSource({
+            "svc-ci, true",
+            "SVC-ci, true",
+            "Svc-ci, true",
+            "svc-, true",
+            "svc, false",
+            "svcci, false",
+            "svc_ci, false",
+            "xsvc-ci, false",
+            "'', false",
+    })
+    void hasReservedPrefixShouldIgnoreCase(String username, boolean expected) {
+        assertThat(ServiceAccount.hasReservedPrefix(username)).isEqualTo(expected);
+    }
 }

@@ -28,6 +28,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
+import javax.jdo.annotations.ForeignKey;
 import javax.jdo.annotations.ForeignKeyAction;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Join;
@@ -102,6 +103,13 @@ public class ApiKey implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     @JsonIgnore
     private List<Team> teams;
+
+    /// @since 5.2.0
+    @Persistent
+    @Column(name = "USER_ID", allowsNull = "true")
+    @ForeignKey(name = "APIKEY_USER_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE)
+    @JsonIgnore
+    private User user;
 
     @Persistent
     @Unique(name = "APIKEY_PUBLIC_IDX")
@@ -184,6 +192,14 @@ public class ApiKey implements Serializable {
 
     public void setTeams(List<Team> teams) {
         this.teams = teams;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getPublicId() {

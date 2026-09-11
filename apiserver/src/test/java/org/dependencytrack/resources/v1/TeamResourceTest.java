@@ -23,6 +23,7 @@ import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
@@ -157,7 +158,8 @@ public class TeamResourceTest extends ResourceTest {
                   "permissions" : [ ],
                   "ldapUsers" : [ ],
                   "oidcUsers" : [ ],
-                  "managedUsers" : [ ]
+                  "managedUsers" : [ ],
+                  "serviceAccounts" : [ ]
                 }, {
                   "uuid" : "${json-unit.any-string}",
                   "name" : "team 10",
@@ -167,7 +169,8 @@ public class TeamResourceTest extends ResourceTest {
                   "permissions" : [ ],
                   "ldapUsers" : [ ],
                   "oidcUsers" : [ ],
-                  "managedUsers" : [ ]
+                  "managedUsers" : [ ],
+                  "serviceAccounts" : [ ]
                 } ]
                 """);
     }
@@ -186,6 +189,28 @@ public class TeamResourceTest extends ResourceTest {
         JsonObject json = parseJsonObject(response);
         org.junit.jupiter.api.Assertions.assertNotNull(json);
         org.junit.jupiter.api.Assertions.assertEquals("ABC", json.getString("name"));
+    }
+
+    @Test
+    public void getTeamShouldIncludeServiceAccounts() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_READ);
+
+        final Team team = qm.createTeam("ABC");
+        final var serviceAccount = new ServiceAccount();
+        serviceAccount.setUsername("svc-ci");
+        serviceAccount.setSuspended(false);
+        qm.persist(serviceAccount);
+        qm.addUserToTeam(serviceAccount, team);
+
+        final Response response = jersey.target(V1_TEAM + "/" + team.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.serviceAccounts[*].username")
+                .isArray()
+                .containsExactly("svc-ci");
     }
 
     @Test
@@ -611,6 +636,39 @@ public class TeamResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(getPlainTextBody(response)).isEqualTo("The API key could not be found.");
+    }
+
+    @Test
+    public void apiKeyEndpointsShouldNotResolveKeysOwnedByServiceAccounts() {
+        initializeWithPermissions(
+                Permissions.ACCESS_MANAGEMENT_CREATE,
+                Permissions.ACCESS_MANAGEMENT_UPDATE,
+                Permissions.ACCESS_MANAGEMENT_DELETE);
+
+        final var serviceAccount = new ServiceAccount();
+        serviceAccount.setUsername("svc-ci");
+        serviceAccount.setSuspended(false);
+        qm.persist(serviceAccount);
+        final ApiKey serviceAccountKey = qm.createApiKey(serviceAccount, null);
+
+        final Response regenerateResponse = jersey.target(V1_TEAM + "/key/" + serviceAccountKey.getPublicId())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(null, MediaType.APPLICATION_JSON));
+        assertThat(regenerateResponse.getStatus()).isEqualTo(404);
+
+        final Response commentResponse = jersey.target(
+                        "%s/key/%s/comment".formatted(V1_TEAM, serviceAccountKey.getPublicId()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity("Some comment 123", MediaType.TEXT_PLAIN));
+        assertThat(commentResponse.getStatus()).isEqualTo(404);
+
+        final Response deleteResponse = jersey.target(V1_TEAM + "/key/" + serviceAccountKey.getPublicId())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        assertThat(deleteResponse.getStatus()).isEqualTo(404);
     }
 
     @Test

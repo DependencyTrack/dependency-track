@@ -27,6 +27,7 @@ import alpine.model.MappedOidcGroup;
 import alpine.model.OidcGroup;
 import alpine.model.OidcUser;
 import alpine.model.Permission;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.model.User;
 import alpine.resources.AlpineRequest;
@@ -124,18 +125,47 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
      * @since 3.2.0
      */
     public ApiKey createApiKey(final Team team) {
-        final ApiKey generatedApiKey = ApiKeyGenerator.generate();
-
         return callInTransaction(() -> {
-            final var apiKey = new ApiKey();
-            apiKey.setKey(generatedApiKey.getKey());
-            apiKey.setPublicId(generatedApiKey.getPublicId());
-            apiKey.setSecret(generatedApiKey.getSecret());
-            apiKey.setSecretHash(generatedApiKey.getSecretHash());
-            apiKey.setCreated(new Date());
+            final ApiKey apiKey = createApiKey();
             apiKey.setTeams(List.of(team));
             return pm.makePersistent(apiKey);
         });
+    }
+
+    /// @since 5.2.0
+    public ApiKey createApiKey(ServiceAccount serviceAccount, String comment) {
+        return callInTransaction(() -> {
+            final ApiKey apiKey = createApiKey();
+            apiKey.setUser(serviceAccount);
+            apiKey.setComment(comment);
+            return pm.makePersistent(apiKey);
+        });
+    }
+
+    private static ApiKey createApiKey() {
+        final ApiKey generatedApiKey = ApiKeyGenerator.generate();
+        final var apiKey = new ApiKey();
+        apiKey.setKey(generatedApiKey.getKey());
+        apiKey.setPublicId(generatedApiKey.getPublicId());
+        apiKey.setSecret(generatedApiKey.getSecret());
+        apiKey.setSecretHash(generatedApiKey.getSecretHash());
+        apiKey.setCreated(new Date());
+        return apiKey;
+    }
+
+    /// @since 5.2.0
+    public ServiceAccount getServiceAccount(String username) {
+        final Query<ServiceAccount> query = pm.newQuery(ServiceAccount.class, "username == :username");
+        query.setParameters(username);
+        return executeAndCloseUnique(query);
+    }
+
+    /// @since 5.2.0
+    public List<ApiKey> getApiKeys(ServiceAccount serviceAccount) {
+        final Query<ApiKey> query = pm.newQuery(ApiKey.class, "user == :user");
+        query.setOrdering("id desc");
+        query.setParameters(serviceAccount);
+        return executeAndCloseList(query);
     }
 
     /**

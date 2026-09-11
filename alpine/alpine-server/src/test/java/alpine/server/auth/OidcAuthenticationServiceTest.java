@@ -331,6 +331,23 @@ public class OidcAuthenticationServiceTest {
     }
 
     @Test
+    public void authenticateShouldThrowWhenUsernameHasReservedServiceAccountPrefix() throws Exception {
+        final Config config = configWith(Map.of(AlpineConfigKeys.OIDC_USER_PROVISIONING, "true"));
+
+        final var profile = new OidcProfile();
+        profile.setSubject("subject");
+        profile.setUsername("SVC-username");
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
+
+        final var authService = new OidcAuthenticationService(config, oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
+
+        Assertions.assertThatExceptionOfType(AlpineAuthenticationException.class)
+                .isThrownBy(authService::authenticate)
+                .satisfies(exception -> assertThat(exception.getCauseType())
+                        .isEqualTo(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT));
+    }
+
+    @Test
     public void authenticateShouldProvisionAndApplyDefaultTeamsAndReturnNewUserWhenUserDoesNotExistAndProvisioningIsEnabled() throws Exception {
         final Config config = configWith(Map.of(
                 AlpineConfigKeys.OIDC_USER_PROVISIONING, "true",

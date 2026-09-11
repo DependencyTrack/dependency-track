@@ -1,0 +1,32 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [],
+  "meta": {
+    "errors": [],
+    "packages": {
+      "pkg:maven/org.example/unknown@1.0.0?checksum=sha1%3Abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": {
+        "package": {
+          "name": "unknown",
+          "namespace": "org.example",
+          "type": "maven",
+          "url": "pkg:maven/org.example/unknown@1.0.0",
+          "version": "1.0.0"
+        },
+        "match": {
+          "type": "none",
+          "details": {
+            "name_version": false,
+            "checksum": false
+          },
+          "description": "Neither package name/version nor checksum matched",
+          "input": {
+            "purl": "pkg:maven/org.example/unknown@1.0.0?checksum=sha1%3Abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "checksum": "sha1:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      }
+    }
+  }
+}

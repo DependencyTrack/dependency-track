@@ -1,0 +1,85 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [
+    {
+      "id": "SNYK-JAVA-ORGJBOSSLOGGING-0000001",
+      "type": "issue",
+      "attributes": {
+        "title": "Example Vulnerability",
+        "type": "package_vulnerability",
+        "created_at": "2022-10-02T09:41:44.046865Z",
+        "updated_at": "2022-11-28T01:11:01.289734Z",
+        "description": "Example description.",
+        "problems": [
+          {
+            "id": "CVE-2022-0001",
+            "source": "CVE"
+          }
+        ],
+        "coordinates": [
+          {
+            "remedies": [
+              {
+                "type": "indeterminate",
+                "description": "Upgrade the package"
+              }
+            ],
+            "representations": [
+              {
+                "resource_path": "[,3.4.2)"
+              },
+              {
+                "package": {
+                  "name": "jboss-logging",
+                  "version": "3.4.1.Final",
+                  "type": "maven",
+                  "url": "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final"
+                }
+              }
+            ]
+          }
+        ],
+        "severities": [
+          {
+            "source": "Snyk",
+            "level": "medium",
+            "score": 5.0,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          }
+        ],
+        "slots": {
+          "publication_time": "2022-10-02T09:54:05Z",
+          "references": []
+        }
+      }
+    }
+  ],
+  "meta": {
+    "errors": [],
+    "packages": {
+      "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1%3A40fd4d696c55793e996d1ff3c475833f836c2498": {
+        "package": {
+          "name": "jboss-logging",
+          "namespace": "org.jboss.logging",
+          "type": "maven",
+          "url": "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1%3A40fd4d696c55793e996d1ff3c475833f836c2498",
+          "version": "3.4.1.Final"
+        },
+        "match": {
+          "type": "full",
+          "details": {
+            "name_version": true,
+            "checksum": true
+          },
+          "description": "A full match was found based on the provided package name, version, and checksum",
+          "input": {
+            "purl": "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1%3A40fd4d696c55793e996d1ff3c475833f836c2498",
+            "checksum": "sha1:40fd4d696c55793e996d1ff3c475833f836c2498"
+          }
+        }
+      }
+    }
+  }
+}

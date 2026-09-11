@@ -41,4 +41,13 @@ class SnykVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnAnaly
 
         assertThat(config.isBatchRequestsEnabled()).isTrue();
     }
+
+    @Test
+    void shouldDisableChecksumMatchingWhenNotConfigured() throws Exception {
+        final var config = new ObjectMapper().readValue("""
+                        {"enabled":true,"apiBaseUrl":"https://api.snyk.io","orgId":"org","apiToken":"token"}
+                        """, SnykVulnAnalyzerConfigV1.class);
+
+        assertThat(config.isChecksumMatchingEnabled()).isFalse();
+    }
 }

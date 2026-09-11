@@ -1,0 +1,142 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [
+    {
+      "id": "SNYK-JAVA-COMFASTERXMLWOODSTOX-3091135",
+      "type": "issue",
+      "attributes": {
+        "title": "Denial of Service (DoS)",
+        "type": "package_vulnerability",
+        "created_at": "2022-10-31T11:25:51.137662Z",
+        "updated_at": "2026-06-18T14:02:23.048276Z",
+        "description": "Denial of Service (DoS).",
+        "problems": [
+          {
+            "id": "CVE-2022-40152",
+            "source": "CVE"
+          }
+        ],
+        "coordinates": [
+          {
+            "remedies": [
+              {
+                "type": "indeterminate",
+                "description": "Upgrade the package version to 5.4.0,6.4.0 to fix this vulnerability"
+              }
+            ],
+            "representations": [
+              {
+                "resource_path": "[,5.4.0),[6.0.0.pr1,6.4.0)"
+              },
+              {
+                "package": {
+                  "name": "woodstox-core",
+                  "namespace": "com.fasterxml.woodstox",
+                  "type": "maven",
+                  "url": "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?checksum=sha1:ad9503c3e994a4f611a4892f2e67ac82df727086",
+                  "version": "5.0.0"
+                }
+              }
+            ]
+          }
+        ],
+        "severities": [
+          {
+            "source": "Snyk",
+            "level": "medium",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          }
+        ],
+        "slots": {
+          "publication_time": "2022-10-31T16:11:28.305760Z",
+          "references": []
+        }
+      }
+    },
+    {
+      "id": "SNYK-JAVA-COMFASTERXMLWOODSTOX-2928754",
+      "type": "issue",
+      "attributes": {
+        "title": "XML External Entity (XXE) Injection",
+        "type": "package_vulnerability",
+        "created_at": "2022-06-16T13:55:07.780271Z",
+        "updated_at": "2026-05-21T02:01:25.869551Z",
+        "description": "XML External Entity (XXE) Injection.",
+        "problems": [
+          {
+            "id": "CWE-611",
+            "source": "CWE"
+          }
+        ],
+        "coordinates": [
+          {
+            "remedies": [
+              {
+                "type": "indeterminate",
+                "description": "Upgrade the package version to 5.3.0 to fix this vulnerability"
+              }
+            ],
+            "representations": [
+              {
+                "resource_path": "[,5.3.0)"
+              },
+              {
+                "package": {
+                  "name": "woodstox-core",
+                  "namespace": "com.fasterxml.woodstox",
+                  "type": "maven",
+                  "url": "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?checksum=sha1:ad9503c3e994a4f611a4892f2e67ac82df727086",
+                  "version": "5.0.0"
+                }
+              }
+            ]
+          }
+        ],
+        "severities": [
+          {
+            "source": "Snyk",
+            "level": "critical",
+            "score": 9.4,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:L"
+          }
+        ],
+        "slots": {
+          "publication_time": "2022-06-16T14:00:24.315507Z",
+          "references": []
+        }
+      }
+    }
+  ],
+  "meta": {
+    "errors": [],
+    "packages": {
+      "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?checksum=sha1:ad9503c3e994a4f611a4892f2e67ac82df727086": {
+        "package": {
+          "name": "woodstox-core",
+          "namespace": "com.fasterxml.woodstox",
+          "type": "maven",
+          "url": "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?checksum=sha1:ad9503c3e994a4f611a4892f2e67ac82df727086",
+          "version": "5.0.0"
+        },
+        "match": {
+          "type": "partial",
+          "details": {
+            "name_version": true,
+            "checksum": false
+          },
+          "description": "A partial match was found. The package name and version match, but the checksum differs from the expected value in Snyk’s database.",
+          "input": {
+            "purl": "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?checksum=sha1:ad9503c3e994a4f611a4892f2e67ac82df727086",
+            "checksum": "sha1:ad9503c3e994a4f611a4892f2e67ac82df727086"
+          }
+        }
+      }
+    }
+  },
+  "links": {
+    "self": "/orgs/test-org/packages/issues?version=2025-11-05"
+  }
+}

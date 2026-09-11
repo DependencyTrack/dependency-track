@@ -1,0 +1,35 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [],
+  "meta": {
+    "errors": [],
+    "packages": {
+      "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1%3A40fd4d696c55793e996d1ff3c475833f836c2498": {
+        "package": {
+          "name": "jboss-logging",
+          "namespace": "org.jboss.logging",
+          "type": "maven",
+          "url": "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1%3A40fd4d696c55793e996d1ff3c475833f836c2498",
+          "version": "3.4.1.Final"
+        },
+        "match": {
+          "type": "full",
+          "details": {
+            "name_version": true,
+            "checksum": true
+          },
+          "description": "A full match was found based on the provided package name, version, and checksum",
+          "input": {
+            "purl": "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1%3A40fd4d696c55793e996d1ff3c475833f836c2498",
+            "checksum": "sha1:40fd4d696c55793e996d1ff3c475833f836c2498"
+          }
+        }
+      }
+    }
+  },
+  "links": {
+    "self": "/orgs/test-org/packages/issues?version=2025-11-05"
+  }
+}

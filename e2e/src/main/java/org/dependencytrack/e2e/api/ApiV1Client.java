@@ -29,14 +29,10 @@ import org.dependencytrack.e2e.api.model.EventTokenResponse;
 import org.dependencytrack.e2e.api.model.Finding;
 import org.dependencytrack.e2e.api.model.NotificationPublisher;
 import org.dependencytrack.e2e.api.model.NotificationRule;
-import org.dependencytrack.e2e.api.model.Page;
 import org.dependencytrack.e2e.api.model.Project;
 import org.dependencytrack.e2e.api.model.Team;
-import org.dependencytrack.e2e.api.model.UpdateExtensionConfigRequest;
 import org.dependencytrack.e2e.api.model.UpdateNotificationRuleRequest;
 import org.dependencytrack.e2e.api.model.VexSubmitRequest;
-import org.dependencytrack.e2e.api.model.VulnPolicyBundleSyncStatus;
-import org.dependencytrack.e2e.api.model.VulnerabilityPolicy;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
@@ -53,7 +49,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Path("/api")
-public interface ApiClient {
+public interface ApiV1Client {
 
     @POST
     @Path("/v1/user/forceChangePassword")
@@ -144,22 +140,6 @@ public interface ApiClient {
     NotificationRule updateNotificationRule(UpdateNotificationRuleRequest request);
 
     @GET
-    @Path("/v2/vuln-policies")
-    @Produces(MediaType.WILDCARD)
-    @Consumes(MediaType.APPLICATION_JSON)
-    Page<VulnerabilityPolicy> getAllVulnerabilityPolicies();
-
-    @POST
-    @Path("/v2/vuln-policy-bundles/{uuid}/sync-runs")
-    void triggerVulnPolicyBundleSync(@PathParam("uuid") UUID uuid);
-
-    @GET
-    @Path("/v2/vuln-policy-bundles/{uuid}/sync-runs/latest")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    VulnPolicyBundleSyncStatus getVulnPolicyBundleSyncStatus(@PathParam("uuid") UUID uuid);
-
-    @GET
     @Path("/v1/analysis")
     @Produces(MediaType.WILDCARD)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -173,13 +153,4 @@ public interface ApiClient {
     @Produces(MediaType.WILDCARD)
     @Consumes(MediaType.APPLICATION_JSON)
     EventTokenResponse analyzeProject(@PathParam("uuid") UUID projectUuid);
-
-    @PUT
-    @Path("/v2/extension-points/{extensionPoint}/extensions/{extension}/config")
-    @Produces(MediaType.WILDCARD)
-    @Consumes(MediaType.APPLICATION_JSON)
-    void updateExtensionConfig(
-            @PathParam("extensionPoint") String extensionPoint,
-            @PathParam("extension") String extension,
-            UpdateExtensionConfigRequest request);
 }

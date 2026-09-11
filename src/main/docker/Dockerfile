@@ -25,7 +25,7 @@ ARG UID=1000
 ARG GID=1000
 ARG WAR_FILENAME=dependency-track-apiserver.jar
 
-FROM eclipse-temurin:25.0.4_7-jre-jammy@sha256:3ffcdc93d49d7111e9a82d6f215d66ee518cb01821e957ec2a866ca59e2561d2 AS jre-build
+FROM eclipse-temurin:25.0.4_7-jre-jammy@sha256:20a695e74d47fb29cda1cbad5d9ee6cfad4ac6e88a8e048ed6265cede1e71f5e AS jre-build
 
 FROM debian:stable-slim@sha256:04634311a8d5fc442b6eb06d792293c4f3e2268652ca7634e00ce8ef5cc0a28a
 

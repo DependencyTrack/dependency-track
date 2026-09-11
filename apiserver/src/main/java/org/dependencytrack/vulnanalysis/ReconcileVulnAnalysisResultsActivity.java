@@ -807,7 +807,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                         subject.getProject(),
                         subject.getComponent(),
                         subject.getVulnerability(),
-                        convertAnalysisTrigger(analysisTrigger)))
+                        convertAnalysisTrigger(analysisTrigger),
+                        subject.getAnalyzerIdentity()))
                 .toList();
     }
 

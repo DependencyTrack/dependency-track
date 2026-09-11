@@ -65,6 +65,7 @@ public final class ConfigKeys {
             "dt.task.portfolio-analysis.max-analysis-age-ms";
     public static final String TASK_PORTFOLIO_METRICS_UPDATE_CRON = "dt.task.portfolio-metrics-update.cron";
     public static final String TASK_PROJECT_MAINTENANCE_CRON = "dt.task.project-maintenance.cron";
+    public static final String TASK_SUPPRESSION_EXPIRY_CRON = "dt.task.suppression-expiry.cron";
     public static final String TASK_TAG_MAINTENANCE_CRON = "dt.task.tag-maintenance.cron";
     public static final String TASK_VULN_DATABASE_MAINTENANCE_CRON = "dt.task.vuln-database-maintenance.cron";
     public static final String TASK_VULN_METRICS_UPDATE_CRON = "dt.task.vuln-metrics-update.cron";

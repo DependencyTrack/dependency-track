@@ -129,6 +129,23 @@ public class AnalysisQueryManager extends QueryManager {
                 analysis.setSuppressed(command.suppress());
                 suppressionChanged = true;
             }
+            // An expiry only makes sense while a finding is suppressed. Unsuppressing therefore
+            // clears any expiry that was set, rather than leaving it to fire against a finding
+            // that is no longer suppressed.
+            if (Boolean.FALSE.equals(command.suppress())) {
+                if (analysis.getSuppressionExpiresAt() != null) {
+                    auditTrailComments.add(formatComment(
+                            AnalysisCommentField.SUPPRESSION_EXPIRES_AT, analysis.getSuppressionExpiresAt(), null));
+                    analysis.setSuppressionExpiresAt(null);
+                }
+            } else if (command.suppressionExpiresAt() != null
+                    && !command.suppressionExpiresAt().equals(analysis.getSuppressionExpiresAt())) {
+                auditTrailComments.add(formatComment(
+                        AnalysisCommentField.SUPPRESSION_EXPIRES_AT,
+                        analysis.getSuppressionExpiresAt(),
+                        command.suppressionExpiresAt()));
+                analysis.setSuppressionExpiresAt(command.suppressionExpiresAt());
+            }
             if (command.owaspVector() != null && !command.owaspVector().equals(analysis.getOwaspVector())) {
                 auditTrailComments.add(formatComment(
                         AnalysisCommentField.OWASP_VECTOR, analysis.getOwaspVector(), command.owaspVector()));

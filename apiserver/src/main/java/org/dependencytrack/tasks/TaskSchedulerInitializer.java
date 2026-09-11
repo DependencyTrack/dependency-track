@@ -55,6 +55,7 @@ import org.dependencytrack.secret.management.SecretManager;
 import org.dependencytrack.tasks.maintenance.MetricsMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.PackageMetadataMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.ProjectMaintenanceTask;
+import org.dependencytrack.tasks.maintenance.SuppressionExpiryMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.TagMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.VulnerabilityDatabaseMaintenanceTask;
 import org.dependencytrack.vulndatasource.VulnDataSourceMirrorService;
@@ -253,6 +254,10 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                         "Project Maintenance",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_PROJECT_MAINTENANCE_CRON),
                         new ProjectMaintenanceTask()),
+                recurringTask(
+                        "Suppression Expiry",
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_SUPPRESSION_EXPIRY_CRON),
+                        new SuppressionExpiryMaintenanceTask()),
                 recurringTask(
                         "Tag Maintenance",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_TAG_MAINTENANCE_CRON),

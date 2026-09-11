@@ -30,6 +30,8 @@ import org.dependencytrack.model.AnalysisState;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
+import java.time.Instant;
+
 /**
  * Defines a custom request object used when updating analysis decisions.
  *
@@ -81,6 +83,8 @@ public class AnalysisRequest {
     // thus using Boolean object rather than primitive.
     private final Boolean suppressed;
 
+    private final Instant suppressionExpiresAt;
+
     @JsonCreator
     public AnalysisRequest(
             @JsonProperty(value = "project") String project,
@@ -91,7 +95,8 @@ public class AnalysisRequest {
             @JsonProperty(value = "analysisResponse") AnalysisResponse analysisResponse,
             @JsonProperty(value = "analysisDetails") String analysisDetails,
             @JsonProperty(value = "comment") String comment,
-            @JsonProperty(value = "isSuppressed") Boolean suppressed) {
+            @JsonProperty(value = "isSuppressed") Boolean suppressed,
+            @JsonProperty(value = "suppressionExpiresAt") Instant suppressionExpiresAt) {
         this.project = project;
         this.component = component;
         this.vulnerability = vulnerability;
@@ -101,6 +106,7 @@ public class AnalysisRequest {
         this.analysisDetails = analysisDetails;
         this.comment = comment;
         this.suppressed = suppressed;
+        this.suppressionExpiresAt = suppressionExpiresAt;
     }
 
     public String getProject() {
@@ -149,5 +155,32 @@ public class AnalysisRequest {
 
     public Boolean isSuppressed() {
         return suppressed;
+    }
+
+    public AnalysisRequest(
+            String project,
+            String component,
+            String vulnerability,
+            AnalysisState analysisState,
+            AnalysisJustification analysisJustification,
+            AnalysisResponse analysisResponse,
+            String analysisDetails,
+            String comment,
+            Boolean suppressed) {
+        this(
+                project,
+                component,
+                vulnerability,
+                analysisState,
+                analysisJustification,
+                analysisResponse,
+                analysisDetails,
+                comment,
+                suppressed,
+                null);
+    }
+
+    public Instant getSuppressionExpiresAt() {
+        return suppressionExpiresAt;
     }
 }

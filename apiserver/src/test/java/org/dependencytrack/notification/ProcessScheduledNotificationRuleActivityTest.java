@@ -110,6 +110,7 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
                 null,
                 null,
                 null,
+                null,
                 Set.of()));
 
         // Child project affected by vulnA (BEFORE) and vulnB (AFTER).

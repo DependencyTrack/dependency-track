@@ -37,6 +37,7 @@ import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -117,6 +118,11 @@ public class Analysis implements Serializable {
     @Column(name = "SUPPRESSED")
     @JsonProperty(value = "isSuppressed")
     private boolean suppressed;
+
+    @Persistent
+    @Column(name = "SUPPRESSION_EXPIRES_AT")
+    @JsonProperty(value = "suppressionExpiresAt")
+    private Instant suppressionExpiresAt;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "SEVERITY")
@@ -248,6 +254,14 @@ public class Analysis implements Serializable {
 
     public void setSuppressed(boolean suppressed) {
         this.suppressed = suppressed;
+    }
+
+    public Instant getSuppressionExpiresAt() {
+        return suppressionExpiresAt;
+    }
+
+    public void setSuppressionExpiresAt(Instant suppressionExpiresAt) {
+        this.suppressionExpiresAt = suppressionExpiresAt;
     }
 
     public Severity getSeverity() {

@@ -53,6 +53,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -1169,5 +1170,92 @@ class AnalysisResourceTest extends ResourceTest {
                         """.formatted(project.getUuid(), component.getUuid(), vuln.getUuid()),
                         MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void updateAnalysisWithSuppressionExpiryTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("INT-001");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.HIGH);
+        vulnerability.setComponents(List.of(component));
+        vulnerability = qm.createVulnerability(vulnerability);
+
+        final String requestJson = """
+                {
+                  "project": "%s",
+                  "component": "%s",
+                  "vulnerability": "%s",
+                  "analysisState": "NOT_AFFECTED",
+                  "isSuppressed": true,
+                  "suppressionExpiresAt": "2099-01-01T00:00:00Z"
+                }
+                """.formatted(project.getUuid(), component.getUuid(), vulnerability.getUuid());
+
+        final Response response = jersey.target(V1_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(requestJson, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
+        assertThat(responseJson.getJsonNumber("suppressionExpiresAt").longValue())
+                .isEqualTo(Instant.parse("2099-01-01T00:00:00Z").getEpochSecond());
+    }
+
+    @Test
+    void updateAnalysisUnsuppressClearsSuppressionExpiryTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("INT-001");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.HIGH);
+        vulnerability.setComponents(List.of(component));
+        vulnerability = qm.createVulnerability(vulnerability);
+
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withSuppress(true)
+                .withSuppressionExpiresAt(Instant.parse("2099-01-01T00:00:00Z")));
+
+        final String requestJson = """
+                {
+                  "project": "%s",
+                  "component": "%s",
+                  "vulnerability": "%s",
+                  "isSuppressed": false
+                }
+                """.formatted(project.getUuid(), component.getUuid(), vulnerability.getUuid());
+
+        final Response response = jersey.target(V1_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(requestJson, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThat(responseJson.getBoolean("isSuppressed")).isFalse();
+        // An expiry is meaningless once the finding is no longer suppressed.
+        assertThat(responseJson.containsKey("suppressionExpiresAt")).isFalse();
     }
 }

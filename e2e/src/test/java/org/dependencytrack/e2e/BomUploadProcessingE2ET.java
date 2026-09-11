@@ -32,8 +32,9 @@ import org.dependencytrack.e2e.api.model.Finding;
 import org.dependencytrack.e2e.api.model.NotificationPublisher;
 import org.dependencytrack.e2e.api.model.NotificationRule;
 import org.dependencytrack.e2e.api.model.Project;
-import org.dependencytrack.e2e.api.model.UpdateExtensionConfigRequest;
 import org.dependencytrack.e2e.api.model.UpdateNotificationRuleRequest;
+import org.dependencytrack.e2e.api.v2.ExtensionsApi;
+import org.dependencytrack.e2e.api.v2.model.UpdateExtensionConfigRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -93,18 +94,20 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
 
     @Test
     void test() throws Exception {
-        apiClient.updateExtensionConfig(
-                "notification-publisher",
-                "email",
-                new UpdateExtensionConfigRequest(Map.ofEntries(
-                        Map.entry("enabled", true),
-                        Map.entry("host", "host.testcontainers.internal"),
-                        Map.entry("port", greenMail.getSmtp().getPort()),
-                        Map.entry("username", "from"),
-                        Map.entry("password", "EMAIL_PASSWORD"),
-                        Map.entry("senderAddress", "from@localhost"))));
+        new ExtensionsApi(apiV2Client)
+                .updateExtensionConfig(
+                        "notification-publisher",
+                        "email",
+                        new UpdateExtensionConfigRequest()
+                                .config(Map.ofEntries(
+                                        Map.entry("enabled", true),
+                                        Map.entry("host", "host.testcontainers.internal"),
+                                        Map.entry("port", greenMail.getSmtp().getPort()),
+                                        Map.entry("username", "from"),
+                                        Map.entry("password", "EMAIL_PASSWORD"),
+                                        Map.entry("senderAddress", "from@localhost"))));
 
-        final List<NotificationPublisher> publishers = apiClient.getAllNotificationPublishers();
+        final List<NotificationPublisher> publishers = apiV1Client.getAllNotificationPublishers();
 
         // Find the email notification publisher.
         final NotificationPublisher emailPublisher = publishers.stream()
@@ -119,9 +122,9 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
                 .orElseThrow(() -> new AssertionError("Unable to find webhook notification publisher"));
 
         // Create an email alert for NEW_VULNERABILITY notifications and point it to GreenMail.
-        final NotificationRule emailRule = apiClient.createNotificationRule(new CreateNotificationRuleRequest(
+        final NotificationRule emailRule = apiV1Client.createNotificationRule(new CreateNotificationRuleRequest(
                 "email", "PORTFOLIO", "INFORMATIONAL", new Publisher(emailPublisher.uuid())));
-        apiClient.updateNotificationRule(new UpdateNotificationRuleRequest(
+        apiV1Client.updateNotificationRule(new UpdateNotificationRuleRequest(
                 emailRule.uuid(),
                 emailRule.name(),
                 true,
@@ -137,9 +140,9 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
                 """));
 
         // Create a webhook alert for NEW_VULNERABILITY notifications and point it to WireMock.
-        final NotificationRule webhookRule = apiClient.createNotificationRule(new CreateNotificationRuleRequest(
+        final NotificationRule webhookRule = apiV1Client.createNotificationRule(new CreateNotificationRuleRequest(
                 "foo", "PORTFOLIO", "INFORMATIONAL", new Publisher(webhookPublisher.uuid())));
-        apiClient.updateNotificationRule(new UpdateNotificationRuleRequest(
+        apiV1Client.updateNotificationRule(new UpdateNotificationRuleRequest(
                 webhookRule.uuid(),
                 webhookRule.name(),
                 true,
@@ -157,7 +160,7 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
                 post(urlPathEqualTo("/notification")).willReturn(aResponse().withStatus(200)));
 
         // Create a new internal vulnerability for jackson-databind.
-        apiClient.createVulnerability(new CreateVulnerabilityRequest(
+        apiV1Client.createVulnerability(new CreateVulnerabilityRequest(
                 "INT-123",
                 "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
                 List.of(917, 502),
@@ -171,7 +174,7 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
         final String bomBase64 = Base64.getEncoder().encodeToString(bomBytes);
 
         // Upload the BOM
-        final EventTokenResponse response = apiClient.uploadBom(new BomUploadRequest("foo", "bar", true, bomBase64));
+        final EventTokenResponse response = apiV1Client.uploadBom(new BomUploadRequest("foo", "bar", true, bomBase64));
         assertThat(response.token()).isNotEmpty();
 
         // Wait up to 15sec for the BOM processing to complete.
@@ -180,15 +183,15 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
                 .pollDelay(Duration.ofMillis(250))
                 .untilAsserted(() -> {
                     final EventProcessingResponse processingResponse =
-                            apiClient.isEventBeingProcessed(response.token());
+                            apiV1Client.isEventBeingProcessed(response.token());
                     assertThat(processingResponse.processing()).isFalse();
                 });
 
         // Lookup the project we just created.
-        final Project project = apiClient.lookupProject("foo", "bar");
+        final Project project = apiV1Client.lookupProject("foo", "bar");
 
         // Ensure the internal vulnerability has been flagged.
-        final List<Finding> findings = apiClient.getFindings(project.uuid(), false);
+        final List<Finding> findings = apiV1Client.getFindings(project.uuid(), false);
         assertThat(findings).satisfiesExactly(finding -> {
             assertThat(finding.component().name()).isEqualTo("jackson-databind");
             assertThat(finding.vulnerability().vulnId()).isEqualTo("INT-123");

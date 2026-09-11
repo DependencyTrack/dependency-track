@@ -21,12 +21,13 @@ package org.dependencytrack.e2e;
 import feign.Feign;
 import feign.jaxrs3.JAXRS3Contract;
 import org.dependencytrack.e2e.api.ApiAuthInterceptor;
-import org.dependencytrack.e2e.api.ApiClient;
+import org.dependencytrack.e2e.api.ApiV1Client;
 import org.dependencytrack.e2e.api.CompositeDecoder;
 import org.dependencytrack.e2e.api.CompositeEncoder;
 import org.dependencytrack.e2e.api.model.ApiKey;
 import org.dependencytrack.e2e.api.model.CreateTeamRequest;
 import org.dependencytrack.e2e.api.model.Team;
+import org.dependencytrack.e2e.api.v2.ApiClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
@@ -52,7 +53,8 @@ abstract class AbstractE2ET {
     protected final Network internalNetwork = Network.newNetwork();
     protected PostgreSQLContainer postgresContainer;
     protected GenericContainer<?> apiServerContainer;
-    protected ApiClient apiClient;
+    protected ApiV1Client apiV1Client;
+    protected ApiClient apiV2Client;
 
     @BeforeEach
     void beforeEach() throws Exception {
@@ -62,7 +64,7 @@ abstract class AbstractE2ET {
         apiServerContainer = createApiServerContainer();
         apiServerContainer.start();
 
-        apiClient = initializeApiServerClient();
+        initializeApiServerClients();
     }
 
     @SuppressWarnings("resource")
@@ -98,13 +100,14 @@ abstract class AbstractE2ET {
 
     protected void customizeApiServerContainer(final GenericContainer<?> container) {}
 
-    private ApiClient initializeApiServerClient() {
-        final ApiClient client = Feign.builder()
+    private void initializeApiServerClients() {
+        final String baseUrl = "http://localhost:%d".formatted(apiServerContainer.getFirstMappedPort());
+        final ApiV1Client client = Feign.builder()
                 .contract(new JAXRS3Contract())
                 .decoder(new CompositeDecoder())
                 .encoder(new CompositeEncoder())
                 .requestInterceptor(new ApiAuthInterceptor())
-                .target(ApiClient.class, "http://localhost:%d".formatted(apiServerContainer.getFirstMappedPort()));
+                .target(ApiV1Client.class, baseUrl);
 
         logger.info("Changing API server admin password");
         client.forcePasswordChange("admin", "admin", "admin123", "admin123");
@@ -136,8 +139,11 @@ abstract class AbstractE2ET {
 
         logger.info("Authenticating as e2e team");
         ApiAuthInterceptor.setApiKey(apiKey.key());
+        apiV1Client = client;
 
-        return client;
+        apiV2Client = new ApiClient();
+        apiV2Client.updateBaseUri(baseUrl + "/api/v2");
+        apiV2Client.setRequestInterceptor(request -> request.header("X-Api-Key", apiKey.key()));
     }
 
     @AfterEach

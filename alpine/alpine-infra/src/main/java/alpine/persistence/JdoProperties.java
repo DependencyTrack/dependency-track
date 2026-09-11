@@ -42,6 +42,8 @@ public final class JdoProperties {
         properties.put(PropertyNames.PROPERTY_ENABLE_STATISTICS, "true");
         properties.put(PropertyNames.PROPERTY_EXECUTION_CONTEXT_MAX_IDLE, "0");
         properties.put(PropertyNames.PROPERTY_DELETION_POLICY, "DataNucleus");
+        properties.put(PropertyNames.PROPERTY_PERSISTENCE_UNIT_NAME, "Alpine");
+        properties.put(PropertyNames.PROPERTY_PERSISTENCE_UNIT_LOAD_CLASSES, "true");
         return properties;
     }
 }

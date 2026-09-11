@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.model.User;
 import alpine.model.auth.UserPrincipal;
@@ -57,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jakarta.validation.Valid;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.FormParam;
@@ -460,6 +462,11 @@ public class UserResource extends AbstractApiResource {
                             .entity(user)
                             .build();
                 }
+                // Service accounts are managed through /v2/service-accounts endpoints.
+                case SERVICE ->
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(qm.getUser(userPrincipal.username()))
+                            .build();
                 case MANAGED -> {
                     if (StringUtils.isBlank(jsonUser.getFullname())) {
                         yield Response.status(Response.Status.BAD_REQUEST)
@@ -565,6 +572,7 @@ public class UserResource extends AbstractApiResource {
                             .entity("Username cannot be null or blank.")
                             .build();
                 }
+                requireNoServiceAccountPrefix(jsonUser.getUsername());
                 LdapUser user = qm.getLdapUser(jsonUser.getUsername());
                 if (user == null) {
                     user = qm.createLdapUser(jsonUser.getUsername());
@@ -646,6 +654,7 @@ public class UserResource extends AbstractApiResource {
                             .entity("Username cannot be null or blank.")
                             .build();
                 }
+                requireNoServiceAccountPrefix(jsonUser.getUsername());
                 if (StringUtils.isBlank(jsonUser.getFullname())) {
                     return Response.status(Response.Status.BAD_REQUEST)
                             .entity("The users full name is missing.")
@@ -815,6 +824,7 @@ public class UserResource extends AbstractApiResource {
                             .entity("Username cannot be null or blank.")
                             .build();
                 }
+                requireNoServiceAccountPrefix(jsonUser.getUsername());
                 OidcUser user = qm.getOidcUser(jsonUser.getUsername());
                 if (user == null) {
                     user = qm.createOidcUser(jsonUser.getUsername());
@@ -1088,5 +1098,14 @@ public class UserResource extends AbstractApiResource {
         }
 
         return Response.noContent().build();
+    }
+
+    private static void requireNoServiceAccountPrefix(String username) {
+        if (ServiceAccount.hasReservedPrefix(username)) {
+            throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST)
+                    .entity("The username prefix %s is reserved for service accounts."
+                            .formatted(ServiceAccount.USERNAME_PREFIX))
+                    .build());
+        }
     }
 }

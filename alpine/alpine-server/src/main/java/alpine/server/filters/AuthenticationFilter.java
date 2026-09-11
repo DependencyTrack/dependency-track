@@ -18,7 +18,6 @@
  */
 package alpine.server.filters;
 
-import alpine.model.auth.ApiKeyPrincipal;
 import alpine.model.auth.Principal;
 import alpine.server.auth.ApiKeyAuthenticationService;
 import alpine.server.auth.PrincipalSecurityContext;
@@ -65,13 +64,13 @@ public class AuthenticationFilter implements ContainerRequestFilter, ContainerRe
 
             Principal principal = null;
             boolean portfolioAccessControlEnabled = false;
+            String authenticationScheme = PrincipalSecurityContext.API_KEY_AUTH;
 
             final var apiKeyAuthService = new ApiKeyAuthenticationService(request);
             if (apiKeyAuthService.isSpecified()) {
                 try {
-                    final ApiKeyPrincipal apiKey = apiKeyAuthService.authenticate();
-                    ApiKeyUsageTracker.onApiKeyUsed(apiKey);
-                    principal = apiKey;
+                    principal = apiKeyAuthService.authenticate();
+                    ApiKeyUsageTracker.onApiKeyUsed(apiKeyAuthService.getApiKeyId());
                     portfolioAccessControlEnabled = apiKeyAuthService.isPortfolioAccessControlEnabled();
                 } catch (AuthenticationException e) {
                     LOGGER.info(SecurityMarkers.SECURITY_FAILURE, "Invalid API key asserted");
@@ -84,6 +83,7 @@ public class AuthenticationFilter implements ContainerRequestFilter, ContainerRe
                 try {
                     principal = sessionAuthService.authenticate();
                     if (principal != null) {
+                        authenticationScheme = PrincipalSecurityContext.BEARER_AUTH;
                         portfolioAccessControlEnabled = sessionAuthService.isPortfolioAccessControlEnabled();
                         if (sessionAuthService.getTokenHash() != null) {
                             SessionUsageTracker.onSessionUsed(sessionAuthService.getTokenHash());
@@ -100,7 +100,10 @@ public class AuthenticationFilter implements ContainerRequestFilter, ContainerRe
             }
 
             requestContext.setSecurityContext(new PrincipalSecurityContext(
-                    principal, requestContext.getSecurityContext().isSecure(), portfolioAccessControlEnabled));
+                    principal,
+                    requestContext.getSecurityContext().isSecure(),
+                    portfolioAccessControlEnabled,
+                    authenticationScheme));
             MDC.put("principal", principal.displayName());
         }
     }

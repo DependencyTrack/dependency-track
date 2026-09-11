@@ -44,14 +44,20 @@ class PrincipalSecurityContextTest {
     void shouldExposeThePrincipalAndTheSchemeItAuthenticatedWith() {
         final var apiKeyPrincipal = new ApiKeyPrincipal(3L, "abcd1234", List.of(), Set.of("BOM_UPLOAD"));
 
-        final var userContext =
-                new PrincipalSecurityContext(principal, /* secure */ true, /* portfolioAccessControlEnabled */ false);
+        final var userContext = new PrincipalSecurityContext(
+                principal,
+                /* secure */ true,
+                /* portfolioAccessControlEnabled */ false,
+                PrincipalSecurityContext.BEARER_AUTH);
         assertThat(userContext.getUserPrincipal()).isSameAs(principal);
         assertThat(userContext.getAuthenticationScheme()).isEqualTo("BEARER");
         assertThat(userContext.isSecure()).isTrue();
 
         final var apiKeyContext = new PrincipalSecurityContext(
-                apiKeyPrincipal, /* secure */ false, /* portfolioAccessControlEnabled */ true);
+                apiKeyPrincipal,
+                /* secure */ false,
+                /* portfolioAccessControlEnabled */ true,
+                PrincipalSecurityContext.API_KEY_AUTH);
         assertThat(apiKeyContext.getUserPrincipal()).isSameAs(apiKeyPrincipal);
         assertThat(apiKeyContext.getAuthenticationScheme()).isEqualTo("API_KEY");
         assertThat(apiKeyContext.isSecure()).isFalse();
@@ -59,8 +65,11 @@ class PrincipalSecurityContextTest {
 
     @Test
     void shouldRefuseRoleChecksEvenForPermissionsThePrincipalHas() {
-        final var securityContext =
-                new PrincipalSecurityContext(principal, /* secure */ false, /* portfolioAccessControlEnabled */ false);
+        final var securityContext = new PrincipalSecurityContext(
+                principal,
+                /* secure */ false,
+                /* portfolioAccessControlEnabled */ false,
+                PrincipalSecurityContext.BEARER_AUTH);
 
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(() -> securityContext.isUserInRole("BOM_UPLOAD"));

@@ -390,15 +390,7 @@ public class TeamResource extends AbstractApiResource {
                     @PathParam("publicIdOrKey")
                     String publicIdOrKey) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
-            if (apiKey == null) {
-                try {
-                    final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
-                    apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
-                } catch (InvalidApiKeyFormatException e) {
-                    LOGGER.debug("Failed to decode value as API key", e);
-                }
-            }
+            ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
             if (apiKey != null) {
                 apiKey = qm.regenerateApiKey(apiKey);
                 return Response.ok(apiKey).build();
@@ -439,15 +431,7 @@ public class TeamResource extends AbstractApiResource {
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
 
             return qm.callInTransaction(() -> {
-                ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
-                if (apiKey == null) {
-                    try {
-                        final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
-                        apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
-                    } catch (InvalidApiKeyFormatException e) {
-                        LOGGER.debug("Failed to decode value as API key", e);
-                    }
-                }
+                final ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
                 if (apiKey == null) {
                     return Response.status(Response.Status.NOT_FOUND)
                             .entity("The API key could not be found.")
@@ -480,15 +464,7 @@ public class TeamResource extends AbstractApiResource {
                     String publicIdOrKey) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
-                if (apiKey == null) {
-                    try {
-                        final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
-                        apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
-                    } catch (InvalidApiKeyFormatException e) {
-                        LOGGER.debug("Failed to decode value as API key", e);
-                    }
-                }
+                final ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
                 if (apiKey != null) {
                     qm.delete(apiKey);
                     return Response.status(Response.Status.NO_CONTENT).build();
@@ -533,5 +509,19 @@ public class TeamResource extends AbstractApiResource {
                         .build();
             }
         }
+    }
+
+    private static ApiKey getTeamApiKey(QueryManager qm, String publicIdOrKey) {
+        ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+        if (apiKey == null) {
+            try {
+                final ApiKey decodedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
+                apiKey = qm.getApiKeyByPublicId(decodedApiKey.getPublicId());
+            } catch (InvalidApiKeyFormatException e) {
+                LOGGER.debug("Failed to decode value as API key", e);
+            }
+        }
+
+        return apiKey != null && apiKey.getUser() == null ? apiKey : null;
     }
 }

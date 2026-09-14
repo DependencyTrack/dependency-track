@@ -124,8 +124,9 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 null,
                 AnalysisState.NOT_AFFECTED,
                 true,
-                null, /* totalCount */
-                null);
+                null,
+                null,
+                1L);
         final Finding findingWithoutAlias = new Finding(findingRow1);
 
         var alias = new VulnerabilityAlias();
@@ -191,8 +192,9 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 null,
                 AnalysisState.NOT_AFFECTED,
                 true,
-                null, /* totalCount */
-                null);
+                null,
+                null,
+                1L);
         final Finding findingWithAlias = new Finding(findingRow2);
 
         final var fpf = new FindingPackagingFormat(project.getUuid(), List.of(findingWithoutAlias, findingWithAlias));
@@ -256,7 +258,8 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                               },
                               "analysis": {
                                 "state": "NOT_AFFECTED",
-                                "isSuppressed": true
+                                "isSuppressed": true,
+                                "policyAnnotations": []
                               },
                               "attribution": {
                                 "analyzerIdentity": "oss-index",
@@ -320,7 +323,8 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                               },
                               "analysis": {
                                 "state": "NOT_AFFECTED",
-                                "isSuppressed": true
+                                "isSuppressed": true,
+                                "policyAnnotations": []
                               },
                               "attribution": {
                                 "analyzerIdentity": "internal",

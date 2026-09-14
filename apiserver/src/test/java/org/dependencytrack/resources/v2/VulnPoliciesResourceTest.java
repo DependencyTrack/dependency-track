@@ -30,6 +30,7 @@ import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
 import org.dependencytrack.dex.proto.failure.v1.ActivityFailureDetails;
 import org.dependencytrack.dex.proto.failure.v1.Failure;
+import org.dependencytrack.model.PolicyAnnotation;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyBundleRow;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyDetailRow;
@@ -164,7 +165,11 @@ class VulnPoliciesResourceTest extends ResourceTest {
                           "analysis": {
                             "state": "NOT_AFFECTED",
                             "justification": "CODE_NOT_REACHABLE",
-                            "suppress": true
+                            "suppress": true,
+                            "annotations": [
+                              { "key": "compliance", "value": "gem" },
+                              { "key": "source", "value": "test" }
+                            ]
                           },
                           "priority": 10
                         }
@@ -191,8 +196,36 @@ class VulnPoliciesResourceTest extends ResourceTest {
         assertThat(created.analysis().getJustification())
                 .isEqualTo(VulnerabilityPolicyAnalysis.Justification.CODE_NOT_REACHABLE);
         assertThat(created.analysis().isSuppress()).isTrue();
+        assertThat(created.analysis().getAnnotations())
+                .containsExactly(new PolicyAnnotation("compliance", "gem"), new PolicyAnnotation("source", "test"));
         assertThat(created.priority()).isEqualTo(10);
         assertThat(created.operationMode()).isEqualTo(VulnerabilityPolicyOperation.APPLY);
+    }
+
+    @Test
+    void shouldGetVulnPolicyWithAnalysisAnnotations() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_READ);
+
+        final var vulnPolicy = createVulnPolicyInstance(0);
+        vulnPolicy
+                .getAnalysis()
+                .setAnnotations(
+                        List.of(new PolicyAnnotation("compliance", "gem"), new PolicyAnnotation("owner", "security")));
+        final VulnPolicyIdentityRow created = inJdbiTransaction(
+                handle -> handle.attach(VulnerabilityPolicyDao.class).create(vulnPolicy));
+
+        final Response response = jersey.target("/vuln-policies/%s".formatted(created.uuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).node("analysis.annotations").isEqualTo(/* language=JSON */ """
+                        [
+                          { "key": "compliance", "value": "gem" },
+                          { "key": "owner", "value": "security" }
+                        ]
+                        """);
     }
 
     @Test

@@ -18,17 +18,22 @@
  */
 package org.dependencytrack.pkgmetadata.resolution.cargo;
 
+import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.packageurl.PackageURL;
+import io.github.nscuro.versatile.VersionFactory;
+import io.github.nscuro.versatile.spi.InvalidVersionException;
+import io.github.nscuro.versatile.spi.Version;
 import org.dependencytrack.pkgmetadata.resolution.api.HashAlgorithm;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.cache.CachingHttpClient;
-import org.dependencytrack.pkgmetadata.resolution.cargo.CargoCrateDocument.Version;
 import org.dependencytrack.pkgmetadata.resolution.support.UrlUtils;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -38,14 +43,21 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.Map;
 
+import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_CARGO;
+import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
 final class CargoPackageMetadataResolver implements PackageMetadataResolver {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CargoPackageMetadataResolver.class);
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
+
+    private record Candidate(CargoIndexEntry entry, Version version) {}
 
     private final ObjectMapper objectMapper;
     private final CachingHttpClient cachingHttpClient;
@@ -61,7 +73,7 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
             throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
-        final String url = UrlUtils.join(repository.url(), "api", "v1", "crates", purl.getName());
+        final String url = UrlUtils.join(repository.url(), indexPathSegments(purl.getName()));
 
         final HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -74,60 +86,76 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
             return null;
         }
 
-        final CargoCrateDocument crateDoc = parseDocument(body);
-        final String latestVersion = crateDoc.crate() != null
-                ? (crateDoc.crate().maxStableVersion() != null
-                        ? crateDoc.crate().maxStableVersion()
-                        : crateDoc.crate().newestVersion())
-                : null;
-        if (latestVersion == null) {
+        final var candidates = new ArrayList<Candidate>();
+        CargoIndexEntry requested = null;
+
+        try (final MappingIterator<CargoIndexEntry> indexEntryIterator =
+                objectMapper.readerFor(CargoIndexEntry.class).readValues(body)) {
+            while (indexEntryIterator.hasNext()) {
+                final CargoIndexEntry indexEntry = indexEntryIterator.next();
+                if (indexEntry.vers() == null) {
+                    continue;
+                }
+                if (purl.getVersion().equals(indexEntry.vers())) {
+                    requested = indexEntry;
+                }
+                if (indexEntry.yanked()) {
+                    continue;
+                }
+
+                final Version version;
+                try {
+                    version = VersionFactory.forScheme(SCHEME_CARGO, indexEntry.vers());
+                } catch (InvalidVersionException e) {
+                    LOGGER.debug("Skipping index entry with unparseable version {}", indexEntry.vers(), e);
+                    continue;
+                }
+
+                candidates.add(new Candidate(indexEntry, version));
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        final Candidate latest = candidates.stream()
+                .filter(candidate -> candidate.version().isStable())
+                .max(comparing(Candidate::version))
+                .or(() -> candidates.stream().max(comparing(Candidate::version)))
+                .orElse(null);
+        if (latest == null) {
             return null;
         }
 
         final var resolvedAt = Instant.now();
-        Instant latestVersionPublishedAt = null;
-
-        Version requestedVersion = null;
-        if (crateDoc.versions() != null) {
-            for (final Version crateVersion : crateDoc.versions()) {
-                if (latestVersion.equals(crateVersion.num())) {
-                    if (crateVersion.createdAt() != null) {
-                        try {
-                            latestVersionPublishedAt = Instant.parse(crateVersion.createdAt());
-                        } catch (DateTimeParseException _) {
-                        }
-                    }
-                }
-                if (purl.getVersion().equals(crateVersion.num())) {
-                    requestedVersion = crateVersion;
-                }
-            }
-        }
-
         return new PackageMetadata(
-                latestVersion,
-                latestVersionPublishedAt,
+                latest.entry().vers(),
+                tryParseInstant(latest.entry().pubtime()),
                 resolvedAt,
-                buildArtifactMetadata(resolvedAt, requestedVersion));
+                buildArtifactMetadata(resolvedAt, requested));
+    }
+
+    /// @see <a href="https://doc.rust-lang.org/cargo/reference/registry-index.html#index-files">Cargo index files</a>
+    private static String[] indexPathSegments(String crateName) {
+        final String name = crateName.toLowerCase(Locale.ROOT);
+        return switch (name.length()) {
+            case 1 -> new String[] {"1", name};
+            case 2 -> new String[] {"2", name};
+            case 3 -> new String[] {"3", name.substring(0, 1), name};
+            default -> new String[] {name.substring(0, 2), name.substring(2, 4), name};
+        };
     }
 
     private static @Nullable PackageArtifactMetadata buildArtifactMetadata(
-            Instant resolvedAt, @Nullable Version crateVersion) {
-        if (crateVersion == null) {
+            Instant resolvedAt, @Nullable CargoIndexEntry entry) {
+        if (entry == null) {
             return null;
         }
 
-        Instant publishedAt = null;
-        if (crateVersion.createdAt() != null) {
-            try {
-                publishedAt = Instant.parse(crateVersion.createdAt());
-            } catch (DateTimeParseException _) {
-            }
-        }
+        final Instant publishedAt = tryParseInstant(entry.pubtime());
 
         Map<HashAlgorithm, String> hashes = Map.of();
-        if (crateVersion.checksum() != null && HashAlgorithm.SHA256.isValid(crateVersion.checksum())) {
-            hashes = Map.of(HashAlgorithm.SHA256, crateVersion.checksum().toLowerCase());
+        if (entry.cksum() != null && HashAlgorithm.SHA256.isValid(entry.cksum())) {
+            hashes = Map.of(HashAlgorithm.SHA256, entry.cksum().toLowerCase());
         }
 
         if (publishedAt == null && hashes.isEmpty()) {
@@ -135,6 +163,18 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
         }
 
         return new PackageArtifactMetadata(resolvedAt, publishedAt, hashes);
+    }
+
+    private static @Nullable Instant tryParseInstant(@Nullable String value) {
+        if (value == null) {
+            return null;
+        }
+
+        try {
+            return Instant.parse(value);
+        } catch (DateTimeParseException _) {
+            return null;
+        }
     }
 
     private static void maybeApplyAuth(HttpRequest.Builder builder, PackageRepository repository) {
@@ -148,17 +188,9 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
             authHeaderValue =
                     "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         } else {
-            authHeaderValue = "Bearer " + repository.password();
+            authHeaderValue = repository.password();
         }
 
         builder.header("Authorization", authHeaderValue);
-    }
-
-    private CargoCrateDocument parseDocument(byte[] body) {
-        try {
-            return objectMapper.readValue(body, CargoCrateDocument.class);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 }

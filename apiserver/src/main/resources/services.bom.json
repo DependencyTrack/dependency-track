@@ -142,7 +142,7 @@
       "name": "Crates.io",
       "description": "Queried for package metadata and latest version information of Rust crates.",
       "endpoints": [
-        "https://crates.io/api/v1/crates"
+        "https://index.crates.io"
       ],
       "authenticated": false,
       "x-trust-boundary": true,

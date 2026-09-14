@@ -42,7 +42,7 @@ public enum DefaultRepository {
     PYPI_PYPI_ORG(RepositoryType.PYPI, "pypi.org", "https://pypi.org/", 1),
     NUGET_GALLERY(RepositoryType.NUGET, "nuget-gallery", "https://api.nuget.org/", 1),
     COMPOSER_PACKAGIST(RepositoryType.COMPOSER, "packagist", "https://repo.packagist.org/", 1),
-    CARGO_CRATES_IO(RepositoryType.CARGO, "crates.io", "https://crates.io", 1),
+    CARGO_CRATES_IO(RepositoryType.CARGO, "crates.io", "https://index.crates.io", 1),
     GO_PROXY_GOLANG_ORG(RepositoryType.GO_MODULES, "proxy.golang.org", "https://proxy.golang.org", 1),
     GITHUB(RepositoryType.GITHUB, "github", "https://github.com", 1),
     HACKAGE(RepositoryType.HACKAGE, "hackage.haskell", "https://hackage.haskell.org/", 1),

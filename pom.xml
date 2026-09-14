@@ -133,6 +133,7 @@
         <lib.flyway.version>13.5.0</lib.flyway.version>
         <lib.google-http-client.version>2.2.0</lib.google-http-client.version>
         <lib.greenmail.version>2.1.13</lib.greenmail.version>
+        <lib.gson.version>2.14.0</lib.gson.version>
         <lib.guava.version>33.7.1-jre</lib.guava.version>
         <lib.hamcrest.version>3.0</lib.hamcrest.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
@@ -162,7 +163,7 @@
         <lib.mockito.version>5.23.0</lib.mockito.version>
         <lib.nullaway.version>0.14.1</lib.nullaway.version>
         <lib.okhttp.version>5.5.0</lib.okhttp.version>
-        <lib.open-feign.version>13.13</lib.open-feign.version>
+        <lib.open-feign.version>13.14</lib.open-feign.version>
         <lib.open-vulnerability-clients.version>9.0.6</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>4.1.2</lib.pebble.version>
@@ -311,6 +312,11 @@
                 <groupId>com.icegreen</groupId>
                 <artifactId>greenmail-junit5</artifactId>
                 <version>${lib.greenmail.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${lib.gson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>

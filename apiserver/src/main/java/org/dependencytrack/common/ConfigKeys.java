@@ -23,6 +23,8 @@ package org.dependencytrack.common;
  */
 public final class ConfigKeys {
 
+    public static final String API_KEY_MAX_LIFETIME_DAYS = "dt.api-key.max-lifetime-days";
+
     public static final String DEV_SERVICES_ENABLED = "dt.dev-services.enabled";
     public static final String DEV_SERVICES_CONTAINER_REUSE_ENABLED = "dt.dev-services.container-reuse.enabled";
     public static final String DEV_SERVICES_FRONTEND_IMAGE = "dt.dev-services.frontend-image";

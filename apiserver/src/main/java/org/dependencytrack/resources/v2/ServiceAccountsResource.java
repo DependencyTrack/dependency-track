@@ -32,6 +32,7 @@ import org.dependencytrack.api.v2.model.ServiceAccountApiKey;
 import org.dependencytrack.api.v2.model.ServiceAccountTeam;
 import org.dependencytrack.api.v2.model.UpdateServiceAccountRequest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.exception.AlreadyExistsException;
 import org.dependencytrack.persistence.QueryManager;
@@ -40,14 +41,20 @@ import org.dependencytrack.persistence.jdbi.ServiceAccountDao.ServiceAccountDeta
 import org.dependencytrack.persistence.jdbi.ServiceAccountDao.ServiceAccountRow;
 import org.dependencytrack.persistence.jdbi.ServiceAccountDao.UpdatedServiceAccountRow;
 import org.dependencytrack.resources.AbstractApiResource;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
@@ -59,6 +66,9 @@ import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolati
 public final class ServiceAccountsResource extends AbstractApiResource implements ServiceAccountsApi {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceAccountsResource.class);
+    private static final Duration API_KEY_MAX_LIFETIME =
+            Duration.ofDays(ConfigProvider.getConfig().getValue(ConfigKeys.API_KEY_MAX_LIFETIME_DAYS, int.class));
+    private static final Duration API_KEY_DEFAULT_LIFETIME = Duration.ofDays(30);
 
     @Override
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_CREATE})
@@ -171,6 +181,17 @@ public final class ServiceAccountsResource extends AbstractApiResource implement
     public Response createServiceAccountApiKey(String name, CreateServiceAccountApiKeyRequest request) {
         final String username = ServiceAccount.usernameOf(name);
 
+        final Duration lifetime = request.getExpiresInDays() != null
+                ? Duration.ofDays(request.getExpiresInDays())
+                : API_KEY_DEFAULT_LIFETIME.compareTo(API_KEY_MAX_LIFETIME) < 0
+                        ? API_KEY_DEFAULT_LIFETIME
+                        : API_KEY_MAX_LIFETIME;
+        if (lifetime.toDays() < 1 || lifetime.compareTo(API_KEY_MAX_LIFETIME) > 0) {
+            throw new BadRequestException(
+                    "The expiry must be between 1 and %d days".formatted(API_KEY_MAX_LIFETIME.toDays()));
+        }
+        final Instant expiresAt = Instant.now().plus(lifetime);
+
         try (final var qm = new QueryManager(getAlpineRequest())) {
             final ServiceAccount serviceAccount = qm.getServiceAccount(username);
             if (serviceAccount == null) {
@@ -180,8 +201,13 @@ public final class ServiceAccountsResource extends AbstractApiResource implement
                 throw new ClientErrorException("The service account is suspended", Response.Status.CONFLICT);
             }
 
-            final ApiKey apiKey = qm.createApiKey(serviceAccount, request.getComment());
-            LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Created API key for service account: {}", username);
+            final ApiKey apiKey = qm.createApiKey(serviceAccount, request.getComment(), Date.from(expiresAt));
+            LOGGER.info(
+                    SecurityMarkers.SECURITY_AUDIT,
+                    "Created API key {} for service account {}, expiring at {}",
+                    apiKey.getPublicId(),
+                    username,
+                    expiresAt);
 
             return Response.created(getUriInfo()
                             .getBaseUriBuilder()
@@ -193,6 +219,7 @@ public final class ServiceAccountsResource extends AbstractApiResource implement
                     .entity(CreateServiceAccountApiKeyResponse.builder()
                             .publicId(apiKey.getPublicId())
                             .key(apiKey.getKey())
+                            .expiresAt(expiresAt.toEpochMilli())
                             .build())
                     .build();
         }
@@ -217,6 +244,11 @@ public final class ServiceAccountsResource extends AbstractApiResource implement
                                             .createdAt(
                                                     apiKey.getCreated() != null
                                                             ? apiKey.getCreated()
+                                                                    .getTime()
+                                                            : null)
+                                            .expiresAt(
+                                                    apiKey.getExpiresAt() != null
+                                                            ? apiKey.getExpiresAt()
                                                                     .getTime()
                                                             : null)
                                             .lastUsedAt(

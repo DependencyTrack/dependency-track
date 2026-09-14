@@ -21,6 +21,7 @@ package alpine.server.filters;
 import alpine.model.ApiKey;
 import alpine.model.Team;
 import alpine.model.ManagedUser;
+import alpine.model.ServiceAccount;
 import alpine.model.auth.ApiKeyPrincipal;
 import alpine.model.auth.Principal;
 import alpine.model.auth.TeamRef;
@@ -47,6 +48,8 @@ import javax.jdo.datastore.JDOConnection;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
+import java.util.Date;
 import java.util.Map;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -257,6 +260,27 @@ class AuthenticationFilterTest extends JerseyTest {
                           "principalPermissions": []
                         }
                         """);
+    }
+
+    @Test
+    void shouldRejectExpiredApiKeyLikeAnInvalidOne() {
+        final ApiKey apiKey;
+        try (final var qm = new AlpineQueryManager()) {
+            final var serviceAccount = new ServiceAccount();
+            serviceAccount.setUsername("svc:ci");
+            serviceAccount.setSuspended(false);
+            qm.persist(serviceAccount);
+            apiKey = qm.createApiKey(serviceAccount, null, Date.from(Instant.parse("2026-01-02T03:04:05Z")));
+        }
+
+        final Response expiredResponse =
+                target("/").request().header("X-Api-Key", apiKey.getKey()).get();
+        final Response invalidResponse =
+                target("/").request().header("X-Api-Key", "invalid").get();
+
+        assertThat(expiredResponse.getStatus()).isEqualTo(401);
+        assertThat(expiredResponse.getMediaType()).isEqualTo(invalidResponse.getMediaType());
+        assertThat(expiredResponse.readEntity(String.class)).isEqualTo(invalidResponse.readEntity(String.class));
     }
 
     @Test

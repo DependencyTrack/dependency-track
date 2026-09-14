@@ -52,7 +52,10 @@ class PackageMetadataResolverIT {
 
     static Stream<Arguments> shouldResolveFromPublicRegistry() {
         return Stream.of(
-                Arguments.of(new CargoPackageMetadataResolverFactory(), "https://crates.io", "pkg:cargo/serde@1.0.200"),
+                Arguments.of(
+                        new CargoPackageMetadataResolverFactory(),
+                        "https://index.crates.io",
+                        "pkg:cargo/serde@1.0.200"),
                 Arguments.of(
                         new ComposerPackageMetadataResolverFactory(),
                         "https://packagist.org",

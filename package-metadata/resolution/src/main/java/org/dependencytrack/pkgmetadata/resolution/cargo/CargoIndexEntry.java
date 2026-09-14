@@ -18,19 +18,11 @@
  */
 package org.dependencytrack.pkgmetadata.resolution.cargo;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-
-record CargoCrateDocument(@JsonProperty("crate") Crate crate, List<Version> versions) {
-
-    record Crate(
-            @JsonProperty("newest_version") @Nullable String newestVersion,
-            @JsonProperty("max_stable_version") @Nullable String maxStableVersion) {}
-
-    record Version(
-            @Nullable String num,
-            @JsonProperty("created_at") @Nullable String createdAt,
-            @Nullable String checksum) {}
-}
+/// @see <a href="https://doc.rust-lang.org/cargo/reference/registry-index.html#json-schema">Index JSON schema</a>
+record CargoIndexEntry(
+        @Nullable String vers,
+        @Nullable String cksum,
+        boolean yanked,
+        @Nullable String pubtime) {}

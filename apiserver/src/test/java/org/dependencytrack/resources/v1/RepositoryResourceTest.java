@@ -96,7 +96,7 @@ public class RepositoryResourceTest extends ResourceTest {
                         {
                           "type": "CARGO",
                           "identifier": "crates.io",
-                          "url": "https://crates.io",
+                          "url": "https://index.crates.io",
                           "resolutionOrder": 1,
                           "enabled": true,
                           "internal": false,

@@ -197,6 +197,8 @@ tags:
   description: Endpoints related to projects
 - name: Secrets
   description: Endpoints related to secrets
+- name: Service Accounts
+  description: Endpoints related to service accounts
 - name: System Capabilities
   description: Endpoints exposing the capabilities of the running server
 - name: Task Queues
@@ -235,6 +237,14 @@ paths:
     $ref: "./resources/secrets/secrets.yaml"
   /secrets/{name}:
     $ref: "./resources/secrets/secret.yaml"
+  /service-accounts:
+    $ref: "./resources/service-accounts/service-accounts.yaml"
+  /service-accounts/{name}:
+    $ref: "./resources/service-accounts/service-account.yaml"
+  /service-accounts/{name}/api-keys:
+    $ref: "./resources/service-accounts/service-account-api-keys.yaml"
+  /service-accounts/{name}/api-keys/{public_id}:
+    $ref: "./resources/service-accounts/service-account-api-key.yaml"
   /vuln-policies:
     $ref: "./resources/vuln-policies/vuln-policies.yaml"
   /vuln-policies/{uuid}:

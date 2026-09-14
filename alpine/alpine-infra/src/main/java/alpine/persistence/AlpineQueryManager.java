@@ -27,11 +27,18 @@ import alpine.model.MappedOidcGroup;
 import alpine.model.OidcGroup;
 import alpine.model.OidcUser;
 import alpine.model.Permission;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.model.User;
 import alpine.resources.AlpineRequest;
 import alpine.security.ApiKeyGenerator;
 import org.datanucleus.store.rdbms.query.JDOQLQuery;
+import org.dependencytrack.common.pagination.Page;
+import org.dependencytrack.common.pagination.Page.TotalCount;
+import org.dependencytrack.common.pagination.PageToken;
+import org.dependencytrack.common.pagination.PageTokenEncoder;
+import org.dependencytrack.common.pagination.SimplePageTokenEncoder;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +59,7 @@ import java.util.Map;
 public class AlpineQueryManager extends AbstractAlpineQueryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AlpineQueryManager.class);
+    protected static final PageTokenEncoder PAGE_TOKEN_ENCODER = new SimplePageTokenEncoder();
 
     /**
      * Default constructor.
@@ -124,18 +132,74 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
      * @since 3.2.0
      */
     public ApiKey createApiKey(final Team team) {
-        final ApiKey generatedApiKey = ApiKeyGenerator.generate();
-
         return callInTransaction(() -> {
-            final var apiKey = new ApiKey();
-            apiKey.setKey(generatedApiKey.getKey());
-            apiKey.setPublicId(generatedApiKey.getPublicId());
-            apiKey.setSecret(generatedApiKey.getSecret());
-            apiKey.setSecretHash(generatedApiKey.getSecretHash());
-            apiKey.setCreated(new Date());
+            final ApiKey apiKey = createApiKey();
             apiKey.setTeams(List.of(team));
             return pm.makePersistent(apiKey);
         });
+    }
+
+    /// @since 5.2.0
+    public ApiKey createApiKey(ServiceAccount serviceAccount, String comment) {
+        return callInTransaction(() -> {
+            final ApiKey apiKey = createApiKey();
+            apiKey.setUser(serviceAccount);
+            apiKey.setComment(comment);
+            return pm.makePersistent(apiKey);
+        });
+    }
+
+    private static ApiKey createApiKey() {
+        final ApiKey generatedApiKey = ApiKeyGenerator.generate();
+        final var apiKey = new ApiKey();
+        apiKey.setKey(generatedApiKey.getKey());
+        apiKey.setPublicId(generatedApiKey.getPublicId());
+        apiKey.setSecret(generatedApiKey.getSecret());
+        apiKey.setSecretHash(generatedApiKey.getSecretHash());
+        apiKey.setCreated(new Date());
+        return apiKey;
+    }
+
+    /// @since 5.2.0
+    public ServiceAccount getServiceAccount(String username) {
+        final Query<ServiceAccount> query = pm.newQuery(ServiceAccount.class, "username == :username");
+        query.setParameters(username);
+        return executeAndCloseUnique(query);
+    }
+
+    record ListServiceAccountApiKeysPageToken(long lastId) implements PageToken {}
+
+    /// @since 5.2.0
+    public Page<ApiKey> getApiKeys(ServiceAccount serviceAccount, @Nullable String pageToken, int limit) {
+        final ListServiceAccountApiKeysPageToken decodedPageToken =
+                PAGE_TOKEN_ENCODER.decode(pageToken, ListServiceAccountApiKeysPageToken.class);
+
+        final Query<ApiKey> query = pm.newQuery(ApiKey.class);
+        if (decodedPageToken != null) {
+            query.setFilter("user == :user && id < :lastId");
+            query.setParameters(serviceAccount, decodedPageToken.lastId());
+        } else {
+            query.setFilter("user == :user");
+            query.setParameters(serviceAccount);
+        }
+        query.setOrdering("id desc");
+        query.setRange(0, limit + 1);
+        final List<ApiKey> apiKeys = executeAndCloseList(query);
+
+        final Query<ApiKey> countQuery = pm.newQuery(ApiKey.class, "user == :user");
+        countQuery.setParameters(serviceAccount);
+        countQuery.setResult("count(id)");
+        final long totalCount = executeAndCloseResultUnique(countQuery, Long.class);
+
+        final List<ApiKey> pageApiKeys = apiKeys.subList(0, Math.min(limit, apiKeys.size()));
+        final ListServiceAccountApiKeysPageToken nextPageToken = apiKeys.size() > limit
+                ? new ListServiceAccountApiKeysPageToken(pageApiKeys.getLast().getId())
+                : null;
+
+        return new Page<>(
+                pageApiKeys,
+                PAGE_TOKEN_ENCODER.encode(nextPageToken),
+                new TotalCount(totalCount, TotalCount.Type.EXACT));
     }
 
     /**

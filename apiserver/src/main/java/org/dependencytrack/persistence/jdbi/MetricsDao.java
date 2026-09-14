@@ -20,6 +20,7 @@ package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PortfolioMetrics;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.jdbi.v3.core.statement.SqlStatements;
@@ -264,6 +265,12 @@ public interface MetricsDao extends SqlObject {
             """)
     @RegisterBeanMapper(ProjectMetrics.class)
     ProjectMetrics getMostRecentProjectMetrics(@Bind final long projectId);
+
+    default @Nullable ProjectMetrics getMostRecentProjectMetrics(Project project) {
+        return project.getCollectionLogic() == null
+                ? getMostRecentProjectMetrics(project.getId())
+                : getMostRecentCollectionProjectMetrics(project.getId());
+    }
 
     @SqlQuery("""
             SELECT metrics.*, metrics."RISKSCORE" AS inherited_risk_score

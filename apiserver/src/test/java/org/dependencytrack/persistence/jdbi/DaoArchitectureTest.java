@@ -55,6 +55,7 @@ class DaoArchitectureTest {
             "org.dependencytrack.common.pagination.Page");
 
     @ArchTest
+    @SuppressWarnings("unused")
     static final ArchRule daoQueryMethodsMustNotReturnJdoModelClasses = FreezingArchRule.freeze(methods()
             .that()
             .areDeclaredInClassesThat()
@@ -80,6 +81,7 @@ class DaoArchitectureTest {
             }));
 
     @ArchTest
+    @SuppressWarnings("unused")
     static final ArchRule daosMustNotUseBeanMapperWithJdoClasses = FreezingArchRule.freeze(classes()
             .that()
             .haveSimpleNameEndingWith("Dao")
@@ -100,6 +102,7 @@ class DaoArchitectureTest {
             }));
 
     @ArchTest
+    @SuppressWarnings("unused")
     static final ArchRule rowMappersMustNotTargetJdoModelClasses = FreezingArchRule.freeze(classes()
             .that()
             .resideInAPackage("org.dependencytrack.persistence.jdbi..")

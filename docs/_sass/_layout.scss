@@ -172,6 +172,17 @@ $nav-image: $baseurl + "/images/menu.svg";
 	}
 }
 
+.version-banner {
+	padding: 10px ($space + 10);
+	background-color: $brand-colour;
+	color: #fff;
+
+	a {
+		color: #fff;
+		text-decoration: underline;
+	}
+}
+
 .content,
 .page-header {
 	//max-width: $content-max-width;

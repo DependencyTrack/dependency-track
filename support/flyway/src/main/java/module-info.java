@@ -24,6 +24,7 @@ module org.dependencytrack.support.flyway {
     exports org.dependencytrack.support.flyway;
 
     requires flyway.core;
+    requires flyway.database.postgresql;
     requires java.sql;
     requires org.jspecify;
 }

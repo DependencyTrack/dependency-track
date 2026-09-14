@@ -66,6 +66,9 @@ jobs:
   build-container:
     runs-on: ubuntu-latest
     permissions:
+      artifact-metadata: write # Required to create the artifact storage record.
+      attestations: write # Required to generate SLSA build provenance.
+      id-token: write # Required for keyless signing of SLSA build provenance.
       security-events: write # Required to upload trivy's SARIF output
     needs:
       - build-java
@@ -130,8 +133,10 @@ jobs:
           fi
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "tags-alpine=${TAGS_ALPINE}" >> $GITHUB_OUTPUT
+          echo "image=${IMAGE_NAME}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
+        id: push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # tag=v7.3.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
@@ -144,7 +149,16 @@ jobs:
           context: .
           file: src/main/docker/Dockerfile
 
+      - name: Generate SLSA Build Provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # tag=v4.2.2
+        if: ${{ inputs.publish-container }}
+        with:
+          subject-name: ${{ steps.tags.outputs.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
       - name: Build Alpine multi-arch Container Image
+        id: push-alpine
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # tag=v7.3.0
         with:
           tags: ${{ steps.tags.outputs.tags-alpine }}
@@ -156,3 +170,11 @@ jobs:
           push: ${{ inputs.publish-container }}
           context: .
           file: src/main/docker/Dockerfile.alpine
+
+      - name: Generate Alpine SLSA Build Provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # tag=v4.2.2
+        if: ${{ inputs.publish-container }}
+        with:
+          subject-name: ${{ steps.tags.outputs.image }}
+          subject-digest: ${{ steps.push-alpine.outputs.digest }}
+          push-to-registry: true

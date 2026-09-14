@@ -42,6 +42,9 @@ jobs:
       publish-container: true
       ref-name: ${{ github.ref_name }}
     permissions:
+      artifact-metadata: write # Required to create the artifact storage record.
+      attestations: write # Required to generate SLSA build provenance.
+      id-token: write # Required for keyless signing of SLSA build provenance.
       security-events: write # Required to upload trivy's SARIF output
     secrets:
       registry-0-usr: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -50,7 +53,10 @@ jobs:
   update-github-release:
     runs-on: ubuntu-latest
     permissions:
+      artifact-metadata: write # Required to create the artifact storage record.
+      attestations: write # Required to generate SLSA build provenance.
       contents: write # Required to update GitHub release assets and notes
+      id-token: write # Required for keyless signing of SLSA build provenance.
     needs:
       - read-version
       - call-build
@@ -77,6 +83,21 @@ jobs:
           sha512sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
           popd
 
+      - name: Generate SLSA Build Provenance
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # tag=v4.2.2
+        with:
+          subject-path: |-
+            target/dependency-track-apiserver.jar
+            target/dependency-track-bundled.jar
+            target/bom.json
+
+      - name: Prepare SLSA Build Provenance Asset
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: |-
+          cp "${BUNDLE_PATH}" target/dependency-track.intoto.jsonl
+
       - name: Update Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -98,6 +119,7 @@ jobs:
             --clobber \
             target/dependency-track-apiserver.jar \
             target/dependency-track-bundled.jar \
+            target/dependency-track.intoto.jsonl \
             target/checksums.txt \
             target/bom.json
 

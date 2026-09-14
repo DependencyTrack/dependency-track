@@ -59,6 +59,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_CONSUMED
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSING_FAILED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_VALIDATION_FAILED;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_DATASOURCE_MIRRORING;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_INTEGRATION;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_POLICY_VIOLATIONS_SUMMARY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABILITIES_SUMMARY;
@@ -201,6 +202,30 @@ public final class NotificationFactory {
                         .setBom(Bom.newBuilder().setContent("(Omitted)").build())
                         .addAllErrors(errors)
                         .build()))
+                .build();
+    }
+
+    public static Notification createDataSourceMirroringCompletedNotification(
+            String dataSourceType, String dataSourceName) {
+        requireNonNull(dataSourceType, "dataSourceType must not be null");
+        requireNonNull(dataSourceName, "dataSourceName must not be null");
+
+        return newNotificationBuilder(SCOPE_SYSTEM, GROUP_DATASOURCE_MIRRORING, LEVEL_INFORMATIONAL)
+                .setTitle("Data Source Mirroring")
+                .setContent("Mirroring of %s data source \"%s\" completed successfully"
+                        .formatted(dataSourceType, dataSourceName))
+                .build();
+    }
+
+    public static Notification createDataSourceMirroringFailedNotification(
+            String dataSourceType, String dataSourceName) {
+        requireNonNull(dataSourceType, "dataSourceType must not be null");
+        requireNonNull(dataSourceName, "dataSourceName must not be null");
+
+        return newNotificationBuilder(SCOPE_SYSTEM, GROUP_DATASOURCE_MIRRORING, LEVEL_ERROR)
+                .setTitle("Data Source Mirroring")
+                .setContent("Mirroring of %s data source \"%s\" failed. Check the log for details"
+                        .formatted(dataSourceType, dataSourceName))
                 .build();
     }
 

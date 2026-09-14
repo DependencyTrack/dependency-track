@@ -2696,6 +2696,28 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldRemoveParentWhenUpdatingProjectWithoutParent() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+
+        final Project parent = qm.createProject("acme-app-parent", null, null, null, null, null, null, false);
+        final Project project = qm.createProject("acme-app", null, null, null, parent, null, null, false);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "acme-app"
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getParent()).isNull();
+    }
+
+    @Test
     void deleteProjectTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_DELETE);
         Project project = qm.createProject("ABC", null, "1.0", null, null, null, null, false);

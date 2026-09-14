@@ -745,7 +745,7 @@ public class ProjectResource extends AbstractApiResource {
                     <p>
                       To re-parent the project, set <code>parent</code> to an object containing
                       the new parent's <code>uuid</code>. Omit <code>parent</code> (or set it to
-                      <code>null</code>) to leave the parent unchanged. Providing <code>parent</code>
+                      <code>null</code>) to remove the parent. Providing <code>parent</code>
                       without a non-null <code>uuid</code> is rejected with 400.
                     </p>
                     <p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>""")

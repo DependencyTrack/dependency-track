@@ -50,6 +50,18 @@ public final class HttpClient extends java.net.http.HttpClient {
     public static final HttpClient INSTANCE = create(
             ConfigProvider.getConfig(), ProxyUtil.getProxyConfig(), Metrics.globalRegistry, ClusterInfo::getClusterId);
 
+    /// For requests whose destination is checked before it is contacted.
+    /// A followed redirect would bypass that check.
+    ///
+    /// TODO: This should be the default client behavior, and redirects should always
+    ///  be an explicit opt-in.
+    public static final HttpClient NO_REDIRECT_INSTANCE = create(
+            ConfigProvider.getConfig(),
+            ProxyUtil.getProxyConfig(),
+            Metrics.globalRegistry,
+            ClusterInfo::getClusterId,
+            Redirect.NEVER);
+
     private final java.net.http.HttpClient delegate;
     private final String userAgentPrefix;
     private final Supplier<String> clusterIdSupplier;
@@ -63,6 +75,15 @@ public final class HttpClient extends java.net.http.HttpClient {
 
     static HttpClient create(
             Config config, ProxyConfig proxyConfig, MeterRegistry meterRegistry, Supplier<String> clusterIdSupplier) {
+        return create(config, proxyConfig, meterRegistry, clusterIdSupplier, Redirect.NORMAL);
+    }
+
+    static HttpClient create(
+            Config config,
+            ProxyConfig proxyConfig,
+            MeterRegistry meterRegistry,
+            Supplier<String> clusterIdSupplier,
+            Redirect followRedirects) {
         final String appName = config.getOptionalValue("alpine.build-info.application.name", String.class)
                 .orElse("Dependency-Track");
         final String appVersion = config.getOptionalValue("alpine.build-info.application.version", String.class)
@@ -80,7 +101,7 @@ public final class HttpClient extends java.net.http.HttpClient {
         final var clientBuilder = java.net.http.HttpClient.newBuilder()
                 .proxy(new ProxySelector(proxyConfig))
                 .connectTimeout(Duration.ofMillis(connectTimeoutMs))
-                .followRedirects(java.net.http.HttpClient.Redirect.NORMAL);
+                .followRedirects(followRedirects);
 
         if (proxyConfig != null && proxyConfig.getUsername() != null && proxyConfig.getPassword() != null) {
             // Basic auth is disabled by default for the JDK's HttpClient, with the following justification:
@@ -197,7 +218,7 @@ public final class HttpClient extends java.net.http.HttpClient {
     }
 
     private HttpRequest withUserAgent(HttpRequest request) {
-        return HttpRequest.newBuilder(request, (name, value) -> !"User-Agent".equalsIgnoreCase(name))
+        return HttpRequest.newBuilder(request, (name, _) -> !"User-Agent".equalsIgnoreCase(name))
                 .header("User-Agent", userAgent())
                 .build();
     }

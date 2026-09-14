@@ -21,11 +21,18 @@ package org.dependencytrack.resources.v2;
 import alpine.model.ApiKey;
 import alpine.model.ServiceAccount;
 import alpine.model.Team;
+import com.fasterxml.uuid.Generators;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.auth.workloadidentity.WorkloadIdentityBindingDao;
+import org.dependencytrack.auth.workloadidentity.WorkloadIdentityProvider;
+import org.dependencytrack.auth.workloadidentity.WorkloadIdentityProviderDao;
 import org.dependencytrack.persistence.jdbi.ServiceAccountDao;
 import org.dependencytrack.persistence.jdbi.ServiceAccountDao.ServiceAccountDetailsRow;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,16 +47,26 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class ServiceAccountsResourceTest extends ResourceTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig());
+
+    private static String publicJwks;
+
+    @BeforeAll
+    static void generatePublicJwks() throws Exception {
+        publicJwks =
+                new JWKSet(new RSAKeyGenerator(2048).keyID("key-1").generate().toPublicJWK()).toString();
+    }
 
     @Test
     void createServiceAccountShouldPrefixTheUsernameAndReturnCreated() {
@@ -726,5 +743,293 @@ class ServiceAccountsResourceTest extends ResourceTest {
 
     private static void createServiceAccount(String name) {
         useJdbiHandle(handle -> handle.attach(ServiceAccountDao.class).create(ServiceAccount.usernameOf(name), null));
+    }
+
+    @Test
+    void createServiceAccountWorkloadIdentityBindingShouldReturnCreated() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+        createProvider("github-actions");
+        createServiceAccount("ci-pipeline");
+
+        final Response response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                    {
+                      "provider_name": "github-actions",
+                      "subject": "repo:acme/app:*",
+                      "condition": "claims.ref == 'refs/heads/main'"
+                    }
+                    """));
+        assertThat(response.getStatus()).isEqualTo(201);
+        final UUID uuid = UUID.fromString(parseJsonObject(response).getString("uuid"));
+        assertThat(uuid.version()).isEqualTo(7);
+        assertThat(response.getLocation().getPath())
+                .endsWith("/service-accounts/ci-pipeline/workload-identity-bindings/" + uuid);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "OIDC, repo:acme/app:*, 201",
+        "OIDC, repo:acme/*, 201",
+        "OIDC, repo:acme/app:ref:refs/heads/main, 201",
+        "OIDC, *, 400",
+        "OIDC, **, 400",
+        "OIDC, repo:*acme, 400",
+        "OIDC, repo:acme*, 400",
+        "OIDC, repo:acme/app-*, 400",
+        "OIDC, repo:acme@*, 400",
+        "SPIFFE, spiffe://example.org/ci/*, 201",
+        "SPIFFE, spiffe://example.org/*, 201",
+        "SPIFFE, spiffe://example.org/ci/main, 201",
+        "SPIFFE, spiffe://other.org/ci/*, 400",
+        "SPIFFE, spiffe://Example.org/ci/*, 400",
+        "SPIFFE, spiffe://example.org, 400",
+        "SPIFFE, ci/*, 400",
+        "SPIFFE, ci, 400",
+        "SPIFFE, spiffe://example.org/ci:*, 400",
+        "SPIFFE, spiffe://example.org/ci*, 400",
+        "SPIFFE, spiffe://example.org*, 400"
+    })
+    void createServiceAccountWorkloadIdentityBindingShouldValidateSubject(
+            WorkloadIdentityProvider.Type providerType, String subject, int expectedStatus) {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+        createProvider("provider", providerType);
+        createServiceAccount("ci-pipeline");
+
+        final Response response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                    {
+                      "provider_name": "provider",
+                      "subject": "%s"
+                    }
+                    """.formatted(subject)));
+        assertThat(response.getStatus()).isEqualTo(expectedStatus);
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+            delimiter = '|',
+            nullValues = "null",
+            value = {"claims.ref == | null | .*", "claims.ref | 0 | Condition must return a boolean, but returns dyn"})
+    void createServiceAccountWorkloadIdentityBindingShouldReturnCelErrorsForInvalidCondition(
+            String condition, Integer expectedColumn, String expectedMessagePattern) {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+        createProvider("github-actions");
+        createServiceAccount("ci-pipeline");
+
+        final Response response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                    {
+                      "provider_name": "github-actions",
+                      "subject": "repo:acme/app:*",
+                      "condition": "%s"
+                    }
+                    """.formatted(condition)));
+        assertThat(response.getStatus()).isEqualTo(400);
+        final String responseJson = getPlainTextBody(response);
+        assertThatJson(responseJson).inPath("$.detail").isEqualTo("Condition is invalid.");
+        assertThatJson(responseJson).inPath("$.errors[0].line").isEqualTo(1);
+        if (expectedColumn != null) {
+            assertThatJson(responseJson).inPath("$.errors[0].column").isEqualTo(expectedColumn);
+        } else {
+            assertThatJson(responseJson).inPath("$.errors[0].column").isNumber();
+        }
+        assertThatJson(responseJson).inPath("$.errors[0].message").isString().matches(expectedMessagePattern);
+    }
+
+    @Test
+    void createServiceAccountWorkloadIdentityBindingShouldReturnBadRequestWhenProviderIsUnknown() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+        createServiceAccount("ci-pipeline");
+
+        final Response response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                    {
+                      "provider_name": "nope",
+                      "subject": "repo:acme/app:*"
+                    }
+                    """));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.detail")
+                .isEqualTo("No workload identity provider named nope exists");
+    }
+
+    @Test
+    void createServiceAccountWorkloadIdentityBindingShouldReturnNotFoundWhenServiceAccountIsUnknown() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+        createProvider("github-actions");
+
+        final Response response = jersey.target("/service-accounts/nope/workload-identity-bindings")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                    {
+                      "provider_name": "github-actions",
+                      "subject": "repo:acme/app:*"
+                    }
+                    """));
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    void createServiceAccountWorkloadIdentityBindingShouldAllowDuplicate() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+        createProvider("github-actions");
+        createServiceAccount("ci-pipeline");
+
+        final Entity<String> request = Entity.json(/* language=JSON */ """
+            {
+              "provider_name": "github-actions",
+              "subject": "repo:acme/app:*"
+            }
+            """);
+
+        Response response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(request);
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(request);
+        assertThat(response.getStatus()).isEqualTo(201);
+    }
+
+    @Test
+    void listServiceAccountWorkloadIdentityBindingsShouldPaginate() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_READ);
+        createProvider("github-actions");
+        createServiceAccount("ci-pipeline");
+        createBinding("github-actions", "ci-pipeline", "repo:acme/app:*", "claims.ref == 'refs/heads/main'");
+        createBinding("github-actions", "ci-pipeline", "repo:acme/lib:*", null);
+
+        Response response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings")
+                .queryParam("limit", 1)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThatJson(responseJson.toString()).isEqualTo(/* language=JSON */ """
+            {
+              "items": [
+                {
+                  "uuid": "${json-unit.any-string}",
+                  "provider_name": "github-actions",
+                  "subject": "repo:acme/app:*",
+                  "condition": "claims.ref == 'refs/heads/main'",
+                  "created_at": "${json-unit.any-number}"
+                }
+              ],
+              "next_page_token": "${json-unit.any-string}",
+              "total": {
+                "count": 2,
+                "type": "EXACT"
+              }
+            }
+            """);
+
+        response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings")
+                .queryParam("limit", 1)
+                .queryParam("page_token", responseJson.getString("next_page_token"))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items").isEqualTo(/* language=JSON */ """
+            [
+              {
+                "uuid": "${json-unit.any-string}",
+                "provider_name": "github-actions",
+                "subject": "repo:acme/lib:*",
+                "created_at": "${json-unit.any-number}"
+              }
+            ]
+            """);
+    }
+
+    @Test
+    void listServiceAccountWorkloadIdentityBindingsShouldReturnNotFoundWhenServiceAccountIsUnknown() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_READ);
+
+        final Response response = jersey.target("/service-accounts/nope/workload-identity-bindings")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    void deleteServiceAccountWorkloadIdentityBindingShouldRemoveIt() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE, Permissions.ACCESS_MANAGEMENT_READ);
+        createProvider("github-actions");
+        createServiceAccount("ci-pipeline");
+        final UUID uuid = createBinding("github-actions", "ci-pipeline", "repo:acme/app:*", null);
+
+        Response response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings/" + uuid)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items").isEqualTo(/* language=JSON */ """
+            []
+            """);
+    }
+
+    @Test
+    void deleteServiceAccountWorkloadIdentityBindingShouldReturnNotFoundForBindingOfAnotherServiceAccount() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
+        createProvider("github-actions");
+        createServiceAccount("ci-pipeline");
+        createServiceAccount("other");
+        final UUID uuid = createBinding("github-actions", "other", "repo:acme/app:*", null);
+
+        final Response response = jersey.target("/service-accounts/ci-pipeline/workload-identity-bindings/" + uuid)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    private static UUID createBinding(
+            String providerName, String serviceAccountName, String subject, String condition) {
+        final UUID uuid = Generators.timeBasedEpochRandomGenerator().generate();
+        useJdbiTransaction(handle -> handle.attach(WorkloadIdentityBindingDao.class)
+                .create(uuid, providerName, ServiceAccount.usernameOf(serviceAccountName), subject, condition));
+        return uuid;
+    }
+
+    private static void createProvider(String name) {
+        createProvider(name, WorkloadIdentityProvider.Type.OIDC);
+    }
+
+    private static void createProvider(String name, WorkloadIdentityProvider.Type type) {
+        useJdbiTransaction(handle -> handle.attach(WorkloadIdentityProviderDao.class)
+                .create(
+                        name,
+                        type,
+                        type == WorkloadIdentityProvider.Type.SPIFFE
+                                ? "example.org"
+                                : "https://token.actions.githubusercontent.com",
+                        "https://dependency-track.example.com",
+                        /* jwksUrl */ null,
+                        publicJwks,
+                        3600));
     }
 }

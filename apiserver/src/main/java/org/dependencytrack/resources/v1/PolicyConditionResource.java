@@ -19,8 +19,6 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.auth.PermissionRequired;
-import dev.cel.common.CelIssue;
-import dev.cel.common.CelValidationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,6 +30,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.cel.InvalidCelExpressionException;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -59,7 +58,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -234,14 +233,10 @@ public class PolicyConditionResource extends AbstractApiResource {
 
         try {
             CelPolicyCompiler.getInstance(CelPolicyType.COMPONENT).compile(value, CacheMode.NO_CACHE);
-        } catch (CelValidationException e) {
-            final var celErrors = new ArrayList<CelExpressionError>();
-            for (final CelIssue issue : e.getErrors()) {
-                celErrors.add(new CelExpressionError(
-                        issue.getSourceLocation().getLine(),
-                        issue.getSourceLocation().getColumn(),
-                        issue.getMessage()));
-            }
+        } catch (InvalidCelExpressionException e) {
+            final List<CelExpressionError> celErrors = e.getErrors().stream()
+                    .map(error -> new CelExpressionError(error.line(), error.column(), error.message()))
+                    .toList();
 
             throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("celErrors", celErrors))

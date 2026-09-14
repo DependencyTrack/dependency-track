@@ -125,6 +125,7 @@ abstract class AbstractE2ET {
 
         logger.info("Assigning permissions to e2e team");
         for (final String permission : Set.of(
+                "ACCESS_MANAGEMENT",
                 "BOM_UPLOAD",
                 "POLICY_MANAGEMENT",
                 "PORTFOLIO_MANAGEMENT",

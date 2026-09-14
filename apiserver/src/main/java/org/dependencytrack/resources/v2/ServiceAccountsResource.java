@@ -21,17 +21,29 @@ package org.dependencytrack.resources.v2;
 import alpine.model.ApiKey;
 import alpine.model.ServiceAccount;
 import alpine.server.auth.PermissionRequired;
+import com.fasterxml.uuid.Generators;
 import org.dependencytrack.api.v2.ServiceAccountsApi;
 import org.dependencytrack.api.v2.model.CreateServiceAccountApiKeyRequest;
 import org.dependencytrack.api.v2.model.CreateServiceAccountApiKeyResponse;
 import org.dependencytrack.api.v2.model.CreateServiceAccountRequest;
+import org.dependencytrack.api.v2.model.CreateWorkloadIdentityBindingRequest;
+import org.dependencytrack.api.v2.model.CreateWorkloadIdentityBindingResponse;
 import org.dependencytrack.api.v2.model.GetServiceAccountResponse;
 import org.dependencytrack.api.v2.model.ListServiceAccountApiKeysResponse;
 import org.dependencytrack.api.v2.model.ListServiceAccountsResponse;
+import org.dependencytrack.api.v2.model.ListWorkloadIdentityBindingsResponse;
 import org.dependencytrack.api.v2.model.ServiceAccountApiKey;
 import org.dependencytrack.api.v2.model.ServiceAccountTeam;
 import org.dependencytrack.api.v2.model.UpdateServiceAccountRequest;
+import org.dependencytrack.api.v2.model.WorkloadIdentityBinding;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.auth.workloadidentity.SpiffeTrustDomain;
+import org.dependencytrack.auth.workloadidentity.WorkloadIdentityBindingDao;
+import org.dependencytrack.auth.workloadidentity.WorkloadIdentityBindingDao.WorkloadIdentityBindingRow;
+import org.dependencytrack.auth.workloadidentity.WorkloadIdentityConditionEnv;
+import org.dependencytrack.auth.workloadidentity.WorkloadIdentityProvider;
+import org.dependencytrack.auth.workloadidentity.WorkloadIdentityProviderDao;
+import org.dependencytrack.auth.workloadidentity.WorkloadIdentityProviderDao.WorkloadIdentityProviderRow;
 import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.exception.AlreadyExistsException;
@@ -55,7 +67,9 @@ import jakarta.ws.rs.ext.Provider;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 
+import static org.apache.commons.lang3.StringUtils.trimToNull;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -284,6 +298,115 @@ public final class ServiceAccountsResource extends AbstractApiResource implement
         }
 
         LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted API key {} of service account: {}", publicId, username);
+        return Response.noContent().build();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_CREATE})
+    public Response createServiceAccountWorkloadIdentityBinding(
+            String name, CreateWorkloadIdentityBindingRequest request) {
+        final String condition = trimToNull(request.getCondition());
+        if (condition != null) {
+            // NB: throws when condition is invalid.
+            WorkloadIdentityConditionEnv.getInstance().compile(condition);
+        }
+
+        final String username = ServiceAccount.usernameOf(name);
+        final UUID bindingId = Generators.timeBasedEpochRandomGenerator().generate();
+
+        final boolean created = inJdbiTransaction(getAlpineRequest(), handle -> {
+            final WorkloadIdentityProviderRow provider =
+                    handle.attach(WorkloadIdentityProviderDao.class).getByName(request.getProviderName());
+            if (provider == null) {
+                throw new BadRequestException(
+                        "No workload identity provider named %s exists".formatted(request.getProviderName()));
+            }
+
+            if (provider.type() == WorkloadIdentityProvider.Type.SPIFFE
+                    && !SpiffeTrustDomain.isValidBindingSubject(provider.issuer(), request.getSubject())) {
+                throw new BadRequestException(
+                        "A SPIFFE subject must be a SPIFFE ID starting with %s, or a prefix of one ending with /*"
+                                .formatted(SpiffeTrustDomain.idPrefix(provider.issuer())));
+            }
+
+            return handle.attach(WorkloadIdentityBindingDao.class)
+                    .create(bindingId, request.getProviderName(), username, request.getSubject(), condition);
+        });
+        if (!created) {
+            throw new NotFoundException();
+        }
+
+        LOGGER.info(
+                SecurityMarkers.SECURITY_AUDIT,
+                "Bound subject {} of workload identity provider {} to service account {}",
+                request.getSubject(),
+                request.getProviderName(),
+                username);
+        return Response.created(getUriInfo()
+                        .getBaseUriBuilder()
+                        .path("/service-accounts")
+                        .path(name)
+                        .path("/workload-identity-bindings")
+                        .path(bindingId.toString())
+                        .build())
+                .entity(CreateWorkloadIdentityBindingResponse.builder()
+                        .uuid(bindingId)
+                        .build())
+                .build();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_READ})
+    public Response listServiceAccountWorkloadIdentityBindings(
+            String serviceAccountName, String pageToken, Integer limit) {
+        final String username = ServiceAccount.usernameOf(serviceAccountName);
+
+        final Page<WorkloadIdentityBindingRow> page = withJdbiHandle(getAlpineRequest(), handle -> {
+            final var dao = handle.attach(WorkloadIdentityBindingDao.class);
+            if (!dao.existsServiceAccount(username)) {
+                throw new NotFoundException();
+            }
+
+            return dao.listBindings(username, limit, pageToken);
+        });
+
+        return Response.ok(ListWorkloadIdentityBindingsResponse.builder()
+                        .items(page.items().stream()
+                                .<WorkloadIdentityBinding>map(row -> WorkloadIdentityBinding.builder()
+                                        .uuid(row.id())
+                                        .providerName(row.providerName())
+                                        .subject(row.subject())
+                                        .condition(row.condition())
+                                        .createdAt(row.createdAt().toEpochMilli())
+                                        .lastUsedAt(
+                                                row.lastUsedAt() != null
+                                                        ? row.lastUsedAt().toEpochMilli()
+                                                        : null)
+                                        .build())
+                                .toList())
+                        .nextPageToken(page.nextPageToken())
+                        .total(convertTotalCount(page.totalCount()))
+                        .build())
+                .build();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
+    public Response deleteServiceAccountWorkloadIdentityBinding(String serviceAccountName, UUID bindingId) {
+        final String username = ServiceAccount.usernameOf(serviceAccountName);
+
+        final boolean deleted = inJdbiTransaction(
+                getAlpineRequest(),
+                handle -> handle.attach(WorkloadIdentityBindingDao.class).delete(username, bindingId));
+        if (!deleted) {
+            throw new NotFoundException();
+        }
+
+        LOGGER.info(
+                SecurityMarkers.SECURITY_AUDIT,
+                "Deleted workload identity binding {} of service account {}",
+                bindingId,
+                username);
         return Response.noContent().build();
     }
 

@@ -1,0 +1,125 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+get:
+  operationId: getWorkloadIdentityProvider
+  summary: Get a workload identity provider
+  description: |-
+    Returns details about a workload identity provider.
+
+    Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_READ` permission.
+  tags:
+    - Workload Identity Providers
+  parameters:
+    - name: name
+      in: path
+      description: The name of the workload identity provider
+      required: true
+      schema:
+        $ref: "../../shared/schemas/workload-identity-provider-name.yaml"
+  responses:
+    "200":
+      description: The workload identity provider
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/workload-identity-provider.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    "404":
+      $ref: "../../shared/responses/generic-not-found-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"
+
+patch:
+  operationId: updateWorkloadIdentityProvider
+  summary: Update a workload identity provider
+  description: |-
+    Updates a workload identity provider.
+
+    Only the given fields are changed. The name and type of a provider cannot change.
+
+    Providing `jwks_url` switches the provider to that URL. Providing `jwks` switches it to inline keys.
+    Changing the `issuer` of an `OIDC` provider that fetches its keys from a URL re-reads the new issuer's
+    discovery document and replaces the stored `jwks_url`, unless `jwks_url` or `jwks` is given as well.
+    Bindings of a `SPIFFE` provider stop matching when its trust domain changes.
+    When the key source changes, the server fetches the new keys and rejects the request if that fails.
+
+    Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_UPDATE` permission.
+  tags:
+    - Workload Identity Providers
+  parameters:
+    - name: name
+      in: path
+      description: The name of the workload identity provider
+      required: true
+      schema:
+        $ref: "../../shared/schemas/workload-identity-provider-name.yaml"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/update-workload-identity-provider-request.yaml"
+  responses:
+    "204":
+      description: Workload identity provider updated
+    "400":
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            anyOf:
+              - $ref: "../../shared/schemas/invalid-request-problem-details.yaml"
+              - $ref: "../../shared/schemas/problem-details.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    "404":
+      $ref: "../../shared/responses/generic-not-found-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"
+
+delete:
+  operationId: deleteWorkloadIdentityProvider
+  summary: Delete a workload identity provider
+  description: |-
+    Deletes a workload identity provider and cascade-deletes its bindings. Sessions already created stay valid until they expire.
+
+    Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_DELETE` permission.
+  tags:
+    - Workload Identity Providers
+  parameters:
+    - name: name
+      in: path
+      description: The name of the workload identity provider
+      required: true
+      schema:
+        $ref: "../../shared/schemas/workload-identity-provider-name.yaml"
+  responses:
+    "204":
+      description: Workload identity provider deleted
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    "404":
+      $ref: "../../shared/responses/generic-not-found-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"

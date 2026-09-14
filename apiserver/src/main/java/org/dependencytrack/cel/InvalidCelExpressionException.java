@@ -16,35 +16,38 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.notification;
+package org.dependencytrack.cel;
 
 import dev.cel.common.CelIssue;
+import dev.cel.common.CelValidationException;
 
 import java.util.List;
 
-/**
- * @since 5.0.0
- */
-public final class InvalidNotificationFilterExpressionException extends RuntimeException {
+/// @since 5.2.0
+public final class InvalidCelExpressionException extends RuntimeException {
 
     public record Error(int line, int column, String message) {}
 
     private final List<Error> errors;
 
-    public InvalidNotificationFilterExpressionException(String message, List<CelIssue> celIssues) {
+    public InvalidCelExpressionException(String message, List<Error> errors) {
         super(message);
-        this.errors = celIssues.stream()
-                .map(e -> new Error(
-                        e.getSourceLocation().getLine(), e.getSourceLocation().getColumn(), e.getMessage()))
-                .toList();
+        this.errors = List.copyOf(errors);
     }
 
-    public InvalidNotificationFilterExpressionException(String message, String errorDetail) {
-        super(message);
-        this.errors = List.of(new Error(0, 0, errorDetail));
+    public InvalidCelExpressionException(String message, CelValidationException cause) {
+        super(message, cause);
+        this.errors = cause.getErrors().stream()
+                .map(InvalidCelExpressionException::toError)
+                .toList();
     }
 
     public List<Error> getErrors() {
         return errors;
+    }
+
+    private static Error toError(CelIssue issue) {
+        return new Error(
+                issue.getSourceLocation().getLine(), issue.getSourceLocation().getColumn(), issue.getMessage());
     }
 }

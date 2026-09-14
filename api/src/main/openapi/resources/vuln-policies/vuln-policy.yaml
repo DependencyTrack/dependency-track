@@ -81,7 +81,7 @@ put:
         application/problem+json:
           schema:
             anyOf:
-              - $ref: "./schemas/invalid-vuln-policy-condition-problem-details.yaml"
+              - $ref: "../../shared/schemas/invalid-cel-expression-problem-details.yaml"
               - $ref: "../../shared/schemas/invalid-request-problem-details.yaml"
               - $ref: "../../shared/schemas/problem-details.yaml"
     "401":

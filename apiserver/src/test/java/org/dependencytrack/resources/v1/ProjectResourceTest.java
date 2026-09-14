@@ -5335,7 +5335,8 @@ class ProjectResourceTest extends ResourceTest {
         final JsonObject json = parseJsonObject(response);
         assertThat(json.getString("classifier")).isEqualTo("LIBRARY");
         assertThat(json.containsKey("collectionLogic")).isFalse();
-        assertThat(json.getJsonObject("parent").getString("uuid")).isEqualTo(parentProject.getUuid().toString());
+        assertThat(json.getJsonObject("parent").getString("uuid"))
+                .isEqualTo(parentProject.getUuid().toString());
     }
 
     @Test

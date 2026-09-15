@@ -87,6 +87,7 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -4730,7 +4731,9 @@ class ProjectResourceTest extends ResourceTest {
         serviceAccount.setSuspended(false);
         qm.persist(serviceAccount);
         qm.addUserToTeam(serviceAccount, team);
-        final String serviceAccountKey = qm.createApiKey(serviceAccount, null).getKey();
+        final String serviceAccountKey = qm.createApiKey(
+                        serviceAccount, null, Date.from(Instant.now().plus(Duration.ofDays(30))))
+                .getKey();
 
         final Response response = jersey.target(V1_PROJECT)
                 .request()

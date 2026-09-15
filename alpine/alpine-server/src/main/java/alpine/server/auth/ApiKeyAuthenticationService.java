@@ -29,6 +29,7 @@ import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 
 /**
  * Authentication service that validates API keys.
@@ -57,12 +60,14 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
                , "PUBLIC_ID"
                , "SECRET_HASH"
                , "USER_ID"
+               , "EXPIRES_AT"
             FROM "APIKEY"
            WHERE "PUBLIC_ID" = ?
         )
         SELECT api_key."ID" AS id
              , api_key."PUBLIC_ID" AS public_id
              , api_key."SECRET_HASH" AS secret_hash
+             , api_key."EXPIRES_AT" AS expires_at
              , usr."ID" AS user_id
              , usr."USERNAME" AS username
              , usr."TYPE" AS user_type
@@ -195,6 +200,16 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
             throw new AuthenticationException();
         }
 
+        final Instant expiresAt = lookupResult.expiresAt();
+        if (expiresAt != null && !expiresAt.isAfter(Instant.now())) {
+            LOGGER.info(
+                    SecurityMarkers.SECURITY_FAILURE,
+                    "API key {} expired at {}",
+                    decodedApiKey.getPublicId(),
+                    expiresAt);
+            throw new AuthenticationException();
+        }
+
         if (lookupResult.ownerSuspended()) {
             LOGGER.debug("The principal owning API key {} is suspended", decodedApiKey.getPublicId());
             throw new AuthenticationException();
@@ -210,6 +225,7 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
             long apiKeyId,
             Principal principal,
             String secretHash,
+            @Nullable Instant expiresAt,
             boolean ownerSuspended,
             boolean portfolioAccessControlEnabled) {
 
@@ -223,6 +239,7 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
             @Override
             public LookupResult map(ResultSet rs) throws SQLException {
                 final long apiKeyId = rs.getLong("id");
+                final var expiresAt = rs.getObject("expires_at", OffsetDateTime.class);
                 final long ownerId = rs.getLong("user_id");
                 final boolean isOwnedByUser = !rs.wasNull();
 
@@ -243,6 +260,7 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
                         apiKeyId,
                         principal,
                         rs.getString("secret_hash"),
+                        expiresAt != null ? expiresAt.toInstant() : null,
                         rs.getBoolean("suspended"),
                         rs.getBoolean("acl_enabled"));
             }

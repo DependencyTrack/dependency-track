@@ -140,11 +140,12 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
     }
 
     /// @since 5.2.0
-    public ApiKey createApiKey(ServiceAccount serviceAccount, String comment) {
+    public ApiKey createApiKey(ServiceAccount serviceAccount, @Nullable String comment, Date expiresAt) {
         return callInTransaction(() -> {
             final ApiKey apiKey = createApiKey();
             apiKey.setUser(serviceAccount);
             apiKey.setComment(comment);
+            apiKey.setExpiresAt(expiresAt);
             return pm.makePersistent(apiKey);
         });
     }

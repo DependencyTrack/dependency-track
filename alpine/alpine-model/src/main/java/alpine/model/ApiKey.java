@@ -97,6 +97,11 @@ public class ApiKey implements Serializable {
     @Column(name = "LAST_USED")
     private Date lastUsed;
 
+    /// @since 5.2.0
+    @Persistent
+    @Column(name = "EXPIRES_AT", allowsNull = "true")
+    private Date expiresAt;
+
     @Persistent(table = "APIKEYS_TEAMS", defaultFetchGroup = "true")
     @Join(column = "APIKEY_ID", primaryKey = "APIKEYS_TEAMS_PK", foreignKey = "APIKEYS_TEAMS_APIKEY_FK", deleteAction = ForeignKeyAction.CASCADE)
     @Element(column = "TEAM_ID", foreignKey = "APIKEYS_TEAMS_TEAM_FK", deleteAction = ForeignKeyAction.CASCADE)
@@ -184,6 +189,14 @@ public class ApiKey implements Serializable {
 
     public void setLastUsed(final Date lastUsed) {
         this.lastUsed = lastUsed;
+    }
+
+    public Date getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(Date expiresAt) {
+        this.expiresAt = expiresAt;
     }
 
     public List<Team> getTeams() {

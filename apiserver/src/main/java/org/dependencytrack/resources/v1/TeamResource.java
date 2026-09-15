@@ -356,6 +356,10 @@ public class TeamResource extends AbstractApiResource {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
                 final ApiKey apiKey = qm.createApiKey(team);
+                super.logSecurityEvent(
+                        LOGGER,
+                        SecurityMarkers.SECURITY_AUDIT,
+                        "API key created: %s (team: %s)".formatted(apiKey.getPublicId(), team.getName()));
                 return Response.status(Response.Status.CREATED).entity(apiKey).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -393,6 +397,8 @@ public class TeamResource extends AbstractApiResource {
             ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
             if (apiKey != null) {
                 apiKey = qm.regenerateApiKey(apiKey);
+                super.logSecurityEvent(
+                        LOGGER, SecurityMarkers.SECURITY_AUDIT, "API key regenerated: " + apiKey.getPublicId());
                 return Response.ok(apiKey).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -466,7 +472,9 @@ public class TeamResource extends AbstractApiResource {
             return qm.callInTransaction(() -> {
                 final ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
                 if (apiKey != null) {
+                    final String publicId = apiKey.getPublicId();
                     qm.delete(apiKey);
+                    super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "API key deleted: " + publicId);
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND)

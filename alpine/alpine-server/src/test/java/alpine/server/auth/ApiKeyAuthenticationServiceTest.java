@@ -41,6 +41,8 @@ import javax.naming.AuthenticationException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -377,7 +379,9 @@ public class ApiKeyAuthenticationServiceTest {
             serviceAccount.setPermissions(List.of(qm.createPermission("DIRECT_PERM", null)));
             serviceAccountId = qm.persist(serviceAccount).getId();
 
-            rawKey = qm.createApiKey(serviceAccount, null).getKey();
+            rawKey = qm.createApiKey(
+                            serviceAccount, null, Date.from(Instant.now().plus(Duration.ofDays(30))))
+                    .getKey();
         }
 
         final var statementCount = new AtomicInteger();

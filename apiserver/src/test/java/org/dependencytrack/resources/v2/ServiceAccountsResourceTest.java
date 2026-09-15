@@ -36,6 +36,9 @@ import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -339,7 +342,11 @@ class ServiceAccountsResourceTest extends ResourceTest {
     void deleteServiceAccountShouldRemoveItAndItsApiKeys() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE, Permissions.ACCESS_MANAGEMENT_CREATE);
         createServiceAccount("ci-pipeline");
-        qm.createApiKey(qm.getServiceAccount("svc:ci-pipeline"), null).getPublicId();
+        qm.createApiKey(
+                        qm.getServiceAccount("svc:ci-pipeline"),
+                        null,
+                        Date.from(Instant.now().plus(Duration.ofDays(30))))
+                .getPublicId();
 
         final Response response = jersey.target("/service-accounts/ci-pipeline")
                 .request()
@@ -350,10 +357,12 @@ class ServiceAccountsResourceTest extends ResourceTest {
         final ServiceAccountDetailsRow deletedServiceAccount =
                 withJdbiHandle(handle -> handle.attach(ServiceAccountDao.class).getByUsername("svc:ci-pipeline"));
         assertThat(deletedServiceAccount).isNull();
-        final long remainingKeys = withJdbiHandle(handle -> handle.createQuery(
-                        /* language=SQL */ "SELECT COUNT(*) FROM \"APIKEY\" WHERE \"USER_ID\" IS NOT NULL")
-                .mapTo(long.class)
-                .one());
+        final long remainingKeys = withJdbiHandle(handle ->
+                handle.createQuery(/* language=SQL */ """
+                    SELECT COUNT(*)
+                      FROM "APIKEY"
+                     WHERE "USER_ID" IS NOT NULL
+                    """).mapTo(long.class).one());
         assertThat(remainingKeys).isZero();
     }
 
@@ -362,21 +371,31 @@ class ServiceAccountsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE, Permissions.ACCESS_MANAGEMENT_READ);
         createServiceAccount("ci-pipeline");
 
+        final Instant before = Instant.now();
         final Response createResponse = jersey.target("/service-accounts/ci-pipeline/api-keys")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
                         {
-                          "comment": "for the build"
+                          "comment": "for the build",
+                          "expires_in_days": 90
                         }
                         """));
         assertThat(createResponse.getStatus()).isEqualTo(201);
-        assertThatJson(getPlainTextBody(createResponse)).isEqualTo(/* language=JSON */ """
+        final Instant after = Instant.now();
+        final JsonObject createResponseJson = parseJsonObject(createResponse);
+        assertThatJson(createResponseJson.toString()).isEqualTo(/* language=JSON */ """
                 {
                   "public_id": "${json-unit.any-string}",
-                  "key": "${json-unit.any-string}"
+                  "key": "${json-unit.any-string}",
+                  "expires_at": "${json-unit.any-number}"
                 }
                 """);
+        final long expiresAt = createResponseJson.getJsonNumber("expires_at").longValue();
+        assertThat(expiresAt)
+                .isBetween(
+                        before.plus(Duration.ofDays(90)).toEpochMilli(),
+                        after.plus(Duration.ofDays(90)).toEpochMilli());
 
         final Response listResponse = jersey.target("/service-accounts/ci-pipeline/api-keys")
                 .request()
@@ -389,7 +408,8 @@ class ServiceAccountsResourceTest extends ResourceTest {
                     {
                       "public_id": "${json-unit.any-string}",
                       "comment": "for the build",
-                      "created_at": "${json-unit.any-number}"
+                      "created_at": "${json-unit.any-number}",
+                      "expires_at": %d
                     }
                   ],
                   "total": {
@@ -397,17 +417,84 @@ class ServiceAccountsResourceTest extends ResourceTest {
                     "type": "EXACT"
                   }
                 }
+                """.formatted(expiresAt));
+    }
+
+    @Test
+    void createServiceAccountApiKeyShouldExpireAfterThirtyDaysByDefault() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+        createServiceAccount("ci-pipeline");
+
+        final Instant before = Instant.now();
+        final Response createResponse = jersey.target("/service-accounts/ci-pipeline/api-keys")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ "{}"));
+        assertThat(createResponse.getStatus()).isEqualTo(201);
+        final Instant after = Instant.now();
+
+        final long expiresAt =
+                parseJsonObject(createResponse).getJsonNumber("expires_at").longValue();
+        assertThat(expiresAt)
+                .isBetween(
+                        before.plus(Duration.ofDays(30)).toEpochMilli(),
+                        after.plus(Duration.ofDays(30)).toEpochMilli());
+    }
+
+    @Test
+    void createServiceAccountApiKeyShouldRejectExpiryBeyondTheMaxLifetime() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+        createServiceAccount("ci-pipeline");
+
+        final Response response = jersey.target("/service-accounts/ci-pipeline/api-keys")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "expires_in_days": 367
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "type": "about:blank",
+                  "status": 400,
+                  "title": "Bad Request",
+                  "detail": "The expiry must be between 1 and 366 days"
+                }
                 """);
+    }
+
+    @Test
+    void createServiceAccountApiKeyShouldRejectExpiryBelowOneDay() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+        createServiceAccount("ci-pipeline");
+
+        final Response response = jersey.target("/service-accounts/ci-pipeline/api-keys")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "expires_in_days": 0
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(400);
     }
 
     @Test
     void listServiceAccountApiKeysShouldPaginateNewestFirst() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_READ);
         createServiceAccount("ci-pipeline");
-        final String olderPublicId =
-                qm.createApiKey(qm.getServiceAccount("svc:ci-pipeline"), null).getPublicId();
-        final String newerPublicId =
-                qm.createApiKey(qm.getServiceAccount("svc:ci-pipeline"), null).getPublicId();
+        final String olderPublicId = qm.createApiKey(
+                        qm.getServiceAccount("svc:ci-pipeline"),
+                        null,
+                        Date.from(Instant.now().plus(Duration.ofDays(30))))
+                .getPublicId();
+        final String newerPublicId = qm.createApiKey(
+                        qm.getServiceAccount("svc:ci-pipeline"),
+                        null,
+                        Date.from(Instant.now().plus(Duration.ofDays(30))))
+                .getPublicId();
 
         Response response = jersey.target("/service-accounts/ci-pipeline/api-keys")
                 .queryParam("limit", 1)
@@ -421,7 +508,8 @@ class ServiceAccountsResourceTest extends ResourceTest {
                   "items": [
                     {
                       "public_id": "%s",
-                      "created_at": "${json-unit.any-number}"
+                      "created_at": "${json-unit.any-number}",
+                      "expires_at": "${json-unit.any-number}"
                     }
                   ],
                   "next_page_token": "${json-unit.any-string}",
@@ -445,7 +533,8 @@ class ServiceAccountsResourceTest extends ResourceTest {
                   "items": [
                     {
                       "public_id": "%s",
-                      "created_at": "${json-unit.any-number}"
+                      "created_at": "${json-unit.any-number}",
+                      "expires_at": "${json-unit.any-number}"
                     }
                   ],
                   "total": {
@@ -471,8 +560,11 @@ class ServiceAccountsResourceTest extends ResourceTest {
     void deleteServiceAccountApiKeyShouldReturnNoContent() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE, Permissions.ACCESS_MANAGEMENT_DELETE);
         createServiceAccount("ci-pipeline");
-        final String publicId =
-                qm.createApiKey(qm.getServiceAccount("svc:ci-pipeline"), null).getPublicId();
+        final String publicId = qm.createApiKey(
+                        qm.getServiceAccount("svc:ci-pipeline"),
+                        null,
+                        Date.from(Instant.now().plus(Duration.ofDays(30))))
+                .getPublicId();
 
         final Response response = jersey.target("/service-accounts/ci-pipeline/api-keys/" + publicId)
                 .request()
@@ -492,8 +584,11 @@ class ServiceAccountsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
         createServiceAccount("ci-pipeline");
         createServiceAccount("other");
-        final String otherPublicId =
-                qm.createApiKey(qm.getServiceAccount("svc:other"), null).getPublicId();
+        final String otherPublicId = qm.createApiKey(
+                        qm.getServiceAccount("svc:other"),
+                        null,
+                        Date.from(Instant.now().plus(Duration.ofDays(30))))
+                .getPublicId();
 
         final Response response = jersey.target("/service-accounts/ci-pipeline/api-keys/" + otherPublicId)
                 .request()
@@ -552,7 +647,10 @@ class ServiceAccountsResourceTest extends ResourceTest {
     void issuedApiKeyShouldAuthenticateAndAuthorizeAsTheServiceAccount() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_READ);
         createServiceAccount("ci-pipeline");
-        final ApiKey serviceAccountKey = qm.createApiKey(qm.getServiceAccount("svc:ci-pipeline"), null);
+        final ApiKey serviceAccountKey = qm.createApiKey(
+                qm.getServiceAccount("svc:ci-pipeline"),
+                null,
+                Date.from(Instant.now().plus(Duration.ofDays(30))));
 
         final Response forbiddenResponse = jersey.target("/service-accounts")
                 .request()
@@ -578,7 +676,10 @@ class ServiceAccountsResourceTest extends ResourceTest {
         final ServiceAccount serviceAccount = qm.getServiceAccount("svc:ci-pipeline");
         serviceAccount.setPermissions(List.of(qm.getPermission(Permissions.ACCESS_MANAGEMENT_READ.name())));
         qm.persist(serviceAccount);
-        final ApiKey serviceAccountKey = qm.createApiKey(qm.getServiceAccount("svc:ci-pipeline"), null);
+        final ApiKey serviceAccountKey = qm.createApiKey(
+                qm.getServiceAccount("svc:ci-pipeline"),
+                null,
+                Date.from(Instant.now().plus(Duration.ofDays(30))));
 
         final Response suspendResponse = jersey.target("/service-accounts/ci-pipeline")
                 .request()
@@ -595,6 +696,32 @@ class ServiceAccountsResourceTest extends ResourceTest {
                 .header(X_API_KEY, serviceAccountKey.getKey())
                 .get();
         assertThat(response.getStatus()).isEqualTo(401);
+    }
+
+    @Test
+    void issuedApiKeyShouldBeRejectedLikeAnInvalidOneWhenExpired() {
+        createServiceAccount("ci-pipeline");
+        final ApiKey serviceAccountKey = qm.callInTransaction(() -> {
+            final ApiKey key = qm.createApiKey(
+                    qm.getServiceAccount("svc:ci-pipeline"),
+                    null,
+                    Date.from(Instant.now().plus(Duration.ofDays(30))));
+            key.setExpiresAt(Date.from(Instant.now().minus(Duration.ofMinutes(1))));
+            return key;
+        });
+
+        final Response expiredResponse = jersey.target("/service-accounts")
+                .request()
+                .header(X_API_KEY, serviceAccountKey.getKey())
+                .get();
+        final Response invalidResponse = jersey.target("/service-accounts")
+                .request()
+                .header(X_API_KEY, "invalid")
+                .get();
+
+        assertThat(expiredResponse.getStatus()).isEqualTo(401);
+        assertThat(expiredResponse.getMediaType()).isEqualTo(invalidResponse.getMediaType());
+        assertThat(getPlainTextBody(expiredResponse)).isEqualTo(getPlainTextBody(invalidResponse));
     }
 
     private static void createServiceAccount(String name) {

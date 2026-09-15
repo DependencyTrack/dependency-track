@@ -46,7 +46,10 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -649,7 +652,8 @@ public class TeamResourceTest extends ResourceTest {
         serviceAccount.setUsername("svc:ci");
         serviceAccount.setSuspended(false);
         qm.persist(serviceAccount);
-        final ApiKey serviceAccountKey = qm.createApiKey(serviceAccount, null);
+        final ApiKey serviceAccountKey =
+                qm.createApiKey(serviceAccount, null, Date.from(Instant.now().plus(Duration.ofDays(30))));
 
         final Response regenerateResponse = jersey.target(V1_TEAM + "/key/" + serviceAccountKey.getPublicId())
                 .request()

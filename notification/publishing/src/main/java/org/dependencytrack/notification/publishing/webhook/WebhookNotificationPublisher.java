@@ -24,15 +24,20 @@ import org.dependencytrack.notification.api.publishing.RetryablePublishException
 import org.dependencytrack.notification.api.templating.RenderedNotificationTemplate;
 import org.dependencytrack.notification.proto.v1.Notification;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.HexFormat;
 
 import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.notification.publishing.http.HttpNotificationResponses.ensureSuccessful2xxResponse;
@@ -41,6 +46,8 @@ import static org.dependencytrack.notification.publishing.http.HttpNotificationR
  * @since 5.0.0
  */
 final class WebhookNotificationPublisher implements NotificationPublisher {
+
+    private static final String SIGNATURE_HEADER_NAME = "X-Webhook-Signature";
 
     private final HttpClient httpClient;
 
@@ -53,11 +60,11 @@ final class WebhookNotificationPublisher implements NotificationPublisher {
         final var ruleConfig = ctx.ruleConfig(WebhookNotificationPublisherRuleConfigV1.class);
 
         final String mimeType;
-        final BodyPublisher body;
+        final byte[] bodyBytes;
         if (Boolean.TRUE.equals(ruleConfig.getPublishProtobuf())) {
             // https://protobuf.dev/reference/protobuf/mime-types/
             mimeType = "application/protobuf";
-            body = BodyPublishers.ofByteArray(notification.toByteArray());
+            bodyBytes = notification.toByteArray();
         } else {
             final RenderedNotificationTemplate renderedTemplate =
                     ctx.templateRenderer().render(notification);
@@ -66,13 +73,18 @@ final class WebhookNotificationPublisher implements NotificationPublisher {
             }
 
             mimeType = renderedTemplate.mimeType();
-            body = BodyPublishers.ofString(renderedTemplate.content());
+            bodyBytes = renderedTemplate.content().getBytes(StandardCharsets.UTF_8);
         }
 
         final var requestBuilder = HttpRequest.newBuilder(ruleConfig.getDestinationUrl())
                 .header("Content-Type", mimeType)
-                .POST(body)
+                .POST(BodyPublishers.ofByteArray(bodyBytes))
                 .timeout(Duration.ofSeconds(10));
+
+        final String signingSecret = ruleConfig.getSigningSecret();
+        if (signingSecret != null) {
+            requestBuilder.header(SIGNATURE_HEADER_NAME, calculateSignature(signingSecret, bodyBytes));
+        }
 
         final String authHeaderName = ruleConfig.getAuthHeaderName();
         final String authHeaderValue = ruleConfig.getAuthHeaderValue();
@@ -90,6 +102,16 @@ final class WebhookNotificationPublisher implements NotificationPublisher {
         } catch (IOException e) {
             RetryablePublishException.throwIfRetryableNetworkError(e, "Request failed while sending notification");
             throw e;
+        }
+    }
+
+    private static String calculateSignature(String secret, byte[] body) {
+        try {
+            final Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            return "sha256=" + HexFormat.of().formatHex(mac.doFinal(body));
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new IllegalStateException("Unable to calculate webhook signature", e);
         }
     }
 }

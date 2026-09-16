@@ -42,7 +42,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -475,7 +479,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
     }
 
     @Test
-    void shouldSendProtobufWhenConfigured() {
+    void shouldSendProtobufWhenConfigured() throws Exception {
         try (final var factory = new WebhookNotificationPublisherFactory()) {
             final var configRegistry = new MockConfigRegistry(Map.of(), null, RuntimeConfigMapper.getInstance(), null);
             factory.init(new ExtensionContextBuilder()
@@ -487,6 +491,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
                 final var ruleConfig = (WebhookNotificationPublisherRuleConfigV1) ruleConfigSpec.defaultConfig();
                 ruleConfig.setDestinationUrl(URI.create(WIREMOCK.baseUrl()));
                 ruleConfig.setPublishProtobuf(true);
+                ruleConfig.setSigningSecret("webhook-secret");
 
                 final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
                         Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"));
@@ -497,10 +502,14 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
 
                 final var notification = createBomConsumedTestNotification();
                 final var expectedProtobuf = notification.toByteArray();
+                final var mac = Mac.getInstance("HmacSHA256");
+                mac.init(new SecretKeySpec("webhook-secret".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+                final var expectedSignature = HexFormat.of().formatHex(mac.doFinal(expectedProtobuf));
                 assertThatNoException().isThrownBy(() -> publisher.publish(ctx, notification));
 
                 WIREMOCK.verify(postRequestedFor(anyUrl())
                         .withHeader("Content-Type", equalTo("application/protobuf"))
+                        .withHeader("X-Webhook-Signature", equalTo("sha256=" + expectedSignature))
                         .withRequestBody(binaryEqualTo(expectedProtobuf)));
             }
         }

@@ -20,6 +20,7 @@ package org.dependencytrack.vulnanalysis.internal;
 
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import com.github.packageurl.PackageURLBuilder;
 import io.github.nscuro.versatile.Comparator;
 import io.github.nscuro.versatile.Vers;
 import io.github.nscuro.versatile.VersException;
@@ -428,11 +429,8 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
     }
 
     private boolean isAffectedByPurl(CandidateComponent component, MatchingCriteria criteria) {
-        final PackageURL componentPurl = component.parsedPurl();
+        final PackageURL componentPurl = matchingPurlOf(component, criteria);
         if (componentPurl == null || componentPurl.getVersion() == null) {
-            return false;
-        }
-        if (!matchesPurl(componentPurl, criteria)) {
             return false;
         }
         if (!matchesDistro(componentPurl, criteria)) {
@@ -443,6 +441,21 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
                 KnownVersioningSchemes.fromPurlType(componentPurl.getType()).orElse(SCHEME_GENERIC);
 
         return compareWithVers(criteria, effectiveVersionOf(componentPurl), versioningScheme);
+    }
+
+    /// Same-name PURLs differ only by a binNMU suffix; the criteria's fix version is the source version.
+    private static @Nullable PackageURL matchingPurlOf(CandidateComponent component, MatchingCriteria criteria) {
+        final PackageURL sourcePurl = component.parsedSourcePurl();
+        if (sourcePurl != null && matchesPurl(sourcePurl, criteria)) {
+            return sourcePurl;
+        }
+
+        final PackageURL purl = component.parsedPurl();
+        if (purl != null && matchesPurl(purl, criteria)) {
+            return purl;
+        }
+
+        return null;
     }
 
     private static boolean matchesPurl(PackageURL componentPurl, MatchingCriteria criteria) {
@@ -571,7 +584,9 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
                 continue;
             }
 
-            candidates.add(new CandidateComponent(componentId, parsedCpe, parsedPurl));
+            final PackageURL parsedSourcePurl = parsedPurl != null ? tryDeriveSourcePurl(component, parsedPurl) : null;
+
+            candidates.add(new CandidateComponent(componentId, parsedCpe, parsedPurl, parsedSourcePurl));
 
             if (component.getComponentsCount() > 0) {
                 collectScannableComponents(component.getComponentsList(), candidates);
@@ -615,6 +630,79 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
             return new PackageURL(purl);
         } catch (MalformedPackageURLException e) {
             LOGGER.warn("Failed to parse PURL '{}'", purl, e);
+            return null;
+        }
+    }
+
+    /// OSV's Debian and Alpine advisories are keyed on the source package, whose name frequently differs
+    /// from the binaries built from it. syft records it in the `upstream` qualifier, trivy in properties.
+    private static @Nullable PackageURL tryDeriveSourcePurl(Component component, PackageURL purl) {
+        final String type = purl.getType();
+        if (!PackageURL.StandardTypes.DEBIAN.equals(type) && !"apk".equals(type)) {
+            return null;
+        }
+        if (purl.getVersion() == null) {
+            return null;
+        }
+
+        String sourceName = null;
+        String sourceVersion = null;
+
+        final String upstream =
+                purl.getQualifiers() != null ? purl.getQualifiers().get("upstream") : null;
+        if (upstream != null && !upstream.isBlank()) {
+            final int versionSeparatorIdx = upstream.indexOf('@');
+            if (versionSeparatorIdx < 0) {
+                sourceName = upstream;
+            } else {
+                sourceName = upstream.substring(0, versionSeparatorIdx);
+                sourceVersion = upstream.substring(versionSeparatorIdx + 1);
+            }
+        } else {
+            String srcVersion = null;
+            String srcEpoch = null;
+            String srcRelease = null;
+            for (final Property property : component.getPropertiesList()) {
+                switch (property.getName()) {
+                    case "aquasecurity:trivy:SrcName" -> sourceName = property.getValue();
+                    case "aquasecurity:trivy:SrcVersion" -> srcVersion = property.getValue();
+                    case "aquasecurity:trivy:SrcEpoch" -> srcEpoch = property.getValue();
+                    case "aquasecurity:trivy:SrcRelease" -> srcRelease = property.getValue();
+                    default -> {}
+                }
+            }
+            if (srcVersion != null) {
+                sourceVersion = (srcEpoch != null ? srcEpoch + ":" : "")
+                        + srcVersion
+                        + (srcRelease != null ? "-" + srcRelease : "");
+            }
+        }
+
+        if (sourceName == null || sourceName.isBlank()) {
+            return null;
+        }
+
+        final String binaryVersion = effectiveVersionOf(purl);
+        final String version = sourceVersion != null ? sourceVersion : binaryVersion;
+        if (sourceName.equals(purl.getName()) && version.equals(binaryVersion)) {
+            return null;
+        }
+
+        try {
+            final PackageURLBuilder builder = PackageURLBuilder.aPackageURL()
+                    .withType(purl.getType())
+                    .withNamespace(purl.getNamespace())
+                    .withName(sourceName)
+                    .withVersion(version);
+
+            final String distro = distroQualifierOf(purl);
+            if (distro != null) {
+                builder.withQualifier("distro", distro);
+            }
+
+            return builder.build();
+        } catch (MalformedPackageURLException e) {
+            LOGGER.warn("Failed to derive source PURL from '{}'", purl, e);
             return null;
         }
     }

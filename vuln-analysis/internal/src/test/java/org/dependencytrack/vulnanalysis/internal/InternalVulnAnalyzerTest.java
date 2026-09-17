@@ -22,7 +22,9 @@ import com.github.packageurl.PackageURL;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
+import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.Vulnerability;
+import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
@@ -1462,6 +1464,164 @@ class InternalVulnAnalyzerTest {
 
             if (expectMatch) {
                 assertThat(vdr.getVulnerabilitiesList()).hasSize(1);
+            } else {
+                assertThat(vdr.getVulnerabilitiesList()).isEmpty();
+            }
+        }
+    }
+
+    @Nested
+    class SourcePackageMatchingTest {
+
+        private static final String EXPAT_SOURCE = "pkg:deb/debian/expat?arch=source&distro=trixie";
+        private static final String LIBEXPAT1 =
+                "pkg:deb/debian/libexpat1@2.8.2-1~deb13u1?arch=amd64&distro=debian-13.6";
+        private static final String ZLIB_SOURCE = "pkg:deb/debian/zlib?arch=source&distro=trixie";
+        private static final Range ZLIB_RANGE = withRange().havingEndExcluding("1:1.3.dfsg+really1.3.1-1+b1");
+        private static final String FOO_SOURCE = "pkg:deb/debian/foo?arch=source&distro=trixie";
+        private static final String FOO_BINNMU = "pkg:deb/debian/foo@1.0-1%2Bb1?arch=amd64&distro=debian-13.6";
+        private static final Range FOO_RANGE = withRange().havingEndIncluding("1.0-1");
+        private static final String BUSYBOX_SOURCE = "pkg:apk/alpine/busybox?arch=source";
+        // OSV derives the qualifier from the "Alpine:v3.20" ecosystem, see ModelConverter#tryEnrichDistroQualifier
+        private static final String BUSYBOX_SOURCE_3_20 = "pkg:apk/alpine/busybox?arch=source&distro=alpine-3.20";
+        private static final String BUSYBOX_SOURCE_3_19 = "pkg:apk/alpine/busybox?arch=source&distro=alpine-3.19";
+        private static final String SSL_CLIENT =
+                "pkg:apk/alpine/ssl_client@1.36.1-r31?arch=x86_64&distro=alpine-3.20.10";
+        private static final Range BUSYBOX_RANGE = withRange().havingEndExcluding("1.36.1-r32");
+
+        private static Collection<Arguments> parameters() {
+            return Arrays.asList(
+                    // Scenario: syft `upstream` qualifier carries the source name
+                    Arguments.of(
+                            EXPAT_SOURCE,
+                            withRange().havingEndExcluding("2.8.3-1"),
+                            MATCHES,
+                            LIBEXPAT1 + "&upstream=expat",
+                            Map.of()),
+                    // Scenario: syft `upstream` carries a source version; it is compared instead of the binary version
+                    Arguments.of(
+                            ZLIB_SOURCE,
+                            ZLIB_RANGE,
+                            MATCHES,
+                            "pkg:deb/debian/zlib1g@1:1.3.dfsg%2Breally1.3.1-1%2Bb1?arch=amd64&distro=debian-13.6"
+                                    + "&upstream=zlib@1:1.3.dfsg%2Breally1.3.1-1",
+                            Map.of()),
+                    // Scenario: trivy `SrcName` property carries the source name
+                    Arguments.of(
+                            EXPAT_SOURCE,
+                            withRange().havingEndExcluding("2.8.3-1"),
+                            MATCHES,
+                            LIBEXPAT1,
+                            Map.of("aquasecurity:trivy:SrcName", "expat")),
+                    // Scenario: trivy `Src*` properties carry the full source version
+                    Arguments.of(
+                            ZLIB_SOURCE,
+                            ZLIB_RANGE,
+                            MATCHES,
+                            "pkg:deb/debian/zlib1g@1.3.dfsg%2Breally1.3.1-1%2Bb1?arch=amd64&distro=debian-13.6&epoch=1",
+                            Map.of(
+                                    "aquasecurity:trivy:SrcName", "zlib",
+                                    "aquasecurity:trivy:SrcVersion", "1.3.dfsg+really1.3.1",
+                                    "aquasecurity:trivy:SrcRelease", "1",
+                                    "aquasecurity:trivy:SrcEpoch", "1")),
+                    // Scenario: same name, binNMU binary version; syft source version is compared
+                    Arguments.of(FOO_SOURCE, FOO_RANGE, MATCHES, FOO_BINNMU + "&upstream=foo@1.0-1", Map.of()),
+                    // Scenario: same name, binNMU binary version; trivy source version is compared
+                    Arguments.of(
+                            FOO_SOURCE,
+                            FOO_RANGE,
+                            MATCHES,
+                            FOO_BINNMU,
+                            Map.of(
+                                    "aquasecurity:trivy:SrcName", "foo",
+                                    "aquasecurity:trivy:SrcVersion", "1.0",
+                                    "aquasecurity:trivy:SrcRelease", "1")),
+                    // Scenario: same name and version; no source PURL derived, binary version compared
+                    Arguments.of(
+                            FOO_SOURCE, FOO_RANGE, DOES_NOT_MATCH, FOO_BINNMU + "&upstream=foo@1.0-1%2Bb1", Map.of()),
+                    // Scenario: Alpine, syft `upstream` qualifier carries the origin package
+                    Arguments.of(BUSYBOX_SOURCE, BUSYBOX_RANGE, MATCHES, SSL_CLIENT + "&upstream=busybox", Map.of()),
+                    // Scenario: Alpine, trivy `SrcName` and `SrcVersion` properties carry the origin package
+                    Arguments.of(
+                            BUSYBOX_SOURCE,
+                            BUSYBOX_RANGE,
+                            MATCHES,
+                            SSL_CLIENT,
+                            Map.of(
+                                    "aquasecurity:trivy:SrcName",
+                                    "busybox",
+                                    "aquasecurity:trivy:SrcVersion",
+                                    "1.36.1-r31")),
+                    // Scenario: Alpine, origin matches but the version is outside the range
+                    Arguments.of(
+                            BUSYBOX_SOURCE,
+                            BUSYBOX_RANGE,
+                            DOES_NOT_MATCH,
+                            "pkg:apk/alpine/ssl_client@1.36.1-r32?arch=x86_64&distro=alpine-3.20.10&upstream=busybox",
+                            Map.of()),
+                    // Scenario: Alpine, no source information; binary name alone does not match
+                    Arguments.of(BUSYBOX_SOURCE, BUSYBOX_RANGE, DOES_NOT_MATCH, SSL_CLIENT, Map.of()),
+                    // Scenario: Alpine, criteria release matches the component's point release
+                    Arguments.of(
+                            BUSYBOX_SOURCE_3_20, BUSYBOX_RANGE, MATCHES, SSL_CLIENT + "&upstream=busybox", Map.of()),
+                    // Scenario: Alpine, origin matches but the criteria targets another release
+                    Arguments.of(
+                            BUSYBOX_SOURCE_3_19,
+                            BUSYBOX_RANGE,
+                            DOES_NOT_MATCH,
+                            SSL_CLIENT + "&upstream=busybox",
+                            Map.of()),
+                    // Scenario: source name matches but the version is outside the range
+                    Arguments.of(
+                            EXPAT_SOURCE,
+                            withRange().havingEndExcluding("2.8.1-1"),
+                            DOES_NOT_MATCH,
+                            LIBEXPAT1 + "&upstream=expat",
+                            Map.of()),
+                    // Scenario: source name matches but the distro does not
+                    Arguments.of(
+                            "pkg:deb/debian/expat?arch=source&distro=bookworm",
+                            withRange().havingEndExcluding("2.8.3-1"),
+                            DOES_NOT_MATCH,
+                            LIBEXPAT1 + "&upstream=expat",
+                            Map.of()),
+                    // Scenario: no source information; binary name alone does not match the source-keyed criteria
+                    Arguments.of(
+                            EXPAT_SOURCE,
+                            withRange().havingEndExcluding("2.8.3-1"),
+                            DOES_NOT_MATCH,
+                            LIBEXPAT1,
+                            Map.of()));
+        }
+
+        @ParameterizedTest(name = "[{index}] expect={2} src={0} range={1} target={3} properties={4}")
+        @MethodSource("parameters")
+        void test(
+                String sourcePurlString,
+                Range sourceRange,
+                boolean expectMatch,
+                String targetPurlString,
+                Map<String, String> componentProperties)
+                throws Exception {
+            jdbi.useTransaction(handle -> {
+                final long vulnDbId = createVulnerability(handle);
+                createPurlVulnerableSoftware(handle, sourcePurlString, sourceRange, vulnDbId);
+            });
+
+            final var componentBuilder =
+                    Component.newBuilder().setBomRef("1").setName("acme-lib").setPurl(targetPurlString);
+            componentProperties.forEach((name, value) -> componentBuilder.addProperties(
+                    Property.newBuilder().setName(name).setValue(value)));
+
+            final Bom vdr = analyzer.analyze(
+                    Bom.newBuilder().addComponents(componentBuilder).build());
+
+            if (expectMatch) {
+                assertThat(vdr.getVulnerabilitiesList()).hasSize(1);
+                // The finding must be attributed to the binary component, not the derived source PURL.
+                assertThat(vdr.getVulnerabilities(0).getAffectsList())
+                        .extracting(VulnerabilityAffects::getRef)
+                        .containsExactly("1");
             } else {
                 assertThat(vdr.getVulnerabilitiesList()).isEmpty();
             }

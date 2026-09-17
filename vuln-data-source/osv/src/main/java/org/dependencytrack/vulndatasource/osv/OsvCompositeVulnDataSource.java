@@ -25,7 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static java.util.Objects.requireNonNull;
@@ -39,6 +42,12 @@ final class OsvCompositeVulnDataSource implements VulnDataSource {
     private final List<OsvVulnDataSource> dataSources;
     private @Nullable OsvVulnDataSource currentDataSource;
     private int currentDataSourceIndex;
+
+    /**
+     * Tracks the originating data source for a Bom instance so markProcessed can be
+     * delegated to the producer even if currentDataSource has moved on.
+     */
+    private final Map<Bom, OsvVulnDataSource> originMap = Collections.synchronizedMap(new IdentityHashMap<>());
 
     OsvCompositeVulnDataSource(final List<OsvVulnDataSource> dataSources) {
         this.dataSources = requireNonNull(dataSources, "dataSources must not be null");
@@ -62,17 +71,21 @@ final class OsvCompositeVulnDataSource implements VulnDataSource {
         }
         currentDataSource = dataSources.get(currentDataSourceIndex);
         try (final var _ = MDC.putCloseable("osvSource", currentDataSource.getDataSourceName())) {
-            return currentDataSource.next();
+            final Bom bom = currentDataSource.next();
+            originMap.put(bom, currentDataSource);
+            return bom;
         }
     }
 
     @Override
     public void markProcessed(final Bom bom) {
-        if (currentDataSource == null) {
-            throw new IllegalStateException("No current data source to mark processed");
+        final var origin = originMap.remove(bom);
+        final var target = origin != null ? origin : currentDataSource;
+        if (target == null) {
+            throw new IllegalStateException("No data source available to mark processed");
         }
-        try (final var _ = MDC.putCloseable("osvSource", currentDataSource.getDataSourceName())) {
-            currentDataSource.markProcessed(bom);
+        try (final var _ = MDC.putCloseable("osvSource", target.getDataSourceName())) {
+            target.markProcessed(bom);
         }
     }
 

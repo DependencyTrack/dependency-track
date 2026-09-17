@@ -396,9 +396,26 @@ public final class CelPolicyDao {
                            -- Policies restricted tags shared with the project.
                            SELECT pt."POLICY_ID"
                              FROM "POLICY_TAGS" AS pt
+                            INNER JOIN "POLICY" AS p4
+                               ON p4."ID" = pt."POLICY_ID"
                             INNER JOIN "PROJECTS_TAGS" AS prt
                                ON prt."TAG_ID" = pt."TAG_ID"
                             WHERE prt."PROJECT_ID" = :projectId
+                              AND NOT p4."INVERT_TAG_MATCH"
+                           UNION
+                           -- Policies with inverted tag matching, which apply to all
+                           -- projects that do not share a tag with the policy.
+                           SELECT p5."ID"
+                             FROM "POLICY" AS p5
+                            WHERE p5."INVERT_TAG_MATCH"
+                              AND EXISTS (SELECT 1 FROM "POLICY_TAGS" WHERE "POLICY_ID" = p5."ID")
+                              AND NOT EXISTS (
+                                SELECT 1
+                                  FROM "POLICY_TAGS" AS pt2
+                                 INNER JOIN "PROJECTS_TAGS" AS prt2
+                                    ON prt2."TAG_ID" = pt2."TAG_ID"
+                                 WHERE pt2."POLICY_ID" = p5."ID"
+                                   AND prt2."PROJECT_ID" = :projectId)
                          )
                          ORDER BY p."ID"
                                 , pc."ID"

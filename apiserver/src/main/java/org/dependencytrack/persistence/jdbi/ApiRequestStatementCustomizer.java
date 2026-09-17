@@ -18,8 +18,9 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
-import alpine.model.ApiKey;
-import alpine.model.User;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
+import alpine.model.auth.UserPrincipal;
 import alpine.persistence.OrderDirection;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.auth.Permissions;
@@ -33,12 +34,10 @@ import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.core.statement.StatementCustomizer;
 
 import javax.jdo.Query;
-import java.security.Principal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_FILTER_PARAMETER;
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_OFFSET_LIMIT_CLAUSE;
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_ORDER_BY_CLAUSE;
@@ -69,27 +68,27 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
     static final String PARAMETER_PROJECT_ACL_API_KEY_ID = "projectAclApiKeyId";
     static final String PARAMETER_PROJECT_ACL_USER_ID = "projectAclUserId";
     static final String TEMPLATE_API_KEY_PROJECT_ACL_CONDITION = /* language=SQL */ """
-            EXISTS(
-              SELECT 1
-                FROM "APIKEYS_TEAMS" AS akt
-               INNER JOIN "PROJECT_ACCESS_TEAMS" AS pat
-                  ON pat."TEAM_ID" = akt."TEAM_ID"
-               INNER JOIN "PROJECT_HIERARCHY" AS ph
-                  ON ph."PARENT_PROJECT_ID" = pat."PROJECT_ID"
-               WHERE akt."APIKEY_ID" = :projectAclApiKeyId
-                 AND ph."CHILD_PROJECT_ID" = %s
-            )
-            """;
+        EXISTS(
+          SELECT 1
+            FROM "APIKEYS_TEAMS" AS akt
+           INNER JOIN "PROJECT_ACCESS_TEAMS" AS pat
+              ON pat."TEAM_ID" = akt."TEAM_ID"
+           INNER JOIN "PROJECT_HIERARCHY" AS ph
+              ON ph."PARENT_PROJECT_ID" = pat."PROJECT_ID"
+           WHERE akt."APIKEY_ID" = :projectAclApiKeyId
+             AND ph."CHILD_PROJECT_ID" = %s
+        )
+        """;
     static final String TEMPLATE_USER_PROJECT_ACL_CONDITION = /* language=SQL */ """
-            EXISTS(
-              SELECT 1
-                FROM "PROJECT_ACCESS_USERS" AS pau
-               INNER JOIN "PROJECT_HIERARCHY" AS ph
-                  ON ph."PARENT_PROJECT_ID" = pau."PROJECT_ID"
-               WHERE ph."CHILD_PROJECT_ID" = %s
-                 AND pau."USER_ID" = :projectAclUserId
-            )
-            """;
+        EXISTS(
+          SELECT 1
+            FROM "PROJECT_ACCESS_USERS" AS pau
+           INNER JOIN "PROJECT_HIERARCHY" AS ph
+              ON ph."PARENT_PROJECT_ID" = pau."PROJECT_ID"
+           WHERE ph."CHILD_PROJECT_ID" = %s
+             AND pau."USER_ID" = :projectAclUserId
+        )
+        """;
 
     @Override
     public void beforeTemplating(final PreparedStatement stmt, final StatementContext ctx) throws SQLException {
@@ -176,53 +175,31 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
         }
     }
 
-    private void defineProjectAclCondition(final StatementContext ctx, final AlpineRequest apiRequest)
-            throws SQLException {
+    private void defineProjectAclCondition(final StatementContext ctx, final AlpineRequest apiRequest) {
         if (apiRequest == null
-                || apiRequest.getPrincipal() == null
+                || !(apiRequest.getPrincipal() instanceof final Principal principal)
                 || ProjectAccess.isUnrestricted()
-                || !isAclEnabled(ctx)
-                || apiRequest
-                        .getEffectivePermissions()
-                        .contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)) {
+                || !apiRequest.isPortfolioAccessControlEnabled()
+                || principal.hasPermission(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)) {
             ctx.define(ATTRIBUTE_API_PROJECT_ACL_CONDITION, "TRUE");
             return;
         }
 
-        final Principal principal = apiRequest.getPrincipal();
-        final ApiRequestConfig config = ctx.getConfig(ApiRequestConfig.class);
+        final var config = ctx.getConfig(ApiRequestConfig.class);
 
         switch (principal) {
-            case User user -> {
+            case UserPrincipal user -> {
                 ctx.define(
                         ATTRIBUTE_API_PROJECT_ACL_CONDITION,
                         TEMPLATE_USER_PROJECT_ACL_CONDITION.formatted(config.projectAclProjectIdColumn()));
-                ctx.getBinding().addNamed(PARAMETER_PROJECT_ACL_USER_ID, user.getId(), QualifiedType.of(Long.class));
+                ctx.getBinding().addNamed(PARAMETER_PROJECT_ACL_USER_ID, user.id(), QualifiedType.of(Long.class));
             }
-            case ApiKey apiKey -> {
+            case ApiKeyPrincipal apiKey -> {
                 ctx.define(
                         ATTRIBUTE_API_PROJECT_ACL_CONDITION,
                         TEMPLATE_API_KEY_PROJECT_ACL_CONDITION.formatted(config.projectAclProjectIdColumn()));
-                ctx.getBinding()
-                        .addNamed(PARAMETER_PROJECT_ACL_API_KEY_ID, apiKey.getId(), QualifiedType.of(Long.class));
+                ctx.getBinding().addNamed(PARAMETER_PROJECT_ACL_API_KEY_ID, apiKey.id(), QualifiedType.of(Long.class));
             }
-            default -> {
-                ctx.define(ATTRIBUTE_API_PROJECT_ACL_CONDITION, "FALSE");
-            }
-        }
-    }
-
-    private boolean isAclEnabled(final StatementContext ctx) throws SQLException {
-        try (final PreparedStatement ps = ctx.getConnection().prepareStatement("""
-                SELECT 1
-                  FROM "CONFIGPROPERTY"
-                 WHERE "GROUPNAME" = ?
-                   AND "PROPERTYNAME" = ?
-                   AND "PROPERTYVALUE" = 'true'
-                """)) {
-            ps.setString(1, ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName());
-            ps.setString(2, ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
-            return ps.executeQuery().next();
         }
     }
 }

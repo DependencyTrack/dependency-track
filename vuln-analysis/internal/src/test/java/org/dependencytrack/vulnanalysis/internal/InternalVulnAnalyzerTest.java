@@ -24,8 +24,7 @@ import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
@@ -85,7 +84,8 @@ class InternalVulnAnalyzerTest {
         final var configRegistry = new MockConfigRegistry(Map.of("datasource.name", "default"));
 
         analyzerFactory = new InternalVulnAnalyzerFactory(dataSourceRegistry);
-        analyzerFactory.init(new MutableServiceRegistry().register(ConfigRegistry.class, configRegistry));
+        analyzerFactory.init(
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
 
         analyzer = analyzerFactory.create();
     }
@@ -1390,6 +1390,20 @@ class InternalVulnAnalyzerTest {
                             Range.withRange().havingStartExcluding("10.0.0").havingEndIncluding("15.0.0"),
                             MATCHES,
                             "pkg:npm/foobar@12.3.1"),
+                    Arguments.of(
+                            "pkg:npm/fs", withRange().havingStartIncluding("0"), MATCHES, "pkg:npm/fs@0.0.1-security"),
+                    Arguments.of(
+                            "pkg:npm/fs", withRange().havingStartIncluding("0"), MATCHES, "pkg:npm/fs@0.0.0-security"),
+                    Arguments.of(
+                            "pkg:npm/fs",
+                            withRange().havingStartIncluding("0.0"),
+                            MATCHES,
+                            "pkg:npm/fs@0.0.1-security"),
+                    Arguments.of(
+                            "pkg:npm/fs",
+                            withRange().havingStartIncluding("0.0.0"),
+                            MATCHES,
+                            "pkg:npm/fs@0.0.0-security"),
                     Arguments.of(
                             "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1",
                             WITHOUT_RANGE,

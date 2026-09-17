@@ -20,12 +20,15 @@ package alpine.server.resources;
 
 import alpine.common.validation.ValidationException;
 import alpine.common.validation.ValidationTask;
-import alpine.model.ApiKey;
-import alpine.model.LdapUser;
-import alpine.model.ManagedUser;
-import alpine.model.OidcUser;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
 import alpine.resources.AlpineRequest;
-import alpine.server.filters.AuthorizationFilter;
+import org.glassfish.jersey.server.validation.ValidationError;
+import org.jspecify.annotations.Nullable;
+import org.owasp.security.logging.SecurityMarkers;
+import org.slf4j.Logger;
+import org.slf4j.Marker;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -36,12 +39,7 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
-import org.glassfish.jersey.server.validation.ValidationError;
-import org.owasp.security.logging.SecurityMarkers;
-import org.slf4j.Logger;
-import org.slf4j.Marker;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -69,19 +67,6 @@ public abstract class AlpineResource {
 
     @Context
     private UriInfo uriInfo;
-
-    private AlpineRequest alpineRequest;
-
-
-    /**
-     * Returns the ContainerRequestContext. This is automatically injected
-     * into every instance of an AlpineResource.
-     * @return the ContainerRequestContext
-     * @since 1.0.0
-     */
-    protected ContainerRequestContext getRequestContext() {
-        return requestContext;
-    }
 
     /**
      * Returns the UriInfo. This is automatically injected into every
@@ -276,45 +261,22 @@ public abstract class AlpineResource {
     /**
      * Returns the principal for who initiated the request.
      * @return a Principal object
-     * @see alpine.model.ApiKey
-     * @see alpine.model.LdapUser
+     * @see alpine.model.auth.ApiKeyPrincipal
+     * @see alpine.model.auth.UserPrincipal
      * @since 1.0.0
      */
-    protected Principal getPrincipal() {
-        final Object principal = requestContext.getProperty("Principal");
-        if (principal != null) {
-            return (Principal) principal;
-        } else {
-            return null;
-        }
-    }
-
-    protected boolean isOidcUser() {
-        return getPrincipal() instanceof OidcUser;
+    protected @Nullable Principal getPrincipal() {
+        return requestContext.getSecurityContext().getUserPrincipal() instanceof final Principal principal
+                ? principal
+                : null;
     }
 
     /**
-     * @return true is the current Principal is an instance of LdapUser. False if not.
-     * @since 1.0.0
-     */
-    protected boolean isLdapUser() {
-        return getPrincipal() instanceof LdapUser;
-    }
-
-    /**
-     * @return true is the current Principal is an instance of ManagedUser. False if not.
-     * @since 1.0.0
-     */
-    protected boolean isManagedUser() {
-        return getPrincipal() instanceof ManagedUser;
-    }
-
-    /**
-     * @return true is the current Principal is an instance of ApiKey. False if not.
+     * @return true if the current Principal is an API key. False if not.
      * @since 1.0.0
      */
     protected boolean isApiKey() {
-        return getPrincipal() instanceof ApiKey;
+        return getPrincipal() instanceof ApiKeyPrincipal;
     }
 
     /**
@@ -325,17 +287,16 @@ public abstract class AlpineResource {
      * @since 1.2.0
      */
     protected boolean hasPermission(final String permission) {
-        final Set<String> effectivePermissions = getEffectivePermissions();
-        return effectivePermissions != null && effectivePermissions.contains(permission);
+        final Principal principal = getPrincipal();
+        return principal != null && principal.hasPermission(permission);
     }
 
     /**
      * @since 3.2.0
      */
-    @SuppressWarnings("unchecked")
     protected Set<String> getEffectivePermissions() {
-        return (Set<String>) requestContext.getProperty(
-                AuthorizationFilter.EFFECTIVE_PERMISSIONS_PROPERTY);
+        final Principal principal = getPrincipal();
+        return principal != null ? principal.effectivePermissions() : Set.of();
     }
 
     /**

@@ -27,24 +27,27 @@ import alpine.model.MappedOidcGroup;
 import alpine.model.OidcGroup;
 import alpine.model.OidcUser;
 import alpine.model.Permission;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.model.User;
-import alpine.model.UserSession;
 import alpine.resources.AlpineRequest;
 import alpine.security.ApiKeyGenerator;
 import org.datanucleus.store.rdbms.query.JDOQLQuery;
+import org.dependencytrack.common.pagination.Page;
+import org.dependencytrack.common.pagination.Page.TotalCount;
+import org.dependencytrack.common.pagination.PageToken;
+import org.dependencytrack.common.pagination.PageTokenEncoder;
+import org.dependencytrack.common.pagination.SimplePageTokenEncoder;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This QueryManager provides a concrete extension of {@link AbstractAlpineQueryManager} by
@@ -56,6 +59,7 @@ import java.util.Set;
 public class AlpineQueryManager extends AbstractAlpineQueryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AlpineQueryManager.class);
+    protected static final PageTokenEncoder PAGE_TOKEN_ENCODER = new SimplePageTokenEncoder();
 
     /**
      * Default constructor.
@@ -128,18 +132,75 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
      * @since 3.2.0
      */
     public ApiKey createApiKey(final Team team) {
-        final ApiKey generatedApiKey = ApiKeyGenerator.generate();
-
         return callInTransaction(() -> {
-            final var apiKey = new ApiKey();
-            apiKey.setKey(generatedApiKey.getKey());
-            apiKey.setPublicId(generatedApiKey.getPublicId());
-            apiKey.setSecret(generatedApiKey.getSecret());
-            apiKey.setSecretHash(generatedApiKey.getSecretHash());
-            apiKey.setCreated(new Date());
+            final ApiKey apiKey = createApiKey();
             apiKey.setTeams(List.of(team));
             return pm.makePersistent(apiKey);
         });
+    }
+
+    /// @since 5.2.0
+    public ApiKey createApiKey(ServiceAccount serviceAccount, @Nullable String comment, Date expiresAt) {
+        return callInTransaction(() -> {
+            final ApiKey apiKey = createApiKey();
+            apiKey.setUser(serviceAccount);
+            apiKey.setComment(comment);
+            apiKey.setExpiresAt(expiresAt);
+            return pm.makePersistent(apiKey);
+        });
+    }
+
+    private static ApiKey createApiKey() {
+        final ApiKey generatedApiKey = ApiKeyGenerator.generate();
+        final var apiKey = new ApiKey();
+        apiKey.setKey(generatedApiKey.getKey());
+        apiKey.setPublicId(generatedApiKey.getPublicId());
+        apiKey.setSecret(generatedApiKey.getSecret());
+        apiKey.setSecretHash(generatedApiKey.getSecretHash());
+        apiKey.setCreated(new Date());
+        return apiKey;
+    }
+
+    /// @since 5.2.0
+    public ServiceAccount getServiceAccount(String username) {
+        final Query<ServiceAccount> query = pm.newQuery(ServiceAccount.class, "username == :username");
+        query.setParameters(username);
+        return executeAndCloseUnique(query);
+    }
+
+    record ListServiceAccountApiKeysPageToken(long lastId) implements PageToken {}
+
+    /// @since 5.2.0
+    public Page<ApiKey> getApiKeys(ServiceAccount serviceAccount, @Nullable String pageToken, int limit) {
+        final ListServiceAccountApiKeysPageToken decodedPageToken =
+                PAGE_TOKEN_ENCODER.decode(pageToken, ListServiceAccountApiKeysPageToken.class);
+
+        final Query<ApiKey> query = pm.newQuery(ApiKey.class);
+        if (decodedPageToken != null) {
+            query.setFilter("user == :user && id < :lastId");
+            query.setParameters(serviceAccount, decodedPageToken.lastId());
+        } else {
+            query.setFilter("user == :user");
+            query.setParameters(serviceAccount);
+        }
+        query.setOrdering("id desc");
+        query.setRange(0, limit + 1);
+        final List<ApiKey> apiKeys = executeAndCloseList(query);
+
+        final Query<ApiKey> countQuery = pm.newQuery(ApiKey.class, "user == :user");
+        countQuery.setParameters(serviceAccount);
+        countQuery.setResult("count(id)");
+        final long totalCount = executeAndCloseResultUnique(countQuery, Long.class);
+
+        final List<ApiKey> pageApiKeys = apiKeys.subList(0, Math.min(limit, apiKeys.size()));
+        final ListServiceAccountApiKeysPageToken nextPageToken = apiKeys.size() > limit
+                ? new ListServiceAccountApiKeysPageToken(pageApiKeys.getLast().getId())
+                : null;
+
+        return new Page<>(
+                pageApiKeys,
+                PAGE_TOKEN_ENCODER.encode(nextPageToken),
+                new TotalCount(totalCount, TotalCount.Type.EXACT));
     }
 
     /**
@@ -532,13 +593,6 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         return executeAndCloseUnique(query);
     }
 
-    public UserSession getUserSessionByTokenHash(String tokenHash) {
-        final Query<UserSession> query = pm.newQuery(UserSession.class);
-        query.setFilter("tokenHash == :tokenHash && expiresAt > :now");
-        query.setParameters(tokenHash, new Date());
-        return executeAndCloseUnique(query);
-    }
-
     /**
      * Creates a new Team with the specified name.
      * @param name The name of the team
@@ -702,74 +756,6 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         final Query<Permission> query = pm.newQuery(Permission.class);
         query.setOrdering("name asc");
         return executeAndCloseList(query);
-    }
-
-    /**
-     * Retrieve the effective permissions of a {@link Principal}.
-     *
-     * @param principal The {@link Principal} to retrieve permissions for.
-     * @return Permissions of {@code principal}
-     * @since 3.2.0
-     */
-    public Set<String> getEffectivePermissions(final Principal principal) {
-        return switch (principal) {
-            case ApiKey apiKey -> getEffectivePermissions(apiKey);
-            case User user -> getEffectivePermissions(user);
-            default -> Collections.emptySet();
-        };
-    }
-
-    private Set<String> getEffectivePermissions(final ApiKey apiKey) {
-        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                SELECT "PERMISSION"."NAME"
-                  FROM "APIKEY"
-                 INNER JOIN "APIKEYS_TEAMS"
-                    ON "APIKEYS_TEAMS"."APIKEY_ID" = "APIKEY"."ID"
-                 INNER JOIN "TEAM"
-                    ON "TEAM"."ID" = "APIKEYS_TEAMS"."TEAM_ID"
-                 INNER JOIN "TEAMS_PERMISSIONS"
-                    ON "TEAMS_PERMISSIONS"."TEAM_ID" = "TEAM"."ID"
-                 INNER JOIN "PERMISSION"
-                    ON "PERMISSION"."ID" = "TEAMS_PERMISSIONS"."PERMISSION_ID"
-                 WHERE "APIKEY"."ID" = :apiKeyId
-                """);
-        query.setNamedParameters(Map.of("apiKeyId", apiKey.getId()));
-        return Set.copyOf(executeAndCloseResultList(query, String.class));
-    }
-
-    /**
-     * Determines the effective permissions for the specified user by collecting
-     * a List of all permissions assigned to the user either directly, or through
-     * team membership.
-     * @param user the {@link User} to retrieve permissions for
-     * @return Set of permission names
-     */
-    private Set<String> getEffectivePermissions(final User user) {
-        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                SELECT p."NAME"
-                  FROM "USER" u
-                 INNER JOIN "USERS_TEAMS" ut
-                    ON ut."USER_ID" = u."ID"
-                 INNER JOIN "TEAM" t
-                    ON t."ID" = ut."TEAM_ID"
-                 INNER JOIN "TEAMS_PERMISSIONS" tp
-                    ON tp."TEAM_ID" = t."ID"
-                 INNER JOIN "PERMISSION" p
-                    ON p."ID" = tp."PERMISSION_ID"
-                 WHERE u."ID" = :userId
-                 UNION ALL
-                SELECT p."NAME"
-                  FROM "USER" u
-                 INNER JOIN "USERS_PERMISSIONS" up
-                    ON up."USER_ID" = u."ID"
-                 INNER JOIN "PERMISSION" p
-                    ON p."ID" = up."PERMISSION_ID"
-                 WHERE u."ID" = :userId
-                """);
-
-        query.setNamedParameters(Map.of("userId", user.getId()));
-
-        return Set.copyOf(executeAndCloseResultList(query, String.class));
     }
 
     /**

@@ -19,11 +19,10 @@
 package org.dependencytrack.kevdatasource.vulncheck;
 
 import org.dependencytrack.kevdatasource.api.KevDataSource;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigValidator;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
@@ -31,7 +30,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -125,9 +123,9 @@ class VulnCheckKevDataSourceFactoryTest
         config.setEnabled(isEnabled);
         config.setApiToken("vulncheck_abc123");
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .build());
 
         assertThat(factory.isEnabled()).isEqualTo(isEnabled);
     }
@@ -137,9 +135,9 @@ class VulnCheckKevDataSourceFactoryTest
         final VulncheckKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(false);
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .build());
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
@@ -150,9 +148,9 @@ class VulnCheckKevDataSourceFactoryTest
         config.setEnabled(true);
         config.setApiToken("vulncheck_abc123");
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .build());
 
         try (final KevDataSource dataSource = factory.create()) {
             assertThat(dataSource).isInstanceOf(VulnCheckKevDataSource.class);

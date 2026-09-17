@@ -22,9 +22,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionTestResult;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.Testable;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
@@ -87,10 +87,10 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        this.kvStore = serviceRegistry.require(KeyValueStore.class);
-        this.httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(ExtensionContext context) {
+        this.configRegistry = context.configRegistry();
+        this.kvStore = context.keyValueStore();
+        this.httpClient = context.httpClient();
         this.objectMapper = new ObjectMapper()
                 .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true)
                 .configure(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature(), true)

@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>dependency-track-parent</artifactId>
-        <version>5.1.0-SNAPSHOT</version>
+        <version>5.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>apiserver</artifactId>
     <packaging>jar</packaging>
@@ -32,11 +32,10 @@
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
         <maven.install.skip>true</maven.install.skip>
         <!-- Dependency Versions -->
-        <lib.cloud-sql-postgres-socket-factory.version>1.29.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.javacron.version>1.4.0</lib.javacron.version>
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.swagger-parser.version>2.1.47</lib.swagger-parser.version>
+        <lib.swagger-parser.version>2.1.48</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.woodstox.version>7.2.2</lib.woodstox.version>
         <!-- CycloneDX CLI -->
@@ -275,10 +274,6 @@
                     <groupId>org.yaml</groupId>
                     <artifactId>snakeyaml</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>com.h2database</groupId>
-                    <artifactId>h2</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <!-- Common Expression Language (CEL) -->
@@ -443,11 +438,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.cloud.sql</groupId>
-            <artifactId>postgres-socket-factory</artifactId>
-            <version>${lib.cloud-sql-postgres-socket-factory.version}</version>
         </dependency>
         <!-- Resilience4J -->
         <dependency>
@@ -719,6 +709,19 @@
                         <configuration>
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
                             <includeScope>runtime</includeScope>
+                            <excludeGroupIds>org.dependencytrack</excludeGroupIds>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-internal-dependencies</id>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib-internal</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                            <includeGroupIds>org.dependencytrack</includeGroupIds>
                         </configuration>
                     </execution>
                 </executions>

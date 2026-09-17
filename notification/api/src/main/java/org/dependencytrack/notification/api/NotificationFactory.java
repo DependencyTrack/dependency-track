@@ -59,6 +59,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_CONSUMED
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSING_FAILED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_VALIDATION_FAILED;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_DATASOURCE_MIRRORING;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_INTEGRATION;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_POLICY_VIOLATIONS_SUMMARY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABILITIES_SUMMARY;
@@ -204,6 +205,30 @@ public final class NotificationFactory {
                 .build();
     }
 
+    public static Notification createDataSourceMirroringCompletedNotification(
+            String dataSourceType, String dataSourceName) {
+        requireNonNull(dataSourceType, "dataSourceType must not be null");
+        requireNonNull(dataSourceName, "dataSourceName must not be null");
+
+        return newNotificationBuilder(SCOPE_SYSTEM, GROUP_DATASOURCE_MIRRORING, LEVEL_INFORMATIONAL)
+                .setTitle("Data Source Mirroring")
+                .setContent("Mirroring of %s data source \"%s\" completed successfully"
+                        .formatted(dataSourceType, dataSourceName))
+                .build();
+    }
+
+    public static Notification createDataSourceMirroringFailedNotification(
+            String dataSourceType, String dataSourceName) {
+        requireNonNull(dataSourceType, "dataSourceType must not be null");
+        requireNonNull(dataSourceName, "dataSourceName must not be null");
+
+        return newNotificationBuilder(SCOPE_SYSTEM, GROUP_DATASOURCE_MIRRORING, LEVEL_ERROR)
+                .setTitle("Data Source Mirroring")
+                .setContent("Mirroring of %s data source \"%s\" failed. Check the log for details"
+                        .formatted(dataSourceType, dataSourceName))
+                .build();
+    }
+
     public static Notification createVulnerabilityRetractedNotification(
             Project project, Component component, Vulnerability vulnerability) {
         requireNonNull(project, "project must not be null");
@@ -238,11 +263,16 @@ public final class NotificationFactory {
 
     @SuppressWarnings("deprecation")
     public static Notification createNewVulnerabilityNotification(
-            Project project, Component component, Vulnerability vulnerability, AnalysisTrigger analysisTrigger) {
+            Project project,
+            Component component,
+            Vulnerability vulnerability,
+            AnalysisTrigger analysisTrigger,
+            String analyzerIdentity) {
         requireNonNull(project, "project must not be null");
         requireNonNull(component, "component must not be null");
         requireNonNull(vulnerability, "vulnerability must not be null");
         requireNonNull(analysisTrigger, "analysisTrigger must not be null");
+        requireNonNull(analyzerIdentity, "analyzerIdentity must not be null");
 
         var title = "New Vulnerability Identified on Project: [" + project.getName();
         if (project.hasVersion()) {
@@ -258,6 +288,7 @@ public final class NotificationFactory {
                         .setComponent(component)
                         .setVulnerability(vulnerability)
                         .setAnalysisTrigger(analysisTrigger)
+                        .setAnalyzerIdentity(analyzerIdentity)
                         .setVulnerabilityAnalysisLevel(
                                 switch (analysisTrigger) {
                                     case ANALYSIS_TRIGGER_BOM_UPLOAD -> "BOM_UPLOAD_ANALYSIS";

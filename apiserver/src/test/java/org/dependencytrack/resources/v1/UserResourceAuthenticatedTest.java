@@ -21,17 +21,19 @@ package org.dependencytrack.resources.v1;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.model.User;
-import alpine.model.UserSession;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.model.IdentifiableObject;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Assertions;
@@ -46,8 +48,11 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -150,6 +155,35 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("Captain BlackBeard", json.getString("fullname"));
         Assertions.assertEquals("blackbeard@example.com", json.getString("email"));
+    }
+
+    @Test
+    void updateSelfPreservesAccountFlagsTest() {
+        qm.runInTransaction(() -> {
+            final ManagedUser user = qm.getManagedUser("testuser");
+            user.setForcePasswordChange(true);
+            user.setNonExpiryPassword(true);
+        });
+
+        final var jsonUser = new ManagedUser();
+        jsonUser.setUsername(testUser.getUsername());
+        jsonUser.setFullname("Captain BlackBeard");
+        jsonUser.setEmail("blackbeard@example.com");
+
+        final Response response = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .post(Entity.entity(jsonUser, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+
+        try (final var freshQm = new QueryManager()) {
+            final ManagedUser updatedUser = freshQm.getManagedUser("testuser");
+            assertThat(updatedUser.getFullname()).isEqualTo("Captain BlackBeard");
+            assertThat(updatedUser.isForcePasswordChange()).isTrue();
+            assertThat(updatedUser.isNonExpiryPassword()).isTrue();
+            assertThat(updatedUser.isSuspended()).isFalse();
+            assertThat(updatedUser.getPassword()).isEqualTo(TEST_USER_PASSWORD_HASH);
+        }
     }
 
     @Test
@@ -295,14 +329,16 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         createCatchAllNotificationRule(qm, NotificationScope.SYSTEM);
 
         qm.createLdapUser("blackbeard");
-        LdapUser user = new LdapUser();
-        user.setUsername("blackbeard");
         Response response = jersey.target(V1_USER + "/ldap")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
-                .method("DELETE", Entity.entity(user, MediaType.APPLICATION_JSON)); // HACK
-        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                    {
+                      "username": "blackbeard"
+                    }
+                    """));
         Assertions.assertEquals(204, response.getStatus(), 0);
 
         assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
@@ -312,6 +348,41 @@ class UserResourceAuthenticatedTest extends ResourceTest {
             assertThat(notification.getTitle()).isEqualTo("User Deleted");
             assertThat(notification.getContent()).isEqualTo("User blackbeard was deleted");
         });
+    }
+
+    @Test
+    void deleteLdapUserWithUnknownUsernameTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
+
+        final Response response = jersey.target(V1_USER + "/ldap")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                    {
+                      "username": "does-not-exist"
+                    }
+                    """));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(getPlainTextBody(response)).isEqualTo("The user could not be found.");
+    }
+
+    @Test
+    void createManagedUserShouldRejectReservedUsernamePrefix() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+
+        final var user = new ManagedUser();
+        user.setFullname("Captain BlackBeard");
+        user.setEmail("blackbeard@example.com");
+        user.setUsername("SVC:blackbeard");
+        user.setNewPassword("password");
+        user.setConfirmPassword("password");
+        final Response response = jersey.target(V1_USER + "/managed")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .put(Entity.entity(user, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("The username prefix svc: is reserved for service accounts.");
     }
 
     @Test
@@ -590,6 +661,23 @@ class UserResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
+    void deleteManagedUserWithUnknownUsernameTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
+
+        final Response response = jersey.target(V1_USER + "/managed")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                    {
+                      "username": "does-not-exist"
+                    }
+                    """));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(getPlainTextBody(response)).isEqualTo("The user could not be found.");
+    }
+
+    @Test
     void deleteManagedUserTest() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
 
@@ -603,14 +691,16 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 false,
                 false,
                 false);
-        ManagedUser user = new ManagedUser();
-        user.setUsername("blackbeard");
         Response response = jersey.target(V1_USER + "/managed")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
-                .method("DELETE", Entity.entity(user, MediaType.APPLICATION_JSON)); // HACK
-        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                    {
+                      "username": "blackbeard"
+                    }
+                    """));
         Assertions.assertEquals(204, response.getStatus(), 0);
 
         assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
@@ -670,15 +760,34 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
 
         qm.createOidcUser("blackbeard");
-        OidcUser user = new OidcUser();
-        user.setUsername("blackbeard");
         Response response = jersey.target(V1_USER + "/oidc")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
-                .method("DELETE", Entity.entity(user, MediaType.APPLICATION_JSON)); // HACK
-        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                    {
+                      "username": "blackbeard"
+                    }
+                    """));
         Assertions.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    void deleteOidcUserWithUnknownUsernameTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
+
+        final Response response = jersey.target(V1_USER + "/oidc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                    {
+                      "username": "does-not-exist"
+                    }
+                    """));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(getPlainTextBody(response)).isEqualTo("The user could not be found.");
     }
 
     @Test
@@ -711,6 +820,31 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertFalse(json.getBoolean("forcePasswordChange"));
         Assertions.assertFalse(json.getBoolean("nonExpiryPassword"));
         Assertions.assertFalse(json.getBoolean("suspended"));
+    }
+
+    @Test
+    void addTeamToUserShouldSupportServiceAccounts() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_UPDATE);
+
+        final Team team = qm.createTeam("Pirates");
+        final var serviceAccount = new ServiceAccount();
+        serviceAccount.setUsername("svc:ci");
+        serviceAccount.setSuspended(false);
+        qm.persist(serviceAccount);
+
+        final var ido = new IdentifiableObject();
+        ido.setUuid(team.getUuid().toString());
+
+        final Response response = jersey.target(V1_USER + "/svc:ci/membership")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(ido, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json.getString("username")).isEqualTo("svc:ci");
+        assertThat(json.getJsonArray("teams").getJsonObject(0).getString("name"))
+                .isEqualTo("Pirates");
     }
 
     @Test
@@ -996,12 +1130,8 @@ class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     void shouldRejectExpiredSession() {
-        final List<UserSession> sessions = qm.getPersistenceManager()
-                .newQuery(UserSession.class, "user == :user")
-                .setParameters(testUser)
-                .executeList();
-        assertThat(sessions).hasSize(1);
-        sessions.getFirst().setExpiresAt(new Date(System.currentTimeMillis() - 3_600_000));
+        assertThat(countSessionsOf(testUser.getId())).isEqualTo(1);
+        expireAllSessions();
 
         final Response response = jersey.target(V1_USER + "/self")
                 .request()
@@ -1026,21 +1156,12 @@ class UserResourceAuthenticatedTest extends ResourceTest {
     void shouldDeleteExpiredSessions() {
         new SessionTokenService().createSession(testUser.getId());
 
-        final List<UserSession> sessions =
-                qm.getPersistenceManager().newQuery(UserSession.class).executeList();
-        for (final UserSession session : sessions) {
-            session.setExpiresAt(new Date(System.currentTimeMillis() - 3_600_000));
-        }
-        qm.getPersistenceManager().makePersistentAll(sessions);
+        expireAllSessions();
 
         final int deleted = new SessionTokenService().deleteExpiredSessions();
         assertThat(deleted).isEqualTo(2);
 
-        final List<UserSession> remaining = qm.getPersistenceManager()
-                .newQuery(UserSession.class, "user == :user")
-                .setParameters(testUser)
-                .executeList();
-        assertThat(remaining).isEmpty();
+        assertThat(countSessionsOf(testUser.getId())).isZero();
     }
 
     @Test
@@ -1063,5 +1184,37 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 .header("Authorization", "Bearer " + otherToken)
                 .get(Response.class);
         assertThat(afterResponse.getStatus()).isEqualTo(200);
+    }
+
+    private static long countSessionsOf(long userId) {
+        try (final Connection connection =
+                        DataSourceRegistry.getInstance().getDefault().getConnection();
+                final PreparedStatement ps = connection.prepareStatement(/* language=SQL */ """
+                    SELECT COUNT(*)
+                      FROM "USER_SESSION"
+                     WHERE "USER_ID" = ?
+                    """)) {
+            ps.setLong(1, userId);
+
+            try (final ResultSet rs = ps.executeQuery()) {
+                assertThat(rs.next()).isTrue();
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static void expireAllSessions() {
+        try (final Connection connection =
+                        DataSourceRegistry.getInstance().getDefault().getConnection();
+                final PreparedStatement ps = connection.prepareStatement(/* language=SQL */ """
+                    UPDATE "USER_SESSION"
+                       SET "EXPIRES_AT" = TIMESTAMP '2000-01-01 00:00:00'
+                    """)) {
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

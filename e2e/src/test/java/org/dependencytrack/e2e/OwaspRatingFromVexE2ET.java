@@ -39,7 +39,7 @@ class OwaspRatingFromVexE2ET extends AbstractE2ET {
 
     @Test
     void shouldSurfaceOwaspRatingFromVexInFindings() throws Exception {
-        apiClient.createVulnerability(new CreateVulnerabilityRequest(
+        apiV1Client.createVulnerability(new CreateVulnerabilityRequest(
                 "INT-001",
                 "CVSS:3.0/AV:N/AC:H/PR:L/UI:R/S:U/C:H/I:H/A:H",
                 null,
@@ -48,18 +48,18 @@ class OwaspRatingFromVexE2ET extends AbstractE2ET {
         final byte[] bomBytes = getClass()
                 .getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json")
                 .readAllBytes();
-        final EventTokenResponse bomUpload = apiClient.uploadBom(
+        final EventTokenResponse bomUpload = apiV1Client.uploadBom(
                 new BomUploadRequest("foo", "bar", true, Base64.getEncoder().encodeToString(bomBytes)));
         awaitProcessed("BOM processing", bomUpload.token());
 
-        final Project project = apiClient.lookupProject("foo", "bar");
+        final Project project = apiV1Client.lookupProject("foo", "bar");
 
-        assertThat(apiClient.getFindings(project.uuid(), true)).anySatisfy(finding -> {
+        assertThat(apiV1Client.getFindings(project.uuid(), true)).anySatisfy(finding -> {
             assertThat(finding.vulnerability().vulnId()).isEqualTo("INT-001");
             assertThat(finding.vulnerability().owaspRRVector()).isNull();
         });
 
-        final EventTokenResponse vexUploadResponse = apiClient.uploadVex(new VexSubmitRequest(
+        final EventTokenResponse vexUploadResponse = apiV1Client.uploadVex(new VexSubmitRequest(
                 project.uuid().toString(),
                 null,
                 null,
@@ -102,7 +102,7 @@ class OwaspRatingFromVexE2ET extends AbstractE2ET {
 
         await("OWASP rating applied to finding")
                 .atMost(Duration.ofSeconds(15))
-                .untilAsserted(() -> assertThat(apiClient.getFindings(project.uuid(), true))
+                .untilAsserted(() -> assertThat(apiV1Client.getFindings(project.uuid(), true))
                         .anySatisfy(finding -> {
                             assertThat(finding.vulnerability().vulnId()).isEqualTo("INT-001");
                             assertThat(finding.vulnerability().owaspRRVector())
@@ -123,7 +123,7 @@ class OwaspRatingFromVexE2ET extends AbstractE2ET {
                 .atMost(Duration.ofSeconds(15))
                 .pollDelay(Duration.ofMillis(250))
                 .untilAsserted(() -> {
-                    final EventProcessingResponse processing = apiClient.isEventBeingProcessed(token);
+                    final EventProcessingResponse processing = apiV1Client.isEventBeingProcessed(token);
                     assertThat(processing.processing()).isFalse();
                 });
     }

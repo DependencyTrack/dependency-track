@@ -23,13 +23,11 @@ import alpine.persistence.JdoProperties;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Metrics;
-import io.smallrye.config.SmallRyeConfig;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
-import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,19 +53,9 @@ public class PersistenceManagerFactory implements IPersistenceManagerFactory, Se
     public void contextInitialized(ServletContextEvent event) {
         LOGGER.info("Initializing persistence framework");
 
-        final var dnProps = new Properties();
-
-        // Apply settings that are required by Alpine and shouldn't be customized.
-        dnProps.put(PropertyNames.PROPERTY_CACHE_L2_TYPE, "none");
-        dnProps.put(PropertyNames.PROPERTY_QUERY_JDOQL_ALLOWALL, "true");
-        dnProps.put(PropertyNames.PROPERTY_RETAIN_VALUES, "true");
-        dnProps.put(PropertyNames.PROPERTY_METADATA_ALLOW_XML, "false");
-        dnProps.put(PropertyNames.PROPERTY_METADATA_SUPPORT_ORM, "false");
-        dnProps.put(PropertyNames.PROPERTY_ENABLE_STATISTICS, "true");
-        dnProps.put(PropertyNames.PROPERTY_EXECUTION_CONTEXT_MAX_IDLE, "0");
-        dnProps.put(PropertyNames.PROPERTY_DELETION_POLICY, "DataNucleus");
-
         final DataSource dataSource = DataSourceRegistry.getInstance().getDefault();
+
+        final Properties dnProps = JdoProperties.required();
         dnProps.put(PropertyNames.PROPERTY_CONNECTION_FACTORY, dataSource);
         dnProps.put(PropertyNames.PROPERTY_CONNECTION_FACTORY2, dataSource);
 
@@ -87,9 +75,6 @@ public class PersistenceManagerFactory implements IPersistenceManagerFactory, Se
      * @return a PersistenceManager
      */
     public static PersistenceManager createPersistenceManager() {
-        if (pmf == null && ConfigProvider.getConfig().unwrap(SmallRyeConfig.class).getProfiles().contains("test")) {
-            pmf = (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(JdoProperties.unit(), "Alpine");
-        }
         if (pmf == null) {
             throw new IllegalStateException("Context is not initialized yet.");
         }

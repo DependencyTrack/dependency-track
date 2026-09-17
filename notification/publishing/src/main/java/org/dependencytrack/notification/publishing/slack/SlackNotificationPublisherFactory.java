@@ -22,7 +22,7 @@ import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplate;
 import org.dependencytrack.notification.publishing.http.HttpNotificationPublisherRuleConfigV1;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.jspecify.annotations.Nullable;
 
@@ -55,8 +55,8 @@ public final class SlackNotificationPublisherFactory implements NotificationPubl
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(ExtensionContext context) {
+        this.httpClient = context.httpClient();
     }
 
     @Override

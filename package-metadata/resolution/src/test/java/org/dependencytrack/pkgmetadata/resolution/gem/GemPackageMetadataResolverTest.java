@@ -20,24 +20,18 @@ package org.dependencytrack.pkgmetadata.resolution.gem;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import org.dependencytrack.cache.api.CacheManager;
-import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.Map;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -59,10 +53,7 @@ class GemPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         resolverFactory = new GemPackageMetadataResolverFactory();
-        resolverFactory.init(new MutableServiceRegistry()
-                .register(CacheManager.class, new NoopCacheManager())
-                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        resolverFactory.init(new ExtensionContextBuilder().build());
         resolver = resolverFactory.create();
     }
 

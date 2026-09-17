@@ -19,7 +19,7 @@
 package alpine.server.auth;
 
 import javax.naming.AuthenticationException;
-import java.security.Principal;
+import alpine.model.User;
 
 /**
  * An exception class that optionally holds pre-determined causes for common
@@ -42,13 +42,13 @@ public class AlpineAuthenticationException extends AuthenticationException {
     }
 
     private final CauseType causeType;
-    private Principal principal;
+    private User principal;
 
     public AlpineAuthenticationException(final CauseType causeType) {
         this.causeType = causeType;
     }
 
-    public AlpineAuthenticationException(final CauseType causeType, final Principal principal) {
+    public AlpineAuthenticationException(final CauseType causeType, final User principal) {
         this.principal = principal;
         this.causeType = causeType;
     }
@@ -57,7 +57,7 @@ public class AlpineAuthenticationException extends AuthenticationException {
         return causeType;
     }
 
-    public Principal getPrincipal() {
+    public User getPrincipal() {
         return principal;
     }
 

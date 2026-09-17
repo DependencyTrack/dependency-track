@@ -20,7 +20,9 @@ package org.dependencytrack.resources.v1;
 
 import alpine.model.ApiKey;
 import alpine.model.Team;
-import alpine.model.User;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
+import alpine.model.auth.TeamRef;
 import alpine.persistence.PaginatedResult;
 import alpine.security.ApiKeyDecoder;
 import alpine.security.InvalidApiKeyFormatException;
@@ -44,6 +46,7 @@ import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.problems.TeamAlreadyExistsProblemDetails;
+import org.dependencytrack.resources.v1.vo.DeleteTeamRequest;
 import org.dependencytrack.resources.v1.vo.TeamSelfResponse;
 import org.dependencytrack.resources.v1.vo.VisibleTeams;
 import org.owasp.security.logging.SecurityMarkers;
@@ -62,7 +65,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -245,10 +247,10 @@ public class TeamResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "404", description = "The team could not be found")
             })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
-    public Response deleteTeam(Team jsonTeam) {
+    public Response deleteTeam(DeleteTeamRequest request) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid(), Team.FetchGroup.ALL.name());
+                final Team team = qm.getObjectByUuid(Team.class, request.uuid(), Team.FetchGroup.ALL.name());
                 if (team != null) {
                     final String teamName = team.getName();
                     qm.delete(team);
@@ -289,44 +291,39 @@ public class TeamResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     public Response availableTeams() {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            boolean isAllTeams = super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
-                    || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
-            final List<Team> teams;
-            final long total;
-            if (isAllTeams) {
-                final PaginatedResult paginatedResult = qm.getTeams();
-                teams = paginatedResult.getList(Team.class);
-                total = paginatedResult.getTotal();
-            } else {
-                List<Team> visibleTeams = List.of();
-                if (getPrincipal() instanceof final User user && user.getTeams() != null) {
-                    visibleTeams = user.getTeams();
-                } else if (getPrincipal() instanceof final ApiKey apiKey && apiKey.getTeams() != null) {
-                    visibleTeams = apiKey.getTeams();
-                }
-                final String filter = getAlpineRequest().getFilter();
-                if (filter != null && !filter.isBlank()) {
-                    final String needle = filter.toLowerCase();
-                    visibleTeams = visibleTeams.stream()
-                            .filter(team -> team.getName() != null
-                                    && team.getName().toLowerCase().contains(needle))
-                            .toList();
-                }
-                total = visibleTeams.size();
-                teams = visibleTeams.stream()
-                        .sorted(Comparator.comparing(
-                                Team::getName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
-                        .skip(getAlpineRequest().getPagination().getOffset())
-                        .limit(getAlpineRequest().getPagination().getLimit())
+        final boolean isAllTeams = super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
+                || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
+        if (!isAllTeams) {
+            List<TeamRef> visibleTeams =
+                    getPrincipal() instanceof final Principal principal ? principal.teams() : List.of();
+
+            final String filter = getAlpineRequest().getFilter();
+            if (filter != null && !filter.isBlank()) {
+                final String needle = filter.toLowerCase();
+                visibleTeams = visibleTeams.stream()
+                        .filter(team -> team.name().toLowerCase().contains(needle))
                         .toList();
             }
 
-            final List<VisibleTeams> response = new ArrayList<>(teams.size());
-            for (Team team : teams) {
-                response.add(new VisibleTeams(team.getName(), team.getUuid()));
-            }
-            return Response.ok(response).header(TOTAL_COUNT_HEADER, total).build();
+            final List<VisibleTeams> response = visibleTeams.stream()
+                    .sorted(Comparator.comparing(TeamRef::name, String.CASE_INSENSITIVE_ORDER))
+                    .skip(getAlpineRequest().getPagination().getOffset())
+                    .limit(getAlpineRequest().getPagination().getLimit())
+                    .map(team -> new VisibleTeams(team.name(), team.uuid()))
+                    .toList();
+            return Response.ok(response)
+                    .header(TOTAL_COUNT_HEADER, visibleTeams.size())
+                    .build();
+        }
+
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final PaginatedResult paginatedResult = qm.getTeams();
+            final List<VisibleTeams> response = paginatedResult.getList(Team.class).stream()
+                    .map(team -> new VisibleTeams(team.getName(), team.getUuid()))
+                    .toList();
+            return Response.ok(response)
+                    .header(TOTAL_COUNT_HEADER, paginatedResult.getTotal())
+                    .build();
         }
     }
 
@@ -359,6 +356,10 @@ public class TeamResource extends AbstractApiResource {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
                 final ApiKey apiKey = qm.createApiKey(team);
+                super.logSecurityEvent(
+                        LOGGER,
+                        SecurityMarkers.SECURITY_AUDIT,
+                        "API key created: %s (team: %s)".formatted(apiKey.getPublicId(), team.getName()));
                 return Response.status(Response.Status.CREATED).entity(apiKey).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -393,17 +394,11 @@ public class TeamResource extends AbstractApiResource {
                     @PathParam("publicIdOrKey")
                     String publicIdOrKey) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
-            if (apiKey == null) {
-                try {
-                    final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
-                    apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
-                } catch (InvalidApiKeyFormatException e) {
-                    LOGGER.debug("Failed to decode value as API key", e);
-                }
-            }
+            ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
             if (apiKey != null) {
                 apiKey = qm.regenerateApiKey(apiKey);
+                super.logSecurityEvent(
+                        LOGGER, SecurityMarkers.SECURITY_AUDIT, "API key regenerated: " + apiKey.getPublicId());
                 return Response.ok(apiKey).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -442,15 +437,7 @@ public class TeamResource extends AbstractApiResource {
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
 
             return qm.callInTransaction(() -> {
-                ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
-                if (apiKey == null) {
-                    try {
-                        final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
-                        apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
-                    } catch (InvalidApiKeyFormatException e) {
-                        LOGGER.debug("Failed to decode value as API key", e);
-                    }
-                }
+                final ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
                 if (apiKey == null) {
                     return Response.status(Response.Status.NOT_FOUND)
                             .entity("The API key could not be found.")
@@ -483,17 +470,11 @@ public class TeamResource extends AbstractApiResource {
                     String publicIdOrKey) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
-                if (apiKey == null) {
-                    try {
-                        final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
-                        apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
-                    } catch (InvalidApiKeyFormatException e) {
-                        LOGGER.debug("Failed to decode value as API key", e);
-                    }
-                }
+                final ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
                 if (apiKey != null) {
+                    final String publicId = apiKey.getPublicId();
                     qm.delete(apiKey);
+                    super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "API key deleted: " + publicId);
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND)
@@ -521,7 +502,7 @@ public class TeamResource extends AbstractApiResource {
     public Response getSelf() {
         try (var qm = new QueryManager(getAlpineRequest())) {
             if (isApiKey()) {
-                final var apiKey = qm.getApiKeyByPublicId(((ApiKey) getPrincipal()).getPublicId());
+                final var apiKey = qm.getApiKeyByPublicId(((ApiKeyPrincipal) getPrincipal()).publicId());
                 final var team = apiKey.getTeams().stream().findFirst();
                 if (team.isPresent()) {
                     return Response.ok(new TeamSelfResponse(team.get())).build();
@@ -536,5 +517,19 @@ public class TeamResource extends AbstractApiResource {
                         .build();
             }
         }
+    }
+
+    private static ApiKey getTeamApiKey(QueryManager qm, String publicIdOrKey) {
+        ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+        if (apiKey == null) {
+            try {
+                final ApiKey decodedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
+                apiKey = qm.getApiKeyByPublicId(decodedApiKey.getPublicId());
+            } catch (InvalidApiKeyFormatException e) {
+                LOGGER.debug("Failed to decode value as API key", e);
+            }
+        }
+
+        return apiKey != null && apiKey.getUser() == null ? apiKey : null;
     }
 }

@@ -38,6 +38,7 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.vo.MappedLdapGroupRequest;
+import org.dependencytrack.resources.v1.vo.MappedLdapGroupResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,7 +142,10 @@ public class LdapResource extends AbstractApiResource {
                                 @Content(
                                         array =
                                                 @ArraySchema(
-                                                        schema = @Schema(implementation = MappedLdapGroup.class)))),
+                                                        schema =
+                                                                @Schema(
+                                                                        implementation =
+                                                                                MappedLdapGroupResponse.class)))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(responseCode = "404", description = "The UUID of the team could not be found"),
             })
@@ -157,7 +161,9 @@ public class LdapResource extends AbstractApiResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
-                final List<MappedLdapGroup> mappings = qm.getMappedLdapGroups(team);
+                final List<MappedLdapGroupResponse> mappings = qm.getMappedLdapGroups(team).stream()
+                        .map(MappedLdapGroupResponse::of)
+                        .toList();
                 return Response.ok(mappings).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -180,7 +186,7 @@ public class LdapResource extends AbstractApiResource {
                 @ApiResponse(
                         responseCode = "200",
                         description = "The created mapping",
-                        content = @Content(schema = @Schema(implementation = MappedLdapGroup.class))),
+                        content = @Content(schema = @Schema(implementation = MappedLdapGroupResponse.class))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(responseCode = "404", description = "The UUID of the team could not be found"),
                 @ApiResponse(responseCode = "409", description = "A mapping with the same team and dn already exists")
@@ -195,7 +201,7 @@ public class LdapResource extends AbstractApiResource {
                 if (team != null) {
                     if (!qm.isMapped(team, request.getDn())) {
                         final MappedLdapGroup mapping = qm.createMappedLdapGroup(team, request.getDn());
-                        return Response.ok(mapping).build();
+                        return Response.ok(MappedLdapGroupResponse.of(mapping)).build();
                     } else {
                         return Response.status(Response.Status.CONFLICT)
                                 .entity("A mapping with the same team and dn already exists.")

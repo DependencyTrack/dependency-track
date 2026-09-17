@@ -20,11 +20,11 @@ package alpine.persistence;
 
 import org.datanucleus.api.jdo.JDOPersistenceManager;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import javax.jdo.JDOHelper;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static javax.jdo.FetchPlan.DETACH_LOAD_FIELDS;
 import static javax.jdo.FetchPlan.DETACH_UNLOAD_FIELDS;
@@ -33,12 +33,15 @@ import static org.datanucleus.PropertyNames.PROPERTY_DETACH_ALL_ON_COMMIT;
 
 public class ScopedCustomizationTest {
 
+    @RegisterExtension
+    static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
+
     private JDOPersistenceManagerFactory pmf;
     private JDOPersistenceManager pm;
 
     @BeforeEach
     public void setUp() {
-        pmf = (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(JdoProperties.unit(), "Alpine");
+        pmf = TestPersistenceManagerFactory.create(DATABASE);
         pm = (JDOPersistenceManager) pmf.getPersistenceManager();
     }
 

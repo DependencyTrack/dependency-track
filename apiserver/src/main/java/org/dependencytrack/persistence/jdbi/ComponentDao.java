@@ -46,9 +46,11 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.hasColumn;
@@ -100,6 +102,14 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             SELECT "ID" FROM "COMPONENT" WHERE "UUID" = :componentUuid
             """)
     Long getComponentId(@Bind UUID componentUuid);
+
+    /// @since 5.2.0
+    @SqlQuery("""
+            SELECT "UUID"
+              FROM "COMPONENT"
+             WHERE "UUID" = ANY(:componentUuids)
+            """)
+    Set<UUID> getExistingUuids(@Bind Collection<UUID> componentUuids);
 
     default Page<Component> listProjectComponents(ListProjectComponentsQuery query) {
         final PageTokenEncoder pageTokenEncoder =

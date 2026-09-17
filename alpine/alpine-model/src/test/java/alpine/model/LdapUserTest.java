@@ -39,7 +39,6 @@ public class LdapUserTest {
         LdapUser user = new LdapUser();
         user.setUsername("myUsername");
         Assertions.assertEquals("myUsername", user.getUsername());
-        Assertions.assertEquals("myUsername", user.getName());
     }
 
     @Test

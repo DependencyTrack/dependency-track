@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.model.ConfigProperty;
+import alpine.model.auth.Principal;
 import alpine.server.auth.PermissionRequired;
 import com.fasterxml.uuid.Generators;
 import com.github.luben.zstd.ZstdInputStream;
@@ -99,7 +100,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;

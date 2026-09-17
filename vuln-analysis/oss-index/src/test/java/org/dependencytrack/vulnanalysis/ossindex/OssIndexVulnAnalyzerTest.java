@@ -27,9 +27,8 @@ import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.memory.MemoryCacheProvider;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.config.RuntimeConfigMapper;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
@@ -39,7 +38,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Map;
@@ -91,10 +89,10 @@ class OssIndexVulnAnalyzerTest {
                 RuntimeConfigMapper.getInstance(),
                 config);
 
-        analyzerFactory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(CacheManager.class, cacheManager)
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(configRegistry)
+                .withCacheManager(cacheManager)
+                .build());
 
         return analyzerFactory.create();
     }
@@ -218,6 +216,22 @@ class OssIndexVulnAnalyzerTest {
                 .addComponents(Component.newBuilder()
                         .setName("acme-lib")
                         .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
+
+        verify(0, postRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void shouldNotAnalyzeComponentWithVersionlessPurl() throws Exception {
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/org.acme/acme-lib")
                         .build())
                 .build();
 

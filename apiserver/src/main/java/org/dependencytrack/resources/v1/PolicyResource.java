@@ -245,6 +245,7 @@ public class PolicyResource extends AbstractApiResource {
                 policy.setOperator(jsonPolicy.getOperator());
                 policy.setViolationState(jsonPolicy.getViolationState());
                 policy.setIncludeChildren(jsonPolicy.isIncludeChildren());
+                policy.setInvertTagMatch(jsonPolicy.isInvertTagMatch());
                 policy.setOnlyLatestProjectVersion(jsonPolicy.isOnlyLatestProjectVersion());
                 return qm.persist(policy);
             });

@@ -20,6 +20,7 @@ package alpine.server.auth;
 
 import alpine.config.AlpineConfigKeys;
 import alpine.model.LdapUser;
+import alpine.model.ServiceAccount;
 import alpine.persistence.AlpineQueryManager;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -30,7 +31,6 @@ import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.LdapContext;
-import java.security.Principal;
 import java.util.List;
 
 /**
@@ -39,7 +39,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 1.0.0
  */
-public class LdapAuthenticationService implements AuthenticationService {
+public class LdapAuthenticationService implements AuthenticationService<LdapUser> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LdapAuthenticationService.class);
 
@@ -85,8 +85,15 @@ public class LdapAuthenticationService implements AuthenticationService {
      * @throws AlpineAuthenticationException when authentication is unsuccessful
      * @since 1.0.0
      */
-    public Principal authenticate() throws AlpineAuthenticationException {
+    public LdapUser authenticate() throws AlpineAuthenticationException {
         LOGGER.debug("Attempting to authenticate user: {}", username);
+        if (username != null && ServiceAccount.hasReservedPrefix(username)) {
+            LOGGER.warn(
+                    "Refusing to authenticate user: the username prefix {} is reserved for service accounts",
+                    ServiceAccount.USERNAME_PREFIX);
+            throw new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT);
+        }
+
         final LdapConnectionWrapper ldap = new LdapConnectionWrapper(config);
         if (validateCredentials(ldap)) {
             try (AlpineQueryManager qm = new AlpineQueryManager()) {
@@ -223,7 +230,7 @@ public class LdapAuthenticationService implements AuthenticationService {
                 }
             }
         } catch (NamingException e) {
-            LOGGER.debug("An error occurred while attempting to validate credentials", e);
+            LOGGER.warn("An error occurred while attempting to validate credentials", e);
         } finally {
             ldap.closeQuietly(ldapContext);
             ldap.closeQuietly(dirContext);

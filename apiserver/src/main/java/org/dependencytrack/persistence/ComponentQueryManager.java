@@ -41,13 +41,8 @@ import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.util.PurlUtil;
 
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonValue;
-
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -588,68 +583,6 @@ final class ComponentQueryManager extends QueryManager {
         return Pair.of(filter, params);
     }
 
-    public Map<String, Component> getDependencyGraphForComponents(Project project, List<Component> components) {
-        Map<String, Component> dependencyGraph = new HashMap<>();
-        if (project.getDirectDependencies() == null
-                || project.getDirectDependencies().isBlank()) {
-            return dependencyGraph;
-        }
-
-        for (Component component : components) {
-            dependencyGraph.put(component.getUuid().toString(), component);
-            getParentDependenciesOfComponent(project, component, dependencyGraph);
-        }
-        if (!dependencyGraph.isEmpty()) {
-            getRootDependencies(dependencyGraph, project);
-            getDirectDependenciesForPathDependencies(dependencyGraph);
-        }
-
-        final var packagePurlByComponentUuid = new HashMap<String, String>();
-        for (final var entry : dependencyGraph.entrySet()) {
-            final String componentUuid = entry.getKey();
-            final Component component = entry.getValue();
-
-            if (component.getPurl() != null) {
-                packagePurlByComponentUuid.put(componentUuid, PurlUtil.purlPackageOnly(component.getPurl()));
-            }
-        }
-
-        final var latestVersionByPackagePurl = new HashMap<String, String>();
-        if (!packagePurlByComponentUuid.isEmpty()) {
-            final List<PackageMetadata> packageMetadataList = withJdbiHandle(handle ->
-                    new PackageMetadataDao(handle).getAll(new HashSet<>(packagePurlByComponentUuid.values())));
-            for (final PackageMetadata packageMetadata : packageMetadataList) {
-                if (packageMetadata.latestVersion() != null) {
-                    latestVersionByPackagePurl.put(
-                            packageMetadata.purl().canonicalize(), packageMetadata.latestVersion());
-                }
-            }
-        }
-
-        // Reduce size of JSON response
-        for (final Map.Entry<String, Component> entry : dependencyGraph.entrySet()) {
-            final Component transientComponent = new Component();
-            transientComponent.setUuid(entry.getValue().getUuid());
-            transientComponent.setName(entry.getValue().getName());
-            transientComponent.setVersion(entry.getValue().getVersion());
-            transientComponent.setPurl(entry.getValue().getPurl());
-            transientComponent.setPurlCoordinates(entry.getValue().getPurlCoordinates());
-            transientComponent.setDependencyGraph(entry.getValue().getDependencyGraph());
-            transientComponent.setExpandDependencyGraph(entry.getValue().isExpandDependencyGraph());
-            final String packagePurl = packagePurlByComponentUuid.get(entry.getKey());
-            if (packagePurl != null) {
-                final String latestVersion = latestVersionByPackagePurl.get(packagePurl);
-                if (latestVersion != null) {
-                    final var transientRepoMetaComponent = new RepositoryMetaComponent();
-                    transientRepoMetaComponent.setLatestVersion(latestVersion);
-                    transientComponent.setRepositoryMeta(transientRepoMetaComponent);
-                }
-            }
-            dependencyGraph.put(entry.getKey(), transientComponent);
-        }
-        return dependencyGraph;
-    }
-
     /**
      * Returns a list of all {@link DependencyGraphResponse} objects by {@link Component} UUID.
      *
@@ -661,63 +594,6 @@ final class ComponentQueryManager extends QueryManager {
         final Query<Component> query = this.getObjectsByUuidsQuery(Component.class, uuids);
         query.setResult("uuid, name, version, purl, directDependencies, null");
         return List.copyOf(query.executeResultList(DependencyGraphResponse.class));
-    }
-
-    private void getParentDependenciesOfComponent(
-            Project project, Component childComponent, Map<String, Component> dependencyGraph) {
-        final Query<Component> query =
-                pm.newQuery(Component.class, "directDependencies.jsonbContains(:child) && project == :project");
-        List<Component> parentComponents = (List<Component>)
-                query.executeWithArray("[{\"uuid\":\"%s\"}]".formatted(childComponent.getUuid()), project);
-        for (Component parentComponent : parentComponents) {
-            parentComponent.setExpandDependencyGraph(true);
-            if (parentComponent.getDependencyGraph() == null) {
-                parentComponent.setDependencyGraph(new HashSet<>());
-            }
-            parentComponent.getDependencyGraph().add(childComponent.getUuid().toString());
-            if (!dependencyGraph.containsKey(parentComponent.getUuid().toString())) {
-                dependencyGraph.put(parentComponent.getUuid().toString(), parentComponent);
-                getParentDependenciesOfComponent(project, parentComponent, dependencyGraph);
-            }
-        }
-    }
-
-    private void getRootDependencies(Map<String, Component> dependencyGraph, Project project) {
-        JsonArray directDependencies = Json.createReader(new StringReader(project.getDirectDependencies()))
-                .readArray();
-        for (JsonValue directDependency : directDependencies) {
-            String uuid = directDependency.asJsonObject().getString("uuid");
-            if (!dependencyGraph.containsKey(uuid)) {
-                Component component = this.getObjectByUuid(Component.class, uuid);
-                dependencyGraph.put(uuid, component);
-            }
-        }
-        getDirectDependenciesForPathDependencies(dependencyGraph);
-    }
-
-    private void getDirectDependenciesForPathDependencies(Map<String, Component> dependencyGraph) {
-        Map<String, Component> addToDependencyGraph = new HashMap<>();
-        for (Component component : dependencyGraph.values()) {
-            if (component.getDirectDependencies() != null
-                    && !component.getDirectDependencies().isEmpty()) {
-                JsonArray directDependencies = Json.createReader(new StringReader(component.getDirectDependencies()))
-                        .readArray();
-                for (JsonValue directDependency : directDependencies) {
-                    if (component.getDependencyGraph() == null) {
-                        component.setDependencyGraph(new HashSet<>());
-                    }
-                    String uuid = directDependency.asJsonObject().getString("uuid");
-                    if (!dependencyGraph.containsKey(uuid) && !addToDependencyGraph.containsKey(uuid)) {
-                        Component childNode = this.getObjectByUuid(Component.class, uuid);
-                        addToDependencyGraph.put(childNode.getUuid().toString(), childNode);
-                        component.getDependencyGraph().add(childNode.getUuid().toString());
-                    } else {
-                        component.getDependencyGraph().add(uuid);
-                    }
-                }
-            }
-        }
-        dependencyGraph.putAll(addToDependencyGraph);
     }
 
     public List<Component> getComponentsByPurl(String purl) {

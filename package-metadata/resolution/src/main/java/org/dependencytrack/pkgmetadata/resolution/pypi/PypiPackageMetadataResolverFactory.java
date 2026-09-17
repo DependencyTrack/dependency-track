@@ -23,14 +23,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolverFactory;
 import org.dependencytrack.pkgmetadata.resolution.cache.CachingHttpClient;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.jspecify.annotations.Nullable;
-
-import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static java.util.Objects.requireNonNull;
@@ -86,13 +83,12 @@ public final class PypiPackageMetadataResolverFactory implements PackageMetadata
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
+    public void init(ExtensionContext context) {
         objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
-                serviceRegistry.require(HttpClient.class),
-                serviceRegistry.require(CacheManager.class).getCache("responses"));
+                context.httpClient(), context.cacheManager().getCache("responses"));
     }
 
     @Override

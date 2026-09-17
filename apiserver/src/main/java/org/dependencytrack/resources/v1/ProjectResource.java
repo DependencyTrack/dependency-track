@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.model.ApiKey;
 import alpine.model.Team;
-import alpine.model.User;
+import alpine.model.auth.Principal;
+import alpine.model.auth.TeamRef;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -79,7 +79,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import javax.jdo.FetchGroup;
-import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -389,8 +388,8 @@ public class ProjectResource extends AbstractApiResource {
             final Project project = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(name));
             if (project != null) {
                 requireAccess(qm, project);
-                project.setMetrics(withJdbiHandle(
-                        handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
+                project.setMetrics(
+                        withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project)));
                 project.setVersions(qm.getProjectVersions(project));
                 return Response.ok(project).build();
             } else {
@@ -434,8 +433,8 @@ public class ProjectResource extends AbstractApiResource {
             final Project project = ProjectAccess.unrestricted(() -> qm.getProject(name, version));
             if (project != null) {
                 requireAccess(qm, project);
-                project.setMetrics(withJdbiHandle(
-                        handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
+                project.setMetrics(
+                        withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project)));
                 project.setVersions(qm.getProjectVersions(project));
                 return Response.ok(project).build();
             } else {
@@ -650,24 +649,14 @@ public class ProjectResource extends AbstractApiResource {
                 }
 
                 if (!chosenTeams.isEmpty()) {
-                    List<Team> userTeams;
-                    if (principal instanceof final User user) {
-                        userTeams = user.getTeams();
-                    } else if (principal instanceof final ApiKey apiKey) {
-                        userTeams = apiKey.getTeams();
-                    } else {
-                        userTeams = List.of();
-                    }
-                    if (userTeams == null) {
-                        userTeams = List.of();
-                    }
+                    final List<TeamRef> principalTeams = principal != null ? principal.teams() : List.of();
 
                     boolean canSeeAllTeams = super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
                             || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
                     final Set<UUID> memberTeamUuids = new HashSet<>();
                     if (!canSeeAllTeams) {
-                        for (final Team userTeam : userTeams) {
-                            memberTeamUuids.add(userTeam.getUuid());
+                        for (final TeamRef principalTeam : principalTeams) {
+                            memberTeamUuids.add(principalTeam.uuid());
                         }
                     }
 
@@ -745,7 +734,7 @@ public class ProjectResource extends AbstractApiResource {
                     <p>
                       To re-parent the project, set <code>parent</code> to an object containing
                       the new parent's <code>uuid</code>. Omit <code>parent</code> (or set it to
-                      <code>null</code>) to leave the parent unchanged. Providing <code>parent</code>
+                      <code>null</code>) to remove the parent. Providing <code>parent</code>
                       without a non-null <code>uuid</code> is rejected with 400.
                     </p>
                     <p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>""")

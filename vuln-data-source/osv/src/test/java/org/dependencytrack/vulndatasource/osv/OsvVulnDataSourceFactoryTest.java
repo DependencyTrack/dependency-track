@@ -18,12 +18,10 @@
  */
 package org.dependencytrack.vulndatasource.osv;
 
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
-import org.dependencytrack.plugin.testing.MockKeyValueStore;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
@@ -31,7 +29,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -63,12 +60,12 @@ class OsvVulnDataSourceFactoryTest
     void defaultConfigShouldContainSingleDefaultSource() {
         final OsvVulnDataSourceConfigV1 config = defaultConfig();
         assertThat(config.getFeeds()).satisfiesExactly(feed -> {
-            assertThat(source.getName()).isEqualTo("default");
-            assertThat(source.isEnabled()).isFalse();
-            assertThat(source.getAliasSyncEnabled()).isFalse();
-            assertThat(source.isIncrementalMirroringEnabled()).isTrue();
-            assertThat(source.getDataUrl().toString()).isEqualTo("https://storage.googleapis.com/osv-vulnerabilities");
-            assertThat(source.getEcosystems()).containsExactlyInAnyOrder("npm", "PyPI", "NuGet", "Maven", "Go");
+            assertThat(feed.getName()).isEqualTo("default");
+            assertThat(feed.isEnabled()).isFalse();
+            assertThat(feed.getAliasSyncEnabled()).isFalse();
+            assertThat(feed.isIncrementalMirroringEnabled()).isTrue();
+            assertThat(feed.getDataUrl().toString()).isEqualTo("https://storage.googleapis.com/osv-vulnerabilities");
+            assertThat(feed.getEcosystems()).containsExactlyInAnyOrder("npm", "PyPI", "NuGet", "Maven", "Go");
         });
     }
 
@@ -168,9 +165,7 @@ class OsvVulnDataSourceFactoryTest
     }
 
     private void initFactory(final ConfigRegistry configRegistry) {
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(HttpClient.class, HttpClient.newHttpClient())
-                .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
     }
 }

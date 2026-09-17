@@ -22,15 +22,11 @@ import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURLBuilder;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
-import org.dependencytrack.cache.api.CacheManager;
-import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +35,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
@@ -76,10 +71,7 @@ class NugetPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         factory = new NugetPackageMetadataResolverFactory();
-        factory.init(new MutableServiceRegistry()
-                .register(CacheManager.class, new NoopCacheManager())
-                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new ExtensionContextBuilder().build());
         resolver = (NugetPackageMetadataResolver) factory.create();
     }
 

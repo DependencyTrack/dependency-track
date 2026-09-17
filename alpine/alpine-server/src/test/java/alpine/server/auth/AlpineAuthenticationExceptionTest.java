@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.security.Principal;
+import alpine.model.User;
 
 public class AlpineAuthenticationExceptionTest {
 
@@ -46,9 +46,9 @@ public class AlpineAuthenticationExceptionTest {
 
     @Test
     public void constructorBTest() {
-        Principal p = Mockito.mock(Principal.class);
-        AlpineAuthenticationException e = new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT, p);
+        User user = Mockito.mock(User.class);
+        AlpineAuthenticationException e = new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT, user);
         Assertions.assertEquals(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT, e.getCauseType());
-        Assertions.assertEquals(p, e.getPrincipal());
+        Assertions.assertEquals(user, e.getPrincipal());
     }
 }

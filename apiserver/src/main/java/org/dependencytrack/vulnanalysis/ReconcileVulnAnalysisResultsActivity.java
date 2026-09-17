@@ -802,12 +802,13 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             vulnDbIds.add(findingKey.vulnDbId());
         });
 
-        return dao.getForNewVulnerabilities(componentIds, vulnDbIds).stream()
+        return dao.getForNewVulnerabilities(componentIds, vulnDbIds, false).stream()
                 .map(subject -> createNewVulnerabilityNotification(
                         subject.getProject(),
                         subject.getComponent(),
                         subject.getVulnerability(),
-                        convertAnalysisTrigger(analysisTrigger)))
+                        convertAnalysisTrigger(analysisTrigger),
+                        subject.getAnalyzerIdentity()))
                 .toList();
     }
 
@@ -825,7 +826,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             vulnDbIds.add(findingKey.vulnDbId());
         });
 
-        return dao.getForNewVulnerabilities(componentIds, vulnDbIds).stream()
+        return dao.getForNewVulnerabilities(componentIds, vulnDbIds, true).stream()
                 .map(subject -> createVulnerabilityRetractedNotification(
                         subject.getProject(), subject.getComponent(), subject.getVulnerability()))
                 .toList();

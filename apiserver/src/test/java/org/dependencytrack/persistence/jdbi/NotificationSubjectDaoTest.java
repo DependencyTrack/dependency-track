@@ -155,10 +155,10 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                 .withState(AnalysisState.FALSE_POSITIVE)
                 .withSuppress(true));
 
-        final List<NewVulnerabilitySubject> subjects =
-                withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
-                        .getForNewVulnerabilities(
-                                List.of(component.getId(), component.getId()), List.of(vulnA.getId(), vulnB.getId())));
+        final List<NewVulnerabilitySubject> subjects = withJdbiHandle(handle -> handle.attach(
+                        NotificationSubjectDao.class)
+                .getForNewVulnerabilities(
+                        List.of(component.getId(), component.getId()), List.of(vulnA.getId(), vulnB.getId()), false));
 
         assertThat(subjects)
                 .satisfiesExactly(subject -> assertThatJson(JsonFormat.printer().print(subject))
@@ -236,7 +236,8 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                     "cvssV3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
                                     "owaspRRVector": "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)",
                                     "isKev": true
-                                  }
+                                  },
+                                  "analyzerIdentity": "internal"
                                 }
                                 """));
     }
@@ -283,7 +284,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
 
         final List<NewVulnerabilitySubject> subjects =
                 withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
-                        .getForNewVulnerabilities(List.of(component.getId()), List.of(vuln.getId())));
+                        .getForNewVulnerabilities(List.of(component.getId()), List.of(vuln.getId()), false));
 
         assertThat(subjects).hasSize(1);
         assertThatJson(JsonFormat.printer().print(subjects.getFirst()))
@@ -316,6 +317,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                             "owaspRRVector": "owaspRrVector",
                             "isKev": false
                           },
+                          "analyzerIdentity": "internal",
                           "affectedProjects": [
                             {
                               "uuid": "${json-unit.matches:projectUuid}",

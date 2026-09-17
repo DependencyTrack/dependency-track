@@ -1180,14 +1180,17 @@ public class ModelConverter {
             return Collections.emptyList();
         }
 
+        final Set<String> componentUuids =
+                components.stream().map(Component::getUuid).map(UUID::toString).collect(Collectors.toSet());
+
         final var dependencies = new ArrayList<Dependency>();
         final var rootDependency = new Dependency(project.getUuid().toString());
-        rootDependency.setDependencies(convertDirectDependencies(project.getDirectDependencies(), components));
+        rootDependency.setDependencies(convertDirectDependencies(project.getDirectDependencies(), componentUuids));
         dependencies.add(rootDependency);
 
         for (final Component component : components) {
             final var dependency = new Dependency(component.getUuid().toString());
-            dependency.setDependencies(convertDirectDependencies(component.getDirectDependencies(), components));
+            dependency.setDependencies(convertDirectDependencies(component.getDirectDependencies(), componentUuids));
             dependencies.add(dependency);
         }
 
@@ -1195,7 +1198,7 @@ public class ModelConverter {
     }
 
     private static List<Dependency> convertDirectDependencies(
-            final String directDependenciesRaw, final List<Component> components) {
+            final String directDependenciesRaw, final Set<String> componentUuids) {
         if (directDependenciesRaw == null || directDependenciesRaw.isBlank()) {
             return Collections.emptyList();
         }
@@ -1207,12 +1210,8 @@ public class ModelConverter {
             for (final JsonValue directDependency : directDependenciesJsonArray) {
                 if (directDependency instanceof final JsonObject directDependencyObject) {
                     final String componentUuid = directDependencyObject.getString("uuid", null);
-                    if (componentUuid != null
-                            && components.stream()
-                                    .map(Component::getUuid)
-                                    .map(UUID::toString)
-                                    .anyMatch(componentUuid::equals)) {
-                        dependencies.add(new Dependency(directDependencyObject.getString("uuid")));
+                    if (componentUuid != null && componentUuids.contains(componentUuid)) {
+                        dependencies.add(new Dependency(componentUuid));
                     }
                 }
             }

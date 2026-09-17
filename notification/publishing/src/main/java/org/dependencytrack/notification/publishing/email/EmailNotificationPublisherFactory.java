@@ -21,9 +21,9 @@ package org.dependencytrack.notification.publishing.email;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplate;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionTestResult;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.Testable;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
@@ -89,8 +89,8 @@ public final class EmailNotificationPublisherFactory
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        configRegistry = serviceRegistry.require(ConfigRegistry.class);
+    public void init(ExtensionContext context) {
+        configRegistry = context.configRegistry();
         localConnectionsAllowed = configRegistry
                 .getDeploymentConfig()
                 .getOptionalValue("allow-local-connections", boolean.class)

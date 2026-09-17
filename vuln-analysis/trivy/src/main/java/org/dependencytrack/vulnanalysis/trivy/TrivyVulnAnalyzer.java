@@ -329,14 +329,17 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
     }
 
     private byte[] sendProtobufRequest(String url, byte[] body) throws InterruptedException {
-        final var request = HttpRequest.newBuilder()
+        final HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(java.net.URI.create(url))
                 .header("Accept", "application/protobuf")
                 .header("Content-Type", "application/protobuf")
-                .header(TOKEN_HEADER, apiToken)
                 .timeout(Duration.ofSeconds(30))
-                .POST(HttpRequest.BodyPublishers.ofByteArray(body))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofByteArray(body));
+        // Trivy servers only require a token when one was configured with --token.
+        if (apiToken != null) {
+            requestBuilder.header(TOKEN_HEADER, apiToken);
+        }
+        final HttpRequest request = requestBuilder.build();
 
         final HttpResponse<byte[]> response;
         try {

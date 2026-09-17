@@ -1160,6 +1160,86 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getDependencyGraphForComponentWithMultiplePathsTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+
+        Component componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("ComponentA");
+        componentA = qm.createComponent(componentA, false);
+
+        Component componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("ComponentB");
+        componentB = qm.createComponent(componentB, false);
+
+        Component componentC = new Component();
+        componentC.setProject(project);
+        componentC.setName("ComponentC");
+        componentC = qm.createComponent(componentC, false);
+
+        Component componentD = new Component();
+        componentD.setProject(project);
+        componentD.setName("ComponentD");
+        componentD = qm.createComponent(componentD, false);
+
+        //  /-> A --\
+        // *         > C -> D
+        //  \-> B --/
+        project.setDirectDependencies(
+                "[{\"uuid\":\"" + componentA.getUuid() + "\"}, {\"uuid\":\"" + componentB.getUuid() + "\"}]");
+        componentA.setDirectDependencies("[{\"uuid\":\"" + componentC.getUuid() + "\"}]");
+        componentB.setDirectDependencies("[{\"uuid\":\"" + componentC.getUuid() + "\"}]");
+        componentC.setDirectDependencies("[{\"uuid\":\"" + componentD.getUuid() + "\"}]");
+
+        final Response response = jersey.target(
+                        V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + componentD.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                // NB: Custom matchers don't work with object keys so have to use String formatting here.
+                .isEqualTo(
+                        /* language=JSON */ """
+                            {
+                              "%1$s": {
+                                "expandDependencyGraph": false,
+                                "isInternal": false,
+                                "name": "ComponentD",
+                                "uuid": "%1$s"
+                              },
+                              "%2$s": {
+                                "dependencyGraph": [ "%1$s" ],
+                                "expandDependencyGraph": true,
+                                "isInternal": false,
+                                "name": "ComponentC",
+                                "uuid": "%2$s"
+                              },
+                              "%3$s": {
+                                "dependencyGraph": [ "%2$s" ],
+                                "expandDependencyGraph": true,
+                                "isInternal": false,
+                                "name": "ComponentA",
+                                "uuid": "%3$s"
+                              },
+                              "%4$s": {
+                                "dependencyGraph": [ "%2$s" ],
+                                "expandDependencyGraph": true,
+                                "isInternal": false,
+                                "name": "ComponentB",
+                                "uuid": "%4$s"
+                              }
+                            }
+                            """.formatted(
+                                        componentD.getUuid(),
+                                        componentC.getUuid(),
+                                        componentA.getUuid(),
+                                        componentB.getUuid()));
+    }
+
+    @Test
     public void getDependencyGraphForComponentInvalidProjectUuidTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);

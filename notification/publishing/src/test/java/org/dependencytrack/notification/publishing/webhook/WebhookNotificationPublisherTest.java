@@ -26,6 +26,7 @@ import org.dependencytrack.notification.api.publishing.NotificationPublisherFact
 import org.dependencytrack.notification.api.publishing.RetryablePublishException;
 import org.dependencytrack.notification.api.templating.NotificationTemplateRenderer;
 import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
+import org.dependencytrack.notification.api.templating.RenderedNotificationTemplate;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherTest;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
@@ -38,9 +39,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -433,8 +439,47 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
         }
     }
 
+    @ParameterizedTest
+    @CsvSource(
+            delimiter = '|',
+            value = {
+                "webhook-secret|{\"message\":\"Grüße\"}|00b35f87f957cd18dae7cc136e636b0ad7fd1f1ca56bae14963f1d858fa372b4",
+                "webhook-secret|{\"message\":\"Changed\"}|4fc2ed6f19980ca7cd7e105ec1f3e998ee0525490b741edd652d155967bf9ac4",
+                "different-secret|{\"message\":\"Grüße\"}|2f9026b81d770792124ff337bdc20af46904b54c0716db8905cb110ea63d5cbc"
+            })
+    void shouldSignExactRequestBodyWhenConfigured(String secret, String body, String expectedSignature)
+            throws Exception {
+        try (final var factory = new WebhookNotificationPublisherFactory()) {
+            factory.init(new ExtensionContextBuilder().build());
+
+            try (final var publisher = factory.create()) {
+                final var ruleConfig = (WebhookNotificationPublisherRuleConfigV1)
+                        factory.ruleConfigSpec().defaultConfig();
+                ruleConfig.setDestinationUrl(URI.create(WIREMOCK.baseUrl()));
+                ruleConfig.setSigningSecret(secret);
+                final NotificationTemplateRenderer templateRenderer =
+                        (notification, additionalContext) -> new RenderedNotificationTemplate(body, "application/json");
+
+                publisher.publish(
+                        new NotificationPublishContext(ruleConfig, templateRenderer),
+                        createBomConsumedTestNotification());
+
+                WIREMOCK.verify(postRequestedFor(anyUrl())
+                        .withHeader("X-Webhook-Signature", equalTo("sha256=" + expectedSignature))
+                        .withRequestBody(equalTo(body)));
+            }
+        }
+    }
+
     @Test
-    void shouldSendProtobufWhenConfigured() {
+    void shouldNotSendSignatureHeaderWhenSecretIsNotConfigured() throws Exception {
+        publisher.publish(publishContext, createBomConsumedTestNotification());
+
+        WIREMOCK.verify(postRequestedFor(anyUrl()).withoutHeader("X-Webhook-Signature"));
+    }
+
+    @Test
+    void shouldSendProtobufWhenConfigured() throws Exception {
         try (final var factory = new WebhookNotificationPublisherFactory()) {
             final var configRegistry = new MockConfigRegistry(Map.of(), null, RuntimeConfigMapper.getInstance(), null);
             factory.init(new ExtensionContextBuilder()
@@ -446,6 +491,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
                 final var ruleConfig = (WebhookNotificationPublisherRuleConfigV1) ruleConfigSpec.defaultConfig();
                 ruleConfig.setDestinationUrl(URI.create(WIREMOCK.baseUrl()));
                 ruleConfig.setPublishProtobuf(true);
+                ruleConfig.setSigningSecret("webhook-secret");
 
                 final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
                         Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"));
@@ -456,10 +502,14 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
 
                 final var notification = createBomConsumedTestNotification();
                 final var expectedProtobuf = notification.toByteArray();
+                final var mac = Mac.getInstance("HmacSHA256");
+                mac.init(new SecretKeySpec("webhook-secret".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+                final var expectedSignature = HexFormat.of().formatHex(mac.doFinal(expectedProtobuf));
                 assertThatNoException().isThrownBy(() -> publisher.publish(ctx, notification));
 
                 WIREMOCK.verify(postRequestedFor(anyUrl())
                         .withHeader("Content-Type", equalTo("application/protobuf"))
+                        .withHeader("X-Webhook-Signature", equalTo("sha256=" + expectedSignature))
                         .withRequestBody(binaryEqualTo(expectedProtobuf)));
             }
         }

@@ -116,4 +116,17 @@ class WebhookNotificationPublisherFactoryTest
             assertThatNoException().isThrownBy(() -> ruleConfigSpec.validator().validate(config));
         }
     }
+
+    @Test
+    void shouldRejectConfigWithBlankSigningSecret() {
+        try (final var publisherFactory = new WebhookNotificationPublisherFactory()) {
+            final RuntimeConfigSpec ruleConfigSpec = publisherFactory.ruleConfigSpec();
+            final var config = (WebhookNotificationPublisherRuleConfigV1) ruleConfigSpec.defaultConfig();
+            config.setSigningSecret("  ");
+
+            assertThatExceptionOfType(InvalidRuntimeConfigException.class)
+                    .isThrownBy(() -> ruleConfigSpec.validator().validate(config))
+                    .withMessageContaining("signingSecret must not be blank");
+        }
+    }
 }

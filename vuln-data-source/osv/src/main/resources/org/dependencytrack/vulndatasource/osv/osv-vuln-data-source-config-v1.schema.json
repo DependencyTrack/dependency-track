@@ -6,10 +6,10 @@
     "org.dependencytrack.plugin.api.config.RuntimeConfig"
   ],
   "properties": {
-    "sources": {
+  "feeds": {
       "type": "array",
-      "title": "Sources",
-      "description": "The OSV sources to mirror vulnerability data from.  \nEach source is configured, enabled and watermarked independently.",
+    "title": "Feeds",
+    "description": "The OSV feeds to mirror vulnerability data from.  \nEach feed is configured, enabled and watermarked independently.",
       "uniqueItems": true,
       "items": {
         "type": "object",
@@ -19,8 +19,10 @@
           "name": {
             "type": "string",
             "title": "Name",
-            "description": "The name of the OSV data source.",
-            "minLength": 1
+            "description": "The name of the OSV data source. Used in watermark keys and other identifiers; must be 1–255 characters and only contain letters, digits, dot (.), underscore (_) or hyphen (-).",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^[A-Za-z0-9._-]+$"
           },
           "enabled": {
             "type": "boolean",

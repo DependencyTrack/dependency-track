@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.vulndatasource.osv;
 
-import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-@WireMockTest
 class OsvCompositeVulnDataSourceTest {
 
     @Test

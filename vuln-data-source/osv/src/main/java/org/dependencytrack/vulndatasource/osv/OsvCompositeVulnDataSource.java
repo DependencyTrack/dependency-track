@@ -23,6 +23,7 @@ import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -60,7 +61,9 @@ final class OsvCompositeVulnDataSource implements VulnDataSource {
             throw new NoSuchElementException();
         }
         currentDataSource = dataSources.get(currentDataSourceIndex);
-        return currentDataSource.next();
+        try (final var _ = MDC.putCloseable("osvSource", currentDataSource.getDataSourceName())) {
+            return currentDataSource.next();
+        }
     }
 
     @Override
@@ -68,7 +71,9 @@ final class OsvCompositeVulnDataSource implements VulnDataSource {
         if (currentDataSource == null) {
             throw new IllegalStateException("No current data source to mark processed");
         }
-        currentDataSource.markProcessed(bom);
+        try (final var _ = MDC.putCloseable("osvSource", currentDataSource.getDataSourceName())) {
+            currentDataSource.markProcessed(bom);
+        }
     }
 
     @Override
@@ -77,7 +82,7 @@ final class OsvCompositeVulnDataSource implements VulnDataSource {
             try {
                 dataSource.close();
             } catch (final Exception e) {
-                LOGGER.warn("Failed to close data source: {}", dataSource, e);
+                LOGGER.warn("Failed to close data source: {}", dataSource.getDataSourceName(), e);
             }
         }
     }

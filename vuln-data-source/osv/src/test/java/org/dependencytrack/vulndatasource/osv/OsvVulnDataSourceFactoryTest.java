@@ -62,7 +62,7 @@ class OsvVulnDataSourceFactoryTest
     @Test
     void defaultConfigShouldContainSingleDefaultSource() {
         final OsvVulnDataSourceConfigV1 config = defaultConfig();
-        assertThat(config.getSources()).satisfiesExactly(source -> {
+        assertThat(config.getFeeds()).satisfiesExactly(feed -> {
             assertThat(source.getName()).isEqualTo("default");
             assertThat(source.isEnabled()).isFalse();
             assertThat(source.getAliasSyncEnabled()).isFalse();
@@ -76,7 +76,7 @@ class OsvVulnDataSourceFactoryTest
     @ValueSource(booleans = {true, false})
     void isDataSourceEnabledShouldReturnTrueWhenEnabledAndFalseOtherwise(final boolean isEnabled) {
         final OsvVulnDataSourceConfigV1 config = defaultConfig();
-        config.getSources().forEach(source -> source.setEnabled(isEnabled));
+        config.getFeeds().forEach(feed -> feed.setEnabled(isEnabled));
         initFactory(config);
         assertThat(factory.isDataSourceEnabled()).isEqualTo(isEnabled);
     }
@@ -84,7 +84,7 @@ class OsvVulnDataSourceFactoryTest
     @Test
     void createShouldReturnNullWhenDisabled() {
         final OsvVulnDataSourceConfigV1 config = defaultConfig();
-        config.getSources().forEach(source -> source.setEnabled(false));
+        config.getFeeds().forEach(feed -> feed.setEnabled(false));
         initFactory(config);
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
@@ -92,7 +92,7 @@ class OsvVulnDataSourceFactoryTest
     @Test
     void createShouldReturnDataSource() {
         final OsvVulnDataSourceConfigV1 config = defaultConfig();
-        config.getSources().forEach(source -> source.setEnabled(true));
+        config.getFeeds().forEach(feed -> feed.setEnabled(true));
         initFactory(config);
         final VulnDataSource dataSource = factory.create();
         assertThat(dataSource).isNotNull();
@@ -103,8 +103,8 @@ class OsvVulnDataSourceFactoryTest
     @Test
     void createShouldReturnDataSourcePerEnabledSource() {
         final OsvVulnDataSourceConfigV1 config = defaultConfig();
-        config.getSources().forEach(source -> source.setEnabled(true));
-        config.getSources()
+        config.getFeeds().forEach(feed -> feed.setEnabled(true));
+        config.getFeeds()
                 .add(new OsvSourceConfigV1()
                         .withName("Chainguard")
                         .withEnabled(true)
@@ -112,7 +112,7 @@ class OsvVulnDataSourceFactoryTest
                         .withAliasSyncEnabled(false)
                         .withDataUrl(URI.create("https://chainguard.com/osv-vulnerabilities"))
                         .withEcosystems(Set.of("Maven")));
-        config.getSources()
+        config.getFeeds()
                 .add(new OsvSourceConfigV1()
                         .withName("Red Hat")
                         .withEnabled(false)
@@ -130,9 +130,9 @@ class OsvVulnDataSourceFactoryTest
     @Test
     void createWhenIncrementalMirroringDisabledShouldCreateDataSourceWithNullWatermarkManager() {
         final OsvVulnDataSourceConfigV1 config = defaultConfig();
-        config.getSources().forEach(source -> {
-            source.setEnabled(true);
-            source.setIncrementalMirroringEnabled(false);
+        config.getFeeds().forEach(feed -> {
+            feed.setEnabled(true);
+            feed.setIncrementalMirroringEnabled(false);
         });
         initFactory(config);
         try (VulnDataSource dataSource = factory.create()) {
@@ -146,9 +146,9 @@ class OsvVulnDataSourceFactoryTest
     @Test
     void createWhenIncrementalMirroringEnabledShouldCreateDataSourceWithWatermarkManager() {
         final OsvVulnDataSourceConfigV1 config = defaultConfig();
-        config.getSources().forEach(source -> {
-            source.setEnabled(true);
-            source.setIncrementalMirroringEnabled(true);
+        config.getFeeds().forEach(feed -> {
+            feed.setEnabled(true);
+            feed.setIncrementalMirroringEnabled(true);
         });
         initFactory(config);
         try (VulnDataSource dataSource = factory.create()) {

@@ -51,12 +51,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.datanucleus.PropertyNames.PROPERTY_MANAGE_RELATIONSHIPS;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_DATA_SOURCE_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_ID;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_SOURCE;
+import static org.dependencytrack.parser.dependencytrack.BovModelConverter.distinctIgnoringDatastoreIdentity;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 
 /**
@@ -155,8 +157,8 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             VulnerabilityUpdatePolicy updatePolicy) {
         LOGGER.debug("Processing batch of {} vulnerabilities", bovs.size());
 
-        final var vulns = new ArrayList<Vulnerability>(bovs.size());
-        final var vsListByVulnId = new HashMap<String, List<VulnerableSoftware>>(bovs.size());
+        final var vulnByKey = new LinkedHashMap<VulnerabilityKey, Vulnerability>(bovs.size());
+        final var vsListByVulnKey = new HashMap<VulnerabilityKey, List<VulnerableSoftware>>(bovs.size());
         final var aliasesByVuln = new LinkedHashMap<VulnerabilityKey, Set<VulnerabilityKey>>(bovs.size());
 
         for (final Bom bov : bovs) {
@@ -181,10 +183,20 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                 vsList = BovModelConverter.extractVulnerableSoftware(bov);
             }
 
-            vulns.add(vuln);
-            vsListByVulnId.put(vuln.getVulnId(), vsList);
-
             final var vulnKey = new VulnerabilityKey(vuln.getVulnId(), vuln.getSource());
+            vulnByKey.put(vulnKey, vuln);
+
+            // A batch can contain the same vulnerability more than once.
+            // OSV for example publishes an advisory under every ecosystem it affects.
+            // Merge rather than overwrite, since synchronization treats the list as the
+            // complete set of software reported by the source.
+            vsListByVulnKey.merge(
+                    vulnKey,
+                    vsList,
+                    (vsListA, vsListB) -> Stream.concat(vsListA.stream(), vsListB.stream())
+                            .filter(distinctIgnoringDatastoreIdentity())
+                            .toList());
+
             final Set<VulnerabilityKey> aliasKeys = VulnerabilityUtil.extractAliasKeys(vuln.getAliases(), vulnKey);
             aliasesByVuln.put(vulnKey, aliasKeys);
         }
@@ -202,7 +214,8 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
 
             qm.runInTransaction(() -> {
-                for (final Vulnerability vuln : vulns) {
+                for (final Map.Entry<VulnerabilityKey, Vulnerability> entry : vulnByKey.entrySet()) {
+                    final Vulnerability vuln = entry.getValue();
                     final Vulnerability existingVuln = getExistingVuln(qm, vuln.getSource(), vuln.getVulnId());
                     if (!updatePolicy.isUpdatableByDataSource(vuln.getSource(), dataSourceName, existingVuln != null)) {
                         LOGGER.debug(
@@ -217,7 +230,7 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                             ? qm.createVulnerability(vuln)
                             : qm.updateVulnerability(existingVuln, vuln);
 
-                    final List<VulnerableSoftware> vsList = vsListByVulnId.get(persistentVuln.getVulnId());
+                    final List<VulnerableSoftware> vsList = vsListByVulnKey.get(entry.getKey());
                     qm.synchronizeVulnerableSoftware(persistentVuln, vsList, source);
                 }
             });

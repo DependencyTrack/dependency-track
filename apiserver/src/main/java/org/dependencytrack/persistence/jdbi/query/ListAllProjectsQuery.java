@@ -26,7 +26,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-
 public record ListAllProjectsQuery(
         @Nullable String nameContains,
         @Nullable String versionContains,
@@ -40,7 +39,6 @@ public record ListAllProjectsQuery(
         @Nullable Boolean isLatest,
         @Nullable Instant lastBomImportSince,
         @Nullable Instant lastBomImportBefore,
-        @Nullable List<String> severities,
         @Nullable List<String> classifiers,
         boolean includeMetrics,
         boolean includeParent,
@@ -73,7 +71,6 @@ public record ListAllProjectsQuery(
             @Nullable Double lastInheritedRiskScore,
             @Nullable SortBy sortBy,
             @Nullable SortDirection sortDirection,
-            Page.TotalCount totalCount) implements org.dependencytrack.common.pagination.PageToken {
-    }
-
+            Page.TotalCount totalCount)
+            implements org.dependencytrack.common.pagination.PageToken {}
 }

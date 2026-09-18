@@ -172,26 +172,6 @@ get:
       description: Filter by last BOM import time (exclusive upper bound).
       schema:
         $ref: "../../shared/schemas/timestamp.yaml"
-    - name: severity
-      in: query
-      description: |-
-        Filter projects that have at least one vulnerability of the given severities,
-        based on the project's current metrics.
-        When multiple values are provided, projects matching **any** of the severities are returned.
-
-        Values are matched case-insensitively. Unknown values result in `400 Bad Request`.
-      schema:
-        type: array
-        items:
-          type: string
-          enum:
-            - CRITICAL
-            - HIGH
-            - MEDIUM
-            - LOW
-            - UNASSIGNED
-      style: form
-      explode: true
     - name: classifier
       in: query
       description: |-

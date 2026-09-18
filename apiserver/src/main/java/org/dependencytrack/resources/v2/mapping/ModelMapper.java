@@ -24,7 +24,6 @@ import org.dependencytrack.api.v2.model.DependencyMetrics;
 import org.dependencytrack.api.v2.model.Hashes;
 import org.dependencytrack.api.v2.model.License;
 import org.dependencytrack.api.v2.model.ListProjectsResponseItem;
-import org.dependencytrack.api.v2.model.ListProjectsResponseItemTeamsInner;
 import org.dependencytrack.api.v2.model.OrganizationalContact;
 import org.dependencytrack.api.v2.model.PackageArtifactMetadata;
 import org.dependencytrack.api.v2.model.PackageMetadata;
@@ -149,48 +148,40 @@ public class ModelMapper {
     }
 
     public static ListProjectsResponseItem mapListProjectsResponseItem(
-            ListAllProjectsRow row,
-            boolean includeMetrics,
-            boolean includeParent,
-            boolean includeTeams) {
+            ListAllProjectsRow row, boolean includeMetrics, boolean includeParent, boolean includeTeams) {
         return ListProjectsResponseItem.builder()
                 .uuid(row.uuid())
                 .name(row.name())
                 .version(row.version())
                 .group(row.group())
-                .classifier(row.classifier() != null
-                        ? Classifier.fromValue(row.classifier().name())
-                        : null)
+                .classifier(
+                        row.classifier() != null
+                                ? Classifier.fromValue(row.classifier().name())
+                                : null)
                 .isActive(row.inactiveSince() == null ? ProjectState.ACTIVE : ProjectState.INACTIVE)
                 .isLatest(row.isLatest())
                 .lastBomImport(row.lastBomImport() != null ? row.lastBomImport().getTime() : null)
                 .lastBomImportFormat(row.lastBomImportFormat())
                 .lastInheritedRiskScore(row.lastInheritedRiskScore())
                 .tags(row.tagNames() != null ? row.tagNames() : List.of())
-                .teams(includeTeams ? mapNamedItems(row.teamNames()) : null)
-                .collectionLogic(row.collectionLogic() != null
-                        ? ListProjectsResponseItem.CollectionLogicEnum.fromValue(row.collectionLogic().name())
-                        : null)
+                .teams(includeTeams ? (row.teamNames() != null ? row.teamNames() : List.of()) : null)
+                .collectionLogic(
+                        row.collectionLogic() != null
+                                ? ListProjectsResponseItem.CollectionLogicEnum.fromValue(
+                                        row.collectionLogic().name())
+                                : null)
                 .collectionTag(row.collectionTagName())
-                .parent(includeParent && row.parentUuid() != null
-                        ? ComponentProject.builder()
-                                .uuid(row.parentUuid())
-                                .name(row.parentName())
-                                .version(row.parentVersion())
-                                .build()
-                        : null)
+                .parent(
+                        includeParent && row.parentUuid() != null
+                                ? ComponentProject.builder()
+                                        .uuid(row.parentUuid())
+                                        .name(row.parentName())
+                                        .version(row.parentVersion())
+                                        .build()
+                                : null)
                 .hasChildren(row.hasChildren())
                 .metrics(includeMetrics ? mapProjectMetrics(row.metrics()) : null)
                 .build();
-    }
-
-    private static List<ListProjectsResponseItemTeamsInner> mapNamedItems(@Nullable List<String> names) {
-        if (names == null || names.isEmpty()) {
-            return List.of();
-        }
-        return names.stream()
-                .map(ListProjectsResponseItemTeamsInner::new)
-                .toList();
     }
 
     public static Hashes mapHashes(Component component) {

@@ -51,16 +51,15 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -100,7 +99,6 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
             final Boolean isLatest,
             final Long lastBomImportSince,
             final Long lastBomImportBefore,
-            final List<String> severity,
             final List<Classifier> classifier,
             final List<String> expand,
             final Integer limit,
@@ -112,30 +110,33 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
         final boolean expandMetrics = hasExpand && expand.contains("metrics");
         final boolean expandParent = hasExpand && expand.contains("parent");
         final boolean expandTeams = hasExpand && expand.contains("teams");
-        final List<String> severities = normalizeSeverityFilter(severity);
         final List<String> classifiers = normalizeClassifierFilter(classifier);
 
         return withJdbiHandle(getAlpineRequest(), handle -> {
-            final ListAllProjectsQuery.SortBy sortByEnum = switch (sortBy) {
-                case null -> null;
-                case "name" -> ListAllProjectsQuery.SortBy.NAME;
-                case "group" -> ListAllProjectsQuery.SortBy.GROUP;
-                case "version" -> ListAllProjectsQuery.SortBy.VERSION;
-                case "classifier" -> ListAllProjectsQuery.SortBy.CLASSIFIER;
-                case "inactive_since" -> ListAllProjectsQuery.SortBy.INACTIVE_SINCE;
-                case "is_latest" -> ListAllProjectsQuery.SortBy.IS_LATEST;
-                case "last_bom_import" -> ListAllProjectsQuery.SortBy.LAST_BOM_IMPORTED;
-                case "last_inherited_risk_score" -> ListAllProjectsQuery.SortBy.LAST_RISKSCORE;
-                default -> throw new InvalidSortFieldException(sortBy, List.of(
-                        "name",
-                        "group",
-                        "version",
-                        "classifier",
-                        "inactive_since",
-                        "is_latest",
-                        "last_bom_import",
-                        "last_inherited_risk_score"));
-            };
+            final ListAllProjectsQuery.SortBy sortByEnum =
+                    switch (sortBy) {
+                        case null -> null;
+                        case "name" -> ListAllProjectsQuery.SortBy.NAME;
+                        case "group" -> ListAllProjectsQuery.SortBy.GROUP;
+                        case "version" -> ListAllProjectsQuery.SortBy.VERSION;
+                        case "classifier" -> ListAllProjectsQuery.SortBy.CLASSIFIER;
+                        case "inactive_since" -> ListAllProjectsQuery.SortBy.INACTIVE_SINCE;
+                        case "is_latest" -> ListAllProjectsQuery.SortBy.IS_LATEST;
+                        case "last_bom_import" -> ListAllProjectsQuery.SortBy.LAST_BOM_IMPORTED;
+                        case "last_inherited_risk_score" -> ListAllProjectsQuery.SortBy.LAST_RISKSCORE;
+                        default ->
+                            throw new InvalidSortFieldException(
+                                    sortBy,
+                                    List.of(
+                                            "name",
+                                            "group",
+                                            "version",
+                                            "classifier",
+                                            "inactive_since",
+                                            "is_latest",
+                                            "last_bom_import",
+                                            "last_inherited_risk_score"));
+                    };
 
             final Page<ProjectDao.ListAllProjectsRow> projectsPage = handle.attach(ProjectDao.class)
                     .listAllProjects(new ListAllProjectsQuery(
@@ -155,7 +156,6 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                             isLatest,
                             lastBomImportSince != null ? Instant.ofEpochMilli(lastBomImportSince) : null,
                             lastBomImportBefore != null ? Instant.ofEpochMilli(lastBomImportBefore) : null,
-                            severities,
                             classifiers,
                             expandMetrics,
                             expandParent,
@@ -170,10 +170,11 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                     .toList();
 
             return Response.ok(ListProjectsResponse.builder()
-                    .items(responseItems)
-                    .nextPageToken(projectsPage.nextPageToken())
-                    .total(convertTotalCount(projectsPage.totalCount()))
-                    .build()).build();
+                            .items(responseItems)
+                            .nextPageToken(projectsPage.nextPageToken())
+                            .total(convertTotalCount(projectsPage.totalCount()))
+                            .build())
+                    .build();
         });
     }
 
@@ -357,43 +358,11 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                 .build();
     }
 
-    private static final Set<String> ALLOWED_PROJECT_SEVERITY_FILTERS = Set.of(
-            "CRITICAL",
-            "HIGH",
-            "MEDIUM",
-            "LOW",
-            "UNASSIGNED");
-
-    private static final String ALLOWED_SEVERITY_FILTERS = "CRITICAL, HIGH, MEDIUM, LOW, UNASSIGNED";
-
-    private static List<String> normalizeSeverityFilter(final List<String> severity) {
-        if (severity == null || severity.isEmpty()) {
-            return null;
-        }
-
-        final var normalized = new ArrayList<String>();
-        for (final String value : severity) {
-            if (value == null || value.isBlank()) {
-                throw new BadRequestException("severity must be one of: " + ALLOWED_SEVERITY_FILTERS);
-            }
-            final String normalizedValue = value.trim().toUpperCase(Locale.ROOT);
-            if (!ALLOWED_PROJECT_SEVERITY_FILTERS.contains(normalizedValue)) {
-                throw new BadRequestException("severity must be one of: " + ALLOWED_SEVERITY_FILTERS);
-            }
-            normalized.add(normalizedValue);
-        }
-
-        return normalized.stream().distinct().toList();
-    }
-
     private static List<String> normalizeClassifierFilter(final List<Classifier> classifier) {
         if (classifier == null || classifier.isEmpty()) {
             return null;
         }
 
-        return classifier.stream()
-                .map(Classifier::name)
-                .distinct()
-                .toList();
+        return classifier.stream().map(Classifier::name).distinct().toList();
     }
 }

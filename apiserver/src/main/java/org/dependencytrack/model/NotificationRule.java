@@ -140,7 +140,7 @@ public class NotificationRule implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC, version ASC"))
     private List<Project> projects;
 
-    @Persistent(table = "NOTIFICATIONRULE_TAGS", defaultFetchGroup = "true", mappedBy = "notificationRules")
+    @Persistent(table = "NOTIFICATIONRULE_TAGS", defaultFetchGroup = "true")
     @Join(
             column = "NOTIFICATIONRULE_ID",
             primaryKey = "NOTIFICATIONRULE_TAGS_PK",

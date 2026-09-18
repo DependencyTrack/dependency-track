@@ -54,9 +54,6 @@ import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 
 public class TagQueryManager extends QueryManager {
 
-    private static final Comparator<Tag> TAG_COMPARATOR =
-            Comparator.comparingInt((Tag tag) -> tag.getProjects().size()).reversed();
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectQueryManager.class);
 
     /**
@@ -591,10 +588,36 @@ public class TagQueryManager extends QueryManager {
     public PaginatedResult getTagsForPolicy(String policyUuid) {
         LOGGER.debug("Retrieving tags under policy {}", policyUuid);
         final var policy = getObjectByUuid(Policy.class, policyUuid);
-        final var tags = Optional.ofNullable(policy.getTags()).orElse(Collections.emptySet()).stream()
-                .sorted(TAG_COMPARATOR)
+        final Set<Tag> policyTags = Optional.ofNullable(policy.getTags()).orElse(Collections.emptySet());
+        final Map<Long, Long> projectCountByTagId = getProjectCountByTagId(policyTags);
+        final var tags = policyTags.stream()
+                .sorted(Comparator.comparingLong((Tag tag) -> projectCountByTagId.getOrDefault(tag.getId(), 0L))
+                        .reversed())
                 .toList();
         return (new PaginatedResult()).objects(tags).total(tags.size());
+    }
+
+    private record TagProjectCountRow(long tagId, long projectCount) {}
+
+    private Map<Long, Long> getProjectCountByTagId(Collection<Tag> tags) {
+        if (tags.isEmpty()) {
+            return Map.of();
+        }
+
+        final Long[] tagIds = tags.stream().map(Tag::getId).toArray(Long[]::new);
+
+        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+            final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
+                    SELECT "TAG_ID" AS "tagId"
+                         , COUNT(*) AS "projectCount"
+                      FROM "PROJECTS_TAGS"
+                     WHERE "TAG_ID" = ANY(:tagIds)
+                     GROUP BY "TAG_ID"
+                    """);
+            query.setNamedParameters(Map.of("tagIds", tagIds));
+            return executeAndCloseResultList(query, TagProjectCountRow.class).stream()
+                    .collect(Collectors.toMap(TagProjectCountRow::tagId, TagProjectCountRow::projectCount));
+        }
     }
 
     /**

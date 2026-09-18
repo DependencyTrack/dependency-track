@@ -397,6 +397,7 @@ BEGIN
           , "SEVERITY"
           , "CVSSV4SCORE"
           , "CVSSV4VECTOR"
+          , "POLICY_ANNOTATIONS"
           )
           SELECT tmp_component_mapping.target_id
                , target_project.id
@@ -416,6 +417,7 @@ BEGIN
                , "SEVERITY"
                , "CVSSV4SCORE"
                , "CVSSV4VECTOR"
+               , "POLICY_ANNOTATIONS"
             FROM source_analysis
            INNER JOIN tmp_component_mapping
               ON tmp_component_mapping.source_id = "COMPONENT_ID"

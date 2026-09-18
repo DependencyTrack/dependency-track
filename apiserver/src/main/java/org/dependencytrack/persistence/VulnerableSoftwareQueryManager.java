@@ -311,7 +311,6 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
             // create an attribution if it doesn't exist already.
             //
             // NB: Attributions that already exist remain untouched.
-            // Refreshing their lastSeen timestamp causes unnecessary write amplification.
             for (final VulnerableSoftware oldVs : vsListToKeep) {
                 final List<AffectedVersionAttribution> attributions = oldVs.getAffectedVersionAttributions();
                 final boolean hasAttribution = attributions != null

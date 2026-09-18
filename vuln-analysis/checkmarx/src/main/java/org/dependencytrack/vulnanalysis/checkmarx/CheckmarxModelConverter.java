@@ -77,7 +77,7 @@ final class CheckmarxModelConverter {
         convertTimestamp(vulnDetails.updatedTime()).ifPresent(vulnBuilder::setUpdated);
         convertTimestamp(vulnDetails.published()).ifPresent(vulnBuilder::setPublished);
 
-        if (aliasSyncEnabled) {
+        if (aliasSyncEnabled && cxVuln.cve() != null && !cxVuln.cve().isBlank()) {
             vulnBuilder.addReferences(VulnerabilityReference.newBuilder()
                     .setId(cxVuln.cve())
                     .setSource(SOURCE_NVD)
@@ -91,18 +91,30 @@ final class CheckmarxModelConverter {
 
         if (vulnDetails.references() != null) {
             for (final var ref : vulnDetails.references()) {
-                vulnBuilder.addAdvisories(Advisory.newBuilder().setUrl(ref.url()));
+                if (ref != null && ref.url() != null && !ref.url().isBlank()) {
+                    vulnBuilder.addAdvisories(Advisory.newBuilder().setUrl(ref.url()));
+                }
             }
         }
 
         if (remediation != null) {
             final var recommendations = new ArrayList<String>();
-            recommendations.add(
-                    "Smallest package upgrade that resolves the identified risks in the current package version: "
-                            + remediation.nearest().version());
-            recommendations.add(
-                    "Latest version of the package: " + remediation.latest().version());
-            vulnBuilder.setRecommendation(String.join(System.lineSeparator(), recommendations));
+            if (remediation.nearest() != null
+                    && remediation.nearest().version() != null
+                    && !remediation.nearest().version().isBlank()) {
+                recommendations.add(
+                        "Smallest package upgrade that resolves the identified risks in the current package version: "
+                                + remediation.nearest().version());
+            }
+            if (remediation.latest() != null
+                    && remediation.latest().version() != null
+                    && !remediation.latest().version().isBlank()) {
+                recommendations.add(
+                        "Latest version of the package: " + remediation.latest().version());
+            }
+            if (!recommendations.isEmpty()) {
+                vulnBuilder.setRecommendation(String.join(System.lineSeparator(), recommendations));
+            }
         }
 
         if (vulnDetails.cvss4() != null) {
@@ -144,7 +156,10 @@ final class CheckmarxModelConverter {
         return vulnBuilder;
     }
 
-    private static Severity convertSeverity(String severity) {
+    private static Severity convertSeverity(@Nullable String severity) {
+        if (severity == null || severity.isBlank()) {
+            return SEVERITY_UNKNOWN;
+        }
         return switch (severity) {
             case "Critical" -> SEVERITY_CRITICAL;
             case "High" -> SEVERITY_HIGH;

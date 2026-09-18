@@ -116,7 +116,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (cache) (rate(cache_gets_total{instance=~\"$instance\",result=\"hit\"}[1m])) / clamp_min(sum by (cache) (rate(cache_gets_total{instance=~\"$instance\"}[1m])), 1e-9)",
+          "expr": "sum by (cache) (rate(cache_gets_total{instance=~\"$instance\",result=\"hit\"}[$__rate_interval])) / clamp_min(sum by (cache) (rate(cache_gets_total{instance=~\"$instance\"}[$__rate_interval])), 1e-9)",
           "legendFormat": "{{cache}}",
           "range": true,
           "refId": "A"
@@ -211,7 +211,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (cache, result) (rate(cache_gets_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (cache, result) (rate(cache_gets_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{cache}} {{result}}",
           "range": true,
           "refId": "A"
@@ -306,7 +306,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (cache) (rate(cache_puts_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (cache) (rate(cache_puts_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{cache}}",
           "range": true,
           "refId": "A"
@@ -401,7 +401,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (cache) (rate(cache_evictions_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (cache) (rate(cache_evictions_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{cache}}",
           "range": true,
           "refId": "A"

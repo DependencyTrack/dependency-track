@@ -120,7 +120,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (outcome) (rate(dt_outbox_relay_cycles_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (outcome) (rate(dt_outbox_relay_cycles_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{outcome}}",
           "range": true,
           "refId": "A"
@@ -215,7 +215,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -226,7 +226,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -237,7 +237,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -332,7 +332,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -343,7 +343,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -354,7 +354,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -449,7 +449,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -460,7 +460,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -471,7 +471,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -566,7 +566,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (level, group) (rate(dt_outbox_relay_messages_sent_count{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (level, group) (rate(dt_outbox_relay_messages_sent_count{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{level}} {{group}}",
           "range": true,
           "refId": "A"
@@ -661,7 +661,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(dt_outbox_relay_messages_sent_sum{instance=~\"$instance\"}[1m])) / sum(rate(dt_outbox_relay_messages_sent_count{instance=~\"$instance\"}[1m]))",
+          "expr": "sum(rate(dt_outbox_relay_messages_sent_sum{instance=~\"$instance\"}[$__rate_interval])) / sum(rate(dt_outbox_relay_messages_sent_count{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "mean batch",
           "range": true,
           "refId": "A"
@@ -769,7 +769,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (level, group) (rate(dt_notifications_emitted_count{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (level, group) (rate(dt_notifications_emitted_count{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{level}} {{group}}",
           "range": true,
           "refId": "A"
@@ -864,7 +864,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -875,7 +875,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -886,7 +886,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -994,7 +994,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -1005,7 +1005,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -1016,7 +1016,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -1111,7 +1111,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -1122,7 +1122,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -1133,7 +1133,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -1228,7 +1228,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (ruleName) (rate(dt_notification_router_rules_matched_total{instance=~\"$instance\"}[1m])))",
+          "expr": "topk(10, sum by (ruleName) (rate(dt_notification_router_rules_matched_total{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "{{ruleName}}",
           "range": true,
           "refId": "A"

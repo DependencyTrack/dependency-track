@@ -1,7 +1,7 @@
 ---
 scrape_configs:
 - job_name: apiserver
-  scrape_interval: 15s
+  scrape_interval: 1m
   metrics_path: /metrics
   dns_sd_configs:
   - names: [ "apiserver" ]

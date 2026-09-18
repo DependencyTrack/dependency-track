@@ -214,7 +214,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_server_requests_seconds_count{instance=~\"$instance\",status=~\"5..\"}[1m])) / clamp_min(sum(rate(http_server_requests_seconds_count{instance=~\"$instance\"}[1m])), 1e-9)",
+          "expr": "sum(rate(http_server_requests_seconds_count{instance=~\"$instance\",status=~\"5..\"}[$__rate_interval])) / clamp_min(sum(rate(http_server_requests_seconds_count{instance=~\"$instance\"}[$__rate_interval])), 1e-9)",
           "instant": false,
           "legendFormat": "5xx ratio",
           "range": true,
@@ -546,7 +546,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(jvm_gc_pause_seconds_sum{instance=~\"$instance\"}[1m]) / clamp_min(rate(jvm_gc_pause_seconds_count{instance=~\"$instance\"}[1m]), 1e-9)",
+          "expr": "rate(jvm_gc_pause_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / clamp_min(rate(jvm_gc_pause_seconds_count{instance=~\"$instance\"}[$__rate_interval]), 1e-9)",
           "legendFormat": "{{instance}} {{action}}",
           "range": true,
           "refId": "A"
@@ -641,7 +641,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (statusClass) (label_replace(rate(http_server_requests_seconds_count{instance=~\"$instance\"}[1m]), \"statusClass\", \"${1}xx\", \"status\", \"(.).*\"))",
+          "expr": "sum by (statusClass) (label_replace(rate(http_server_requests_seconds_count{instance=~\"$instance\"}[$__rate_interval]), \"statusClass\", \"${1}xx\", \"status\", \"(.).*\"))",
           "legendFormat": "{{statusClass}}",
           "range": true,
           "refId": "A"
@@ -736,7 +736,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk($topN, histogram_quantile(0.99, sum by (le, uri) (rate(http_server_requests_seconds_bucket{instance=~\"$instance\"}[1m]))))",
+          "expr": "topk($topN, histogram_quantile(0.99, sum by (le, uri) (rate(http_server_requests_seconds_bucket{instance=~\"$instance\"}[$__rate_interval]))))",
           "legendFormat": "{{uri}} p99",
           "range": true,
           "refId": "A"
@@ -747,7 +747,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "overall p99",
           "range": true,
           "refId": "B"
@@ -758,7 +758,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "overall p95",
           "range": true,
           "refId": "C"
@@ -769,7 +769,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "overall p50",
           "range": true,
           "refId": "D"
@@ -1055,7 +1055,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (rate(dt_dex_engine_runs_completed_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (status) (rate(dt_dex_engine_runs_completed_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{status}}",
           "range": true,
           "refId": "A"
@@ -1150,7 +1150,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (outcome) (rate(dt_outbox_relay_cycles_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (outcome) (rate(dt_outbox_relay_cycles_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{outcome}}",
           "range": true,
           "refId": "A"
@@ -1245,7 +1245,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (result) (rate(dbscheduler_task_completions_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (result) (rate(dbscheduler_task_completions_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{result}}",
           "range": true,
           "refId": "A"
@@ -1340,7 +1340,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (task) (rate(dbscheduler_task_completions_total{instance=~\"$instance\",result=\"failed\"}[1m]))",
+          "expr": "sum by (task) (rate(dbscheduler_task_completions_total{instance=~\"$instance\",result=\"failed\"}[$__rate_interval]))",
           "legendFormat": "{{task}}",
           "range": true,
           "refId": "A"
@@ -1435,7 +1435,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(vuln_policy_evaluation_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(vuln_policy_evaluation_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "A"
@@ -1446,7 +1446,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(vuln_policy_evaluation_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(vuln_policy_evaluation_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "B"

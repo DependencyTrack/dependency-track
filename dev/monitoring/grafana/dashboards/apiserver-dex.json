@@ -194,7 +194,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (rate(dt_dex_engine_runs_completed_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (status) (rate(dt_dex_engine_runs_completed_total{instance=~\"$instance\"}[$__rate_interval]))",
           "instant": false,
           "range": true,
           "legendFormat": "{{status}}",
@@ -825,7 +825,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum (rate(dt_dex_engine_workflow_task_scheduler_polls_total{instance=~\"$instance\"}[1m]))",
+              "expr": "sum (rate(dt_dex_engine_workflow_task_scheduler_polls_total{instance=~\"$instance\"}[$__rate_interval]))",
               "instant": false,
               "range": true,
               "legendFormat": "workflow",
@@ -839,7 +839,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum (rate(dt_dex_engine_activity_task_scheduler_polls_total{instance=~\"$instance\"}[1m]))",
+              "expr": "sum (rate(dt_dex_engine_activity_task_scheduler_polls_total{instance=~\"$instance\"}[$__rate_interval]))",
               "instant": false,
               "range": true,
               "legendFormat": "activity",
@@ -937,7 +937,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum (rate(dt_dex_engine_workflow_tasks_scheduled_total{instance=~\"$instance\"}[1m]))",
+              "expr": "sum (rate(dt_dex_engine_workflow_tasks_scheduled_total{instance=~\"$instance\"}[$__rate_interval]))",
               "instant": false,
               "range": true,
               "legendFormat": "workflow",
@@ -951,7 +951,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum (rate(dt_dex_engine_activity_tasks_scheduled_total{instance=~\"$instance\"}[1m]))",
+              "expr": "sum (rate(dt_dex_engine_activity_tasks_scheduled_total{instance=~\"$instance\"}[$__rate_interval]))",
               "instant": false,
               "range": true,
               "legendFormat": "activity",
@@ -1049,7 +1049,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.5, sum by (le, queueName) (rate(dt_dex_engine_workflow_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$workflowQueue\"}[1m])))",
+              "expr": "histogram_quantile(0.5, sum by (le, queueName) (rate(dt_dex_engine_workflow_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$workflowQueue\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{queueName}} p50",
@@ -1063,7 +1063,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le, queueName) (rate(dt_dex_engine_workflow_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$workflowQueue\"}[1m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, queueName) (rate(dt_dex_engine_workflow_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$workflowQueue\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{queueName}} p95",
@@ -1077,7 +1077,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.99, sum by (le, queueName) (rate(dt_dex_engine_workflow_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$workflowQueue\"}[1m])))",
+              "expr": "histogram_quantile(0.99, sum by (le, queueName) (rate(dt_dex_engine_workflow_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$workflowQueue\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{queueName}} p99",
@@ -1175,7 +1175,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.5, sum by (le, queueName) (rate(dt_dex_engine_activity_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$activityQueue\"}[1m])))",
+              "expr": "histogram_quantile(0.5, sum by (le, queueName) (rate(dt_dex_engine_activity_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$activityQueue\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{queueName}} p50",
@@ -1189,7 +1189,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le, queueName) (rate(dt_dex_engine_activity_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$activityQueue\"}[1m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, queueName) (rate(dt_dex_engine_activity_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$activityQueue\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{queueName}} p95",
@@ -1203,7 +1203,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.99, sum by (le, queueName) (rate(dt_dex_engine_activity_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$activityQueue\"}[1m])))",
+              "expr": "histogram_quantile(0.99, sum by (le, queueName) (rate(dt_dex_engine_activity_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$activityQueue\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{queueName}} p99",
@@ -1315,7 +1315,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_polls_total{instance=~\"$instance\",workerType=~\"$workerType\"}[1m]))",
+              "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_polls_total{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval]))",
               "instant": false,
               "range": true,
               "legendFormat": "{{workerType}}",
@@ -1413,7 +1413,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_poll_skipped_backpressure_total{instance=~\"$instance\",workerType=~\"$workerType\"}[1m]))",
+              "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_poll_skipped_backpressure_total{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval]))",
               "instant": false,
               "range": true,
               "legendFormat": "{{workerType}}",
@@ -1511,7 +1511,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_tasks_polled_sum{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])) / sum by (workerType) (rate(dt_dex_engine_task_worker_tasks_polled_count{instance=~\"$instance\",workerType=~\"$workerType\"}[1m]))",
+              "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_tasks_polled_sum{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval])) / sum by (workerType) (rate(dt_dex_engine_task_worker_tasks_polled_count{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval]))",
               "instant": false,
               "range": true,
               "legendFormat": "{{workerType}}",
@@ -1715,7 +1715,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.5, sum by (le, workerType) (rate(dt_dex_engine_task_worker_process_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
+              "expr": "histogram_quantile(0.5, sum by (le, workerType) (rate(dt_dex_engine_task_worker_process_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{workerType}} p50",
@@ -1729,7 +1729,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le, workerType) (rate(dt_dex_engine_task_worker_process_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, workerType) (rate(dt_dex_engine_task_worker_process_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{workerType}} p95",
@@ -1743,7 +1743,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.99, sum by (le, workerType) (rate(dt_dex_engine_task_worker_process_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
+              "expr": "histogram_quantile(0.99, sum by (le, workerType) (rate(dt_dex_engine_task_worker_process_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{workerType}} p99",
@@ -1841,7 +1841,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.5, sum by (le, workerType) (rate(dt_dex_engine_task_worker_poll_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
+              "expr": "histogram_quantile(0.5, sum by (le, workerType) (rate(dt_dex_engine_task_worker_poll_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{workerType}} p50",
@@ -1855,7 +1855,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le, workerType) (rate(dt_dex_engine_task_worker_poll_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, workerType) (rate(dt_dex_engine_task_worker_poll_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{workerType}} p95",
@@ -1869,7 +1869,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.99, sum by (le, workerType) (rate(dt_dex_engine_task_worker_poll_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
+              "expr": "histogram_quantile(0.99, sum by (le, workerType) (rate(dt_dex_engine_task_worker_poll_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{workerType}} p99",
@@ -1967,7 +1967,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_tasks_processed_total{instance=~\"$instance\",workerType=~\"$workerType\"}[1m]))",
+              "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_tasks_processed_total{instance=~\"$instance\",workerType=~\"$workerType\"}[$__rate_interval]))",
               "instant": false,
               "range": true,
               "legendFormat": "{{workerType}}",
@@ -2177,7 +2177,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum by (name) (rate(dt_dex_engine_buffer_flushes_total{instance=~\"$instance\"}[1m]))",
+              "expr": "sum by (name) (rate(dt_dex_engine_buffer_flushes_total{instance=~\"$instance\"}[$__rate_interval]))",
               "instant": false,
               "range": true,
               "legendFormat": "{{name}}",
@@ -2275,7 +2275,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum by (name) (rate(dt_dex_engine_buffer_flush_batch_size_sum{instance=~\"$instance\"}[1m])) / sum by (name) (rate(dt_dex_engine_buffer_flush_batch_size_count{instance=~\"$instance\"}[1m]))",
+              "expr": "sum by (name) (rate(dt_dex_engine_buffer_flush_batch_size_sum{instance=~\"$instance\"}[$__rate_interval])) / sum by (name) (rate(dt_dex_engine_buffer_flush_batch_size_count{instance=~\"$instance\"}[$__rate_interval]))",
               "instant": false,
               "range": true,
               "legendFormat": "{{name}}",
@@ -2373,7 +2373,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.5, sum by (le, name) (rate(dt_dex_engine_buffer_flush_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+              "expr": "histogram_quantile(0.5, sum by (le, name) (rate(dt_dex_engine_buffer_flush_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{name}} p50",
@@ -2387,7 +2387,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le, name) (rate(dt_dex_engine_buffer_flush_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, name) (rate(dt_dex_engine_buffer_flush_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{name}} p95",
@@ -2401,7 +2401,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.99, sum by (le, name) (rate(dt_dex_engine_buffer_flush_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+              "expr": "histogram_quantile(0.99, sum by (le, name) (rate(dt_dex_engine_buffer_flush_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{name}} p99",
@@ -2499,7 +2499,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.5, sum by (le, name) (rate(dt_dex_engine_buffer_item_wait_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+              "expr": "histogram_quantile(0.5, sum by (le, name) (rate(dt_dex_engine_buffer_item_wait_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{name}} p50",
@@ -2513,7 +2513,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.95, sum by (le, name) (rate(dt_dex_engine_buffer_item_wait_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, name) (rate(dt_dex_engine_buffer_item_wait_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{name}} p95",
@@ -2527,7 +2527,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.99, sum by (le, name) (rate(dt_dex_engine_buffer_item_wait_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+              "expr": "histogram_quantile(0.99, sum by (le, name) (rate(dt_dex_engine_buffer_item_wait_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
               "instant": false,
               "range": true,
               "legendFormat": "{{name}} p99",

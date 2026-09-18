@@ -7,3 +7,7 @@ datasources:
   access: proxy
   url: http://prometheus:9090
   isDefault: true
+  jsonData:
+    # Must track scrape_interval in ../prometheus.yml: the dashboards size their rate
+    # windows with $__rate_interval, which Grafana derives from this value.
+    timeInterval: 1m

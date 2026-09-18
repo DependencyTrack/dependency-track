@@ -347,7 +347,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(jvm_gc_memory_allocated_bytes_total{instance=~\"$instance\"}[1m])",
+          "expr": "rate(jvm_gc_memory_allocated_bytes_total{instance=~\"$instance\"}[$__rate_interval])",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -443,7 +443,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(jvm_gc_pause_seconds_sum{instance=~\"$instance\"}[1m]) / clamp_min(rate(jvm_gc_pause_seconds_count{instance=~\"$instance\"}[1m]), 1e-9)",
+          "expr": "rate(jvm_gc_pause_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / clamp_min(rate(jvm_gc_pause_seconds_count{instance=~\"$instance\"}[$__rate_interval]), 1e-9)",
           "legendFormat": "{{instance}} {{action}}",
           "range": true,
           "refId": "A"
@@ -1082,7 +1082,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (status, method) (rate(http_client_requests_seconds_count{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (status, method) (rate(http_client_requests_seconds_count{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{method}} {{status}}",
           "range": true,
           "refId": "A"
@@ -1178,7 +1178,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_client_requests_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_client_requests_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -1189,7 +1189,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_client_requests_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_client_requests_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -1200,7 +1200,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_client_requests_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_client_requests_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -1276,7 +1276,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_client_requests_seconds_count{instance=~\"$instance\",status=~\"5..|4..\"}[1m])) / clamp_min(sum(rate(http_client_requests_seconds_count{instance=~\"$instance\"}[1m])), 1e-9)",
+          "expr": "sum(rate(http_client_requests_seconds_count{instance=~\"$instance\",status=~\"5..|4..\"}[$__rate_interval])) / clamp_min(sum(rate(http_client_requests_seconds_count{instance=~\"$instance\"}[$__rate_interval])), 1e-9)",
           "legendFormat": "error ratio",
           "range": true,
           "refId": "A"
@@ -1371,7 +1371,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (uri) (rate(http_client_requests_seconds_count{instance=~\"$instance\"}[1m])))",
+          "expr": "topk(10, sum by (uri) (rate(http_client_requests_seconds_count{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "{{uri}}",
           "range": true,
           "refId": "A"
@@ -1480,7 +1480,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (task, result) (rate(dbscheduler_task_completions_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (task, result) (rate(dbscheduler_task_completions_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{task}} {{result}}",
           "range": true,
           "refId": "A"
@@ -1576,7 +1576,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (task) (rate(dbscheduler_task_completions_total{instance=~\"$instance\",result=\"failed\"}[1m]))",
+          "expr": "sum by (task) (rate(dbscheduler_task_completions_total{instance=~\"$instance\",result=\"failed\"}[$__rate_interval]))",
           "legendFormat": "{{task}}",
           "range": true,
           "refId": "A"
@@ -1672,7 +1672,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (task) (rate(dbscheduler_task_duration_seconds_sum{instance=~\"$instance\"}[1m])) / clamp_min(sum by (task) (rate(dbscheduler_task_duration_seconds_count{instance=~\"$instance\"}[1m])), 1e-9)",
+          "expr": "sum by (task) (rate(dbscheduler_task_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval])) / clamp_min(sum by (task) (rate(dbscheduler_task_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval])), 1e-9)",
           "legendFormat": "{{task}}",
           "range": true,
           "refId": "A"

@@ -74,6 +74,6 @@ class OsvCompositeVulnDataSourceTest {
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(
                         () -> compositeDataSource.markProcessed(Bom.newBuilder().build()))
-                .withMessage("No current data source to mark processed");
+                .withMessage("No data source available to mark processed");
     }
 }

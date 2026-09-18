@@ -19,13 +19,10 @@
 package org.dependencytrack.resources.v2;
 
 import alpine.server.auth.PermissionRequired;
-import dev.cel.common.CelIssue;
-import dev.cel.common.CelValidationException;
 import org.dependencytrack.api.v2.VulnPoliciesApi;
 import org.dependencytrack.api.v2.model.CreateVulnPolicy201Response;
 import org.dependencytrack.api.v2.model.CreateVulnPolicyRequest;
 import org.dependencytrack.api.v2.model.GetVulnPolicyResponse;
-import org.dependencytrack.api.v2.model.InvalidVulnPolicyConditionProblemDetails;
 import org.dependencytrack.api.v2.model.ListVulnPoliciesResponse;
 import org.dependencytrack.api.v2.model.ListVulnPoliciesResponseItem;
 import org.dependencytrack.api.v2.model.ListVulnPolicyBundlesResponse;
@@ -35,7 +32,6 @@ import org.dependencytrack.api.v2.model.TotalCountType;
 import org.dependencytrack.api.v2.model.UpdateVulnPolicyRequest;
 import org.dependencytrack.api.v2.model.VulnPolicyAnalysis;
 import org.dependencytrack.api.v2.model.VulnPolicyBundleSyncStatus;
-import org.dependencytrack.api.v2.model.VulnPolicyConditionError;
 import org.dependencytrack.api.v2.model.VulnPolicyOperationMode;
 import org.dependencytrack.api.v2.model.VulnPolicyRating;
 import org.dependencytrack.api.v2.model.VulnPolicySource;
@@ -79,7 +75,6 @@ import jakarta.ws.rs.ext.Provider;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -367,26 +362,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
     }
 
     private static void validateCelCondition(String condition) {
-        final var policyCompiler = CelPolicyCompiler.getInstance(CelPolicyType.VULNERABILITY);
-        try {
-            policyCompiler.compile(condition, CacheMode.NO_CACHE);
-        } catch (CelValidationException e) {
-            final var errors = new ArrayList<VulnPolicyConditionError>();
-            for (final CelIssue issue : e.getErrors()) {
-                errors.add(VulnPolicyConditionError.builder()
-                        .line(issue.getSourceLocation().getLine())
-                        .column(issue.getSourceLocation().getColumn())
-                        .message(issue.getMessage())
-                        .build());
-            }
-
-            throw new ProblemDetailsException(InvalidVulnPolicyConditionProblemDetails.builder()
-                    .status(Response.Status.BAD_REQUEST.getStatusCode())
-                    .title("Bad Request")
-                    .detail("Condition is invalid.")
-                    .errors(errors)
-                    .build());
-        }
+        CelPolicyCompiler.getInstance(CelPolicyType.VULNERABILITY).compile(condition, CacheMode.NO_CACHE);
     }
 
     private static VulnerabilityPolicy convert(CreateVulnPolicyRequest request) {

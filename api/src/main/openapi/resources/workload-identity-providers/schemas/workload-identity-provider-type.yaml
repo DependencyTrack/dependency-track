@@ -14,13 +14,13 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) OWASP Foundation. All Rights Reserved.
-type: object
-allOf:
-- $ref: "../../../shared/schemas/problem-details.yaml"
-properties:
-  errors:
-    type: array
-    items:
-      $ref: "./vuln-policy-condition-error.yaml"
-required:
-- errors
+type: string
+description: |-
+  The type of issuer the provider trusts.
+
+  * `OIDC`: an OpenID Connect issuer. Tokens must carry an `iss` claim equal to the provider's issuer.
+  * `SPIFFE`: a SPIFFE trust domain. The `iss` claim is ignored, and `sub` must be a SPIFFE ID of that trust domain.
+enum:
+- OIDC
+- SPIFFE
+example: OIDC

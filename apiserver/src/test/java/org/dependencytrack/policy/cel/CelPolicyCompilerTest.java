@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.policy.cel;
 
-import dev.cel.common.CelValidationException;
 import dev.cel.common.types.CelType;
+import org.dependencytrack.cel.InvalidCelExpressionException;
 import org.dependencytrack.policy.cel.CelPolicyCompiler.CacheMode;
 import org.junit.jupiter.api.Test;
 
@@ -147,7 +147,7 @@ class CelPolicyCompilerTest {
     @Test
     void testVisitVersRangeCheck() {
         var exception = assertThrows(
-                CelValidationException.class,
+                InvalidCelExpressionException.class,
                 () -> CelPolicyCompiler.getInstance(CelPolicyType.COMPONENT).compile("""
                 project.name == "foo" && project.matches_range("vers:generic<1")
                   && project.depends_on(v1.Component{
@@ -155,30 +155,30 @@ class CelPolicyCompilerTest {
                      })
                 """, CacheMode.NO_CACHE));
         assertThat(exception.getErrors()).hasSize(3);
-        assertThat(exception.getErrors().get(0).getMessage())
+        assertThat(exception.getErrors().get(0).message())
                 .contains("vers string does not contain a versioning scheme separator");
-        assertThat(exception.getErrors().get(1).getMessage())
+        assertThat(exception.getErrors().get(1).message())
                 .contains(
                         "Querying by version range without providing an additional field to filter on is not allowed");
-        assertThat(exception.getErrors().get(2).getMessage()).contains("Invalid range");
+        assertThat(exception.getErrors().get(2).message()).contains("Invalid range");
 
         // This expression has a type error (comparing bool to string),
         // so it fails at type-checking before vers validation runs.
         exception = assertThrows(
-                CelValidationException.class,
+                InvalidCelExpressionException.class,
                 () -> CelPolicyCompiler.getInstance(CelPolicyType.COMPONENT).compile("""
                 component.matches_range("vers:generic<1") == "foo" && project.matches_range("vers:generic<1")
                 """, CacheMode.NO_CACHE));
         assertThat(exception.getErrors()).hasSizeGreaterThanOrEqualTo(1);
-        assertThat(exception.getErrors().getFirst().getMessage()).contains("found no matching overload for '_==_'");
+        assertThat(exception.getErrors().getFirst().message()).contains("found no matching overload for '_==_'");
 
         exception = assertThrows(
-                CelValidationException.class,
+                InvalidCelExpressionException.class,
                 () -> CelPolicyCompiler.getInstance(CelPolicyType.COMPONENT).compile("""
                 component.name == "foo" || vulns.exists(vuln, vuln.id == "foo" && component.matches_range("versgeneric/<1"))
                 """, CacheMode.NO_CACHE));
         assertThat(exception.getErrors()).hasSize(1);
-        assertThat(exception.getErrors().getFirst().getMessage())
+        assertThat(exception.getErrors().getFirst().message())
                 .contains("vers string does not contain a URI scheme separator");
 
         assertDoesNotThrow(
@@ -190,13 +190,13 @@ class CelPolicyCompilerTest {
     @Test
     void shouldRejectInvalidSpdxExpressionLiteral() {
         final var exception = assertThrows(
-                CelValidationException.class,
+                InvalidCelExpressionException.class,
                 () -> CelPolicyCompiler.getInstance(CelPolicyType.COMPONENT).compile("""
                         spdx_expr_allows("(MIT", ["MIT"])
                         """, CacheMode.NO_CACHE));
         assertThat(exception.getErrors())
-                .anySatisfy(error -> assertThat(error.getMessage())
-                        .contains("Invalid SPDX expression: Unexpected end of expression"));
+                .anySatisfy(error ->
+                        assertThat(error.message()).contains("Invalid SPDX expression: Unexpected end of expression"));
     }
 
     @Test

@@ -19,7 +19,7 @@ info:
   title: OWASP Dependency-Track
   description: |-
     # REST API of OWASP Dependency-Track
-    
+
     ## Pagination
 
     This API implements token-based pagination.
@@ -56,13 +56,13 @@ info:
     that hold *a lot* of items may return partial counts (type `AT_LEAST`)
     instead of exact counts (type `EXACT`). Which type to expect is usually
     documented in the operation's description.
-    
+
     ## Sorting
-    
+
     Items in a collection can be sorted using the `sort_by` and `sort_direction`
     query parameters. Which fields are sortable is documented in the respective
     operation's description.
-    
+
     Note that if no sortable fields are documented for an operation,
     sorting is not supported *at all*.
 
@@ -110,9 +110,10 @@ info:
 
     - `POST /api/v1/user/login`
     - `POST /api/v1/user/oidc/login`
+    - `POST /api/v2/oauth/token`
 
-    API v2 does not yet provide its own login endpoints; clients use
-    the v1 endpoints above to acquire tokens and then call v2 with them.
+    API v2 does not yet provide its own login endpoints; users log in
+    through the v1 endpoints above and then call v2 with the token.
 
     Tokens are valid for 8 hours by default and **cannot be refreshed**.
     Clients must re-authenticate once a token expires.
@@ -193,6 +194,8 @@ tags:
   description: Endpoints related to extensions
 - name: Kev Data Sources
   description: Endpoints related to KEV data sources
+- name: OAuth
+  description: Endpoints related to OAuth 2.0 token issuance
 - name: Projects
   description: Endpoints related to projects
 - name: Secrets
@@ -211,6 +214,8 @@ tags:
   description: Endpoints related to vulnerabilities
 - name: Workflows
   description: Endpoints related to workflows
+- name: Workload Identity Providers
+  description: Endpoints related to workload identity providers
 
 paths:
   /components:
@@ -229,6 +234,8 @@ paths:
     $ref: "./resources/kev-data-sources/kev-data-source-mirror-runs.yaml"
   /kev-data-sources/{name}/mirror-runs/latest:
     $ref: "./resources/kev-data-sources/kev-data-source-mirror-run-latest.yaml"
+  /oauth/token:
+    $ref: "./resources/oauth/oauth-token.yaml"
   /projects/{uuid}/clone:
     $ref: "./resources/projects/project-clone.yaml"
   /projects/{uuid}/components:
@@ -245,6 +252,14 @@ paths:
     $ref: "./resources/service-accounts/service-account-api-keys.yaml"
   /service-accounts/{name}/api-keys/{public_id}:
     $ref: "./resources/service-accounts/service-account-api-key.yaml"
+  /service-accounts/{name}/workload-identity-bindings:
+    $ref: "./resources/service-accounts/service-account-workload-identity-bindings.yaml"
+  /service-accounts/{name}/workload-identity-bindings/{binding_id}:
+    $ref: "./resources/service-accounts/service-account-workload-identity-binding.yaml"
+  /workload-identity-providers:
+    $ref: "./resources/workload-identity-providers/workload-identity-providers.yaml"
+  /workload-identity-providers/{name}:
+    $ref: "./resources/workload-identity-providers/workload-identity-provider.yaml"
   /vuln-policies:
     $ref: "./resources/vuln-policies/vuln-policies.yaml"
   /vuln-policies/{uuid}:
@@ -288,8 +303,8 @@ components:
     bearerAuth:
       description: |-
         Authentication via opaque server-issued session token.
-        Tokens are obtained from `POST /api/v1/user/login` or
-        `POST /api/v1/user/oidc/login`.
+        Tokens are obtained from `POST /api/v1/user/login`,
+        `POST /api/v1/user/oidc/login`, or `POST /api/v2/oauth/token`.
       type: http
       scheme: bearer
       bearerFormat: Opaque

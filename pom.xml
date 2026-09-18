@@ -137,6 +137,7 @@
         <lib.hamcrest.version>3.0</lib.hamcrest.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
         <lib.httpclient5.version>5.6.4</lib.httpclient5.version>
+        <lib.httpmime.version>4.5.14</lib.httpmime.version>
         <lib.jackson2.version>2.22.2</lib.jackson2.version>
         <lib.jackson3.version>3.2.2</lib.jackson3.version>
         <lib.jakarta-activation.version>2.1.4</lib.jakarta-activation.version>
@@ -160,6 +161,7 @@
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
         <lib.minio.version>9.0.3</lib.minio.version>
         <lib.mockito.version>5.23.0</lib.mockito.version>
+        <lib.nimbus-oauth2-oidc-sdk.version>11.38.2</lib.nimbus-oauth2-oidc-sdk.version>
         <lib.nullaway.version>0.14.1</lib.nullaway.version>
         <lib.okhttp.version>5.5.0</lib.okhttp.version>
         <lib.open-feign.version>13.15</lib.open-feign.version>
@@ -338,6 +340,11 @@
                 <version>${lib.httpclient5.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpmime</artifactId>
+                <version>${lib.httpmime.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>jakarta.activation</groupId>
                 <artifactId>jakarta.activation-api</artifactId>
                 <version>${lib.jakarta-activation.version}</version>
@@ -429,6 +436,11 @@
                 <groupId>com.networknt</groupId>
                 <artifactId>json-schema-validator</artifactId>
                 <version>${lib.json-schema-validator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>oauth2-oidc-sdk</artifactId>
+                <version>${lib.nimbus-oauth2-oidc-sdk.version}</version>
             </dependency>
             <dependency>
                 <groupId>net.javacrumbs.json-unit</groupId>

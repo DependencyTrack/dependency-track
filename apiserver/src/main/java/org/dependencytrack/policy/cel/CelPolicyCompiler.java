@@ -29,6 +29,7 @@ import dev.cel.common.types.CelType;
 import dev.cel.runtime.CelEvaluationException;
 import dev.cel.runtime.CelRuntime;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.dependencytrack.cel.InvalidCelExpressionException;
 import org.dependencytrack.policy.cel.CelPolicyAstAnalyzer.FunctionSignature;
 import org.dependencytrack.policy.cel.CelPolicySpdxExpressionValidator.SpdxExpressionValidationError;
 import org.dependencytrack.policy.cel.CelPolicyVersValidator.VersValidationError;
@@ -77,9 +78,9 @@ public final class CelPolicyCompiler {
      * @param scriptSrc Source of the expression to compile
      * @param cacheMode Whether the {@link CelPolicyProgram} shall be cached upon successful compilation
      * @return The compiled {@link CelPolicyProgram}
-     * @throws CelValidationException When compilation, type checking, or analysis failed
+     * @throws InvalidCelExpressionException When compilation, type checking, or analysis failed
      */
-    public CelPolicyProgram compile(String scriptSrc, CacheMode cacheMode) throws CelValidationException {
+    public CelPolicyProgram compile(String scriptSrc, CacheMode cacheMode) {
         final String normalizedSrc = normalizeDurationDays(scriptSrc);
         final String scriptDigest = DigestUtils.sha256Hex(normalizedSrc);
 
@@ -90,6 +91,15 @@ public final class CelPolicyCompiler {
             }
         }
 
+        try {
+            return compile(normalizedSrc, scriptDigest, cacheMode);
+        } catch (CelValidationException e) {
+            throw new InvalidCelExpressionException("Condition is invalid.", e);
+        }
+    }
+
+    private CelPolicyProgram compile(String normalizedSrc, String scriptDigest, CacheMode cacheMode)
+            throws CelValidationException {
         LOGGER.debug("Compiling expression: %s".formatted(normalizedSrc));
         final CelAbstractSyntaxTree ast =
                 policyType.compiler().compile(normalizedSrc).getAst();

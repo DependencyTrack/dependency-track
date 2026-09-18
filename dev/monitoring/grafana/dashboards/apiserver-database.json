@@ -37,7 +37,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Total connection pool size per pool and instance.",
       "fieldConfig": {
@@ -118,7 +118,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "hikaricp_connections{instance=~\"$instance\"}",
@@ -134,7 +134,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "In-use connections per pool and instance.",
       "fieldConfig": {
@@ -215,7 +215,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "hikaricp_connections_active{instance=~\"$instance\"}",
@@ -231,7 +231,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Idle connections available for checkout per pool.",
       "fieldConfig": {
@@ -312,7 +312,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "hikaricp_connections_idle{instance=~\"$instance\"}",
@@ -328,7 +328,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Threads waiting to acquire a connection per pool.",
       "fieldConfig": {
@@ -409,7 +409,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "hikaricp_connections_pending{instance=~\"$instance\"}",
@@ -425,7 +425,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Pool exhaustion events resulting in acquisition timeouts.",
       "fieldConfig": {
@@ -506,7 +506,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum by (pool) (rate(hikaricp_connections_timeout_total{instance=~\"$instance\"}[1m]))",
@@ -535,7 +535,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Ten most frequently executed JDBI queries.",
       "fieldConfig": {
@@ -616,7 +616,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "topk(10, sum by (query) (rate(jdbi_query_latency_seconds_count{instance=~\"$instance\"}[1m])))",
@@ -632,7 +632,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Ten JDBI queries with the highest mean latency.",
       "fieldConfig": {
@@ -713,7 +713,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "topk(10, sum by (query) (rate(jdbi_query_latency_seconds_sum{instance=~\"$instance\"}[1m])) / sum by (query) (rate(jdbi_query_latency_seconds_count{instance=~\"$instance\"}[1m])))",
@@ -729,7 +729,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "95th percentile latency of the ten busiest JDBI queries.",
       "fieldConfig": {
@@ -810,7 +810,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "topk(10, histogram_quantile(0.95, sum by (le, query) (rate(jdbi_query_latency_seconds_bucket{instance=~\"$instance\"}[1m]))))",
@@ -826,7 +826,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "JDBI query failures per second across the cluster.",
       "fieldConfig": {
@@ -923,7 +923,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(jdbi_query_latency_seconds_count{instance=~\"$instance\",outcome=\"failure\"}[1m]))",
@@ -949,7 +949,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Cluster-wide datastore read and write operations per second.",
           "fieldConfig": {
@@ -1030,7 +1030,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum(rate(datanucleus_datastore_reads_total{instance=~\"$instance\"}[1m]))",
@@ -1042,7 +1042,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum(rate(datanucleus_datastore_writes_total{instance=~\"$instance\"}[1m]))",
@@ -1058,7 +1058,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Cluster-wide JDO query executions and failures per second.",
           "fieldConfig": {
@@ -1155,7 +1155,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum(rate(datanucleus_queries_executed_total{instance=~\"$instance\"}[1m]))",
@@ -1167,7 +1167,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum(rate(datanucleus_queries_failed_total{instance=~\"$instance\"}[1m]))",
@@ -1183,7 +1183,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "JDO transactions started, committed, and rolled back per second.",
           "fieldConfig": {
@@ -1280,7 +1280,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum(rate(datanucleus_transactions_total{instance=~\"$instance\"}[1m]))",
@@ -1292,7 +1292,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum(rate(datanucleus_transactions_committed_total{instance=~\"$instance\"}[1m]))",
@@ -1304,7 +1304,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum(rate(datanucleus_transactions_rolledback_total{instance=~\"$instance\"}[1m]))",
@@ -1320,7 +1320,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Cached compiled JDO query plans per instance.",
           "fieldConfig": {
@@ -1401,7 +1401,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "datanucleus_cache_query_generic_compilation_entries{instance=~\"$instance\"}",
@@ -1413,7 +1413,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "datanucleus_cache_query_datastore_compilation_entries{instance=~\"$instance\"}",
@@ -1429,7 +1429,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Currently managed JDO connections per instance.",
           "fieldConfig": {
@@ -1510,7 +1510,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "datanucleus_connections_active{instance=~\"$instance\"}",
@@ -1538,6 +1538,32 @@
   "templating": {
     "list": [
       {
+        "name": "datasource",
+        "label": "Data Source",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {
+          "text": "default",
+          "value": "default"
+        },
+        "hide": 0
+      },
+      {
+        "name": "job",
+        "label": "Job",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "query": "label_values(dt_info, job)",
+        "refresh": 2,
+        "multi": false,
+        "includeAll": false,
+        "current": {},
+        "sort": 1
+      },
+      {
         "current": {
           "selected": true,
           "text": [
@@ -1549,9 +1575,9 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "uid": "${datasource}"
         },
-        "definition": "label_values(process_uptime_seconds, instance)",
+        "definition": "label_values(process_uptime_seconds{job=\"$job\"}, instance)",
         "includeAll": true,
         "label": "Instance",
         "multi": true,
@@ -1559,7 +1585,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(process_uptime_seconds, instance)",
+          "query": "label_values(process_uptime_seconds{job=\"$job\"}, instance)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

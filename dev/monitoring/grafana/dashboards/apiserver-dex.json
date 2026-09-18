@@ -36,7 +36,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Current non-terminal workflow run counts grouped by lifecycle status.",
       "fieldConfig": {
@@ -93,7 +93,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "max by (status) (dt_dex_engine_workflow_runs_current{instance=~\"$instance\"})",
@@ -111,7 +111,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Workflow run completions per second grouped by terminal status.",
       "fieldConfig": {
@@ -191,7 +191,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum by (status) (rate(dt_dex_engine_runs_completed_total{instance=~\"$instance\"}[1m]))",
@@ -209,7 +209,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "In-memory workflow task queue depth against capacity.",
       "fieldConfig": {
@@ -289,7 +289,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -303,7 +303,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -364,7 +364,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "In-memory activity task queue depth against capacity.",
       "fieldConfig": {
@@ -444,7 +444,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -458,7 +458,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -532,7 +532,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Activity tasks ready to schedule that are waiting in the database. The count is capped at 10000; a series flat-lining at that value is saturated, and the real backlog may be higher.",
       "fieldConfig": {
@@ -616,7 +616,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "max by (queueName) (dt_dex_engine_activity_task_queue_backlog{instance=~\"$instance\",queueName=~\"$activityQueue\"})",
@@ -634,7 +634,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Age of the oldest ready activity task waiting in the database.",
       "fieldConfig": {
@@ -714,7 +714,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "max by (queueName) (dt_dex_engine_activity_task_queue_backlog_age_seconds{instance=~\"$instance\",queueName=~\"$activityQueue\"})",
@@ -742,7 +742,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Task scheduler poll iterations per second.",
           "fieldConfig": {
@@ -822,7 +822,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum (rate(dt_dex_engine_workflow_task_scheduler_polls_total{instance=~\"$instance\"}[1m]))",
@@ -836,7 +836,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum (rate(dt_dex_engine_activity_task_scheduler_polls_total{instance=~\"$instance\"}[1m]))",
@@ -854,7 +854,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Tasks moved from database to in-memory queues per second.",
           "fieldConfig": {
@@ -934,7 +934,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum (rate(dt_dex_engine_workflow_tasks_scheduled_total{instance=~\"$instance\"}[1m]))",
@@ -948,7 +948,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum (rate(dt_dex_engine_activity_tasks_scheduled_total{instance=~\"$instance\"}[1m]))",
@@ -966,7 +966,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Workflow task scheduling latency percentiles by queue.",
           "fieldConfig": {
@@ -1046,7 +1046,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.5, sum by (le, queueName) (rate(dt_dex_engine_workflow_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$workflowQueue\"}[1m])))",
@@ -1060,7 +1060,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.95, sum by (le, queueName) (rate(dt_dex_engine_workflow_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$workflowQueue\"}[1m])))",
@@ -1074,7 +1074,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.99, sum by (le, queueName) (rate(dt_dex_engine_workflow_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$workflowQueue\"}[1m])))",
@@ -1092,7 +1092,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Activity task scheduling latency percentiles by queue.",
           "fieldConfig": {
@@ -1172,7 +1172,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.5, sum by (le, queueName) (rate(dt_dex_engine_activity_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$activityQueue\"}[1m])))",
@@ -1186,7 +1186,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.95, sum by (le, queueName) (rate(dt_dex_engine_activity_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$activityQueue\"}[1m])))",
@@ -1200,7 +1200,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.99, sum by (le, queueName) (rate(dt_dex_engine_activity_task_scheduling_latency_seconds_bucket{instance=~\"$instance\",queueName=~\"$activityQueue\"}[1m])))",
@@ -1232,7 +1232,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Task worker poll rate by worker type.",
           "fieldConfig": {
@@ -1312,7 +1312,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_polls_total{instance=~\"$instance\",workerType=~\"$workerType\"}[1m]))",
@@ -1330,7 +1330,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Worker polls skipped because the local concurrency limit was reached.",
           "fieldConfig": {
@@ -1410,7 +1410,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_poll_skipped_backpressure_total{instance=~\"$instance\",workerType=~\"$workerType\"}[1m]))",
@@ -1428,7 +1428,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Mean number of tasks fetched per worker poll cycle.",
           "fieldConfig": {
@@ -1508,7 +1508,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_tasks_polled_sum{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])) / sum by (workerType) (rate(dt_dex_engine_task_worker_tasks_polled_count{instance=~\"$instance\",workerType=~\"$workerType\"}[1m]))",
@@ -1526,7 +1526,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Fraction of worker concurrency slots currently in use.",
           "fieldConfig": {
@@ -1614,7 +1614,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "dt_dex_engine_task_worker_concurrency_utilization{instance=~\"$instance\",workerType=~\"$workerType\"}",
@@ -1632,7 +1632,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Time to process a single task percentile by worker type.",
           "fieldConfig": {
@@ -1712,7 +1712,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.5, sum by (le, workerType) (rate(dt_dex_engine_task_worker_process_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
@@ -1726,7 +1726,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.95, sum by (le, workerType) (rate(dt_dex_engine_task_worker_process_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
@@ -1740,7 +1740,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.99, sum by (le, workerType) (rate(dt_dex_engine_task_worker_process_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
@@ -1758,7 +1758,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Worker poll round-trip latency percentile by worker type.",
           "fieldConfig": {
@@ -1838,7 +1838,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.5, sum by (le, workerType) (rate(dt_dex_engine_task_worker_poll_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
@@ -1852,7 +1852,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.95, sum by (le, workerType) (rate(dt_dex_engine_task_worker_poll_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
@@ -1866,7 +1866,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.99, sum by (le, workerType) (rate(dt_dex_engine_task_worker_poll_latency_seconds_bucket{instance=~\"$instance\",workerType=~\"$workerType\"}[1m])))",
@@ -1884,7 +1884,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Completed tasks per second by worker type.",
           "fieldConfig": {
@@ -1964,7 +1964,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum by (workerType) (rate(dt_dex_engine_task_worker_tasks_processed_total{instance=~\"$instance\",workerType=~\"$workerType\"}[1m]))",
@@ -1996,7 +1996,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Items currently queued in each internal buffer.",
           "fieldConfig": {
@@ -2076,7 +2076,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "dt_dex_engine_buffer_items_queued{instance=~\"$instance\"}",
@@ -2094,7 +2094,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Buffer flush operations per second by buffer name.",
           "fieldConfig": {
@@ -2174,7 +2174,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum by (name) (rate(dt_dex_engine_buffer_flushes_total{instance=~\"$instance\"}[1m]))",
@@ -2192,7 +2192,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Mean number of items per buffer flush by buffer.",
           "fieldConfig": {
@@ -2272,7 +2272,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum by (name) (rate(dt_dex_engine_buffer_flush_batch_size_sum{instance=~\"$instance\"}[1m])) / sum by (name) (rate(dt_dex_engine_buffer_flush_batch_size_count{instance=~\"$instance\"}[1m]))",
@@ -2290,7 +2290,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Buffer flush operation latency percentile by buffer.",
           "fieldConfig": {
@@ -2370,7 +2370,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.5, sum by (le, name) (rate(dt_dex_engine_buffer_flush_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
@@ -2384,7 +2384,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.95, sum by (le, name) (rate(dt_dex_engine_buffer_flush_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
@@ -2398,7 +2398,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.99, sum by (le, name) (rate(dt_dex_engine_buffer_flush_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
@@ -2416,7 +2416,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Time individual items wait in buffer before being flushed.",
           "fieldConfig": {
@@ -2496,7 +2496,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.5, sum by (le, name) (rate(dt_dex_engine_buffer_item_wait_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
@@ -2510,7 +2510,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.95, sum by (le, name) (rate(dt_dex_engine_buffer_item_wait_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
@@ -2524,7 +2524,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.99, sum by (le, name) (rate(dt_dex_engine_buffer_item_wait_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
@@ -2556,7 +2556,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Current DEX engine leadership status (1=leader, 0=follower).",
           "fieldConfig": {
@@ -2620,7 +2620,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "dt_dex_engine_leadership_status{instance=~\"$instance\"}",
@@ -2638,7 +2638,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "description": "Leader acquisition and loss rate across the cluster.",
           "fieldConfig": {
@@ -2718,7 +2718,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum(rate(dt_dex_engine_leadership_acquired_total{instance=~\"$instance\"}[5m]))",
@@ -2732,7 +2732,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "sum(rate(dt_dex_engine_leadership_lost_total{instance=~\"$instance\"}[5m]))",
@@ -2762,6 +2762,32 @@
   "templating": {
     "list": [
       {
+        "name": "datasource",
+        "label": "Data Source",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {
+          "text": "default",
+          "value": "default"
+        },
+        "hide": 0
+      },
+      {
+        "name": "job",
+        "label": "Job",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "query": "label_values(dt_info, job)",
+        "refresh": 2,
+        "multi": false,
+        "includeAll": false,
+        "current": {},
+        "sort": 1
+      },
+      {
         "allowCustomValue": false,
         "current": {
           "selected": true,
@@ -2774,9 +2800,9 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "uid": "${datasource}"
         },
-        "definition": "label_values(process_uptime_seconds, instance)",
+        "definition": "label_values(process_uptime_seconds{job=\"$job\"}, instance)",
         "includeAll": true,
         "label": "Instance",
         "multi": true,
@@ -2784,7 +2810,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(process_uptime_seconds, instance)",
+          "query": "label_values(process_uptime_seconds{job=\"$job\"}, instance)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -2798,7 +2824,7 @@
         "type": "query",
         "datasource": {
           "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "uid": "${datasource}"
         },
         "query": "label_values(dt_dex_engine_workflow_task_queue_depth{instance=~\"$instance\"}, queueName)",
         "refresh": 2,
@@ -2821,7 +2847,7 @@
         "type": "query",
         "datasource": {
           "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "uid": "${datasource}"
         },
         "query": "label_values(dt_dex_engine_activity_task_queue_depth{instance=~\"$instance\"}, queueName)",
         "refresh": 2,
@@ -2851,7 +2877,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "uid": "${datasource}"
         },
         "definition": "label_values(dt_dex_engine_task_worker_polls_total{instance=~\"$instance\"}, workerType)",
         "includeAll": true,

@@ -27,6 +27,7 @@ import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.runtime.PluginManager;
@@ -1679,6 +1680,59 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         attributions = qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
         assertThat(attributions).hasSize(1);
         assertThat(attributions.getFirst().getId()).isEqualTo(attributionId);
+    }
+
+    @Test
+    void shouldCollapseDuplicateVulnsInBatch() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "2a24a29f-9ff3-52b8-bc81-471f326a5b3e",
+                      "name": "io.ratpack:ratpack-session",
+                      "purl": "pkg:maven/io.ratpack/ratpack-session"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "GHSA-2cc5-23r7-vc4v",
+                      "source": { "name": "GITHUB" },
+                      "affects": [
+                        {
+                          "ref": "2a24a29f-9ff3-52b8-bc81-471f326a5b3e",
+                          "versions": [
+                            { "version": "1.0.0" },
+                            { "version": "2.0.0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+
+        final Bom bov = generateBomFromJson(bovJson);
+        final Bom duplicateBov = generateBomFromJson(bovJson);
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov, duplicateBov).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("osv", dataSourceMock));
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("osv")
+                        .setSourceName("OSV")
+                        .build());
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-2cc5-23r7-vc4v");
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getVulnerableSoftware())
+                .extracting(VulnerableSoftware::getVersion)
+                .containsExactlyInAnyOrder("1.0.0", "2.0.0");
+        assertThat(qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware()))
+                .hasSize(2);
     }
 
     private static class TestVulnDataSourceFactory implements VulnDataSourceFactory {

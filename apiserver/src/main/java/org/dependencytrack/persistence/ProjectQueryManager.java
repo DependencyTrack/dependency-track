@@ -427,9 +427,6 @@ final class ProjectQueryManager extends QueryManager {
                     final Tag existingTag = existingTagsIterator.next();
                     if (!tags.contains(existingTag)) {
                         existingTagsIterator.remove();
-                        if (existingTag.getProjects() != null) {
-                            existingTag.getProjects().remove(project);
-                        }
                         modified = true;
                     }
                 }
@@ -437,13 +434,6 @@ final class ProjectQueryManager extends QueryManager {
             for (final Tag tag : tags) {
                 if (!project.getTags().contains(tag)) {
                     project.getTags().add(tag);
-
-                    if (tag.getProjects() == null) {
-                        tag.setProjects(new HashSet<>(Set.of(project)));
-                    } else {
-                        tag.getProjects().add(project);
-                    }
-
                     modified = true;
                 }
             }

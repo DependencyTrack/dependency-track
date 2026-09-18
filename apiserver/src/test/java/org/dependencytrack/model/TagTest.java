@@ -21,9 +21,6 @@ package org.dependencytrack.model;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class TagTest {
 
     @Test
@@ -38,17 +35,6 @@ public class TagTest {
         Tag tag = new Tag();
         tag.setName("java");
         Assertions.assertEquals("java", tag.getName());
-    }
-
-    @Test
-    public void testProjects() {
-        Set<Project> projects = new HashSet<>();
-        Project project = new Project();
-        projects.add(project);
-        Tag tag = new Tag();
-        tag.setProjects(projects);
-        Assertions.assertEquals(1, tag.getProjects().size());
-        Assertions.assertEquals(project, tag.getProjects().iterator().next());
     }
 
     @Test

@@ -31,6 +31,7 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -56,6 +57,9 @@ public record AnalysisTrailResponse(
         @JsonProperty("isSuppressed")
         @Schema(description = "Whether the finding is suppressed", requiredMode = Schema.RequiredMode.REQUIRED)
         boolean isSuppressed,
+
+        @Schema(description = "Timestamp at which the suppression expires") @Nullable
+        Instant suppressionExpiresAt,
 
         @Schema(description = "Severity assigned by the analysis") @Nullable
         Severity severity,
@@ -96,6 +100,7 @@ public record AnalysisTrailResponse(
                 analysis.getAnalysisDetails(),
                 comments,
                 analysis.isSuppressed(),
+                analysis.getSuppressionExpiresAt(),
                 analysis.getSeverity(),
                 analysis.getCvssV2Vector(),
                 analysis.getCvssV2Score(),

@@ -29,6 +29,7 @@ import org.jdbi.v3.core.statement.SqlStatements;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -416,6 +417,29 @@ public final class AnalysisDao {
                         new FindingKey(rs.getLong("COMPONENT_ID"), rs.getLong("VULNERABILITY_ID")), rs.getLong("ID")))
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    /**
+     * Un-suppresses analyses whose suppression expiry has elapsed.
+     *
+     * @param limit Maximum number of analyses to un-suppress
+     * @return IDs of the analyses that were un-suppressed
+     */
+    public List<Long> expireSuppressions(final int limit) {
+        return handle.createQuery("""
+                        UPDATE "ANALYSIS"
+                           SET "SUPPRESSED" = FALSE
+                             , "SUPPRESSION_EXPIRES_AT" = NULL
+                         WHERE "ID" IN (
+                             SELECT "ID"
+                               FROM "ANALYSIS"
+                              WHERE "SUPPRESSED"
+                                AND "SUPPRESSION_EXPIRES_AT" <= NOW()
+                              LIMIT :limit
+                                FOR UPDATE SKIP LOCKED
+                         )
+                        RETURNING "ID"
+                        """).bind("limit", limit).mapTo(Long.class).list();
     }
 
     public record CreateCommentCommand(long analysisId, String commenter, String comment) {}

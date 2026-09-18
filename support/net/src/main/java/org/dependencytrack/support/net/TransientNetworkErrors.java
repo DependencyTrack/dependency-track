@@ -18,7 +18,10 @@
  */
 package org.dependencytrack.support.net;
 
+import org.jspecify.annotations.Nullable;
+
 import java.io.EOFException;
+import java.io.IOException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -42,8 +45,27 @@ public final class TransientNetworkErrors {
                     || cause instanceof UnknownHostException) {
                 return true;
             }
+
+            // The JDK HTTP client does not always report transport failures as a socket
+            // or channel exception. For the same peer reset it may throw a plain
+            // IOException whose cause chain carries no more specific type, in which case
+            // the message is the only thing left to go on. Matching on messages is not
+            // something to be happy about, but the alternative is treating a retryable
+            // transport failure as permanent.
+            if (cause instanceof IOException && isTransportFailureMessage(cause.getMessage())) {
+                return true;
+            }
         }
 
         return false;
+    }
+
+    private static boolean isTransportFailureMessage(@Nullable String message) {
+        if (message == null) {
+            return false;
+        }
+
+        final String lowerCase = message.toLowerCase();
+        return lowerCase.contains("connection reset") || lowerCase.contains("broken pipe");
     }
 }

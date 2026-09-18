@@ -552,7 +552,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         final JsonObject firstPage = parseJsonObject(response);
-        assertThatJson(firstPage.toString()).inPath("$.items[*].name")
+        assertThatJson(firstPage.toString())
+                .inPath("$.items[*].name")
                 .isEqualTo(/* language=JSON */ "[\"gamma-app\", \"beta-app\"]");
         assertThatJson(firstPage.toString()).inPath("$.total.count").isEqualTo(3);
         assertThat(firstPage.containsKey("next_page_token")).isTrue();
@@ -564,7 +565,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isEqualTo(/* language=JSON */ "[\"alpha-app\"]");
     }
 
@@ -616,9 +618,11 @@ public class ProjectsResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         final JsonObject firstPage = parseJsonObject(response);
-        assertThatJson(firstPage.toString()).inPath("$.items[*].name")
+        assertThatJson(firstPage.toString())
+                .inPath("$.items[*].name")
                 .isEqualTo(/* language=JSON */ "[\"acme-app-a\", \"acme-app-collection\"]");
-        assertThatJson(firstPage.toString()).inPath("$.items[*].last_inherited_risk_score")
+        assertThatJson(firstPage.toString())
+                .inPath("$.items[*].last_inherited_risk_score")
                 .isEqualTo(/* language=JSON */ "[10.0, 7.0]");
         assertThat(firstPage.containsKey("next_page_token")).isTrue();
 
@@ -630,9 +634,11 @@ public class ProjectsResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         final JsonObject secondPage = parseJsonObject(response);
-        assertThatJson(secondPage.toString()).inPath("$.items[*].name")
+        assertThatJson(secondPage.toString())
+                .inPath("$.items[*].name")
                 .isEqualTo(/* language=JSON */ "[\"acme-app-child\", \"acme-app-d\"]");
-        assertThatJson(secondPage.toString()).inPath("$.items[*].last_inherited_risk_score")
+        assertThatJson(secondPage.toString())
+                .inPath("$.items[*].last_inherited_risk_score")
                 .isEqualTo(/* language=JSON */ "[6.0, 5.0]");
         assertThat(secondPage.containsKey("next_page_token")).isFalse();
     }
@@ -691,7 +697,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("beta-app");
 
@@ -701,7 +708,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("beta-app");
 
@@ -711,7 +719,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("gamma-app");
 
@@ -721,16 +730,11 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder(
-                        "alpha-app",
-                        "gamma-app",
-                        "delta-app",
-                        "epsilon-app",
-                        "latest-app",
-                        "stale-app",
-                        "team-app");
+                        "alpha-app", "gamma-app", "delta-app", "epsilon-app", "latest-app", "stale-app", "team-app");
 
         response = jersey.target("/projects")
                 .queryParam("parent_uuid", root.getUuid())
@@ -738,7 +742,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("beta-app");
 
@@ -748,7 +753,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("beta-app");
 
@@ -758,7 +764,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("delta-app", "epsilon-app");
 
@@ -769,7 +776,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("delta-app");
 
@@ -779,7 +787,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("team-app");
 
@@ -795,7 +804,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("team-app", "other-team-app");
 
@@ -811,7 +821,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("team-app", "other-team-app", "both-teams-app");
 
@@ -821,7 +832,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("latest-app");
 
@@ -831,7 +843,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .contains("stale-app");
 
@@ -842,7 +855,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("alpha-app");
     }
@@ -872,7 +886,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("application-app");
 
@@ -882,7 +897,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("library-app", "container-app");
 
@@ -892,7 +908,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .isEmpty();
 
@@ -903,136 +920,13 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("library-app");
 
         response = jersey.target("/projects")
                 .queryParam("classifier", "invalid")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(400);
-    }
-
-    @Test
-    public void listProjectsSeverityFilterTest() {
-        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
-
-        final var criticalProject = new Project();
-        criticalProject.setName("critical-app");
-        qm.persist(criticalProject);
-
-        final var lowProject = new Project();
-        lowProject.setName("low-app");
-        qm.persist(lowProject);
-
-        final var mediumProject = new Project();
-        mediumProject.setName("medium-app");
-        qm.persist(mediumProject);
-
-        final var unassignedProject = new Project();
-        unassignedProject.setName("unassigned-app");
-        qm.persist(unassignedProject);
-
-        useJdbiHandle(handle -> {
-            final var dao = handle.attach(MetricsTestDao.class);
-            final LocalDate today = LocalDate.now(ZoneOffset.UTC);
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
-            final Instant now = Instant.now();
-
-            final var criticalMetrics = new ProjectMetrics();
-            criticalMetrics.setProjectId(criticalProject.getId());
-            criticalMetrics.setCritical(2);
-            criticalMetrics.setFirstOccurrence(Date.from(now));
-            criticalMetrics.setLastOccurrence(Date.from(now));
-            dao.createProjectMetrics(criticalMetrics);
-
-            final var lowMetrics = new ProjectMetrics();
-            lowMetrics.setProjectId(lowProject.getId());
-            lowMetrics.setLow(3);
-            lowMetrics.setFirstOccurrence(Date.from(now));
-            lowMetrics.setLastOccurrence(Date.from(now));
-            dao.createProjectMetrics(lowMetrics);
-
-            final var mediumMetrics = new ProjectMetrics();
-            mediumMetrics.setProjectId(mediumProject.getId());
-            mediumMetrics.setMedium(1);
-            mediumMetrics.setFirstOccurrence(Date.from(now));
-            mediumMetrics.setLastOccurrence(Date.from(now));
-            dao.createProjectMetrics(mediumMetrics);
-
-            final var unassignedMetrics = new ProjectMetrics();
-            unassignedMetrics.setProjectId(unassignedProject.getId());
-            unassignedMetrics.setUnassigned(2);
-            unassignedMetrics.setFirstOccurrence(Date.from(now));
-            unassignedMetrics.setLastOccurrence(Date.from(now));
-            dao.createProjectMetrics(unassignedMetrics);
-        });
-
-        Response response = jersey.target("/projects")
-                .queryParam("severity", "CRITICAL")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
-                .isArray()
-                .containsExactly("critical-app");
-
-        response = jersey.target("/projects")
-                .queryParam("severity", "CRITICAL", "LOW")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
-                .isArray()
-                .containsExactlyInAnyOrder("critical-app", "low-app");
-
-        response = jersey.target("/projects")
-                .queryParam("severity", "HIGH")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
-                .isArray()
-                .isEmpty();
-
-        response = jersey.target("/projects")
-                .queryParam("severity", "MEDIUM")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
-                .isArray()
-                .containsExactly("medium-app");
-
-        response = jersey.target("/projects")
-                .queryParam("severity", "UNASSIGNED")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
-                .isArray()
-                .containsExactly("unassigned-app");
-
-        response = jersey.target("/projects")
-                .queryParam("severity", "LOW")
-                .queryParam("name_contains", "low")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
-                .isArray()
-                .containsExactly("low-app");
-
-        response = jersey.target("/projects")
-                .queryParam("severity", "invalid")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1092,10 +986,9 @@ public class ProjectsResourceTest extends ResourceTest {
         assertThatJson(parentBody).inPath("$.items[0].is_active").isEqualTo("ACTIVE");
         assertThatJson(parentBody).inPath("$.items[0].last_bom_import_format").isEqualTo("CycloneDX");
         assertThatJson(parentBody).inPath("$.items[0].collection_logic").isEqualTo("AGGREGATE_DIRECT_CHILDREN");
-        assertThatJson(parentBody).inPath("$.items[0].teams[0].name").isString();
+        assertThatJson(parentBody).inPath("$.items[0].teams[0]").isEqualTo("Test Users");
         assertThatJson(parentBody).inPath("$.items[0].metrics").isObject();
         assertThatJson(parentBody).inPath("$.items[0].parent").isAbsent();
-
 
         response = jersey.target("/projects")
                 .queryParam("name_contains", "collection")
@@ -1114,7 +1007,9 @@ public class ProjectsResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         final String childBody = getPlainTextBody(response);
         assertThatJson(childBody).inPath("$.items[0].name").isEqualTo("child-app");
-        assertThatJson(childBody).inPath("$.items[0].parent.uuid").isEqualTo(parent.getUuid().toString());
+        assertThatJson(childBody)
+                .inPath("$.items[0].parent.uuid")
+                .isEqualTo(parent.getUuid().toString());
         assertThatJson(childBody).inPath("$.items[0].parent.name").isEqualTo("collection-app");
 
         response = jersey.target("/projects")
@@ -1131,7 +1026,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("child-app");
     }
@@ -1176,7 +1072,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("child-app");
     }
@@ -1215,7 +1112,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("child-app", "grandchild-app");
 
@@ -1226,7 +1124,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("child-app");
 
@@ -1237,7 +1136,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("grandchild-app");
     }
@@ -1289,7 +1189,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("child-app", "grandchild-app");
     }
@@ -1322,7 +1223,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("root-with-child", "child-with-grandchild");
     }
@@ -1373,7 +1275,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("accessible-parent");
 
@@ -1393,7 +1296,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("accessible-parent")
                 .doesNotContain("child-only-parent");
@@ -1413,15 +1317,11 @@ public class ProjectsResourceTest extends ResourceTest {
         inaccessible.setName("inaccessible-app");
         qm.persist(inaccessible);
 
-        final Response response = jersey.target("/projects")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Response response =
+                jersey.target("/projects").request().header(X_API_KEY, apiKey).get();
         assertThat(response.getStatus()).isEqualTo(200);
         final String body = getPlainTextBody(response);
-        assertThatJson(body).inPath("$.items[*].name")
-                .isArray()
-                .containsExactly("accessible-app");
+        assertThatJson(body).inPath("$.items[*].name").isArray().containsExactly("accessible-app");
     }
 
     @Test

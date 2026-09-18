@@ -59,15 +59,10 @@ properties:
   teams:
     type: array
     description: >-
-      Teams with access to the project. Only present when `expand=teams` is requested.
+      Team names with access to the project. Only present when `expand=teams` is requested.
       Empty array when expanded and no teams are assigned.
     items:
-      type: object
-      properties:
-        name:
-          type: string
-      required:
-        - name
+      type: string
   parent:
     $ref: "../../../shared/schemas/component-project.yaml"
   has_children:

@@ -23,7 +23,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Cache hit ratio per cache. Sustained low values point to thrashing or cold caches.",
       "fieldConfig": {
@@ -113,10 +113,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (cache) (rate(cache_gets_total{instance=~\"$instance\",result=\"hit\"}[1m])) / clamp_min(sum by (cache) (rate(cache_gets_total{instance=~\"$instance\"}[1m])), 1e-9)",
+          "expr": "sum by (cache) (rate(cache_gets_total{instance=~\"$instance\",result=\"hit\"}[$__rate_interval])) / clamp_min(sum by (cache) (rate(cache_gets_total{instance=~\"$instance\"}[$__rate_interval])), 1e-9)",
           "legendFormat": "{{cache}}",
           "range": true,
           "refId": "A"
@@ -128,7 +128,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Cache access rate split by hit and miss per cache.",
       "fieldConfig": {
@@ -208,10 +208,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (cache, result) (rate(cache_gets_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (cache, result) (rate(cache_gets_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{cache}} {{result}}",
           "range": true,
           "refId": "A"
@@ -223,7 +223,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Cache write rate per cache.",
       "fieldConfig": {
@@ -303,10 +303,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (cache) (rate(cache_puts_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (cache) (rate(cache_puts_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{cache}}",
           "range": true,
           "refId": "A"
@@ -318,7 +318,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Cache eviction rate per cache. Spikes correlate with memory pressure or capacity limits.",
       "fieldConfig": {
@@ -398,10 +398,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (cache) (rate(cache_evictions_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (cache) (rate(cache_evictions_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{cache}}",
           "range": true,
           "refId": "A"
@@ -413,7 +413,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Current number of entries per cache. Uses max across instances since cache state is shared per process.",
       "fieldConfig": {
@@ -493,7 +493,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "max by (cache) (cache_size{instance=~\"$instance\"})",
@@ -516,6 +516,32 @@
   "templating": {
     "list": [
       {
+        "name": "datasource",
+        "label": "Data Source",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {
+          "text": "default",
+          "value": "default"
+        },
+        "hide": 0
+      },
+      {
+        "name": "job",
+        "label": "Job",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "query": "label_values(dt_info, job)",
+        "refresh": 2,
+        "multi": false,
+        "includeAll": false,
+        "current": {},
+        "sort": 1
+      },
+      {
         "allowCustomValue": false,
         "current": {
           "selected": true,
@@ -528,9 +554,9 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "uid": "${datasource}"
         },
-        "definition": "label_values(process_uptime_seconds, instance)",
+        "definition": "label_values(process_uptime_seconds{job=\"$job\"}, instance)",
         "includeAll": true,
         "label": "Instance",
         "multi": true,
@@ -538,7 +564,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(process_uptime_seconds, instance)",
+          "query": "label_values(process_uptime_seconds{job=\"$job\"}, instance)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

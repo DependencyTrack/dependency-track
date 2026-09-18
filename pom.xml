@@ -121,7 +121,7 @@
         <lib.org-kohsuke-github-api.version>1.330</lib.org-kohsuke-github-api.version>
         <lib.com-asahaf-javacron.version>1.4.0</lib.com-asahaf-javacron.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>13.4.0.jre11</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>13.6.0.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.2.0</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.7.13</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->

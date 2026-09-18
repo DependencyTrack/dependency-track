@@ -200,6 +200,8 @@ tags:
   description: Endpoints related to projects
 - name: Secrets
   description: Endpoints related to secrets
+- name: Service Accounts
+  description: Endpoints related to service accounts
 - name: System Capabilities
   description: Endpoints exposing the capabilities of the running server
 - name: Task Queues

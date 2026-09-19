@@ -124,7 +124,9 @@ final class OssIndexModelConverter {
             return null;
         }
 
-        final double score = cvss.getBakedScores().getBaseScore();
+        final double score = cvss instanceof Cvss4P0
+                ? cvss.getBakedScores().getOverallScore()
+                : cvss.getBakedScores().getBaseScore();
         return switch (cvss) {
             case Cvss4P0 it ->
                 VulnerabilityRating.newBuilder()

@@ -166,7 +166,7 @@ public final class BovModelConverter {
                     if (cvss != null && cvss.isBaseFullyDefined()) {
                         if (rating.getScore() == 0.0) {
                             vuln.setCvssV4Score(
-                                    BigDecimal.valueOf(cvss.getBakedScores().getBaseScore()));
+                                    BigDecimal.valueOf(cvss.getBakedScores().getOverallScore()));
                         }
                     } else {
                         LOGGER.debug(

@@ -226,7 +226,9 @@ final class ModelConverter {
             return null;
         }
 
-        final double score = cvss.getBakedScores().getBaseScore();
+        final double score = cvss instanceof Cvss4P0
+                ? cvss.getBakedScores().getOverallScore()
+                : cvss.getBakedScores().getBaseScore();
         final String stored = cvss instanceof Cvss2 ? "(" + cvss + ")" : cvss.toString();
         return switch (cvss) {
             case Cvss4P0 _ -> new DerivedCvss(SCORE_METHOD_CVSSV4, score, scoreToSeverityCvssV4(score), stored);

@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.vulndatasource.github;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.dependencytrack.plugin.api.MutableServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
@@ -32,12 +34,31 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.IOException;
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
+import java.net.URI;
 import java.net.http.HttpClient;
+import java.util.List;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+@WireMockTest
 class GitHubVulnDataSourceFactoryTest
         extends AbstractExtensionFactoryTest<@NonNull VulnDataSource, @NonNull GitHubVulnDataSourceFactory> {
 
@@ -167,5 +188,71 @@ class GitHubVulnDataSourceFactoryTest
         final VulnDataSource dataSource = factory.create();
         assertThat(dataSource).isNotNull();
         dataSource.close();
+    }
+
+    @Test
+    void shouldAuthenticateAgainstProxy(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(any(anyUrl())
+                .inScenario("proxyAuth")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(aResponse().withStatus(407).withHeader("Proxy-Authenticate", "Basic realm=\"proxy\""))
+                .willSetStateTo("challenged"));
+        stubFor(any(anyUrl())
+                .inScenario("proxyAuth")
+                .whenScenarioStateIs("challenged")
+                .willReturn(okJson(/* language=JSON */ """
+                    {
+                      "data": {
+                        "securityAdvisories": {
+                          "nodes": [],
+                          "totalCount": 0,
+                          "pageInfo": {
+                            "hasNextPage": false
+                          }
+                        }
+                      }
+                    }
+                    """)));
+
+        final var proxyAddress = new InetSocketAddress("localhost", wmRuntimeInfo.getHttpPort());
+        final var proxySelector = new ProxySelector() {
+            @Override
+            public List<Proxy> select(URI uri) {
+                return List.of(new Proxy(Proxy.Type.HTTP, proxyAddress));
+            }
+
+            @Override
+            public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {}
+        };
+        final var authenticator = new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return getRequestorType() == RequestorType.PROXY
+                        ? new PasswordAuthentication("proxyUser", "proxyPassword".toCharArray())
+                        : null;
+            }
+        };
+
+        final var config = enabledConfig();
+        config.setEnabled(true);
+        config.setApiToken("dummy");
+        config.setApiUrl(URI.create("http://github.invalid/graphql"));
+
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .register(
+                        HttpClient.class,
+                        HttpClient.newBuilder()
+                                .proxy(proxySelector)
+                                .authenticator(authenticator)
+                                .build())
+                .register(KeyValueStore.class, new MockKeyValueStore()));
+
+        final VulnDataSource dataSource = factory.create();
+        assertThat(dataSource.hasNext()).isFalse();
+        dataSource.close();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Proxy-Authorization", equalTo("Basic cHJveHlVc2VyOnByb3h5UGFzc3dvcmQ=")));
     }
 }

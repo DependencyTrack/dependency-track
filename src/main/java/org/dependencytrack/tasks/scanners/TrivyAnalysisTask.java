@@ -207,7 +207,11 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
         final var componentByPurl = new HashMap<String, Component>();
 
         for (final Component component : components) {
-            if (component.getPurl() != null) {
+            if (component.getClassifier() == Classifier.OPERATING_SYSTEM) {
+                LOGGER.debug("add operative system %s".formatted(component.toString()));
+                var key = "%s-%s".formatted(component.getName(), component.getVersion());
+                os.put(key, OS.newBuilder().setFamily(component.getName()).setName(component.getVersion()).build());
+            } else if (component.getPurl() != null) {
                 var appType = PurlType.getApp(component.getPurl().getType());
 
                 var name = component.getPurl().getName();
@@ -304,10 +308,6 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                     }
                 }
 
-            } else if (component.getClassifier() == Classifier.OPERATING_SYSTEM) {
-                LOGGER.debug("add operative system %s".formatted(component.toString()));
-                var key = "%s-%s".formatted(component.getName(), component.getVersion());
-                os.put(key, OS.newBuilder().setFamily(component.getName()).setName(component.getVersion()).build());
             }
         }
 

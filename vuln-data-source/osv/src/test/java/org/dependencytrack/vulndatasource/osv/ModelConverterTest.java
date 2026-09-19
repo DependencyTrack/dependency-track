@@ -1085,6 +1085,37 @@ class ModelConverterTest {
     final class SeverityDerivationTest {
 
         @Test
+        void shouldRetainThreatMetricsInCvssV4Score() throws IOException {
+            final Osv advisory = MAPPER.readValue(/* language=JSON */ """
+                    {
+                      "id": "GHSA-m7v2-7gxm-vc2v",
+                      "severity": [
+                        {
+                          "type": "CVSS_V4",
+                          "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U"
+                        }
+                      ],
+                      "database_specific": {
+                        "severity": "HIGH"
+                      }
+                    }
+                    """, Osv.class);
+
+            final Bom bov = new ModelConverter(MAPPER).convert(advisory, false, DEFAULT_SOURCE_ECOSYSTEM);
+
+            assertThatBov(bov).inPath("$.vulnerabilities[0].ratings").isEqualTo(/* language=JSON */ """
+                    [
+                      {
+                        "method": "SCORE_METHOD_CVSSV4",
+                        "score": 8.1,
+                        "severity": "SEVERITY_HIGH",
+                        "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U"
+                      }
+                    ]
+                    """);
+        }
+
+        @Test
         void shouldFilterInvalidCvssVectors() throws IOException {
             final Bom bov = new ModelConverter(MAPPER)
                     .convert(loadOsvAdvisory("osv-vulnerability-invalid-cvss.json"), false, DEFAULT_SOURCE_ECOSYSTEM);

@@ -73,6 +73,7 @@ class OsvVulnDataSourceTest {
         objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
         vulnDataSource = new OsvVulnDataSource(
+                "default",
                 watermarkManagerMock,
                 objectMapper,
                 "http://localhost",
@@ -172,6 +173,7 @@ class OsvVulnDataSourceTest {
                         .withHeader("Content-Type", "application/zip")));
 
         OsvVulnDataSource dataSource = new OsvVulnDataSource(
+                "default",
                 watermarkManagerMock,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -241,6 +243,7 @@ class OsvVulnDataSourceTest {
                         .withBody(zipBytes.toByteArray())));
 
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 null,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -284,6 +287,7 @@ class OsvVulnDataSourceTest {
 
         final var ids = new ArrayList<String>();
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 null,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -322,6 +326,7 @@ class OsvVulnDataSourceTest {
                         .withHeader("Content-Type", "application/zip")));
 
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 null,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -364,6 +369,7 @@ class OsvVulnDataSourceTest {
                         .withHeader("Content-Type", "application/zip")));
 
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 watermarkManagerMock,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -405,6 +411,7 @@ class OsvVulnDataSourceTest {
                         .withBody(advisoryJson)));
 
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 watermarkManagerMock,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -447,6 +454,7 @@ class OsvVulnDataSourceTest {
         }
 
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 watermarkManagerMock,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -502,6 +510,7 @@ class OsvVulnDataSourceTest {
                         .withBody(zipBytes.toByteArray())));
 
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 watermarkManagerMock,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -560,6 +569,7 @@ class OsvVulnDataSourceTest {
 
         final var ids = new ArrayList<String>();
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 watermarkManagerMock,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -622,6 +632,7 @@ class OsvVulnDataSourceTest {
 
         final var ids = new ArrayList<String>();
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 watermarkManagerMock,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -669,6 +680,7 @@ class OsvVulnDataSourceTest {
 
         final var ids = new ArrayList<String>();
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 watermarkManagerMock,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),
@@ -706,6 +718,7 @@ class OsvVulnDataSourceTest {
         }
 
         try (var dataSource = new OsvVulnDataSource(
+                "default",
                 watermarkManagerMock,
                 objectMapper,
                 wmRuntimeInfo.getHttpBaseUrl(),

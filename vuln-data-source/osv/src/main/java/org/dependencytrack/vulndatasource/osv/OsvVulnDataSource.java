@@ -62,6 +62,7 @@ final class OsvVulnDataSource implements VulnDataSource {
     private static final Logger LOGGER = LoggerFactory.getLogger(OsvVulnDataSource.class);
     private static final int MAX_INCREMENTAL_ADVISORY_DOWNLOADS = 250;
 
+    private final String dataSourceName;
     private final @Nullable WatermarkManager watermarkManager;
     private final ObjectMapper objectMapper;
     private final String dataUrl;
@@ -78,12 +79,14 @@ final class OsvVulnDataSource implements VulnDataSource {
     private final boolean isAliasSyncEnabled;
 
     OsvVulnDataSource(
+            final String dataSourceName,
             final @Nullable WatermarkManager watermarkManager,
             final ObjectMapper objectMapper,
             final String dataUrl,
             final Collection<String> ecosystems,
             final HttpClient httpClient,
             final boolean isAliasSyncEnabled) {
+        this.dataSourceName = requireNonNull(dataSourceName, "dataSourceName must not be null");
         this.watermarkManager = watermarkManager;
         this.objectMapper = objectMapper;
         this.dataUrl = dataUrl;
@@ -213,8 +216,9 @@ final class OsvVulnDataSource implements VulnDataSource {
         }
 
         LOGGER.info(
-                "Finished ecosystem {}: processed {} advisories",
+                "Finished ecosystem {} of data source {}: processed {} advisories",
                 currentEcosystem,
+                dataSourceName,
                 currentEcosystemAdvisoriesProcessed);
     }
 
@@ -223,7 +227,7 @@ final class OsvVulnDataSource implements VulnDataSource {
         currentEcosystemAdvisoriesProcessed = 0;
         currentAdvisorySource = openAdvisorySource(currentEcosystem);
 
-        LOGGER.info("Processing ecosystem {}", currentEcosystem);
+        LOGGER.info("Processing ecosystem {} of data source {}", currentEcosystem, dataSourceName);
     }
 
     private @Nullable OsvAdvisorySource openAdvisorySource(String ecosystem) {
@@ -375,5 +379,9 @@ final class OsvVulnDataSource implements VulnDataSource {
     @Nullable
     WatermarkManager getWatermarkManager() {
         return watermarkManager;
+    }
+
+    String getDataSourceName() {
+        return dataSourceName;
     }
 }

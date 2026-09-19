@@ -411,6 +411,39 @@ class TrivyVulnAnalyzerTest {
     }
 
     @Test
+    void testAnalyzeOsComponentWithPurl() throws Exception {
+        stubTrivyEndpoints(ScanResponse.getDefaultInstance());
+
+        final Bom bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("os-1")
+                        .setName("debian")
+                        .setVersion("13.6")
+                        .setPurl("pkg:generic/debian@13.6")
+                        .setType(Classification.CLASSIFICATION_OPERATING_SYSTEM)
+                        .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("libc6")
+                        .setVersion("2.41-12")
+                        .setPurl("pkg:deb/debian/libc6@2.41-12?arch=amd64&distro=debian-13.6")
+                        .setType(CLASSIFICATION_LIBRARY)
+                        .build())
+                .build();
+
+        analyzer.analyze(bom);
+
+        final var putBlobRequests =
+                WireMock.findAll(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
+        assertThat(putBlobRequests).hasSize(1);
+
+        final PutBlobRequest putBlobRequest =
+                PutBlobRequest.parseFrom(putBlobRequests.get(0).getBody());
+        assertThat(putBlobRequest.getBlobInfo().getOs().getFamily()).isEqualTo("debian");
+        assertThat(putBlobRequest.getBlobInfo().getOs().getName()).isEqualTo("13.6");
+    }
+
+    @Test
     void testSkipsComponentsWithoutVersion() throws Exception {
         stubTrivyEndpoints(ScanResponse.getDefaultInstance());
 

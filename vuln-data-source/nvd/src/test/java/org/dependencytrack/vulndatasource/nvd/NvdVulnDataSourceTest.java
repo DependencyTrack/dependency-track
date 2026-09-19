@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.net.http.HttpClient;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
@@ -259,9 +260,9 @@ class NvdVulnDataSourceTest {
 
         stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
                 .willReturn(aResponse().withStatus(200).withBody("""
-                                lastModifiedDate:2024-01-01T00:00:00.000Z
-                                sha256:0000000000000000000000000000000000000000000000000000000000000000
-                                """)));
+                    lastModifiedDate:2024-01-01T00:00:00.000Z
+                    sha256:0000000000000000000000000000000000000000000000000000000000000000
+                    """)));
 
         stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz"))
                 .willReturn(aResponse()
@@ -286,7 +287,7 @@ class NvdVulnDataSourceTest {
                 createDataSource(wmRuntimeInfo.getHttpBaseUrl(), kvStore, List.of(new NvdDataFeed.ModifiedDataFeed()));
 
         while (dataSource.hasNext()) {
-            dataSource.next();
+            dataSource.markProcessed(dataSource.next());
         }
 
         dataSource.close();
@@ -294,6 +295,190 @@ class NvdVulnDataSourceTest {
 
         assertThat(kvStore.get("feed-digest:modified").value())
                 .isEqualTo("0000000000000000000000000000000000000000000000000000000000000000");
+    }
+
+    @Test
+    void shouldContinueWithRemainingFeedsWhenFeedYieldsNoCves(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        kvStore = new MockKeyValueStore();
+        kvStore.put(
+                "watermark",
+                String.valueOf(Instant.parse("2024-06-01T00:00:00Z").toEpochMilli()));
+
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-2024.meta"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                    lastModifiedDate:2025-01-01T00:00:00.000Z
+                    sha256:0000000000000000000000000000000000000000000000000000000000000000
+                    """)));
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-2024.json.gz"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/gzip")
+                        .withBody(gzip(/* language=JSON */ """
+                            {
+                              "vulnerabilities": [
+                                {
+                                  "cve": {
+                                    "id": "CVE-2024-0001",
+                                    "lastModified": "2024-12-01T00:00:00.000",
+                                    "descriptions": [{"lang": "en", "value": "Above watermark"}],
+                                    "metrics": {}
+                                  }
+                                }
+                              ]
+                            }
+                            """))));
+
+        // Nothing modified since the watermark, i.e. this feed yields no CVEs.
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-2023.meta"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                    lastModifiedDate:2025-01-01T00:00:00.000Z
+                    sha256:0000000000000000000000000000000000000000000000000000000000000000
+                    """)));
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-2023.json.gz"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/gzip")
+                        .withBody(gzip(/* language=JSON */ """
+                            {
+                              "vulnerabilities": [
+                                {
+                                  "cve": {
+                                    "id": "CVE-2023-0001",
+                                    "lastModified": "2024-01-01T00:00:00.000",
+                                    "descriptions": [{"lang": "en", "value": "Below watermark"}],
+                                    "metrics": {}
+                                  }
+                                }
+                              ]
+                            }
+                            """))));
+
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                    lastModifiedDate:2025-01-01T00:00:00.000Z
+                    sha256:0000000000000000000000000000000000000000000000000000000000000000
+                    """)));
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/gzip")
+                        .withBody(gzip(/* language=JSON */ """
+                            {
+                              "vulnerabilities": [
+                                {
+                                  "cve": {
+                                    "id": "CVE-2025-0001",
+                                    "lastModified": "2024-12-15T00:00:00.000",
+                                    "descriptions": [{"lang": "en", "value": "Above watermark"}],
+                                    "metrics": {}
+                                  }
+                                }
+                              ]
+                            }
+                            """))));
+
+        dataSource = createDataSource(
+                wmRuntimeInfo.getHttpBaseUrl(),
+                kvStore,
+                List.of(
+                        new NvdDataFeed.YearDataFeed(2024),
+                        new NvdDataFeed.YearDataFeed(2023),
+                        new NvdDataFeed.ModifiedDataFeed()));
+
+        final var vulnIds = new ArrayList<String>();
+        while (dataSource.hasNext()) {
+            vulnIds.add(dataSource.next().getVulnerabilities(0).getId());
+        }
+
+        assertThat(vulnIds).containsExactly("CVE-2024-0001", "CVE-2025-0001");
+    }
+
+    @Test
+    void shouldNotCommitFeedDigestForUnprocessedCves(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        kvStore = new MockKeyValueStore();
+
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                    lastModifiedDate:2025-01-01T00:00:00.000Z
+                    sha256:0000000000000000000000000000000000000000000000000000000000000000
+                    """)));
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/gzip")
+                        .withBody(gzip(/* language=JSON */ """
+                            {
+                              "vulnerabilities": [
+                                {
+                                  "cve": {
+                                    "id": "CVE-2024-0001",
+                                    "lastModified": "2024-12-01T00:00:00.000",
+                                    "descriptions": [{"lang": "en", "value": "Never persisted"}],
+                                    "metrics": {}
+                                  }
+                                }
+                              ]
+                            }
+                            """))));
+
+        dataSource =
+                createDataSource(wmRuntimeInfo.getHttpBaseUrl(), kvStore, List.of(new NvdDataFeed.ModifiedDataFeed()));
+
+        while (dataSource.hasNext()) {
+            dataSource.next();
+
+            // NB: No markProcessed call to simulate a consumer that batches records
+            // and fails to process them before closing the data source.
+        }
+
+        dataSource.close();
+        dataSource = null;
+
+        assertThat(kvStore.get("feed-digest:modified")).isNull();
+    }
+
+    @Test
+    void shouldNotCommitWatermarkOlderThanCommittedOne(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        final Instant committedWatermark = Instant.parse("2024-06-01T00:00:00.500Z");
+
+        kvStore = new MockKeyValueStore();
+        kvStore.put("watermark", String.valueOf(committedWatermark.toEpochMilli()));
+
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                    lastModifiedDate:2025-01-01T00:00:00.000Z
+                    sha256:0000000000000000000000000000000000000000000000000000000000000000
+                    """)));
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/gzip")
+                        .withBody(gzip(/* language=JSON */ """
+                            {
+                              "vulnerabilities": [
+                                {
+                                  "cve": {
+                                    "id": "CVE-2024-0001",
+                                    "lastModified": "2024-06-01T00:00:00.900",
+                                    "descriptions": [{"lang": "en", "value": "Above watermark"}],
+                                    "metrics": {}
+                                  }
+                                }
+                              ]
+                            }
+                            """))));
+
+        dataSource =
+                createDataSource(wmRuntimeInfo.getHttpBaseUrl(), kvStore, List.of(new NvdDataFeed.ModifiedDataFeed()));
+
+        while (dataSource.hasNext()) {
+            dataSource.markProcessed(dataSource.next());
+        }
+
+        dataSource.close();
+        dataSource = null;
+
+        assertThat(kvStore.get("watermark").value()).isEqualTo(String.valueOf(committedWatermark.toEpochMilli()));
     }
 
     @Test

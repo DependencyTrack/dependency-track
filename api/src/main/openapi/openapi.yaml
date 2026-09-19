@@ -236,6 +236,8 @@ paths:
     $ref: "./resources/kev-data-sources/kev-data-source-mirror-run-latest.yaml"
   /oauth/token:
     $ref: "./resources/oauth/oauth-token.yaml"
+  /projects:
+    $ref: "./resources/projects/projects.yaml"
   /projects/{uuid}/clone:
     $ref: "./resources/projects/project-clone.yaml"
   /projects/{uuid}/components:

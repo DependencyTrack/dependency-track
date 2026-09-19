@@ -19,12 +19,16 @@
 package org.dependencytrack.resources.v2;
 
 import alpine.server.auth.PermissionRequired;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.api.v2.ProjectsApi;
+import org.dependencytrack.api.v2.model.Classifier;
 import org.dependencytrack.api.v2.model.CloneProjectInclude;
 import org.dependencytrack.api.v2.model.CloneProjectRequest;
 import org.dependencytrack.api.v2.model.CloneProjectResponse;
 import org.dependencytrack.api.v2.model.ListProjectComponentsResponse;
 import org.dependencytrack.api.v2.model.ListProjectComponentsResponseItem;
+import org.dependencytrack.api.v2.model.ListProjectsResponse;
+import org.dependencytrack.api.v2.model.ProjectState;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.pagination.Page;
@@ -39,6 +43,7 @@ import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
+import org.dependencytrack.persistence.jdbi.query.ListAllProjectsQuery;
 import org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.util.PurlUtil;
@@ -52,6 +57,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -61,10 +67,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.map;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapDependencyMetrics;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapHashes;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapLicense;
+import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapListProjectsResponseItem;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapScope;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapSortDirection;
 
@@ -75,6 +83,100 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
 
     @Context
     private UriInfo uriInfo;
+
+    @Override
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response listProjects(
+            final String nameContains,
+            final String versionContains,
+            final List<String> tagsAll,
+            final List<String> teamsAny,
+            final UUID parentUuid,
+            final UUID ancestorUuid,
+            final Boolean onlyRoot,
+            final Boolean hasChildren,
+            final ProjectState isActive,
+            final Boolean isLatest,
+            final Long lastBomImportSince,
+            final Long lastBomImportBefore,
+            final List<Classifier> classifier,
+            final List<String> expand,
+            final Integer limit,
+            final String pageToken,
+            final SortDirection sortDirection,
+            final String sortBy) {
+
+        final boolean hasExpand = expand != null && !expand.isEmpty();
+        final boolean expandMetrics = hasExpand && expand.contains("metrics");
+        final boolean expandParent = hasExpand && expand.contains("parent");
+        final boolean expandTeams = hasExpand && expand.contains("teams");
+        final List<String> classifiers = normalizeClassifierFilter(classifier);
+
+        return withJdbiHandle(getAlpineRequest(), handle -> {
+            final ListAllProjectsQuery.SortBy sortByEnum =
+                    switch (sortBy) {
+                        case null -> null;
+                        case "name" -> ListAllProjectsQuery.SortBy.NAME;
+                        case "group" -> ListAllProjectsQuery.SortBy.GROUP;
+                        case "version" -> ListAllProjectsQuery.SortBy.VERSION;
+                        case "classifier" -> ListAllProjectsQuery.SortBy.CLASSIFIER;
+                        case "inactive_since" -> ListAllProjectsQuery.SortBy.INACTIVE_SINCE;
+                        case "is_latest" -> ListAllProjectsQuery.SortBy.IS_LATEST;
+                        case "last_bom_import" -> ListAllProjectsQuery.SortBy.LAST_BOM_IMPORTED;
+                        case "last_inherited_risk_score" -> ListAllProjectsQuery.SortBy.LAST_RISKSCORE;
+                        default ->
+                            throw new InvalidSortFieldException(
+                                    sortBy,
+                                    List.of(
+                                            "name",
+                                            "group",
+                                            "version",
+                                            "classifier",
+                                            "inactive_since",
+                                            "is_latest",
+                                            "last_bom_import",
+                                            "last_inherited_risk_score"));
+                    };
+
+            final Page<ProjectDao.ListAllProjectsRow> projectsPage = handle.attach(ProjectDao.class)
+                    .listAllProjects(new ListAllProjectsQuery(
+                            StringUtils.trimToNull(nameContains),
+                            StringUtils.trimToNull(versionContains),
+                            tagsAll,
+                            teamsAny,
+                            parentUuid,
+                            ancestorUuid,
+                            onlyRoot,
+                            hasChildren,
+                            switch (isActive) {
+                                case ACTIVE -> Boolean.TRUE;
+                                case INACTIVE -> Boolean.FALSE;
+                                case null -> null;
+                            },
+                            isLatest,
+                            lastBomImportSince != null ? Instant.ofEpochMilli(lastBomImportSince) : null,
+                            lastBomImportBefore != null ? Instant.ofEpochMilli(lastBomImportBefore) : null,
+                            classifiers,
+                            expandMetrics,
+                            expandParent,
+                            expandTeams,
+                            limit,
+                            pageToken,
+                            sortByEnum,
+                            mapSortDirection(sortDirection)));
+
+            final var responseItems = projectsPage.items().stream()
+                    .map(row -> mapListProjectsResponseItem(row, expandMetrics, expandParent, expandTeams))
+                    .toList();
+
+            return Response.ok(ListProjectsResponse.builder()
+                            .items(responseItems)
+                            .nextPageToken(projectsPage.nextPageToken())
+                            .total(convertTotalCount(projectsPage.totalCount()))
+                            .build())
+                    .build();
+        });
+    }
 
     @Override
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -254,5 +356,13 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                         .build())
                 .entity(CloneProjectResponse.builder().uuid(clonedProjectUuid).build())
                 .build();
+    }
+
+    private static List<String> normalizeClassifierFilter(final List<Classifier> classifier) {
+        if (classifier == null || classifier.isEmpty()) {
+            return null;
+        }
+
+        return classifier.stream().map(Classifier::name).distinct().toList();
     }
 }

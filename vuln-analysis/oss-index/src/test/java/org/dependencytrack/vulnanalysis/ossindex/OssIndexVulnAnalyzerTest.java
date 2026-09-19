@@ -132,6 +132,48 @@ class OssIndexVulnAnalyzerTest {
     }
 
     @Test
+    void shouldRetainThreatMetricsInCvssV4Score() throws Exception {
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
+                        [
+                          {
+                            "coordinates": "pkg:composer/symfony/monolog-bridge@6.4.0",
+                            "vulnerabilities": [
+                              {
+                                "id": "CVE-2026-45077",
+                                "cvssScore": 8.1,
+                                "cvssVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U",
+                                "cve": "CVE-2026-45077"
+                              }
+                            ]
+                          }
+                        ]
+                        """)));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("monolog-bridge")
+                        .setPurl("pkg:composer/symfony/monolog-bridge@6.4.0")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThatJson(JsonFormat.printer().print(vdr))
+                .inPath("$.vulnerabilities[0].ratings")
+                .isEqualTo(/* language=JSON */ """
+                        [
+                          {
+                            "source": { "name": "OSSINDEX" },
+                            "score": 8.1,
+                            "method": "SCORE_METHOD_CVSSV4",
+                            "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U"
+                          }
+                        ]
+                        """);
+    }
+
+    @Test
     void shouldAnalyzeAndCacheWithVulns() throws Exception {
         stubFor(post(urlPathEqualTo("/api/v3/component-report"))
                 .willReturn(aResponse().withStatus(200).withBodyFile("vulns-response.json")));

@@ -215,19 +215,21 @@ final class ModelConverter {
         final VulnerabilityRating.Builder ratingBuilder = VulnerabilityRating.newBuilder()
                 .setSource(SOURCE)
                 .setVector(cvss.toString())
-                .setScore(cvss.getBakedScores().getBaseScore())
+                .setScore(calculateCvssScore(cvss))
                 .setSeverity(calculateCvssSeverity(cvss));
-        if (cvss instanceof Cvss4P0) {
-            return Optional.of(
-                    ratingBuilder.setMethod(ScoreMethod.SCORE_METHOD_CVSSV4).build());
-        } else if (cvss instanceof Cvss3P1) {
-            return Optional.of(
-                    ratingBuilder.setMethod(ScoreMethod.SCORE_METHOD_CVSSV31).build());
-        } else if (cvss instanceof Cvss3P0) {
-            return Optional.of(
-                    ratingBuilder.setMethod(ScoreMethod.SCORE_METHOD_CVSSV3).build());
-        }
-        return Optional.empty();
+        return switch (cvss) {
+            case Cvss4P0 _ ->
+                Optional.of(
+                        ratingBuilder.setMethod(ScoreMethod.SCORE_METHOD_CVSSV4).build());
+            case Cvss3P1 _ ->
+                Optional.of(ratingBuilder
+                        .setMethod(ScoreMethod.SCORE_METHOD_CVSSV31)
+                        .build());
+            case Cvss3P0 _ ->
+                Optional.of(
+                        ratingBuilder.setMethod(ScoreMethod.SCORE_METHOD_CVSSV3).build());
+            default -> Optional.empty();
+        };
     }
 
     private static @Nullable List<VulnerabilityReference> mapVulnerabilityReferences(SecurityAdvisory advisory) {
@@ -356,12 +358,18 @@ final class ModelConverter {
         }
     }
 
+    private static double calculateCvssScore(CvssVector cvss) {
+        return cvss instanceof Cvss4P0
+                ? cvss.getBakedScores().getOverallScore()
+                : cvss.getBakedScores().getBaseScore();
+    }
+
     private static Severity calculateCvssSeverity(@Nullable CvssVector cvss) {
         if (cvss == null) {
             return SEVERITY_UNKNOWN;
         }
 
-        final double score = cvss.getBakedScores().getBaseScore();
+        final double score = calculateCvssScore(cvss);
         if (cvss instanceof Cvss3 || cvss instanceof Cvss4P0) {
             if (score >= 9) {
                 return SEVERITY_CRITICAL;

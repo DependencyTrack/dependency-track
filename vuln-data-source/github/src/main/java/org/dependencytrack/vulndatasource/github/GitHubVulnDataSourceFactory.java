@@ -21,7 +21,11 @@ package org.dependencytrack.vulndatasource.github;
 import io.github.jeremylong.openvulnerability.client.HttpAsyncClientSupplier;
 import io.github.jeremylong.openvulnerability.client.ghsa.GitHubSecurityAdvisoryClient;
 import io.github.jeremylong.openvulnerability.client.ghsa.GitHubSecurityAdvisoryClientBuilder;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.CredentialsProvider;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
@@ -32,6 +36,10 @@ import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
 import org.jspecify.annotations.Nullable;
 
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -51,6 +59,7 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
     private @Nullable KeyValueStore kvStore;
     private @Nullable HttpClient httpClient;
     private @Nullable ProxySelector proxySelector;
+    private @Nullable Authenticator authenticator;
 
     @Override
     public String extensionName() {
@@ -78,6 +87,7 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
         this.kvStore = context.keyValueStore();
         this.httpClient = context.httpClient();
         this.proxySelector = httpClient.proxy().orElse(null);
+        this.authenticator = httpClient.authenticator().orElse(null);
     }
 
     @Override
@@ -104,6 +114,7 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
         final HttpAsyncClientSupplier httpClientSupplier = () -> HttpAsyncClients.custom()
                 .setRetryStrategy(new GitHubHttpRequestRetryStrategy())
                 .setProxySelector(proxySelector)
+                .setDefaultCredentialsProvider(proxyCredentialsProvider(config.getApiUrl()))
                 .addRequestInterceptorFirst(new BearerTokenInterceptor(tokenProvider))
                 .build();
 
@@ -167,5 +178,41 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
                         "GitHub App authentication requires App ID, Installation ID and App Private Key");
             }
         });
+    }
+
+    private @Nullable CredentialsProvider proxyCredentialsProvider(URI apiUrl) {
+        if (proxySelector == null || authenticator == null) {
+            return null;
+        }
+
+        final InetSocketAddress proxyAddress = proxySelector.select(apiUrl).stream()
+                .filter(proxy -> proxy.type() != Proxy.Type.DIRECT)
+                .map(Proxy::address)
+                .filter(InetSocketAddress.class::isInstance)
+                .map(InetSocketAddress.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (proxyAddress == null) {
+            return null;
+        }
+
+        final PasswordAuthentication credentials = authenticator.requestPasswordAuthenticationInstance(
+                proxyAddress.getHostString(),
+                /* addr */ null,
+                proxyAddress.getPort(),
+                "http",
+                /* prompt */ null,
+                /* scheme */ null,
+                /* url */ null,
+                Authenticator.RequestorType.PROXY);
+        if (credentials == null) {
+            return null;
+        }
+
+        final var credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(
+                new AuthScope(proxyAddress.getHostString(), proxyAddress.getPort()),
+                new UsernamePasswordCredentials(credentials.getUserName(), credentials.getPassword()));
+        return credentialsProvider;
     }
 }

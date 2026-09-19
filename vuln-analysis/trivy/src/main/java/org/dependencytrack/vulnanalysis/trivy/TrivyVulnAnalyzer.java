@@ -101,9 +101,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                 continue;
             }
 
-            if (component.hasPurl() && component.hasBomRef()) {
-                processComponentWithPurl(component, apps, pkgs, bomRefsByPurl);
-            } else if (component.getType() == Classification.CLASSIFICATION_OPERATING_SYSTEM) {
+            if (component.getType() == Classification.CLASSIFICATION_OPERATING_SYSTEM) {
                 final String key = "%s-%s".formatted(component.getName(), component.getVersion());
                 osMap.put(
                         key,
@@ -111,6 +109,8 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                                 .setFamily(component.getName())
                                 .setName(component.getVersion())
                                 .build());
+            } else if (component.hasPurl() && component.hasBomRef()) {
+                processComponentWithPurl(component, apps, pkgs, bomRefsByPurl);
             }
         }
 

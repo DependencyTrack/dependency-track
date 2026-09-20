@@ -74,6 +74,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -81,6 +82,7 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -2090,6 +2092,52 @@ class ProjectResourceTest extends ResourceTest {
                           ]
                         }
                         """);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"uuid", "lookup", "latest"})
+    void shouldReturnAggregatedChildMetricsWhenGettingCollectionProject(String endpoint) {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var collectionProject = new Project();
+        collectionProject.setName("acme-collection");
+        collectionProject.setVersion("1.0.0");
+        collectionProject.setIsLatest(true);
+        collectionProject.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.persist(collectionProject);
+
+        final var childProject = new Project();
+        childProject.setName("acme-app");
+        childProject.setParent(collectionProject);
+        qm.persist(childProject);
+
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", LocalDate.now(ZoneOffset.UTC));
+            final var now = Instant.now();
+
+            final var childMetrics = new ProjectMetrics();
+            childMetrics.setProjectId(childProject.getId());
+            childMetrics.setMedium(2);
+            childMetrics.setFirstOccurrence(Date.from(now));
+            childMetrics.setLastOccurrence(Date.from(now));
+            testDao.createProjectMetrics(childMetrics);
+        });
+
+        final WebTarget target =
+                switch (endpoint) {
+                    case "uuid" -> jersey.target(V1_PROJECT + "/" + collectionProject.getUuid());
+                    case "lookup" ->
+                        jersey.target(V1_PROJECT + "/lookup")
+                                .queryParam("name", "acme-collection")
+                                .queryParam("version", "1.0.0");
+                    case "latest" -> jersey.target(V1_PROJECT + "/latest/acme-collection");
+                    default -> throw new IllegalArgumentException(endpoint);
+                };
+
+        final Response response = target.request().header(X_API_KEY, apiKey).get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.metrics.medium").isEqualTo(2);
     }
 
     @Test

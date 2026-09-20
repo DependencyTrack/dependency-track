@@ -87,8 +87,8 @@ final class ProjectQueryManager extends QueryManager {
         final Project project = getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
         if (project != null) {
             // set Metrics to minimize the number of round trips a client needs to make
-            project.setMetrics(withJdbiHandle(
-                    handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
+            project.setMetrics(
+                    withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project)));
             // set ProjectVersions to minimize the number of round trips a client needs to make
             project.setVersions(getProjectVersions(project));
         }

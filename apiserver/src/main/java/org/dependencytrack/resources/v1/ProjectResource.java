@@ -389,8 +389,8 @@ public class ProjectResource extends AbstractApiResource {
             final Project project = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(name));
             if (project != null) {
                 requireAccess(qm, project);
-                project.setMetrics(withJdbiHandle(
-                        handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
+                project.setMetrics(
+                        withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project)));
                 project.setVersions(qm.getProjectVersions(project));
                 return Response.ok(project).build();
             } else {
@@ -434,8 +434,8 @@ public class ProjectResource extends AbstractApiResource {
             final Project project = ProjectAccess.unrestricted(() -> qm.getProject(name, version));
             if (project != null) {
                 requireAccess(qm, project);
-                project.setMetrics(withJdbiHandle(
-                        handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
+                project.setMetrics(
+                        withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project)));
                 project.setVersions(qm.getProjectVersions(project));
                 return Response.ok(project).build();
             } else {

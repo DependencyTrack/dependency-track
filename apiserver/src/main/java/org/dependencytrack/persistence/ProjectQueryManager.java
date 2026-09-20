@@ -251,6 +251,32 @@ final class ProjectQueryManager extends QueryManager {
     public Project updateProject(Project transientProject, boolean commitIndex) {
         return callInTransaction(() -> {
             final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
+
+            // NB: Resolve the parent BEFORE setting any field below, for the same reason the
+            // collection tag is resolved before collectionLogic further down: getObjectByUuid
+            // triggers a query, which flushes dirty state. Doing that after e.g. setClassifier
+            // has run, but before setCollectionLogic clears it, can flush a row that violates
+            // PROJECT_COLLECTION_CLASSIFIER_check (see #7241).
+            if (transientProject.getParent() != null
+                    && transientProject.getParent().getUuid() != null) {
+                if (project.getUuid().equals(transientProject.getParent().getUuid())) {
+                    throw new IllegalArgumentException("A project cannot select itself as a parent");
+                }
+                Project parent = getObjectByUuid(
+                        Project.class, transientProject.getParent().getUuid());
+                if (parent.getInactiveSince() != null) {
+                    throw new IllegalArgumentException("An inactive project cannot be selected as a parent");
+                } else if (isChildOf(parent, transientProject.getUuid())) {
+                    throw new IllegalArgumentException(
+                            "The new parent project cannot be a child of the current project.");
+                } else {
+                    project.setParent(parent);
+                }
+                project.setParent(parent);
+            } else {
+                project.setParent(null);
+            }
+
             project.setAuthors(transientProject.getAuthors());
             project.setPublisher(transientProject.getPublisher());
             project.setManufacturer(transientProject.getManufacturer());
@@ -282,26 +308,6 @@ final class ProjectQueryManager extends QueryManager {
                 }
             }
             project.setIsLatest(transientProject.isLatest());
-
-            if (transientProject.getParent() != null
-                    && transientProject.getParent().getUuid() != null) {
-                if (project.getUuid().equals(transientProject.getParent().getUuid())) {
-                    throw new IllegalArgumentException("A project cannot select itself as a parent");
-                }
-                Project parent = getObjectByUuid(
-                        Project.class, transientProject.getParent().getUuid());
-                if (parent.getInactiveSince() != null) {
-                    throw new IllegalArgumentException("An inactive project cannot be selected as a parent");
-                } else if (isChildOf(parent, transientProject.getUuid())) {
-                    throw new IllegalArgumentException(
-                            "The new parent project cannot be a child of the current project.");
-                } else {
-                    project.setParent(parent);
-                }
-                project.setParent(parent);
-            } else {
-                project.setParent(null);
-            }
 
             // Prevent illegal states of collection projects (must not contain components or services).
             final ProjectCollectionLogic newCollectionLogic = transientProject.getCollectionLogic();

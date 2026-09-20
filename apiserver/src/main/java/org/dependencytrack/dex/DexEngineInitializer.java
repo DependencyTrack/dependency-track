@@ -37,6 +37,7 @@ import org.dependencytrack.dex.engine.api.DexEngineFactory;
 import org.dependencytrack.dex.engine.api.TaskType;
 import org.dependencytrack.dex.engine.api.TaskWorkerOptions;
 import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
+import org.dependencytrack.dex.listener.DataSourceMirroringNotificationEmitter;
 import org.dependencytrack.dex.listener.DelayedBomProcessedNotificationEmitter;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.kevdatasource.MirrorKevDataSourceActivity;
@@ -357,6 +358,8 @@ public final class DexEngineInitializer implements ServletContextListener {
                 engine.registerTaskWorker(workerOptions);
             }
         }
+
+        engine.addEventListener(new DataSourceMirroringNotificationEmitter(pluginManager));
         if (config.getOptionalValue("dt.tmp.delay-bom-processed-notification", boolean.class)
                 .orElse(false)) {
             engine.addEventListener(new DelayedBomProcessedNotificationEmitter());

@@ -19,6 +19,7 @@
 package org.dependencytrack.vulndatasource;
 
 import org.cyclonedx.proto.v1_7.Bom;
+import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.common.MdcScope;
 import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivityContext;
@@ -28,8 +29,9 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.dependencytrack.BovModelConverter;
-import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
+import org.dependencytrack.persistence.jdbi.VulnerabilitySyncDao;
+import org.dependencytrack.persistence.jdbi.VulnerableSoftwareDao;
 import org.dependencytrack.plugin.runtime.NoSuchExtensionException;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
@@ -41,7 +43,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jdo.Query;
 import java.io.Closeable;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -53,8 +54,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static org.datanucleus.PropertyNames.PROPERTY_MANAGE_RELATIONSHIPS;
-import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_DATA_SOURCE_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_ID;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_SOURCE;
@@ -69,6 +68,8 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MirrorVulnDataSourceActivity.class);
     private static final Duration HEARTBEAT_LOG_INTERVAL = Duration.ofSeconds(30);
+    private static final int BATCH_SIZE = 100;
+    private static final int BATCH_MAX_AFFECTED_VERSIONS = 25_000;
 
     private final PluginManager pluginManager;
 
@@ -114,7 +115,9 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             // when the activity got interrupted. That requires temporarily popping
             // the interrupt flag from the thread before invoking close() on it.
             try (var _ = (Closeable) () -> closeUninterruptibly(dataSource)) {
-                final var bovBatch = new ArrayList<Bom>(25);
+                final var bovBatch = new ArrayList<Bom>(BATCH_SIZE);
+                int affectedVersionsInBatch = 0;
+
                 while (dataSource.hasNext()) {
                     if (Thread.interrupted()) {
                         throw new InterruptedException("Interrupted before all vulnerabilities could be consumed");
@@ -122,10 +125,16 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
 
                     final Bom bov = dataSource.next();
                     bovBatch.add(bov);
-                    if (bovBatch.size() == 25) {
+                    affectedVersionsInBatch += affectedVersionCount(bov);
+
+                    if (bovBatch.size() == BATCH_SIZE
+                            // NB: A single vulnerability can have thousands of affected versions.
+                            // Limiting batch sizes by vulnerability count alone is not sufficient.
+                            || affectedVersionsInBatch >= BATCH_MAX_AFFECTED_VERSIONS) {
                         processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
                         vulnsProcessed += bovBatch.size();
                         bovBatch.clear();
+                        affectedVersionsInBatch = 0;
                         if (System.nanoTime() - lastHeartbeatNs >= HEARTBEAT_LOG_INTERVAL.toNanos()) {
                             LOGGER.info("Processed {} vulnerabilities so far", vulnsProcessed);
                             lastHeartbeatNs = System.nanoTime();
@@ -159,7 +168,7 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
 
         final var vulnByKey = new LinkedHashMap<VulnerabilityKey, Vulnerability>(bovs.size());
         final var vsListByVulnKey = new HashMap<VulnerabilityKey, List<VulnerableSoftware>>(bovs.size());
-        final var aliasesByVuln = new LinkedHashMap<VulnerabilityKey, Set<VulnerabilityKey>>(bovs.size());
+        final var aliasesByVulnKey = new LinkedHashMap<VulnerabilityKey, Set<VulnerabilityKey>>(bovs.size());
 
         for (final Bom bov : bovs) {
             if (bov.getVulnerabilitiesCount() == 0) {
@@ -198,26 +207,20 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                             .toList());
 
             final Set<VulnerabilityKey> aliasKeys = VulnerabilityUtil.extractAliasKeys(vuln.getAliases(), vulnKey);
-            aliasesByVuln.put(vulnKey, aliasKeys);
+            aliasesByVulnKey.put(vulnKey, aliasKeys);
         }
 
-        try (final var qm = new QueryManager()) {
-            // Disable managed relationships to avoid excessive N+1 queries during VulnerableSoftware synchronization.
-            //
-            //   "For an M-N bidirectional relation, at persist you MUST set one side and the other side will
-            //   be populated at commit/flush to make them consistent."
-            //   https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#managed_relationships
-            //
-            // The "consistent" is referring to in-memory state, NOT database records.
-            // We don't need a fully consistent object graph here, in fact it's actively detrimental.
-            qm.getPersistenceManager().setProperty(PROPERTY_MANAGE_RELATIONSHIPS, "false");
-            qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+        if (!vulnByKey.isEmpty()) {
+            useJdbiTransaction(handle -> {
+                final var vulnerabilityDao = new VulnerabilitySyncDao(handle);
+                final Map<VulnerabilityKey, Long> existingVulnIdByKey =
+                        vulnerabilityDao.getIdsByKey(vulnByKey.keySet());
 
-            qm.runInTransaction(() -> {
+                final var syncableVulns = new ArrayList<Vulnerability>(vulnByKey.size());
                 for (final Map.Entry<VulnerabilityKey, Vulnerability> entry : vulnByKey.entrySet()) {
                     final Vulnerability vuln = entry.getValue();
-                    final Vulnerability existingVuln = getExistingVuln(qm, vuln.getSource(), vuln.getVulnId());
-                    if (!updatePolicy.isUpdatableByDataSource(vuln.getSource(), dataSourceName, existingVuln != null)) {
+                    if (!updatePolicy.isUpdatableByDataSource(
+                            vuln.getSource(), dataSourceName, existingVulnIdByKey.containsKey(entry.getKey()))) {
                         LOGGER.debug(
                                 "Skipping vulnerability {} from source {}: authoritative source is enabled",
                                 vuln.getVulnId(),
@@ -225,20 +228,18 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                         continue;
                     }
 
-                    LOGGER.debug("Synchronizing vulnerability {}", vuln.getVulnId());
-                    final Vulnerability persistentVuln = existingVuln == null
-                            ? qm.createVulnerability(vuln)
-                            : qm.updateVulnerability(existingVuln, vuln);
+                    syncableVulns.add(vuln);
+                }
 
-                    final List<VulnerableSoftware> vsList = vsListByVulnKey.get(entry.getKey());
-                    qm.synchronizeVulnerableSoftware(persistentVuln, vsList, source);
+                final Map<VulnerabilityKey, Long> vulnIdByKey = vulnerabilityDao.upsertAll(
+                        syncableVulns, /* canUpdatePredicate */ _ -> true, /* requireNewerUpdated */ false);
+                new VulnerableSoftwareDao(handle).syncAll(source, vulnIdByKey, vsListByVulnKey);
+
+                if (!aliasesByVulnKey.isEmpty()) {
+                    new VulnerabilityAliasDao(handle)
+                            .syncAssertions("vuln-data-source:" + dataSourceName, aliasesByVulnKey);
                 }
             });
-
-            if (!aliasesByVuln.isEmpty()) {
-                useJdbiTransaction(handle -> new VulnerabilityAliasDao(handle)
-                        .syncAssertions("vuln-data-source:" + dataSourceName, aliasesByVuln));
-            }
         }
 
         for (final Bom bov : bovs) {
@@ -246,17 +247,17 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
         }
     }
 
-    private static @Nullable Vulnerability getExistingVuln(QueryManager qm, String source, String vulnId) {
-        final Query<Vulnerability> query =
-                qm.getPersistenceManager().newQuery(Vulnerability.class, "source == :source && vulnId == :vulnId");
-        query.getFetchPlan().addGroup(Vulnerability.FetchGroup.VULNERABLE_SOFTWARE.name());
-        query.setParameters(source, vulnId);
-        query.setRange(0, 1);
-        try {
-            return query.executeUnique();
-        } finally {
-            query.closeAll();
+    private static int affectedVersionCount(Bom bov) {
+        if (bov.getVulnerabilitiesCount() == 0) {
+            return 0;
         }
+
+        int count = 0;
+        for (final VulnerabilityAffects affects : bov.getVulnerabilities(0).getAffectsList()) {
+            count += affects.getVersionsCount();
+        }
+
+        return count;
     }
 
     private static void closeUninterruptibly(VulnDataSource dataSource) {

@@ -223,9 +223,11 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
     }
 
     /**
+     * @deprecated Use {@link org.dependencytrack.persistence.jdbi.VulnerableSoftwareDao#syncAll(Vulnerability.Source, Map, Map)}
      * @since 4.12.0
      */
     @Override
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public void synchronizeVulnerableSoftware(
             final Vulnerability persistentVuln,
             final List<VulnerableSoftware> vsList,

@@ -685,10 +685,6 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false);
     }
 
-    public Vulnerability getVulnerabilityByVulnId(String source, String vulnId, boolean includeVulnerableSoftware) {
-        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
-    }
-
     public Vulnerability getVulnerabilityByVulnId(Vulnerability.Source source, String vulnId) {
         return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false);
     }
@@ -754,63 +750,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public boolean contains(Vulnerability vulnerability, Component component) {
         return getVulnerabilityQueryManager().contains(vulnerability, component);
-    }
-
-    public VulnerableSoftware getVulnerableSoftwareByCpe23(
-            String cpe23,
-            String versionEndExcluding,
-            String versionEndIncluding,
-            String versionStartExcluding,
-            String versionStartIncluding) {
-        return getVulnerableSoftwareQueryManager()
-                .getVulnerableSoftwareByCpe23(
-                        cpe23, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
-    }
-
-    public VulnerableSoftware getVulnerableSoftwareByPurl(
-            final String purlType,
-            final String purlNamespace,
-            final String purlName,
-            final String version,
-            final String versionEndExcluding,
-            final String versionEndIncluding,
-            final String versionStartExcluding,
-            final String versionStartIncluding) {
-        return getVulnerableSoftwareQueryManager()
-                .getVulnerableSoftwareByPurl(
-                        purlType,
-                        purlNamespace,
-                        purlName,
-                        version,
-                        versionEndExcluding,
-                        versionEndIncluding,
-                        versionStartExcluding,
-                        versionStartIncluding);
-    }
-
-    public VulnerableSoftware getVulnerableSoftwareByPurl(
-            final String purlType,
-            final String purlNamespace,
-            final String purlName,
-            final String purlQualifiers,
-            final String purlSubpath,
-            final String version,
-            final String versionEndExcluding,
-            final String versionEndIncluding,
-            final String versionStartExcluding,
-            final String versionStartIncluding) {
-        return getVulnerableSoftwareQueryManager()
-                .getVulnerableSoftwareByPurl(
-                        purlType,
-                        purlNamespace,
-                        purlName,
-                        purlQualifiers,
-                        purlSubpath,
-                        version,
-                        versionEndExcluding,
-                        versionEndIncluding,
-                        versionStartExcluding,
-                        versionStartIncluding);
     }
 
     public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {

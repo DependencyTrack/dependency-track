@@ -140,7 +140,8 @@ final class WatermarkManager {
     }
 
     void maybeCommit() {
-        if (pendingWatermark == null || (committedWatermark != null && committedWatermark.equals(pendingWatermark))) {
+        if (pendingWatermark == null
+                || (committedWatermark != null && !committedWatermark.isBefore(pendingWatermark))) {
             return;
         }
 

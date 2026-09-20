@@ -340,7 +340,9 @@ final class NvdVulnDataSource implements VulnDataSource {
         }
 
         if (response.statusCode() != 200) {
-            throw new IllegalStateException("Unexpected response code: " + response.statusCode());
+            throw new IllegalStateException(
+                    "Failed to retrieve metadata for feed %s: GET %s responded with status code %d"
+                            .formatted(feed.name(), feedMetadataUri, response.statusCode()));
         }
 
         return NvdDataFeedMetadata.of(response.body());
@@ -368,7 +370,8 @@ final class NvdVulnDataSource implements VulnDataSource {
             final HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
 
             if (response.statusCode() != 200) {
-                throw new IllegalStateException("Unexpected response code: " + response.statusCode());
+                throw new IllegalStateException("Failed to download feed %s: GET %s responded with status code %d"
+                        .formatted(feed.name(), feedFileUri, response.statusCode()));
             }
 
             return response.body();

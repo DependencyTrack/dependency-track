@@ -490,7 +490,10 @@ class NvdVulnDataSourceTest {
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> dataSource.hasNext())
-                .withMessage("Unexpected response code: 500");
+                .withMessage("""
+                        Failed to retrieve metadata for feed modified: \
+                        GET %s/json/cve/2.0/nvdcve-2.0-modified.meta responded with status code 500\
+                        """, wmRuntimeInfo.getHttpBaseUrl());
     }
 
     @Test
@@ -507,7 +510,10 @@ class NvdVulnDataSourceTest {
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> dataSource.hasNext())
-                .withMessage("Unexpected response code: 500");
+                .withMessage("""
+                        Failed to download feed modified: \
+                        GET %s/json/cve/2.0/nvdcve-2.0-modified.json.gz responded with status code 500\
+                        """, wmRuntimeInfo.getHttpBaseUrl());
     }
 
     private NvdVulnDataSource createDataSource(String feedsUrl) {

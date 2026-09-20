@@ -247,8 +247,9 @@ final class OsvVulnDataSource implements VulnDataSource {
 
         if (modifiedAdvisoryIds.size() > MAX_INCREMENTAL_ADVISORY_DOWNLOADS) {
             LOGGER.info("""
-                            Number of new or updated advisories for ecosystem {} exceeds the incremental \
-                            download threshold of {}; downloading the full advisory archive instead""", ecosystem, MAX_INCREMENTAL_ADVISORY_DOWNLOADS);
+                Number of new or updated advisories for ecosystem {} exceeds the incremental \
+                download threshold of {}; downloading the full advisory archive instead\
+                """, ecosystem, MAX_INCREMENTAL_ADVISORY_DOWNLOADS);
             return downloadFullArchive(ecosystem, modifiedAdvisoryIds);
         }
 
@@ -285,7 +286,9 @@ final class OsvVulnDataSource implements VulnDataSource {
                 throw new IllegalStateException("Interrupted while downloading advisory archive", e);
             }
             if (response.statusCode() != 200) {
-                throw new IllegalStateException("Unexpected response code: " + response.statusCode());
+                throw new IllegalStateException(
+                        "Failed to download advisory archive for ecosystem %s: GET %s responded with status code %d"
+                                .formatted(ecosystem, request.uri(), response.statusCode()));
             }
 
             try {
@@ -332,7 +335,9 @@ final class OsvVulnDataSource implements VulnDataSource {
             throw new IllegalStateException("Interrupted while downloading modified IDs", e);
         }
         if (response.statusCode() != 200) {
-            throw new IllegalStateException("Unexpected response code: " + response.statusCode());
+            throw new IllegalStateException(
+                    "Failed to download modified advisory IDs for ecosystem %s: GET %s responded with status code %d"
+                            .formatted(ecosystem, request.uri(), response.statusCode()));
         }
 
         final var modifiedIds = new HashSet<String>();

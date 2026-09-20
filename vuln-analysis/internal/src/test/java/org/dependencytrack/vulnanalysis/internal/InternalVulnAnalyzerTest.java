@@ -1391,6 +1391,20 @@ class InternalVulnAnalyzerTest {
                             MATCHES,
                             "pkg:npm/foobar@12.3.1"),
                     Arguments.of(
+                            "pkg:npm/fs", withRange().havingStartIncluding("0"), MATCHES, "pkg:npm/fs@0.0.1-security"),
+                    Arguments.of(
+                            "pkg:npm/fs", withRange().havingStartIncluding("0"), MATCHES, "pkg:npm/fs@0.0.0-security"),
+                    Arguments.of(
+                            "pkg:npm/fs",
+                            withRange().havingStartIncluding("0.0"),
+                            MATCHES,
+                            "pkg:npm/fs@0.0.1-security"),
+                    Arguments.of(
+                            "pkg:npm/fs",
+                            withRange().havingStartIncluding("0.0.0"),
+                            MATCHES,
+                            "pkg:npm/fs@0.0.0-security"),
+                    Arguments.of(
                             "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1",
                             WITHOUT_RANGE,
                             DOES_NOT_MATCH,

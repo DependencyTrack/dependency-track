@@ -955,6 +955,10 @@ public final class TableRegistry {
      * §5.1 {@code CLASSIFIER}: {@code NONE} and any value outside the v5 enum set become NULL.
      * §5.2 {@code COLLECTION_LOGIC}: {@code NONE} becomes NULL; column reference renamed
      * to {@code COLLECTION_TAG_ID} (rewritten through {@code tag_canonical_id_map}).
+     * v5 additionally enforces {@code PROJECT_COLLECTION_TAG_REQUIRED_check}, which v4 has
+     * no equivalent of, so the two columns are reconciled before load:
+     * {@code AGGREGATE_DIRECT_CHILDREN_WITH_TAG} without a resolvable tag drops the logic
+     * (it cannot aggregate anything), and a tag carried by any other logic is dropped.
      * §5.3 mutual exclusivity: if both CLASSIFIER and COLLECTION_LOGIC survive, NULL the
      * CLASSIFIER and keep COLLECTION_LOGIC.
      * §5.4 {@code ACTIVE} → {@code INACTIVE_SINCE}: {@code FALSE} → epoch, else NULL.
@@ -1137,8 +1141,17 @@ public final class TableRegistry {
                        ) THEN p."CLASSIFIER"
                        ELSE NULL
                    END AS "CLASSIFIER",
-                   CASE WHEN p."COLLECTION_LOGIC" = 'NONE' THEN NULL ELSE p."COLLECTION_LOGIC" END AS "COLLECTION_LOGIC",
-                   tag_map.canonical_id AS "COLLECTION_TAG_ID",
+                   CASE
+                       WHEN p."COLLECTION_LOGIC" = 'NONE' THEN NULL
+                       WHEN p."COLLECTION_LOGIC" = 'AGGREGATE_DIRECT_CHILDREN_WITH_TAG'
+                            AND tag_map.canonical_id IS NULL THEN NULL
+                       ELSE p."COLLECTION_LOGIC"
+                   END AS "COLLECTION_LOGIC",
+                   CASE
+                       WHEN p."COLLECTION_LOGIC" = 'AGGREGATE_DIRECT_CHILDREN_WITH_TAG'
+                           THEN tag_map.canonical_id
+                       ELSE NULL
+                   END AS "COLLECTION_TAG_ID",
                    p."CPE",
                    p."DESCRIPTION",
                    "%1$s".try_jsonb(p."DIRECT_DEPENDENCIES") AS "DIRECT_DEPENDENCIES",

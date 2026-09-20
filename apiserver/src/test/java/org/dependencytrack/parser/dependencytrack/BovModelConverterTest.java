@@ -26,6 +26,7 @@ import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.Source;
 import org.cyclonedx.proto.v1_7.VulnerabilityRating;
 import org.cyclonedx.proto.v1_7.VulnerabilityReference;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.junit.jupiter.api.Nested;
@@ -311,6 +312,24 @@ class BovModelConverterTest {
         assertThat(vuln.getCvssV4Vector())
                 .isEqualTo("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H/E:A");
         assertThat(vuln.getCvssV4Score()).isEqualTo("7.0");
+    }
+
+    @Test
+    public void testConvertWithRatingsWithCvssV4AndNoScore() {
+        final Bom bovInput = Bom.newBuilder()
+                .addVulnerabilities(org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
+                        .setId("GHSA-m7v2-7gxm-vc2v")
+                        .setSource(Source.newBuilder().setName("GITHUB").build())
+                        .addRatings(VulnerabilityRating.newBuilder()
+                                .setSource(Source.newBuilder().setName("GITHUB").build())
+                                .setMethod(SCORE_METHOD_CVSSV4)
+                                .setVector("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U"))
+                        .build())
+                .build();
+        final Vulnerability vuln = BovModelConverter.convert(bovInput, bovInput.getVulnerabilities(0), true);
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getCvssV4Score()).isEqualTo("8.1");
+        assertThat(vuln.getSeverity()).isEqualTo(Severity.HIGH);
     }
 
     @Nested

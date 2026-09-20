@@ -44,6 +44,8 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.ProtobufTestUtil.generateBomFromJson;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -174,6 +176,49 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         final Vulnerability vuln = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-fxwm-579q-49qq");
         assertThat(vuln).isNotNull();
         assertThat(vuln.getDescription()).isEqualTo("Authoritative GHSA description");
+    }
+
+    @Test
+    void shouldOverwriteExistingVulnWhenIncomingDataIsOlder() throws Exception {
+        final Bom newerBov = generateBomFromJson(/* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "description": "Newer data",
+                      "updated": "2024-02-01T00:00:00Z"
+                    }
+                  ]
+                }
+                """);
+        final Bom olderBov = generateBomFromJson(/* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "description": "Older data",
+                      "updated": "2024-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+                """);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(newerBov, olderBov).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getDescription()).isEqualTo("Older data");
     }
 
     @Test
@@ -1680,6 +1725,309 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         attributions = qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
         assertThat(attributions).hasSize(1);
         assertThat(attributions.getFirst().getId()).isEqualTo(attributionId);
+    }
+
+    @Test
+    void shouldReAttributeExistingVulnerableSoftwareThatNoLongerMatchesByIdentity() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+
+        // The lookup for existing records ignores the vulnerable flag, whereas the identity comparison does not.
+        // Flipping it makes the existing record match by lookup but not by identity,
+        // which is how re-attribution of an already associated record gets exercised.
+        useJdbiTransaction(handle -> handle.execute("""
+                UPDATE "VULNERABLESOFTWARE" SET "VULNERABLE" = FALSE
+                """));
+
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getVulnerableSoftware()).hasSize(1);
+        assertThat(qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware()))
+                .satisfiesExactly(
+                        attribution -> assertThat(attribution.getSource()).isEqualTo(Vulnerability.Source.NVD));
+    }
+
+    @Test
+    void shouldKeepAttributionOfOtherSourceWhenReAttributingExistingVulnerableSoftware() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+
+        useJdbiTransaction(handle -> handle.execute("""
+                UPDATE "VULNERABLESOFTWARE" SET "VULNERABLE" = FALSE
+                """));
+        useJdbiTransaction(handle -> handle.execute("""
+                UPDATE "AFFECTEDVERSIONATTRIBUTION" SET "SOURCE" = 'GITHUB'
+                """));
+
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getVulnerableSoftware()).hasSize(1);
+        assertThat(qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware()))
+                .extracting(AffectedVersionAttribution::getSource)
+                .containsExactlyInAnyOrder(Vulnerability.Source.GITHUB, Vulnerability.Source.NVD);
+    }
+
+    @Test
+    void shouldDisassociateAndUnattributeVulnerableSoftwareThatSourceNoLongerReports() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+        final Bom bovWithoutVulnerableSoftware = generateBomFromJson(/* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" }
+                    }
+                  ]
+                }
+                """);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov, bovWithoutVulnerableSoftware).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getVulnerableSoftware()).isEmpty();
+        final long associationCount = withJdbiHandle(handle ->
+                handle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*) FROM "VULNERABLESOFTWARE_VULNERABILITIES"
+                        """).mapTo(Long.class).one());
+        assertThat(associationCount).isZero();
+        final long attributionCount = withJdbiHandle(handle ->
+                handle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*) FROM "AFFECTEDVERSIONATTRIBUTION"
+                        """).mapTo(Long.class).one());
+        assertThat(attributionCount).isZero();
+    }
+
+    @Test
+    void shouldKeepVulnerableSoftwareAttributedToOtherSourceThatSourceNoLongerReports() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+        final Bom bovWithoutVulnerableSoftware = generateBomFromJson(/* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" }
+                    }
+                  ]
+                }
+                """);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov, bovWithoutVulnerableSoftware).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+
+        useJdbiTransaction(handle -> handle.execute("""
+                UPDATE "AFFECTEDVERSIONATTRIBUTION" SET "SOURCE" = 'GITHUB'
+                """));
+
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getVulnerableSoftware()).hasSize(1);
+        assertThat(qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware()))
+                .extracting(AffectedVersionAttribution::getSource)
+                .containsExactly(Vulnerability.Source.GITHUB);
+    }
+
+    @Test
+    void shouldDropUnattributedVulnerableSoftwareThatSourceNoLongerReports() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+        final Bom bovWithoutVulnerableSoftware = generateBomFromJson(/* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" }
+                    }
+                  ]
+                }
+                """);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov, bovWithoutVulnerableSoftware).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+
+        // Records created before 4.7.0 carry no attribution at all. Without one there is nothing
+        // to show that another source still reports them, so they are dropped rather than kept.
+        useJdbiTransaction(handle -> handle.execute("""
+                DELETE FROM "AFFECTEDVERSIONATTRIBUTION"
+                """));
+
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getVulnerableSoftware()).isEmpty();
+        final long associationCount = withJdbiHandle(handle ->
+                handle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*) FROM "VULNERABLESOFTWARE_VULNERABILITIES"
+                        """).mapTo(Long.class).one());
+        assertThat(associationCount).isZero();
     }
 
     @Test

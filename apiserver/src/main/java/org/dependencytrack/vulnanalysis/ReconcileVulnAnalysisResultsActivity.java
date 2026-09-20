@@ -43,6 +43,7 @@ import org.dependencytrack.persistence.jdbi.AnalysisDao.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.NotificationSubjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
+import org.dependencytrack.persistence.jdbi.VulnerabilitySyncDao;
 import org.dependencytrack.persistence.jdbi.query.GetProjectAuditChangeNotificationSubjectQuery;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
@@ -358,7 +359,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
         LOGGER.debug("Synchronizing batch of {} vulnerabilities", vulns.size());
 
-        return inJdbiTransaction(handle -> new VulnerabilityDao(handle).syncAll(vulns, canUpdatePredicate));
+        return inJdbiTransaction(handle -> new VulnerabilitySyncDao(handle).syncAll(vulns, canUpdatePredicate));
     }
 
     private void syncVulnAliasAssertions(

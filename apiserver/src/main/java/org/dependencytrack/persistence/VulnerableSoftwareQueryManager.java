@@ -68,8 +68,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
      * @param cpe23 the CPE 2.3 string
      * @return a VulnerableSoftware object, or null if not found
      */
-    @Override
-    public VulnerableSoftware getVulnerableSoftwareByCpe23(
+    private VulnerableSoftware getVulnerableSoftwareByCpe23(
             String cpe23,
             String versionEndExcluding,
             String versionEndIncluding,
@@ -115,36 +114,9 @@ final class VulnerableSoftwareQueryManager extends QueryManager {
     }
 
     /**
-     * @since 4.12.3
-     */
-    @Override
-    public VulnerableSoftware getVulnerableSoftwareByPurl(
-            final String purlType,
-            final String purlNamespace,
-            final String purlName,
-            final String version,
-            final String versionEndExcluding,
-            final String versionEndIncluding,
-            final String versionStartExcluding,
-            final String versionStartIncluding) {
-        return getVulnerableSoftwareByPurl(
-                purlType,
-                purlNamespace,
-                purlName,
-                /* purlQualifiers */ null,
-                /* purlSubpath */ null,
-                version,
-                versionEndExcluding,
-                versionEndIncluding,
-                versionStartExcluding,
-                versionStartIncluding);
-    }
-
-    /**
      * @since 4.14.0
      */
-    @Override
-    public VulnerableSoftware getVulnerableSoftwareByPurl(
+    private VulnerableSoftware getVulnerableSoftwareByPurl(
             final String purlType,
             final String purlNamespace,
             final String purlName,

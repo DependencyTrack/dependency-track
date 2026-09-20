@@ -129,7 +129,7 @@ public class Policy implements Serializable {
     /**
      * A list of zero-to-n tags
      */
-    @Persistent(table = "POLICY_TAGS", defaultFetchGroup = "true", mappedBy = "policies")
+    @Persistent(table = "POLICY_TAGS", defaultFetchGroup = "true")
     @Join(
             column = "POLICY_ID",
             primaryKey = "POLICY_TAGS_PK",

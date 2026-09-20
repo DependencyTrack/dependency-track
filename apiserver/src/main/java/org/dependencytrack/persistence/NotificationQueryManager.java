@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
@@ -265,9 +264,6 @@ public class NotificationQueryManager extends QueryManager {
                     final Tag existingTag = existingTagsIterator.next();
                     if (!tags.contains(existingTag)) {
                         existingTagsIterator.remove();
-                        if (existingTag.getNotificationRules() != null) {
-                            existingTag.getNotificationRules().remove(notificationRule);
-                        }
                         modified = true;
                     }
                 }
@@ -275,13 +271,6 @@ public class NotificationQueryManager extends QueryManager {
             for (final Tag tag : tags) {
                 if (!notificationRule.getTags().contains(tag)) {
                     notificationRule.getTags().add(tag);
-
-                    if (tag.getNotificationRules() == null) {
-                        tag.setNotificationRules(new HashSet<>(Set.of(notificationRule)));
-                    } else {
-                        tag.getNotificationRules().add(notificationRule);
-                    }
-
                     modified = true;
                 }
             }

@@ -47,7 +47,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationAnalysisDecisionChangeNotification;
@@ -500,9 +499,6 @@ final class PolicyQueryManager extends QueryManager {
                     final Tag existingTag = existingTagsIterator.next();
                     if (!tags.contains(existingTag)) {
                         existingTagsIterator.remove();
-                        if (existingTag.getPolicies() != null) {
-                            existingTag.getPolicies().remove(policy);
-                        }
                         modified = true;
                     }
                 }
@@ -511,11 +507,6 @@ final class PolicyQueryManager extends QueryManager {
             for (final Tag tag : tags) {
                 if (!policy.getTags().contains(tag)) {
                     policy.getTags().add(tag);
-                    if (tag.getPolicies() == null) {
-                        tag.setPolicies(new HashSet<>(Set.of(policy)));
-                    } else {
-                        tag.getPolicies().add(policy);
-                    }
                     modified = true;
                 }
             }

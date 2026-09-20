@@ -722,4 +722,46 @@ class OsvVulnDataSourceTest {
 
         verify(1, getRequestedFor(urlPathMatching("/Red%20Hat/OSV-1\\.json")));
     }
+
+    @Test
+    void shouldReportRequestUrlWhenFullArchiveDownloadFails(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(get(urlEqualTo("/Bioconductor/all.zip")).willReturn(aResponse().withStatus(404)));
+
+        try (var dataSource = new OsvVulnDataSource(
+                null,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("Bioconductor"),
+                HttpClient.newHttpClient(),
+                false)) {
+            assertThatExceptionOfType(IllegalStateException.class)
+                    .isThrownBy(dataSource::hasNext)
+                    .withMessage("""
+                            Failed to download advisory archive for ecosystem Bioconductor: \
+                            GET %s/Bioconductor/all.zip responded with status code 404\
+                            """, wmRuntimeInfo.getHttpBaseUrl());
+        }
+    }
+
+    @Test
+    void shouldReportRequestUrlWhenModifiedAdvisoryIdsDownloadFails(WireMockRuntimeInfo wmRuntimeInfo) {
+        when(watermarkManagerMock.getWatermark("Bioconductor")).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
+        stubFor(get(urlEqualTo("/Bioconductor/modified_id.csv"))
+                .willReturn(aResponse().withStatus(404)));
+
+        try (var dataSource = new OsvVulnDataSource(
+                watermarkManagerMock,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("Bioconductor"),
+                HttpClient.newHttpClient(),
+                false)) {
+            assertThatExceptionOfType(IllegalStateException.class)
+                    .isThrownBy(dataSource::hasNext)
+                    .withMessage("""
+                            Failed to download modified advisory IDs for ecosystem Bioconductor: \
+                            GET %s/Bioconductor/modified_id.csv responded with status code 404\
+                            """, wmRuntimeInfo.getHttpBaseUrl());
+        }
+    }
 }

@@ -7,3 +7,5 @@ datasources:
   access: proxy
   url: http://prometheus:9090
   isDefault: true
+  jsonData:
+    timeInterval: 15s

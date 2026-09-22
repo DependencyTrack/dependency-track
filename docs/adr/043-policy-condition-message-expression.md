@@ -141,8 +141,11 @@ Shipping defaults with the mechanism gives existing conditions the detail withou
 exercises the mechanism on every legacy subject from the start.
 
 Evaluation of a message expression never affects whether a violation is recorded. If the expression
-fails at runtime, the engine logs a warning, records the violation without a message, and continues.
-A broken message expression must not hide a violation.
+fails at runtime, the engine logs a warning with the cause, stores the fixed placeholder
+`Message expression failed to evaluate. See server logs.` as the message, and continues. The
+placeholder tells the recipient that something is broken without disclosing the cause, which may
+contain data the recipient is not meant to see. A broken message expression must not hide a
+violation.
 
 The violation table already has an unused nullable `TEXT` column of 255 characters, inherited from
 v4. We will widen this column to unbounded text and use it for the message. The violation model
@@ -188,8 +191,8 @@ columns to queries the engine already issues, but it cannot add a query, a join,
 function call. Users who want a message to include data the condition does not read have to read
 that data in the condition as well, which makes the cost visible where it is paid.
 
-The fail-open behavior means a broken message expression produces violations without a message and a
-warning in the logs. Save-time validation catches syntax and type errors, so runtime failures are
+The fail-open behavior means a broken message expression produces violations with a placeholder
+message and a warning in the logs, so the breakage is visible to recipients and operators alike. Save-time validation catches syntax and type errors, so runtime failures are
 limited to cases such as missing optional fields.
 
 [CEL]: https://cel.dev

@@ -73,7 +73,8 @@ Pros:
 
 Cons:
 
-* Users must write the message expression themselves. Conditions without one gain nothing.
+* Users must write the message expression themselves for `EXPRESSION` conditions. Legacy subjects
+  can get a generated default, because their condition is generated too.
 * The result is free text, not structured data. Integrations that want to parse it need to agree on a
   format with the policy author.
 
@@ -131,6 +132,14 @@ expressions have to use CEL to select what is relevant. For example, a condition
   .map(vuln, vuln.id + " (EPSS " + string(vuln.epss_score) + ")").join(", ")
 ```
 
+Legacy subjects get a default message expression. The builder that translates a legacy subject,
+operator, and value into a CEL condition also produces a default message expression, so both are
+derived from the same input and cannot drift apart. The default is used when the user has not set a
+message expression on the condition. For the `EPSS` condition above, the default is the message
+expression shown above. Defaults follow the same restrictions as user-written message expressions.
+Shipping defaults with the mechanism gives existing conditions the detail without user action and
+exercises the mechanism on every legacy subject from the start.
+
 Evaluation of a message expression never affects whether a violation is recorded. If the expression
 fails at runtime, the engine logs a warning, records the violation without a message, and continues.
 A broken message expression must not hide a violation.
@@ -150,24 +159,23 @@ present.
 
 Out of scope for this decision:
 
-* Default message expressions for legacy subjects. The engine could generate a sensible message for
-  `EPSS`, `SEVERITY`, or `LICENSE` conditions when the user did not provide one. This is a possible
-  follow-up and does not change the mechanism decided here.
 * Structured matched-entity data in notifications.
 * The frontend. The policy condition form needs an input for the message expression and the
   violation views should show the message. This work happens in the frontend repository.
 
 ## Consequences
 
-Users can make policy violation notifications self-contained. A recipient can see which
-vulnerability, license, or component value caused a violation without a follow-up API call. Because
+Policy violation notifications become self-contained. A recipient can see which vulnerability,
+license, or component value caused a violation without a follow-up API call. Legacy subject
+conditions get this from the default message expression. `EXPRESSION` conditions get it once the
+user adds a message expression. Because
 the message is stored with the violation, the scheduled summary notification shows the same message
 as the immediate notification, even when the underlying data has changed since.
 
-Message expressions are a power-user feature, like notification filter expressions. Users need to know
-CEL and the structure of the `component`, `project`, and `vulns` variables. Documentation with
-examples for the common cases (EPSS, severity, license) will matter for adoption. Conditions without
-a message expression behave exactly as before.
+Writing a message expression is a power-user feature, like notification filter expressions. Users
+need to know CEL and the structure of the `component`, `project`, and `vulns` variables. The
+generated defaults for legacy subjects double as documentation for how to write one. `EXPRESSION`
+conditions without a message expression behave exactly as before.
 
 The message is free text. Integrations that need structured data have to agree on a format with the
 policy author, for example by producing JSON from the message expression. This is a deliberate

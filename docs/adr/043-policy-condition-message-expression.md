@@ -157,11 +157,7 @@ The notification schema gains an optional `message` string on the `PolicyViolati
 notification templates for email, Slack, Microsoft Teams, and Mattermost print the message when it is
 present.
 
-Out of scope for this decision:
-
-* Structured matched-entity data in notifications.
-* The frontend. The policy condition form needs an input for the message expression and the
-  violation views should show the message. This work happens in the frontend repository.
+Structured matched-entity data in notifications is out of scope for this decision.
 
 ## Consequences
 

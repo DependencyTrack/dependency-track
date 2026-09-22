@@ -99,18 +99,32 @@ nullable text column on the policy condition table and exposed as a new optional
 policy condition in the REST API. The expression is limited to 2048 characters, the same limit as
 notification filter expressions.
 
-The expression is validated when a condition is created or updated. It is compiled against the same
-CEL environment as the condition, and its result type must be `string`. An invalid expression is
-rejected with an [RFC 9457] problem details response, in the same way invalid `EXPRESSION` conditions
-are rejected today.
+The expression is validated when a condition is created or updated. It is compiled against a
+restricted CEL environment, described below, and its result type must be `string`. An invalid
+expression is rejected with an [RFC 9457] problem details response, in the same way invalid
+`EXPRESSION` conditions are rejected today.
 
 The policy engine evaluates the message expression only for conditions that were violated. It uses
-the same variables as the condition: `component`, `project`, `vulns`, and `now`. The fields the
-message expression reads are added to the engine's data requirements, so the data is loaded together
-with the data the conditions need and no extra database queries are issued per component. The
-resulting string is truncated to 1024 characters and stored on the violation. Since the same
-condition applies to every component, message expressions have to use CEL to select what is relevant.
-For example, a condition `vulns.exists(vuln, vuln.epss_score >= 0.5)` may use the message expression:
+the same variables as the condition: `component`, `project`, `vulns`, and `now`. The engine loads
+data for all components of a project before it evaluates any condition, so everything a message
+expression reads is loaded for every component, although the message is only needed for the
+violated ones. To keep that cost bounded by the cost of the condition, the message expression's CEL
+environment is more restricted than the condition's:
+
+* Policy functions such as `depends_on`, `is_dependency_of`, or `matches_range` are not available.
+  Some of them issue their own database queries when called. Standard CEL functions and macros and
+  the strings extension are available.
+* The expression may only read fields that the condition itself reads, plus a fixed allowlist of
+  identity fields, such as the component's `name` and `version` and a vulnerability's `id` and
+  `source`. Identity fields are plain columns on tables the engine already queries, so they add
+  columns to an existing query but never a query or a join. A message expression that reads any
+  other field is rejected at save time.
+
+Identity fields the condition does not read are added to the engine's data requirements, so they
+are loaded together with the data the conditions need. The resulting string is truncated to 1024
+characters and stored on the violation. Since the same condition applies to every component, message
+expressions have to use CEL to select what is relevant. For example, a condition
+`vulns.exists(vuln, vuln.epss_score >= 0.5)` may use the message expression:
 
 ```
 "EPSS >= 0.5 matched by: " + vulns.filter(vuln, vuln.epss_score >= 0.5)
@@ -164,9 +178,11 @@ policy conditions gains an optional field. Both changes are additive and backwar
 `text` field on violations, which was always present but never populated, now carries data.
 
 Each violated condition with a message expression costs one additional CEL evaluation per component.
-Conditions that are not violated and conditions without a message expression cost nothing extra. The
-data requirements of message expressions are merged into the existing preload, so the number of
-database queries per evaluation does not change.
+Conditions that are not violated and conditions without a message expression cost no extra
+evaluation. The restricted environment bounds the data cost. A message expression can add identity
+columns to queries the engine already issues, but it cannot add a query, a join, or a policy
+function call. Users who want a message to include data the condition does not read have to read
+that data in the condition as well, which makes the cost visible where it is paid.
 
 The fail-open behavior means a broken message expression produces violations without a message and a
 warning in the logs. Save-time validation catches syntax and type errors, so runtime failures are

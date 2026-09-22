@@ -32,7 +32,7 @@ evaluation time and persisted with the violation.
 
 ### Possible Solutions
 
-#### Structured matched-entity fields
+#### Option A: Structured matched-entity fields
 
 The engine resolves the matched entities for each legacy subject and stores them as structured data
 on the violation. Vulnerability subjects would store the matched vulnerabilities, license subjects the
@@ -54,7 +54,7 @@ Cons:
 * The notification schema and the violation table need a new field for every kind of entity. Adding a
   new subject means touching the schema again.
 
-#### Message expression
+#### Option B: Message expression
 
 Each policy condition gets an optional CEL expression that evaluates to a string. When the condition is
 violated, the engine evaluates the message expression with the same variables the condition itself
@@ -77,7 +77,7 @@ Cons:
 * The result is free text, not structured data. Integrations that want to parse it need to agree on a
   format with the policy author.
 
-#### Both
+#### Option C: Both
 
 Add structured fields for legacy subjects and a message expression for everything else.
 
@@ -87,12 +87,12 @@ Pros:
 
 Cons:
 
-* Two mechanisms for one problem, with all the costs of the first option.
+* Two mechanisms for one problem, with all the costs of option A.
 
 ## Decision
 
-We will add an optional message expression to policy conditions, the second option above. We will
-not add structured matched-entity fields.
+We will add an optional message expression to policy conditions (option B). We will not add
+structured matched-entity fields.
 
 A message expression is a CEL expression that must evaluate to a string. It is stored as a new
 nullable text column on the policy condition table and exposed as a new optional field on the

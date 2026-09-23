@@ -781,7 +781,20 @@ public class ProjectsResourceTest extends ResourceTest {
         component.setVersion("3.0");
         component.setPurl("pkg:maven/foo/bar@3.0");
         component.setLicense("Public Domain");
-        qm.createComponent(component, false);
+        final Component persistedComponent2 = qm.createComponent(component, false);
+
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :license, 1, false)
+            """)
+                .bind("componentId", persistedComponent2.getId())
+                .bind("license", "Public Domain")
+                .execute());
 
         return project;
     }

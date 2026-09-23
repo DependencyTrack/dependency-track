@@ -737,7 +737,7 @@ public class ProjectsResourceTest extends ResourceTest {
         final var license = new License();
         license.setLicenseId("MIT");
         license.setName("MIT License");
-        qm.persist(license);
+        final License persistedLicense = qm.persist(license);
 
         Component component = new Component();
         component.setProject(project);
@@ -755,8 +755,24 @@ public class ProjectsResourceTest extends ResourceTest {
         component.setVersion("2.0");
         component.setPurl("pkg:maven/foo/bar@2.0");
         component.setScope(Scope.REQUIRED);
-        component.setResolvedLicense(license);
-        qm.createComponent(component, false);
+        final Component persistedComponent = qm.createComponent(component, false);
+
+        useJdbiHandle(handle -> handle.createUpdate("""
+        INSERT INTO "COMPONENTLICENSES" (
+            "COMPONENTID",
+            "LICENSE_ID",
+            "ORDINALITY",
+            "CONCLUDED"
+        )
+        VALUES (
+            :componentId,
+            :licenseId,
+            1,
+            false
+        )""")
+        .bind("componentId", persistedComponent.getId())
+        .bind("licenseId", persistedLicense.getId())
+        .execute());
 
         component = new Component();
         component.setProject(project);

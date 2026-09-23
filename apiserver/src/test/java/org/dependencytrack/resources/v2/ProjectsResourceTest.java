@@ -770,9 +770,9 @@ public class ProjectsResourceTest extends ResourceTest {
             1,
             false
         )""")
-        .bind("componentId", persistedComponent.getId())
-        .bind("licenseId", persistedLicense.getId())
-        .execute());
+                .bind("componentId", persistedComponent.getId())
+                .bind("licenseId", persistedLicense.getId())
+                .execute());
 
         component = new Component();
         component.setProject(project);

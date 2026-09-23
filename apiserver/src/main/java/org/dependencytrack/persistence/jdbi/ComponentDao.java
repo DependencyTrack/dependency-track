@@ -648,33 +648,36 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         }
     }
 
-    public record ComponentLicenseRow(long componentId, Long licenseId, String license, String licenseExpression,
-        String licenseUrl, long ordinality, boolean concluded) {
-    }
+    public record ComponentLicenseRow(
+            long componentId,
+            Long licenseId,
+            String license,
+            String licenseExpression,
+            String licenseUrl,
+            long ordinality,
+            boolean concluded) {}
 
     default void replaceComponentLicenses(List<Long> componentIds, List<ComponentLicenseRow> updates) {
-        
+
         if (componentIds.isEmpty()) {
             return;
         }
- 
+
         final PreparedBatch deleteBatch = getHandle().prepareBatch("""
             DELETE FROM "COMPONENTLICENSES"
             WHERE "COMPONENTID" = :componentId
         """);
 
         for (final Long componentId : componentIds) {
-            deleteBatch
-                .bind("componentId", componentId)
-                .add();
+            deleteBatch.bind("componentId", componentId).add();
         }
 
         deleteBatch.execute();
-    
+
         if (updates.isEmpty()) {
             return;
         }
- 
+
         final PreparedBatch batch = getHandle().prepareBatch("""
             INSERT INTO "COMPONENTLICENSES" (
                 "COMPONENTID",
@@ -695,18 +698,18 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 :concluded
             )
             """);
-    
+
         for (final ComponentLicenseRow update : updates) {
             batch.bind("componentId", update.componentId())
-                .bind("licenseId", update.licenseId())
-                .bind("license", update.license())
-                .bind("licenseExpression", update.licenseExpression())
-                .bind("licenseUrl", update.licenseUrl())
-                .bind("ordinality", update.ordinality())
-                .bind("concluded", update.concluded())
-                .add();
+                    .bind("licenseId", update.licenseId())
+                    .bind("license", update.license())
+                    .bind("licenseExpression", update.licenseExpression())
+                    .bind("licenseUrl", update.licenseUrl())
+                    .bind("ordinality", update.ordinality())
+                    .bind("concluded", update.concluded())
+                    .add();
         }
-    
+
         batch.execute();
     }
 
@@ -715,7 +718,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             return Map.of();
         }
 
-        return getHandle().createQuery("""
+        return getHandle()
+                .createQuery("""
             SELECT DISTINCT ON (cl."COMPONENTID")
                 cl."COMPONENTID",
                 cl."LICENSE_ID",
@@ -730,39 +734,44 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 cl."ORDINALITY",
                 cl."ID"
             """)
-            .bindArray("componentIds", Long.class, componentIds)
-            .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
-                final long componentId = rs.getLong("COMPONENTID");
+                .bindArray("componentIds", Long.class, componentIds)
+                .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
+                    final long componentId = rs.getLong("COMPONENTID");
 
-                final long licenseIdValue = rs.getLong("LICENSE_ID");
-                final Long licenseId = rs.wasNull() ? null : licenseIdValue;
+                    final long licenseIdValue = rs.getLong("LICENSE_ID");
+                    final Long licenseId = rs.wasNull() ? null : licenseIdValue;
 
-                result.put(componentId, new ComponentLicenseRow(
-                    componentId,
-                    licenseId,
-                    rs.getString("LICENSE"),
-                    rs.getString("LICENSE_EXPRESSION"),
-                    rs.getString("LICENSE_URL"),
-                    rs.getLong("ORDINALITY"),
-                    rs.getBoolean("CONCLUDED")
-                ));
+                    result.put(
+                            componentId,
+                            new ComponentLicenseRow(
+                                    componentId,
+                                    licenseId,
+                                    rs.getString("LICENSE"),
+                                    rs.getString("LICENSE_EXPRESSION"),
+                                    rs.getString("LICENSE_URL"),
+                                    rs.getLong("ORDINALITY"),
+                                    rs.getBoolean("CONCLUDED")));
 
-                return result;
-            }
-        );
+                    return result;
+                });
     }
 
-
-    public record LicenseRow(long id, UUID uuid, String licenseId, String name,
-        boolean customLicense, boolean fsfLibre, boolean osiApproved) {
-    }
+    public record LicenseRow(
+            long id,
+            UUID uuid,
+            String licenseId,
+            String name,
+            boolean customLicense,
+            boolean fsfLibre,
+            boolean osiApproved) {}
 
     default Map<Long, LicenseRow> getLicensesByIds(Collection<Long> licenseIds) {
         if (licenseIds.isEmpty()) {
             return Map.of();
         }
 
-        return getHandle().createQuery("""
+        return getHandle()
+                .createQuery("""
             SELECT "ID",
                 "UUID",
                 "LICENSEID",
@@ -773,21 +782,19 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             FROM "LICENSE"
             WHERE "ID" = ANY(:licenseIds)
             """)
-            .bindArray("licenseIds", Long.class, licenseIds)
-            .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
-                final var license = new LicenseRow(
-                    rs.getLong("ID"),
-                    UUID.fromString(rs.getString("UUID")),
-                    rs.getString("LICENSEID"),
-                    rs.getString("NAME"),
-                    rs.getBoolean("ISCUSTOMLICENSE"),
-                    rs.getBoolean("FSFLIBRE"),
-                    rs.getBoolean("ISOSIAPPROVED")
-                );
+                .bindArray("licenseIds", Long.class, licenseIds)
+                .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
+                    final var license = new LicenseRow(
+                            rs.getLong("ID"),
+                            UUID.fromString(rs.getString("UUID")),
+                            rs.getString("LICENSEID"),
+                            rs.getString("NAME"),
+                            rs.getBoolean("ISCUSTOMLICENSE"),
+                            rs.getBoolean("FSFLIBRE"),
+                            rs.getBoolean("ISOSIAPPROVED"));
 
-                result.put(license.id(), license);
-                return result;
-            }
-        );
+                    result.put(license.id(), license);
+                    return result;
+                });
     }
 }

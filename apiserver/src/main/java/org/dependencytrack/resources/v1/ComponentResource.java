@@ -57,7 +57,6 @@ import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.tasks.IdentifyInternalComponentsWorkflow;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.dependencytrack.util.PurlUtil;
-import org.jdbi.v3.core.Handle;
 
 import jakarta.inject.Inject;
 import jakarta.validation.Validator;
@@ -86,7 +85,6 @@ import java.util.stream.Collectors;
 
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_TRIGGERED_BY;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
@@ -561,8 +559,7 @@ public class ComponentResource extends AbstractApiResource {
                 validator.validateProperty(jsonComponent, "blake2b_512"),
                 validator.validateProperty(jsonComponent, "blake3"),
                 validator.validateProperty(jsonComponent, "streebog_256"),
-                validator.validateProperty(jsonComponent, "streebog_512")
-        );
+                validator.validateProperty(jsonComponent, "streebog_512"));
         Component updatedComponent;
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             updatedComponent = qm.callInTransaction(() -> {
@@ -628,17 +625,19 @@ public class ComponentResource extends AbstractApiResource {
                     component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
                     qm.updateComponent(component, true);
-                } 
-                 return component;
+                }
+                return component;
             });
         }
 
         if (updatedComponent == null) {
-            return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("The UUID of the component could not be found.")
+                    .build();
         }
- 
+
         final List<ComponentDao.ComponentLicenseRow> licenseRows;
- 
+
         if (updatedComponent.getResolvedLicense() == null
                 && updatedComponent.getLicense() == null
                 && updatedComponent.getLicenseExpression() == null
@@ -646,16 +645,20 @@ public class ComponentResource extends AbstractApiResource {
             licenseRows = List.of();
         } else {
             licenseRows = List.of(new ComponentDao.ComponentLicenseRow(
-                updatedComponent.getId(),
-                updatedComponent.getResolvedLicense() != null ? updatedComponent.getResolvedLicense().getId() : null,
-                updatedComponent.getLicense(),
-                updatedComponent.getLicenseExpression(),
-                updatedComponent.getLicenseUrl(),
-                1, false));
+                    updatedComponent.getId(),
+                    updatedComponent.getResolvedLicense() != null
+                            ? updatedComponent.getResolvedLicense().getId()
+                            : null,
+                    updatedComponent.getLicense(),
+                    updatedComponent.getLicenseExpression(),
+                    updatedComponent.getLicenseUrl(),
+                    1,
+                    false));
         }
- 
-        useJdbiTransaction(handle -> handle.attach(ComponentDao.class).replaceComponentLicenses(List.of(updatedComponent.getId()), licenseRows));
- 
+
+        useJdbiTransaction(handle -> handle.attach(ComponentDao.class)
+                .replaceComponentLicenses(List.of(updatedComponent.getId()), licenseRows));
+
         return Response.ok(updatedComponent).build();
     }
 
@@ -681,27 +684,30 @@ public class ComponentResource extends AbstractApiResource {
             })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE})
     public Response deleteComponent(
-            @Parameter(description = "The UUID of the component to delete", schema = @Schema(format = "uuid"), required = true)
-            @PathParam("uuid") @ValidUuid String uuid) {
+            @Parameter(
+                            description = "The UUID of the component to delete",
+                            schema = @Schema(format = "uuid"),
+                            required = true)
+                    @PathParam("uuid")
+                    @ValidUuid
+                    String uuid) {
         return inJdbiTransaction(getAlpineRequest(), handle -> {
             final ComponentDao componentDao = handle.attach(ComponentDao.class);
             final Boolean accessible = componentDao.isAccessible(UUID.fromString(uuid));
-    
+
             if (accessible == null) {
                 return Response.status(Response.Status.NOT_FOUND)
-                    .entity("The UUID of the component could not be found.")
-                    .build();
+                        .entity("The UUID of the component could not be found.")
+                        .build();
             }
-    
+
             if (!accessible) {
                 throw new ProjectAccessDeniedException("Access to the requested project is forbidden");
             }
-    
+
             componentDao.deleteComponent(UUID.fromString(uuid));
-    
-            return Response
-                    .status(Response.Status.NO_CONTENT)
-                    .build();
+
+            return Response.status(Response.Status.NO_CONTENT).build();
         });
     }
 

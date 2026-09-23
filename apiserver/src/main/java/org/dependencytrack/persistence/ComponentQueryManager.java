@@ -109,17 +109,18 @@ final class ComponentQueryManager extends QueryManager {
             return components;
         }
 
-        final Map<Long, ComponentDao.ComponentLicenseRow> rowsByComponentId =
-            withJdbiHandle(handle -> handle.attach(ComponentDao.class)
-                .getFirstLicenseRow(components.stream().map(Component::getId).toList())
-            );
+        final Map<Long, ComponentDao.ComponentLicenseRow> rowsByComponentId = withJdbiHandle(handle -> handle.attach(
+                        ComponentDao.class)
+                .getFirstLicenseRow(components.stream().map(Component::getId).toList()));
 
         final List<Long> licenseIds = rowsByComponentId.values().stream()
-            .map(ComponentDao.ComponentLicenseRow::licenseId)
-            .filter(Objects::nonNull).distinct().toList();
+                .map(ComponentDao.ComponentLicenseRow::licenseId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
 
-        final Map<Long, ComponentDao.LicenseRow> licensesById = withJdbiHandle(handle -> 
-            handle.attach(ComponentDao.class).getLicensesByIds(licenseIds));
+        final Map<Long, ComponentDao.LicenseRow> licensesById =
+                withJdbiHandle(handle -> handle.attach(ComponentDao.class).getLicensesByIds(licenseIds));
 
         for (final Component component : components) {
             final ComponentDao.ComponentLicenseRow row = rowsByComponentId.get(component.getId());
@@ -233,7 +234,7 @@ final class ComponentQueryManager extends QueryManager {
                 LEFT OUTER JOIN LATERAL (
                     SELECT * FROM "COMPONENTLICENSES"
                     WHERE "COMPONENTLICENSES"."COMPONENTID" = "A0"."ID"
-                    ORDER BY 
+                    ORDER BY
                         "COMPONENTLICENSES"."ORDINALITY" ASC,
                         "COMPONENTLICENSES"."ID" ASC
                     LIMIT 1

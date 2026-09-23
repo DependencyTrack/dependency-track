@@ -50,8 +50,8 @@ import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_PROJECT_METADAT
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_PROJECT_PROPERTY;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_VULNERABILITY;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.COMPONENT_FIELDS;
-import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.COMPONENT_PROPERTY_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.COMPONENT_LICENSE_FIELDS;
+import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.COMPONENT_PROPERTY_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.LICENSE_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.LICENSE_GROUP_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.PROJECT_FIELDS;

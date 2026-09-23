@@ -733,7 +733,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         componentA.setLicense("License A");
         componentA = qm.createComponent(componentA, false);
 
-        final long componentAId = componentA.getId(); 
+        final long componentAId = componentA.getId();
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
                 "COMPONENTID",
@@ -743,9 +743,9 @@ public class PolicyViolationResourceTest extends ResourceTest {
             )
             VALUES (:componentId, :license, 1, false)
         """)
-        .bind("componentId", componentAId)
-        .bind("license", "License A")
-        .execute());
+                .bind("componentId", componentAId)
+                .bind("license", "License A")
+                .execute());
 
         var componentB = new Component();
         componentB.setProject(projectB);
@@ -754,7 +754,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         componentB.setLicense("License B");
         componentB = qm.createComponent(componentB, false);
 
-        final long componentBId = componentB.getId(); 
+        final long componentBId = componentB.getId();
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
                 "COMPONENTID",
@@ -764,9 +764,9 @@ public class PolicyViolationResourceTest extends ResourceTest {
             )
             VALUES (:componentId, :license, 1, false)
         """)
-        .bind("componentId", componentBId)
-        .bind("license", "License B")
-        .execute());
+                .bind("componentId", componentBId)
+                .bind("license", "License B")
+                .execute());
 
         var componentC = new Component();
         componentC.setProject(projectC);
@@ -775,7 +775,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         componentC.setLicense("License C");
         componentC = qm.createComponent(componentC, false);
 
-        final long componentCId = componentC.getId(); 
+        final long componentCId = componentC.getId();
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
                 "COMPONENTID",
@@ -785,9 +785,9 @@ public class PolicyViolationResourceTest extends ResourceTest {
             )
             VALUES (:componentId, :license, 1, false)
             """)
-        .bind("componentId", componentCId)
-        .bind("license", "License C")
-        .execute());
+                .bind("componentId", componentCId)
+                .bind("license", "License C")
+                .execute());
 
         var componentD = new Component();
         componentD.setProject(projectD);
@@ -796,7 +796,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         componentD.setLicense("License D");
         componentD = qm.createComponent(componentD, false);
 
-        final long componentDId = componentD.getId(); 
+        final long componentDId = componentD.getId();
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
                 "COMPONENTID",
@@ -806,9 +806,9 @@ public class PolicyViolationResourceTest extends ResourceTest {
             )
             VALUES (:componentId, :license, 1, false)
         """)
-        .bind("componentId", componentDId)
-        .bind("license", "License D")
-        .execute());
+                .bind("componentId", componentDId)
+                .bind("license", "License D")
+                .execute());
 
         final Policy policyA = qm.createPolicy("Policy A", Policy.Operator.ALL, Policy.ViolationState.FAIL);
         final PolicyCondition conditionA = qm.createPolicyCondition(

@@ -76,9 +76,9 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
             )
             VALUES (:componentId, :licenseId, 1, false)
             """)
-        .bind("componentId", component.getId())
-        .bind("licenseId", licenseId)
-        .execute());
+                .bind("componentId", component.getId())
+                .bind("licenseId", licenseId)
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -211,9 +211,9 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
             )
             VALUES (:componentId, :expression, 1, false)
             """)
-        .bind("componentId", component.getId())
-        .bind("expression", "MIT")
-        .execute());
+                .bind("componentId", component.getId())
+                .bind("expression", "MIT")
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -256,9 +256,9 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
             )
             VALUES (:componentId, :expression, 1, false)
             """)
-        .bind("componentId", component.getId())
-        .bind("expression", "MIT")
-        .execute());
+                .bind("componentId", component.getId())
+                .bind("expression", "MIT")
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -301,9 +301,9 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
             )
             VALUES (:componentId, :expression, 1, false)
             """)
-        .bind("componentId", component.getId())
-        .bind("expression", "MIT OR Apache-2.0")
-        .execute());
+                .bind("componentId", component.getId())
+                .bind("expression", "MIT OR Apache-2.0")
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
@@ -346,9 +346,9 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
             )
             VALUES (:componentId, :expression, 1, false)
             """)
-        .bind("componentId", component.getId())
-        .bind("expression", "MIT AND GPL-2.0")
-        .execute());
+                .bind("componentId", component.getId())
+                .bind("expression", "MIT AND GPL-2.0")
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);

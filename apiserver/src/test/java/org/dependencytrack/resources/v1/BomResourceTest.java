@@ -643,9 +643,9 @@ class BomResourceTest extends ResourceTest {
             )
             VALUES (:componentId, :licenseId, 1, false)
             """)
-            .bind("componentId", c.getId())
-            .bind("licenseId", license.getId())
-        .execute());
+                .bind("componentId", c.getId())
+                .bind("licenseId", license.getId())
+                .execute());
         qm.persist(project);
         Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .request()

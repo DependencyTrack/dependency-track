@@ -208,12 +208,12 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
             )
             VALUES (:componentId, :licenseId, :license, :licenseExpression, :licenseUrl, 1, false)
             """)
-        .bind("componentId", component.getId())
-        .bind("licenseId", license.getId())
-        .bind("license", "componentLicenseName")
-        .bind("licenseExpression", component.getLicenseExpression())
-        .bind("licenseUrl", "licenseUrl")
-        .execute());
+                .bind("componentId", component.getId())
+                .bind("licenseId", license.getId())
+                .bind("license", "componentLicenseName")
+                .bind("licenseExpression", component.getLicenseExpression())
+                .bind("licenseUrl", "licenseUrl")
+                .execute());
 
         qm.createComponentProperty(
                 component,
@@ -2884,9 +2884,9 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
             )
             VALUES (:componentId, :licenseId, 1, false)
             """)
-        .bind("componentId", component.getId())
-        .bind("licenseId", license.getId())
-        .execute());
+                .bind("componentId", component.getId())
+                .bind("licenseId", license.getId())
+                .execute());
 
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(
@@ -2954,9 +2954,9 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
             )
             VALUES (:componentId, :licenseExpression, 1, false)
             """)
-        .bind("componentId", component.getId())
-        .bind("licenseExpression", component.getLicenseExpression())
-        .execute());
+                .bind("componentId", component.getId())
+                .bind("licenseExpression", component.getLicenseExpression())
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         if (expectViolation) {
@@ -3004,9 +3004,9 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
             )
             VALUES (:componentId, :licenseId, 1, false)
             """)
-        .bind("componentId", component.getId())
-        .bind("licenseId", license.getId())
-        .execute());
+                .bind("componentId", component.getId())
+                .bind("licenseId", license.getId())
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);

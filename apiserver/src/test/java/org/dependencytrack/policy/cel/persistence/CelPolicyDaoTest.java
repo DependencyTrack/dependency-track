@@ -231,14 +231,14 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                         1,
                         false
                         )""")
-        .bind("componentId", component.getId())
-        .bind("licenseId", license.getId())
-        .bind("license", "componentLicenseName")
-        .bind("licenseExpression", "componentLicenseExpression")
-        .execute());
+                .bind("componentId", component.getId())
+                .bind("licenseId", license.getId())
+                .bind("license", "componentLicenseName")
+                .bind("licenseExpression", "componentLicenseExpression")
+                .execute());
 
-        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
-                new PackageMetadata(
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(List.of(new PackageMetadata(
                         new PackageURL("pkg:maven/componentGroup/componentName"),
                         "1.0.0",
                         null,

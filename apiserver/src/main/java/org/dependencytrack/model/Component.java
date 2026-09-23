@@ -478,16 +478,23 @@ public class Component implements Serializable {
 
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The license may only contain printable characters")
     private transient String license;
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license expression may only contain printable characters")
+
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The license expression may only contain printable characters")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @ValidSpdxExpression
     private transient String licenseExpression;
+
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.URL, message = "The license URL must be a valid URL")
     private transient String licenseUrl;
+
     private transient License resolvedLicense;
 
     // TODO: Move this to another class, similar to ConciseProjectListItem.

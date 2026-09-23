@@ -602,8 +602,7 @@ final class PolicyQueryManager extends QueryManager {
                     case "policy_name" -> filterBuilder.append("policyCondition.policy.name");
                     case "component" -> filterBuilder.append("component.name");
                     case "license" -> {
-                        final List<Long> matchingComponentIds = withJdbiHandle(handle ->
-                        handle.createQuery("""
+                        final List<Long> matchingComponentIds = withJdbiHandle(handle -> handle.createQuery("""
                                 SELECT DISTINCT cl."COMPONENTID"
                                 FROM "COMPONENTLICENSES" AS cl
                                 LEFT JOIN "LICENSE" AS l
@@ -616,14 +615,21 @@ final class PolicyQueryManager extends QueryManager {
                                 .bind("licensePattern", "%" + input.toLowerCase() + "%")
                                 .mapTo(Long.class)
                                 .list());
-            
+
                         params.put("licenseComponentIds", matchingComponentIds);
                         filterBuilder.append(":licenseComponentIds.contains(component.id)");
                     }
-                    case "project_name" -> filterBuilder.append("project.name.toLowerCase().matches(:").append(paramName).append(") || project.version");
+                    case "project_name" ->
+                        filterBuilder
+                                .append("project.name.toLowerCase().matches(:")
+                                .append(paramName)
+                                .append(") || project.version");
                 }
                 if (!inputFilter[i].equalsIgnoreCase("license")) {
-                    filterBuilder.append(".toLowerCase().matches(:").append(paramName).append(")");
+                    filterBuilder
+                            .append(".toLowerCase().matches(:")
+                            .append(paramName)
+                            .append(")");
                     hasTextFilter = true;
                 }
                 if (i < inputFilterLength - 1) {

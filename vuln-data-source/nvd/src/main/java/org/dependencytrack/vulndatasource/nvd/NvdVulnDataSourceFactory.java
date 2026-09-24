@@ -38,9 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -151,7 +149,6 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
 
     @Override
     public ExtensionTestResult test(@Nullable RuntimeConfig runtimeConfig) {
-        requireNonNull(configRegistry, "configRegistry has not been initialized");
         requireNonNull(httpClient, "httpClient has not been initialized");
         requireNonNull(runtimeConfig, "runtimeConfig must not be null");
 
@@ -167,23 +164,6 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
                 ? URI.create(nvdConfig.getCveFeedsUrl().toString() + "/")
                 : nvdConfig.getCveFeedsUrl();
         final URI metadataUri = feedsUrl.resolve("json/cve/2.0/nvdcve-2.0-modified.meta");
-
-        if (!configRegistry
-                .getDeploymentConfig()
-                .getOptionalValue("allow-local-connections", boolean.class)
-                .orElse(false)) {
-            try {
-                final var hostAddress = InetAddress.getByName(feedsUrl.getHost());
-                if (hostAddress.isLoopbackAddress()
-                        || hostAddress.isLinkLocalAddress()
-                        || hostAddress.isSiteLocalAddress()
-                        || hostAddress.isAnyLocalAddress()) {
-                    return testResult.fail("connection", "Connection to local hosts is not allowed");
-                }
-            } catch (UnknownHostException e) {
-                return testResult.fail("connection", "Unknown host");
-            }
-        }
 
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(metadataUri)

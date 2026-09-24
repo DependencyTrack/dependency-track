@@ -113,13 +113,26 @@ public final class LegacyConfigPropertyValidator {
 
     static final Map<String, String> LEGACY_V5_RC1_PROPERTY_RENAMES = buildLegacyV5Rc1Renames();
 
+    private static final String ALLOW_LOCAL_CONNECTIONS_REPLACEMENT = """
+            Use dt.outbound.allowed-destinations, which allows private networks by default. \
+            Add "loopback" to it to also allow loopback addresses.\
+            """;
+
     /// Properties that no longer exist, and whose value cannot be carried over to their replacement.
     /// A rename entry would be misleading, since the operator has to decide on a new value rather
     /// than move the old one.
-    static final Map<String, String> REMOVED_PROPERTY_REPLACEMENTS = Map.of("dt.task.portfolio-analysis.cron", """
-        The portfolio analysis no longer starts at a fixed time. \
-        Use dt.task.portfolio-analysis.max-analysis-age-ms to say how long an analysis stays valid.\
-        """);
+    static final Map<String, String> REMOVED_PROPERTY_REPLACEMENTS = Map.of(
+            "dt.task.portfolio-analysis.cron",
+            """
+            The portfolio analysis no longer starts at a fixed time. \
+            Use dt.task.portfolio-analysis.max-analysis-age-ms to say how long an analysis stays valid.\
+            """,
+            "dt.vuln-analyzer.oss-index.allow-local-connections",
+            ALLOW_LOCAL_CONNECTIONS_REPLACEMENT,
+            "dt.vuln-data-source.jvn.allow-local-connections",
+            ALLOW_LOCAL_CONNECTIONS_REPLACEMENT,
+            "dt.vuln-data-source.nvd.allow-local-connections",
+            ALLOW_LOCAL_CONNECTIONS_REPLACEMENT);
 
     private static final Set<String> STANDARD_SYSTEM_ENV_VARS = Set.of("NO_PROXY");
 

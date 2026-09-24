@@ -27,11 +27,10 @@ import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.oauth2.sdk.GeneralException;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.as.AuthorizationServerMetadata;
+import org.dependencytrack.support.net.OutboundConnectionDeniedException;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.net.InetAddress;
-import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -63,9 +62,6 @@ public final class WorkloadIdentityKeySetFetcher implements ResourceRetriever {
 
     WorkloadIdentityKeySetFetcher(HttpClient httpClient, boolean relaxedUrlChecks, Duration fetchTimeout) {
         this.httpClient = requireNonNull(httpClient, "httpClient must not be null");
-        if (httpClient.followRedirects() != HttpClient.Redirect.NEVER) {
-            throw new IllegalArgumentException("httpClient must not follow redirects");
-        }
         this.relaxedUrlChecks = relaxedUrlChecks;
         this.fetchTimeout = requireNonNull(fetchTimeout, "fetchTimeout must not be null");
     }
@@ -143,7 +139,16 @@ public final class WorkloadIdentityKeySetFetcher implements ResourceRetriever {
         } catch (InterruptedException e) {
             future.cancel(true);
             throw e;
-        } catch (TimeoutException | ExecutionException e) {
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof OutboundConnectionDeniedException) {
+                throw new JWKSetRetrievalException("%s is at a destination that is not allowed".formatted(what), null);
+            }
+            if (e.getCause() instanceof UnknownHostException) {
+                throw new JWKSetRetrievalException("%s host cannot be resolved".formatted(what), null);
+            }
+            throw new JWKSetRetrievalException(
+                    "%s is unreachable, or larger than %d bytes".formatted(what, MAX_BODY_BYTES), e);
+        } catch (TimeoutException e) {
             future.cancel(true);
             throw new JWKSetRetrievalException(
                     "%s is unreachable, or larger than %d bytes".formatted(what, MAX_BODY_BYTES), e);
@@ -171,41 +176,10 @@ public final class WorkloadIdentityKeySetFetcher implements ResourceRetriever {
             throw new JWKSetRetrievalException("URLs with user information are not allowed", null);
         }
 
-        final String host = uri.getHost();
-        if (host == null) {
+        if (uri.getHost() == null) {
             throw new JWKSetRetrievalException("%s is not a valid URL".formatted(url), null);
-        }
-        if (relaxedUrlChecks
-                // NB: Local lookup is meaningless if the configured proxy resolves the address.
-                || isProxied(uri)) {
-            return uri;
-        }
-
-        final InetAddress[] addresses;
-        try {
-            addresses = InetAddress.getAllByName(host);
-        } catch (UnknownHostException e) {
-            throw new JWKSetRetrievalException("Host %s cannot be resolved".formatted(host), e);
-        }
-
-        // Private ranges are allowed on purpose, since internal issuers are a supported deployment.
-        for (final InetAddress address : addresses) {
-            if (address.isLoopbackAddress()
-                    || address.isLinkLocalAddress()
-                    || address.isAnyLocalAddress()
-                    || address.isMulticastAddress()) {
-                throw new JWKSetRetrievalException("Connections to host %s are not allowed".formatted(host), null);
-            }
         }
 
         return uri;
-    }
-
-    private boolean isProxied(URI uri) {
-        return httpClient
-                .proxy()
-                .map(proxySelector ->
-                        proxySelector.select(uri).stream().anyMatch(proxy -> proxy.type() != Proxy.Type.DIRECT))
-                .orElse(false);
     }
 }

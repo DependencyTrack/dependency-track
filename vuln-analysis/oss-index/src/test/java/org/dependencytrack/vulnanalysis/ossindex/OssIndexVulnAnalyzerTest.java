@@ -84,10 +84,7 @@ class OssIndexVulnAnalyzerTest {
         }
 
         final var configRegistry = new MockConfigRegistry(
-                Map.of("allow-local-connections", "true"),
-                analyzerFactory.runtimeConfigSpec(),
-                RuntimeConfigMapper.getInstance(),
-                config);
+                Map.of(), analyzerFactory.runtimeConfigSpec(), RuntimeConfigMapper.getInstance(), config);
 
         analyzerFactory.init(new ExtensionContextBuilder()
                 .withConfigRegistry(configRegistry)

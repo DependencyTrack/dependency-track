@@ -31,13 +31,16 @@ import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorKevDataSourceArg;
+import org.dependencytrack.support.net.OutboundConnectionDeniedException;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,6 +99,26 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
 
         activity.execute(ctx, activityArgForKevDataSource("cisa"));
         assertThat(countKevAssertions("cisa")).isEqualTo(2);
+    }
+
+    @Test
+    void shouldFailTerminallyWhenOutboundConnectionDenied() {
+        final var activity = new MirrorKevDataSourceActivity(createPluginManager("cisa", () -> new KevDataSource() {
+            @Override
+            public boolean hasNext() {
+                throw new UncheckedIOException(
+                        new OutboundConnectionDeniedException("Connections to cisa.invalid are not allowed"));
+            }
+
+            @Override
+            public KevAssertion next() {
+                throw new NoSuchElementException();
+            }
+        }));
+
+        assertThatExceptionOfType(TerminalApplicationFailureException.class)
+                .isThrownBy(() -> activity.execute(ctx, activityArgForKevDataSource("cisa")))
+                .withRootCauseInstanceOf(OutboundConnectionDeniedException.class);
     }
 
     @Test

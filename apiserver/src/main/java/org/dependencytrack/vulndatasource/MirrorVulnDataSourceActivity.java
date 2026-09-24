@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.vulndatasource;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.common.MdcScope;
@@ -35,6 +36,7 @@ import org.dependencytrack.persistence.jdbi.VulnerableSoftwareDao;
 import org.dependencytrack.plugin.runtime.NoSuchExtensionException;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
+import org.dependencytrack.support.net.OutboundConnectionDeniedException;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.dependencytrack.vulnanalysis.VulnerabilityUpdatePolicy;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
@@ -147,6 +149,12 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                     vulnsProcessed += bovBatch.size();
                     bovBatch.clear();
                 }
+            } catch (RuntimeException e) {
+                // Retrying cannot succeed until dt.outbound.allowed-destinations is changed.
+                if (ExceptionUtils.throwableOfType(e, OutboundConnectionDeniedException.class) != null) {
+                    throw new TerminalApplicationFailureException(e);
+                }
+                throw e;
             }
 
             LOGGER.info(

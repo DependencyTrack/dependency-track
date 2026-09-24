@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.kevdatasource;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivityContext;
 import org.dependencytrack.dex.api.ActivitySpec;
@@ -30,6 +31,7 @@ import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.plugin.runtime.NoSuchExtensionException;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorKevDataSourceArg;
+import org.dependencytrack.support.net.OutboundConnectionDeniedException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,6 +104,11 @@ public final class MirrorKevDataSourceActivity implements Activity<MirrorKevData
                     upsertBatch(dataSourceName, batch);
                     processed += batch.size();
                 }
+            } catch (RuntimeException e) {
+                if (ExceptionUtils.throwableOfType(e, OutboundConnectionDeniedException.class) != null) {
+                    throw new TerminalApplicationFailureException(e);
+                }
+                throw e;
             }
 
             useJdbiTransaction(handle -> {

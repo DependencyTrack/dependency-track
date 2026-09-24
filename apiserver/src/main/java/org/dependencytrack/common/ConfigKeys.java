@@ -44,6 +44,8 @@ public final class ConfigKeys {
     public static final String METRICS_AUTH_USERNAME = "dt.metrics.auth.username";
     public static final String METRICS_AUTH_PASSWORD = "dt.metrics.auth.password";
 
+    public static final String OUTBOUND_ALLOWED_DESTINATIONS = "dt.outbound.allowed-destinations";
+
     public static final String TASK_SCHEDULER_ENABLED = "dt.task-scheduler.enabled";
     public static final String TASK_SCHEDULER_THREADS = "dt.task-scheduler.threads";
     public static final String TASK_SCHEDULER_POLL_INTERVAL_MS = "dt.task-scheduler.poll-interval-ms";

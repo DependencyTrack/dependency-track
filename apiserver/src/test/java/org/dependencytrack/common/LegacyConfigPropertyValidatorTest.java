@@ -25,12 +25,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LegacyConfigPropertyValidatorTest {
@@ -94,6 +96,24 @@ class LegacyConfigPropertyValidatorTest {
                 .hasMessageContaining("no longer supported")
                 .hasMessageContaining("dt.task.portfolio-analysis.cron")
                 .hasMessageContaining("dt.task.portfolio-analysis.max-analysis-age-ms");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "dt.vuln-analyzer.oss-index.allow-local-connections",
+                "dt.vuln-data-source.jvn.allow-local-connections",
+                "dt.vuln-data-source.nvd.allow-local-connections"
+            })
+    void validateShouldFailWhenRemovedAllowLocalConnectionsPropertyIsPresent(String name) {
+        final Config config =
+                new SmallRyeConfigBuilder().withDefaultValue(name, "true").build();
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> LegacyConfigPropertyValidator.validate(config))
+                .withMessageContaining("no longer supported")
+                .withMessageContaining(name)
+                .withMessageContaining("dt.outbound.allowed-destinations");
     }
 
     @ParameterizedTest

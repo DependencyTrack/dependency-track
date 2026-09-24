@@ -32,12 +32,14 @@ import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
+import org.dependencytrack.support.net.OutboundConnectionDeniedException;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
 import java.util.List;
 import java.util.function.Supplier;
@@ -49,6 +51,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.ProtobufTestUtil.generateBomFromJson;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -132,6 +135,26 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
 
         assertThatExceptionOfType(TerminalApplicationFailureException.class)
                 .isThrownBy(() -> activity.execute(mock(ActivityContext.class), arg));
+    }
+
+    @Test
+    void shouldFailTerminallyWhenOutboundConnectionDenied() {
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doThrow(new UncheckedIOException(
+                        new OutboundConnectionDeniedException("Connections to osv.invalid are not allowed")))
+                .when(dataSourceMock)
+                .hasNext();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("osv", dataSourceMock));
+
+        assertThatExceptionOfType(TerminalApplicationFailureException.class)
+                .isThrownBy(() -> activity.execute(
+                        mock(ActivityContext.class),
+                        MirrorVulnDataSourceArg.newBuilder()
+                                .setDataSourceName("osv")
+                                .setSourceName("OSV")
+                                .build()))
+                .withRootCauseInstanceOf(OutboundConnectionDeniedException.class);
     }
 
     @Test

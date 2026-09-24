@@ -32,6 +32,7 @@ import org.dependencytrack.plugin.api.config.RuntimeConfig;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.dependencytrack.plugin.config.RuntimeConfigMapper;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.eclipse.microprofile.config.Config;
 import org.jdbi.v3.core.Jdbi;
 import org.jspecify.annotations.Nullable;
@@ -84,6 +85,7 @@ public class PluginManager implements Closeable {
     private final Function<String, @Nullable String> secretResolver;
     private final Jdbi jdbi;
     private final HttpClient httpClient;
+    private final OutboundConnectionPolicy outboundConnectionPolicy;
     private final SequencedMap<Class<? extends Plugin>, Plugin> loadedPluginByClass;
     private final Map<ExtensionIdentity, Plugin> pluginByExtensionIdentity;
     private final Map<Plugin, List<ExtensionFactory<?>>> factoriesByPlugin;
@@ -101,12 +103,14 @@ public class PluginManager implements Closeable {
             Function<String, @Nullable String> secretResolver,
             Jdbi jdbi,
             HttpClient httpClient,
+            OutboundConnectionPolicy outboundConnectionPolicy,
             Collection<Class<? extends ExtensionPoint>> extensionPointClasses) {
         this.config = config;
         this.cacheManager = cacheManager;
         this.secretResolver = secretResolver;
         this.jdbi = jdbi;
         this.httpClient = httpClient;
+        this.outboundConnectionPolicy = outboundConnectionPolicy;
         this.runtimeConfigMapper = RuntimeConfigMapper.getInstance();
         this.loadedPluginByClass = new LinkedHashMap<>();
         this.pluginByExtensionIdentity = new HashMap<>();
@@ -374,8 +378,8 @@ public class PluginManager implements Closeable {
         final var extensionCacheManager = new NamespacedCacheManager(
                 this.cacheManager, "%s.%s".formatted(extensionPointMetadata.name(), extensionIdentity.name()));
 
-        final var extensionContext =
-                new ExtensionContext(configRegistry, extensionCacheManager, keyValueStore, httpClient);
+        final var extensionContext = new ExtensionContext(
+                configRegistry, extensionCacheManager, keyValueStore, httpClient, outboundConnectionPolicy);
 
         LOGGER.debug("Initializing extension");
         try {

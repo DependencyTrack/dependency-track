@@ -38,6 +38,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publishing.DefaultNotificationPublishersPlugin;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.runtime.PluginManager;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -94,6 +95,7 @@ class NotificationRuleResourceTest extends ResourceTest {
                 secretName -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(org.dependencytrack.notification.api.publishing.NotificationPublisher.class));
         pluginManager.loadPlugins(List.of(new DefaultNotificationPublishersPlugin()));
     }

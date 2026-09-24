@@ -59,11 +59,6 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
     }
 
     @Override
-    protected void customizeDeploymentConfig(Map<String, String> deploymentConfig) {
-        deploymentConfig.put("allow-local-connections", "true");
-    }
-
-    @Override
     protected void customizeGlobalConfig(RuntimeConfig globalConfig) {
         final var emailGlobalConfig = (EmailNotificationPublisherGlobalConfigV1) globalConfig;
         emailGlobalConfig.setEnabled(true);

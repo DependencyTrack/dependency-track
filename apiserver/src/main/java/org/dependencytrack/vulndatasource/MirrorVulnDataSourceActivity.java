@@ -150,7 +150,6 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                     bovBatch.clear();
                 }
             } catch (RuntimeException e) {
-                // Retrying cannot succeed until dt.outbound.allowed-destinations is changed.
                 if (ExceptionUtils.throwableOfType(e, OutboundConnectionDeniedException.class) != null) {
                     throw new TerminalApplicationFailureException(e);
                 }

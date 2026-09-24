@@ -29,6 +29,8 @@ import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
+import org.dependencytrack.support.net.OutboundConnectionDeniedException;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +43,6 @@ import jakarta.mail.Session;
 import jakarta.mail.Transport;
 
 import javax.net.ssl.SSLSocketFactory;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Map;
@@ -61,7 +62,7 @@ public final class EmailNotificationPublisherFactory
     private final Map<String, String> overrideMailProperties;
     private final Class<? extends SSLSocketFactory> sslSocketFactoryClass;
     private @Nullable ConfigRegistry configRegistry;
-    private boolean localConnectionsAllowed;
+    private @Nullable OutboundConnectionPolicy outboundConnectionPolicy;
 
     EmailNotificationPublisherFactory(
             Map<String, String> overrideMailProperties, Class<? extends SSLSocketFactory> sslSocketFactoryClass) {
@@ -91,10 +92,7 @@ public final class EmailNotificationPublisherFactory
     @Override
     public void init(ExtensionContext context) {
         configRegistry = context.configRegistry();
-        localConnectionsAllowed = configRegistry
-                .getDeploymentConfig()
-                .getOptionalValue("allow-local-connections", boolean.class)
-                .orElse(false);
+        outboundConnectionPolicy = context.outboundConnectionPolicy();
     }
 
     @Override
@@ -107,10 +105,10 @@ public final class EmailNotificationPublisherFactory
             throw new IllegalStateException("Publisher is disabled");
         }
 
-        if (!localConnectionsAllowed && isLocalHost(globalConfig.getHost())) {
-            throw new IllegalStateException("""
-                    The configured host resolves to a local address, \
-                    but local connections are not allowed""");
+        try {
+            requireAllowedHost(globalConfig.getHost());
+        } catch (OutboundConnectionDeniedException e) {
+            throw new IllegalStateException(e.getMessage(), e);
         }
 
         return new EmailNotificationPublisher(createSession(globalConfig), globalConfig.getSenderAddress());
@@ -145,10 +143,10 @@ public final class EmailNotificationPublisherFactory
             return testResult;
         }
 
-        if (!localConnectionsAllowed && isLocalHost(config.getHost())) {
-            return testResult.fail("connection", """
-                    The configured host resolves to a local address, \
-                    but local connections are not allowed""");
+        try {
+            requireAllowedHost(config.getHost());
+        } catch (OutboundConnectionDeniedException e) {
+            return testResult.fail("connection", e.getMessage());
         }
 
         final Session session = createSession(config);
@@ -215,16 +213,13 @@ public final class EmailNotificationPublisherFactory
         return Session.getInstance(props, authenticator);
     }
 
-    private boolean isLocalHost(String hostname) {
+    private void requireAllowedHost(String hostname) throws OutboundConnectionDeniedException {
+        requireNonNull(outboundConnectionPolicy, "outboundConnectionPolicy must not be null");
+
         try {
-            InetAddress hostAddress = InetAddress.getByName(hostname);
-            return hostAddress.isLoopbackAddress()
-                    || hostAddress.isLinkLocalAddress()
-                    || hostAddress.isSiteLocalAddress()
-                    || hostAddress.isAnyLocalAddress();
-        } catch (UnknownHostException e) {
+            outboundConnectionPolicy.requireAllowed(hostname);
+        } catch (UnknownHostException _) {
             // Let the actual connection logic handle this.
-            return false;
         }
     }
 }

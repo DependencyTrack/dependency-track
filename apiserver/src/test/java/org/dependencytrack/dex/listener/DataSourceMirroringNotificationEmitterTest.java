@@ -29,6 +29,7 @@ import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.runtime.PluginManager;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.nvd.NvdVulnDataSourcePlugin;
 import org.jspecify.annotations.Nullable;
@@ -61,6 +62,7 @@ class DataSourceMirroringNotificationEmitterTest extends PersistenceCapableTest 
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(KevDataSource.class, VulnDataSource.class));
         pluginManager.loadPlugins(List.of(new BuiltinKevDataSourcePlugin(), new NvdVulnDataSourcePlugin()));
 

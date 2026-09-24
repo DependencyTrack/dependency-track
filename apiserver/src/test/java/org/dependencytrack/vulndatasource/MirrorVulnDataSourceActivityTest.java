@@ -33,6 +33,7 @@ import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
 import org.dependencytrack.support.net.OutboundConnectionDeniedException;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
 import org.jspecify.annotations.NonNull;
@@ -77,6 +78,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnDataSource.class));
         pluginManager.loadPlugins(List.of(() -> List.copyOf(factories)));
         return pluginManager;
@@ -90,6 +92,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnDataSource.class));
         pluginManager.loadPlugins(List.of());
 
@@ -111,6 +114,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnDataSource.class));
         pluginManager.loadPlugins(List.of(() -> List.of(new DisabledVulnDataSourceFactory("nvd"))));
 

@@ -21,6 +21,7 @@ package org.dependencytrack.plugin.api;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 
 import java.net.http.HttpClient;
 
@@ -35,14 +36,21 @@ import static java.util.Objects.requireNonNull;
 /// @param cacheManager   Access to caches, namespaced to the extension.
 /// @param keyValueStore  Access to persistent key-value storage, namespaced to the extension.
 /// @param httpClient     HTTP client configured according to the host application's settings.
+/// @param outboundConnectionPolicy Policy for outbound connections.
+/// To be used for all connections that can't go through `httpClient`, which already enforces it.
 /// @since 5.2.0
 public record ExtensionContext(
-        ConfigRegistry configRegistry, CacheManager cacheManager, KeyValueStore keyValueStore, HttpClient httpClient) {
+        ConfigRegistry configRegistry,
+        CacheManager cacheManager,
+        KeyValueStore keyValueStore,
+        HttpClient httpClient,
+        OutboundConnectionPolicy outboundConnectionPolicy) {
 
     public ExtensionContext {
         requireNonNull(configRegistry, "configRegistry must not be null");
         requireNonNull(cacheManager, "cacheManager must not be null");
         requireNonNull(keyValueStore, "keyValueStore must not be null");
         requireNonNull(httpClient, "httpClient must not be null");
+        requireNonNull(outboundConnectionPolicy, "outboundConnectionPolicy must not be null");
     }
 }

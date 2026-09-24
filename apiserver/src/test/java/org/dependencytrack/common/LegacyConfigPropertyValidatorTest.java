@@ -101,6 +101,8 @@ class LegacyConfigPropertyValidatorTest {
     @ParameterizedTest
     @ValueSource(
             strings = {
+                "dt.notification-publisher.email.allow-local-connections",
+                "dt.notification-publisher.kafka.allow-local-connections",
                 "dt.vuln-analyzer.oss-index.allow-local-connections",
                 "dt.vuln-data-source.jvn.allow-local-connections",
                 "dt.vuln-data-source.nvd.allow-local-connections"

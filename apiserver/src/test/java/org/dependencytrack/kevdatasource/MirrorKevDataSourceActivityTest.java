@@ -32,6 +32,7 @@ import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorKevDataSourceArg;
 import org.dependencytrack.support.net.OutboundConnectionDeniedException;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -149,6 +150,7 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(KevDataSource.class));
         pluginManager.loadPlugins(List.of(() -> List.copyOf(factories)));
         return pluginManager;

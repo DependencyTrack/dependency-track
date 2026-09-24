@@ -41,6 +41,7 @@ import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
@@ -94,6 +95,7 @@ class KevDataSourcesResourceTest extends ResourceTest {
                 secretManager::getSecretValue,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(KevDataSource.class));
         mirrorService = new KevDataSourceMirrorService(pluginManager, DEX_ENGINE_MOCK);
     }

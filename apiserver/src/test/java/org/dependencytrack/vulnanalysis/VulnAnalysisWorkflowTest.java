@@ -69,6 +69,7 @@ import org.dependencytrack.proto.internal.workflow.v1.PrepareVulnAnalysisRes;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowContext;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.dependencytrack.vulnanalysis.internal.InternalVulnAnalyzerConfigV1;
@@ -135,6 +136,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnAnalyzer.class, VulnDataSource.class));
         pluginManager.loadPlugins(List.of(new InternalVulnAnalyzerPlugin(), mockAnalyzerPlugin));
 

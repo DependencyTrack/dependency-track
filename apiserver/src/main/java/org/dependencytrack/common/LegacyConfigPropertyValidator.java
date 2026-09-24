@@ -121,18 +121,16 @@ public final class LegacyConfigPropertyValidator {
     /// Properties that no longer exist, and whose value cannot be carried over to their replacement.
     /// A rename entry would be misleading, since the operator has to decide on a new value rather
     /// than move the old one.
-    static final Map<String, String> REMOVED_PROPERTY_REPLACEMENTS = Map.of(
-            "dt.task.portfolio-analysis.cron",
-            """
+    static final Map<String, String> REMOVED_PROPERTY_REPLACEMENTS = Map.ofEntries(
+            Map.entry("dt.task.portfolio-analysis.cron", """
             The portfolio analysis no longer starts at a fixed time. \
             Use dt.task.portfolio-analysis.max-analysis-age-ms to say how long an analysis stays valid.\
-            """,
-            "dt.vuln-analyzer.oss-index.allow-local-connections",
-            ALLOW_LOCAL_CONNECTIONS_REPLACEMENT,
-            "dt.vuln-data-source.jvn.allow-local-connections",
-            ALLOW_LOCAL_CONNECTIONS_REPLACEMENT,
-            "dt.vuln-data-source.nvd.allow-local-connections",
-            ALLOW_LOCAL_CONNECTIONS_REPLACEMENT);
+            """),
+            Map.entry("dt.notification-publisher.email.allow-local-connections", ALLOW_LOCAL_CONNECTIONS_REPLACEMENT),
+            Map.entry("dt.notification-publisher.kafka.allow-local-connections", ALLOW_LOCAL_CONNECTIONS_REPLACEMENT),
+            Map.entry("dt.vuln-analyzer.oss-index.allow-local-connections", ALLOW_LOCAL_CONNECTIONS_REPLACEMENT),
+            Map.entry("dt.vuln-data-source.jvn.allow-local-connections", ALLOW_LOCAL_CONNECTIONS_REPLACEMENT),
+            Map.entry("dt.vuln-data-source.nvd.allow-local-connections", ALLOW_LOCAL_CONNECTIONS_REPLACEMENT));
 
     private static final Set<String> STANDARD_SYSTEM_ENV_VARS = Set.of("NO_PROXY");
 

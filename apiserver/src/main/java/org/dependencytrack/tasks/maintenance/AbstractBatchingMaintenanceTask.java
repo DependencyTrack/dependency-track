@@ -22,6 +22,8 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
@@ -36,12 +38,33 @@ abstract class AbstractBatchingMaintenanceTask implements Runnable {
         this.logger = LoggerFactory.getLogger(getClass());
     }
 
-    final int runBatched(int batchSize, ToIntFunction<Handle> batchFn) {
+    final int runBatched(
+            final int batchSize,
+            final ToIntFunction<Handle> batchFn) {
+        return runBatched(
+                batchSize,
+                handle -> batchFn.applyAsInt(handle),
+                result -> result,
+                result -> {
+                });
+    }
+
+    final <T> int runBatched(
+            final int batchSize,
+            final Function<Handle, T> batchFn,
+            final ToIntFunction<T> processedCountFn,
+            final Consumer<T> afterCommitFn) {
         int totalProcessed = 0;
         int iteration = 0;
 
         while (iteration < maxIterations) {
-            final int processed = inJdbiTransaction(batchFn::applyAsInt);
+            final T batchResult =
+                    inJdbiTransaction(batchFn::apply);
+
+            afterCommitFn.accept(batchResult);
+
+            final int processed =
+                    processedCountFn.applyAsInt(batchResult);
 
             iteration++;
             totalProcessed += processed;
@@ -51,7 +74,10 @@ abstract class AbstractBatchingMaintenanceTask implements Runnable {
         }
 
         if (iteration >= maxIterations) {
-            logger.warn("Reached safety cap of {} iterations; will resume on next run", maxIterations);
+            logger.warn(
+                    "Reached safety cap of {} iterations; "
+                            + "will resume on next run",
+                    maxIterations);
         }
 
         return totalProcessed;

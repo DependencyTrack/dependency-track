@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.tasks.maintenance;
 
+import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ import java.util.Optional;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_DAYS;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_TYPE;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_VERSIONS;
+import static org.dependencytrack.filestorage.OriginalBomFileCleanup.deleteOriginalBomFiles;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTask {
@@ -39,8 +41,11 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
     private static final int BATCH_SIZE = 25;
     private static final int MAX_ITERATIONS = 1000;
 
-    public ProjectMaintenanceTask() {
+    private final FileStorage fileStorage;
+
+    public ProjectMaintenanceTask(final FileStorage fileStorage) {
         super(MAX_ITERATIONS);
+        this.fileStorage = fileStorage;
     }
 
     @Override
@@ -61,13 +66,20 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
                             .attach(ConfigPropertyDao.class)
                             .getValue(MAINTENANCE_PROJECTS_RETENTION_DAYS, Integer.class));
             final Instant retentionCutOff = Instant.now().minus(Duration.ofDays(retentionDays));
-            final int deleted = runBatched(BATCH_SIZE, handle -> {
-                final List<ProjectDao.DeletedProject> deletedProjects = handle
-                        .attach(ProjectDao.class)
-                        .deleteInactiveProjectsForRetentionDuration(retentionCutOff, BATCH_SIZE);
-                logDeletedProjects(deletedProjects);
-                return deletedProjects.size();
-            });
+            final int deleted = runBatched(
+                    BATCH_SIZE,
+                    handle -> handle
+                            .attach(ProjectDao.class)
+                            .deleteInactiveProjectsWithOriginalBomFiles(
+                                    retentionCutOff,
+                                    BATCH_SIZE),
+                    result -> result.deletedProjects().size(),
+                    result -> {
+                        logDeletedProjects(result.deletedProjects());
+                        deleteOriginalBomFiles(
+                                fileStorage,
+                                result.originalBomFiles());
+                    });
 
             if (deleted > 0) {
                 LOGGER.info("Deleted {} inactive project(s) by age", deleted);
@@ -81,13 +93,20 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
                         .attach(ConfigPropertyDao.class)
                         .getValue(MAINTENANCE_PROJECTS_RETENTION_VERSIONS, Integer.class));
 
-        final int deleted = runBatched(BATCH_SIZE, handle -> {
-            final List<ProjectDao.DeletedProject> deletedProjects = handle
-                    .attach(ProjectDao.class)
-                    .deleteExcessProjectVersions(versionCountThreshold, BATCH_SIZE);
-            logDeletedProjects(deletedProjects);
-            return deletedProjects.size();
-        });
+        final int deleted = runBatched(
+                BATCH_SIZE,
+                handle -> handle
+                        .attach(ProjectDao.class)
+                        .deleteExcessProjectVersionsWithOriginalBomFiles(
+                                versionCountThreshold,
+                                BATCH_SIZE),
+                result -> result.deletedProjects().size(),
+                result -> {
+                    logDeletedProjects(result.deletedProjects());
+                    deleteOriginalBomFiles(
+                            fileStorage,
+                            result.originalBomFiles());
+                });
 
         if (deleted > 0) {
             LOGGER.info("Deleted {} excess project version(s)", deleted);

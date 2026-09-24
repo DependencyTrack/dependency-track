@@ -19,6 +19,8 @@
 package org.dependencytrack.resources.v2;
 
 import alpine.server.auth.PermissionRequired;
+import com.google.protobuf.InvalidProtocolBufferException;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
@@ -34,6 +36,9 @@ import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.exception.InvalidSortFieldException;
+import org.dependencytrack.filestorage.api.FileStorage;
+import org.dependencytrack.filestorage.proto.v1.FileMetadata;
+import org.dependencytrack.persistence.jdbi.BomDao;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PackageArtifactMetadata;
@@ -51,6 +56,10 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +75,7 @@ import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapHashes;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapLicense;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapScope;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapSortDirection;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 
 @Provider
 public class ProjectsResource extends AbstractApiResource implements ProjectsApi {
@@ -74,6 +84,68 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
 
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    private FileStorage fileStorage;
+
+    @Override
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getProjectOriginalBom(final UUID projectUuid) {
+        final byte[] serializedFileMetadata =
+                inJdbiTransaction(getAlpineRequest(), handle -> {
+                    final Long projectId =
+                            handle.attach(ProjectDao.class).getProjectId(projectUuid);
+                    if (projectId == null) {
+                        throw new NotFoundException();
+                    }
+
+                    requireProjectAccess(handle, projectUuid);
+
+                    final byte[] metadata = handle
+                            .attach(BomDao.class)
+                            .getLatestOriginalFileMetadata(projectUuid);
+                    if (metadata == null) {
+                        throw new NotFoundException();
+                    }
+
+                    return metadata;
+                });
+
+        final FileMetadata fileMetadata;
+        try {
+            fileMetadata = FileMetadata.parseFrom(serializedFileMetadata);
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalStateException(
+                    "Failed to parse original BOM file metadata for project %s"
+                            .formatted(projectUuid),
+                    e);
+        }
+
+        final InputStream inputStream;
+        try {
+            inputStream = fileStorage.get(fileMetadata);
+        } catch (NoSuchFileException e) {
+            throw new NotFoundException(e);
+        } catch (IOException e) {
+            throw new UncheckedIOException(
+                    "Failed to retrieve original BOM for project %s"
+                            .formatted(projectUuid),
+                    e);
+        }
+
+        final String fileName = switch (fileMetadata.getMediaType()) {
+            case "application/vnd.cyclonedx+json" -> "bom.json";
+            case "application/vnd.cyclonedx+xml" -> "bom.xml";
+            default -> "bom";
+        };
+
+        return Response
+                .ok(inputStream, fileMetadata.getMediaType())
+                .header(
+                        CONTENT_DISPOSITION,
+                        "attachment; filename=\"%s\"".formatted(fileName))
+                .build();
+    }
 
     @Override
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)

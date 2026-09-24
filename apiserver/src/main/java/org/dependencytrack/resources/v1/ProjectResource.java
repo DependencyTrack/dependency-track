@@ -32,6 +32,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import jakarta.inject.Inject;
 import jakarta.validation.Validator;
 import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.ClientErrorException;
@@ -52,6 +53,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.common.pagination.Page;
+import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
@@ -62,6 +64,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ProjectDeletionResult;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsConciseQuery;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
@@ -95,6 +98,7 @@ import static java.util.Objects.requireNonNullElseGet;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
+import static org.dependencytrack.filestorage.OriginalBomFileCleanup.deleteOriginalBomFiles;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -115,6 +119,9 @@ import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolati
 public class ProjectResource extends AbstractApiResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectResource.class);
+
+     @Inject
+     private FileStorage fileStorage;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -1034,10 +1041,21 @@ public class ProjectResource extends AbstractApiResource {
             @Parameter(description = "The UUID of the project to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         final UUID projectUuid = UUID.fromString(uuid);
-        logDeletedProjects(inJdbiTransaction(getAlpineRequest(), handle -> {
-            requireProjectAccess(handle, projectUuid);
-            return handle.attach(ProjectDao.class).deleteProjects(Set.of(projectUuid));
-        }));
+
+        final ProjectDeletionResult deletionResult =
+                inJdbiTransaction(getAlpineRequest(), handle -> {
+                    requireProjectAccess(handle, projectUuid);
+                    return handle
+                            .attach(ProjectDao.class)
+                            .deleteProjectsWithOriginalBomFiles(
+                                    Set.of(projectUuid));
+                });
+
+        logDeletedProjects(deletionResult.deletedProjects());
+        deleteOriginalBomFiles(
+                fileStorage,
+                deletionResult.originalBomFiles());
+
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
@@ -1058,8 +1076,16 @@ public class ProjectResource extends AbstractApiResource {
             Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE
     })
     public Response deleteProjects(@Size(min = 1, max = 1000) final Set<UUID> uuids) {
-        logDeletedProjects(inJdbiTransaction(getAlpineRequest(), handle ->
-                handle.attach(ProjectDao.class).deleteProjects(uuids)));
+        final ProjectDeletionResult deletionResult =
+                inJdbiTransaction(getAlpineRequest(), handle -> handle
+                        .attach(ProjectDao.class)
+                        .deleteProjectsWithOriginalBomFiles(uuids));
+
+        logDeletedProjects(deletionResult.deletedProjects());
+        deleteOriginalBomFiles(
+                fileStorage,
+                deletionResult.originalBomFiles());
+
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 

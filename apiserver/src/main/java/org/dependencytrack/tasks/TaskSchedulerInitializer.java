@@ -38,6 +38,7 @@ import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.kevdatasource.KevDataSourceMirrorService;
 import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.kevdatasource.api.KevDataSourceFactory;
@@ -121,7 +122,11 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
         final var secretManager = (SecretManager) event.getServletContext().getAttribute(SecretManager.class.getName());
         requireNonNull(secretManager, "secretManager has not been initialized");
 
-        final List<RecurringTask<Void>> tasks = recurringTasks(config, dexEngine, pluginManager, secretManager);
+        final var fileStorage = (FileStorage) event.getServletContext().getAttribute(FileStorage.class.getName());
+        requireNonNull(fileStorage, "fileStorage has not been initialized");
+
+        final List<RecurringTask<Void>> tasks = recurringTasks(
+                config, dexEngine, pluginManager, secretManager, fileStorage);
 
         LOGGER.info("Starting task scheduler");
         final int threads = config.getValue(ConfigKeys.TASK_SCHEDULER_THREADS, int.class);
@@ -178,7 +183,8 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
             Config config,
             DexEngine dexEngine,
             PluginManager pluginManager,
-            SecretManager secretManager) {
+            SecretManager secretManager,
+            FileStorage fileStorage) {
         final var kevDataSourceMirrorService = new KevDataSourceMirrorService(pluginManager, dexEngine);
         final var vulnDataSourceMirrorService = new VulnDataSourceMirrorService(pluginManager, dexEngine);
 
@@ -248,7 +254,7 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                 recurringTask(
                         "Project Maintenance",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_PROJECT_MAINTENANCE_CRON),
-                        new ProjectMaintenanceTask()),
+                        new ProjectMaintenanceTask(fileStorage)),
                 recurringTask(
                         "Tag Maintenance",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_TAG_MAINTENANCE_CRON),

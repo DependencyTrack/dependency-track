@@ -195,9 +195,23 @@ message Vulnerability {
   // Whether the vulnerability is known to be exploited.
   bool is_kev = 37;
 
+  // The analysis of this vulnerability for the component being evaluated.
+  // Not set when the finding has not been analyzed yet.
+  //
+  // Note that suppressed findings are not evaluated at all, so this will never
+  // describe a suppressed analysis.
+  optional Analysis analysis = 38;
+
   message Alias {
     string id = 1;
     string source = 2;
+  }
+
+  message Analysis {
+    string state = 1;
+    optional string justification = 2;
+    optional string response = 3;
+    optional string details = 4;
   }
 }
 

@@ -80,6 +80,7 @@ import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_LICENSE;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_LICENSE_GROUP;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_PROJECT;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_VULNERABILITY;
+import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_VULNERABILITY_ANALYSIS;
 
 public final class CelPolicyEngine {
 
@@ -236,6 +237,21 @@ public final class CelPolicyEngine {
             vulnIdsByComponentId = Map.of();
         }
 
+        // Analyses are per-finding, whereas vulnerability protos are de-duplicated per
+        // project. They are thus merged into per-component copies further below, and only
+        // when a policy actually accesses them.
+        final Map<Long, Map<Long, Vulnerability.Analysis>> analysesByComponentId;
+        if (requirements.getOrDefault(TYPE_VULNERABILITY, Set.of()).contains("analysis")
+                && !vulnIdsByComponentId.isEmpty()) {
+            analysesByComponentId = withJdbiHandle(handle -> new CelPolicyDao(handle)
+                    .fetchAllAnalyses(
+                            projectId,
+                            vulnIdsByComponentId.keySet(),
+                            requirements.getOrDefault(TYPE_VULNERABILITY_ANALYSIS, Set.of())));
+        } else {
+            analysesByComponentId = Map.of();
+        }
+
         final var violationsByComponentId = new HashMap<Long, List<PolicyViolation>>();
         final Timestamp protoNow = Timestamps.now();
 
@@ -249,8 +265,22 @@ public final class CelPolicyEngine {
 
             final List<Vulnerability> protoVulns;
             if (requirements.containsKey(TYPE_VULNERABILITY)) {
+                final Map<Long, Vulnerability.Analysis> analysesByVulnId =
+                        analysesByComponentId.getOrDefault(componentId, Map.of());
                 protoVulns = vulnIdsByComponentId.getOrDefault(componentId, Set.of()).stream()
-                        .map(protoVulnById::get)
+                        .map(vulnId -> {
+                            final Vulnerability protoVuln = protoVulnById.get(vulnId);
+                            if (protoVuln == null) {
+                                return null;
+                            }
+                            final Vulnerability.Analysis protoAnalysis = analysesByVulnId.get(vulnId);
+                            if (protoAnalysis == null) {
+                                return protoVuln;
+                            }
+                            return protoVuln.toBuilder()
+                                    .setAnalysis(protoAnalysis)
+                                    .build();
+                        })
                         .filter(Objects::nonNull)
                         .toList();
             } else {

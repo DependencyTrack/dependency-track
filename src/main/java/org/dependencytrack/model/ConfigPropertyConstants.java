@@ -129,7 +129,8 @@ public enum ConfigPropertyConstants {
     DEFAULT_LANGUAGE("general", "default.locale", null, PropertyType.STRING, "Determine the default Language to use", true),
     TELEMETRY_SUBMISSION_ENABLED("telemetry", "submission.enabled", String.valueOf(!"true".equals(System.getProperty("dev.mode.enabled")) && Config.getInstance().getPropertyAsBoolean(ConfigKey.TELEMETRY_SUBMISSION_ENABLED_DEFAULT)), PropertyType.BOOLEAN, "Whether submission of telemetry data is enabled"),
     TELEMETRY_LAST_SUBMISSION_DATA("telemetry", "last.submission.data", null, PropertyType.STRING, "Data of the last telemetry submission"),
-    TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS("telemetry", "last.submission.epoch.seconds", null, PropertyType.INTEGER, "Timestamp of the last telemetry submission in epoch seconds");
+    TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS("telemetry", "last.submission.epoch.seconds", null, PropertyType.INTEGER, "Timestamp of the last telemetry submission in epoch seconds"),
+    VULNERABILITY_SOURCE_OPTIONS("customization", "vulnerability-source.options", "{\"enabled\":false,\"values\":[{\"label\":\"Penetration Test\"},{\"label\":\"Vendor Advisory\"},{\"label\":\"Internal Testing\"},{\"label\":\"Bug Bounty\"},{\"label\":\"Other\"}]}", PropertyType.STRING, "Admin-configurable vulnerability source of discovery dropdown options JSON");
 
     private final String groupName;
     private final String propertyName;

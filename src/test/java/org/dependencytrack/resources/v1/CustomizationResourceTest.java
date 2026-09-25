@@ -1,0 +1,174 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
+ */
+package org.dependencytrack.resources.v1;
+
+import alpine.model.IConfigProperty;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
+import alpine.server.filters.AuthorizationFilter;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
+import org.dependencytrack.ResourceTest;
+import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CustomizationResourceTest extends ResourceTest {
+
+    private static final String V1_CUSTOMIZATION_VULNERABILITY_SOURCE = "/v1/customization/vulnerability-source";
+
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(CustomizationResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class)
+                    .register(AuthorizationFilter.class));
+
+    // -------------------------------------------------------------------------
+    // GET /v1/customization/vulnerability-source
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getVulnerabilitySourceOptionsReturnsDefaultsWhenNotConfigured() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULNERABILITY_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        JsonObject json = parseJsonObject(response);
+        assertThat(json.getBoolean("enabled")).isFalse();
+        assertThat(json.getJsonArray("values")).isNotEmpty();
+    }
+
+    @Test
+    void getVulnerabilitySourceOptionsReturnsStoredValue() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        qm.createConfigProperty(
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS.getGroupName(),
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS.getPropertyName(),
+                "{\"enabled\":true,\"values\":[{\"label\":\"Pentest\"}]}",
+                IConfigProperty.PropertyType.STRING,
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS.getDescription());
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULNERABILITY_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        JsonObject json = parseJsonObject(response);
+        assertThat(json.getBoolean("enabled")).isTrue();
+        assertThat(json.getJsonArray("values")).hasSize(1);
+        assertThat(json.getJsonArray("values").getJsonObject(0).getString("label")).isEqualTo("Pentest");
+    }
+
+    // -------------------------------------------------------------------------
+    // PUT /v1/customization/vulnerability-source
+    // -------------------------------------------------------------------------
+
+    @Test
+    void updateVulnerabilitySourceOptionsRoundTrip() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION, Permissions.VIEW_PORTFOLIO);
+
+        Response putResponse = jersey.target(V1_CUSTOMIZATION_VULNERABILITY_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "enabled": true,
+                            "values": [{"label": "Penetration Test"}, {"label": "Bug Bounty"}]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+        assertThat(putResponse.getStatus()).isEqualTo(204);
+
+        Response getResponse = jersey.target(V1_CUSTOMIZATION_VULNERABILITY_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        JsonObject json = parseJsonObject(getResponse);
+        assertThat(json.getBoolean("enabled")).isTrue();
+        assertThat(json.getJsonArray("values")).hasSize(2);
+    }
+
+    @Test
+    void updateVulnerabilitySourceOptionsRejectsMissingFields() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULNERABILITY_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("{\"enabled\": true}", MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+    }
+
+    @Test
+    void updateVulnerabilitySourceOptionsRejectsEmptyLabel() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULNERABILITY_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {"enabled": true, "values": [{"label": "  "}]}
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+    }
+
+    @Test
+    void updateVulnerabilitySourceOptionsRejectsDuplicateLabels() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULNERABILITY_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {"enabled": true, "values": [{"label": "Pentest"}, {"label": "pentest"}]}
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+    }
+
+    @Test
+    void updateVulnerabilitySourceOptionsReturns403WithoutPermission() {
+        // No permissions added to the team
+        Response response = jersey.target(V1_CUSTOMIZATION_VULNERABILITY_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {"enabled": true, "values": [{"label": "Pentest"}]}
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(403);
+    }
+}

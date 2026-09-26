@@ -19,7 +19,6 @@
 package org.dependencytrack.persistence;
 
 import alpine.persistence.PaginatedResult;
-import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
@@ -28,13 +27,10 @@ import org.dependencytrack.model.Tag;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.proto.v1.Notification;
 import org.jspecify.annotations.NonNull;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -44,7 +40,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
@@ -285,41 +280,5 @@ public class NotificationQueryManager extends QueryManager {
     @Override
     public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
         return bind(notificationRule, tags, /* keepExisting */ false);
-    }
-
-    /**
-     * @return All notifications in the notification outbox.
-     * @since 5.0.0
-     */
-    @Override
-    public List<Notification> getNotificationOutbox() {
-        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                SELECT "PAYLOAD"
-                  FROM "NOTIFICATION_OUTBOX"
-                 ORDER BY "ID"
-                """);
-
-        return executeAndCloseResultList(query, byte[].class).stream()
-                .map(data -> {
-                    try {
-                        return Notification.parseFrom(data);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                })
-                .toList();
-    }
-
-    /**
-     * @since 5.0.0
-     */
-    @Override
-    public void truncateNotificationOutbox() {
-        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
-            final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                TRUNCATE TABLE "NOTIFICATION_OUTBOX"
-                """);
-            executeAndClose(query);
-        }
     }
 }

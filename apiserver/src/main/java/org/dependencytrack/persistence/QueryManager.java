@@ -61,7 +61,6 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
@@ -820,14 +819,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
         return getNotificationQueryManager().bind(notificationRule, tags);
-    }
-
-    public List<Notification> getNotificationOutbox() {
-        return getNotificationQueryManager().getNotificationOutbox();
-    }
-
-    public void truncateNotificationOutbox() {
-        getNotificationQueryManager().truncateNotificationOutbox();
     }
 
     public List<TagQueryManager.TagListRow> getTags() {

@@ -62,6 +62,7 @@ import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -512,7 +513,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
             assertThat(arg.getNotification().getTitle()).startsWith("[TEST] ");
             assertThat(arg.getRuleTest()).isTrue();
         });
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test

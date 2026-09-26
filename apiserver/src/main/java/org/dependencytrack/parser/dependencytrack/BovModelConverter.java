@@ -29,10 +29,13 @@ import io.github.nscuro.versatile.spi.Version;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
+import org.cyclonedx.proto.v1_7.OrganizationalContact;
+import org.cyclonedx.proto.v1_7.OrganizationalEntity;
 import org.cyclonedx.proto.v1_7.ScoreMethod;
 import org.cyclonedx.proto.v1_7.Source;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffectedVersions;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
+import org.cyclonedx.proto.v1_7.VulnerabilityCredits;
 import org.cyclonedx.proto.v1_7.VulnerabilityRating;
 import org.cyclonedx.proto.v1_7.VulnerabilityReference;
 import org.dependencytrack.model.Severity;
@@ -68,6 +71,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_GENERIC;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
@@ -124,7 +128,15 @@ public final class BovModelConverter {
             vuln.setRejected(new Date(Timestamps.toMillis(cdxVuln.getRejected())));
         }
         if (cdxVuln.hasCredits()) {
-            vuln.setCredits(String.join(", ", cdxVuln.getCredits().toString()));
+            final VulnerabilityCredits credits = cdxVuln.getCredits();
+            final Stream<String> individualNames = credits.getIndividualsList().stream()
+                    .filter(OrganizationalContact::hasName)
+                    .map(OrganizationalContact::getName);
+            final Stream<String> organizationNames = credits.getOrganizationsList().stream()
+                    .filter(OrganizationalEntity::hasName)
+                    .map(OrganizationalEntity::getName);
+            vuln.setCredits(
+                    trimToNull(Stream.concat(individualNames, organizationNames).collect(Collectors.joining(", "))));
         }
 
         // External links: collect from both BOM-level external references and the

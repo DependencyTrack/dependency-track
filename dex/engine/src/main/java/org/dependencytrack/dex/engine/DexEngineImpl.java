@@ -105,6 +105,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1837,7 +1838,7 @@ final class DexEngineImpl implements DexEngine {
             }
         }
 
-        throw new IllegalStateException(
-                "Engine must be in state any of %s, but is %s".formatted(expectedStatuses, this.status));
+        throw new IllegalStateException("Engine must be in state any of %s, but is %s"
+                .formatted(Arrays.toString(expectedStatuses), this.status));
     }
 }

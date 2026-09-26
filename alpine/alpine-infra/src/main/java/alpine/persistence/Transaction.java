@@ -120,7 +120,7 @@ public final class Transaction {
 
             final Boolean currentSerializeRead = jdoTransaction.getSerializeRead();
             final Boolean requestedSerializeRead = options.serializeRead;
-            if (requestedSerializeRead != null && currentSerializeRead != requestedSerializeRead) {
+            if (requestedSerializeRead != null && !requestedSerializeRead.equals(currentSerializeRead)) {
                 if (isJoiningExisting) {
                     throw new IllegalStateException("""
                             Requested serializeRead=%s, but transaction is already \

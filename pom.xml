@@ -702,7 +702,7 @@
                             <arg>-XDcompilePolicy=simple</arg>
                             <arg>--should-stop=ifError=FLOW</arg>
                             <arg>-Xplugin:ErrorProne
-                                -XepDisableAllChecks
+                                -XepDisableAllWarnings
                                 -XepExcludedPaths:.*/target/generated-(test-)?sources/.*
                                 -Xep:NullAway:${nullaway.severity}
                                 -XepOpt:NullAway:OnlyNullMarked=true

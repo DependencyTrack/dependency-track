@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
+import com.google.protobuf.util.Timestamps;
 import org.dependencytrack.model.FindingKey;
 import org.dependencytrack.notification.proto.v1.Component;
 import org.dependencytrack.notification.proto.v1.NewVulnerabilitySubject;
@@ -35,8 +36,8 @@ import org.dependencytrack.persistence.jdbi.mapping.NotificationProjectRowMapper
 import org.dependencytrack.persistence.jdbi.mapping.NotificationSubjectNewVulnerabilityRowMapper;
 import org.dependencytrack.persistence.jdbi.mapping.NotificationSubjectProjectAuditChangeRowMapper;
 import org.dependencytrack.persistence.jdbi.mapping.NotificationVulnerabilityRowMapper;
-import org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil;
 import org.dependencytrack.persistence.jdbi.query.GetProjectAuditChangeNotificationSubjectQuery;
+import org.jdbi.v3.core.mapper.RowViewMapper;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMappers;
@@ -44,6 +45,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -193,9 +195,6 @@ public interface NotificationSubjectDao extends SqlObject {
             return List.of();
         }
 
-        final var componentRowMapper = new NotificationComponentRowMapper();
-        final var projectRowMapper = new NotificationProjectRowMapper();
-        final var vulnerabilityRowMapper = new NotificationVulnerabilityRowMapper();
         final var subjectBuilderByComponentUuid =
                 new HashMap<UUID, NewVulnerableDependencySubject.Builder>(componentIds.size());
 
@@ -305,18 +304,18 @@ public interface NotificationSubjectDao extends SqlObject {
                            AND a."SUPPRESSED" IS DISTINCT FROM TRUE
                         """)
                 .bindArray("componentIds", Long.class, componentIds)
-                .reduceResultSet(subjectBuilderByComponentUuid, (accumulator, rs, ctx) -> {
-                    final var componentUuid = rs.getObject("componentUuid", UUID.class);
+                .reduceRows(subjectBuilderByComponentUuid, (accumulator, row) -> {
+                    final var componentUuid = row.getColumn("componentUuid", UUID.class);
 
                     NewVulnerableDependencySubject.Builder builder = accumulator.get(componentUuid);
                     if (builder == null) {
                         builder = NewVulnerableDependencySubject.newBuilder()
-                                .setComponent(componentRowMapper.map(rs, ctx))
-                                .setProject(projectRowMapper.map(rs, ctx));
+                                .setComponent(row.getRow(Component.class))
+                                .setProject(row.getRow(Project.class));
                         accumulator.put(componentUuid, builder);
                     }
 
-                    builder.addVulnerabilities(vulnerabilityRowMapper.map(rs, ctx));
+                    builder.addVulnerabilities(row.getRow(Vulnerability.class));
 
                     return accumulator;
                 });
@@ -680,9 +679,6 @@ public interface NotificationSubjectDao extends SqlObject {
             return List.of();
         }
 
-        final var componentRowMapper = new NotificationComponentRowMapper();
-        final var projectRowMapper = new NotificationProjectRowMapper();
-
         return getHandle()
                 .createQuery("""
                         SELECT pv."UUID" AS "violationUuid"
@@ -736,28 +732,28 @@ public interface NotificationSubjectDao extends SqlObject {
                            AND va."STATE" IS DISTINCT FROM 'APPROVED'
                         """)
                 .bindArray("violationIds", Long.class, violationIds)
-                .map((rs, ctx) -> {
-                    final Component component = componentRowMapper.map(rs, ctx);
-                    final Project project = projectRowMapper.map(rs, ctx);
+                .map((RowViewMapper<PolicyViolationSubject>) row -> {
+                    final Component component = row.getRow(Component.class);
+                    final Project project = row.getRow(Project.class);
 
                     final Policy policy = Policy.newBuilder()
-                            .setUuid(rs.getString("policyUuid"))
-                            .setName(rs.getString("policyName"))
-                            .setViolationState(rs.getString("policyViolationState"))
+                            .setUuid(row.getColumn("policyUuid", String.class))
+                            .setName(row.getColumn("policyName", String.class))
+                            .setViolationState(row.getColumn("policyViolationState", String.class))
                             .build();
 
                     final PolicyCondition condition = PolicyCondition.newBuilder()
-                            .setUuid(rs.getString("conditionUuid"))
-                            .setSubject(rs.getString("conditionSubject"))
-                            .setOperator(rs.getString("conditionOperator"))
-                            .setValue(rs.getString("conditionValue"))
+                            .setUuid(row.getColumn("conditionUuid", String.class))
+                            .setSubject(row.getColumn("conditionSubject", String.class))
+                            .setOperator(row.getColumn("conditionOperator", String.class))
+                            .setValue(row.getColumn("conditionValue", String.class))
                             .setPolicy(policy)
                             .build();
 
                     final PolicyViolation violation = PolicyViolation.newBuilder()
-                            .setUuid(rs.getString("violationUuid"))
-                            .setType(rs.getString("violationType"))
-                            .setTimestamp(RowMapperUtil.nullableTimestamp(rs, "violationTimestamp"))
+                            .setUuid(row.getColumn("violationUuid", String.class))
+                            .setType(row.getColumn("violationType", String.class))
+                            .setTimestamp(Timestamps.fromDate(row.getColumn("violationTimestamp", Timestamp.class)))
                             .setCondition(condition)
                             .build();
 

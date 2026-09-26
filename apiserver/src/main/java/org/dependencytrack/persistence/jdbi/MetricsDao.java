@@ -55,6 +55,10 @@ import java.util.regex.Pattern;
 /// **Do not add joins that expose orphan rows without an explicit existence filter**!
 ///
 /// @since 5.0.0
+@RegisterBeanMapper(DependencyMetrics.class)
+@RegisterBeanMapper(PortfolioMetrics.class)
+@RegisterBeanMapper(ProjectMetrics.class)
+@RegisterBeanMapper(VulnerabilityMetrics.class)
 public interface MetricsDao extends SqlObject {
 
     Pattern VALID_TABLE_IDENTIFIER_PATTERN = Pattern.compile("^\"[A-Z][A-Z0-9_]+\"$");
@@ -186,7 +190,6 @@ public interface MetricsDao extends SqlObject {
              ORDER BY date_range.metrics_date;
             </#if>
             """)
-    @RegisterBeanMapper(PortfolioMetrics.class)
     List<PortfolioMetrics> getPortfolioMetricsForDays(@Bind int days);
 
     @SqlUpdate("""
@@ -225,7 +228,6 @@ public interface MetricsDao extends SqlObject {
              ORDER BY "YEAR"
                     , NULLIF("MONTH", 0) NULLS LAST
             """)
-    @RegisterBeanMapper(VulnerabilityMetrics.class)
     List<VulnerabilityMetrics> getVulnerabilityMetrics();
 
     @SqlQuery("""
@@ -236,7 +238,6 @@ public interface MetricsDao extends SqlObject {
             AND "LAST_OCCURRENCE" >= :since
             ORDER BY "LAST_OCCURRENCE" ASC
             """)
-    @RegisterBeanMapper(ProjectMetrics.class)
     List<ProjectMetrics> getProjectMetricsSince(@Bind long projectId, @Bind Instant since);
 
     @SqlQuery("""
@@ -247,7 +248,6 @@ public interface MetricsDao extends SqlObject {
             AND "LAST_OCCURRENCE" >= :since
             ORDER BY "LAST_OCCURRENCE" ASC
             """)
-    @RegisterBeanMapper(DependencyMetrics.class)
     List<DependencyMetrics> getDependencyMetricsSince(@Bind long componentId, @Bind Instant since);
 
     default PortfolioMetrics getMostRecentPortfolioMetrics() {
@@ -264,7 +264,6 @@ public interface MetricsDao extends SqlObject {
             ORDER BY "LAST_OCCURRENCE" DESC
             LIMIT 1
             """)
-    @RegisterBeanMapper(ProjectMetrics.class)
     ProjectMetrics getMostRecentProjectMetrics(@Bind final long projectId);
 
     default @Nullable ProjectMetrics getMostRecentProjectMetrics(Project project) {
@@ -285,7 +284,6 @@ public interface MetricsDao extends SqlObject {
                 LIMIT 1
              ) AS metrics ON TRUE
             """)
-    @RegisterBeanMapper(ProjectMetrics.class)
     List<ProjectMetrics> getMostRecentProjectMetrics(@Bind Collection<Long> projectIds);
 
     @SqlQuery("""
@@ -436,7 +434,6 @@ public interface MetricsDao extends SqlObject {
                 ON date_range.metrics_date = dm.metrics_date
              ORDER BY date_range.metrics_date
             """)
-    @RegisterBeanMapper(ProjectMetrics.class)
     List<ProjectMetrics> getCollectionProjectMetricsSince(@Bind long projectId, @Bind Instant since);
 
     default @Nullable ProjectMetrics getMostRecentCollectionProjectMetrics(long projectId) {
@@ -544,7 +541,6 @@ public interface MetricsDao extends SqlObject {
              WHERE cd."COLLECTION_LOGIC" IS NULL
              GROUP BY cd.root_id
             """)
-    @RegisterBeanMapper(ProjectMetrics.class)
     List<ProjectMetrics> getMostRecentCollectionProjectMetrics(@Bind Collection<Long> projectIds);
 
     @SqlCall("""
@@ -565,7 +561,6 @@ public interface MetricsDao extends SqlObject {
             ORDER BY "LAST_OCCURRENCE" DESC
             LIMIT 1
             """)
-    @RegisterBeanMapper(DependencyMetrics.class)
     DependencyMetrics getMostRecentDependencyMetrics(@Bind long componentId);
 
     @SqlQuery("""
@@ -580,7 +575,6 @@ public interface MetricsDao extends SqlObject {
                 LIMIT 1
              ) AS metrics ON TRUE
             """)
-    @RegisterBeanMapper(DependencyMetrics.class)
     List<DependencyMetrics> getMostRecentDependencyMetrics(@Bind Collection<Long> componentIds);
 
     @SqlQuery("""

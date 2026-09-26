@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.integrations.kenna;
 
-import alpine.model.ConfigProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.common.Mappers;
@@ -78,10 +77,9 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
 
     @Override
     public boolean isEnabled() {
-        final ConfigProperty connector =
-                qm.getConfigProperty(KENNA_CONNECTOR_ID.getGroupName(), KENNA_CONNECTOR_ID.getPropertyName());
-        if (qm.isEnabled(KENNA_ENABLED) && connector != null && connector.getPropertyValue() != null) {
-            connectorId = connector.getPropertyValue();
+        final String connector = getConfigValue(KENNA_CONNECTOR_ID);
+        if (isConfigEnabled(KENNA_ENABLED) && connector != null) {
+            connectorId = connector;
             return true;
         }
         return false;
@@ -128,15 +126,13 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
     @Override
     public void upload(final InputStream payload) {
         LOGGER.debug("Uploading payload to KennaSecurity");
-        final ConfigProperty apiUrlProperty =
-                qm.getConfigProperty(KENNA_API_URL.getGroupName(), KENNA_API_URL.getPropertyName());
-        final ConfigProperty tokenProperty =
-                qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
-        if (tokenProperty == null) {
+        final String apiUrl = getConfigValue(KENNA_API_URL);
+        final String token = getConfigValue(KENNA_TOKEN);
+        if (token == null) {
             LOGGER.warn("Kenna Security token not specified. Aborting");
             return;
         }
-        final String tokenSecretName = StringUtils.trimToNull(tokenProperty.getPropertyValue());
+        final String tokenSecretName = StringUtils.trimToNull(token);
         if (tokenSecretName == null) {
             LOGGER.warn("Kenna Security token not specified. Aborting");
             return;
@@ -153,8 +149,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                     .addFilePart("file", "findings.json", payload, "application/json");
 
             final var request = HttpRequest.newBuilder()
-                    .uri(URI.create(
-                            "%s/connectors/%s/data_file".formatted(apiUrlProperty.getPropertyValue(), connectorId)))
+                    .uri(URI.create("%s/connectors/%s/data_file".formatted(apiUrl, connectorId)))
                     .header("X-Risk-Token", tokenValue)
                     .header("Accept", "application/json")
                     .header("Content-Type", multipart.contentType())

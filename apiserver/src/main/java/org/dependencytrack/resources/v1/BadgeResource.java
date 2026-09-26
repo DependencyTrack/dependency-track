@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.model.ConfigProperty;
 import alpine.server.auth.AuthenticationNotRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,9 +30,11 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.misc.Badger;
+import org.jspecify.annotations.Nullable;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -80,7 +81,7 @@ public class BadgeResource extends AbstractApiResource {
                     @ValidUuid
                     String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            if (!qm.isEnabled(GENERAL_BADGE_ENABLED)) {
+            if (!isBadgeEnabled()) {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -90,10 +91,9 @@ public class BadgeResource extends AbstractApiResource {
                 final var badger = new Badger();
 
                 String linkToProjectVuln = null;
-                final ConfigProperty baseUrl =
-                        qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
-                if (baseUrl != null && baseUrl.getPropertyValue() != null) {
-                    linkToProjectVuln = baseUrl.getPropertyValue() + "/projects/" + project.getUuid() + "/findings";
+                final String baseUrl = getBaseUrl();
+                if (baseUrl != null) {
+                    linkToProjectVuln = baseUrl + "/projects/" + project.getUuid() + "/findings";
                 }
                 return Response.ok(badger.generateVulnerabilities(metrics, linkToProjectVuln))
                         .build();
@@ -125,7 +125,7 @@ public class BadgeResource extends AbstractApiResource {
             @Parameter(description = "The version of the project to query on", required = true) @PathParam("version")
                     String version) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            if (!qm.isEnabled(GENERAL_BADGE_ENABLED)) {
+            if (!isBadgeEnabled()) {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
             final Project project = qm.getProject(name, version);
@@ -135,10 +135,9 @@ public class BadgeResource extends AbstractApiResource {
                 final var badger = new Badger();
 
                 String linkToProjectVuln = null;
-                final ConfigProperty baseUrl =
-                        qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
-                if (baseUrl != null && baseUrl.getPropertyValue() != null) {
-                    linkToProjectVuln = baseUrl.getPropertyValue() + "/projects/" + project.getUuid() + "/findings";
+                final String baseUrl = getBaseUrl();
+                if (baseUrl != null) {
+                    linkToProjectVuln = baseUrl + "/projects/" + project.getUuid() + "/findings";
                 }
                 return Response.ok(badger.generateVulnerabilities(metrics, linkToProjectVuln))
                         .build();
@@ -173,7 +172,7 @@ public class BadgeResource extends AbstractApiResource {
                     @ValidUuid
                     String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            if (!qm.isEnabled(GENERAL_BADGE_ENABLED)) {
+            if (!isBadgeEnabled()) {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -183,11 +182,9 @@ public class BadgeResource extends AbstractApiResource {
                 final var badger = new Badger();
 
                 String linkToProjectViolations = null;
-                final ConfigProperty baseUrl =
-                        qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
-                if (baseUrl != null && baseUrl.getPropertyValue() != null) {
-                    linkToProjectViolations =
-                            baseUrl.getPropertyValue() + "/projects/" + project.getUuid() + "/policyViolations";
+                final String baseUrl = getBaseUrl();
+                if (baseUrl != null) {
+                    linkToProjectViolations = baseUrl + "/projects/" + project.getUuid() + "/policyViolations";
                 }
                 return Response.ok(badger.generateViolations(metrics, linkToProjectViolations))
                         .build();
@@ -219,7 +216,7 @@ public class BadgeResource extends AbstractApiResource {
             @Parameter(description = "The version of the project to query on", required = true) @PathParam("version")
                     String version) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            if (!qm.isEnabled(GENERAL_BADGE_ENABLED)) {
+            if (!isBadgeEnabled()) {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
             final Project project = qm.getProject(name, version);
@@ -229,11 +226,9 @@ public class BadgeResource extends AbstractApiResource {
                 final var badger = new Badger();
 
                 String linkToProjectViolations = null;
-                final ConfigProperty baseUrl =
-                        qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
-                if (baseUrl != null && baseUrl.getPropertyValue() != null) {
-                    linkToProjectViolations =
-                            baseUrl.getPropertyValue() + "/projects/" + project.getUuid() + "/policyViolations";
+                final String baseUrl = getBaseUrl();
+                if (baseUrl != null) {
+                    linkToProjectViolations = baseUrl + "/projects/" + project.getUuid() + "/policyViolations";
                 }
                 return Response.ok(badger.generateViolations(metrics, linkToProjectViolations))
                         .build();
@@ -243,5 +238,16 @@ public class BadgeResource extends AbstractApiResource {
                         .build();
             }
         }
+    }
+
+    private static boolean isBadgeEnabled() {
+        return Boolean.TRUE.equals(
+                withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).isEnabled(GENERAL_BADGE_ENABLED)));
+    }
+
+    private static @Nullable String getBaseUrl() {
+        return withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getOptionalValue(GENERAL_BASE_URL)
+                .orElse(null));
     }
 }

@@ -35,6 +35,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.ConfigPropertyVisibility;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.resources.v1.vo.ConfigPropertyResponse;
 import org.dependencytrack.resources.v1.vo.UpdateConfigPropertyRequest;
 import org.dependencytrack.secret.management.SecretManager;
@@ -54,6 +55,8 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
  * JAX-RS resources for processing ConfigProperties
@@ -248,16 +251,12 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            final ConfigProperty property = qm.getConfigProperty(groupName, propertyName);
-            if (property == null) {
-                return Response.status(Response.Status.NOT_FOUND)
+        return withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).getOptional(groupName, propertyName))
+                .map(property ->
+                        Response.ok(ConfigPropertyResponse.of(property)).build())
+                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity("The config property could not be found.")
-                        .build();
-            }
-
-            return Response.ok(ConfigPropertyResponse.of(property)).build();
-        }
+                        .build());
     }
 
     private Response applyUpdate(QueryManager qm, UpdateConfigPropertyRequest request) {

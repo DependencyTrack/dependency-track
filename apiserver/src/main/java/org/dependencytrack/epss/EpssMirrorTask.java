@@ -173,8 +173,7 @@ public final class EpssMirrorTask implements Runnable {
         return withJdbiHandle(handle -> {
             final var dao = handle.attach(ConfigPropertyDao.class);
 
-            final boolean isEnabled = dao.getOptionalValue(VULNERABILITY_SOURCE_EPSS_ENABLED, Boolean.class)
-                    .orElse(false);
+            final boolean isEnabled = dao.isEnabled(VULNERABILITY_SOURCE_EPSS_ENABLED);
             final String feedsBaseUrl = dao.getOptionalValue(VULNERABILITY_SOURCE_EPSS_FEEDS_URL, String.class)
                     .orElse(null);
 

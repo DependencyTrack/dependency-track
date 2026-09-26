@@ -18,9 +18,7 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.common.util.BooleanUtil;
 import alpine.common.validation.RegexSequence;
-import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.model.auth.ApiKeyPrincipal;
 import alpine.model.auth.Principal;
@@ -42,7 +40,6 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ComponentProperty;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
@@ -837,21 +834,6 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager()
                 .createNotificationPublisher(
                         name, description, extensionName, templateContent, templateMimeType, defaultPublisher);
-    }
-
-    /**
-     * Determines if a config property is enabled or not.
-     *
-     * @param configPropertyConstants the property to query
-     * @return true if enabled, false if not
-     */
-    public boolean isEnabled(final ConfigPropertyConstants configPropertyConstants) {
-        final ConfigProperty property =
-                getConfigProperty(configPropertyConstants.getGroupName(), configPropertyConstants.getPropertyName());
-        if (property != null && ConfigProperty.PropertyType.BOOLEAN == property.getPropertyType()) {
-            return BooleanUtil.valueOf(property.getPropertyValue());
-        }
-        return false;
     }
 
     public boolean bind(final Project project, final Collection<Tag> tags, final boolean keepExisting) {

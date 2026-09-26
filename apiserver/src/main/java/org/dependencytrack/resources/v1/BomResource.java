@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.model.ConfigProperty;
 import alpine.model.auth.Principal;
 import alpine.server.auth.PermissionRequired;
 import com.fasterxml.uuid.Generators;
@@ -59,6 +58,7 @@ import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.parser.cyclonedx.InvalidBomException;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.NotificationSubjectDao;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.dependencytrack.resources.AbstractApiResource;
@@ -126,6 +126,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_T
 import static org.dependencytrack.notification.api.NotificationFactory.createBomValidationFailedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 /**
@@ -995,13 +996,13 @@ public class BomResource extends AbstractApiResource {
     }
 
     private static boolean shouldValidate(List<String> projectTagNames) {
-        try (final var qm = new QueryManager()) {
-            final ConfigProperty validationModeProperty =
-                    qm.getConfigProperty(BOM_VALIDATION_MODE.getGroupName(), BOM_VALIDATION_MODE.getPropertyName());
+        return withJdbiHandle(handle -> {
+            final var dao = handle.attach(ConfigPropertyDao.class);
 
             var validationMode = BomValidationMode.valueOf(BOM_VALIDATION_MODE.getDefaultPropertyValue());
             try {
-                validationMode = BomValidationMode.valueOf(validationModeProperty.getPropertyValue());
+                validationMode = BomValidationMode.valueOf(
+                        dao.getOptionalValue(BOM_VALIDATION_MODE).orElseThrow());
             } catch (RuntimeException e) {
                 LOGGER.warn("""
                         No BOM validation mode configured, or configured value is invalid; \
@@ -1024,12 +1025,11 @@ public class BomResource extends AbstractApiResource {
             final ConfigPropertyConstants tagsPropertyConstant = validationMode == BomValidationMode.ENABLED_FOR_TAGS
                     ? BOM_VALIDATION_TAGS_INCLUSIVE
                     : BOM_VALIDATION_TAGS_EXCLUSIVE;
-            final ConfigProperty tagsProperty =
-                    qm.getConfigProperty(tagsPropertyConstant.getGroupName(), tagsPropertyConstant.getPropertyName());
 
             final Set<String> validationModeTags;
             try {
-                final JsonReader jsonParser = Json.createReader(new StringReader(tagsProperty.getPropertyValue()));
+                final JsonReader jsonParser = Json.createReader(new StringReader(
+                        dao.getOptionalValue(tagsPropertyConstant).orElseThrow()));
                 final JsonArray jsonArray = jsonParser.readArray();
                 validationModeTags = Set.copyOf(jsonArray.getValuesAs(JsonString::getString));
             } catch (RuntimeException e) {
@@ -1043,7 +1043,7 @@ public class BomResource extends AbstractApiResource {
             final boolean doTagsMatch = projectTagNames.stream().anyMatch(validationModeTags::contains);
             return (validationMode == BomValidationMode.ENABLED_FOR_TAGS && doTagsMatch)
                     || (validationMode == BomValidationMode.DISABLED_FOR_TAGS && !doTagsMatch);
-        }
+        });
     }
 
     private void maybeBindTags(QueryManager qm, Project project, List<Tag> tags) {

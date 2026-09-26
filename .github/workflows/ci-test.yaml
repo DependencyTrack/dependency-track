@@ -67,12 +67,27 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '25'
-          cache: 'maven'
+
+      - name: Restore Maven repository
+        id: restore-maven-repository
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-repository-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            maven-repository-
 
       - name: Execute unit tests
         env:
           TESTCONTAINERS_REUSE_ENABLE: "true"
         run: make test
+
+      - name: Save Maven repository
+        if: ${{ !cancelled() && github.event_name == 'push' && steps.restore-maven-repository.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: ${{ steps.restore-maven-repository.outputs.cache-primary-key }}
 
       - name: Generate test report
         if: ${{ always() }}

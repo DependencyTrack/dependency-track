@@ -28,14 +28,22 @@ import org.dependencytrack.common.Mappers;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
+import org.dependencytrack.resources.v1.vo.AffectedComponent;
 import org.dependencytrack.util.DateUtil;
 
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class FindingPackagingFormat {
 
@@ -47,7 +55,7 @@ public class FindingPackagingFormat {
     /**
      * FPF is versioned. If the format changes, the version needs to be bumped.
      */
-    private static final String FPF_VERSION = "1.5";
+    private static final String FPF_VERSION = "1.6";
 
     private static final String FIELD_APPLICATION = "application";
     private static final String FIELD_VERSION = "version";
@@ -113,6 +121,36 @@ public class FindingPackagingFormat {
             if (project.getCpe() != null) {
                 projectJson.put(FIELD_CPE, project.getCpe());
             }
+
+            /*
+               Enrich each finding's vulnerability with the affected version
+               ranges of the components it applies to, so a consumer can derive
+               the version to upgrade to. Reuses the AffectedComponent shape
+               already exposed by the vulnerability API.
+            */
+            useJdbiHandle(handle -> {
+                final var dao = handle.attach(VulnerabilityDao.class);
+
+                final Set<UUID> vulnUuids = new HashSet<>();
+                for (final Finding finding : findings) {
+                    vulnUuids.add((UUID) finding.getVulnerability().get("uuid"));
+                }
+
+                final Map<UUID, List<AffectedComponent>> rangesByVuln = new HashMap<>();
+                for (final var row : dao.getVulnerableSoftwareByVulnUuids(vulnUuids)) {
+                    rangesByVuln
+                            .computeIfAbsent(row.vulnUuid(), key -> new ArrayList<>())
+                            .add(new AffectedComponent(row.vulnerableSoftware()));
+                }
+
+                for (final Finding finding : findings) {
+                    final UUID uuid = (UUID) finding.getVulnerability().get("uuid");
+                    final List<AffectedComponent> ranges = rangesByVuln.get(uuid);
+                    if (ranges != null && !ranges.isEmpty()) {
+                        finding.getVulnerability().put("affectedVersions", ranges);
+                    }
+                }
+            });
 
             /*
                Add the meta and project objects along with the findings array

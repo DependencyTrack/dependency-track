@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.secret.management.database;
 
+import com.google.crypto.tink.AccessesPartialKey;
 import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.InsecureSecretKeyAccess;
 import com.google.crypto.tink.KeysetHandle;
@@ -99,6 +100,7 @@ final class Crypto {
         return new EncryptionResult(cipherText, serializedDek);
     }
 
+    @AccessesPartialKey
     private Aead loadKek(DatabaseSecretManagerConfig config) {
         // The KEK is usually meant to be fetched from an external KMS.
         // We can't make KMSes a mandatory requirement, hence we support

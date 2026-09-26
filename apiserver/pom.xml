@@ -735,6 +735,9 @@
     <profiles>
         <profile>
             <id>dist</id>
+            <properties>
+                <maven.build.cache.skipSave>true</maven.build.cache.skipSave>
+            </properties>
             <build>
                 <plugins>
                     <plugin>

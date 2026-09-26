@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class LicenseGroupConditionTest extends PersistenceCapableTest {
 
@@ -41,6 +42,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         license.setName("Apache 2.0");
         license.setUuid(UUID.randomUUID());
         license = qm.persist(license);
+        final long licenseId = license.getId();
         LicenseGroup lg = qm.createLicenseGroup("Test License Group");
         lg.setLicenses(Collections.singletonList(license));
         lg = qm.persist(lg);
@@ -64,6 +66,19 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setResolvedLicense(license);
         component.setProject(project);
         qm.persist(component);
+
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE_ID",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :licenseId, 1, false)
+            """)
+                .bind("componentId", component.getId())
+                .bind("licenseId", licenseId)
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -187,6 +202,19 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE_EXPRESSION",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :expression, 1, false)
+            """)
+                .bind("componentId", component.getId())
+                .bind("expression", "MIT")
+                .execute());
+
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
@@ -218,6 +246,19 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setLicense("MIT");
         component.setProject(project);
         qm.persist(component);
+
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE_EXPRESSION",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :expression, 1, false)
+            """)
+                .bind("componentId", component.getId())
+                .bind("expression", "MIT")
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -251,6 +292,19 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE_EXPRESSION",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :expression, 1, false)
+            """)
+                .bind("componentId", component.getId())
+                .bind("expression", "MIT OR Apache-2.0")
+                .execute());
+
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
@@ -282,6 +336,19 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setLicenseExpression("MIT AND GPL-2.0");
         component.setProject(project);
         qm.persist(component);
+
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE_EXPRESSION",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :expression, 1, false)
+            """)
+                .bind("componentId", component.getId())
+                .bind("expression", "MIT AND GPL-2.0")
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);

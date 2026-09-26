@@ -47,6 +47,7 @@ import java.util.function.Supplier;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class PolicyViolationResourceTest extends ResourceTest {
 
@@ -732,12 +733,40 @@ public class PolicyViolationResourceTest extends ResourceTest {
         componentA.setLicense("License A");
         componentA = qm.createComponent(componentA, false);
 
+        final long componentAId = componentA.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :license, 1, false)
+        """)
+                .bind("componentId", componentAId)
+                .bind("license", "License A")
+                .execute());
+
         var componentB = new Component();
         componentB.setProject(projectB);
         componentB.setName("Component B");
         componentB.setVersion("1.0");
         componentB.setLicense("License B");
         componentB = qm.createComponent(componentB, false);
+
+        final long componentBId = componentB.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :license, 1, false)
+        """)
+                .bind("componentId", componentBId)
+                .bind("license", "License B")
+                .execute());
 
         var componentC = new Component();
         componentC.setProject(projectC);
@@ -746,12 +775,40 @@ public class PolicyViolationResourceTest extends ResourceTest {
         componentC.setLicense("License C");
         componentC = qm.createComponent(componentC, false);
 
+        final long componentCId = componentC.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :license, 1, false)
+            """)
+                .bind("componentId", componentCId)
+                .bind("license", "License C")
+                .execute());
+
         var componentD = new Component();
         componentD.setProject(projectD);
         componentD.setName("Component D");
         componentD.setVersion("1.0");
         componentD.setLicense("License D");
         componentD = qm.createComponent(componentD, false);
+
+        final long componentDId = componentD.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :license, 1, false)
+        """)
+                .bind("componentId", componentDId)
+                .bind("license", "License D")
+                .execute());
 
         final Policy policyA = qm.createPolicy("Policy A", Policy.Operator.ALL, Policy.ViolationState.FAIL);
         final PolicyCondition conditionA = qm.createPolicyCondition(

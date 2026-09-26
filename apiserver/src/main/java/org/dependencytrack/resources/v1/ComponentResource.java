@@ -37,6 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.exception.ProjectAccessDeniedException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentOccurrence;
@@ -56,7 +57,6 @@ import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.tasks.IdentifyInternalComponentsWorkflow;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.dependencytrack.util.PurlUtil;
-import org.jdbi.v3.core.Handle;
 
 import jakarta.inject.Inject;
 import jakarta.validation.Validator;
@@ -84,7 +84,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_TRIGGERED_BY;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
@@ -559,8 +560,9 @@ public class ComponentResource extends AbstractApiResource {
                 validator.validateProperty(jsonComponent, "blake3"),
                 validator.validateProperty(jsonComponent, "streebog_256"),
                 validator.validateProperty(jsonComponent, "streebog_512"));
+        Component updatedComponent;
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
+            updatedComponent = qm.callInTransaction(() -> {
                 final Component component = qm.getObjectByUuid(Component.class, jsonComponent.getUuid());
                 if (component != null) {
                     requireAccess(qm, component.getProject());
@@ -623,15 +625,41 @@ public class ComponentResource extends AbstractApiResource {
                     component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
                     qm.updateComponent(component, true);
-
-                    return Response.ok(component).build();
-                } else {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The UUID of the component could not be found.")
-                            .build();
                 }
+                return component;
             });
         }
+
+        if (updatedComponent == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("The UUID of the component could not be found.")
+                    .build();
+        }
+
+        final List<ComponentDao.ComponentLicenseRow> licenseRows;
+
+        if (updatedComponent.getResolvedLicense() == null
+                && updatedComponent.getLicense() == null
+                && updatedComponent.getLicenseExpression() == null
+                && updatedComponent.getLicenseUrl() == null) {
+            licenseRows = List.of();
+        } else {
+            licenseRows = List.of(new ComponentDao.ComponentLicenseRow(
+                    updatedComponent.getId(),
+                    updatedComponent.getResolvedLicense() != null
+                            ? updatedComponent.getResolvedLicense().getId()
+                            : null,
+                    updatedComponent.getLicense(),
+                    updatedComponent.getLicenseExpression(),
+                    updatedComponent.getLicenseUrl(),
+                    1,
+                    false));
+        }
+
+        useJdbiTransaction(handle -> handle.attach(ComponentDao.class)
+                .replaceComponentLicenses(List.of(updatedComponent.getId()), licenseRows));
+
+        return Response.ok(updatedComponent).build();
     }
 
     @DELETE
@@ -663,23 +691,24 @@ public class ComponentResource extends AbstractApiResource {
                     @PathParam("uuid")
                     @ValidUuid
                     String uuid) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final Component component = qm.getObjectByUuid(Component.class, uuid, Component.FetchGroup.ALL.name());
-                if (component != null) {
-                    requireAccess(qm, component.getProject());
-                    try (final Handle jdbiHandle = openJdbiHandle()) {
-                        final var componentDao = jdbiHandle.attach(ComponentDao.class);
-                        componentDao.deleteComponent(component.getUuid());
-                    }
-                    return Response.status(Response.Status.NO_CONTENT).build();
-                } else {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The UUID of the component could not be found.")
-                            .build();
-                }
-            });
-        }
+        return inJdbiTransaction(getAlpineRequest(), handle -> {
+            final ComponentDao componentDao = handle.attach(ComponentDao.class);
+            final Boolean accessible = componentDao.isAccessible(UUID.fromString(uuid));
+
+            if (accessible == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The UUID of the component could not be found.")
+                        .build();
+            }
+
+            if (!accessible) {
+                throw new ProjectAccessDeniedException("Access to the requested project is forbidden");
+            }
+
+            componentDao.deleteComponent(UUID.fromString(uuid));
+
+            return Response.status(Response.Status.NO_CONTENT).build();
+        });
     }
 
     @GET

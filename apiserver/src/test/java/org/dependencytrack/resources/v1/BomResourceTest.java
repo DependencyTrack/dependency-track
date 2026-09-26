@@ -629,9 +629,23 @@ class BomResourceTest extends ResourceTest {
         license.setId(1234);
         license.setName("CustomName");
         license.setCustomLicense(true);
+        qm.createCustomLicense(license, false);
         c.setResolvedLicense(license);
         c.setDirectDependencies("[]");
         Component component = qm.createComponent(c, false);
+        final long componentId = component.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE_ID",
+                "ORDINALITY",
+                "CONCLUDED"
+            )
+            VALUES (:componentId, :licenseId, 1, false)
+            """)
+                .bind("componentId", c.getId())
+                .bind("licenseId", license.getId())
+                .execute());
         qm.persist(project);
         Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .request()

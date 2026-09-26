@@ -16,22 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
+@NullMarked
 package org.dependencytrack.persistence.jdbi.mapping;
 
-import org.dependencytrack.notification.proto.v1.Bom;
-import org.jdbi.v3.core.statement.StatementContext;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-public final class NotificationBomRowMapper implements OptionalColumnRowMapper<Bom> {
-
-    @Override
-    public Bom map(ResultSet rs, StatementContext ctx, Columns columns) throws SQLException {
-        final var builder = Bom.newBuilder();
-        columns.maybeSet(rs, "bomFormat", ResultSet::getString, builder::setFormat);
-        columns.maybeSet(rs, "bomSpecVersion", ResultSet::getString, builder::setSpecVersion);
-        columns.maybeSet(rs, "bomContent", ResultSet::getString, builder::setContent);
-        return builder.build();
-    }
-}
+import org.jspecify.annotations.NullMarked;

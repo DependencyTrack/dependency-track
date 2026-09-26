@@ -38,13 +38,11 @@ import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Epss;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
@@ -106,7 +104,6 @@ public class QueryManager extends AlpineQueryManager {
     protected AlpineRequest request;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryManager.class);
-    private BomQueryManager bomQueryManager;
     private ComponentQueryManager componentQueryManager;
     private AnalysisQueryManager analysisQueryManager;
     private LicenseQueryManager licenseQueryManager;
@@ -118,7 +115,6 @@ public class QueryManager extends AlpineQueryManager {
     private VulnerabilityQueryManager vulnerabilityQueryManager;
     private VulnerableSoftwareQueryManager vulnerableSoftwareQueryManager;
     private TagQueryManager tagQueryManager;
-    private EpssQueryManager epssQueryManager;
 
     /**
      * Default constructor.
@@ -159,19 +155,6 @@ public class QueryManager extends AlpineQueryManager {
     /// @since 5.2.0
     public AlpineRequest getAlpineRequest() {
         return request;
-    }
-
-    /**
-     * @since 5.0.0
-     */
-    public boolean tryAcquireAdvisoryLock(long lockId) {
-        if (!pm.currentTransaction().isActive()) {
-            throw new IllegalStateException("Advisory locks can only be acquired within an active JDO transaction");
-        }
-
-        final Query<?> query = pm.newQuery(Query.SQL, "SELECT pg_try_advisory_xact_lock(?)");
-        query.setParameters(lockId);
-        return executeAndCloseResultUnique(query, Boolean.class);
     }
 
     /**
@@ -293,20 +276,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Lazy instantiation of BomQueryManager.
-     *
-     * @return a BomQueryManager object
-     */
-    private BomQueryManager getBomQueryManager() {
-        if (bomQueryManager == null) {
-            bomQueryManager = (request == null)
-                    ? new BomQueryManager(getPersistenceManager())
-                    : new BomQueryManager(getPersistenceManager(), request);
-        }
-        return bomQueryManager;
-    }
-
-    /**
      * Lazy instantiation of PolicyQueryManager.
      *
      * @return a PolicyQueryManager object
@@ -332,18 +301,6 @@ public class QueryManager extends AlpineQueryManager {
                     : new VulnerabilityQueryManager(getPersistenceManager(), request);
         }
         return vulnerabilityQueryManager;
-    }
-
-    /**
-     * Lazy instantiation of EpssQueryManager.
-     *
-     * @return a EpssQueryManager object
-     */
-    private EpssQueryManager getEpssQueryManager() {
-        if (epssQueryManager == null) {
-            epssQueryManager = new EpssQueryManager(getPersistenceManager());
-        }
-        return epssQueryManager;
     }
 
     /**
@@ -515,23 +472,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<ProjectProperty> getProjectProperties(final Project project) {
         return getProjectQueryManager().getProjectProperties(project);
-    }
-
-    public Bom createBom(
-            Project project,
-            Date imported,
-            Bom.Format format,
-            String specVersion,
-            Integer bomVersion,
-            String serialNumber,
-            final UUID uploadToken,
-            Date bomGenerated) {
-        return getBomQueryManager()
-                .createBom(project, imported, format, specVersion, bomVersion, serialNumber, uploadToken, bomGenerated);
-    }
-
-    public List<Bom> getAllBoms(Project project) {
-        return getBomQueryManager().getAllBoms(project);
     }
 
     public PaginatedResult getComponentByHash(String hash) {
@@ -1083,14 +1023,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<Component> getComponentsByPurl(String purl) {
         return getComponentQueryManager().getComponentsByPurl(purl);
-    }
-
-    public Epss getEffectiveEpssForVuln(String source, String vulnId) {
-        return getEpssQueryManager().getEffectiveEpssForVuln(source, vulnId);
-    }
-
-    public Map<VulnerabilityKey, Epss> getEffectiveEpssForVulns(Collection<VulnerabilityKey> keys) {
-        return getEpssQueryManager().getEffectiveEpssForVulns(keys);
     }
 
     public Set<Tag> resolveTags(final Collection<Tag> tags) {

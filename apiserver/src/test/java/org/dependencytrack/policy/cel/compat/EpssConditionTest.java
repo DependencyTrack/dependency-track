@@ -19,14 +19,14 @@
 package org.dependencytrack.policy.cel.compat;
 
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.epss.Epss;
+import org.dependencytrack.epss.EpssDao;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Epss;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyCondition.Operator;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.policy.cel.CelPolicyEngine;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -117,9 +117,11 @@ public class EpssConditionTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        useJdbiHandle(handle -> handle.attach(EpssDao.class)
-                .createOrUpdateAll(List.of(
-                        new Epss("CVE-123", vulnEpssScore != null ? BigDecimal.valueOf(vulnEpssScore) : null, null))));
+        if (vulnEpssScore != null) {
+            useJdbiHandle(handle -> handle.attach(EpssDao.class)
+                    .createOrUpdateAll(
+                            List.of(new Epss("CVE-123", BigDecimal.valueOf(vulnEpssScore), BigDecimal.ZERO))));
+        }
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         if (expectViolation) {

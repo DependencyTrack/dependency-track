@@ -26,7 +26,6 @@ import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
@@ -44,6 +43,7 @@ import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
+import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -63,6 +63,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -475,13 +476,13 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 .noneSatisfy(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
 
-        final List<Bom> boms = qm.getAllBoms(project);
+        final List<BomRow> boms = getBoms(project);
         assertThat(boms).hasSize(1);
-        final Bom bom = boms.get(0);
-        assertThat(bom.getBomFormat()).isEqualTo("CycloneDX");
-        assertThat(bom.getSpecVersion()).isEqualTo("1.3");
-        assertThat(bom.getBomVersion()).isEqualTo(1);
-        assertThat(bom.getSerialNumber()).isEqualTo("6d780157-0f8e-4ef1-8e9b-1eb48b2fad6f");
+        final BomRow bom = boms.get(0);
+        assertThat(bom.bomFormat()).isEqualTo("CycloneDX");
+        assertThat(bom.specVersion()).isEqualTo("1.3");
+        assertThat(bom.bomVersion()).isEqualTo(1);
+        assertThat(bom.serialNumber()).isEqualTo("6d780157-0f8e-4ef1-8e9b-1eb48b2fad6f");
 
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getGroup()).isNull(); // Not overridden by BOM import
@@ -830,13 +831,13 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 .noneSatisfy(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
 
-        final List<Bom> boms = qm.getAllBoms(project);
+        final List<BomRow> boms = getBoms(project);
         assertThat(boms).hasSize(1);
-        final Bom bom = boms.get(0);
-        assertThat(bom.getBomFormat()).isEqualTo("CycloneDX");
-        assertThat(bom.getSpecVersion()).isEqualTo("1.4");
-        assertThat(bom.getBomVersion()).isEqualTo(1);
-        assertThat(bom.getSerialNumber()).isEqualTo("d7cf8503-6d80-4219-ab4c-3bab8f250ee7");
+        final BomRow bom = boms.get(0);
+        assertThat(bom.bomFormat()).isEqualTo("CycloneDX");
+        assertThat(bom.specVersion()).isEqualTo("1.4");
+        assertThat(bom.bomVersion()).isEqualTo(1);
+        assertThat(bom.serialNumber()).isEqualTo("d7cf8503-6d80-4219-ab4c-3bab8f250ee7");
 
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getGroup()).isNull(); // Not overridden by BOM import
@@ -1347,8 +1348,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        var boms = qm.getAllBoms(project);
-        assertThat(boms.get(0).getGenerated()).isEqualTo("2021-02-09T20:40:32Z");
+        var boms = getBoms(project);
+        assertThat(boms.get(0).generated()).isEqualTo("2021-02-09T20:40:32Z");
     }
 
     @Test
@@ -2063,5 +2064,23 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 .mapTo(String.class)
                 .findOne()
                 .orElse(null));
+    }
+
+    public record BomRow(
+            String bomFormat, String specVersion, Integer bomVersion, String serialNumber, Date generated) {}
+
+    private static List<BomRow> getBoms(Project project) {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT "BOM_FORMAT"
+                             , "SPEC_VERSION"
+                             , "BOM_VERSION"
+                             , "SERIAL_NUMBER"
+                             , "GENERATED"
+                          FROM "BOM"
+                         WHERE "PROJECT_ID" = :projectId
+                        """)
+                .bind("projectId", project.getId())
+                .map(ConstructorMapper.of(BomRow.class))
+                .list());
     }
 }

@@ -34,7 +34,6 @@ import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.exception.InvalidSortFieldException;
-import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -60,7 +59,6 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityKey;
-import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.proto.v1.Notification;
@@ -110,7 +108,6 @@ public class QueryManager extends AlpineQueryManager {
     private RepositoryQueryManager repositoryQueryManager;
     private ServiceComponentQueryManager serviceComponentQueryManager;
     private VulnerabilityQueryManager vulnerabilityQueryManager;
-    private VulnerableSoftwareQueryManager vulnerableSoftwareQueryManager;
     private TagQueryManager tagQueryManager;
 
     /**
@@ -298,20 +295,6 @@ public class QueryManager extends AlpineQueryManager {
                     : new VulnerabilityQueryManager(getPersistenceManager(), request);
         }
         return vulnerabilityQueryManager;
-    }
-
-    /**
-     * Lazy instantiation of VulnerableSoftwareQueryManager.
-     *
-     * @return a VulnerableSoftwareQueryManager object
-     */
-    private VulnerableSoftwareQueryManager getVulnerableSoftwareQueryManager() {
-        if (vulnerableSoftwareQueryManager == null) {
-            vulnerableSoftwareQueryManager = (request == null)
-                    ? new VulnerableSoftwareQueryManager(getPersistenceManager())
-                    : new VulnerableSoftwareQueryManager(getPersistenceManager(), request);
-        }
-        return vulnerableSoftwareQueryManager;
     }
 
     /**
@@ -660,28 +643,6 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getFindingAttributions(vulnerability, component);
     }
 
-    public List<AffectedVersionAttribution> getAffectedVersionAttributions(
-            Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware) {
-        return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftware);
-    }
-
-    public List<AffectedVersionAttribution> getAffectedVersionAttributions(
-            final Vulnerability vulnerability, final List<VulnerableSoftware> vulnerableSoftwares) {
-        return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftwares);
-    }
-
-    public AffectedVersionAttribution getAffectedVersionAttribution(
-            Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware, Vulnerability.Source source) {
-        return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
-    }
-
-    public void deleteAffectedVersionAttributions(
-            final Vulnerability vulnerability,
-            final List<VulnerableSoftware> vulnerableSoftwares,
-            final Vulnerability.Source source) {
-        getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability, vulnerableSoftwares, source);
-    }
-
     public boolean hasVulnerabilities(final Project project) {
         return getVulnerabilityQueryManager().hasVulnerabilities(project);
     }
@@ -994,13 +955,6 @@ public class QueryManager extends AlpineQueryManager {
      */
     public List<DependencyGraphResponse> getServiceDependencyGraphByUuids(final List<UUID> uuids) {
         return this.getServiceComponentQueryManager().getDependencyGraphByUUID(uuids);
-    }
-
-    public void synchronizeVulnerableSoftware(
-            final Vulnerability persistentVuln,
-            final List<VulnerableSoftware> vsList,
-            final Vulnerability.Source source) {
-        getVulnerableSoftwareQueryManager().synchronizeVulnerableSoftware(persistentVuln, vsList, source);
     }
 
     public List<Component> getComponentsByPurl(String purl) {

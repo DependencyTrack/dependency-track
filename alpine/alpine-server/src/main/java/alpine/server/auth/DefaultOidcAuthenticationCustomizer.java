@@ -64,7 +64,7 @@ public class DefaultOidcAuthenticationCustomizer implements OidcAuthenticationCu
                 ? claimsSet.getClaim(teamsClaimName)
                 : null;
         profile.setGroups(switch (groupsClaim) {
-            case String groupsString -> Arrays.stream(groupsString.split(","))
+            case String groupsString -> Arrays.stream(stripBrackets(groupsString).split(","))
                     .map(String::trim)
                     .filter(not(String::isEmpty))
                     .toList();
@@ -113,6 +113,14 @@ public class DefaultOidcAuthenticationCustomizer implements OidcAuthenticationCu
 
     private <T> T selectProfileClaim(final T left, final T right) {
         return (left != null) ? left : right;
+    }
+
+    // Some providers can only emit string claims and serialize lists as "[foo, bar]".
+    private static String stripBrackets(final String value) {
+        final String trimmed = value.trim();
+        return trimmed.startsWith("[") && trimmed.endsWith("]")
+                ? trimmed.substring(1, trimmed.length() - 1)
+                : trimmed;
     }
 
 }

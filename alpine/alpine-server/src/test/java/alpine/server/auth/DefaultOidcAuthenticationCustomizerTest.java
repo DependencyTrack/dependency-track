@@ -94,6 +94,23 @@ class DefaultOidcAuthenticationCustomizerTest {
         }
 
         @Test
+        void shouldSupportTeamsClaimAsBracketedDelimitedString() {
+            final var customizer = new DefaultOidcAuthenticationCustomizer("username", "groups");
+
+            final var claims = new ClaimsSet(
+                    new JSONObject(
+                            Map.ofEntries(
+                                    Map.entry("sub", "subject-foo"),
+                                    Map.entry("username", "username"),
+                                    Map.entry("email", "user@example.com"),
+                                    Map.entry("groups", "[group-foo, group-bar]"))));
+
+            final OidcProfile profile = customizer.createProfile(claims);
+            assertThat(profile).isNotNull();
+            assertThat(profile.getGroups()).containsOnly("group-foo", "group-bar");
+        }
+
+        @Test
         void shouldLeaveGroupsNullWhenTeamsClaimIsAbsent() {
             final var customizer = new DefaultOidcAuthenticationCustomizer("username", "groups");
 
@@ -140,6 +157,23 @@ class DefaultOidcAuthenticationCustomizerTest {
                                     Map.entry("username", "username"),
                                     Map.entry("email", "user@example.com"),
                                     Map.entry("groups", ""))));
+
+            final OidcProfile profile = customizer.createProfile(claims);
+            assertThat(profile).isNotNull();
+            assertThat(profile.getGroups()).isNotNull().isEmpty();
+        }
+
+        @Test
+        void shouldReturnEmptyGroupsWhenTeamsClaimIsPresentButEmptyBrackets() {
+            final var customizer = new DefaultOidcAuthenticationCustomizer("username", "groups");
+
+            final var claims = new ClaimsSet(
+                    new JSONObject(
+                            Map.ofEntries(
+                                    Map.entry("sub", "subject-foo"),
+                                    Map.entry("username", "username"),
+                                    Map.entry("email", "user@example.com"),
+                                    Map.entry("groups", "[]"))));
 
             final OidcProfile profile = customizer.createProfile(claims);
             assertThat(profile).isNotNull();

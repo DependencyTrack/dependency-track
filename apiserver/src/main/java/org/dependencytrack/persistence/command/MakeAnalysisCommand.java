@@ -26,6 +26,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.proto.v1.Group;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Set;
 
@@ -58,6 +59,7 @@ public record MakeAnalysisCommand(
         String comment,
         String owaspVector,
         BigDecimal owaspScore,
+        Instant suppressionExpiresAt,
         Set<Option> options) {
 
     public enum Option {
@@ -81,7 +83,20 @@ public record MakeAnalysisCommand(
     }
 
     public MakeAnalysisCommand(final Component component, final Vulnerability vulnerability) {
-        this(component, vulnerability, null, null, null, null, null, null, null, null, null, Collections.emptySet());
+        this(
+                component,
+                vulnerability,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                Collections.emptySet());
     }
 
     public MakeAnalysisCommand withState(final AnalysisState state) {
@@ -97,6 +112,7 @@ public record MakeAnalysisCommand(
                 this.comment,
                 this.owaspVector,
                 this.owaspScore,
+                this.suppressionExpiresAt,
                 this.options);
     }
 
@@ -113,6 +129,7 @@ public record MakeAnalysisCommand(
                 this.comment,
                 this.owaspVector,
                 this.owaspScore,
+                this.suppressionExpiresAt,
                 this.options);
     }
 
@@ -129,6 +146,7 @@ public record MakeAnalysisCommand(
                 this.comment,
                 this.owaspVector,
                 this.owaspScore,
+                this.suppressionExpiresAt,
                 this.options);
     }
 
@@ -145,6 +163,7 @@ public record MakeAnalysisCommand(
                 this.comment,
                 this.owaspVector,
                 this.owaspScore,
+                this.suppressionExpiresAt,
                 this.options);
     }
 
@@ -161,6 +180,7 @@ public record MakeAnalysisCommand(
                 this.comment,
                 this.owaspVector,
                 this.owaspScore,
+                this.suppressionExpiresAt,
                 this.options);
     }
 
@@ -177,6 +197,7 @@ public record MakeAnalysisCommand(
                 this.comment,
                 this.owaspVector,
                 this.owaspScore,
+                this.suppressionExpiresAt,
                 this.options);
     }
 
@@ -193,6 +214,7 @@ public record MakeAnalysisCommand(
                 comment,
                 this.owaspVector,
                 this.owaspScore,
+                this.suppressionExpiresAt,
                 this.options);
     }
 
@@ -209,6 +231,7 @@ public record MakeAnalysisCommand(
                 this.comment,
                 owaspVector,
                 owaspScore,
+                this.suppressionExpiresAt,
                 this.options);
     }
 
@@ -225,6 +248,24 @@ public record MakeAnalysisCommand(
                 this.comment,
                 this.owaspVector,
                 this.owaspScore,
+                this.suppressionExpiresAt,
                 options);
+    }
+
+    public MakeAnalysisCommand withSuppressionExpiresAt(final Instant suppressionExpiresAt) {
+        return new MakeAnalysisCommand(
+                this.component,
+                this.vulnerability,
+                this.state,
+                this.justification,
+                this.response,
+                this.details,
+                this.suppress,
+                this.commenter,
+                this.comment,
+                this.owaspVector,
+                this.owaspScore,
+                suppressionExpiresAt,
+                this.options);
     }
 }

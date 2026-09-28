@@ -72,6 +72,7 @@ class TaskSchedulerInitializerTest {
                         "Portfolio Vulnerability Analysis",
                         "Project Maintenance",
                         "Scheduled Notification Dispatch",
+                        "Suppression Expiry",
                         "Tag Maintenance",
                         "Telemetry Submission",
                         "Vulnerability Database Maintenance",

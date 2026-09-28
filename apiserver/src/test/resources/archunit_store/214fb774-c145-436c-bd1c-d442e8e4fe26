@@ -1,6 +1,0 @@
-org.dependencytrack.persistence.jdbi.ComponentDao#getOccurrences uses @RegisterBeanMapper with model class org.dependencytrack.model.ComponentOccurrence
-org.dependencytrack.persistence.jdbi.ConfigPropertyDao#getOptional uses @RegisterBeanMapper with model class alpine.model.ConfigProperty
-org.dependencytrack.persistence.jdbi.MetricsDao#<class> uses @RegisterBeanMapper with model class org.dependencytrack.model.DependencyMetrics
-org.dependencytrack.persistence.jdbi.MetricsDao#<class> uses @RegisterBeanMapper with model class org.dependencytrack.model.PortfolioMetrics
-org.dependencytrack.persistence.jdbi.MetricsDao#<class> uses @RegisterBeanMapper with model class org.dependencytrack.model.ProjectMetrics
-org.dependencytrack.persistence.jdbi.MetricsDao#<class> uses @RegisterBeanMapper with model class org.dependencytrack.model.VulnerabilityMetrics

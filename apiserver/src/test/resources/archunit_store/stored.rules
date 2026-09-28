@@ -1,7 +1,7 @@
 #
-#Sun Jun 14 12:34:14 CEST 2026
-classes\ that\ have\ simple\ name\ ending\ with\ 'Dao'\ and\ reside\ in\ a\ package\ 'org.dependencytrack.persistence.jdbi'\ should\ not\ use\ @RegisterBeanMapper\ with\ model\ classes=214fb774-c145-436c-bd1c-d442e8e4fe26
-classes\ that\ reside\ in\ a\ package\ 'org.dependencytrack.persistence.jdbi..'\ and\ implement\ org.jdbi.v3.core.mapper.RowMapper\ should\ not\ target\ model\ classes=f3b37c20-3a23-4355-a1a0-626adddec514
+#Sun Sep 27 11:07:13 CEST 2026
+classes\ that\ have\ simple\ name\ ending\ with\ 'Dao'\ and\ reside\ in\ a\ package\ 'org.dependencytrack..'\ should\ not\ use\ @RegisterBeanMapper\ with\ model\ classes=e8926770-e6ad-4eef-9cfb-56d6a4741459
+classes\ that\ reside\ in\ a\ package\ 'org.dependencytrack..'\ and\ implement\ org.jdbi.v3.core.mapper.RowMapper\ should\ not\ target\ model\ classes=99a6b091-120e-4112-88e0-255b8a930a13
 methods\ that\ are\ JAX-RS\ resource\ handler\ methods\ should\ not\ accept\ JDO\ model\ classes\ as\ request\ body=3e49066c-46b2-40c2-8473-ce4276c1ba12
 methods\ that\ are\ JAX-RS\ resource\ handler\ methods\ should\ not\ declare\ JDO\ model\ classes\ in\ Swagger\ response\ schemas=67305ac9-6039-403a-8a4c-ada073ef9b6d
-methods\ that\ are\ declared\ in\ classes\ that\ have\ simple\ name\ ending\ with\ 'Dao'\ and\ are\ declared\ in\ classes\ that\ reside\ in\ a\ package\ 'org.dependencytrack.persistence.jdbi'\ and\ are\ not\ annotated\ with\ @SqlUpdate\ and\ are\ not\ annotated\ with\ @SqlBatch\ should\ not\ return\ model\ classes=abb951d9-b11c-45d0-a35c-0d8977fd78e3
+methods\ that\ are\ declared\ in\ classes\ that\ have\ simple\ name\ ending\ with\ 'Dao'\ and\ are\ declared\ in\ classes\ that\ reside\ in\ a\ package\ 'org.dependencytrack..'\ and\ are\ not\ annotated\ with\ @SqlUpdate\ and\ are\ not\ annotated\ with\ @SqlBatch\ should\ not\ return\ model\ classes=b14ffbfd-8a5e-4750-be1c-767673f81c48

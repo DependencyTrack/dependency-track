@@ -20,8 +20,8 @@ package org.dependencytrack.persistence;
 
 import org.dependencytrack.init.InitTask;
 import org.dependencytrack.init.InitTaskContext;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 
 /**
  * @since 5.0.0

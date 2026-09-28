@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
-import org.dependencytrack.model.DependencyMetrics;
-import org.dependencytrack.model.ProjectMetrics;
+import org.dependencytrack.metrics.DependencyMetrics;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.BindBean;

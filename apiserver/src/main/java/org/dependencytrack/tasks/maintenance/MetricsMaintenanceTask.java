@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.tasks.maintenance;
 
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

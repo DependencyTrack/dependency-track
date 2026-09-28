@@ -30,6 +30,7 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.metrics.DependencyMetrics;
 import org.dependencytrack.model.validation.ValidSpdxExpression;
 import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;

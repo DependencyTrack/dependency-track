@@ -18,19 +18,19 @@
  */
 package org.dependencytrack.util;
 
-import alpine.model.ConfigProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.jspecify.annotations.Nullable;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_MATCH_MODE;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
  * Utility class to identify internal components based on the configured group and name regular expressions.
@@ -94,29 +94,27 @@ public class InternalComponentIdentifier {
     }
 
     private static Patterns loadPatterns() {
-        try (final var qm = new QueryManager()) {
-            final ConfigProperty groupsRegexProperty = qm.getConfigProperty(
-                    INTERNAL_COMPONENTS_GROUPS_REGEX.getGroupName(),
-                    INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName());
-            final ConfigProperty namesRegexProperty = qm.getConfigProperty(
-                    INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName(), INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyName());
-            final ConfigProperty matchModeProperty = qm.getConfigProperty(
-                    INTERNAL_COMPONENTS_MATCH_MODE.getGroupName(), INTERNAL_COMPONENTS_MATCH_MODE.getPropertyName());
-
+        return withJdbiHandle(handle -> {
+            final var dao = handle.attach(ConfigPropertyDao.class);
             return new Patterns(
-                    tryCompilePattern(groupsRegexProperty).orElse(null),
-                    tryCompilePattern(namesRegexProperty).orElse(null),
-                    Optional.ofNullable(matchModeProperty)
-                            .map(ConfigProperty::getPropertyValue)
+                    dao.getOptionalValue(INTERNAL_COMPONENTS_GROUPS_REGEX)
+                            .map(InternalComponentIdentifier::tryCompilePattern)
+                            .orElse(null),
+                    dao.getOptionalValue(INTERNAL_COMPONENTS_NAMES_REGEX)
+                            .map(InternalComponentIdentifier::tryCompilePattern)
+                            .orElse(null),
+                    dao.getOptionalValue(INTERNAL_COMPONENTS_MATCH_MODE)
                             .map(StringUtils::trimToNull)
                             .orElse(INTERNAL_COMPONENTS_MATCH_MODE.getDefaultPropertyValue()));
-        }
+        });
     }
 
-    private static Optional<Pattern> tryCompilePattern(final ConfigProperty property) {
-        return Optional.ofNullable(property)
-                .map(ConfigProperty::getPropertyValue)
-                .map(StringUtils::trimToNull)
-                .map(Pattern::compile);
+    private static @Nullable Pattern tryCompilePattern(String value) {
+        final String valueTrimmed = StringUtils.trimToNull(value);
+        if (valueTrimmed == null) {
+            return null;
+        }
+
+        return Pattern.compile(valueTrimmed);
     }
 }

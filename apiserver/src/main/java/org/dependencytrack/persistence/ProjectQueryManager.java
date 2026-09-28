@@ -453,47 +453,6 @@ final class ProjectQueryManager extends QueryManager {
     }
 
     @Override
-    public boolean hasAccess(final Principal principal, final Project project) {
-        if (isPortfolioAclBypassed(principal)) {
-            return true;
-        }
-
-        final Query<?> query;
-        switch (principal) {
-            case UserPrincipal user -> {
-                query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                                SELECT EXISTS(
-                                  SELECT 1
-                                    FROM "PROJECT_ACCESS_USERS" AS pau
-                                   INNER JOIN "PROJECT_HIERARCHY" AS ph
-                                      ON ph."PARENT_PROJECT_ID" = pau."PROJECT_ID"
-                                   WHERE ph."CHILD_PROJECT_ID" = ?
-                                     AND pau."USER_ID" = ?
-                                )
-                                """).setParameters(project.getId(), user.id());
-            }
-            case ApiKeyPrincipal apiKey -> {
-                query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                                SELECT EXISTS(
-                                  SELECT 1
-                                    FROM "APIKEYS_TEAMS" AS akt
-                                   INNER JOIN "PROJECT_ACCESS_TEAMS" AS pat
-                                      ON pat."TEAM_ID" = akt."TEAM_ID"
-                                   INNER JOIN "PROJECT_HIERARCHY" AS ph
-                                      ON ph."PARENT_PROJECT_ID" = pat."PROJECT_ID"
-                                   WHERE akt."APIKEY_ID" = ?
-                                     AND ph."CHILD_PROJECT_ID" = ?
-                                )
-                                """).setParameters(apiKey.id(), project.getId());
-            }
-            case null -> {
-                return false;
-            }
-        }
-
-        return executeAndCloseResultUnique(query, Boolean.class);
-    }
-
     void preprocessACLs(final Query<?> query, final String inputFilter, final Map<String, Object> params) {
         if (isPortfolioAclBypassed(principal)) {
             query.setFilter(inputFilter);
@@ -657,6 +616,7 @@ final class ProjectQueryManager extends QueryManager {
         }
     }
 
+    @Override
     public List<ProjectVersion> getProjectVersions(Project project) {
         final Query<Project> query = pm.newQuery(Project.class);
         query.setResult("uuid, version, isLatest, inactiveSince");

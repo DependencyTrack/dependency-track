@@ -45,6 +45,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Base64;
 import java.util.EnumMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -262,7 +263,7 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
         if (spaceIndex > 0) {
             hash = hash.substring(0, spaceIndex);
         }
-        hash = hash.toLowerCase();
+        hash = hash.toLowerCase(Locale.ROOT);
 
         if (!HashAlgorithm.SHA1.isValid(hash)) {
             LOGGER.debug("Ignoring invalid SHA-1 hash: {}", hash);
@@ -316,7 +317,7 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
     }
 
     static boolean isSnapshotVersion(String version) {
-        return version.toLowerCase().endsWith("-snapshot");
+        return version.toLowerCase(Locale.ROOT).endsWith("-snapshot");
     }
 
     private static @Nullable Instant parseHttpDate(String value) {

@@ -19,22 +19,19 @@
 package org.dependencytrack.persistence.jdbi.mapping;
 
 import org.dependencytrack.notification.proto.v1.Bom;
-import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
-
-public class NotificationBomRowMapper implements RowMapper<Bom> {
+public final class NotificationBomRowMapper implements OptionalColumnRowMapper<Bom> {
 
     @Override
-    public Bom map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-        final Bom.Builder builder = Bom.newBuilder();
-        maybeSet(rs, "bomFormat", ResultSet::getString, builder::setFormat);
-        maybeSet(rs, "bomSpecVersion", ResultSet::getString, builder::setSpecVersion);
-        maybeSet(rs, "bomContent", ResultSet::getString, builder::setContent);
+    public Bom map(ResultSet rs, StatementContext ctx, Columns columns) throws SQLException {
+        final var builder = Bom.newBuilder();
+        columns.maybeSet(rs, "bomFormat", ResultSet::getString, builder::setFormat);
+        columns.maybeSet(rs, "bomSpecVersion", ResultSet::getString, builder::setSpecVersion);
+        columns.maybeSet(rs, "bomContent", ResultSet::getString, builder::setContent);
         return builder.build();
     }
 }

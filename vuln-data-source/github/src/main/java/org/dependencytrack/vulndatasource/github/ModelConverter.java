@@ -52,13 +52,16 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static io.github.nscuro.versatile.VersUtils.versFromGhsaRange;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.cyclonedx.proto.v1_7.Severity.SEVERITY_CRITICAL;
 import static org.cyclonedx.proto.v1_7.Severity.SEVERITY_HIGH;
 import static org.cyclonedx.proto.v1_7.Severity.SEVERITY_INFO;
@@ -133,7 +136,7 @@ final class ModelConverter {
                 final Component component = componentByPurl.computeIfAbsent(
                         purl.getCoordinates(),
                         purlCoordinates -> Component.newBuilder()
-                                .setBomRef(UUID.nameUUIDFromBytes(purlCoordinates.getBytes())
+                                .setBomRef(UUID.nameUUIDFromBytes(purlCoordinates.getBytes(UTF_8))
                                         .toString())
                                 .setPurl(purlCoordinates)
                                 .build());
@@ -151,13 +154,13 @@ final class ModelConverter {
 
         // Sort components by BOM ref to ensure consistent ordering.
         final List<Component> components = componentByPurl.values().stream()
-                .sorted(java.util.Comparator.comparing(Component::getBomRef))
+                .sorted(Comparator.comparing(Component::getBomRef))
                 .toList();
 
         // Sort affects by BOM ref to ensure consistent ordering.
         final List<VulnerabilityAffects> vulnAffects = vulnAffectsBuilderByBomRef.values().stream()
                 .map(VulnerabilityAffects.Builder::build)
-                .sorted(java.util.Comparator.comparing(VulnerabilityAffects::getRef))
+                .sorted(Comparator.comparing(VulnerabilityAffects::getRef))
                 .toList();
 
         final Bom.Builder bomBuilder = Bom.newBuilder()
@@ -309,7 +312,7 @@ final class ModelConverter {
 
     private static @Nullable PackageURL convertToPurl(Package pkg) {
         final String purlType =
-                switch (pkg.getEcosystem().toLowerCase()) {
+                switch (pkg.getEcosystem().toLowerCase(Locale.ROOT)) {
                     case "composer" -> PackageURL.StandardTypes.COMPOSER;
                     case "erlang" -> PackageURL.StandardTypes.HEX;
                     case "go" -> PackageURL.StandardTypes.GOLANG;

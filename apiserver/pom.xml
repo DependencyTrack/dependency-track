@@ -282,6 +282,10 @@
             <artifactId>cel</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.metaeffekt.core</groupId>
             <artifactId>ae-security</artifactId>
         </dependency>
@@ -735,6 +739,9 @@
     <profiles>
         <profile>
             <id>dist</id>
+            <properties>
+                <maven.build.cache.skipSave>true</maven.build.cache.skipSave>
+            </properties>
             <build>
                 <plugins>
                     <plugin>

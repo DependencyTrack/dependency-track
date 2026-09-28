@@ -32,6 +32,7 @@ import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,7 @@ import jakarta.servlet.ServletContextEvent;
 
 import java.net.http.HttpClient;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -111,6 +113,7 @@ class DexEngineInitializerTest {
                         secretManager::getSecretValue,
                         JdbiFactory.createLocalJdbi(dataSource),
                         HttpClient.newHttpClient(),
+                        OutboundConnectionPolicy.of(List.of("*")),
                         Collections.emptyList()))
                 .when(servletContextMock)
                 .getAttribute(eq(PluginManager.class.getName()));

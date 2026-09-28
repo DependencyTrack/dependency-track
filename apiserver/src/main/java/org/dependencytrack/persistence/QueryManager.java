@@ -18,9 +18,7 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.common.util.BooleanUtil;
 import alpine.common.validation.RegexSequence;
-import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.model.auth.ApiKeyPrincipal;
 import alpine.model.auth.Principal;
@@ -31,19 +29,16 @@ import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
+import com.google.errorprone.annotations.CompileTimeConstant;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.exception.InvalidSortFieldException;
-import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ComponentProperty;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Epss;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
@@ -64,10 +59,8 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityKey;
-import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
@@ -87,6 +80,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -104,7 +98,6 @@ public class QueryManager extends AlpineQueryManager {
     protected AlpineRequest request;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryManager.class);
-    private BomQueryManager bomQueryManager;
     private ComponentQueryManager componentQueryManager;
     private AnalysisQueryManager analysisQueryManager;
     private LicenseQueryManager licenseQueryManager;
@@ -114,9 +107,7 @@ public class QueryManager extends AlpineQueryManager {
     private RepositoryQueryManager repositoryQueryManager;
     private ServiceComponentQueryManager serviceComponentQueryManager;
     private VulnerabilityQueryManager vulnerabilityQueryManager;
-    private VulnerableSoftwareQueryManager vulnerableSoftwareQueryManager;
     private TagQueryManager tagQueryManager;
-    private EpssQueryManager epssQueryManager;
 
     /**
      * Default constructor.
@@ -154,17 +145,9 @@ public class QueryManager extends AlpineQueryManager {
         this.request = request;
     }
 
-    /**
-     * @since 5.0.0
-     */
-    public boolean tryAcquireAdvisoryLock(long lockId) {
-        if (!pm.currentTransaction().isActive()) {
-            throw new IllegalStateException("Advisory locks can only be acquired within an active JDO transaction");
-        }
-
-        final Query<?> query = pm.newQuery(Query.SQL, "SELECT pg_try_advisory_xact_lock(?)");
-        query.setParameters(lockId);
-        return executeAndCloseResultUnique(query, Boolean.class);
+    /// @since 5.2.0
+    public AlpineRequest getAlpineRequest() {
+        return request;
     }
 
     /**
@@ -213,7 +196,7 @@ public class QueryManager extends AlpineQueryManager {
             }
             if (foundPersistentMember) {
                 // NB: Changed from AbstractAlpineQueryManager#decorate to always sort by ID.
-                query.setOrdering(orderBy + " " + orderDirection.name().toLowerCase() + ", id asc");
+                query.setOrdering(orderBy + " " + orderDirection.name().toLowerCase(Locale.ROOT) + ", id asc");
             } else {
                 // Is it a non-persistent (transient) field?
                 final boolean foundNonPersistentMember = Arrays.stream(
@@ -286,20 +269,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Lazy instantiation of BomQueryManager.
-     *
-     * @return a BomQueryManager object
-     */
-    private BomQueryManager getBomQueryManager() {
-        if (bomQueryManager == null) {
-            bomQueryManager = (request == null)
-                    ? new BomQueryManager(getPersistenceManager())
-                    : new BomQueryManager(getPersistenceManager(), request);
-        }
-        return bomQueryManager;
-    }
-
-    /**
      * Lazy instantiation of PolicyQueryManager.
      *
      * @return a PolicyQueryManager object
@@ -325,34 +294,6 @@ public class QueryManager extends AlpineQueryManager {
                     : new VulnerabilityQueryManager(getPersistenceManager(), request);
         }
         return vulnerabilityQueryManager;
-    }
-
-    /**
-     * Lazy instantiation of EpssQueryManager.
-     *
-     * @return a EpssQueryManager object
-     */
-    private EpssQueryManager getEpssQueryManager() {
-        if (epssQueryManager == null) {
-            epssQueryManager = (request == null)
-                    ? new EpssQueryManager(getPersistenceManager())
-                    : new EpssQueryManager(getPersistenceManager());
-        }
-        return epssQueryManager;
-    }
-
-    /**
-     * Lazy instantiation of VulnerableSoftwareQueryManager.
-     *
-     * @return a VulnerableSoftwareQueryManager object
-     */
-    private VulnerableSoftwareQueryManager getVulnerableSoftwareQueryManager() {
-        if (vulnerableSoftwareQueryManager == null) {
-            vulnerableSoftwareQueryManager = (request == null)
-                    ? new VulnerableSoftwareQueryManager(getPersistenceManager())
-                    : new VulnerableSoftwareQueryManager(getPersistenceManager(), request);
-        }
-        return vulnerableSoftwareQueryManager;
     }
 
     /**
@@ -433,10 +374,6 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjectVersions(project);
     }
 
-    public boolean hasAccess(final Principal principal, final Project project) {
-        return getProjectQueryManager().hasAccess(principal, project);
-    }
-
     void preprocessACLs(final Query<?> query, final String inputFilter, final Map<String, Object> params) {
         getProjectQueryManager().preprocessACLs(query, inputFilter, params);
     }
@@ -514,23 +451,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<ProjectProperty> getProjectProperties(final Project project) {
         return getProjectQueryManager().getProjectProperties(project);
-    }
-
-    public Bom createBom(
-            Project project,
-            Date imported,
-            Bom.Format format,
-            String specVersion,
-            Integer bomVersion,
-            String serialNumber,
-            final UUID uploadToken,
-            Date bomGenerated) {
-        return getBomQueryManager()
-                .createBom(project, imported, format, specVersion, bomVersion, serialNumber, uploadToken, bomGenerated);
-    }
-
-    public List<Bom> getAllBoms(Project project) {
-        return getBomQueryManager().getAllBoms(project);
     }
 
     public PaginatedResult getComponentByHash(String hash) {
@@ -722,28 +642,6 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getFindingAttributions(vulnerability, component);
     }
 
-    public List<AffectedVersionAttribution> getAffectedVersionAttributions(
-            Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware) {
-        return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftware);
-    }
-
-    public List<AffectedVersionAttribution> getAffectedVersionAttributions(
-            final Vulnerability vulnerability, final List<VulnerableSoftware> vulnerableSoftwares) {
-        return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftwares);
-    }
-
-    public AffectedVersionAttribution getAffectedVersionAttribution(
-            Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware, Vulnerability.Source source) {
-        return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
-    }
-
-    public void deleteAffectedVersionAttributions(
-            final Vulnerability vulnerability,
-            final List<VulnerableSoftware> vulnerableSoftwares,
-            final Vulnerability.Source source) {
-        getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability, vulnerableSoftwares, source);
-    }
-
     public boolean hasVulnerabilities(final Project project) {
         return getVulnerabilityQueryManager().hasVulnerabilities(project);
     }
@@ -898,21 +796,6 @@ public class QueryManager extends AlpineQueryManager {
                         name, description, extensionName, templateContent, templateMimeType, defaultPublisher);
     }
 
-    /**
-     * Determines if a config property is enabled or not.
-     *
-     * @param configPropertyConstants the property to query
-     * @return true if enabled, false if not
-     */
-    public boolean isEnabled(final ConfigPropertyConstants configPropertyConstants) {
-        final ConfigProperty property =
-                getConfigProperty(configPropertyConstants.getGroupName(), configPropertyConstants.getPropertyName());
-        if (property != null && ConfigProperty.PropertyType.BOOLEAN == property.getPropertyType()) {
-            return BooleanUtil.valueOf(property.getPropertyValue());
-        }
-        return false;
-    }
-
     public boolean bind(final Project project, final Collection<Tag> tags, final boolean keepExisting) {
         return getProjectQueryManager().bind(project, tags, keepExisting);
     }
@@ -936,14 +819,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
         return getNotificationQueryManager().bind(notificationRule, tags);
-    }
-
-    public List<Notification> getNotificationOutbox() {
-        return getNotificationQueryManager().getNotificationOutbox();
-    }
-
-    public void truncateNotificationOutbox() {
-        getNotificationQueryManager().truncateNotificationOutbox();
     }
 
     public List<TagQueryManager.TagListRow> getTags() {
@@ -1073,23 +948,8 @@ public class QueryManager extends AlpineQueryManager {
         return this.getServiceComponentQueryManager().getDependencyGraphByUUID(uuids);
     }
 
-    public void synchronizeVulnerableSoftware(
-            final Vulnerability persistentVuln,
-            final List<VulnerableSoftware> vsList,
-            final Vulnerability.Source source) {
-        getVulnerableSoftwareQueryManager().synchronizeVulnerableSoftware(persistentVuln, vsList, source);
-    }
-
     public List<Component> getComponentsByPurl(String purl) {
         return getComponentQueryManager().getComponentsByPurl(purl);
-    }
-
-    public Epss getEffectiveEpssForVuln(String source, String vulnId) {
-        return getEpssQueryManager().getEffectiveEpssForVuln(source, vulnId);
-    }
-
-    public Map<VulnerabilityKey, Epss> getEffectiveEpssForVulns(Collection<VulnerabilityKey> keys) {
-        return getEpssQueryManager().getEffectiveEpssForVulns(keys);
     }
 
     public Set<Tag> resolveTags(final Collection<Tag> tags) {
@@ -1158,7 +1018,8 @@ public class QueryManager extends AlpineQueryManager {
      * @return A SQL condition that may be used to check if the {@link Principal} has access to a project
      * @since 4.12.0
      */
-    public Map.Entry<String, Map<String, Object>> getProjectAclSqlCondition(final String projectTableAlias) {
+    public Map.Entry<String, Map<String, Object>> getProjectAclSqlCondition(
+            @CompileTimeConstant final String projectTableAlias) {
         if (isPortfolioAclBypassed(principal)) {
             return Map.entry("TRUE", Collections.emptyMap());
         }

@@ -54,6 +54,7 @@ public class ManagedUserAuthenticationService implements AuthenticationService<M
      * @return always will return true
      * @since 1.0.0
      */
+    @Override
     public boolean isSpecified() {
         return true;
     }
@@ -67,6 +68,7 @@ public class ManagedUserAuthenticationService implements AuthenticationService<M
      * @throws AlpineAuthenticationException when authentication is unsuccessful
      * @since 1.0.0
      */
+    @Override
     public ManagedUser authenticate() throws AlpineAuthenticationException {
         LOGGER.debug("Attempting to authenticate user: {}", username);
         try (AlpineQueryManager qm = new AlpineQueryManager()) {

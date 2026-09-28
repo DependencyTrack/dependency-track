@@ -26,6 +26,7 @@ import org.dependencytrack.model.PolicyCondition;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 final class LicenseQueryManager extends QueryManager {
@@ -51,6 +52,7 @@ final class LicenseQueryManager extends QueryManager {
      * Returns a List of all License objects.
      * @return a List of all License objects
      */
+    @Override
     public PaginatedResult getLicenses() {
         final Query<License> query = pm.newQuery(License.class);
         query.getFetchPlan().addGroup(License.FetchGroup.ALL.name());
@@ -59,7 +61,7 @@ final class LicenseQueryManager extends QueryManager {
         }
         if (filter != null) {
             query.setFilter("name.toLowerCase().matches(:filter) || licenseId.toLowerCase().matches(:filter)");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            final String filterString = ".*" + filter.toLowerCase(Locale.ROOT) + ".*";
             return execute(query, filterString);
         }
         return execute(query);
@@ -70,6 +72,7 @@ final class LicenseQueryManager extends QueryManager {
      * This method if designed NOT to provide paginated results.
      * @return a List of License objects
      */
+    @Override
     @SuppressWarnings("unchecked")
     public List<License> getAllLicensesConcise() {
         final Query<License> query = pm.newQuery(License.class);
@@ -85,6 +88,7 @@ final class LicenseQueryManager extends QueryManager {
      * @param licenseId the SPDX license ID to retrieve
      * @return a License object, or null if not found
      */
+    @Override
     public License getLicense(String licenseId) {
         final Query<License> query = pm.newQuery(License.class, "licenseId == :licenseId");
         query.getFetchPlan().addGroup(License.FetchGroup.ALL.name());
@@ -112,6 +116,7 @@ final class LicenseQueryManager extends QueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the created license
      */
+    @Override
     public License createCustomLicense(License license, boolean commitIndex) {
         license.setCustomLicense(true);
         final License result = persist(license);
@@ -137,6 +142,7 @@ final class LicenseQueryManager extends QueryManager {
      * @param license the license to delete
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */
+    @Override
     public void deleteLicense(final License license, final boolean commitIndex) {
         final Query<PolicyCondition> query =
                 pm.newQuery(PolicyCondition.class, "subject == :subject && value == :value");

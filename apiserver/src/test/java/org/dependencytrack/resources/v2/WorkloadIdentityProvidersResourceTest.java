@@ -90,6 +90,7 @@ class WorkloadIdentityProvidersResourceTest extends ResourceTest {
                         }
                         """));
         assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).inPath("$.detail").asString().contains("not allowed");
     }
 
     @Test
@@ -103,11 +104,12 @@ class WorkloadIdentityProvidersResourceTest extends ResourceTest {
                         {
                           "name": "internal",
                           "type": "OIDC",
-                          "issuer": "https://127.0.0.1",
+                          "issuer": "https://[fe80::1]",
                           "audience": "https://dependency-track.example.com"
                         }
                         """));
         assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).inPath("$.detail").asString().contains("not allowed");
     }
 
     @Test

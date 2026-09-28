@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -520,10 +521,10 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         final List<Relation> relations = List.of(
                 Cpe.compareAttribute(
                         criteria.cpePart(),
-                        targetCpe.getPart().getAbbreviation().toLowerCase()),
-                Cpe.compareAttribute(criteria.cpeVendor(), targetCpe.getVendor().toLowerCase()),
+                        targetCpe.getPart().getAbbreviation().toLowerCase(Locale.ROOT)),
+                Cpe.compareAttribute(criteria.cpeVendor(), targetCpe.getVendor().toLowerCase(Locale.ROOT)),
                 Cpe.compareAttribute(
-                        criteria.cpeProduct(), targetCpe.getProduct().toLowerCase()),
+                        criteria.cpeProduct(), targetCpe.getProduct().toLowerCase(Locale.ROOT)),
                 Cpe.compareAttribute(criteria.version(), targetCpe.getVersion()),
                 Cpe.compareAttribute(criteria.cpeUpdate(), targetCpe.getUpdate()),
                 Cpe.compareAttribute(criteria.cpeEdition(), targetCpe.getEdition()),

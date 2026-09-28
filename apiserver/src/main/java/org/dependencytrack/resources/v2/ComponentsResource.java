@@ -66,6 +66,7 @@ import jakarta.ws.rs.ext.Provider;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -104,7 +105,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
                 try {
                     requireAccess(qm, project);
                 } catch (ProjectAccessDeniedException ex) {
-                    throw new NotAuthorizedException(Response.Status.UNAUTHORIZED);
+                    throw new NotAuthorizedException(ex, Response.Status.UNAUTHORIZED);
                 }
                 return mapRequestToComponent(request, qm, project);
             });
@@ -154,23 +155,23 @@ public class ComponentsResource extends AbstractApiResource implements Component
                 try {
                     packageURL = new PackageURL(StringUtils.trimToNull(purlPrefix));
                 } catch (MalformedPackageURLException e) {
-                    throw new BadRequestException("Invalid package URL: %s".formatted(purlPrefix));
+                    throw new BadRequestException("Invalid package URL: %s".formatted(purlPrefix), e);
                 }
             }
             if (cpe != null) {
                 try {
                     CpeParser.parse(StringUtils.trimToNull(cpe));
                 } catch (CpeParsingException e) {
-                    throw new BadRequestException("Invalid CPE: %s".formatted(cpe));
+                    throw new BadRequestException("Invalid CPE: %s".formatted(cpe), e);
                 }
             }
             ListComponentsQuery.HashType hashTypeEnum = null;
             if (hashType != null) {
                 try {
                     hashTypeEnum = ListComponentsQuery.HashType.valueOf(
-                            StringUtils.trimToNull(hashType).toUpperCase());
+                            StringUtils.trimToNull(hashType).toUpperCase(Locale.ROOT));
                 } catch (IllegalArgumentException e) {
-                    throw new BadRequestException("Invalid Hash type: %s".formatted(hashType));
+                    throw new BadRequestException("Invalid Hash type: %s".formatted(hashType), e);
                 }
             }
 
@@ -188,7 +189,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
             final Page<Component> componentsPage = handle.attach(ComponentDao.class)
                     .listComponents(new ListComponentsQuery(
                             /* projectId */ null,
-                            packageURL != null ? packageURL.canonicalize().toLowerCase() : null,
+                            packageURL != null ? packageURL.canonicalize().toLowerCase(Locale.ROOT) : null,
                             StringUtils.trimToNull(cpe),
                             StringUtils.trimToNull(swidTagIdContains),
                             StringUtils.trimToNull(groupContains),

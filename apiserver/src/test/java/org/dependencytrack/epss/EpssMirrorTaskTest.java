@@ -16,13 +16,11 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.tasks;
+package org.dependencytrack.epss;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Epss;
-import org.dependencytrack.persistence.jdbi.EpssDao;
-import org.jdbi.v3.core.mapper.reflect.BeanMapper;
+import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -106,19 +104,19 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
         assertThat(epssRecords)
                 .satisfiesExactlyInAnyOrder(
                         epssRecord -> {
-                            assertThat(epssRecord.getCve()).isEqualTo("CVE-1999-0001");
-                            assertThat(epssRecord.getScore()).isEqualByComparingTo("0.01141");
-                            assertThat(epssRecord.getPercentile()).isEqualByComparingTo("0.7769");
+                            assertThat(epssRecord.cve()).isEqualTo("CVE-1999-0001");
+                            assertThat(epssRecord.score()).isEqualByComparingTo("0.01141");
+                            assertThat(epssRecord.percentile()).isEqualByComparingTo("0.7769");
                         },
                         epssRecord -> {
-                            assertThat(epssRecord.getCve()).isEqualTo("CVE-1999-0002");
-                            assertThat(epssRecord.getScore()).isEqualByComparingTo("0.15347");
-                            assertThat(epssRecord.getPercentile()).isEqualByComparingTo("0.94405");
+                            assertThat(epssRecord.cve()).isEqualTo("CVE-1999-0002");
+                            assertThat(epssRecord.score()).isEqualByComparingTo("0.15347");
+                            assertThat(epssRecord.percentile()).isEqualByComparingTo("0.94405");
                         },
                         epssRecord -> {
-                            assertThat(epssRecord.getCve()).isEqualTo("CVE-1999-0003");
-                            assertThat(epssRecord.getScore()).isEqualByComparingTo("0.90362");
-                            assertThat(epssRecord.getPercentile()).isEqualByComparingTo("0.99581");
+                            assertThat(epssRecord.cve()).isEqualTo("CVE-1999-0003");
+                            assertThat(epssRecord.score()).isEqualByComparingTo("0.90362");
+                            assertThat(epssRecord.percentile()).isEqualByComparingTo("0.99581");
                         });
     }
 
@@ -175,12 +173,12 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
     }
 
     private static List<Epss> findAllEpss() {
-        return withJdbiHandle(
-                handle -> handle.createQuery("""
+        return withJdbiHandle(handle ->
+                handle.createQuery("""
                         SELECT "CVE" AS "cve"
                              , "SCORE" AS "score"
                              , "PERCENTILE" AS "percentile"
                           FROM "EPSS"
-                        """).map(BeanMapper.of(Epss.class)).list());
+                        """).map(ConstructorMapper.of(Epss.class)).list());
     }
 }

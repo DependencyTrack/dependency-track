@@ -87,7 +87,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
 
     @Override
     public @Nullable Void execute(ActivityContext ctx, @Nullable ResolvePackageMetadataActivityArg arg)
-            throws Exception {
+            throws InterruptedException {
         if (arg == null || arg.getPurlsList().isEmpty()) {
             return null;
         }
@@ -188,7 +188,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             Function<PackageURL, Boolean> isInternalFunc,
             Map<String, org.dependencytrack.model.PackageArtifactMetadata> priorArtifactMetadataByPurl,
             ResultBuffer buffer)
-            throws Exception {
+            throws InterruptedException {
         final PackageURL purl;
         try {
             purl = new PackageURL(purlStr);
@@ -239,7 +239,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             Map<String, Optional<String>> passwordByRepoTypeAndName,
             Function<PackageURL, Boolean> isInternalFunc,
             org.dependencytrack.model.@Nullable PackageArtifactMetadata priorArtifactMetadata)
-            throws Exception {
+            throws InterruptedException {
         if (resolverFactory.requiresRepository()) {
             final List<Repository> repos =
                     repoByPurlType.computeIfAbsent(normalizedPurl.getType(), this::getRepositoriesByPurlType);
@@ -337,7 +337,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             return pluginManager.getFactory(PackageMetadataResolver.class, resolverName);
         } catch (NoSuchExtensionPointException | NoSuchExtensionException e) {
             throw new TerminalApplicationFailureException(
-                    "No resolver factory found for name: %s".formatted(resolverName));
+                    "No resolver factory found for name: %s".formatted(resolverName), e);
         }
     }
 

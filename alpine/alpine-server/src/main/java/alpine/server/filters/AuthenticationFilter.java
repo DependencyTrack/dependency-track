@@ -74,7 +74,7 @@ public class AuthenticationFilter implements ContainerRequestFilter, ContainerRe
                     portfolioAccessControlEnabled = apiKeyAuthService.isPortfolioAccessControlEnabled();
                 } catch (AuthenticationException e) {
                     LOGGER.info(SecurityMarkers.SECURITY_FAILURE, "Invalid API key asserted");
-                    throw new NotAuthorizedException(Response.status(Response.Status.UNAUTHORIZED).build());
+                    throw new NotAuthorizedException(Response.status(Response.Status.UNAUTHORIZED).build(), e);
                 }
             }
 
@@ -91,7 +91,7 @@ public class AuthenticationFilter implements ContainerRequestFilter, ContainerRe
                     }
                 } catch (AuthenticationException e) {
                     LOGGER.info(SecurityMarkers.SECURITY_FAILURE, "Invalid session token asserted");
-                    throw new NotAuthorizedException(Response.status(Response.Status.UNAUTHORIZED).build());
+                    throw new NotAuthorizedException(Response.status(Response.Status.UNAUTHORIZED).build(), e);
                 }
             }
 

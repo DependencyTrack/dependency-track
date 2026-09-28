@@ -36,6 +36,8 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Client for Checkmarx vulnerability API.
  */
@@ -120,7 +122,7 @@ final class CheckmarxApiClient {
             }
 
             RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
-            final String errorMessage = errorBody.toString().trim();
+            final String errorMessage = errorBody.toString(UTF_8).trim();
 
             if (!errorMessage.isEmpty()) {
                 LOGGER.debug(

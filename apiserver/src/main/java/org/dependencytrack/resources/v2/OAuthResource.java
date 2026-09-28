@@ -74,7 +74,7 @@ public final class OAuthResource extends AbstractApiResource implements OAuthApi
     private static final Set<TokenTypeURI> SUPPORTED_SUBJECT_TOKEN_TYPES =
             Set.of(TokenTypeURI.JWT, TokenTypeURI.ID_TOKEN);
     private static final WorkloadIdentityTokenVerifier TOKEN_VERIFIER =
-            new WorkloadIdentityTokenVerifier(new WorkloadIdentityKeySetFetcher(HttpClient.NO_REDIRECT_INSTANCE));
+            new WorkloadIdentityTokenVerifier(new WorkloadIdentityKeySetFetcher(HttpClient.INSTANCE));
 
     // Patterns required for manual validation. Keep in sync with OpenAPI spec.
     private static final Pattern PROVIDER_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9_-]{0,62}$");

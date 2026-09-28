@@ -38,6 +38,7 @@ import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.epss.EpssMirrorTask;
 import org.dependencytrack.kevdatasource.KevDataSourceMirrorService;
 import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.kevdatasource.api.KevDataSourceFactory;

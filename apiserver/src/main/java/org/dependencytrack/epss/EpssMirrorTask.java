@@ -16,11 +16,10 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.tasks;
+package org.dependencytrack.epss;
 
-import org.dependencytrack.model.Epss;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
-import org.dependencytrack.persistence.jdbi.EpssDao;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +41,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_EPSS_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_EPSS_FEEDS_URL;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
@@ -67,9 +68,11 @@ public final class EpssMirrorTask implements Runnable {
             return;
         }
 
+        final String feedsBaseUrl = requireNonNull(config.feedsBaseUrl(), "EPSS feeds URL must be configured");
+
         try {
-            LOGGER.info("Downloading EPSS feed from {}", config.feedsBaseUrl());
-            final Path feedFilePath = downloadFeedFile(config.feedsBaseUrl());
+            LOGGER.info("Downloading EPSS feed from {}", feedsBaseUrl);
+            final Path feedFilePath = downloadFeedFile(feedsBaseUrl);
             LOGGER.debug("Download destination: {}", feedFilePath);
 
             LOGGER.info("Processing EPSS feed");
@@ -108,7 +111,7 @@ public final class EpssMirrorTask implements Runnable {
         try (final var fileInputStream = Files.newInputStream(feedFilePath, StandardOpenOption.DELETE_ON_CLOSE);
                 final var bufferedInputStream = new BufferedInputStream(fileInputStream);
                 final var gzipInputStream = new GZIPInputStream(bufferedInputStream);
-                final var inputStreamReader = new InputStreamReader(gzipInputStream);
+                final var inputStreamReader = new InputStreamReader(gzipInputStream, UTF_8);
                 final var bufferedReader = new BufferedReader(inputStreamReader)) {
             final var recordBatch = new ArrayList<Epss>(BATCH_SIZE);
 
@@ -164,14 +167,13 @@ public final class EpssMirrorTask implements Runnable {
         return new Epss(columns[0], new BigDecimal(columns[1]), new BigDecimal(columns[2]));
     }
 
-    private record Config(boolean isEnabled, String feedsBaseUrl) {}
+    private record Config(boolean isEnabled, @Nullable String feedsBaseUrl) {}
 
     private static Config loadConfig() {
         return withJdbiHandle(handle -> {
             final var dao = handle.attach(ConfigPropertyDao.class);
 
-            final boolean isEnabled = dao.getOptionalValue(VULNERABILITY_SOURCE_EPSS_ENABLED, Boolean.class)
-                    .orElse(false);
+            final boolean isEnabled = dao.isEnabled(VULNERABILITY_SOURCE_EPSS_ENABLED);
             final String feedsBaseUrl = dao.getOptionalValue(VULNERABILITY_SOURCE_EPSS_FEEDS_URL, String.class)
                     .orElse(null);
 

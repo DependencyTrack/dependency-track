@@ -78,6 +78,11 @@ public interface ConfigPropertyDao extends SqlObject {
         return Optional.of(convertedValue);
     }
 
+    default boolean isEnabled(final ConfigPropertyConstants property) {
+        return getOptionalValue(property, Boolean.class)
+                .orElseGet(() -> Boolean.parseBoolean(property.getDefaultPropertyValue()));
+    }
+
     default <T> T getValue(final ConfigPropertyConstants property, final Class<T> clazz) {
         return getOptionalValue(property, clazz).orElseThrow(NoSuchElementException::new);
     }

@@ -680,7 +680,13 @@ public class ComponentResource extends AbstractApiResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The UUID of the component could not be found")
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The UUID of the component could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON))
             })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE})
     public Response deleteComponent(
@@ -691,24 +697,12 @@ public class ComponentResource extends AbstractApiResource {
                     @PathParam("uuid")
                     @ValidUuid
                     String uuid) {
-        return inJdbiTransaction(getAlpineRequest(), handle -> {
-            final ComponentDao componentDao = handle.attach(ComponentDao.class);
-            final Boolean accessible = componentDao.isAccessible(UUID.fromString(uuid));
-
-            if (accessible == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("The UUID of the component could not be found.")
-                        .build();
-            }
-
-            if (!accessible) {
-                throw new ProjectAccessDeniedException("Access to the requested project is forbidden");
-            }
-
-            componentDao.deleteComponent(UUID.fromString(uuid));
-
-            return Response.status(Response.Status.NO_CONTENT).build();
+        final UUID componentUuid = UUID.fromString(uuid);
+        useJdbiTransaction(getAlpineRequest(), handle -> {
+            requireComponentAccess(handle, componentUuid);
+            handle.attach(ComponentDao.class).deleteComponent(componentUuid);
         });
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @GET

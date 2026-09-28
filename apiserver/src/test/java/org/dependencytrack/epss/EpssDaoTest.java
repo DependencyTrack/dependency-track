@@ -16,14 +16,15 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.persistence;
+package org.dependencytrack.epss;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Epss;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
-import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
+import org.jdbi.v3.core.Handle;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -32,29 +33,46 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 
-class EpssQueryManagerTest extends PersistenceCapableTest {
+class EpssDaoTest extends PersistenceCapableTest {
+
+    private Handle jdbiHandle;
+    private EpssDao epssDao;
+
+    @BeforeEach
+    void beforeEach() {
+        jdbiHandle = openJdbiHandle();
+        epssDao = jdbiHandle.attach(EpssDao.class);
+    }
+
+    @AfterEach
+    void afterEach() {
+        if (jdbiHandle != null) {
+            jdbiHandle.close();
+        }
+    }
 
     @Test
     void shouldReturnDirectEpssForCveSourcedVuln() {
         persistEpss("CVE-000", "0.01", "0.02");
 
-        assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.NVD.name(), "CVE-000"))
+        assertThat(epssDao.getEffectiveEpssForVuln(Vulnerability.Source.NVD.name(), "CVE-000"))
                 .isNotNull()
                 .satisfies(e -> {
-                    assertThat(e.getCve()).isEqualTo("CVE-000");
-                    assertThat(e.getScore()).isEqualByComparingTo("0.01");
-                    assertThat(e.getPercentile()).isEqualByComparingTo("0.02");
+                    assertThat(e.cve()).isEqualTo("CVE-000");
+                    assertThat(e.score()).isEqualByComparingTo("0.01");
+                    assertThat(e.percentile()).isEqualByComparingTo("0.02");
                 });
     }
 
     @Test
     void shouldReturnNullWhenVulnHasNoCveAndNoAlias() {
-        assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-xxxx-yyyy-zzzz"))
+        assertThat(epssDao.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-xxxx-yyyy-zzzz"))
                 .isNull();
-        assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.NVD.name(), "CVE-MISSING"))
+        assertThat(epssDao.getEffectiveEpssForVuln(Vulnerability.Source.NVD.name(), "CVE-MISSING"))
                 .isNull();
     }
 
@@ -64,12 +82,12 @@ class EpssQueryManagerTest extends PersistenceCapableTest {
         linkAliases(
                 new VulnerabilityKey("CVE-100", "NVD"), Set.of(new VulnerabilityKey("GHSA-aaaa-bbbb-cccc", "GITHUB")));
 
-        assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-aaaa-bbbb-cccc"))
+        assertThat(epssDao.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-aaaa-bbbb-cccc"))
                 .isNotNull()
                 .satisfies(e -> {
-                    assertThat(e.getCve()).isEqualTo("CVE-100");
-                    assertThat(e.getScore()).isEqualByComparingTo("0.42");
-                    assertThat(e.getPercentile()).isEqualByComparingTo("0.88");
+                    assertThat(e.cve()).isEqualTo("CVE-100");
+                    assertThat(e.score()).isEqualByComparingTo("0.42");
+                    assertThat(e.percentile()).isEqualByComparingTo("0.88");
                 });
     }
 
@@ -85,11 +103,11 @@ class EpssQueryManagerTest extends PersistenceCapableTest {
                         new VulnerabilityKey("CVE-202", "NVD"),
                         new VulnerabilityKey("GHSA-multi-cve-test", "GITHUB")));
 
-        assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-multi-cve-test"))
+        assertThat(epssDao.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-multi-cve-test"))
                 .isNotNull()
                 .satisfies(e -> {
-                    assertThat(e.getCve()).isEqualTo("CVE-201");
-                    assertThat(e.getScore()).isEqualByComparingTo("0.90");
+                    assertThat(e.cve()).isEqualTo("CVE-201");
+                    assertThat(e.score()).isEqualByComparingTo("0.90");
                 });
     }
 
@@ -105,9 +123,9 @@ class EpssQueryManagerTest extends PersistenceCapableTest {
                         new VulnerabilityKey("CVE-303", "NVD"),
                         new VulnerabilityKey("GHSA-tie-test", "GITHUB")));
 
-        assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-tie-test"))
+        assertThat(epssDao.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-tie-test"))
                 .isNotNull()
-                .satisfies(e -> assertThat(e.getCve()).isEqualTo("CVE-302"));
+                .satisfies(e -> assertThat(e.cve()).isEqualTo("CVE-302"));
     }
 
     @Test
@@ -116,21 +134,21 @@ class EpssQueryManagerTest extends PersistenceCapableTest {
         persistEpss("CVE-401", "0.20", "0.20");
         linkAliases(new VulnerabilityKey("CVE-401", "NVD"), Set.of(new VulnerabilityKey("GHSA-batch-test", "GITHUB")));
 
-        final var result = qm.getEffectiveEpssForVulns(List.of(
+        final var result = epssDao.getEffectiveEpssForVulns(List.of(
                 new VulnerabilityKey("CVE-400", "NVD"),
                 new VulnerabilityKey("GHSA-batch-test", "GITHUB"),
                 new VulnerabilityKey("GHSA-missing", "GITHUB")));
 
         assertThat(result).hasSize(2);
         assertThat(result.get(new VulnerabilityKey("CVE-400", "NVD")))
-                .satisfies(e -> assertThat(e.getScore()).isEqualByComparingTo("0.10"));
+                .satisfies(e -> assertThat(e.score()).isEqualByComparingTo("0.10"));
         assertThat(result.get(new VulnerabilityKey("GHSA-batch-test", "GITHUB")))
-                .satisfies(e -> assertThat(e.getCve()).isEqualTo("CVE-401"));
+                .satisfies(e -> assertThat(e.cve()).isEqualTo("CVE-401"));
     }
 
     @Test
     void shouldReturnEmptyMapForEmptyBatch() {
-        assertThat(qm.getEffectiveEpssForVulns(List.of())).isEmpty();
+        assertThat(epssDao.getEffectiveEpssForVulns(List.of())).isEmpty();
     }
 
     private void persistEpss(final String cve, final String score, final String percentile) {

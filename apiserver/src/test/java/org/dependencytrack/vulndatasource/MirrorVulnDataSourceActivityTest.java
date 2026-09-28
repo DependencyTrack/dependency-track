@@ -32,12 +32,16 @@ import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
+import org.dependencytrack.support.net.OutboundConnectionDeniedException;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
+import org.jdbi.v3.core.mapper.reflect.BeanMapper;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
 import java.util.List;
 import java.util.function.Supplier;
@@ -49,6 +53,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.ProtobufTestUtil.generateBomFromJson;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -74,6 +79,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnDataSource.class));
         pluginManager.loadPlugins(List.of(() -> List.copyOf(factories)));
         return pluginManager;
@@ -87,6 +93,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnDataSource.class));
         pluginManager.loadPlugins(List.of());
 
@@ -108,6 +115,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnDataSource.class));
         pluginManager.loadPlugins(List.of(() -> List.of(new DisabledVulnDataSourceFactory("nvd"))));
 
@@ -132,6 +140,26 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
 
         assertThatExceptionOfType(TerminalApplicationFailureException.class)
                 .isThrownBy(() -> activity.execute(mock(ActivityContext.class), arg));
+    }
+
+    @Test
+    void shouldFailTerminallyWhenOutboundConnectionDenied() {
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doThrow(new UncheckedIOException(
+                        new OutboundConnectionDeniedException("Connections to osv.invalid are not allowed")))
+                .when(dataSourceMock)
+                .hasNext();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("osv", dataSourceMock));
+
+        assertThatExceptionOfType(TerminalApplicationFailureException.class)
+                .isThrownBy(() -> activity.execute(
+                        mock(ActivityContext.class),
+                        MirrorVulnDataSourceArg.newBuilder()
+                                .setDataSourceName("osv")
+                                .setSourceName("OSV")
+                                .build()))
+                .withRootCauseInstanceOf(OutboundConnectionDeniedException.class);
     }
 
     @Test
@@ -1642,8 +1670,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                         .build());
 
         Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
-        List<AffectedVersionAttribution> attributions =
-                qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        List<AffectedVersionAttribution> attributions = getAffectedVersionAttributions(vuln);
         assertThat(attributions).hasSize(1);
         final long attributionId = attributions.getFirst().getId();
 
@@ -1655,7 +1682,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                         .build());
 
         vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
-        attributions = qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        attributions = getAffectedVersionAttributions(vuln);
         assertThat(attributions)
                 .satisfiesExactly(attribution -> assertThat(attribution.getId()).isEqualTo(attributionId));
     }
@@ -1700,8 +1727,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                         .build());
 
         Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
-        List<AffectedVersionAttribution> attributions =
-                qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        List<AffectedVersionAttribution> attributions = getAffectedVersionAttributions(vuln);
         assertThat(attributions).hasSize(1);
         final long attributionId = attributions.getFirst().getId();
 
@@ -1722,7 +1748,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                         .build());
 
         vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
-        attributions = qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        attributions = getAffectedVersionAttributions(vuln);
         assertThat(attributions).hasSize(1);
         assertThat(attributions.getFirst().getId()).isEqualTo(attributionId);
     }
@@ -1777,7 +1803,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
 
         final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
         assertThat(vuln.getVulnerableSoftware()).hasSize(1);
-        assertThat(qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware()))
+        assertThat(getAffectedVersionAttributions(vuln))
                 .satisfiesExactly(
                         attribution -> assertThat(attribution.getSource()).isEqualTo(Vulnerability.Source.NVD));
     }
@@ -1832,7 +1858,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
 
         final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
         assertThat(vuln.getVulnerableSoftware()).hasSize(1);
-        assertThat(qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware()))
+        assertThat(getAffectedVersionAttributions(vuln))
                 .extracting(AffectedVersionAttribution::getSource)
                 .containsExactlyInAnyOrder(Vulnerability.Source.GITHUB, Vulnerability.Source.NVD);
     }
@@ -1959,7 +1985,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
 
         final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
         assertThat(vuln.getVulnerableSoftware()).hasSize(1);
-        assertThat(qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware()))
+        assertThat(getAffectedVersionAttributions(vuln))
                 .extracting(AffectedVersionAttribution::getSource)
                 .containsExactly(Vulnerability.Source.GITHUB);
     }
@@ -2079,8 +2105,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         assertThat(vuln.getVulnerableSoftware())
                 .extracting(VulnerableSoftware::getVersion)
                 .containsExactlyInAnyOrder("1.0.0", "2.0.0");
-        assertThat(qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware()))
-                .hasSize(2);
+        assertThat(getAffectedVersionAttributions(vuln)).hasSize(2);
     }
 
     private static class TestVulnDataSourceFactory implements VulnDataSourceFactory {
@@ -2180,5 +2205,24 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         public @NonNull VulnDataSource create() {
             throw new UnsupportedOperationException();
         }
+    }
+
+    private static List<AffectedVersionAttribution> getAffectedVersionAttributions(Vulnerability vuln) {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT ava."ID"
+                             , ava."SOURCE"
+                             , ava."FIRST_SEEN"
+                          FROM "AFFECTEDVERSIONATTRIBUTION" AS ava
+                         WHERE ava."VULNERABILITY" = :vulnId
+                           AND EXISTS(
+                             SELECT 1
+                               FROM "VULNERABLESOFTWARE_VULNERABILITIES" AS vsv
+                              WHERE vsv."VULNERABILITY_ID" = ava."VULNERABILITY"
+                                AND vsv."VULNERABLESOFTWARE_ID" = ava."VULNERABLE_SOFTWARE"
+                           )
+                        """)
+                .bind("vulnId", vuln.getId())
+                .map(BeanMapper.of(AffectedVersionAttribution.class))
+                .list());
     }
 }

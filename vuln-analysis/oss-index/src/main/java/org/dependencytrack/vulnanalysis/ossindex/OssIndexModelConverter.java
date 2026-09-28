@@ -33,6 +33,7 @@ import org.metaeffekt.core.security.cvss.v4P0.Cvss4P0;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,7 +58,7 @@ final class OssIndexModelConverter {
     static Vulnerability.Builder convert(ComponentReportVulnerability reportedVuln, boolean includeAliases) {
         final var vulnBuilder = Vulnerability.newBuilder().setId(reportedVuln.id());
 
-        if (reportedVuln.id().toLowerCase().startsWith("cve-")) {
+        if (reportedVuln.id().toLowerCase(Locale.ROOT).startsWith("cve-")) {
             vulnBuilder.setSource(SOURCE_NVD);
         } else {
             vulnBuilder.setSource(SOURCE_OSSINDEX);

@@ -355,6 +355,12 @@ final class WorkflowRunState {
                 final int createdEventId = event.getTimerElapsed().getTimerCreatedEventId();
                 pendingTimerCreatedEventIds.remove(createdEventId);
             }
+            case WORKFLOW_TASK_STARTED,
+                    WORKFLOW_TASK_COMPLETED,
+                    RUN_CANCELED,
+                    SIDE_EFFECT_EXECUTED,
+                    EXTERNAL_EVENT_RECEIVED,
+                    SUBJECT_NOT_SET -> {}
         }
 
         if (isNew) {

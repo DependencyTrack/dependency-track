@@ -59,6 +59,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
@@ -111,7 +112,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
     }
 
     @Override
-    public @Nullable Void execute(ActivityContext ctx, @Nullable ReconcileVulnAnalysisResultsArg arg) throws Exception {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable ReconcileVulnAnalysisResultsArg arg)
+            throws IOException, InterruptedException {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }

@@ -28,6 +28,7 @@ import org.dependencytrack.api.v2.model.PackageMetadata;
 import org.dependencytrack.api.v2.model.Scope;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Project;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -61,7 +62,7 @@ public class ModelMapper {
                 .build();
     }
 
-    public static ComponentProject mapProject(org.dependencytrack.model.Project project) {
+    public static ComponentProject mapProject(Project project) {
         if (project == null) {
             return null;
         }

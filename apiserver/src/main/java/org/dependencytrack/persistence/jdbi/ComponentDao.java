@@ -26,6 +26,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.jdbi.mapping.OptionalColumnRowMapper.Columns;
 import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
 import org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -54,8 +55,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.hasColumn;
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
 import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 
 public interface ComponentDao extends SqlObject, PaginationSupport {
@@ -608,37 +607,48 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         private final RowMapper<Component> componentRowMapper = BeanMapper.of(Component.class);
 
         @Override
+        public RowMapper<ListedComponent> specialize(ResultSet rs, StatementContext ctx) throws SQLException {
+            final RowMapper<Component> beanMapper = componentRowMapper.specialize(rs, ctx);
+            final var columns = Columns.of(rs);
+            return (r, c) -> map(r, c, beanMapper, columns);
+        }
+
+        @Override
         public ListedComponent map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-            final Component component = componentRowMapper.map(rs, ctx);
-            if (hasColumn(rs, "projectUuid") && rs.getString("projectUuid") != null) {
+            return specialize(rs, ctx).map(rs, ctx);
+        }
+
+        private static ListedComponent map(
+                ResultSet rs, StatementContext ctx, RowMapper<Component> beanMapper, Columns columns)
+                throws SQLException {
+            final Component component = beanMapper.map(rs, ctx);
+            if (columns.contains("projectUuid") && rs.getString("projectUuid") != null) {
                 final var project = new Project();
                 project.setUuid(UUID.fromString(rs.getString("projectUuid")));
-                maybeSet(rs, "projectName", ResultSet::getString, project::setName);
-                maybeSet(rs, "projectVersion", ResultSet::getString, project::setVersion);
+                columns.maybeSet(rs, "projectName", ResultSet::getString, project::setName);
+                columns.maybeSet(rs, "projectVersion", ResultSet::getString, project::setVersion);
                 component.setProject(project);
             }
-            maybeSet(rs, "PURL", ResultSet::getString, component::setPurl);
+            columns.maybeSet(rs, "PURL", ResultSet::getString, component::setPurl);
             if (rs.getString("LAST_RISKSCORE") != null) {
-                maybeSet(rs, "LAST_RISKSCORE", ResultSet::getDouble, component::setLastInheritedRiskScore);
+                columns.maybeSet(rs, "LAST_RISKSCORE", ResultSet::getDouble, component::setLastInheritedRiskScore);
             }
-            maybeSet(rs, "componentLicenseName", ResultSet::getString, component::setLicense);
-            maybeSet(rs, "licenseExpression", ResultSet::getString, component::setLicenseExpression);
-            maybeSet(rs, "licenseUrl", ResultSet::getString, component::setLicenseUrl);
-            if (hasColumn(rs, "licenseUuid") && rs.getString("licenseUuid") != null) {
+            columns.maybeSet(rs, "componentLicenseName", ResultSet::getString, component::setLicense);
+            columns.maybeSet(rs, "licenseExpression", ResultSet::getString, component::setLicenseExpression);
+            columns.maybeSet(rs, "licenseUrl", ResultSet::getString, component::setLicenseUrl);
+            if (columns.contains("licenseUuid") && rs.getString("licenseUuid") != null) {
                 final var license = new License();
                 license.setUuid(UUID.fromString(rs.getString("licenseUuid")));
-                maybeSet(rs, "licenseId", ResultSet::getString, license::setLicenseId);
-                maybeSet(rs, "licenseName", ResultSet::getString, license::setName);
-                maybeSet(rs, "isCustomLicense", ResultSet::getBoolean, license::setCustomLicense);
-                maybeSet(rs, "isFsfLibre", ResultSet::getBoolean, license::setFsfLibre);
-                maybeSet(rs, "isOsiApproved", ResultSet::getBoolean, license::setOsiApproved);
+                columns.maybeSet(rs, "licenseId", ResultSet::getString, license::setLicenseId);
+                columns.maybeSet(rs, "licenseName", ResultSet::getString, license::setName);
+                columns.maybeSet(rs, "isCustomLicense", ResultSet::getBoolean, license::setCustomLicense);
+                columns.maybeSet(rs, "isFsfLibre", ResultSet::getBoolean, license::setFsfLibre);
+                columns.maybeSet(rs, "isOsiApproved", ResultSet::getBoolean, license::setOsiApproved);
                 component.setResolvedLicense(license);
             }
-            if (hasColumn(rs, "occurrenceCount")) {
-                maybeSet(rs, "occurrenceCount", ResultSet::getLong, component::setOccurrenceCount);
-            }
+            columns.maybeSet(rs, "occurrenceCount", ResultSet::getLong, component::setOccurrenceCount);
             Long publishedAtMicros = null;
-            if (hasColumn(rs, "artifactPublishedAtMicros")) {
+            if (columns.contains("artifactPublishedAtMicros")) {
                 final long value = rs.getLong("artifactPublishedAtMicros");
                 if (!rs.wasNull()) {
                     publishedAtMicros = value;

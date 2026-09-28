@@ -22,8 +22,11 @@ import com.google.protobuf.Timestamp;
 import io.github.nscuro.versatile.Vers;
 import org.cyclonedx.proto.v1_7.Advisory;
 import org.cyclonedx.proto.v1_7.Bom;
+import org.cyclonedx.proto.v1_7.OrganizationalContact;
+import org.cyclonedx.proto.v1_7.OrganizationalEntity;
 import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.Source;
+import org.cyclonedx.proto.v1_7.VulnerabilityCredits;
 import org.cyclonedx.proto.v1_7.VulnerabilityRating;
 import org.cyclonedx.proto.v1_7.VulnerabilityReference;
 import org.dependencytrack.model.Severity;
@@ -67,6 +70,13 @@ class BovModelConverterTest {
                         .setUpdated(Timestamp.newBuilder().setSeconds(1675645200)) // 2023-02-06
                         .setRejected(Timestamp.newBuilder().setSeconds(1675645200)) // 2023-02-06
                         .addAllCwes(List.of(20, 400, 502, 917, 9999999)) // 9999999 is invalid
+                        .setCredits(VulnerabilityCredits.newBuilder()
+                                .addIndividuals(
+                                        OrganizationalContact.newBuilder().setName("Jane Doe"))
+                                .addIndividuals(
+                                        OrganizationalContact.newBuilder().setEmail("anon@example.com"))
+                                .addOrganizations(
+                                        OrganizationalEntity.newBuilder().setName("Acme Corp")))
                         .addAdvisories(Advisory.newBuilder()
                                 .setUrl("https://logging.apache.org/log4j/2.x/security.html")
                                 .build())
@@ -113,6 +123,7 @@ class BovModelConverterTest {
         assertThat(vuln.getPublished()).isInSameDayAs("2021-12-10");
         assertThat(vuln.getUpdated()).isInSameDayAs("2023-02-06");
         assertThat(vuln.getRejected()).isInSameDayAs("2023-02-06");
+        assertThat(vuln.getCredits()).isEqualTo("Jane Doe, Acme Corp");
         assertThat(vuln.getReferences()).isEqualToIgnoringWhitespace("""
                 * [https://logging.apache.org/log4j/2.x/security.html](https://logging.apache.org/log4j/2.x/security.html)\s
                 * [https://support.apple.com/kb/HT213189](https://support.apple.com/kb/HT213189)

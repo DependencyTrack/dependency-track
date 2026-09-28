@@ -106,6 +106,7 @@ import java.util.stream.Stream;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_CREATED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
@@ -2301,7 +2302,7 @@ class ProjectResourceTest extends ResourceTest {
                 ]
                 """);
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification).isNotNull();
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_CREATED);

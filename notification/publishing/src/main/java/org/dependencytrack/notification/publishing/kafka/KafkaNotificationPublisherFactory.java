@@ -35,21 +35,20 @@ import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
+import org.dependencytrack.support.net.OutboundConnectionDeniedException;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.kafka.clients.CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG;
@@ -81,7 +80,7 @@ public final class KafkaNotificationPublisherFactory
     private final Lock producerCacheLock = new ReentrantLock();
     private @Nullable ConfigRegistry configRegistry;
     private @Nullable CachedProducer cachedProducer;
-    private boolean localConnectionsAllowed;
+    private @Nullable OutboundConnectionPolicy outboundConnectionPolicy;
 
     @Override
     public String extensionName() {
@@ -101,10 +100,7 @@ public final class KafkaNotificationPublisherFactory
     @Override
     public void init(ExtensionContext context) {
         configRegistry = context.configRegistry();
-        localConnectionsAllowed = configRegistry
-                .getDeploymentConfig()
-                .getOptionalValue("allow-local-connections", boolean.class)
-                .orElse(false);
+        outboundConnectionPolicy = context.outboundConnectionPolicy();
     }
 
     @Override
@@ -117,15 +113,10 @@ public final class KafkaNotificationPublisherFactory
             throw new IllegalStateException("Publisher is disabled");
         }
 
-        if (!localConnectionsAllowed) {
-            final Set<String> brokerHosts = extractBrokerHosts(globalConfig);
-            for (final var brokerHost : brokerHosts) {
-                if (isLocalHost(brokerHost)) {
-                    throw new IllegalStateException("""
-                            Bootstrap server '%s' resolves to a local address, \
-                            but local connections are not allowed""".formatted(brokerHost));
-                }
-            }
+        try {
+            requireAllowedBrokerHosts(globalConfig);
+        } catch (OutboundConnectionDeniedException e) {
+            throw new IllegalStateException(e.getMessage(), e);
         }
 
         final KafkaProducer<String, byte[]> kafkaProducer = getKafkaProducer(globalConfig);
@@ -170,15 +161,10 @@ public final class KafkaNotificationPublisherFactory
 
         final var testResult = ExtensionTestResult.ofChecks("connection");
 
-        if (!localConnectionsAllowed) {
-            final Set<String> brokerHosts = extractBrokerHosts(config);
-            for (final var brokerHost : brokerHosts) {
-                if (isLocalHost(brokerHost)) {
-                    return testResult.fail("connection", """
-                            Bootstrap server '%s' resolves to a local address, \
-                            but local connections are not allowed""".formatted(brokerHost));
-                }
-            }
+        try {
+            requireAllowedBrokerHosts(config);
+        } catch (OutboundConnectionDeniedException e) {
+            return testResult.fail("connection", e.getMessage());
         }
 
         final ProducerConfig producerConfig = createProducerConfig(config);
@@ -281,22 +267,26 @@ public final class KafkaNotificationPublisherFactory
         return new ProducerConfig(props);
     }
 
-    private Set<String> extractBrokerHosts(KafkaNotificationPublisherGlobalConfigV1 config) {
-        return config.getBootstrapServers().stream()
-                .map(address -> address.split(":", 2)[0])
-                .collect(Collectors.toSet());
+    private void requireAllowedBrokerHosts(KafkaNotificationPublisherGlobalConfigV1 config)
+            throws OutboundConnectionDeniedException {
+        requireNonNull(outboundConnectionPolicy, "outboundConnectionPolicy must not be null");
+
+        for (final String bootstrapServer : config.getBootstrapServers()) {
+            try {
+                outboundConnectionPolicy.requireAllowed(hostOf(bootstrapServer));
+            } catch (UnknownHostException _) {
+                // Let the actual connection logic handle this.
+            }
+        }
     }
 
-    private boolean isLocalHost(String hostname) {
-        try {
-            InetAddress hostAddress = InetAddress.getByName(hostname);
-            return hostAddress.isLoopbackAddress()
-                    || hostAddress.isLinkLocalAddress()
-                    || hostAddress.isSiteLocalAddress()
-                    || hostAddress.isAnyLocalAddress();
-        } catch (UnknownHostException e) {
-            // Let the actual connection logic handle this.
-            return false;
+    private static String hostOf(String bootstrapServer) {
+        // IPv6 addresses use brackets, e.g. [::1]:9092.
+        if (bootstrapServer.startsWith("[")) {
+            final int closingBracketIndex = bootstrapServer.indexOf(']');
+            return closingBracketIndex < 0 ? bootstrapServer : bootstrapServer.substring(1, closingBracketIndex);
         }
+
+        return bootstrapServer.split(":", 2)[0];
     }
 }

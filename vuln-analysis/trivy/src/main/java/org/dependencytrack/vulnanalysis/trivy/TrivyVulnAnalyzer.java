@@ -44,6 +44,7 @@ import trivy.proto.scanner.v1.ScanResponse;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -281,6 +282,8 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
         } finally {
             try {
                 deleteBlobs(putBlobRequest);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
                 LOGGER.warn("Failed to delete blob {}", diffId, e);
             }
@@ -330,7 +333,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
 
     private byte[] sendProtobufRequest(String url, byte[] body) throws InterruptedException {
         final HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(java.net.URI.create(url))
+                .uri(URI.create(url))
                 .header("Accept", "application/protobuf")
                 .header("Content-Type", "application/protobuf")
                 .timeout(Duration.ofSeconds(30))

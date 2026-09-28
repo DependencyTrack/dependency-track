@@ -48,6 +48,7 @@ import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolu
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataActivityArg;
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataWorkflowArg;
 import org.dependencytrack.secret.TestSecretManager;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,6 +90,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(PackageMetadataResolver.class));
         pluginManager.loadPlugins(List.of(mockPlugin));
 

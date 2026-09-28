@@ -508,7 +508,7 @@ public final class CachingHttpClient {
 
         final Long maxAgeSeconds = effectiveMaxAgeSeconds(cacheControl, previousEntry);
         final long capped =
-                maxAgeSeconds != null ? Math.min(maxAgeSeconds, freshnessCap.getSeconds()) : freshnessCap.getSeconds();
+                maxAgeSeconds != null ? Math.min(maxAgeSeconds, freshnessCap.toSeconds()) : freshnessCap.toSeconds();
         return clock.instant().plusSeconds(capped);
     }
 

@@ -113,7 +113,7 @@ class DaoArchitectureTest {
                 public void check(JavaClass mapperClass, ConditionEvents events) {
                     for (JavaType iface : mapperClass.getInterfaces()) {
                         if (iface instanceof final JavaParameterizedType paramType
-                                && paramType.toErasure().isEquivalentTo(org.jdbi.v3.core.mapper.RowMapper.class)) {
+                                && paramType.toErasure().isAssignableTo(org.jdbi.v3.core.mapper.RowMapper.class)) {
                             for (JavaType arg : paramType.getActualTypeArguments()) {
                                 if (arg instanceof final JavaClass targetClass && isModelClass(targetClass)) {
                                     events.add(SimpleConditionEvent.violated(

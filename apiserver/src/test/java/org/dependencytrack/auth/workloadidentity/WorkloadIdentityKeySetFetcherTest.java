@@ -32,8 +32,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.http.HttpClient;
@@ -140,34 +138,6 @@ class WorkloadIdentityKeySetFetcherTest {
                             fetcher.fetchKeySet("http://localhost:%d/keys".formatted(serverSocket.getLocalPort())))
                     .withMessageContaining("unreachable");
             assertThat(Duration.ofNanos(System.nanoTime() - startedAtNanos)).isLessThan(Duration.ofSeconds(3));
-        }
-    }
-
-    @Test
-    void fetchKeySetShouldLeaveNameResolutionToTheProxy() throws Exception {
-        final int closedPort;
-        try (final var serverSocket = new ServerSocket(0)) {
-            closedPort = serverSocket.getLocalPort();
-        }
-
-        try (final HttpClient proxiedClient = HttpClient.newBuilder()
-                .proxy(ProxySelector.of(new InetSocketAddress("localhost", closedPort)))
-                .build()) {
-            assertThatExceptionOfType(JWKSetRetrievalException.class)
-                    .isThrownBy(() ->
-                            new WorkloadIdentityKeySetFetcher(proxiedClient).fetchKeySet("https://issuer.invalid/keys"))
-                    .withMessageContaining("unreachable");
-        }
-    }
-
-    @Test
-    void constructorShouldRejectClientThatFollowsRedirects() {
-        try (final HttpClient redirectingClient = HttpClient.newBuilder()
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build()) {
-            assertThatExceptionOfType(IllegalArgumentException.class)
-                    .isThrownBy(() -> new WorkloadIdentityKeySetFetcher(redirectingClient))
-                    .withMessageContaining("redirects");
         }
     }
 

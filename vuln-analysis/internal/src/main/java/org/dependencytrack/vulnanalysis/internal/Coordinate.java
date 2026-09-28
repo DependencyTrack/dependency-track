@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 import us.springett.parsers.cpe.Cpe;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
@@ -56,8 +57,8 @@ sealed interface Coordinate {
         if (cpe != null) {
             coordinates.add(new Coordinate.CpeCoordinate(
                     cpe.getPart().getAbbreviation(),
-                    cpe.getVendor().toLowerCase(),
-                    cpe.getProduct().toLowerCase()));
+                    cpe.getVendor().toLowerCase(Locale.ROOT),
+                    cpe.getProduct().toLowerCase(Locale.ROOT)));
         }
 
         final PackageURL purl = component.parsedPurl();

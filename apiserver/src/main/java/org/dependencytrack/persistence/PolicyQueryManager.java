@@ -635,7 +635,7 @@ final class PolicyQueryManager extends QueryManager {
                                     OR LOWER(COALESCE(l."LICENSEID", '')) LIKE :licensePattern
                                     OR LOWER(COALESCE(l."NAME", '')) LIKE :licensePattern
                                 """)
-                                .bind("licensePattern", "%" + input.toLowerCase() + "%")
+                                .bind("licensePattern", "%" + input.toLowerCase(Locale.ROOT) + "%")
                                 .mapTo(Long.class)
                                 .list());
 

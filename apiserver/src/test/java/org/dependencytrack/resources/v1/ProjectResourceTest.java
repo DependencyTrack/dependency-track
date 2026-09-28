@@ -141,6 +141,21 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void getProjectsWithMalformedPurlTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setPurl("pkg:pypi/%0@latest");
+        qm.persist(project);
+
+        Response response =
+                jersey.target(V1_PROJECT).request().header(X_API_KEY, apiKey).get(Response.class);
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonArray json = parseJsonArray(response);
+        Assertions.assertEquals("pkg:pypi/%0@latest", json.getJsonObject(0).getString("purl"));
+    }
+
+    @Test
     void shouldSortProjectListByVersion() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 

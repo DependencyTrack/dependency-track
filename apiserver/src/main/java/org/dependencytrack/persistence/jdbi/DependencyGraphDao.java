@@ -19,7 +19,6 @@
 package org.dependencytrack.persistence.jdbi;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.github.packageurl.PackageURL;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -169,8 +168,8 @@ public interface DependencyGraphDao extends SqlObject {
             UUID uuid,
             String name,
             @Nullable String version,
-            @Nullable PackageURL purl,
-            @Nullable PackageURL purlCoordinates,
+            @Nullable String purl,
+            @Nullable String purlCoordinates,
             @Json @Nullable List<DirectDependency> directDependencies) {
 
         Set<UUID> directDependencyUuids() {
@@ -186,8 +185,8 @@ public interface DependencyGraphDao extends SqlObject {
             UUID uuid,
             String name,
             @Nullable String version,
-            @Nullable PackageURL purl,
-            @Nullable PackageURL purlCoordinates,
+            @Nullable String purl,
+            @Nullable String purlCoordinates,
             @Nullable Set<UUID> directDependencyUuids,
             boolean onSearchPath) {}
 }

@@ -19,7 +19,6 @@
 package org.dependencytrack.persistence.jdbi;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.github.packageurl.PackageURL;
 import com.google.errorprone.annotations.CompileTimeConstant;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.Page.TotalCount;
@@ -458,7 +457,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Nullable Classifier classifier,
             @Nullable String description,
             @Nullable String publisher,
-            @Nullable PackageURL purl,
+            @Nullable String purl,
             @Nullable String swidTagId,
             @Nullable String cpe,
             @Nullable String directDependencies,

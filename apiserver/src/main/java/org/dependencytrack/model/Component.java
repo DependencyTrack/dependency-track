@@ -35,6 +35,7 @@ import org.dependencytrack.model.validation.ValidSpdxExpression;
 import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
+import org.jdbi.v3.core.annotation.JdbiProperty;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -738,6 +739,7 @@ public class Component implements Serializable {
         }
     }
 
+    @JdbiProperty(map = false)
     public void setPurl(PackageURL purl) {
         if (purl != null) {
             this.purl = purl.canonicalize();
@@ -748,6 +750,12 @@ public class Component implements Serializable {
 
     public void setPurl(String purl) {
         this.purl = purl;
+    }
+
+    /// @since 5.2.0
+    @JsonIgnore
+    public String getPurlAsString() {
+        return purl;
     }
 
     @JsonSerialize(using = CustomPackageURLSerializer.class)
@@ -763,6 +771,7 @@ public class Component implements Serializable {
         }
     }
 
+    @JdbiProperty(map = false)
     public void setPurlCoordinates(PackageURL purlCoordinates) {
         if (purlCoordinates != null) {
             this.purlCoordinates = purlCoordinates.canonicalize();

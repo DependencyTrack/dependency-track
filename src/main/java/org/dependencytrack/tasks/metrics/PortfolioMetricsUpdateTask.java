@@ -146,10 +146,8 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                     counters.policyViolationsOperationalUnaudited += metrics.getPolicyViolationsOperationalUnaudited();
                 }
 
-                // Remove projects and project metrics from the L1 cache
-                // to prevent it from growing too large.
-                pm.evictAll(false, Project.class);
-                pm.evictAll(false, ProjectMetrics.class);
+                // Clear the L1 cache to prevent it from growing too large.
+                pm.evictAll();
 
                 LOGGER.debug("Fetching next " + BATCH_SIZE + " projects");
                 activeProjects = fetchNextActiveProjectsBatch(pm, lastId);

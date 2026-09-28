@@ -174,10 +174,8 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                     counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
                 }
 
-                // Remove components from the L1 cache to prevent it from growing too large.
-                // Note that because ComponentMetricsUpdateTask uses its own QueryManager,
-                // component metrics objects are not in this L1 cache.
-                pm.evictAll(false, Component.class);
+                // Clear the L1 cache to prevent it from growing too large.
+                pm.evictAll();
 
             LOGGER.debug("Fetching next components page for project " + uuid);
             components = fetchNextComponentsPage(pm, project, lastId);

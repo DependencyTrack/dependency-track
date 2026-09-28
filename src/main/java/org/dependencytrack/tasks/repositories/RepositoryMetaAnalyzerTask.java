@@ -115,11 +115,8 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                             analyze(qm, component);
                         }
 
-                        // Remove components, analysis cache, and meta components from
-                        // the L1 cache to prevent it from growing too large.
-                        qm.getPersistenceManager().evictAll(false, Component.class);
-                        qm.getPersistenceManager().evictAll(false, ComponentAnalysisCache.class);
-                        qm.getPersistenceManager().evictAll(false, RepositoryMetaComponent.class);
+                        // Clear the L1 cache to prevent it from growing too large.
+                        qm.getPersistenceManager().evictAll();
 
                         components = fetchNextComponentBatch(qm, lastId);
                     }

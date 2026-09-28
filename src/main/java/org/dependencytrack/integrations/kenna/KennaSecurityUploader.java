@@ -112,7 +112,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                 }
             }
 
-            qm.getPersistenceManager().evictAll(false, Project.class);
+            qm.getPersistenceManager().evictAll();
             projects = fetchNextProjectBatch(qm, projects.getLast().getId());
         }
 

@@ -28,7 +28,6 @@ import org.dependencytrack.event.ScheduledNotificationDispatchEvent;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.NotificationRule;
-import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
@@ -130,12 +129,7 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
             } catch (RuntimeException e) {
                 LOGGER.warn("Failed to dispatch notification for group " + group, e);
             } finally {
-                qm.getPersistenceManager().evictAll(false, Project.class);
-                qm.getPersistenceManager().evictAll(false, Component.class);
-                qm.getPersistenceManager().evictAll(false, Policy.class);
-                qm.getPersistenceManager().evictAll(false, PolicyCondition.class);
-                qm.getPersistenceManager().evictAll(false, PolicyViolation.class);
-                qm.getPersistenceManager().evictAll(false, Vulnerability.class);
+                qm.getPersistenceManager().evictAll();
             }
         }
 

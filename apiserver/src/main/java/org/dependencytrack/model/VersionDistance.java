@@ -80,8 +80,8 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
             "^(?:(?<" + GROUP_EPOCH + ">.*):)?"
                     // Version part: at least major version (numeric), optionally minor (numeric)
                     // or patch (numeric) version. Ignore the rest.
-                    + "v?(?<" + GROUP_MAJOR + ">\\d+[a-z]*)?(?:\\.(?<" + GROUP_MINOR + ">\\d+[a-z]*))?(?:\\.(?<"
-                    + GROUP_PATCH + ">\\d+[a-z]*))?"
+                    + "v?(?<" + GROUP_MAJOR + ">\\d+)?[a-z]*(?:\\.(?<" + GROUP_MINOR + ">\\d+)?[a-z]*)?(?:\\.(?<"
+                    + GROUP_PATCH + ">\\d+)?[a-z]*)?"
                     // Build numbers, labels and build metadata.
                     + ".*$",
             Pattern.CASE_INSENSITIVE);

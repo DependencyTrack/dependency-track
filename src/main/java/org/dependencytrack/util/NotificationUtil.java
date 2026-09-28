@@ -125,7 +125,9 @@ public final class NotificationUtil {
     public static void analyzeNotificationCriteria(final QueryManager qm, Component component) {
         List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component, false);
         if (vulnerabilities != null && !vulnerabilities.isEmpty()) {
+            final Project project = qm.detach(Project.class, component.getProject().getId());
             component = qm.detach(Component.class, component.getId());
+            component.setProject(project); // Tags of project are lost after the detach above
             vulnerabilities = qm.detach(vulnerabilities);
             for (final Vulnerability vulnerability : vulnerabilities) {
                 // Because aliases is a transient field, it's lost when detaching the vulnerability.

@@ -19,6 +19,7 @@
 package org.dependencytrack.model;
 
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

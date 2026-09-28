@@ -32,12 +32,8 @@ import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.testing.WorkflowTestExtension;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.PackageMetadataResolutionStatus;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataResolutionDao;
 import org.dependencytrack.pkgmetadata.resolution.api.HashAlgorithm;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
@@ -412,7 +408,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
     void shouldPassPriorArtifactMetadataToResolverWhenAvailable() {
         useJdbiTransaction(handle -> {
             new PackageMetadataDao(handle)
-                    .upsertAll(List.of(new org.dependencytrack.model.PackageMetadata(
+                    .upsertAll(List.of(new org.dependencytrack.pkgmetadata.PackageMetadata(
                             parsePurl("pkg:maven/org.acme/foo"),
                             "1.0",
                             Instant.parse("2024-06-15T12:00:00Z"),
@@ -420,7 +416,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
                             null,
                             "mock")));
             new PackageArtifactMetadataDao(handle)
-                    .upsertAll(List.of(new org.dependencytrack.model.PackageArtifactMetadata(
+                    .upsertAll(List.of(new org.dependencytrack.pkgmetadata.PackageArtifactMetadata(
                             parsePurl("pkg:maven/org.acme/foo@1.0"),
                             parsePurl("pkg:maven/org.acme/foo"),
                             null,

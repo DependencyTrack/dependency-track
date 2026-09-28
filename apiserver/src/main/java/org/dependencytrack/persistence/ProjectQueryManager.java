@@ -27,12 +27,12 @@ import alpine.model.auth.UserType;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.Tag;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

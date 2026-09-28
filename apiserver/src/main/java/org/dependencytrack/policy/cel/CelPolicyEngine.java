@@ -29,7 +29,7 @@ import org.dependencytrack.model.PolicyCondition.Subject;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.notification.JdbiNotificationEmitter;
 import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.persistence.jdbi.NotificationSubjectDao;
+import org.dependencytrack.notification.NotificationSubjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.policy.cel.CelPolicyCompiler.CacheMode;
 import org.dependencytrack.policy.cel.compat.CelPolicyScriptSourceBuilder;

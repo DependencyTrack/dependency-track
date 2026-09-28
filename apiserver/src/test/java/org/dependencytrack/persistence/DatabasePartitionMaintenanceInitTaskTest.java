@@ -22,7 +22,7 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.init.InitTaskContext;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
+import org.dependencytrack.metrics.MetricsDao;
 import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;

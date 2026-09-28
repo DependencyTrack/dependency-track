@@ -1,0 +1,14 @@
+org.dependencytrack.notification.ScheduledNotificationDao.getScheduledNotificationRuleByName(java.lang.String) returns model class org.dependencytrack.model.NotificationRule
+org.dependencytrack.persistence.jdbi.ComponentDao.getOccurrences(java.util.UUID) returns model class org.dependencytrack.model.ComponentOccurrence
+org.dependencytrack.persistence.jdbi.ComponentDao.listComponents(org.dependencytrack.persistence.jdbi.query.ListComponentsQuery) returns model class org.dependencytrack.model.Component
+org.dependencytrack.persistence.jdbi.ComponentDao.listProjectComponents(org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery) returns model class org.dependencytrack.model.Component
+org.dependencytrack.persistence.jdbi.ConfigPropertyDao.getOptional(java.lang.String, java.lang.String) returns model class alpine.model.ConfigProperty
+org.dependencytrack.persistence.jdbi.FindingDao.getFindings(long, boolean) returns model class org.dependencytrack.model.Finding
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getByUuid(java.util.UUID) returns model class org.dependencytrack.model.Vulnerability
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getByUuidOrVulnIdAndSource(java.util.UUID, java.lang.String, java.lang.String) returns model class org.dependencytrack.model.Vulnerability
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getByVulnIdAndSource(java.lang.String, java.lang.String) returns model class org.dependencytrack.model.Vulnerability
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getVulnerabilitiesByComponent(java.lang.Long, boolean) returns model class org.dependencytrack.model.Vulnerability
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getVulnerabilitiesByProject(long, boolean) returns model class org.dependencytrack.model.Vulnerability
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getVulnerableComponents(long, java.util.List) returns model class org.dependencytrack.model.Component
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getVulnerableSoftwareByVulnId(long) returns model class org.dependencytrack.model.VulnerableSoftware
+org.dependencytrack.policy.cel.persistence.CelPolicyDao.getApplicablePolicies(long) returns model class org.dependencytrack.model.Policy

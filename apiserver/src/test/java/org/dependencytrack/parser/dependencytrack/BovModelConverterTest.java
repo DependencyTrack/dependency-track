@@ -22,10 +22,14 @@ import com.google.protobuf.Timestamp;
 import io.github.nscuro.versatile.Vers;
 import org.cyclonedx.proto.v1_7.Advisory;
 import org.cyclonedx.proto.v1_7.Bom;
+import org.cyclonedx.proto.v1_7.OrganizationalContact;
+import org.cyclonedx.proto.v1_7.OrganizationalEntity;
 import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.Source;
+import org.cyclonedx.proto.v1_7.VulnerabilityCredits;
 import org.cyclonedx.proto.v1_7.VulnerabilityRating;
 import org.cyclonedx.proto.v1_7.VulnerabilityReference;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.junit.jupiter.api.Nested;
@@ -66,6 +70,13 @@ class BovModelConverterTest {
                         .setUpdated(Timestamp.newBuilder().setSeconds(1675645200)) // 2023-02-06
                         .setRejected(Timestamp.newBuilder().setSeconds(1675645200)) // 2023-02-06
                         .addAllCwes(List.of(20, 400, 502, 917, 9999999)) // 9999999 is invalid
+                        .setCredits(VulnerabilityCredits.newBuilder()
+                                .addIndividuals(
+                                        OrganizationalContact.newBuilder().setName("Jane Doe"))
+                                .addIndividuals(
+                                        OrganizationalContact.newBuilder().setEmail("anon@example.com"))
+                                .addOrganizations(
+                                        OrganizationalEntity.newBuilder().setName("Acme Corp")))
                         .addAdvisories(Advisory.newBuilder()
                                 .setUrl("https://logging.apache.org/log4j/2.x/security.html")
                                 .build())
@@ -112,6 +123,7 @@ class BovModelConverterTest {
         assertThat(vuln.getPublished()).isInSameDayAs("2021-12-10");
         assertThat(vuln.getUpdated()).isInSameDayAs("2023-02-06");
         assertThat(vuln.getRejected()).isInSameDayAs("2023-02-06");
+        assertThat(vuln.getCredits()).isEqualTo("Jane Doe, Acme Corp");
         assertThat(vuln.getReferences()).isEqualToIgnoringWhitespace("""
                 * [https://logging.apache.org/log4j/2.x/security.html](https://logging.apache.org/log4j/2.x/security.html)\s
                 * [https://support.apple.com/kb/HT213189](https://support.apple.com/kb/HT213189)
@@ -311,6 +323,24 @@ class BovModelConverterTest {
         assertThat(vuln.getCvssV4Vector())
                 .isEqualTo("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H/E:A");
         assertThat(vuln.getCvssV4Score()).isEqualTo("7.0");
+    }
+
+    @Test
+    public void testConvertWithRatingsWithCvssV4AndNoScore() {
+        final Bom bovInput = Bom.newBuilder()
+                .addVulnerabilities(org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
+                        .setId("GHSA-m7v2-7gxm-vc2v")
+                        .setSource(Source.newBuilder().setName("GITHUB").build())
+                        .addRatings(VulnerabilityRating.newBuilder()
+                                .setSource(Source.newBuilder().setName("GITHUB").build())
+                                .setMethod(SCORE_METHOD_CVSSV4)
+                                .setVector("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U"))
+                        .build())
+                .build();
+        final Vulnerability vuln = BovModelConverter.convert(bovInput, bovInput.getVulnerabilities(0), true);
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getCvssV4Score()).isEqualTo("8.1");
+        assertThat(vuln.getSeverity()).isEqualTo(Severity.HIGH);
     }
 
     @Nested

@@ -20,6 +20,7 @@ package org.dependencytrack.notification.api;
 
 import org.dependencytrack.notification.proto.v1.AnalysisTrigger;
 import org.dependencytrack.notification.proto.v1.Component;
+import org.dependencytrack.notification.proto.v1.NewVulnerabilitySubject;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.Project;
 import org.dependencytrack.notification.proto.v1.Vulnerability;
@@ -106,8 +107,34 @@ class NotificationFactoryTest {
                 Project.newBuilder().setName("acme-app").build(),
                 Component.newBuilder().setName("acme-lib").build(),
                 vulnerability,
-                AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD);
+                AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD,
+                "internal");
         assertThat(notification.getContent()).isEqualTo(expectedContent);
+    }
+
+    @Test
+    void createNewVulnerabilityNotificationShouldPopulateAnalyzerIdentity() throws Exception {
+        final Notification notification = createNewVulnerabilityNotification(
+                Project.newBuilder().setName("acme-app").build(),
+                Component.newBuilder().setName("acme-lib").build(),
+                Vulnerability.newBuilder().setVulnId("CVE-100").build(),
+                AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD,
+                "internal");
+
+        final NewVulnerabilitySubject subject = notification.getSubject().unpack(NewVulnerabilitySubject.class);
+        assertThat(subject.getAnalyzerIdentity()).isEqualTo("internal");
+    }
+
+    @Test
+    void createNewVulnerabilityNotificationShouldThrowWhenAnalyzerIdentityIsNull() {
+        assertThatExceptionOfType(NullPointerException.class)
+                .isThrownBy(() -> createNewVulnerabilityNotification(
+                        Project.newBuilder().setName("acme-app").build(),
+                        Component.newBuilder().setName("acme-lib").build(),
+                        Vulnerability.newBuilder().setVulnId("CVE-100").build(),
+                        AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD,
+                        null))
+                .withMessage("analyzerIdentity must not be null");
     }
 
     @ParameterizedTest

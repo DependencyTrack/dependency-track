@@ -124,6 +124,9 @@ message NewVulnerabilitySubject {
 
   // The trigger of the analysis that identified the vulnerability.
   AnalysisTrigger analysis_trigger = 7;
+
+  // Name of the analyzer that identified the vulnerability first.
+  string analyzer_identity = 8;
 }
 
 message NewVulnerableDependencySubject {
@@ -226,9 +229,6 @@ message Vulnerability {
 
   // Whether the vulnerability is known to be exploited.
   optional bool is_kev = 21 [json_name = "isKev"];
-
-  // Name of the analyzer that identified the vulnerability first.
-  optional string analyzer_identity = 22;
 
   message Alias {
     string id = 1 [json_name = "vulnId"];

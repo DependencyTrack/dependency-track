@@ -37,6 +37,7 @@ import org.dependencytrack.dex.engine.api.DexEngineFactory;
 import org.dependencytrack.dex.engine.api.TaskType;
 import org.dependencytrack.dex.engine.api.TaskWorkerOptions;
 import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
+import org.dependencytrack.dex.listener.DataSourceMirroringNotificationEmitter;
 import org.dependencytrack.dex.listener.DelayedBomProcessedNotificationEmitter;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.kevdatasource.MirrorKevDataSourceActivity;
@@ -113,6 +114,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -357,6 +359,8 @@ public final class DexEngineInitializer implements ServletContextListener {
                 engine.registerTaskWorker(workerOptions);
             }
         }
+
+        engine.addEventListener(new DataSourceMirroringNotificationEmitter(pluginManager));
         if (config.getOptionalValue("dt.tmp.delay-bom-processed-notification", boolean.class)
                 .orElse(false)) {
             engine.addEventListener(new DelayedBomProcessedNotificationEmitter());
@@ -492,7 +496,7 @@ public final class DexEngineInitializer implements ServletContextListener {
             if (created) {
                 LOGGER.info(
                         "Created {} task queue '{}' with capacity {}",
-                        request.type().name().toLowerCase(),
+                        request.type().name().toLowerCase(Locale.ROOT),
                         request.name(),
                         request.capacity());
             }

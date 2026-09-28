@@ -111,14 +111,21 @@ final class PostgresExtractor implements SourceExtractor {
             } finally {
                 try {
                     writer.get();
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 } catch (final Exception ignore) {
                     // writer outcome is irrelevant once the reader has resolved
                 }
             }
         } finally {
             pool.shutdown();
-            if (!pool.awaitTermination(30, TimeUnit.SECONDS)) {
+            try {
+                if (!pool.awaitTermination(30, TimeUnit.SECONDS)) {
+                    pool.shutdownNow();
+                }
+            } catch (final InterruptedException e) {
                 pool.shutdownNow();
+                Thread.currentThread().interrupt();
             }
         }
     }

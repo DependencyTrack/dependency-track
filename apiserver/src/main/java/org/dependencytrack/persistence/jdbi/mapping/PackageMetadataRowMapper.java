@@ -20,44 +20,37 @@ package org.dependencytrack.persistence.jdbi.mapping;
 
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.PackageMetadata;
-import org.jdbi.v3.core.config.ConfigRegistry;
 import org.jdbi.v3.core.mapper.ColumnMapper;
-import org.jdbi.v3.core.mapper.ColumnMappers;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
-import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import static java.util.Objects.requireNonNull;
+import java.time.Instant;
 
 /**
  * @since 5.0.0
  */
-@NullMarked
 public final class PackageMetadataRowMapper implements RowMapper<PackageMetadata> {
 
-    private @Nullable ColumnMapper<PackageURL> purlColumnMapper;
-
     @Override
-    public void init(ConfigRegistry registry) {
-        purlColumnMapper =
-                registry.get(ColumnMappers.class).findFor(PackageURL.class).orElseThrow();
+    public RowMapper<PackageMetadata> specialize(ResultSet rs, StatementContext ctx) {
+        final ColumnMapper<PackageURL> purlColumnMapper =
+                ctx.findColumnMapperFor(PackageURL.class).orElseThrow();
+        final ColumnMapper<Instant> instantColumnMapper =
+                ctx.findColumnMapperFor(Instant.class).orElseThrow();
+
+        return (r, c) -> new PackageMetadata(
+                purlColumnMapper.map(r, "PURL", c),
+                r.getString("LATEST_VERSION"),
+                instantColumnMapper.map(r, "LATEST_VERSION_PUBLISHED_AT", c),
+                instantColumnMapper.map(r, "RESOLVED_AT", c),
+                r.getString("RESOLVED_FROM"),
+                r.getString("RESOLVED_BY"));
     }
 
     @Override
     public PackageMetadata map(ResultSet rs, StatementContext ctx) throws SQLException {
-        requireNonNull(purlColumnMapper);
-        final var latestVersionPublishedAt = rs.getTimestamp("LATEST_VERSION_PUBLISHED_AT");
-
-        return new PackageMetadata(
-                purlColumnMapper.map(rs, "PURL", ctx),
-                rs.getString("LATEST_VERSION"),
-                latestVersionPublishedAt != null ? latestVersionPublishedAt.toInstant() : null,
-                rs.getTimestamp("RESOLVED_AT").toInstant(),
-                rs.getString("RESOLVED_FROM"),
-                rs.getString("RESOLVED_BY"));
+        return specialize(rs, ctx).map(rs, ctx);
     }
 }

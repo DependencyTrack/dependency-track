@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.vulnanalysis.trivy;
 
+import org.cyclonedx.proto.v1_7.Advisory;
 import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.ScoreMethod;
 import org.cyclonedx.proto.v1_7.Severity;
@@ -70,8 +71,7 @@ final class TrivyModelConverter {
 
         // References as advisories
         for (final String ref : trivyVuln.getReferencesList()) {
-            vulnBuilder.addAdvisories(
-                    org.cyclonedx.proto.v1_7.Advisory.newBuilder().setUrl(ref).build());
+            vulnBuilder.addAdvisories(Advisory.newBuilder().setUrl(ref).build());
         }
 
         // Title as property

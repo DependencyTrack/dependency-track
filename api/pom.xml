@@ -62,7 +62,6 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>7.25.0</version>
                 <executions>
                     <execution>
                         <id>generate-api-v2</id>

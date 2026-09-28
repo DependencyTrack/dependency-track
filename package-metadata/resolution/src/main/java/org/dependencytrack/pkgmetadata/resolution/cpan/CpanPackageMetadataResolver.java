@@ -40,6 +40,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.EnumMap;
+import java.util.Locale;
 
 import static java.util.Objects.requireNonNull;
 
@@ -97,7 +98,7 @@ final class CpanPackageMetadataResolver implements PackageMetadataResolver {
         final var hashes = new EnumMap<HashAlgorithm, String>(HashAlgorithm.class);
         final String sha256 = root.path("checksum_sha256").asText(null);
         if (sha256 != null && HashAlgorithm.SHA256.isValid(sha256)) {
-            hashes.put(HashAlgorithm.SHA256, sha256.toLowerCase());
+            hashes.put(HashAlgorithm.SHA256, sha256.toLowerCase(Locale.ROOT));
         }
 
         if (publishedAt == null && hashes.isEmpty()) {
@@ -115,6 +116,7 @@ final class CpanPackageMetadataResolver implements PackageMetadataResolver {
                 // CPAN dates are in ISO local date-time format without timezone (UTC implied).
                 publishedAt = LocalDateTime.parse(date).toInstant(ZoneOffset.UTC);
             } catch (DateTimeParseException _) {
+                // Publish timestamps are optional, so malformed ones are ignored.
             }
         }
         return publishedAt;

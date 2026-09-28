@@ -19,26 +19,23 @@
 package org.dependencytrack.persistence.jdbi.mapping;
 
 import org.dependencytrack.notification.proto.v1.Project;
-import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
-
-public class NotificationProjectRowMapper implements RowMapper<Project> {
+public final class NotificationProjectRowMapper implements OptionalColumnRowMapper<Project> {
 
     @Override
-    public Project map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-        final Project.Builder builder = Project.newBuilder();
-        maybeSet(rs, "projectUuid", ResultSet::getString, builder::setUuid);
-        maybeSet(rs, "projectName", ResultSet::getString, builder::setName);
-        maybeSet(rs, "projectVersion", ResultSet::getString, builder::setVersion);
-        maybeSet(rs, "projectDescription", ResultSet::getString, builder::setDescription);
-        maybeSet(rs, "projectPurl", ResultSet::getString, builder::setPurl);
-        maybeSet(rs, "projectTags", RowMapperUtil::stringArray, builder::addAllTags);
-        maybeSet(rs, "isActive", ResultSet::getBoolean, builder::setIsActive);
+    public Project map(ResultSet rs, StatementContext ctx, Columns columns) throws SQLException {
+        final var builder = Project.newBuilder();
+        columns.maybeSet(rs, "projectUuid", ResultSet::getString, builder::setUuid);
+        columns.maybeSet(rs, "projectName", ResultSet::getString, builder::setName);
+        columns.maybeSet(rs, "projectVersion", ResultSet::getString, builder::setVersion);
+        columns.maybeSet(rs, "projectDescription", ResultSet::getString, builder::setDescription);
+        columns.maybeSet(rs, "projectPurl", ResultSet::getString, builder::setPurl);
+        columns.maybeSet(rs, "projectTags", RowMapperUtil::stringArray, builder::addAllTags);
+        columns.maybeSet(rs, "isActive", ResultSet::getBoolean, builder::setIsActive);
         return builder.build();
     }
 }

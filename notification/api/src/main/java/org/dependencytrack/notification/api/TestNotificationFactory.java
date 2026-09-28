@@ -47,6 +47,8 @@ import static org.dependencytrack.notification.api.NotificationFactory.createBom
 import static org.dependencytrack.notification.api.NotificationFactory.createBomProcessedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomProcessingFailedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomValidationFailedNotification;
+import static org.dependencytrack.notification.api.NotificationFactory.createDataSourceMirroringCompletedNotification;
+import static org.dependencytrack.notification.api.NotificationFactory.createDataSourceMirroringFailedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createIntegrationErrorNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createNewVulnerabilityNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createNewVulnerableDependencyNotification;
@@ -65,6 +67,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_CONSUMED
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSING_FAILED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_VALIDATION_FAILED;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_DATASOURCE_MIRRORING;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_INTEGRATION;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_POLICY_VIOLATIONS_SUMMARY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABILITIES_SUMMARY;
@@ -140,6 +143,12 @@ public final class TestNotificationFactory {
                     new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_ANALYZER, LEVEL_ERROR),
                     TestNotificationFactory::createAnalyzerErrorTestNotification),
             Map.entry(
+                    new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_DATASOURCE_MIRRORING, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createDataSourceMirroringCompletedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_DATASOURCE_MIRRORING, LEVEL_ERROR),
+                    TestNotificationFactory::createDataSourceMirroringFailedTestNotification),
+            Map.entry(
                     new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_INTEGRATION, LEVEL_ERROR),
                     TestNotificationFactory::createIntegrationErrorTestNotification),
             Map.entry(
@@ -191,13 +200,21 @@ public final class TestNotificationFactory {
         return createBomValidationFailedNotification(createProject(), List.of("cause 1", "cause 2"));
     }
 
+    public static Notification createDataSourceMirroringCompletedTestNotification() {
+        return createDataSourceMirroringCompletedNotification("vulnerability", "NVD");
+    }
+
+    public static Notification createDataSourceMirroringFailedTestNotification() {
+        return createDataSourceMirroringFailedNotification("vulnerability", "NVD");
+    }
+
     public static Notification createIntegrationErrorTestNotification() {
         return createIntegrationErrorNotification("failure");
     }
 
     public static Notification createNewVulnerabilityTestNotification() {
         return createNewVulnerabilityNotification(
-                createProject(), createComponent(), createVulnerability(), ANALYSIS_TRIGGER_BOM_UPLOAD);
+                createProject(), createComponent(), createVulnerability(), ANALYSIS_TRIGGER_BOM_UPLOAD, "internal");
     }
 
     public static Notification createNewVulnerableDependencyTestNotification() {

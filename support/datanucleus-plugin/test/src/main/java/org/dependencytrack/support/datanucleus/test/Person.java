@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.support.datanucleus.test;
 
-import javax.jdo.annotations.Extension;
-import javax.jdo.annotations.Extensions;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -35,14 +33,6 @@ public class Person {
 
     @Persistent
     private String name;
-
-    @Persistent
-    @Extensions(
-            value = {
-                @Extension(vendorName = "datanucleus", key = "insert-function", value = "(?::JSONB)"),
-                @Extension(vendorName = "datanucleus", key = "update-function", value = "(?::JSONB)")
-            })
-    private String properties;
 
     @Persistent(customValueStrategy = "uuid-v7")
     private UUID uuid;
@@ -61,14 +51,6 @@ public class Person {
 
     public void setName(final String name) {
         this.name = name;
-    }
-
-    public String getProperties() {
-        return properties;
-    }
-
-    public void setProperties(final String properties) {
-        this.properties = properties;
     }
 
     public UUID getUuid() {

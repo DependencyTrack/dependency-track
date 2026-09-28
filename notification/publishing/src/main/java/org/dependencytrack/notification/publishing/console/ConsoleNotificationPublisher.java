@@ -26,6 +26,8 @@ import org.dependencytrack.notification.proto.v1.Notification;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * @since 5.0.0
  */
@@ -45,6 +47,6 @@ final class ConsoleNotificationPublisher implements NotificationPublisher {
             throw new IllegalStateException("No template configured");
         }
 
-        outputStream.write(renderedTemplate.content().getBytes());
+        outputStream.write(renderedTemplate.content().getBytes(UTF_8));
     }
 }

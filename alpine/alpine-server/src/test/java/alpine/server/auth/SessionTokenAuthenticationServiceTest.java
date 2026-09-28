@@ -38,6 +38,7 @@ import java.security.Principal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -106,6 +107,27 @@ class SessionTokenAuthenticationServiceTest {
         final var authService = new SessionTokenAuthenticationService(request);
 
         assertThat(authService.authenticate()).isNull();
+    }
+
+    @Test
+    void shouldAuthenticateWithSessionThatOutlivesTheConfiguredTimeout() throws Exception {
+        final var config = new SmallRyeConfigBuilder()
+                .withDefaultValues(Map.of("dt.auth.session-timeout-ms", "1"))
+                .build();
+        final String rawToken;
+        try (final var qm = new AlpineQueryManager();
+             final Connection connection = DataSourceRegistry.getInstance().getDefault().getConnection()) {
+            final ManagedUser user = qm.createManagedUser("testuser", "password");
+            rawToken = new SessionTokenService(config).createSession(connection, user.getId(), Duration.ofHours(1));
+        }
+
+        Thread.sleep(50);
+
+        final var request = mock(ContainerRequest.class);
+        when(request.getRequestHeader("Authorization")).thenReturn(List.of("Bearer " + rawToken));
+        final var authService = new SessionTokenAuthenticationService(request);
+
+        assertThat(authService.authenticate()).isNotNull();
     }
 
     @Test

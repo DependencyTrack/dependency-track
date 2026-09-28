@@ -37,7 +37,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Notification outbox relay cycles per second grouped by outcome.",
       "fieldConfig": {
@@ -117,10 +117,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (outcome) (rate(dt_outbox_relay_cycles_total{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (outcome) (rate(dt_outbox_relay_cycles_total{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{outcome}}",
           "range": true,
           "refId": "A"
@@ -132,7 +132,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "End-to-end duration of a notification relay cycle.",
       "fieldConfig": {
@@ -212,10 +212,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -223,10 +223,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -234,10 +234,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_cycle_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -249,7 +249,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Time spent polling pending notifications from the outbox table.",
       "fieldConfig": {
@@ -329,10 +329,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -340,10 +340,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -351,10 +351,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_poll_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -366,7 +366,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Time spent submitting routed notifications to the DEX engine.",
       "fieldConfig": {
@@ -446,10 +446,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -457,10 +457,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -468,10 +468,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_outbox_relay_send_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -483,7 +483,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Notifications successfully sent per second grouped by level and group.",
       "fieldConfig": {
@@ -563,10 +563,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (level, group) (rate(dt_outbox_relay_messages_sent_count{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (level, group) (rate(dt_outbox_relay_messages_sent_count{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{level}} {{group}}",
           "range": true,
           "refId": "A"
@@ -578,7 +578,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Mean number of notifications delivered per relay cycle.",
       "fieldConfig": {
@@ -658,10 +658,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(dt_outbox_relay_messages_sent_sum{instance=~\"$instance\"}[1m])) / sum(rate(dt_outbox_relay_messages_sent_count{instance=~\"$instance\"}[1m]))",
+          "expr": "sum(rate(dt_outbox_relay_messages_sent_sum{instance=~\"$instance\"}[$__rate_interval])) / sum(rate(dt_outbox_relay_messages_sent_count{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "mean batch",
           "range": true,
           "refId": "A"
@@ -686,7 +686,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Notifications enqueued into the outbox per second grouped by level and group.",
       "fieldConfig": {
@@ -766,10 +766,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (level, group) (rate(dt_notifications_emitted_count{instance=~\"$instance\"}[1m]))",
+          "expr": "sum by (level, group) (rate(dt_notifications_emitted_count{instance=~\"$instance\"}[$__rate_interval]))",
           "legendFormat": "{{level}} {{group}}",
           "range": true,
           "refId": "A"
@@ -781,7 +781,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Time to write a notification into the outbox table.",
       "fieldConfig": {
@@ -861,10 +861,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -872,10 +872,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -883,10 +883,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notifications_emit_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -911,7 +911,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Time spent fetching applicable notification rules from the database.",
       "fieldConfig": {
@@ -991,10 +991,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -1002,10 +1002,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -1013,10 +1013,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notification_router_rule_query_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -1028,7 +1028,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Time spent evaluating rule predicates and CEL filters.",
       "fieldConfig": {
@@ -1108,10 +1108,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -1119,10 +1119,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -1130,10 +1130,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(dt_notification_router_rule_filter_latency_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -1145,7 +1145,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Ten most frequently matched notification rules.",
       "fieldConfig": {
@@ -1225,10 +1225,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (ruleName) (rate(dt_notification_router_rules_matched_total{instance=~\"$instance\"}[1m])))",
+          "expr": "topk(10, sum by (ruleName) (rate(dt_notification_router_rules_matched_total{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "{{ruleName}}",
           "range": true,
           "refId": "A"
@@ -1249,6 +1249,32 @@
   "templating": {
     "list": [
       {
+        "name": "datasource",
+        "label": "Data Source",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {
+          "text": "default",
+          "value": "default"
+        },
+        "hide": 0
+      },
+      {
+        "name": "job",
+        "label": "Job",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "query": "label_values(dt_info, job)",
+        "refresh": 2,
+        "multi": false,
+        "includeAll": false,
+        "current": {},
+        "sort": 1
+      },
+      {
         "current": {
           "selected": true,
           "text": [
@@ -1260,9 +1286,9 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "uid": "${datasource}"
         },
-        "definition": "label_values(process_uptime_seconds, instance)",
+        "definition": "label_values(process_uptime_seconds{job=\"$job\"}, instance)",
         "includeAll": true,
         "label": "Instance",
         "multi": true,
@@ -1270,7 +1296,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(process_uptime_seconds, instance)",
+          "query": "label_values(process_uptime_seconds{job=\"$job\"}, instance)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

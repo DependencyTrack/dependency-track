@@ -27,6 +27,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 final class OsvEcosystems {
 
@@ -45,7 +46,7 @@ final class OsvEcosystems {
         final String ecosystemName = ecosystem.substring(0, colonIndex);
         final String suffix = ecosystem.substring(colonIndex + 1);
 
-        return switch (ecosystemName.toLowerCase()) {
+        return switch (ecosystemName.toLowerCase(Locale.ROOT)) {
             case "alpine" -> AlpineDistribution.ofVersion(suffix);
             case "debian" -> DebianDistribution.of(suffix);
             case "ubuntu" -> {

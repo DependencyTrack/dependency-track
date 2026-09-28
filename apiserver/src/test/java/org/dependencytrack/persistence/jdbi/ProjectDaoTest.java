@@ -169,8 +169,11 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         });
 
         // Create a BOM.
-        final Bom bom = qm.createBom(
-                project, new Date(), Bom.Format.CYCLONEDX, "1.4", 1, "serialNumber", UUID.randomUUID(), null);
+        final var bom = new Bom();
+        bom.setProject(project);
+        bom.setImported(new Date());
+        bom.setBomFormat(Bom.Format.CYCLONEDX);
+        qm.persist(bom);
 
         // Create a child project with an accompanying component.
         final var projectChild = new Project();

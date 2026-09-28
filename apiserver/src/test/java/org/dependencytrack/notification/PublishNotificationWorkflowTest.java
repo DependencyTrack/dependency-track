@@ -47,6 +47,7 @@ import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationActivityArg;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,6 +85,7 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                 secretName -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(NotificationPublisher.class));
         pluginManager.loadPlugins(List.of(new DefaultNotificationPublishersPlugin()));
 

@@ -55,6 +55,7 @@ class DaoArchitectureTest {
             "org.dependencytrack.common.pagination.Page");
 
     @ArchTest
+    @SuppressWarnings("unused")
     static final ArchRule daoQueryMethodsMustNotReturnJdoModelClasses = FreezingArchRule.freeze(methods()
             .that()
             .areDeclaredInClassesThat()
@@ -80,6 +81,7 @@ class DaoArchitectureTest {
             }));
 
     @ArchTest
+    @SuppressWarnings("unused")
     static final ArchRule daosMustNotUseBeanMapperWithJdoClasses = FreezingArchRule.freeze(classes()
             .that()
             .haveSimpleNameEndingWith("Dao")
@@ -100,6 +102,7 @@ class DaoArchitectureTest {
             }));
 
     @ArchTest
+    @SuppressWarnings("unused")
     static final ArchRule rowMappersMustNotTargetJdoModelClasses = FreezingArchRule.freeze(classes()
             .that()
             .resideInAPackage("org.dependencytrack.persistence.jdbi..")
@@ -110,7 +113,7 @@ class DaoArchitectureTest {
                 public void check(JavaClass mapperClass, ConditionEvents events) {
                     for (JavaType iface : mapperClass.getInterfaces()) {
                         if (iface instanceof final JavaParameterizedType paramType
-                                && paramType.toErasure().isEquivalentTo(org.jdbi.v3.core.mapper.RowMapper.class)) {
+                                && paramType.toErasure().isAssignableTo(org.jdbi.v3.core.mapper.RowMapper.class)) {
                             for (JavaType arg : paramType.getActualTypeArguments()) {
                                 if (arg instanceof final JavaClass targetClass && isModelClass(targetClass)) {
                                     events.add(SimpleConditionEvent.violated(

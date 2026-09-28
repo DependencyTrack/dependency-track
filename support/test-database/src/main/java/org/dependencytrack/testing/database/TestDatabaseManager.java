@@ -195,6 +195,7 @@ final class TestDatabaseManager {
                             staleDatabases.add(existingDb);
                         }
                     } catch (NumberFormatException _) {
+                        // Digits that overflow a long cannot be a PID.
                     }
                 }
             }

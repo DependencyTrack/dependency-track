@@ -25,6 +25,7 @@ import org.jspecify.annotations.NonNull;
 
 class DummyTestExtensionFactory implements ExtensionFactory<@NonNull TestExtensionPoint> {
 
+    ExtensionContext context;
     private ConfigRegistry configRegistry;
 
     @Override
@@ -49,6 +50,7 @@ class DummyTestExtensionFactory implements ExtensionFactory<@NonNull TestExtensi
 
     @Override
     public void init(@NonNull ExtensionContext context) {
+        this.context = context;
         this.configRegistry = context.configRegistry();
     }
 

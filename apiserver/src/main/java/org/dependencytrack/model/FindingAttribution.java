@@ -84,6 +84,7 @@ public class FindingAttribution implements Serializable {
             deferred = "true")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
+    @SuppressWarnings("UnusedVariable") // Only accessed by DataNucleus and JDOQL queries.
     private Project project;
 
     @Persistent(defaultFetchGroup = "true")

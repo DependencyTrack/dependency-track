@@ -63,6 +63,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -502,7 +503,7 @@ public class Component implements Serializable {
     private transient RepositoryMetaComponent repositoryMeta;
 
     private transient boolean isNew;
-    private transient Set<String> dependencyGraph;
+    private transient Set<UUID> dependencyGraph;
     private transient boolean expandDependencyGraph;
     private transient String author;
 
@@ -609,7 +610,7 @@ public class Component implements Serializable {
     }
 
     public void setMd5(String md5) {
-        this.md5 = md5 == null ? null : md5.toLowerCase();
+        this.md5 = md5 == null ? null : md5.toLowerCase(Locale.ROOT);
     }
 
     public String getSha1() {
@@ -617,7 +618,7 @@ public class Component implements Serializable {
     }
 
     public void setSha1(String sha1) {
-        this.sha1 = sha1 == null ? null : sha1.toLowerCase();
+        this.sha1 = sha1 == null ? null : sha1.toLowerCase(Locale.ROOT);
     }
 
     public String getSha256() {
@@ -625,7 +626,7 @@ public class Component implements Serializable {
     }
 
     public void setSha256(String sha256) {
-        this.sha256 = sha256 == null ? null : sha256.toLowerCase();
+        this.sha256 = sha256 == null ? null : sha256.toLowerCase(Locale.ROOT);
     }
 
     public String getSha384() {
@@ -633,7 +634,7 @@ public class Component implements Serializable {
     }
 
     public void setSha384(String sha384) {
-        this.sha384 = sha384 == null ? null : sha384.toLowerCase();
+        this.sha384 = sha384 == null ? null : sha384.toLowerCase(Locale.ROOT);
     }
 
     public String getSha512() {
@@ -641,7 +642,7 @@ public class Component implements Serializable {
     }
 
     public void setSha512(String sha512) {
-        this.sha512 = sha512 == null ? null : sha512.toLowerCase();
+        this.sha512 = sha512 == null ? null : sha512.toLowerCase(Locale.ROOT);
     }
 
     public String getSha3_256() {
@@ -649,7 +650,7 @@ public class Component implements Serializable {
     }
 
     public void setSha3_256(String sha3_256) {
-        this.sha3_256 = sha3_256 == null ? null : sha3_256.toLowerCase();
+        this.sha3_256 = sha3_256 == null ? null : sha3_256.toLowerCase(Locale.ROOT);
     }
 
     public String getSha3_384() {
@@ -657,7 +658,7 @@ public class Component implements Serializable {
     }
 
     public void setSha3_384(String sha3_384) {
-        this.sha3_384 = sha3_384 == null ? null : sha3_384.toLowerCase();
+        this.sha3_384 = sha3_384 == null ? null : sha3_384.toLowerCase(Locale.ROOT);
     }
 
     public String getSha3_512() {
@@ -665,7 +666,7 @@ public class Component implements Serializable {
     }
 
     public void setSha3_512(String sha3_512) {
-        this.sha3_512 = sha3_512 == null ? null : sha3_512.toLowerCase();
+        this.sha3_512 = sha3_512 == null ? null : sha3_512.toLowerCase(Locale.ROOT);
     }
 
     public String getBlake2b_256() {
@@ -705,7 +706,7 @@ public class Component implements Serializable {
     }
 
     public void setStreebog_256(String streebog_256) {
-        this.streebog_256 = streebog_256 == null ? null : streebog_256.toLowerCase();
+        this.streebog_256 = streebog_256 == null ? null : streebog_256.toLowerCase(Locale.ROOT);
     }
 
     public String getStreebog_512() {
@@ -713,7 +714,7 @@ public class Component implements Serializable {
     }
 
     public void setStreebog_512(String streebog_512) {
-        this.streebog_512 = streebog_512 == null ? null : streebog_512.toLowerCase();
+        this.streebog_512 = streebog_512 == null ? null : streebog_512.toLowerCase(Locale.ROOT);
     }
 
     public String getCpe() {
@@ -1009,11 +1010,11 @@ public class Component implements Serializable {
         this.licenseCandidates = licenseCandidates;
     }
 
-    public Set<String> getDependencyGraph() {
+    public Set<UUID> getDependencyGraph() {
         return dependencyGraph;
     }
 
-    public void setDependencyGraph(Set<String> dependencyGraph) {
+    public void setDependencyGraph(Set<UUID> dependencyGraph) {
         this.dependencyGraph = dependencyGraph;
     }
 

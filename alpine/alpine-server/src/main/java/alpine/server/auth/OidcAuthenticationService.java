@@ -21,6 +21,7 @@ package alpine.server.auth;
 
 import alpine.config.AlpineConfigKeys;
 import alpine.model.OidcUser;
+import alpine.model.ServiceAccount;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.util.OidcUtil;
 import jakarta.annotation.Nonnull;
@@ -177,6 +178,14 @@ public class OidcAuthenticationService implements AuthenticationService<OidcUser
     }
 
     private OidcUser authenticateInternal(final OidcProfile profile) throws AlpineAuthenticationException {
+        if (ServiceAccount.hasReservedPrefix(profile.getUsername())) {
+            LOGGER.warn(
+                    "Refusing to authenticate user {}: the username prefix {} is reserved for service accounts",
+                    profile.getUsername(),
+                    ServiceAccount.USERNAME_PREFIX);
+            throw new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT);
+        }
+
         try (final var qm = new AlpineQueryManager()) {
             OidcUser user = qm.getOidcUser(profile.getUsername());
             if (user != null) {

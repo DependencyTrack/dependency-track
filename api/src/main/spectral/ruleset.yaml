@@ -99,10 +99,11 @@ rules:
         match: ^delete[A-Z]
 
   # Enforce consistent response structure, depending on the operation's HTTP method.
+  # The oauth token endpoint is exempt because RFC 6749 requires 200 and its own error object.
   response-conventions-post:
     message: "{{error}}"
     severity: error
-    given: "$.paths[?(!@property.match(/\\/test$/))].post.responses"
+    given: "$.paths[?(!@property.match(/(\\/test|^\\/oauth\\/token)$/))].post.responses"
     then:
       function: response-conventions
       functionOptions:
@@ -131,3 +132,15 @@ rules:
       function: response-conventions
       functionOptions:
         method: delete
+
+  # Same rule as in zalando.yaml, but skipping the oauth token endpoint,
+  # whose errors follow RFC 6749 instead of RFC 9457.
+  must-use-problem-json-for-errors:
+    message: Error response must be application/problem+json
+    description: MUST support problem JSON [176]
+    documentationUrl: https://opensource.zalando.com/restful-api-guidelines/#176
+    severity: error
+    given: "$.paths[?(!@property.match(/^\\/oauth\\/token$/))].*.responses[?(@ && @property.match(/^(4|5)/))]"
+    then:
+      field: content.application/problem+json
+      function: truthy

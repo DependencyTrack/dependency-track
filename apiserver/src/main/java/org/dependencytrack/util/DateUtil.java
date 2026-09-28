@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.util;
 
+import jakarta.xml.bind.DatatypeConverter;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -63,6 +65,6 @@ public final class DateUtil {
         if (dateString == null) {
             return null;
         }
-        return jakarta.xml.bind.DatatypeConverter.parseDateTime(dateString).getTime();
+        return DatatypeConverter.parseDateTime(dateString).getTime();
     }
 }

@@ -37,6 +37,7 @@ import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.dependencytrack.vulndatasource.VulnDataSourceMirrorService;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
@@ -92,6 +93,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
                 secretManager::getSecretValue,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnDataSource.class));
         mirrorService = new VulnDataSourceMirrorService(pluginManager, DEX_ENGINE_MOCK);
     }

@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.secret.management.database;
 
+import com.google.crypto.tink.AccessesPartialKey;
 import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.InsecureSecretKeyAccess;
 import com.google.crypto.tink.KeysetHandle;
@@ -45,6 +46,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -99,6 +101,7 @@ final class Crypto {
         return new EncryptionResult(cipherText, serializedDek);
     }
 
+    @AccessesPartialKey
     private Aead loadKek(DatabaseSecretManagerConfig config) {
         // The KEK is usually meant to be fetched from an external KMS.
         // We can't make KMSes a mandatory requirement, hence we support
@@ -116,7 +119,7 @@ final class Crypto {
             // Note that Tink by convention uses positive key IDs,
             // while hashCode can yield negative values.
             // Clear the sign bit to ensure we're always following the Tink convention.
-            final int keyId = Arrays.hashCode(kekBytes) & 0x7FFFFFFF | 1;
+            final int keyId = (Arrays.hashCode(kekBytes) & 0x7FFFFFFF) | 1;
 
             try {
                 final var key = AesGcmKey.builder()
@@ -167,7 +170,7 @@ final class Crypto {
                         PosixFilePermission.OWNER_WRITE,
                         PosixFilePermission.GROUP_READ));
 
-                if (!System.getProperty("os.name").toLowerCase().startsWith("win")) {
+                if (!System.getProperty("os.name").toLowerCase(Locale.ROOT).startsWith("win")) {
                     Files.createFile(kekKeysetPath, posixPermissionsAttribute);
                 } else {
                     // POSIX permissions don't work on Windows.
@@ -303,6 +306,7 @@ final class Crypto {
                 try {
                     connection.setAutoCommit(originalAutoCommit);
                 } catch (SQLException _) {
+                    // Best-effort restore that must not mask the outcome of the transaction.
                 }
             }
         } catch (SQLException e) {

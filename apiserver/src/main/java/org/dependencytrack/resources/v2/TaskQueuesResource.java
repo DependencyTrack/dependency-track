@@ -41,6 +41,8 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 
+import java.util.Locale;
+
 @Provider
 @NullMarked
 public final class TaskQueuesResource extends AbstractApiResource implements TaskQueuesApi {
@@ -83,13 +85,13 @@ public final class TaskQueuesResource extends AbstractApiResource implements Tas
             LOGGER.info(
                     SecurityMarkers.SECURITY_AUDIT,
                     "Updated {} task queue '{}'",
-                    type.name().toLowerCase(),
+                    type.name().toLowerCase(Locale.ROOT),
                     name);
         } else {
             LOGGER.info(
                     SecurityMarkers.SECURITY_AUDIT,
                     "Update of {} task queue '{}' requested, but it has not changed",
-                    type.name().toLowerCase(),
+                    type.name().toLowerCase(Locale.ROOT),
                     name);
         }
 

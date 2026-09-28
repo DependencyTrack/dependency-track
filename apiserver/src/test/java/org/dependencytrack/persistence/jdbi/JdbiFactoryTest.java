@@ -18,8 +18,12 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
+import alpine.resources.AlpineRequest;
+import org.datanucleus.flush.FlushMode;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.support.jdbi.exception.UniqueConstraintViolationException;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +32,8 @@ import java.sql.Statement;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.datanucleus.PropertyNames.PROPERTY_FLUSH_MODE;
 
 public class JdbiFactoryTest extends PersistenceCapableTest {
 
@@ -63,6 +69,112 @@ public class JdbiFactoryTest extends PersistenceCapableTest {
                             .findFirst());
             assertThat(projectName).isNotPresent();
         });
+    }
+
+    @Test
+    public void testWithJdbiHandleParticipatesInJdoTransaction() {
+        qm.getPersistenceManager().setProperty(PROPERTY_FLUSH_MODE, FlushMode.MANUAL.name());
+
+        qm.runInTransaction(() -> {
+            final var project = new Project();
+            project.setName("acme-app");
+            project.setVersion("1.0.0");
+            qm.getPersistenceManager().makePersistent(project);
+
+            final Optional<String> projectName = JdbiFactory.withJdbiHandle(qm, handle -> {
+                assertThat(handle.getJdbi()).isSameAs(JdbiFactory.createJdbi());
+                return handle.createQuery("SELECT \"NAME\" FROM \"PROJECT\"")
+                        .mapTo(String.class)
+                        .findFirst();
+            });
+            assertThat(projectName).contains("acme-app");
+        });
+    }
+
+    @Test
+    public void testWithJdbiHandleCarriesApiRequestWithinJdoTransaction() {
+        final var request = new AlpineRequest(
+                /* principal */ null,
+                /* pagination */ null,
+                /* filter */ "foo",
+                /* orderBy */ null,
+                /* orderDirection */ null);
+
+        final var requestQm = new QueryManager(qm.getPersistenceManager(), request);
+
+        requestQm.runInTransaction(() -> {
+            final AlpineRequest handleRequest = JdbiFactory.withJdbiHandle(
+                    requestQm,
+                    handle -> handle.getConfig(ApiRequestConfig.class).apiRequest());
+            assertThat(handleRequest).isSameAs(request);
+        });
+    }
+
+    @Test
+    public void testUseJdbiHandleOutsideJdoTransactionRollsBackFailedJdbiTransaction() {
+        assertThatThrownBy(() -> JdbiFactory.useJdbiHandle(
+                        qm,
+                        handle -> handle.useTransaction(_ -> {
+                            handle.execute("""
+                                INSERT INTO "PROJECT" ("NAME", "VERSION", "UUID")
+                                VALUES ('acme-app', '1.0.0', GEN_RANDOM_UUID())
+                                """);
+                            throw new IllegalStateException("boom");
+                        })))
+                .isInstanceOf(IllegalStateException.class);
+
+        final int projectCount =
+                JdbiFactory.withJdbiHandle(handle -> handle.createQuery("SELECT COUNT(*) FROM \"PROJECT\"")
+                        .mapTo(Integer.class)
+                        .one());
+        assertThat(projectCount).isZero();
+    }
+
+    @Test
+    public void testUseJdbiHandleTranslatesExceptions() {
+        assertThatThrownBy(() -> qm.runInTransaction(() -> JdbiFactory.useJdbiHandle(qm, handle -> {
+                    for (int i = 0; i < 2; i++) {
+                        handle.execute("""
+                            INSERT INTO "PROJECT" ("NAME", "VERSION", "UUID")
+                            VALUES ('acme-app', '1.0.0', GEN_RANDOM_UUID())
+                            """);
+                    }
+                })))
+                .isInstanceOf(UniqueConstraintViolationException.class);
+    }
+
+    @Test
+    public void testWithJdbiHandleRejectsNestingInOtherHandle() {
+        assertThatThrownBy(() -> JdbiFactory.useJdbiHandle(
+                        _ -> qm.runInTransaction(() -> JdbiFactory.useJdbiHandle(qm, _ -> {}))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    public void testWithJdbiHandleRejectsNesting() {
+        try (final var otherQm = new QueryManager()) {
+            assertThatThrownBy(() -> qm.runInTransaction(() -> JdbiFactory.useJdbiHandle(
+                            qm, _ -> otherQm.runInTransaction(() -> JdbiFactory.useJdbiHandle(otherQm, _ -> {})))))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+    }
+
+    @Test
+    public void testUseJdbiHandleIsRolledBackWithJdoTransaction() {
+        assertThatThrownBy(() -> qm.runInTransaction(() -> {
+                    JdbiFactory.useJdbiHandle(qm, handle -> handle.execute("""
+                        INSERT INTO "PROJECT" ("NAME", "VERSION", "UUID")
+                        VALUES ('acme-app', '1.0.0', GEN_RANDOM_UUID())
+                        """));
+                    throw new IllegalStateException("boom");
+                }))
+                .isInstanceOf(IllegalStateException.class);
+
+        final int projectCount =
+                JdbiFactory.withJdbiHandle(handle -> handle.createQuery("SELECT COUNT(*) FROM \"PROJECT\"")
+                        .mapTo(Integer.class)
+                        .one());
+        assertThat(projectCount).isZero();
     }
 
     @Test

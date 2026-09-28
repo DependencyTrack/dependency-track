@@ -156,7 +156,7 @@ final class NotificationOutboxRelay implements Closeable {
                 .build());
         new ExecutorServiceMetrics(executorService, EXECUTOR_NAME, List.of()).bindTo(meterRegistry);
 
-        executorService.schedule(() -> run(0), pollIntervalMillis, TimeUnit.MILLISECONDS);
+        var _ = executorService.schedule(() -> run(0), pollIntervalMillis, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -180,7 +180,7 @@ final class NotificationOutboxRelay implements Closeable {
             cycleCounter.withTag(OUTCOME_METER_TAG_NAME, cycleOutcome.name()).increment();
             cycleLatencySample.stop(cycleLatencyTimer.withTag(OUTCOME_METER_TAG_NAME, cycleOutcome.name()));
 
-            executor.schedule(() -> run(0), pollIntervalMillis, TimeUnit.MILLISECONDS);
+            var _ = executor.schedule(() -> run(0), pollIntervalMillis, TimeUnit.MILLISECONDS);
         } catch (RejectedExecutionException e) {
             LOGGER.debug("Next poll could not be scheduled, likely because the executor was shut down", e);
         } catch (Throwable t) {
@@ -192,7 +192,7 @@ final class NotificationOutboxRelay implements Closeable {
             // Ensure that we don't keep thrashing external services if we run into errors.
             final long backoffDelayMillis = backoffIntervalFunction.apply(failureBackoffCount + 1);
             LOGGER.error("Failed to relay messages, backing off for {}ms", backoffDelayMillis, t);
-            executor.schedule(() -> run(failureBackoffCount + 1), backoffDelayMillis, TimeUnit.MILLISECONDS);
+            var _ = executor.schedule(() -> run(failureBackoffCount + 1), backoffDelayMillis, TimeUnit.MILLISECONDS);
         } finally {
             currentBatch.clear();
         }

@@ -54,6 +54,7 @@ import java.util.function.Supplier;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
@@ -312,7 +313,7 @@ class ViolationAnalysisResourceTest extends ResourceTest {
                                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Some comment"))
                                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users")));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -364,7 +365,7 @@ class ViolationAnalysisResourceTest extends ResourceTest {
         assertThat(jsonObject.getBoolean("isSuppressed")).isFalse();
         assertThat(jsonObject.getJsonArray("analysisComments")).isEmpty();
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test
@@ -430,7 +431,7 @@ class ViolationAnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Some comment"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -543,7 +544,7 @@ class ViolationAnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("APPROVED → NOT_SET"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);

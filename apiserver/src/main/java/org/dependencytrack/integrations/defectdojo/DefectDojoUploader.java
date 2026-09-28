@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.integrations.defectdojo;
 
-import alpine.model.ConfigProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.FindingPackagingFormat;
@@ -125,9 +124,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public boolean isEnabled() {
-        final ConfigProperty enabled =
-                qm.getConfigProperty(DEFECTDOJO_ENABLED.getGroupName(), DEFECTDOJO_ENABLED.getPropertyName());
-        return enabled != null && Boolean.valueOf(enabled.getPropertyValue());
+        return isConfigEnabled(DEFECTDOJO_ENABLED);
     }
 
     @Override
@@ -145,20 +142,18 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public void upload(final Project project, final InputStream payload) {
-        final ConfigProperty defectDojoUrl =
-                qm.getConfigProperty(DEFECTDOJO_URL.getGroupName(), DEFECTDOJO_URL.getPropertyName());
-        final ConfigProperty apiKeyProperty =
-                qm.getConfigProperty(DEFECTDOJO_API_KEY.getGroupName(), DEFECTDOJO_API_KEY.getPropertyName());
-        if (apiKeyProperty == null) {
+        final String defectDojoUrl = getConfigValue(DEFECTDOJO_URL);
+        final String apiKey = getConfigValue(DEFECTDOJO_API_KEY);
+        if (apiKey == null) {
             LOGGER.warn("DefectDojo API key not specified. Aborting");
             return;
         }
-        final String apiKeySecretName = StringUtils.trimToNull(apiKeyProperty.getPropertyValue());
+        final String apiKeySecretName = StringUtils.trimToNull(apiKey);
         if (apiKeySecretName == null) {
             LOGGER.warn("DefectDojo API key not specified. Aborting");
             return;
         }
-        final boolean globalReimportEnabled = qm.isEnabled(DEFECTDOJO_REIMPORT_ENABLED);
+        final boolean globalReimportEnabled = isConfigEnabled(DEFECTDOJO_REIMPORT_ENABLED);
         final ProjectProperty engagementId =
                 qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         final boolean verifyFindings = isVerifiedConfigured(project);
@@ -172,9 +167,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                 return;
             }
             final DefectDojoClient client = new DefectDojoClient(
-                    httpClient,
-                    this,
-                    URI.create(defectDojoUrl.getPropertyValue()).toURL());
+                    httpClient, this, URI.create(defectDojoUrl).toURL());
             if (isReimportConfigured(project) || globalReimportEnabled) {
                 final ArrayList<String> testsIds = client.getDojoTestIds(apiKeyValue, engagementId.getPropertyValue());
                 final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds, testTitle);

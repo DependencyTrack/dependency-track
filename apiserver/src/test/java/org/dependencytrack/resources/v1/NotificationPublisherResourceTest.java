@@ -39,6 +39,7 @@ import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.dependencytrack.resources.v1.vo.UpdateNotificationPublisherRequest;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.AfterAll;
@@ -61,6 +62,7 @@ import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -97,6 +99,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
                 secretName -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(org.dependencytrack.notification.api.publishing.NotificationPublisher.class));
         pluginManager.loadPlugins(List.of(new DefaultNotificationPublishersPlugin()));
     }
@@ -510,7 +513,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
             assertThat(arg.getNotification().getTitle()).startsWith("[TEST] ");
             assertThat(arg.getRuleTest()).isTrue();
         });
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test

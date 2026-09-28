@@ -20,6 +20,7 @@ package org.dependencytrack.persistence.jdbi;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.packageurl.PackageURL;
+import com.google.errorprone.annotations.CompileTimeConstant;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.dependencytrack.exception.AlreadyExistsException;
@@ -306,8 +307,8 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Define ArrayList<String> whereConditions,
             @BindMap Map<String, Object> queryParams,
             @Define boolean includeMetrics,
-            @Define String collectionMetricsSubquery,
-            @Define String leafMetricsSubquery);
+            @Define @CompileTimeConstant String collectionMetricsSubquery,
+            @Define @CompileTimeConstant String leafMetricsSubquery);
 
     default Page<ConciseProjectListRow> getPageConcise(ListProjectsConciseQuery query) {
         if (query.parentUuidFilter() != null && !Boolean.TRUE.equals(isAccessible(query.parentUuidFilter()))) {
@@ -591,8 +592,8 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Define ArrayList<String> whereConditions,
             @BindMap Map<String, Object> queryParams,
             @Define boolean includeMetrics,
-            @Define String collectionMetricsSubquery,
-            @Define String leafMetricsSubquery);
+            @Define @CompileTimeConstant String collectionMetricsSubquery,
+            @Define @CompileTimeConstant String leafMetricsSubquery);
 
     default Page<ListProjectsRow> getProjects(ListProjectsQuery query) {
         final var whereConditions = new ArrayList<String>();

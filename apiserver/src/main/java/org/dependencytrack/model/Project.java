@@ -297,7 +297,7 @@ public class Project implements Serializable {
     @JsonIgnore
     private List<ProjectProperty> properties;
 
-    @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true", mappedBy = "projects")
+    @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true")
     @Join(
             column = "PROJECT_ID",
             primaryKey = "PROJECTS_TAGS_PK",

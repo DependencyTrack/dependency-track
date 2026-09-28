@@ -66,7 +66,7 @@ final class DatabaseCacheMaintenanceWorker implements Closeable {
 
         executor = Executors.newSingleThreadScheduledExecutor(
                 Thread.ofPlatform().name(getClass().getSimpleName(), 0).factory());
-        executor.scheduleAtFixedRate(
+        var _ = executor.scheduleAtFixedRate(
                 () -> {
                     try {
                         performMaintenance();

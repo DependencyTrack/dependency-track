@@ -72,6 +72,7 @@ public class AnalysisQueryManager extends QueryManager {
      * @param vulnerability the Vulnerability
      * @return a Analysis object, or null if not found
      */
+    @Override
     public Analysis getAnalysis(Component component, Vulnerability vulnerability) {
         final Query<Analysis> query =
                 pm.newQuery(Analysis.class, "component == :component && vulnerability == :vulnerability");

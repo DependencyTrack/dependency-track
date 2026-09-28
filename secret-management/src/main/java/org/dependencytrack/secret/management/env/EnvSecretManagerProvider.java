@@ -25,6 +25,7 @@ import org.eclipse.microprofile.config.Config;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -57,7 +58,7 @@ public final class EnvSecretManagerProvider implements SecretManagerProvider {
             final String envName = envEntry.getKey();
             final String envValue = envEntry.getValue();
 
-            if (!envName.toLowerCase().startsWith("dt_secret_")) {
+            if (!envName.toLowerCase(Locale.ROOT).startsWith("dt_secret_")) {
                 continue;
             }
 

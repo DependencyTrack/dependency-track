@@ -26,7 +26,6 @@ import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
@@ -44,6 +43,7 @@ import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
+import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -63,6 +63,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -76,6 +77,8 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.dependencytrack.model.ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
+import static org.dependencytrack.notification.NotificationTestUtil.truncateNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_CONSUMED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSING_FAILED;
@@ -132,7 +135,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         final var bomUploadToken = UUID.randomUUID();
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
@@ -271,7 +274,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         });
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
@@ -347,7 +350,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         final var bomUploadToken = UUID.randomUUID();
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
@@ -384,7 +387,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         final var bomUploadToken = UUID.randomUUID();
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
@@ -405,7 +408,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThatExceptionOfType(TerminalApplicationFailureException.class)
                 .isThrownBy(() -> activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken)));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_ERROR);
@@ -469,19 +472,19 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED))
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED))
                 .noneSatisfy(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
 
-        final List<Bom> boms = qm.getAllBoms(project);
+        final List<BomRow> boms = getBoms(project);
         assertThat(boms).hasSize(1);
-        final Bom bom = boms.get(0);
-        assertThat(bom.getBomFormat()).isEqualTo("CycloneDX");
-        assertThat(bom.getSpecVersion()).isEqualTo("1.3");
-        assertThat(bom.getBomVersion()).isEqualTo(1);
-        assertThat(bom.getSerialNumber()).isEqualTo("6d780157-0f8e-4ef1-8e9b-1eb48b2fad6f");
+        final BomRow bom = boms.get(0);
+        assertThat(bom.bomFormat()).isEqualTo("CycloneDX");
+        assertThat(bom.specVersion()).isEqualTo("1.3");
+        assertThat(bom.bomVersion()).isEqualTo(1);
+        assertThat(bom.serialNumber()).isEqualTo("6d780157-0f8e-4ef1-8e9b-1eb48b2fad6f");
 
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getGroup()).isNull(); // Not overridden by BOM import
@@ -761,7 +764,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
             activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
 
             assertBomProcessedNotification();
-            qm.truncateNotificationOutbox();
+            truncateNotificationOutbox();
 
             // Ensure all expected components are present.
             // In this particular case, both components from the BOM are supposed to NOT be merged.
@@ -824,19 +827,19 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         final var bomUploadToken = UUID.randomUUID();
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED))
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED))
                 .noneSatisfy(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
 
-        final List<Bom> boms = qm.getAllBoms(project);
+        final List<BomRow> boms = getBoms(project);
         assertThat(boms).hasSize(1);
-        final Bom bom = boms.get(0);
-        assertThat(bom.getBomFormat()).isEqualTo("CycloneDX");
-        assertThat(bom.getSpecVersion()).isEqualTo("1.4");
-        assertThat(bom.getBomVersion()).isEqualTo(1);
-        assertThat(bom.getSerialNumber()).isEqualTo("d7cf8503-6d80-4219-ab4c-3bab8f250ee7");
+        final BomRow bom = boms.get(0);
+        assertThat(bom.bomFormat()).isEqualTo("CycloneDX");
+        assertThat(bom.specVersion()).isEqualTo("1.4");
+        assertThat(bom.bomVersion()).isEqualTo(1);
+        assertThat(bom.serialNumber()).isEqualTo("d7cf8503-6d80-4219-ab4c-3bab8f250ee7");
 
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getGroup()).isNull(); // Not overridden by BOM import
@@ -861,7 +864,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
         final var arg = buildArg(project, bomFileMetadata, bomUploadToken);
         new ImportBomActivity(fileStorage, dexEngineMock, /* delayBomProcessedNotification */ true).execute(null, arg);
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         // BOM_PROCESSED notification should not have been sent.
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED));
@@ -879,7 +882,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         // BOM_PROCESSED notification should not have been sent eagerly.
         // It will be dispatched by DelayedBomProcessedNotificationEmitter
         // when the AnalyzeProjectWorkflow completes.
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED));
     }
@@ -893,7 +896,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
@@ -916,7 +919,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
@@ -950,7 +953,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
@@ -1017,7 +1020,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
@@ -1039,7 +1042,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
@@ -1273,7 +1276,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
@@ -1347,8 +1350,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        var boms = qm.getAllBoms(project);
-        assertThat(boms.get(0).getGenerated()).isEqualTo("2021-02-09T20:40:32Z");
+        var boms = getBoms(project);
+        assertThat(boms.get(0).generated()).isEqualTo("2021-02-09T20:40:32Z");
     }
 
     @Test
@@ -2020,11 +2023,11 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
     private void assertBomProcessedNotification() throws Exception {
         try {
-            assertThat(qm.getNotificationOutbox())
+            assertThat(getNotificationOutbox())
                     .anySatisfy(
                             notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
         } catch (AssertionError e) {
-            final Optional<Notification> optionalNotification = qm.getNotificationOutbox().stream()
+            final Optional<Notification> optionalNotification = getNotificationOutbox().stream()
                     .filter(notification -> notification.getGroup() == GROUP_BOM_PROCESSING_FAILED)
                     .findAny();
             if (optionalNotification.isEmpty()) {
@@ -2063,5 +2066,23 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 .mapTo(String.class)
                 .findOne()
                 .orElse(null));
+    }
+
+    public record BomRow(
+            String bomFormat, String specVersion, Integer bomVersion, String serialNumber, Date generated) {}
+
+    private static List<BomRow> getBoms(Project project) {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT "BOM_FORMAT"
+                             , "SPEC_VERSION"
+                             , "BOM_VERSION"
+                             , "SERIAL_NUMBER"
+                             , "GENERATED"
+                          FROM "BOM"
+                         WHERE "PROJECT_ID" = :projectId
+                        """)
+                .bind("projectId", project.getId())
+                .map(ConstructorMapper.of(BomRow.class))
+                .list());
     }
 }

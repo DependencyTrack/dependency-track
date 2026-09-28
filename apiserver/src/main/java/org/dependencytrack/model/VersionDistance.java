@@ -396,8 +396,6 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
             final String policyConditionOperator,
             final VersionDistance versionDistance) {
         final var operator = PolicyCondition.Operator.valueOf(policyConditionOperator);
-        final var value = policyConditionValue;
-
         if (policyConditionValue != null) {
             var epoch = policyConditionValue.getEpoch().equals("") ? "0" : policyConditionValue.getEpoch();
             var major = policyConditionValue.getMajor().equals("") ? "?" : policyConditionValue.getMajor();

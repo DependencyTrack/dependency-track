@@ -33,20 +33,20 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.epss.Epss;
+import org.dependencytrack.epss.EpssDao;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Epss;
 import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
-import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
@@ -1575,7 +1575,7 @@ public class FindingResourceTest extends ResourceTest {
                             new VulnerabilityKey("CVE-2021-9998", Vulnerability.Source.NVD),
                             Set.of(new VulnerabilityKey("INT-ALIASED", Vulnerability.Source.INTERNAL)));
             handle.attach(EpssDao.class)
-                    .createOrUpdateAll(List.of(new Epss("CVE-2021-9998", new BigDecimal("0.95"), null)));
+                    .createOrUpdateAll(List.of(new Epss("CVE-2021-9998", new BigDecimal("0.95"), BigDecimal.ZERO)));
         });
 
         final Response response = jersey.target(V1_FINDING)
@@ -2811,8 +2811,8 @@ public class FindingResourceTest extends ResourceTest {
         vulnerability.setCwes(List.of(80, 666));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        useJdbiHandle(
-                handle -> handle.attach(EpssDao.class).createOrUpdateAll(List.of(new Epss(vulnId, epssScore, null))));
+        useJdbiHandle(handle ->
+                handle.attach(EpssDao.class).createOrUpdateAll(List.of(new Epss(vulnId, epssScore, BigDecimal.ZERO))));
 
         return vulnerability;
     }
@@ -2826,8 +2826,8 @@ public class FindingResourceTest extends ResourceTest {
         vulnerability.setCwes(List.of(80, 666));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        useJdbiHandle(handle ->
-                handle.attach(EpssDao.class).createOrUpdateAll(List.of(new Epss(vulnId, null, epssPercentile))));
+        useJdbiHandle(handle -> handle.attach(EpssDao.class)
+                .createOrUpdateAll(List.of(new Epss(vulnId, BigDecimal.ZERO, epssPercentile))));
 
         return vulnerability;
     }

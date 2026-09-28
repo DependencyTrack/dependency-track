@@ -40,17 +40,19 @@ public class ProjectIsAccessibleByMethod implements SQLMethod {
 
     @Override
     public SQLExpression getExpression(SQLStatement stmt, SQLExpression expr, List<SQLExpression> args) {
-        if (!(expr instanceof final ObjectExpression objectExpr))
+        if (!(expr instanceof final ObjectExpression objectExpr)) {
             // DataNucleus should prevent this from ever happening since
             // the method is explicitly registered for java.lang.Object.
             throw new IllegalStateException("Expected expression to be of type %s, but got: %s"
                     .formatted(ObjectExpression.class.getName(), expr.getClass().getName()));
+        }
 
         final String objectTypeName = objectExpr.getJavaTypeMapping().getType();
-        if (!PROJECT_CLASS_NAME.equals(objectTypeName))
+        if (!PROJECT_CLASS_NAME.equals(objectTypeName)) {
             throw new IllegalStateException(
                     "isAccessibleBy is only allowed for objects of type %s, but was called on %s"
                             .formatted(PROJECT_CLASS_NAME, objectTypeName));
+        }
 
         if (args == null) {
             throw new IllegalArgumentException();

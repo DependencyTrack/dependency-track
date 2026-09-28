@@ -60,6 +60,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -172,12 +173,12 @@ public class MetricsResource extends AbstractApiResource {
                     .orElseGet(() -> Integer.parseInt(MAINTENANCE_METRICS_RETENTION_DAYS.getDefaultPropertyValue()));
 
             // NB: Calculate days between the given date and *tomorrow*,
-            // because LocalDate#until's end date is exclusive,
+            // because ChronoUnit#between treats the end date as exclusive,
             // and we want to include data for *today*.
-            final var sincePeriod = since.until(LocalDate.now(ZoneOffset.UTC).plusDays(1));
-            final int sinceDays = sincePeriod.getDays();
+            final long sinceDays =
+                    ChronoUnit.DAYS.between(since, LocalDate.now(ZoneOffset.UTC).plusDays(1));
 
-            return handle.attach(MetricsDao.class).getPortfolioMetricsForDays(Math.min(retentionDays, sinceDays));
+            return handle.attach(MetricsDao.class).getPortfolioMetricsForDays((int) Math.min(retentionDays, sinceDays));
         });
         return Response.ok(metrics).build();
     }

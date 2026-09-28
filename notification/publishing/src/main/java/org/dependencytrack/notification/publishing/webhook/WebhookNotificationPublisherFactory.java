@@ -86,6 +86,10 @@ public final class WebhookNotificationPublisherFactory implements NotificationPu
                         throw new InvalidRuntimeConfigException(
                                 "authHeaderValue is required when authHeaderName is set");
                     }
+                    if (config.getSigningSecret() != null
+                            && config.getSigningSecret().isBlank()) {
+                        throw new InvalidRuntimeConfigException("signingSecret must not be blank");
+                    }
                 });
     }
 

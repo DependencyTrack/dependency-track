@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_BOM_UPLOAD_TOKEN;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSING_FAILED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
@@ -69,7 +70,7 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
                         Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString()),
                         Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, bomUploadToken.toString()))))));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -102,7 +103,7 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
                         WF_LABEL_BOM_UPLOAD_TOKEN,
                         bomUploadToken.toString())))));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_ERROR);
@@ -148,7 +149,7 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
                                         projectB.getUuid().toString()),
                                 Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, tokenB.toString()))))));
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactlyInAnyOrder(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
@@ -167,7 +168,7 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
                         Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString()),
                         Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, UUID.randomUUID().toString()))))));
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test
@@ -175,7 +176,7 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
         emitter.onEvent(new WorkflowRunsCompletedEvent(
                 List.of(createRunMetadata("vuln-analysis", WorkflowRunStatus.COMPLETED, null))));
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test
@@ -185,7 +186,7 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
                 WorkflowRunStatus.COMPLETED,
                 Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, UUID.randomUUID().toString())))));
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test
@@ -199,7 +200,7 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
                 WorkflowRunStatus.COMPLETED,
                 Map.of(WF_LABEL_PROJECT_UUID, project.getUuid().toString())))));
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test
@@ -211,14 +212,14 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
                         Map.entry(WF_LABEL_PROJECT_UUID, UUID.randomUUID().toString()),
                         Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, UUID.randomUUID().toString()))))));
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test
     void shouldDoNothingForEmptyEvent() {
         emitter.onEvent(new WorkflowRunsCompletedEvent(List.of()));
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     private static WorkflowRunMetadata createRunMetadata(

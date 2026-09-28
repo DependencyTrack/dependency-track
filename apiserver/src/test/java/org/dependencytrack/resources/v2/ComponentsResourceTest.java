@@ -772,6 +772,27 @@ public class ComponentsResourceTest extends ResourceTest {
     }
 
     @Test
+    public void listComponentsWithMalformedPurlTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("test", null, "1.0", null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("comp");
+        component.setPurl("pkg:pypi/%0@latest");
+        qm.createComponent(component, false);
+
+        final Response response = jersey.target("/components")
+                .queryParam("expand", "package_metadata,package_artifact_metadata")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items[0].purl").isEqualTo("pkg:pypi/%0@latest");
+    }
+
+    @Test
     public void listComponentsWithArtifactMetadataTest() throws Exception {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 

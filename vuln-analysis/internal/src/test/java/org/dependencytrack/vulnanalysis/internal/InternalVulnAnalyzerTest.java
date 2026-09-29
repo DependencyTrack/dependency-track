@@ -1105,6 +1105,11 @@ class InternalVulnAnalyzerTest {
                             MATCHES,
                             "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"),
                     Arguments.of(
+                            "cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*",
+                            withRange().havingStartIncluding("0"),
+                            MATCHES,
+                            "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"),
+                    Arguments.of(
                             "cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other",
                             withRange().havingStartExcluding("0.9.9"),
                             MATCHES,

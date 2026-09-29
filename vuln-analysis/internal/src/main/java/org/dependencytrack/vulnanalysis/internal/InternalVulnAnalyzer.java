@@ -508,7 +508,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
             versBuilder.withConstraint(Comparator.LESS_THAN_OR_EQUAL, criteria.versionEndIncluding());
         }
 
-        if (criteria.version() == null && !versBuilder.hasConstraints()) {
+        if (!versBuilder.hasConstraints() && (criteria.version() == null || "*".equals(criteria.version()))) {
             versBuilder.withConstraint(Comparator.WILDCARD, null);
         } else if (criteria.version() != null && !"*".equals(criteria.version()) && !"-".equals(criteria.version())) {
             versBuilder.withConstraint(Comparator.EQUAL, criteria.version());

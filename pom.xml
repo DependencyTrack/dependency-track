@@ -138,7 +138,7 @@
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
         <lib.httpclient5.version>5.6.4</lib.httpclient5.version>
         <lib.httpmime.version>4.5.14</lib.httpmime.version>
-        <lib.jackson2.version>2.22.2</lib.jackson2.version>
+        <lib.jackson2.version>2.22.3</lib.jackson2.version>
         <lib.jackson3.version>3.2.3</lib.jackson3.version>
         <lib.jakarta-activation.version>2.1.4</lib.jakarta-activation.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>

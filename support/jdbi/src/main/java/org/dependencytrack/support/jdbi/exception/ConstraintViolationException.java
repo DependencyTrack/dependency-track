@@ -27,8 +27,8 @@ import org.postgresql.util.ServerErrorMessage;
  */
 public sealed class ConstraintViolationException extends RuntimeException
         permits UniqueConstraintViolationException,
-        CheckConstraintViolationException,
-        NotNullConstraintViolationException {
+                CheckConstraintViolationException,
+                NotNullConstraintViolationException {
 
     private final @Nullable String constraintName;
     private final @Nullable String tableName;
@@ -61,24 +61,21 @@ public sealed class ConstraintViolationException extends RuntimeException
         }
 
         final ServerErrorMessage serverError = psqlException.getServerErrorMessage();
-        final String constraintName = serverError != null
-                ? serverError.getConstraint()
-                : null;
-        final String tableName = serverError != null
-                ? serverError.getTable()
-                : null;
-        final String columnName = serverError != null
-                ? serverError.getColumn()
-                : null;
+        final String constraintName = serverError != null ? serverError.getConstraint() : null;
+        final String tableName = serverError != null ? serverError.getTable() : null;
+        final String columnName = serverError != null ? serverError.getColumn() : null;
         final String message = psqlException.getMessage();
 
         return switch (sqlState) {
-            case "23505" -> new UniqueConstraintViolationException(
-                    message, throwable, constraintName, tableName, columnName, sqlState);
-            case "23514" -> new CheckConstraintViolationException(
-                    message, throwable, constraintName, tableName, columnName, sqlState);
-            case "23502" -> new NotNullConstraintViolationException(
-                    message, throwable, constraintName, tableName, columnName, sqlState);
+            case "23505" ->
+                new UniqueConstraintViolationException(
+                        message, throwable, constraintName, tableName, columnName, sqlState);
+            case "23514" ->
+                new CheckConstraintViolationException(
+                        message, throwable, constraintName, tableName, columnName, sqlState);
+            case "23502" ->
+                new NotNullConstraintViolationException(
+                        message, throwable, constraintName, tableName, columnName, sqlState);
             default -> null;
         };
     }
@@ -98,5 +95,4 @@ public sealed class ConstraintViolationException extends RuntimeException
     public String getSqlState() {
         return sqlState;
     }
-
 }

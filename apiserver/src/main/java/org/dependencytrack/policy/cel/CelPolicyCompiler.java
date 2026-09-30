@@ -29,13 +29,14 @@ import dev.cel.common.types.CelType;
 import dev.cel.runtime.CelEvaluationException;
 import dev.cel.runtime.CelRuntime;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.collections4.MultiValuedMap;
+import org.dependencytrack.cel.InvalidCelExpressionException;
 import org.dependencytrack.policy.cel.CelPolicyAstAnalyzer.FunctionSignature;
 import org.dependencytrack.policy.cel.CelPolicySpdxExpressionValidator.SpdxExpressionValidationError;
 import org.dependencytrack.policy.cel.CelPolicyVersValidator.VersValidationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,9 +78,9 @@ public final class CelPolicyCompiler {
      * @param scriptSrc Source of the expression to compile
      * @param cacheMode Whether the {@link CelPolicyProgram} shall be cached upon successful compilation
      * @return The compiled {@link CelPolicyProgram}
-     * @throws CelValidationException When compilation, type checking, or analysis failed
+     * @throws InvalidCelExpressionException When compilation, type checking, or analysis failed
      */
-    public CelPolicyProgram compile(String scriptSrc, CacheMode cacheMode) throws CelValidationException {
+    public CelPolicyProgram compile(String scriptSrc, CacheMode cacheMode) {
         final String normalizedSrc = normalizeDurationDays(scriptSrc);
         final String scriptDigest = DigestUtils.sha256Hex(normalizedSrc);
 
@@ -90,15 +91,24 @@ public final class CelPolicyCompiler {
             }
         }
 
+        try {
+            return compile(normalizedSrc, scriptDigest, cacheMode);
+        } catch (CelValidationException e) {
+            throw new InvalidCelExpressionException("Condition is invalid.", e);
+        }
+    }
+
+    private CelPolicyProgram compile(String normalizedSrc, String scriptDigest, CacheMode cacheMode)
+            throws CelValidationException {
         LOGGER.debug("Compiling expression: %s".formatted(normalizedSrc));
-        final CelAbstractSyntaxTree ast = policyType.compiler().compile(normalizedSrc).getAst();
+        final CelAbstractSyntaxTree ast =
+                policyType.compiler().compile(normalizedSrc).getAst();
 
         final CelRuntime.Program celProgram;
         try {
             celProgram = policyType.runtime().createProgram(ast);
         } catch (CelEvaluationException e) {
-            throw new CelValidationException(ast.getSource(),
-                    List.of(CelIssue.formatError(0, 0, e.getMessage())));
+            throw new CelValidationException(ast.getSource(), List.of(CelIssue.formatError(0, 0, e.getMessage())));
         }
 
         final var analysis = analyze(ast);
@@ -110,18 +120,17 @@ public final class CelPolicyCompiler {
         if (cacheMode == CacheMode.CACHE) {
             cache.put(scriptDigest, program);
         }
-        
+
         return program;
     }
 
-    private record AnalysisResult(MultiValuedMap<CelType, String> requirements, Set<String> usedFunctions) {
-    }
+    private record AnalysisResult(Map<CelType, Set<String>> requirements, Set<String> usedFunctions) {}
 
     private static AnalysisResult analyze(CelAbstractSyntaxTree ast) {
         final var visitor = new CelPolicyAstAnalyzer(ast);
         visitor.analyze();
 
-        final MultiValuedMap<CelType, String> requirements = visitor.getAccessedFieldsByType();
+        final Map<CelType, Set<String>> requirements = visitor.getAccessedFieldsByType();
 
         for (final var expansion : FIELD_EXPANSIONS.entrySet()) {
             final CelType type = expansion.getKey();
@@ -131,7 +140,7 @@ public final class CelPolicyCompiler {
 
             for (final var fieldExpansion : expansion.getValue().entrySet()) {
                 if (requirements.get(type).contains(fieldExpansion.getKey())) {
-                    requirements.putAll(type, fieldExpansion.getValue());
+                    requirements.computeIfAbsent(type, _ -> new HashSet<>()).addAll(fieldExpansion.getValue());
                 }
             }
         }
@@ -146,20 +155,20 @@ public final class CelPolicyCompiler {
 
             final List<String> fields = funcRequirements.get(funcSignature.targetType());
             if (fields != null) {
-                requirements.putAll(funcSignature.targetType(), fields);
+                requirements
+                        .computeIfAbsent(funcSignature.targetType(), _ -> new HashSet<>())
+                        .addAll(fields);
             }
         }
 
-        final Set<String> usedFunctions = functionSignatures.stream()
-                .map(FunctionSignature::function)
-                .collect(Collectors.toSet());
+        final Set<String> usedFunctions =
+                functionSignatures.stream().map(FunctionSignature::function).collect(Collectors.toSet());
 
         return new AnalysisResult(requirements, usedFunctions);
     }
 
-    private static void validateVersRanges(
-            CelAbstractSyntaxTree ast,
-            Set<String> usedFunctions) throws CelValidationException {
+    private static void validateVersRanges(CelAbstractSyntaxTree ast, Set<String> usedFunctions)
+            throws CelValidationException {
         final var visitor = new CelPolicyVersValidator(ast, usedFunctions);
         visitor.validate();
 
@@ -183,9 +192,8 @@ public final class CelPolicyCompiler {
         throw new CelValidationException(source, issues);
     }
 
-    private static void validateSpdxExpressions(
-            CelAbstractSyntaxTree ast,
-            Set<String> usedFunctions) throws CelValidationException {
+    private static void validateSpdxExpressions(CelAbstractSyntaxTree ast, Set<String> usedFunctions)
+            throws CelValidationException {
         final var visitor = new CelPolicySpdxExpressionValidator(ast, usedFunctions);
         visitor.validate();
 
@@ -208,5 +216,4 @@ public final class CelPolicyCompiler {
 
         throw new CelValidationException(source, issues);
     }
-
 }

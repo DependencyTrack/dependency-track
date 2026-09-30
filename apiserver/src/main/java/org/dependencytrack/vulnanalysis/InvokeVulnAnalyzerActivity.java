@@ -63,9 +63,8 @@ public final class InvokeVulnAnalyzerActivity implements Activity<InvokeVulnAnal
     }
 
     @Override
-    public InvokeVulnAnalyzerRes execute(
-            ActivityContext ctx,
-            @Nullable InvokeVulnAnalyzerArg arg) throws Exception {
+    public InvokeVulnAnalyzerRes execute(ActivityContext ctx, @Nullable InvokeVulnAnalyzerArg arg)
+            throws IOException, InterruptedException {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -116,8 +115,7 @@ public final class InvokeVulnAnalyzerActivity implements Activity<InvokeVulnAnal
             throw new ApplicationFailureException(
                     "Failed to invoke vuln analyzer with retryable cause", e, e.retryAfter());
         } catch (RuntimeException e) {
-            throw new TerminalApplicationFailureException(
-                    "Failed to invoke vuln analyzer with non-retryable cause", e);
+            throw new TerminalApplicationFailureException("Failed to invoke vuln analyzer with non-retryable cause", e);
         }
     }
 
@@ -127,5 +125,4 @@ public final class InvokeVulnAnalyzerActivity implements Activity<InvokeVulnAnal
                 "application/protobuf",
                 new ByteArrayInputStream(vdr.toByteArray()));
     }
-
 }

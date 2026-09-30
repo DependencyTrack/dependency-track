@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
@@ -35,7 +36,6 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Model for assigning tags to specific objects.
@@ -49,8 +49,7 @@ public class Tag implements Serializable {
 
     private static final long serialVersionUID = -7798359808664731988L;
 
-    public Tag() {
-    }
+    public Tag() {}
 
     public Tag(final String name) {
         this.name = name;
@@ -67,24 +66,10 @@ public class Tag implements Serializable {
     @NotBlank
     @Size(min = 1, max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The name may only contain printable characters")
     private String name;
-
-    @Persistent
-    @JsonIgnore
-    private Set<Policy> policies;
-
-    @Persistent
-    @JsonIgnore
-    private Set<Project> projects;
-
-    @Persistent
-    @JsonIgnore
-    private Set<Vulnerability> vulnerabilities;
-
-    @Persistent
-    @JsonIgnore
-    private Set<NotificationRule> notificationRules;
 
     public long getId() {
         return id;
@@ -100,38 +85,6 @@ public class Tag implements Serializable {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Set<Policy> getPolicies() {
-        return policies;
-    }
-
-    public void setPolicies(Set<Policy> policies) {
-        this.policies = policies;
-    }
-
-    public Set<Project> getProjects() {
-        return projects;
-    }
-
-    public void setProjects(Set<Project> projects) {
-        this.projects = projects;
-    }
-
-    public Set<Vulnerability> getVulnerabilities() {
-        return vulnerabilities;
-    }
-
-    public void setVulnerabilities(Set<Vulnerability> vulnerabilities) {
-        this.vulnerabilities = vulnerabilities;
-    }
-
-    public Set<NotificationRule> getNotificationRules() {
-        return notificationRules;
-    }
-
-    public void setNotificationRules(final Set<NotificationRule> notificationRules) {
-        this.notificationRules = notificationRules;
     }
 
     @Override

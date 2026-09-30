@@ -79,8 +79,7 @@ public final class RuntimeConfigMapper {
     private final Map<RuntimeConfigSpec, RuntimeConfigSchema> schemaCache;
 
     RuntimeConfigMapper() {
-        this.jsonMapper = new ObjectMapper()
-                .setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
+        this.jsonMapper = new ObjectMapper().setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
         final Dialect schemaDialect = Dialect.builder(Dialects.getDraft202012())
                 // Don't emit warnings when encountering jsonschema2pojo extensions.
                 // https://github.com/joelittlejohn/jsonschema2pojo/wiki/Reference#extensions
@@ -98,13 +97,10 @@ public final class RuntimeConfigMapper {
                         new NonValidationKeyword(CustomAnnotations.SECRET_REF),
                         new NonValidationKeyword(CustomAnnotations.UI_HINT)))
                 .build();
-        this.schemaRegistry = SchemaRegistry
-                .withDialect(
-                        schemaDialect,
-                        builder -> builder
-                                .nodeReader(DefaultNodeReader.builder()
-                                        .jsonMapper(this.jsonMapper)
-                                        .build()));
+        this.schemaRegistry = SchemaRegistry.withDialect(
+                schemaDialect,
+                builder -> builder.nodeReader(
+                        DefaultNodeReader.builder().jsonMapper(this.jsonMapper).build()));
         this.schemaCache = new ConcurrentHashMap<>();
     }
 
@@ -222,25 +218,23 @@ public final class RuntimeConfigMapper {
     }
 
     private RuntimeConfigSchema getSchema(RuntimeConfigSpec runtimeConfigSpec) {
-        return schemaCache.computeIfAbsent(
-                runtimeConfigSpec,
-                _ -> {
-                    final JsonNode schemaNode;
-                    try {
-                        schemaNode = jsonMapper.readValue(runtimeConfigSpec.schema(), JsonNode.class);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
+        return schemaCache.computeIfAbsent(runtimeConfigSpec, _ -> {
+            final JsonNode schemaNode;
+            try {
+                schemaNode = jsonMapper.readValue(runtimeConfigSpec.schema(), JsonNode.class);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
 
-                    final Schema jsonSchema = schemaRegistry.getSchema(schemaNode);
-                    if (jsonSchema.getId() == null || jsonSchema.getId().isBlank()) {
-                        throw new IllegalStateException("Schema does not define an ID");
-                    }
+            final Schema jsonSchema = schemaRegistry.getSchema(schemaNode);
+            if (jsonSchema.getId() == null || jsonSchema.getId().isBlank()) {
+                throw new IllegalStateException("Schema does not define an ID");
+            }
 
-                    final Set<String> secretRefPaths = getSecretRefPaths(schemaNode, null);
+            final Set<String> secretRefPaths = getSecretRefPaths(schemaNode, null);
 
-                    return new RuntimeConfigSchema(jsonSchema, secretRefPaths);
-                });
+            return new RuntimeConfigSchema(jsonSchema, secretRefPaths);
+        });
     }
 
     private Set<String> getSecretRefPaths(JsonNode schemaNode, @Nullable String currentPath) {
@@ -257,9 +251,7 @@ public final class RuntimeConfigMapper {
             final String fieldName = fieldNamesIterator.next();
             final JsonNode propertySchemaNode = propertiesNode.get(fieldName);
 
-            final String fieldPath = currentPath != null
-                    ? currentPath + "/" + fieldName
-                    : "/" + fieldName;
+            final String fieldPath = currentPath != null ? currentPath + "/" + fieldName : "/" + fieldName;
 
             if (hasSecretRef(propertySchemaNode, fieldPath)) {
                 paths.add(fieldPath);
@@ -286,18 +278,15 @@ public final class RuntimeConfigMapper {
 
         final JsonNode secretRefNode = propertyNode.get(CustomAnnotations.SECRET_REF);
         if (!secretRefNode.isBoolean()) {
-            throw new IllegalStateException(
-                    "Invalid %s node type at %s: Expected %s but was %s".formatted(
-                            CustomAnnotations.SECRET_REF, path, JsonNodeType.BOOLEAN, secretRefNode.getNodeType()));
+            throw new IllegalStateException("Invalid %s node type at %s: Expected %s but was %s"
+                    .formatted(CustomAnnotations.SECRET_REF, path, JsonNodeType.BOOLEAN, secretRefNode.getNodeType()));
         }
 
         return secretRefNode.asBoolean();
     }
 
     private void resolveSecretRefs(
-            JsonNode configNode,
-            String path,
-            Function<String, @Nullable String> secretResolver) {
+            JsonNode configNode, String path, Function<String, @Nullable String> secretResolver) {
         // Handle array paths such as /foo[*]/bar manually because
         // JSON pointers don't support wildcards in array indexes.
         //
@@ -307,9 +296,8 @@ public final class RuntimeConfigMapper {
             // Deconstruct path: "/foo[*]/bar" -> "/foo", "/bar".
             final int arrayWildcardIndex = path.indexOf("[*]");
             final String pathBeforeWildcard = path.substring(0, arrayWildcardIndex);
-            final String pathAfterWildcard = arrayWildcardIndex + 3 < path.length()
-                    ? path.substring(arrayWildcardIndex + 3)
-                    : null;
+            final String pathAfterWildcard =
+                    arrayWildcardIndex + 3 < path.length() ? path.substring(arrayWildcardIndex + 3) : null;
 
             if (!(configNode.at(pathBeforeWildcard) instanceof ArrayNode arrayNode)) {
                 return;
@@ -370,12 +358,10 @@ public final class RuntimeConfigMapper {
                 if (parentNode instanceof final ObjectNode objectNode) {
                     objectNode.set(fieldName, TextNode.valueOf(secretValue));
                 } else {
-                    throw new IllegalStateException(
-                            "Unexpected node type at %s: Expected %s but was %s".formatted(
-                                    path, JsonNodeType.OBJECT, parentNode.getNodeType()));
+                    throw new IllegalStateException("Unexpected node type at %s: Expected %s but was %s"
+                            .formatted(path, JsonNodeType.OBJECT, parentNode.getNodeType()));
                 }
             }
         }
     }
-
 }

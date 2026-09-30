@@ -50,8 +50,9 @@ class ProjectAccessTest {
     @Test
     void shouldRestoreStateAfterException() {
         assertThatThrownBy(() -> ProjectAccess.unrestricted(() -> {
-            throw new IllegalStateException("boom");
-        })).isInstanceOf(IllegalStateException.class);
+                    throw new IllegalStateException("boom");
+                }))
+                .isInstanceOf(IllegalStateException.class);
 
         assertThat(ProjectAccess.isUnrestricted()).isFalse();
     }
@@ -79,8 +80,8 @@ class ProjectAccessTest {
 
         ProjectAccess.unrestricted(() -> {
             try {
-                CompletableFuture.runAsync(
-                        () -> otherThreadObserved.set(ProjectAccess.isUnrestricted())).get();
+                CompletableFuture.runAsync(() -> otherThreadObserved.set(ProjectAccess.isUnrestricted()))
+                        .get();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -90,5 +91,4 @@ class ProjectAccessTest {
 
         assertThat(otherThreadObserved).isFalse();
     }
-
 }

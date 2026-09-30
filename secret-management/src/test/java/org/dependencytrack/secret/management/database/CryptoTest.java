@@ -83,8 +83,8 @@ class CryptoTest {
         // Create a second, completely independent keyset.
         final Path kekPathB = tempDir.resolve("kek-b.json");
         final KeysetHandle differentKeyset = KeysetHandle.generateNew(PredefinedAeadParameters.AES128_GCM);
-        Files.writeString(kekPathB,
-                TinkJsonProtoKeysetFormat.serializeKeyset(differentKeyset, InsecureSecretKeyAccess.get()));
+        Files.writeString(
+                kekPathB, TinkJsonProtoKeysetFormat.serializeKeyset(differentKeyset, InsecureSecretKeyAccess.get()));
 
         final DatabaseSecretManagerConfig configB = createConfig(kekPathB, false);
         assertThatExceptionOfType(IllegalStateException.class)
@@ -100,13 +100,13 @@ class CryptoTest {
 
         // Rotate: add a new key and make it primary.
         final KeysetHandle originalKeyset =
-                TinkJsonProtoKeysetFormat.parseKeyset(
-                        Files.readString(kekPath), InsecureSecretKeyAccess.get());
+                TinkJsonProtoKeysetFormat.parseKeyset(Files.readString(kekPath), InsecureSecretKeyAccess.get());
         final var keysetManager = KeysetManager.withKeysetHandle(originalKeyset);
         keysetManager.addNewKey(AeadKeyTemplates.AES128_GCM, true);
 
         final Path rotatedPath = tempDir.resolve("kek-rotated.json");
-        Files.writeString(rotatedPath,
+        Files.writeString(
+                rotatedPath,
                 TinkJsonProtoKeysetFormat.serializeKeyset(
                         keysetManager.getKeysetHandle(), InsecureSecretKeyAccess.get()));
 
@@ -122,7 +122,7 @@ class CryptoTest {
 
         // Delete stored key IDs to simulate intentional keyset replacement.
         try (final Connection connection = dataSource.getConnection();
-             final Statement statement = connection.createStatement()) {
+                final Statement statement = connection.createStatement()) {
             statement.execute("""
                     DELETE FROM "CONFIGPROPERTY"
                      WHERE "GROUPNAME" = 'secret-management'
@@ -133,7 +133,8 @@ class CryptoTest {
         // A completely different keyset should now be accepted.
         final Path kekPathB = tempDir.resolve("kek-b.json");
         final KeysetHandle differentKeyset = KeysetHandle.generateNew(PredefinedAeadParameters.AES128_GCM);
-        Files.writeString(kekPathB, TinkJsonProtoKeysetFormat.serializeKeyset(differentKeyset, InsecureSecretKeyAccess.get()));
+        Files.writeString(
+                kekPathB, TinkJsonProtoKeysetFormat.serializeKeyset(differentKeyset, InsecureSecretKeyAccess.get()));
 
         final DatabaseSecretManagerConfig configB = createConfig(kekPathB, false);
         assertThatNoException().isThrownBy(() -> new Crypto(dataSource, configB));
@@ -175,29 +176,27 @@ class CryptoTest {
 
     private DatabaseSecretManagerConfig createConfigWithKek(byte[] kekBytes) {
         final String encodedKek = Base64.getEncoder().encodeToString(kekBytes);
-        return new DatabaseSecretManagerConfig(
-                new SmallRyeConfigBuilder()
-                        .withDefaultValues(Map.ofEntries(
-                                Map.entry("dt.datasource.secrets.url", database.jdbcUrl()),
-                                Map.entry("dt.datasource.secrets.username", database.username()),
-                                Map.entry("dt.datasource.secrets.password", database.password()),
-                                Map.entry("dt.secret-management.database.datasource.name", "secrets"),
-                                Map.entry("dt.secret-management.database.kek", encodedKek)))
-                        .build());
+        return new DatabaseSecretManagerConfig(new SmallRyeConfigBuilder()
+                .withDefaultValues(Map.ofEntries(
+                        Map.entry("dt.datasource.secrets.url", database.jdbcUrl()),
+                        Map.entry("dt.datasource.secrets.username", database.username()),
+                        Map.entry("dt.datasource.secrets.password", database.password()),
+                        Map.entry("dt.secret-management.database.datasource.name", "secrets"),
+                        Map.entry("dt.secret-management.database.kek", encodedKek)))
+                .build());
     }
 
     private DatabaseSecretManagerConfig createConfig(Path kekPath, boolean createIfMissing) {
-        return new DatabaseSecretManagerConfig(
-                new SmallRyeConfigBuilder()
-                        .withDefaultValues(Map.ofEntries(
-                                Map.entry("dt.datasource.secrets.url", database.jdbcUrl()),
-                                Map.entry("dt.datasource.secrets.username", database.username()),
-                                Map.entry("dt.datasource.secrets.password", database.password()),
-                                Map.entry("dt.secret-management.database.datasource.name", "secrets"),
-                                Map.entry("dt.secret-management.database.kek-keyset.path", kekPath.toString()),
-                                Map.entry("dt.secret-management.database.kek-keyset.create-if-missing",
-                                        String.valueOf(createIfMissing))))
-                        .build());
+        return new DatabaseSecretManagerConfig(new SmallRyeConfigBuilder()
+                .withDefaultValues(Map.ofEntries(
+                        Map.entry("dt.datasource.secrets.url", database.jdbcUrl()),
+                        Map.entry("dt.datasource.secrets.username", database.username()),
+                        Map.entry("dt.datasource.secrets.password", database.password()),
+                        Map.entry("dt.secret-management.database.datasource.name", "secrets"),
+                        Map.entry("dt.secret-management.database.kek-keyset.path", kekPath.toString()),
+                        Map.entry(
+                                "dt.secret-management.database.kek-keyset.create-if-missing",
+                                String.valueOf(createIfMissing))))
+                .build());
     }
-
 }

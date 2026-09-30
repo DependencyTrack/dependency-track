@@ -20,10 +20,10 @@ package org.dependencytrack.notification.publishing.slack;
 
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherFactoryTest;
 
-class SlackNotificationPublisherFactoryTest extends AbstractNotificationPublisherFactoryTest<SlackNotificationPublisherFactory> {
+class SlackNotificationPublisherFactoryTest
+        extends AbstractNotificationPublisherFactoryTest<SlackNotificationPublisherFactory> {
 
     protected SlackNotificationPublisherFactoryTest() {
         super(SlackNotificationPublisherFactory.class);
     }
-
 }

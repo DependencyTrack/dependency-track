@@ -34,5 +34,4 @@ public final class InternalFailureException extends FailureException {
     public InternalFailureException(@Nullable String message) {
         this(message, null);
     }
-
 }

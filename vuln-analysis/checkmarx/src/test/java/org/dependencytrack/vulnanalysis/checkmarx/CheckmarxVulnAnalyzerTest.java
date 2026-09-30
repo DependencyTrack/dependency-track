@@ -27,8 +27,7 @@ import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.memory.MemoryCacheProvider;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.junit.jupiter.api.AfterEach;
@@ -36,7 +35,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.util.ArrayList;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -45,8 +43,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
@@ -77,11 +75,10 @@ class CheckmarxVulnAnalyzerTest {
                         .withAuthApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
                         .withApiKey("test-api-key"));
 
-        analyzerFactory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(CacheManager.class, cacheManager)
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(configRegistry)
+                .withCacheManager(cacheManager)
+                .build());
 
         // Stub auth token endpoint used by CheckmarxAccessTokenManager
         stubFor(post(urlPathMatching("/auth/realms/test-org-id/protocol/openid-connect/token"))
@@ -117,12 +114,11 @@ class CheckmarxVulnAnalyzerTest {
                         .withBodyFile("chx-no-issues-response.json")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("jackson-databind")
-                                .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -131,10 +127,13 @@ class CheckmarxVulnAnalyzerTest {
         final Bom secondVdr = analyzer.analyze(bom);
         assertThat(secondVdr).isEqualTo(vdr);
 
-        verify(1, postRequestedFor(urlEqualTo(
-                        "/api/v1/Packages/risks?IncludeRiskDetails=true&IncludeVersionDetails=true&IncludeVersionRemediation=true"))
-                .withHeader("Authorization", equalTo("Bearer test-access-token"))
-                .withRequestBody(equalToJson(/* language=JSON */ """
+        verify(
+                1,
+                postRequestedFor(
+                                urlEqualTo(
+                                        "/api/v1/Packages/risks?IncludeRiskDetails=true&IncludeVersionDetails=true&IncludeVersionRemediation=true"))
+                        .withHeader("Authorization", equalTo("Bearer test-access-token"))
+                        .withRequestBody(equalToJson(/* language=JSON */ """
                         {
                           "format": "purl",
                           "items": [
@@ -155,12 +154,11 @@ class CheckmarxVulnAnalyzerTest {
                         .withBodyFile("chx-response-with-vulns.json")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("jackson-databind")
-                                .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -235,18 +233,32 @@ class CheckmarxVulnAnalyzerTest {
         final Bom secondVdr = analyzer.analyze(bom);
         assertThat(secondVdr).isEqualTo(vdr);
 
-        verify(1, postRequestedFor(anyUrl())
-                .withHeader("Authorization", equalTo("Bearer test-access-token")));
+        verify(1, postRequestedFor(anyUrl()).withHeader("Authorization", equalTo("Bearer test-access-token")));
     }
 
     @Test
     void shouldNotAnalyzeComponentWithoutBomRef() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setName("acme-lib")
-                                .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
+
+        verify(0, postRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void shouldNotAnalyzeComponentWithVersionlessPurl() throws Exception {
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/org.acme/acme-lib")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -258,11 +270,10 @@ class CheckmarxVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeComponentWithoutPurl() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-lib")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -280,12 +291,11 @@ class CheckmarxVulnAnalyzerTest {
                         .withBodyFile("chx-non-okay-response.json")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-lib")
-                                .setPurl("pkg:rpm/acme-artefact@1.2.3")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:rpm/acme-artefact@1.2.3")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -295,17 +305,15 @@ class CheckmarxVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeInternalComponents() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-lib")
-                                .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
-                                .addProperties(
-                                        Property.newBuilder()
-                                                .setName("dependencytrack:internal:is-internal-component")
-                                                .setValue("does-not-matter")
-                                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .addProperties(Property.newBuilder()
+                                .setName("dependencytrack:internal:is-internal-component")
+                                .setValue("does-not-matter")
                                 .build())
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -324,17 +332,14 @@ class CheckmarxVulnAnalyzerTest {
 
         final var components = new ArrayList<Component>(150);
         for (int i = 0; i < 150; i++) {
-            components.add(
-                    Component.newBuilder()
-                            .setBomRef(String.valueOf(i))
-                            .setName("acme-lib")
-                            .setPurl("pkg:maven/com.acme/acme-lib@1.0." + i)
-                            .build());
+            components.add(Component.newBuilder()
+                    .setBomRef(String.valueOf(i))
+                    .setName("acme-lib")
+                    .setPurl("pkg:maven/com.acme/acme-lib@1.0." + i)
+                    .build());
         }
 
-        final var bom = Bom.newBuilder()
-                .addAllComponents(components)
-                .build();
+        final var bom = Bom.newBuilder().addAllComponents(components).build();
 
         final Bom vdr = analyzer.analyze(bom);
         assertThat(vdr).isEqualTo(Bom.getDefaultInstance());

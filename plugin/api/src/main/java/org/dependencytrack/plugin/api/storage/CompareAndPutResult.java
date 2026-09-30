@@ -49,13 +49,11 @@ public sealed interface CompareAndPutResult {
              * </ul>
              */
             VERSION_MISMATCH
-
         }
 
         public Failure {
             requireNonNull(reason, "reason must not be null");
         }
-
     }
 
     /**
@@ -63,7 +61,5 @@ public sealed interface CompareAndPutResult {
      *
      * @param newVersion New version of the entry.
      */
-    record Success(long newVersion) implements CompareAndPutResult {
-    }
-
+    record Success(long newVersion) implements CompareAndPutResult {}
 }

@@ -30,8 +30,7 @@ import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 
 public class PurlUtil {
 
-    private PurlUtil() {
-    }
+    private PurlUtil() {}
 
     public static PackageURL purlCoordinatesOnly(final PackageURL original) throws MalformedPackageURLException {
         return aPackageURL()
@@ -112,5 +111,4 @@ public class PurlUtil {
             return null;
         }
     }
-
 }

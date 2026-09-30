@@ -54,9 +54,8 @@ final class HexPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String url = UrlUtils.join(repository.url(), "api", "packages", purl.getName());
@@ -89,9 +88,8 @@ final class HexPackageMetadataResolver implements PackageMetadataResolver {
             for (final JsonNode release : releases) {
                 if (purl.getVersion().equals(release.path("version").asText(null))) {
                     final var publishedAt = extractPublishedAt(release);
-                    artifactMetadata = publishedAt != null
-                            ? new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of())
-                            : null;
+                    artifactMetadata =
+                            publishedAt != null ? new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of()) : null;
                     break;
                 }
             }
@@ -105,7 +103,9 @@ final class HexPackageMetadataResolver implements PackageMetadataResolver {
         if (insertedAt != null) {
             try {
                 return Instant.parse(insertedAt);
-            } catch (DateTimeParseException _) {}
+            } catch (DateTimeParseException _) {
+                // Publish timestamps are optional, so malformed ones are ignored.
+            }
         }
         return null;
     }
@@ -117,5 +117,4 @@ final class HexPackageMetadataResolver implements PackageMetadataResolver {
             throw new UncheckedIOException(e);
         }
     }
-
 }

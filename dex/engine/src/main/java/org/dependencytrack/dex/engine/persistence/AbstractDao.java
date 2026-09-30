@@ -43,9 +43,8 @@ abstract class AbstractDao {
             return null;
         }
 
-        final PageTokenEncoder encoder = jdbiHandle
-                .getConfig(PaginationConfig.class)
-                .getPageTokenEncoder();
+        final PageTokenEncoder encoder =
+                jdbiHandle.getConfig(PaginationConfig.class).getPageTokenEncoder();
         requireNonNull(encoder);
 
         return encoder.encode(token);
@@ -56,12 +55,10 @@ abstract class AbstractDao {
             return null;
         }
 
-        final PageTokenEncoder encoder = jdbiHandle
-                .getConfig(PaginationConfig.class)
-                .getPageTokenEncoder();
+        final PageTokenEncoder encoder =
+                jdbiHandle.getConfig(PaginationConfig.class).getPageTokenEncoder();
         requireNonNull(encoder);
 
         return encoder.decode(token, tokenClass);
     }
-
 }

@@ -21,21 +21,16 @@ package org.dependencytrack.pkgmetadata.resolution.gomodules;
 import com.github.packageurl.PackageURLBuilder;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import org.dependencytrack.cache.api.CacheManager;
-import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
@@ -60,10 +55,7 @@ class GoModulesPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         resolverFactory = new GoModulesPackageMetadataResolverFactory();
-        resolverFactory.init(new MutableServiceRegistry()
-                .register(CacheManager.class, new NoopCacheManager())
-                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        resolverFactory.init(new ExtensionContextBuilder().build());
         resolver = resolverFactory.create();
     }
 
@@ -96,11 +88,9 @@ class GoModulesPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v0.21.0");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-10-01T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-10-01T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-10-01T12:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-10-01T12:00:00Z"));
     }
 
     @Test
@@ -133,11 +123,9 @@ class GoModulesPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v0.21.0");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-10-01T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-10-01T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-06-15T08:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-06-15T08:00:00Z"));
     }
 
     @Test
@@ -167,8 +155,7 @@ class GoModulesPackageMetadataResolverTest {
                 .withVersion("v1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -220,17 +207,14 @@ class GoModulesPackageMetadataResolverTest {
                 .withVersion("v0.19.0")
                 .build();
         final var prior = new PackageArtifactMetadata(
-                Instant.parse("2023-01-01T00:00:00Z"),
-                Instant.parse("2024-06-15T08:00:00Z"),
-                Map.of());
+                Instant.parse("2023-01-01T00:00:00Z"), Instant.parse("2024-06-15T08:00:00Z"), Map.of());
 
         final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         final PackageMetadata result = resolver.resolve(purl, repo, prior);
 
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-06-15T08:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-06-15T08:00:00Z"));
         verify(0, getRequestedFor(urlPathEqualTo("/golang.org/x/text/@v/v0.19.0.info")));
     }
 
@@ -275,8 +259,8 @@ class GoModulesPackageMetadataResolverTest {
         final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
         assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
-        final String expected = "Basic " + Base64.getEncoder().encodeToString(
-                "user:secret".getBytes(StandardCharsets.UTF_8));
+        final String expected =
+                "Basic " + Base64.getEncoder().encodeToString("user:secret".getBytes(StandardCharsets.UTF_8));
         verify(getRequestedFor(urlPathEqualTo("/golang.org/x/text/@latest"))
                 .withHeader("Authorization", equalTo(expected)));
     }
@@ -301,5 +285,4 @@ class GoModulesPackageMetadataResolverTest {
         verify(getRequestedFor(urlPathEqualTo("/golang.org/x/text/@latest"))
                 .withHeader("Authorization", equalTo("Bearer token")));
     }
-
 }

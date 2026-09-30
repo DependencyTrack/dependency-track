@@ -50,8 +50,7 @@ public final class NotificationPublishContext {
     }
 
     public NotificationPublishContext(
-            @Nullable RuntimeConfig ruleConfig,
-            NotificationTemplateRenderer templateRenderer) {
+            @Nullable RuntimeConfig ruleConfig, NotificationTemplateRenderer templateRenderer) {
         this(ruleConfig, Collections::emptySet, templateRenderer);
     }
 
@@ -78,5 +77,4 @@ public final class NotificationPublishContext {
     public NotificationTemplateRenderer templateRenderer() {
         return templateRenderer;
     }
-
 }

@@ -44,5 +44,4 @@ public class UUIDv7Generator extends AbstractGenerator<String> {
 
         return new ValueGenerationBlock<>(ids);
     }
-
 }

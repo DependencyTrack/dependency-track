@@ -37,7 +37,6 @@ import java.nio.file.NoSuchFileException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -84,11 +83,12 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new ProjectMaintenanceTask(fileStorage);
         assertThatNoException().isThrownBy(task::run);
 
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        final Page<ListProjectsRow> projectsPage =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
 
-        assertThat(projectsPage.items()).satisfiesExactly(
-                retainedProject -> assertThat(retainedProject.name()).isEqualTo("acme-app-B"));
+        assertThat(projectsPage.items())
+                .satisfiesExactly(
+                        retainedProject -> assertThat(retainedProject.name()).isEqualTo("acme-app-B"));
     }
 
     @Test
@@ -108,8 +108,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         final var expiredProject = new Project();
         expiredProject.setName("expired-project");
-        expiredProject.setInactiveSince(
-                Date.from(Instant.now().minus(Duration.ofDays(40))));
+        expiredProject.setInactiveSince(Date.from(Instant.now().minus(Duration.ofDays(40))));
         qm.persist(expiredProject);
 
         final var childProject = new Project();
@@ -122,28 +121,17 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         retainedProject.setInactiveSince(new Date());
         qm.persist(retainedProject);
 
-        final FileMetadata expiredFileMetadata = storeOriginalBom(
-                expiredProject,
-                "maintenance/age-expired");
-        final FileMetadata childFileMetadata = storeOriginalBom(
-                childProject,
-                "maintenance/age-child");
-        final FileMetadata retainedFileMetadata = storeOriginalBom(
-                retainedProject,
-                "maintenance/age-retained");
+        final FileMetadata expiredFileMetadata = storeOriginalBom(expiredProject, "maintenance/age-expired");
+        final FileMetadata childFileMetadata = storeOriginalBom(childProject, "maintenance/age-child");
+        final FileMetadata retainedFileMetadata = storeOriginalBom(retainedProject, "maintenance/age-retained");
 
         final var task = new ProjectMaintenanceTask(fileStorage);
         assertThatNoException().isThrownBy(task::run);
 
-        assertThatThrownBy(() -> fileStorage.get(expiredFileMetadata))
-                .isInstanceOf(NoSuchFileException.class);
-        assertThatThrownBy(() -> fileStorage.get(childFileMetadata))
-                .isInstanceOf(NoSuchFileException.class);
+        assertThatThrownBy(() -> fileStorage.get(expiredFileMetadata)).isInstanceOf(NoSuchFileException.class);
+        assertThatThrownBy(() -> fileStorage.get(childFileMetadata)).isInstanceOf(NoSuchFileException.class);
         try (final var inputStream = fileStorage.get(retainedFileMetadata)) {
-            assertThat(inputStream)
-                    .hasBinaryContent(
-                            "maintenance/age-retained".getBytes(
-                                    StandardCharsets.UTF_8));
+            assertThat(inputStream).hasBinaryContent("maintenance/age-retained".getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -164,8 +152,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         final var expiredProject = new Project();
         expiredProject.setName("expired-project");
-        expiredProject.setInactiveSince(
-                Date.from(Instant.now().minus(Duration.ofDays(40))));
+        expiredProject.setInactiveSince(Date.from(Instant.now().minus(Duration.ofDays(40))));
         qm.persist(expiredProject);
 
         final FileMetadata fileMetadata = FileMetadata.newBuilder()
@@ -174,16 +161,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
                 .setMediaType("application/vnd.cyclonedx+json")
                 .setSha256Digest("cleanup-failure")
                 .build();
-        final Bom bom = qm.createBom(
-                expiredProject,
-                new Date(),
-                Bom.Format.CYCLONEDX,
-                "1.6",
-                1,
-                null,
-                UUID.randomUUID(),
-                null);
-        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
+        persistOriginalBom(expiredProject, fileMetadata);
 
         final FileStorage failingFileStorage = mock(FileStorage.class);
         doThrow(new IllegalStateException("Storage unavailable"))
@@ -194,9 +172,8 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         assertThatNoException().isThrownBy(task::run);
 
         verify(failingFileStorage).delete(fileMetadata);
-        final Long deletedProjectId = withJdbiHandle(handle -> handle
-                .attach(ProjectDao.class)
-                .getProjectId(expiredProject.getUuid()));
+        final Long deletedProjectId =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjectId(expiredProject.getUuid()));
         assertThat(deletedProjectId).isNull();
     }
 
@@ -248,18 +225,17 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         // Retain all active and last 2 inactive versions of a project and delete rest
         final var task = new ProjectMaintenanceTask(fileStorage);
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
-        assertThat(projectsPage.items()).satisfiesExactly(
-                retainedProject -> assertThat(retainedProject.version()).isEqualTo("3.0.0"),
-                retainedProject -> assertThat(retainedProject.version()).isEqualTo("4.0.0"),
-                retainedProject -> assertThat(retainedProject.version()).isEqualTo("5.0.0")
-        );
+        final Page<ListProjectsRow> projectsPage =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        assertThat(projectsPage.items())
+                .satisfiesExactly(
+                        retainedProject -> assertThat(retainedProject.version()).isEqualTo("3.0.0"),
+                        retainedProject -> assertThat(retainedProject.version()).isEqualTo("4.0.0"),
+                        retainedProject -> assertThat(retainedProject.version()).isEqualTo("5.0.0"));
     }
 
     @Test
-    void testWithRetentionTypeVersionsDeletesOriginalBomFiles()
-            throws Exception {
+    void testWithRetentionTypeVersionsDeletesOriginalBomFiles() throws Exception {
         qm.createConfigProperty(
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
@@ -285,23 +261,15 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         newerProject.setInactiveSince(DateUtil.parseShortDate("20250106"));
         qm.persist(newerProject);
 
-        final FileMetadata oldestFileMetadata = storeOriginalBom(
-                oldestProject,
-                "maintenance/version-oldest");
-        final FileMetadata newerFileMetadata = storeOriginalBom(
-                newerProject,
-                "maintenance/version-newer");
+        final FileMetadata oldestFileMetadata = storeOriginalBom(oldestProject, "maintenance/version-oldest");
+        final FileMetadata newerFileMetadata = storeOriginalBom(newerProject, "maintenance/version-newer");
 
         final var task = new ProjectMaintenanceTask(fileStorage);
         assertThatNoException().isThrownBy(task::run);
 
-        assertThatThrownBy(() -> fileStorage.get(oldestFileMetadata))
-                .isInstanceOf(NoSuchFileException.class);
+        assertThatThrownBy(() -> fileStorage.get(oldestFileMetadata)).isInstanceOf(NoSuchFileException.class);
         try (final var inputStream = fileStorage.get(newerFileMetadata)) {
-            assertThat(inputStream)
-                    .hasBinaryContent(
-                            "maintenance/version-newer".getBytes(
-                                    StandardCharsets.UTF_8));
+            assertThat(inputStream).hasBinaryContent("maintenance/version-newer".getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -353,22 +321,22 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         // Retain all active and last 2 inactive versions of all projects and delete rest
         final var task = new ProjectMaintenanceTask(fileStorage);
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
-        assertThat(projectsPage.items()).satisfiesExactlyInAnyOrder(
-                retainedProject -> {
-                    assertThat(retainedProject.name()).isEqualTo("acme-app-A");
-                    assertThat(retainedProject.version()).isEqualTo("2.0.0");
-                },
-                retainedProject -> {
-                    assertThat(retainedProject.name()).isEqualTo("acme-app-B");
-                    assertThat(retainedProject.version()).isEqualTo("2.0.0");
-                },
-                retainedProject -> {
-                    assertThat(retainedProject.name()).isEqualTo("acme-app-B");
-                    assertThat(retainedProject.version()).isEqualTo("3.0.0");
-                }
-        );
+        final Page<ListProjectsRow> projectsPage =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        assertThat(projectsPage.items())
+                .satisfiesExactlyInAnyOrder(
+                        retainedProject -> {
+                            assertThat(retainedProject.name()).isEqualTo("acme-app-A");
+                            assertThat(retainedProject.version()).isEqualTo("2.0.0");
+                        },
+                        retainedProject -> {
+                            assertThat(retainedProject.name()).isEqualTo("acme-app-B");
+                            assertThat(retainedProject.version()).isEqualTo("2.0.0");
+                        },
+                        retainedProject -> {
+                            assertThat(retainedProject.name()).isEqualTo("acme-app-B");
+                            assertThat(retainedProject.version()).isEqualTo("3.0.0");
+                        });
     }
 
     @Test
@@ -388,8 +356,8 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         final var task = new ProjectMaintenanceTask(fileStorage);
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        final Page<ListProjectsRow> projectsPage =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items()).isNotEmpty();
     }
 
@@ -410,30 +378,28 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         final var task = new ProjectMaintenanceTask(fileStorage);
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        final Page<ListProjectsRow> projectsPage =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items()).isNotEmpty();
     }
 
-    private FileMetadata storeOriginalBom(
-            final Project project,
-            final String fileName) throws Exception {
+    private FileMetadata storeOriginalBom(final Project project, final String fileName) throws Exception {
         final FileMetadata fileMetadata = fileStorage.store(
                 fileName,
                 "application/vnd.cyclonedx+json",
-                new ByteArrayInputStream(
-                        fileName.getBytes(StandardCharsets.UTF_8)));
-        final Bom bom = qm.createBom(
-                project,
-                new Date(),
-                Bom.Format.CYCLONEDX,
-                "1.6",
-                1,
-                null,
-                UUID.randomUUID(),
-                null);
-        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
+                new ByteArrayInputStream(fileName.getBytes(StandardCharsets.UTF_8)));
+        persistOriginalBom(project, fileMetadata);
         return fileMetadata;
     }
 
+    private void persistOriginalBom(final Project project, final FileMetadata fileMetadata) {
+        final var bom = new Bom();
+        bom.setProject(project);
+        bom.setImported(new Date());
+        bom.setBomFormat(Bom.Format.CYCLONEDX);
+        bom.setSpecVersion("1.6");
+        bom.setBomVersion(1);
+        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
+        qm.persist(bom);
+    }
 }

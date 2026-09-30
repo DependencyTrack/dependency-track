@@ -43,9 +43,8 @@ import java.util.UUID;
 public class AffectedComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AffectedComponent.class);
-    private static final ObjectReader QUALIFIER_READER = Mappers.jsonMapper()
-            .readerFor(new TypeReference<TreeMap<String, String>>() {
-            });
+    private static final ObjectReader QUALIFIER_READER =
+            Mappers.jsonMapper().readerFor(new TypeReference<TreeMap<String, String>>() {});
 
     enum IdentityType {
         CPE,
@@ -68,8 +67,7 @@ public class AffectedComponent {
     private UUID uuid;
     private List<AffectedVersionAttribution> affectedVersionAttributions;
 
-    public AffectedComponent() {
-    }
+    public AffectedComponent() {}
 
     public AffectedComponent(final VulnerableSoftware vs) {
         if (vs.getCpe23() != null) {
@@ -81,8 +79,7 @@ public class AffectedComponent {
         } else if (vs.getPurl() != null) {
             identityType = IdentityType.PURL;
             identity = vs.getPurl();
-        } else if (vs.getPurlType() != null
-                && vs.getPurlName() != null) {
+        } else if (vs.getPurlType() != null && vs.getPurlName() != null) {
             TreeMap<String, String> qualifiers = null;
             if (vs.getPurlQualifiers() != null) {
                 try {
@@ -93,8 +90,13 @@ public class AffectedComponent {
             }
 
             try {
-                final var purl = new PackageURL(vs.getPurlType(), vs.getPurlNamespace(), vs.getPurlName(),
-                        vs.getPurlVersion(), qualifiers, vs.getPurlSubpath());
+                final var purl = new PackageURL(
+                        vs.getPurlType(),
+                        vs.getPurlNamespace(),
+                        vs.getPurlName(),
+                        vs.getPurlVersion(),
+                        qualifiers,
+                        vs.getPurlSubpath());
                 identityType = IdentityType.PURL;
                 identity = purl.canonicalize();
             } catch (MalformedPackageURLException e) {

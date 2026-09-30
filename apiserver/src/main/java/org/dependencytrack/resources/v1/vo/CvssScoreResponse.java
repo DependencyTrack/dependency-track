@@ -44,5 +44,4 @@ public record CvssScoreResponse(
     private static @Nullable Double nullIfNaN(final double value) {
         return Double.isNaN(value) ? null : value;
     }
-
 }

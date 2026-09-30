@@ -46,14 +46,10 @@ public record ViolationAnalysisResponse(
 
     public static ViolationAnalysisResponse of(ViolationAnalysis analysis) {
         final List<ViolationAnalysisComment> jdoComments = analysis.getAnalysisComments();
-        final List<Comment> comments = jdoComments != null
-                ? jdoComments.stream().map(Comment::of).toList()
-                : List.of();
+        final List<Comment> comments =
+                jdoComments != null ? jdoComments.stream().map(Comment::of).toList() : List.of();
 
-        return new ViolationAnalysisResponse(
-                analysis.getAnalysisState(),
-                comments,
-                analysis.isSuppressed());
+        return new ViolationAnalysisResponse(analysis.getAnalysisState(), comments, analysis.isSuppressed());
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -64,12 +60,11 @@ public record ViolationAnalysisResponse(
             @Schema(description = "The comment text", requiredMode = Schema.RequiredMode.REQUIRED)
             String comment,
 
-            @Schema(description = "Identifier of the user who wrote the comment")
-            @Nullable String commenter) {
+            @Schema(description = "Identifier of the user who wrote the comment") @Nullable
+            String commenter) {
 
         public static Comment of(ViolationAnalysisComment jdo) {
             return new Comment(jdo.getTimestamp(), jdo.getComment(), jdo.getCommenter());
         }
-
     }
 }

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import jakarta.validation.constraints.Pattern;
+
 import java.io.Serializable;
 
 /**
@@ -40,7 +41,9 @@ public class Cwe implements Serializable {
     private int cweId;
 
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The name may only contain printable characters")
     private String name;
 
     public int getCweId() {
@@ -58,5 +61,4 @@ public class Cwe implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
-
 }

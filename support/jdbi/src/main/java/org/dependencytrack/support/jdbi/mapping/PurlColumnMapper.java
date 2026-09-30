@@ -45,5 +45,4 @@ public final class PurlColumnMapper implements ColumnMapper<PackageURL> {
             throw new IllegalStateException(e);
         }
     }
-
 }

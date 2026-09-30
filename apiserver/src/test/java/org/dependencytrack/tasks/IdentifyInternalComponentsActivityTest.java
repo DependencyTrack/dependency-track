@@ -41,12 +41,18 @@ class IdentifyInternalComponentsActivityTest extends PersistenceCapableTest {
 
         // Configure internal components to be identified by group "org.acme"
         // and names starting with "foobar-".
-        qm.createConfigProperty(ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX.getGroupName(),
+        qm.createConfigProperty(
+                ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX.getGroupName(),
                 ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName(),
-                "^org\\.acme$", PropertyType.STRING, null);
-        qm.createConfigProperty(ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName(),
+                "^org\\.acme$",
+                PropertyType.STRING,
+                null);
+        qm.createConfigProperty(
+                ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName(),
                 ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyName(),
-                "^foobar-.*", PropertyType.STRING, null);
+                "^foobar-.*",
+                PropertyType.STRING,
+                null);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
 
@@ -84,5 +90,4 @@ class IdentifyInternalComponentsActivityTest extends PersistenceCapableTest {
             return query.executeResultUnique(Long.class);
         }
     }
-
 }

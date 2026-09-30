@@ -34,14 +34,14 @@ public record ConfigPropertyResponse(
         @Schema(description = "Name of the property", requiredMode = Schema.RequiredMode.REQUIRED)
         String propertyName,
 
-        @Schema(description = "Value of the property")
-        @Nullable String propertyValue,
+        @Schema(description = "Value of the property") @Nullable
+        String propertyValue,
 
         @Schema(description = "Type of the property", requiredMode = Schema.RequiredMode.REQUIRED)
         IConfigProperty.PropertyType propertyType,
 
-        @Schema(description = "Description of the property")
-        @Nullable String description) {
+        @Schema(description = "Description of the property") @Nullable
+        String description) {
 
     public static ConfigPropertyResponse of(IConfigProperty property) {
         return new ConfigPropertyResponse(
@@ -51,5 +51,4 @@ public record ConfigPropertyResponse(
                 property.getPropertyType(),
                 property.getDescription());
     }
-
 }

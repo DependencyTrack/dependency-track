@@ -29,5 +29,4 @@ public record NotificationTemplate(String content, String mimeType) {
         requireNonNull(content, "content must not be null");
         requireNonNull(mimeType, "mimeType must not be null");
     }
-
 }

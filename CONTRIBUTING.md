@@ -43,10 +43,8 @@ File a single issue per defect. Do not list multiple defects in the same issue.
 
 The more information you can provide, the more likely we will be successful at reproducing the bug and finding a fix.
 
-API server logs (including errors) are logged to the following locations per default:
-
-* `~/.dependency-track/dependency-track.log` (`/data/.dependency-track/dependency-track.log` within Docker containers)
-* Standard output (use `docker logs -f <CONTAINER_NAME>` when using Docker)
+API server logs (including errors) are logged to standard output by default.
+When running in Docker, use `docker logs <CONTAINER_NAME>` to reveal them.
 
 Errors in the frontend are logged to your browser's developer console (see [here](https://developer.chrome.com/docs/devtools/console/log/#browser) 
 for Google Chrome). Issues in the communication between frontend and API server will be visible in the *Network* tab of 
@@ -66,18 +64,18 @@ Please refer to our security policy in [`SECURITY.md`](./SECURITY.md) for how to
 Beside extending existing documentation or correcting any errors it may contain, another great way to contribute is to
 update the [FAQ](https://docs.dependencytrack.org/FAQ/) with questions and answers that benefit the community.
 
-Refer to the *Documentation* section of [`DEVELOPING.md`](./DEVELOPING.md) for a guide on how to build the documentation locally.
+User-facing documentation lives in the dedicated [docs](https://github.com/DependencyTrack/docs) repository.
+Contributor documentation lives in [`docs/`](./docs/README.md).
 
 ## Testing Snapshot Versions
 
-Every time a commit is pushed to the `master` branch, container images are built and published to the `snapshot` tag.
+Every time a commit is pushed to the `main` branch, container images are built and published to the `5-snapshot` tag.
 This is true for both API server and frontend:
 
-* [`dependencytrack/apiserver:snapshot`](https://hub.docker.com/r/dependencytrack/apiserver/tags?name=snapshot)
-* [`dependencytrack/bundled:snapshot`](https://hub.docker.com/r/dependencytrack/bundled/tags?name=snapshot)
-* [`dependencytrack/frontend:snapshot`](https://hub.docker.com/r/dependencytrack/frontend/tags?name=snapshot)
+* [`dependencytrack/apiserver:5-snapshot`](https://hub.docker.com/r/dependencytrack/apiserver/tags?name=5-snapshot)
+* [`dependencytrack/frontend:5-snapshot`](https://hub.docker.com/r/dependencytrack/frontend/tags?name=5-snapshot)
 
-Testing `snapshot` versions and providing early feedback helps in improving the quality of new releases.
+Testing `5-snapshot` versions and providing early feedback helps in improving the quality of new releases.
 The private `#proj-dependency-track-beta` Slack channel is intended for discussions about and feedback for `snapshot`
 versions. If you are interested in participating, please let us know in [`#proj-dependency-track`](https://dependencytrack.org/slack).
 
@@ -118,25 +116,23 @@ where the design is uncontroversial, bundling the ADR and the implementation in 
 
 ### Pull Requests
 
-* Pull requests that do not merge easily with the tip of the `master` branch will be declined.
+* Pull requests that do not merge easily with the tip of the `main` branch will be declined.
   * The author will be asked to merge with tip and submit a new pull request.
-* Code should follow standard code style conventions for whitespace, indentation and naming.
-  * In the case of style differences between existing code and language standards, consistency with existing code is preferred.
 * New functionality should have corresponding tests added to the existing test suite if possible.
 * Avoid new dependencies if the functionality that is being used is trivial to implement directly or is available in standard libraries.
 * Avoid checking in unrelated whitespace changes with code changes.
 * Commits must be [signed off](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt--s) to indicate agreement with [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
-* Pull requests must use the provided PR template and fill out all applicable sections. **Pull requests that do not use the template will be closed.**
+* Pull requests must use the provided [PR template](.github/PULL_REQUEST_TEMPLATE.md) and fill out all applicable sections. **Pull requests that do not use the template will be closed.**
 * Optionally include visualizations like screenshots, videos or [diagrams](https://github.blog/2022-02-14-include-diagrams-markdown-files-mermaid/) in the pull request description.
 
 ### Commit Messages
 
 Please follow these rules when writing a commit message:
 
-* Separate subject from body with a blank line
-* Limit the subject line to 50 characters
+* Do not prefix the subject line 
+  * Write `Fix broken clean-build-cache make target`, not a [conventional-commits](https://www.conventionalcommits.org/en/v1.0.0/) prefix like `fix(build): broken cache target`
+* Do not use generic subjects like "Fix issue #123"
 * Capitalize the subject line
 * Do not end the subject line with a period
 * Use the imperative mood in the subject line
-* Wrap the body at 72 characters
-* Use the body to explain *what* and *why* vs. *how*
+* Use the body to explain *what* and *why*, not *how*

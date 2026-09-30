@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.api.TestNotificationFactory.createBomConsumedTestNotification;
 
 class JdoNotificationEmitterTest extends PersistenceCapableTest {
@@ -49,7 +50,7 @@ class JdoNotificationEmitterTest extends PersistenceCapableTest {
 
         emitter.emit(notification);
 
-        assertThat(qm.getNotificationOutbox()).containsOnly(notification);
+        assertThat(getNotificationOutbox()).containsOnly(notification);
     }
 
     @Test
@@ -64,96 +65,72 @@ class JdoNotificationEmitterTest extends PersistenceCapableTest {
 
         emitter.emitAll(notifications);
 
-        assertThat(qm.getNotificationOutbox()).hasSize(5);
+        assertThat(getNotificationOutbox()).hasSize(5);
     }
 
     @Test
     void emitShouldThrowWhenNotificationIsNull() {
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> emitter.emit(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> emitter.emit(null));
     }
 
     @Test
     void emitAllShouldThrowWhenNotificationsIsNull() {
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> emitter.emitAll(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> emitter.emitAll(null));
     }
 
     @Test
     void emitShouldThrowWhenNotificationIdIsMissing() {
         final Notification notification =
-                createBomConsumedTestNotification().toBuilder()
-                        .clearId()
-                        .build();
+                createBomConsumedTestNotification().toBuilder().clearId().build();
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> emitter.emit(notification));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> emitter.emit(notification));
     }
 
     @Test
     void emitShouldThrowWhenNotificationScopeIsMissing() {
         final Notification notification =
-                createBomConsumedTestNotification().toBuilder()
-                        .clearScope()
-                        .build();
+                createBomConsumedTestNotification().toBuilder().clearScope().build();
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> emitter.emit(notification));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> emitter.emit(notification));
     }
 
     @Test
     void emitShouldThrowWhenNotificationGroupIsMissing() {
         final Notification notification =
-                createBomConsumedTestNotification().toBuilder()
-                        .clearGroup()
-                        .build();
+                createBomConsumedTestNotification().toBuilder().clearGroup().build();
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> emitter.emit(notification));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> emitter.emit(notification));
     }
 
     @Test
     void emitShouldThrowWhenNotificationLevelIsMissing() {
         final Notification notification =
-                createBomConsumedTestNotification().toBuilder()
-                        .clearLevel()
-                        .build();
+                createBomConsumedTestNotification().toBuilder().clearLevel().build();
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> emitter.emit(notification));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> emitter.emit(notification));
     }
 
     @Test
     void emitShouldThrowWhenNotificationTimestampIsMissing() {
         final Notification notification =
-                createBomConsumedTestNotification().toBuilder()
-                        .clearTimestamp()
-                        .build();
+                createBomConsumedTestNotification().toBuilder().clearTimestamp().build();
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> emitter.emit(notification));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> emitter.emit(notification));
     }
 
     @Test
     void emitShouldThrowWhenNotificationTitleIsMissing() {
         final Notification notification =
-                createBomConsumedTestNotification().toBuilder()
-                        .clearTitle()
-                        .build();
+                createBomConsumedTestNotification().toBuilder().clearTitle().build();
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> emitter.emit(notification));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> emitter.emit(notification));
     }
 
     @Test
     void emitShouldThrowWhenNotificationContentIsMissing() {
         final Notification notification =
-                createBomConsumedTestNotification().toBuilder()
-                        .clearContent()
-                        .build();
+                createBomConsumedTestNotification().toBuilder().clearContent().build();
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> emitter.emit(notification));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> emitter.emit(notification));
     }
-
 }

@@ -79,13 +79,12 @@ public class DatabaseMigrationInitTaskTest {
     }
 
     private void assertMigrationExecuted(final boolean expectExecuted) {
-        final List<String> tableNames = jdbi.withHandle(handle -> handle.createQuery("""
+        final List<String> tableNames = jdbi.withHandle(
+                handle -> handle.createQuery("""
                         SELECT "table_name"
                           FROM "information_schema"."tables"
                          WHERE "table_schema" NOT IN ('pg_catalog', 'information_schema')
-                        """)
-                .mapTo(String.class)
-                .list());
+                        """).mapTo(String.class).list());
 
         if (expectExecuted) {
             assertThat(tableNames).isNotEmpty();
@@ -93,5 +92,4 @@ public class DatabaseMigrationInitTaskTest {
             assertThat(tableNames).isEmpty();
         }
     }
-
 }

@@ -38,8 +38,7 @@ class EnvSecretManagerTest {
 
     @BeforeEach
     void beforeEach() {
-        secretManager = new EnvSecretManagerProvider(
-                Map.of("dt_secret_name", "value"))
+        secretManager = new EnvSecretManagerProvider(Map.of("dt_secret_name", "value"))
                 .create(null, new SimplePageTokenEncoder());
     }
 
@@ -105,8 +104,7 @@ class EnvSecretManagerTest {
 
     @Test
     void listSecretMetadataShouldReturnSecretMetadata() {
-        final Page<SecretMetadata> page = secretManager.listSecretMetadata(
-                new ListSecretsRequest(null, null, 100));
+        final Page<SecretMetadata> page = secretManager.listSecretMetadata(new ListSecretsRequest(null, null, 100));
 
         assertThat(page.nextPageToken()).isNull();
         assertThat(page.totalCount()).isNotNull();
@@ -122,73 +120,61 @@ class EnvSecretManagerTest {
 
     @Test
     void listSecretMetadataShouldSupportPagination() {
-        secretManager = new EnvSecretManagerProvider(
-                Map.of(
+        secretManager = new EnvSecretManagerProvider(Map.of(
                         "dt_secret_alpha", "v1",
                         "dt_secret_beta", "v2",
                         "dt_secret_gamma", "v3"))
                 .create(null, new SimplePageTokenEncoder());
 
-        final Page<SecretMetadata> firstPage = secretManager.listSecretMetadata(
-                new ListSecretsRequest(null, null, 2));
+        final Page<SecretMetadata> firstPage = secretManager.listSecretMetadata(new ListSecretsRequest(null, null, 2));
 
-        assertThat(firstPage.items()).extracting(SecretMetadata::name)
-                .containsExactly("alpha", "beta");
+        assertThat(firstPage.items()).extracting(SecretMetadata::name).containsExactly("alpha", "beta");
         assertThat(firstPage.nextPageToken()).isNotNull();
         assertThat(firstPage.totalCount().value()).isEqualTo(3);
 
-        final Page<SecretMetadata> secondPage = secretManager.listSecretMetadata(
-                new ListSecretsRequest(null, firstPage.nextPageToken(), 2));
+        final Page<SecretMetadata> secondPage =
+                secretManager.listSecretMetadata(new ListSecretsRequest(null, firstPage.nextPageToken(), 2));
 
-        assertThat(secondPage.items()).extracting(SecretMetadata::name)
-                .containsExactly("gamma");
+        assertThat(secondPage.items()).extracting(SecretMetadata::name).containsExactly("gamma");
         assertThat(secondPage.nextPageToken()).isNull();
         assertThat(secondPage.totalCount().value()).isEqualTo(3);
     }
 
     @Test
     void listSecretMetadataShouldSupportSearchText() {
-        secretManager = new EnvSecretManagerProvider(
-                Map.of(
+        secretManager = new EnvSecretManagerProvider(Map.of(
                         "dt_secret_alpha", "v1",
                         "dt_secret_beta", "v2",
                         "dt_secret_ALPHABET", "v3"))
                 .create(null, new SimplePageTokenEncoder());
 
-        final Page<SecretMetadata> page = secretManager.listSecretMetadata(
-                new ListSecretsRequest("alph", null, 100));
+        final Page<SecretMetadata> page = secretManager.listSecretMetadata(new ListSecretsRequest("alph", null, 100));
 
-        assertThat(page.items()).extracting(SecretMetadata::name)
-                .containsExactly("ALPHABET", "alpha");
+        assertThat(page.items()).extracting(SecretMetadata::name).containsExactly("ALPHABET", "alpha");
         assertThat(page.nextPageToken()).isNull();
         assertThat(page.totalCount().value()).isEqualTo(2);
     }
 
     @Test
     void listSecretMetadataShouldSupportSearchTextWithPagination() {
-        secretManager = new EnvSecretManagerProvider(
-                Map.of(
+        secretManager = new EnvSecretManagerProvider(Map.of(
                         "dt_secret_foo1", "v1",
                         "dt_secret_foo2", "v2",
                         "dt_secret_foo3", "v3",
                         "dt_secret_bar1", "v4"))
                 .create(null, new SimplePageTokenEncoder());
 
-        final Page<SecretMetadata> firstPage = secretManager.listSecretMetadata(
-                new ListSecretsRequest("foo", null, 2));
+        final Page<SecretMetadata> firstPage = secretManager.listSecretMetadata(new ListSecretsRequest("foo", null, 2));
 
-        assertThat(firstPage.items()).extracting(SecretMetadata::name)
-                .containsExactly("foo1", "foo2");
+        assertThat(firstPage.items()).extracting(SecretMetadata::name).containsExactly("foo1", "foo2");
         assertThat(firstPage.nextPageToken()).isNotNull();
         assertThat(firstPage.totalCount().value()).isEqualTo(3);
 
-        final Page<SecretMetadata> secondPage = secretManager.listSecretMetadata(
-                new ListSecretsRequest("foo", firstPage.nextPageToken(), 2));
+        final Page<SecretMetadata> secondPage =
+                secretManager.listSecretMetadata(new ListSecretsRequest("foo", firstPage.nextPageToken(), 2));
 
-        assertThat(secondPage.items()).extracting(SecretMetadata::name)
-                .containsExactly("foo3");
+        assertThat(secondPage.items()).extracting(SecretMetadata::name).containsExactly("foo3");
         assertThat(secondPage.nextPageToken()).isNull();
         assertThat(secondPage.totalCount().value()).isEqualTo(3);
     }
-
 }

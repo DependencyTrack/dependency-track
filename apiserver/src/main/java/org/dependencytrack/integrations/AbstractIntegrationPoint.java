@@ -18,11 +18,15 @@
  */
 package org.dependencytrack.integrations;
 
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import static org.dependencytrack.notification.api.NotificationFactory.createIntegrationErrorNotification;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public abstract class AbstractIntegrationPoint implements IntegrationPoint {
 
@@ -32,13 +36,24 @@ public abstract class AbstractIntegrationPoint implements IntegrationPoint {
         this.qm = qm;
     }
 
-    public void handleUnexpectedHttpResponse(final Logger logger, final String url, final int statusCode, final String statusText) {
+    protected static @Nullable String getConfigValue(ConfigPropertyConstants property) {
+        return withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getOptionalValue(property)
+                .orElse(null));
+    }
+
+    protected static boolean isConfigEnabled(ConfigPropertyConstants property) {
+        return Boolean.TRUE.equals(
+                withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).isEnabled(property)));
+    }
+
+    public void handleUnexpectedHttpResponse(
+            final Logger logger, final String url, final int statusCode, final String statusText) {
         logger.error("An error occurred while communicating with the " + name() + " integration point");
         logger.error("HTTP Status : " + statusCode + " " + statusText);
         logger.error("Request URL : " + url);
 
-        new JdoNotificationEmitter(qm).emit(
-                createIntegrationErrorNotification("""
+        new JdoNotificationEmitter(qm).emit(createIntegrationErrorNotification("""
                         An error occurred while communicating with the %s integration point. \
                         URL: %s - HTTP Status: %s. Check log for details.""".formatted(name(), url, statusCode)));
     }
@@ -46,8 +61,7 @@ public abstract class AbstractIntegrationPoint implements IntegrationPoint {
     public void handleException(final Logger logger, final Exception e) {
         logger.error("An error occurred with the " + name() + " integration point", e);
 
-        new JdoNotificationEmitter(qm).emit(
-                createIntegrationErrorNotification("""
+        new JdoNotificationEmitter(qm).emit(createIntegrationErrorNotification("""
                         An error occurred with the %s integration point. \
                         Check log for details. %s""".formatted(name(), e)));
     }

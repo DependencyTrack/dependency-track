@@ -19,10 +19,6 @@
 package org.dependencytrack.resources.v2;
 
 import alpine.server.auth.PermissionRequired;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.VulnsApi;
 import org.dependencytrack.api.v2.model.KevAssertion;
 import org.dependencytrack.api.v2.model.ListVulnKevAssertionsResponse;
@@ -36,6 +32,11 @@ import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
 import org.dependencytrack.plugin.api.ExtensionFactory;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.resources.AbstractApiResource;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,43 +67,32 @@ public final class VulnsResource extends AbstractApiResource implements VulnsApi
             return handle.attach(KevDao.class).getAssertions(source, vulnId);
         });
 
-        final Map<String, String> displayNameByExtensionName =
-                pluginManager.getFactories(KevDataSource.class).stream()
-                        .collect(Collectors.toMap(
-                                ExtensionFactory::extensionName,
-                                ExtensionFactory::displayName));
+        final Map<String, String> displayNameByExtensionName = pluginManager.getFactories(KevDataSource.class).stream()
+                .collect(Collectors.toMap(ExtensionFactory::extensionName, ExtensionFactory::displayName));
 
         final var items = new ArrayList<KevAssertion>(rows.size());
         for (final KevAssertionRow row : rows) {
-            items.add(
-                    KevAssertion.builder()
-                            .asserter(row.asserter())
-                            .asserterDisplayName(
-                                    displayNameByExtensionName.getOrDefault(
-                                            row.asserter(),
-                                            row.asserter()))
-                            .vulnSource(row.vulnSource())
-                            .vulnId(row.vulnId())
-                            .publishedAt(row.publishedAt() != null
-                                    ? row.publishedAt().toEpochMilli()
-                                    : null)
-                            .requiredAction(row.requiredAction())
-                            .knownRansomware(row.knownRansomware())
-                            .description(row.description())
-                            .createdAt(row.createdAt().toEpochMilli())
-                            .updatedAt(row.updatedAt().toEpochMilli())
-                            .build());
+            items.add(KevAssertion.builder()
+                    .asserter(row.asserter())
+                    .asserterDisplayName(displayNameByExtensionName.getOrDefault(row.asserter(), row.asserter()))
+                    .vulnSource(row.vulnSource())
+                    .vulnId(row.vulnId())
+                    .publishedAt(row.publishedAt() != null ? row.publishedAt().toEpochMilli() : null)
+                    .requiredAction(row.requiredAction())
+                    .knownRansomware(row.knownRansomware())
+                    .description(row.description())
+                    .createdAt(row.createdAt().toEpochMilli())
+                    .updatedAt(row.updatedAt().toEpochMilli())
+                    .build());
         }
 
-        final var response =
-                ListVulnKevAssertionsResponse.builder()
-                        .items(items)
-                        .total(TotalCount.builder()
-                                .count((long) items.size())
-                                .type(TotalCountType.EXACT)
-                                .build())
-                        .build();
+        final var response = ListVulnKevAssertionsResponse.builder()
+                .items(items)
+                .total(TotalCount.builder()
+                        .count((long) items.size())
+                        .type(TotalCountType.EXACT)
+                        .build())
+                .build();
         return Response.ok(response).build();
     }
-
 }

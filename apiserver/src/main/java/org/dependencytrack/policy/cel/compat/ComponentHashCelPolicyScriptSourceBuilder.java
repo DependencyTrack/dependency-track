@@ -23,10 +23,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.cyclonedx.model.Hash;
 import org.dependencytrack.common.Mappers;
 import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.proto.policy.v1.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UncheckedIOException;
+import java.util.Locale;
 
 import static org.dependencytrack.policy.cel.compat.CelPolicyScriptSourceBuilder.escapeQuotes;
 
@@ -37,12 +39,15 @@ public class ComponentHashCelPolicyScriptSourceBuilder implements CelPolicyScrip
     @Override
     public String apply(final PolicyCondition policyCondition) {
         final Hash hash = extractHashValues(policyCondition);
-        if (hash.getAlgorithm() == null || hash.getValue() == null || hash.getAlgorithm().isEmpty() || hash.getValue().isEmpty()) {
+        if (hash.getAlgorithm() == null
+                || hash.getValue() == null
+                || hash.getAlgorithm().isEmpty()
+                || hash.getValue().isEmpty()) {
             return null;
         }
 
-        final String fieldName = hash.getAlgorithm().toLowerCase().replaceAll("-", "_");
-        if (org.dependencytrack.proto.policy.v1.Component.getDescriptor().findFieldByName(fieldName) == null) {
+        final String fieldName = hash.getAlgorithm().toLowerCase(Locale.ROOT).replaceAll("-", "_");
+        if (Component.getDescriptor().findFieldByName(fieldName) == null) {
             LOGGER.warn("Component does not have a field named %s".formatted(fieldName));
             return null;
         }
@@ -54,7 +59,8 @@ public class ComponentHashCelPolicyScriptSourceBuilder implements CelPolicyScrip
                     component.%s != "%s"
                     """.formatted(fieldName, escapeQuotes(hash.getValue()));
             default -> {
-                LOGGER.warn("Policy operator %s is not supported for this subject".formatted(policyCondition.getOperator()));
+                LOGGER.warn("Policy operator %s is not supported for this subject"
+                        .formatted(policyCondition.getOperator()));
                 yield null;
             }
         };
@@ -70,8 +76,6 @@ public class ComponentHashCelPolicyScriptSourceBuilder implements CelPolicyScrip
 
         return new Hash(
                 valueNode.path("algorithm").asText(null),
-                valueNode.path("value").asText(null)
-        );
+                valueNode.path("value").asText(null));
     }
-
 }

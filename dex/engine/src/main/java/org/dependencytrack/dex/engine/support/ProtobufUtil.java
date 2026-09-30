@@ -26,8 +26,7 @@ import java.util.Date;
 
 public final class ProtobufUtil {
 
-    private ProtobufUtil() {
-    }
+    private ProtobufUtil() {}
 
     public static Instant toInstant(final Timestamp timestamp) {
         return Instant.ofEpochSecond(0L, Timestamps.toNanos(timestamp));
@@ -36,5 +35,4 @@ public final class ProtobufUtil {
     public static Timestamp toProtoTimestamp(final Instant instant) {
         return Timestamps.fromDate(Date.from(instant));
     }
-
 }

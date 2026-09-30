@@ -20,12 +20,6 @@ package org.dependencytrack.resources.v2;
 
 import alpine.server.auth.PermissionRequired;
 import com.google.protobuf.InvalidProtocolBufferException;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.ProjectsApi;
 import org.dependencytrack.api.v2.model.CloneProjectInclude;
 import org.dependencytrack.api.v2.model.CloneProjectRequest;
@@ -38,23 +32,30 @@ import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.persistence.jdbi.BomDao;
+import org.dependencytrack.metrics.DependencyMetrics;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.DependencyMetrics;
-import org.dependencytrack.model.PackageArtifactMetadata;
-import org.dependencytrack.model.PackageMetadata;
+import org.dependencytrack.persistence.jdbi.BomDao;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
+import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.util.PurlUtil;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.Provider;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,6 +69,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.map;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapDependencyMetrics;
@@ -75,7 +77,6 @@ import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapHashes;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapLicense;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapScope;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapSortDirection;
-import static jakarta.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 
 @Provider
 public class ProjectsResource extends AbstractApiResource implements ProjectsApi {
@@ -91,34 +92,28 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
     @Override
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectOriginalBom(final UUID projectUuid) {
-        final byte[] serializedFileMetadata =
-                inJdbiTransaction(getAlpineRequest(), handle -> {
-                    final Long projectId =
-                            handle.attach(ProjectDao.class).getProjectId(projectUuid);
-                    if (projectId == null) {
-                        throw new NotFoundException();
-                    }
+        final byte[] serializedFileMetadata = inJdbiTransaction(getAlpineRequest(), handle -> {
+            final Long projectId = handle.attach(ProjectDao.class).getProjectId(projectUuid);
+            if (projectId == null) {
+                throw new NotFoundException();
+            }
 
-                    requireProjectAccess(handle, projectUuid);
+            requireProjectAccess(handle, projectUuid);
 
-                    final byte[] metadata = handle
-                            .attach(BomDao.class)
-                            .getLatestOriginalFileMetadata(projectUuid);
-                    if (metadata == null) {
-                        throw new NotFoundException();
-                    }
+            final byte[] metadata = handle.attach(BomDao.class).getLatestOriginalFileMetadata(projectUuid);
+            if (metadata == null) {
+                throw new NotFoundException();
+            }
 
-                    return metadata;
-                });
+            return metadata;
+        });
 
         final FileMetadata fileMetadata;
         try {
             fileMetadata = FileMetadata.parseFrom(serializedFileMetadata);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException(
-                    "Failed to parse original BOM file metadata for project %s"
-                            .formatted(projectUuid),
-                    e);
+                    "Failed to parse original BOM file metadata for project %s".formatted(projectUuid), e);
         }
 
         final InputStream inputStream;
@@ -127,23 +122,18 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
         } catch (NoSuchFileException e) {
             throw new NotFoundException(e);
         } catch (IOException e) {
-            throw new UncheckedIOException(
-                    "Failed to retrieve original BOM for project %s"
-                            .formatted(projectUuid),
-                    e);
+            throw new UncheckedIOException("Failed to retrieve original BOM for project %s".formatted(projectUuid), e);
         }
 
-        final String fileName = switch (fileMetadata.getMediaType()) {
-            case "application/vnd.cyclonedx+json" -> "bom.json";
-            case "application/vnd.cyclonedx+xml" -> "bom.xml";
-            default -> "bom";
-        };
+        final String fileName =
+                switch (fileMetadata.getMediaType()) {
+                    case "application/vnd.cyclonedx+json" -> "bom.json";
+                    case "application/vnd.cyclonedx+xml" -> "bom.xml";
+                    default -> "bom";
+                };
 
-        return Response
-                .ok(inputStream, fileMetadata.getMediaType())
-                .header(
-                        CONTENT_DISPOSITION,
-                        "attachment; filename=\"%s\"".formatted(fileName))
+        return Response.ok(inputStream, fileMetadata.getMediaType())
+                .header(CONTENT_DISPOSITION, "attachment; filename=\"%s\"".formatted(fileName))
                 .build();
     }
 
@@ -172,18 +162,24 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
             }
             requireProjectAccess(handle, uuid);
 
-            final ListProjectComponentsQuery.SortBy sortByEnum = switch (sortBy) {
-                case null -> null;
-                case "name" -> ListProjectComponentsQuery.SortBy.NAME;
-                case "group" -> ListProjectComponentsQuery.SortBy.GROUP;
-                case "last_inherited_risk_score" -> ListProjectComponentsQuery.SortBy.LAST_RISKSCORE;
-                case "package_artifact_metadata.published_at" -> ListProjectComponentsQuery.SortBy.PUBLISHED_AT;
-                default -> throw new InvalidSortFieldException(
-                        sortBy, List.of("name", "group", "last_inherited_risk_score", "package_artifact_metadata.published_at"));
-            };
+            final ListProjectComponentsQuery.SortBy sortByEnum =
+                    switch (sortBy) {
+                        case null -> null;
+                        case "name" -> ListProjectComponentsQuery.SortBy.NAME;
+                        case "group" -> ListProjectComponentsQuery.SortBy.GROUP;
+                        case "last_inherited_risk_score" -> ListProjectComponentsQuery.SortBy.LAST_RISKSCORE;
+                        case "package_artifact_metadata.published_at" -> ListProjectComponentsQuery.SortBy.PUBLISHED_AT;
+                        default ->
+                            throw new InvalidSortFieldException(
+                                    sortBy,
+                                    List.of(
+                                            "name",
+                                            "group",
+                                            "last_inherited_risk_score",
+                                            "package_artifact_metadata.published_at"));
+                    };
 
-            final Page<Component> componentsPage = handle
-                    .attach(ComponentDao.class)
+            final Page<Component> componentsPage = handle.attach(ComponentDao.class)
                     .listProjectComponents(new ListProjectComponentsQuery(
                             projectId,
                             onlyOutdated,
@@ -201,60 +197,49 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
 
             if (!componentsPage.items().isEmpty()) {
                 if (expandMetrics) {
-                    final Set<Long> componentIds =
-                            componentsPage.items().stream()
-                                    .map(Component::getId)
-                                    .collect(Collectors.toSet());
-                    metricsByComponentId = handle
-                            .attach(MetricsDao.class)
-                            .getMostRecentDependencyMetrics(componentIds).stream()
-                            .collect(Collectors.toMap(
-                                    DependencyMetrics::getComponentId,
-                                    Function.identity()));
+                    final Set<Long> componentIds = componentsPage.items().stream()
+                            .map(Component::getId)
+                            .collect(Collectors.toSet());
+                    metricsByComponentId =
+                            handle.attach(MetricsDao.class).getMostRecentDependencyMetrics(componentIds).stream()
+                                    .collect(Collectors.toMap(DependencyMetrics::getComponentId, Function.identity()));
                 }
                 if (expandPkgMeta) {
-                    final Set<String> packagePurls =
-                            componentsPage.items().stream()
-                                    .filter(component -> component.getPurl() != null)
-                                    .map(component -> PurlUtil.purlPackageOnly(component.getPurl()))
-                                    .collect(Collectors.toSet());
-                    pkgMetaByPackagePurl =
-                            new PackageMetadataDao(handle).getAll(packagePurls).stream()
-                                    .collect(Collectors.toMap(
-                                            pm -> pm.purl().canonicalize(),
-                                            Function.identity()));
+                    final Set<String> packagePurls = componentsPage.items().stream()
+                            .filter(component -> component.getPurl() != null)
+                            .map(component -> PurlUtil.purlPackageOnly(component.getPurl()))
+                            .collect(Collectors.toSet());
+                    pkgMetaByPackagePurl = new PackageMetadataDao(handle)
+                            .getAll(packagePurls).stream()
+                                    .collect(Collectors.toMap(pm -> pm.purl().canonicalize(), Function.identity()));
                 }
                 if (expandPkgArtifactMeta) {
-                    final Set<String> versionedPurls =
-                            componentsPage.items().stream()
-                                    .filter(component -> component.getPurl() != null)
-                                    .map(component -> component.getPurl().canonicalize())
-                                    .collect(Collectors.toSet());
-                    pkgArtifactMetaByPurl =
-                            new PackageArtifactMetadataDao(handle).getAll(versionedPurls).stream()
-                                    .collect(Collectors.toMap(
-                                            pam -> pam.purl().canonicalize(),
-                                            Function.identity()));
+                    final Set<String> versionedPurls = componentsPage.items().stream()
+                            .filter(component -> component.getPurl() != null)
+                            .map(component -> component.getPurl().canonicalize())
+                            .collect(Collectors.toSet());
+                    pkgArtifactMetaByPurl = new PackageArtifactMetadataDao(handle)
+                            .getAll(versionedPurls).stream()
+                                    .collect(Collectors.toMap(pam -> pam.purl().canonicalize(), Function.identity()));
                 }
             }
 
-            final var responseItems = new ArrayList<ListProjectComponentsResponseItem>(componentsPage.items().size());
+            final var responseItems = new ArrayList<ListProjectComponentsResponseItem>(
+                    componentsPage.items().size());
             for (final Component componentRow : componentsPage.items()) {
-                final String purlStr = componentRow.getPurl() != null
-                        ? componentRow.getPurl().canonicalize()
-                        : null;
-                final String packagePurlStr = componentRow.getPurl() != null
-                        ? PurlUtil.purlPackageOnly(componentRow.getPurl())
-                        : null;
-                final PackageArtifactMetadata pkgArtifactMeta = purlStr != null
-                        ? pkgArtifactMetaByPurl.get(purlStr)
-                        : null;
+                final String purlStr =
+                        componentRow.getPurl() != null ? componentRow.getPurl().canonicalize() : null;
+                final String packagePurlStr =
+                        componentRow.getPurl() != null ? PurlUtil.purlPackageOnly(componentRow.getPurl()) : null;
+                final PackageArtifactMetadata pkgArtifactMeta =
+                        purlStr != null ? pkgArtifactMetaByPurl.get(purlStr) : null;
                 final var responseItem = ListProjectComponentsResponseItem.builder()
                         .name(componentRow.getName())
                         .hashes(mapHashes(componentRow))
-                        .classifier(componentRow.getClassifier() != null
-                                ? componentRow.getClassifier().name()
-                                : null)
+                        .classifier(
+                                componentRow.getClassifier() != null
+                                        ? componentRow.getClassifier().name()
+                                        : null)
                         .scope(mapScope(componentRow.getScope()))
                         .copyright(componentRow.getCopyright())
                         .cpe(componentRow.getCpe())
@@ -265,22 +250,20 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                         .licenseExpression(componentRow.getLicenseExpression())
                         .licenseUrl(componentRow.getLicenseUrl())
                         .resolvedLicense(mapLicense(componentRow.getResolvedLicense()))
-                        .occurrenceCount(expandOccurrenceCount
-                                ? componentRow.getOccurrenceCount()
-                                : null)
+                        .occurrenceCount(expandOccurrenceCount ? componentRow.getOccurrenceCount() : null)
                         .purl(purlStr)
                         .swidTagId(componentRow.getSwidTagId())
                         .uuid(componentRow.getUuid())
                         .version(componentRow.getVersion())
-                        .metrics(expandMetrics
-                                ? mapDependencyMetrics(metricsByComponentId.get(componentRow.getId()))
-                                : null)
-                        .packageMetadata(expandPkgMeta && packagePurlStr != null
-                                ? map(pkgMetaByPackagePurl.get(packagePurlStr))
-                                : null)
-                        .packageArtifactMetadata(expandPkgArtifactMeta
-                                ? map(pkgArtifactMeta)
-                                : null)
+                        .metrics(
+                                expandMetrics
+                                        ? mapDependencyMetrics(metricsByComponentId.get(componentRow.getId()))
+                                        : null)
+                        .packageMetadata(
+                                expandPkgMeta && packagePurlStr != null
+                                        ? map(pkgMetaByPackagePurl.get(packagePurlStr))
+                                        : null)
+                        .packageArtifactMetadata(expandPkgArtifactMeta ? map(pkgArtifactMeta) : null)
                         .build();
                 responseItems.add(responseItem);
             }
@@ -295,10 +278,7 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.PORTFOLIO_MANAGEMENT,
-            Permissions.Constants.PORTFOLIO_MANAGEMENT_CREATE
-    })
+    @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_CREATE})
     public Response cloneProject(final UUID projectUuid, final CloneProjectRequest request) {
         final UUID clonedProjectUuid = inJdbiTransaction(getAlpineRequest(), handle -> {
             requireProjectAccess(handle, projectUuid);
@@ -309,8 +289,8 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                     projectUuid,
                     request.getVersion());
 
-            final UUID uuid = handle.attach(ProjectDao.class).cloneProject(
-                    new CloneProjectCommand(
+            final UUID uuid = handle.attach(ProjectDao.class)
+                    .cloneProject(new CloneProjectCommand(
                             projectUuid,
                             request.getVersion(),
                             request.getVersionIsLatest(),
@@ -329,15 +309,11 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
             return uuid;
         });
 
-        return Response
-                .created(uriInfo.getBaseUriBuilder()
+        return Response.created(uriInfo.getBaseUriBuilder()
                         .path("/projects")
                         .path(clonedProjectUuid.toString())
                         .build())
-                .entity(CloneProjectResponse.builder()
-                        .uuid(clonedProjectUuid)
-                        .build())
+                .entity(CloneProjectResponse.builder().uuid(clonedProjectUuid).build())
                 .build();
     }
-
 }

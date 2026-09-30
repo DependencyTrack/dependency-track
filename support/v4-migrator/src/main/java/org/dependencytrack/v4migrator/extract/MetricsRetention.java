@@ -36,13 +36,12 @@ final class MetricsRetention {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsRetention.class);
 
-    private MetricsRetention() {
-    }
+    private MetricsRetention() {}
 
     static void resolveAndPersist(final int days, final GlobalOptions options, final Jdbi target) {
         if (days < 0) {
             throw new IllegalArgumentException(
-                "--metrics-retention-days must be >= 0 (0 drops all metrics, N > 0 keeps N days)");
+                    "--metrics-retention-days must be >= 0 (0 drops all metrics, N > 0 keeps N days)");
         }
         final Instant cutoff = Instant.now().minus(days, ChronoUnit.DAYS);
         LOGGER.info("Metrics retention set to {} days (cutoff = {})", days, cutoff);
@@ -51,16 +50,16 @@ final class MetricsRetention {
                     INSERT INTO "%s".migration_config (key, value) VALUES (:k, :v)
                     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
                     """.formatted(options.stagingSchema))
-                .bind("k", "metrics_retention_days")
-                .bind("v", Integer.toString(days))
-                .execute();
+                    .bind("k", "metrics_retention_days")
+                    .bind("v", Integer.toString(days))
+                    .execute();
             h.createUpdate("""
                     INSERT INTO "%s".migration_config (key, value) VALUES (:k, :v)
                     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
                     """.formatted(options.stagingSchema))
-                .bind("k", "metrics_retention_cutoff_at")
-                .bind("v", cutoff.toString())
-                .execute();
+                    .bind("k", "metrics_retention_cutoff_at")
+                    .bind("v", cutoff.toString())
+                    .execute();
         });
     }
 }

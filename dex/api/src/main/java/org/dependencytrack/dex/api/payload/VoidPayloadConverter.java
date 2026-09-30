@@ -34,5 +34,4 @@ final class VoidPayloadConverter implements PayloadConverter<Void> {
     public @Nullable Void convertFromPayload(final @Nullable Payload payload) {
         return null;
     }
-
 }

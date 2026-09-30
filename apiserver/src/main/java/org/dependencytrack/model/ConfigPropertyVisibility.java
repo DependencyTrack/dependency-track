@@ -37,5 +37,4 @@ public enum ConfigPropertyVisibility {
 
     /// Visible to anyone, including unauthenticated parties.
     PUBLIC
-
 }

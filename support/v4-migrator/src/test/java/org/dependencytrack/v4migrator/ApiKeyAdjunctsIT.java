@@ -67,7 +67,8 @@ class ApiKeyAdjunctsIT {
     @Test
     void migratesApiKeysAndTeamJoins() throws Exception {
         source.jdbi().useHandle(h -> {
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '11111111-1111-1111-1111-111111111111')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '11111111-1111-1111-1111-111111111111')");
             h.execute("INSERT INTO \"PERMISSION\" (\"ID\", \"NAME\") VALUES (1, 'VIEW_PORTFOLIO')");
             h.execute("INSERT INTO \"PERMISSION\" (\"ID\", \"NAME\") VALUES (2, 'SECRET_MANAGEMENT_READ')");
             h.execute("""
@@ -91,28 +92,28 @@ class ApiKeyAdjunctsIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> apiKeys = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> apiKeys =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "COMMENT", "IS_LEGACY", "PUBLIC_ID", "SECRET_HASH"
                       FROM "APIKEY"
                      ORDER BY "ID"
                     """).mapToMap().list());
-        assertThat(apiKeys).extracting("id", "comment", "is_legacy", "public_id", "secret_hash")
-            .containsExactly(
-                tuple(10L, "first",  false, "abcdefgh", "hash-one"),
-                tuple(11L, "second", true,  "ijklmnop", "hash-two"));
+        assertThat(apiKeys)
+                .extracting("id", "comment", "is_legacy", "public_id", "secret_hash")
+                .containsExactly(
+                        tuple(10L, "first", false, "abcdefgh", "hash-one"),
+                        tuple(11L, "second", true, "ijklmnop", "hash-two"));
 
-        final List<Map<String, Object>> apiKeyTeams = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> apiKeyTeams =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "TEAM_ID", "APIKEY_ID"
                       FROM "APIKEYS_TEAMS"
                      ORDER BY "TEAM_ID", "APIKEY_ID"
                     """).mapToMap().list());
-        assertThat(apiKeyTeams).extracting("team_id", "apikey_id")
-            .containsExactly(tuple(1L, 10L), tuple(1L, 11L));
+        assertThat(apiKeyTeams).extracting("team_id", "apikey_id").containsExactly(tuple(1L, 10L), tuple(1L, 11L));
 
-        final List<Map<String, Object>> teamPerms = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> teamPerms =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT t."NAME" AS team_name, p."NAME" AS permission_name
                       FROM "TEAMS_PERMISSIONS" tp
                       JOIN "TEAM" t       ON t."ID" = tp."TEAM_ID"
@@ -121,8 +122,8 @@ class ApiKeyAdjunctsIT {
                     """).mapToMap().list());
         assertThat(teamPerms).hasSize(1);
         assertThat(teamPerms.get(0))
-            .containsEntry("team_name", "Engineering")
-            .containsEntry("permission_name", "VIEW_PORTFOLIO");
+                .containsEntry("team_name", "Engineering")
+                .containsEntry("permission_name", "VIEW_PORTFOLIO");
     }
 
     private void runPipeline() throws Exception {

@@ -70,7 +70,8 @@ class SpdxLicenseRegistryTest {
         registeredIds.addAll(SpdxLicenseRegistry.WITH_COMPOUNDS.keySet());
 
         final JsonNode root;
-        try (final InputStream is = SpdxLicenseRegistryTest.class.getClassLoader()
+        try (final InputStream is = SpdxLicenseRegistryTest.class
+                .getClassLoader()
                 .getResourceAsStream("license-list-data/json/licenses.json")) {
             assertThat(is).isNotNull();
             root = Mappers.jsonMapper().readTree(is);
@@ -95,11 +96,9 @@ class SpdxLicenseRegistryTest {
                 .filter(id -> !registeredIds.contains(id))
                 .collect(HashSet::new, HashSet::add, HashSet::addAll);
 
-        assertThat(uncovered)
-                .as("""
+        assertThat(uncovered).as("""
                         Deprecated IDs not covered by SpdxLicenseRegistry. \
-                        Add to a family, WITH_COMPOUNDS, or EXCLUDED_DEPRECATED.""")
-                .isEmpty();
+                        Add to a family, WITH_COMPOUNDS, or EXCLUDED_DEPRECATED.""").isEmpty();
     }
 
     @Test
@@ -113,15 +112,13 @@ class SpdxLicenseRegistryTest {
                 .filter(id -> !id.endsWith("+") && !id.endsWith("-or-later") && !id.contains("-with-"))
                 .filter(id -> {
                     final var matcher = VERSIONED_ID.matcher(id);
-                    return matcher.find() && familyPrefixes.contains(matcher.group(1).toLowerCase());
+                    return matcher.find()
+                            && familyPrefixes.contains(matcher.group(1).toLowerCase());
                 })
                 .collect(HashSet::new, HashSet::add, HashSet::addAll);
 
-        assertThat(uncovered)
-                .as("""
+        assertThat(uncovered).as("""
                         License IDs matching a known family prefix but missing from SpdxLicenseRegistry. \
-                        Add to the appropriate family's version group.""")
-                .isEmpty();
+                        Add to the appropriate family's version group.""").isEmpty();
     }
-
 }

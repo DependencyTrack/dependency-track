@@ -27,8 +27,6 @@ import org.jspecify.annotations.Nullable;
 public final class WorkflowRunDeterminismError extends WorkflowRunError {
 
     public WorkflowRunDeterminismError(final @Nullable String message) {
-        super("Detected non-deterministic workflow execution"
-                + (message != null ? ": " + message : ""));
+        super("Detected non-deterministic workflow execution" + (message != null ? ": " + message : ""));
     }
-
 }

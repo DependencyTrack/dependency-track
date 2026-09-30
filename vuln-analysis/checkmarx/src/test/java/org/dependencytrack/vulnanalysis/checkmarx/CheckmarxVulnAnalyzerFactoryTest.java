@@ -21,10 +21,10 @@ package org.dependencytrack.vulnanalysis.checkmarx;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 
-class CheckmarxVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnAnalyzer, CheckmarxVulnAnalyzerFactory> {
+class CheckmarxVulnAnalyzerFactoryTest
+        extends AbstractExtensionFactoryTest<VulnAnalyzer, CheckmarxVulnAnalyzerFactory> {
 
     CheckmarxVulnAnalyzerFactoryTest() {
         super(CheckmarxVulnAnalyzerFactory.class);
     }
-
 }

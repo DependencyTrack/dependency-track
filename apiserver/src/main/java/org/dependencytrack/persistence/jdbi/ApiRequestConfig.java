@@ -97,7 +97,6 @@ public class ApiRequestConfig implements JdbiConfig<ApiRequestConfig> {
         public OrderingColumn(final String name) {
             this(name, null);
         }
-
     }
 
     public record AlwaysByOrdering(String queryName, OrderDirection direction) {
@@ -105,7 +104,5 @@ public class ApiRequestConfig implements JdbiConfig<ApiRequestConfig> {
         public AlwaysByOrdering(String queryName) {
             this(queryName, OrderDirection.UNSPECIFIED);
         }
-
     }
-
 }

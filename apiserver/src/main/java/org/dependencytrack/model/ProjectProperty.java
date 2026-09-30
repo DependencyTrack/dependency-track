@@ -23,6 +23,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -45,7 +46,9 @@ import java.io.Serializable;
  * @since 3.0.0
  */
 @PersistenceCapable(table = "PROJECT_PROPERTY")
-@Unique(name = "PROJECT_PROPERTY_KEYS_IDX", members = {"project", "groupName", "propertyName"})
+@Unique(
+        name = "PROJECT_PROPERTY_KEYS_IDX",
+        members = {"project", "groupName", "propertyName"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectProperty implements IConfigProperty, Serializable {
 
@@ -57,7 +60,11 @@ public class ProjectProperty implements IConfigProperty, Serializable {
     private long id;
 
     @Persistent
-    @ForeignKey(name = "PROJECT_PROPERTY_PROJECT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "PROJECT_PROPERTY_PROJECT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @JsonIgnore
     private Project project;
@@ -97,10 +104,12 @@ public class ProjectProperty implements IConfigProperty, Serializable {
     @Pattern(regexp = "[\\P{Cc}]+", message = "The description must not contain control characters")
     private String description;
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }
@@ -113,44 +122,53 @@ public class ProjectProperty implements IConfigProperty, Serializable {
         this.project = project;
     }
 
+    @Override
     public String getGroupName() {
         return groupName;
     }
 
+    @Override
     public void setGroupName(String groupName) {
         this.groupName = groupName;
     }
 
+    @Override
     public String getPropertyName() {
         return propertyName;
     }
 
+    @Override
     public void setPropertyName(String propertyName) {
         this.propertyName = propertyName;
     }
 
+    @Override
     public String getPropertyValue() {
         return propertyValue;
     }
 
+    @Override
     public void setPropertyValue(String propertyValue) {
         this.propertyValue = propertyValue;
     }
 
+    @Override
     public PropertyType getPropertyType() {
         return propertyType;
     }
 
+    @Override
     public void setPropertyType(PropertyType propertyType) {
         this.propertyType = propertyType;
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
 
+    @Override
     public void setDescription(String description) {
         this.description = description;
     }
-
 }

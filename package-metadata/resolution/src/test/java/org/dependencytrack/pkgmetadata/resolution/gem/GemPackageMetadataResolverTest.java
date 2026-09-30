@@ -20,24 +20,18 @@ package org.dependencytrack.pkgmetadata.resolution.gem;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import org.dependencytrack.cache.api.CacheManager;
-import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.Map;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -59,10 +53,7 @@ class GemPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         resolverFactory = new GemPackageMetadataResolverFactory();
-        resolverFactory.init(new MutableServiceRegistry()
-                .register(CacheManager.class, new NoopCacheManager())
-                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        resolverFactory.init(new ExtensionContextBuilder().build());
         resolver = resolverFactory.create();
     }
 
@@ -95,19 +86,15 @@ class GemPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("7.1.3");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
     }
 
     @Test
     void shouldSkipPrereleaseWhenSelectingLatest(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/versions/rails.json"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody(/* language=JSON */ """
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                                 [
                                   {"number": "8.0.0.rc1", "prerelease": true, "created_at": "2024-09-01T10:00:00Z"},
                                   {"number": "7.1.3", "prerelease": false, "created_at": "2024-01-15T10:30:00Z"},
@@ -126,16 +113,13 @@ class GemPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("7.1.3");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
     }
 
     @Test
     void shouldFallBackToFirstEntryWhenAllVersionsArePrerelease(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/versions/early-gem.json"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody(/* language=JSON */ """
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                                 [
                                   {"number": "0.2.0.rc1", "prerelease": true, "created_at": "2024-05-01T10:00:00Z"},
                                   {"number": "0.1.0.alpha", "prerelease": true, "created_at": "2024-02-01T10:00:00Z"}
@@ -180,8 +164,7 @@ class GemPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -206,11 +189,9 @@ class GemPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("7.1.3");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2023-12-01T08:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2023-12-01T08:00:00Z"));
     }
 
     @Test
@@ -235,8 +216,7 @@ class GemPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("7.1.3");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 
@@ -289,10 +269,9 @@ class GemPackageMetadataResolverTest {
         final var repo = new PackageRepository("rubygems", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
         assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
-        final String expected = "Basic " + Base64.getEncoder().encodeToString(
-                "user:secret".getBytes(StandardCharsets.UTF_8));
+        final String expected =
+                "Basic " + Base64.getEncoder().encodeToString("user:secret".getBytes(StandardCharsets.UTF_8));
         verify(getRequestedFor(urlPathEqualTo("/api/v1/versions/rails.json"))
                 .withHeader("Authorization", equalTo(expected)));
     }
-
 }

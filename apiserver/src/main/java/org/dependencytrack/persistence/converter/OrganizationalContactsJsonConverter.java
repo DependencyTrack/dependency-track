@@ -43,5 +43,4 @@ public class OrganizationalContactsJsonConverter extends AbstractJsonConverter<L
         // Overriding is required for DataNucleus to correctly detect the return type.
         return super.convertToAttribute(datastoreValue);
     }
-
 }

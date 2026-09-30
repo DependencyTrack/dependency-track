@@ -31,7 +31,8 @@ public final class InvalidNotificationFilterExpressionProblemDetails extends Pro
     @Schema(description = "Errors identified during CEL expression compilation")
     private List<CelExpressionError> errors;
 
-    public InvalidNotificationFilterExpressionProblemDetails(int status, String title, String detail, List<CelExpressionError> errors) {
+    public InvalidNotificationFilterExpressionProblemDetails(
+            int status, String title, String detail, List<CelExpressionError> errors) {
         super(status, title, detail);
         this.errors = errors;
     }
@@ -39,5 +40,4 @@ public final class InvalidNotificationFilterExpressionProblemDetails extends Pro
     public List<CelExpressionError> getErrors() {
         return errors;
     }
-
 }

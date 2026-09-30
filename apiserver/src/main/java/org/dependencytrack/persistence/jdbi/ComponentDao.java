@@ -26,6 +26,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.jdbi.mapping.OptionalColumnRowMapper.Columns;
 import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
 import org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -46,13 +47,13 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.hasColumn;
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
 import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 
 public interface ComponentDao extends SqlObject, PaginationSupport {
@@ -101,11 +102,19 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             """)
     Long getComponentId(@Bind UUID componentUuid);
 
+    /// @since 5.2.0
+    @SqlQuery("""
+            SELECT "UUID"
+              FROM "COMPONENT"
+             WHERE "UUID" = ANY(:componentUuids)
+            """)
+    Set<UUID> getExistingUuids(@Bind Collection<UUID> componentUuids);
+
     default Page<Component> listProjectComponents(ListProjectComponentsQuery query) {
         final PageTokenEncoder pageTokenEncoder =
                 getHandle().getConfig(PaginationConfig.class).getPageTokenEncoder();
-        final var decodedPageToken = pageTokenEncoder.decode(
-                query.pageToken(), ListProjectComponentsQuery.PageToken.class);
+        final var decodedPageToken =
+                pageTokenEncoder.decode(query.pageToken(), ListProjectComponentsQuery.PageToken.class);
 
         final var whereConditions = new ArrayList<>(List.of("\"C\".\"PROJECT_ID\" = :projectId"));
         final var queryParams = new HashMap<String, Object>(Map.of("projectId", query.projectId()));
@@ -146,26 +155,25 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                     ? decodedPageToken.sortBy()
                     : ListProjectComponentsQuery.SortBy.NAME;
             effectiveSortDirection = decodedPageToken.sortDirection();
-            queryParams.put("lastSortValue", switch (effectiveSortBy) {
-                case NAME -> decodedPageToken.lastName();
-                case GROUP -> decodedPageToken.lastGroup();
-                case LAST_RISKSCORE -> decodedPageToken.lastRiskScore();
-                case PUBLISHED_AT -> decodedPageToken.lastPublishedAtMicros() != null
-                        ? Instant.EPOCH.plus(decodedPageToken.lastPublishedAtMicros(), ChronoUnit.MICROS)
-                        : null;
-            });
+            queryParams.put(
+                    "lastSortValue",
+                    switch (effectiveSortBy) {
+                        case NAME -> decodedPageToken.lastName();
+                        case GROUP -> decodedPageToken.lastGroup();
+                        case LAST_RISKSCORE -> decodedPageToken.lastRiskScore();
+                        case PUBLISHED_AT ->
+                            decodedPageToken.lastPublishedAtMicros() != null
+                                    ? Instant.EPOCH.plus(decodedPageToken.lastPublishedAtMicros(), ChronoUnit.MICROS)
+                                    : null;
+                    });
         } else {
             totalCount = getBoundedTotalCountWithProjectAcl(
                     "FROM \"COMPONENT\" \"C\" WHERE " + String.join(" AND ", whereConditions),
                     queryParams,
                     null,
                     "\"C\".\"PROJECT_ID\"");
-            effectiveSortBy = query.sortBy() != null
-                    ? query.sortBy()
-                    : ListProjectComponentsQuery.SortBy.NAME;
-            effectiveSortDirection = query.sortDirection() != null
-                    ? query.sortDirection()
-                    : SortDirection.ASC;
+            effectiveSortBy = query.sortBy() != null ? query.sortBy() : ListProjectComponentsQuery.SortBy.NAME;
+            effectiveSortDirection = query.sortDirection() != null ? query.sortDirection() : SortDirection.ASC;
         }
 
         final List<ListedComponent> rows = listProjectComponents(
@@ -173,16 +181,13 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 queryParams,
                 query.limit() + 1,
                 query.includeOccurrenceCount(),
-                decodedPageToken != null
-                        ? decodedPageToken.lastId()
-                        : null,
+                decodedPageToken != null ? decodedPageToken.lastId() : null,
                 effectiveSortBy,
                 effectiveSortDirection,
                 decodedPageToken != null);
 
-        final List<ListedComponent> resultRows = rows.size() > 1
-                ? rows.subList(0, Math.min(rows.size(), query.limit()))
-                : rows;
+        final List<ListedComponent> resultRows =
+                rows.size() > 1 ? rows.subList(0, Math.min(rows.size(), query.limit())) : rows;
 
         final ListProjectComponentsQuery.PageToken nextPageToken;
         if (rows.size() > query.limit()) {
@@ -191,12 +196,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
             nextPageToken = new ListProjectComponentsQuery.PageToken(
                     lastComponent.getId(),
-                    effectiveSortBy == ListProjectComponentsQuery.SortBy.NAME
-                            ? lastComponent.getName()
-                            : null,
-                    effectiveSortBy == ListProjectComponentsQuery.SortBy.GROUP
-                            ? lastComponent.getGroup()
-                            : null,
+                    effectiveSortBy == ListProjectComponentsQuery.SortBy.NAME ? lastComponent.getName() : null,
+                    effectiveSortBy == ListProjectComponentsQuery.SortBy.GROUP ? lastComponent.getGroup() : null,
                     effectiveSortBy == ListProjectComponentsQuery.SortBy.LAST_RISKSCORE
                             ? lastComponent.getLastInheritedRiskScore()
                             : null,
@@ -210,9 +211,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             nextPageToken = null;
         }
 
-        final List<Component> components = resultRows.stream()
-                .map(ListedComponent::component)
-                .toList();
+        final List<Component> components =
+                resultRows.stream().map(ListedComponent::component).toList();
         return new Page<>(components, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
 
@@ -339,8 +339,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
     default Page<Component> listComponents(ListComponentsQuery query) {
         final PageTokenEncoder pageTokenEncoder =
                 getHandle().getConfig(PaginationConfig.class).getPageTokenEncoder();
-        final var decodedPageToken = pageTokenEncoder.decode(
-                query.pageToken(), ListComponentsQuery.PageToken.class);
+        final var decodedPageToken = pageTokenEncoder.decode(query.pageToken(), ListComponentsQuery.PageToken.class);
 
         final var whereConditions = new ArrayList<String>();
         final var queryParams = new HashMap<String, Object>();
@@ -370,7 +369,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             queryParams.put("componentCpe", query.cpe());
         }
         if (query.swidTagIdContains() != null) {
-            whereConditions.add("LOWER(\"C\".\"SWIDTAGID\") LIKE ('%' || LOWER(:componentSwidTagId) || '%') ESCAPE '!'");
+            whereConditions.add(
+                    "LOWER(\"C\".\"SWIDTAGID\") LIKE ('%' || LOWER(:componentSwidTagId) || '%') ESCAPE '!'");
             queryParams.put("componentSwidTagId", escapeLikePattern(query.swidTagIdContains()));
         }
         if (query.packageArtifactPublishedSince() != null || query.packageArtifactPublishedBefore() != null) {
@@ -384,37 +384,37 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 pamConditions.add("pam.\"PUBLISHED_AT\" < :packageArtifactPublishedBefore");
                 queryParams.put("packageArtifactPublishedBefore", query.packageArtifactPublishedBefore());
             }
-            whereConditions.add(
-                    "EXISTS (SELECT 1 FROM \"PACKAGE_ARTIFACT_METADATA\" AS pam WHERE %s)".formatted(
-                            String.join(" AND ", pamConditions)));
+            whereConditions.add("EXISTS (SELECT 1 FROM \"PACKAGE_ARTIFACT_METADATA\" AS pam WHERE %s)"
+                    .formatted(String.join(" AND ", pamConditions)));
         }
         if (query.projectActive() != null) {
-            whereConditions.add(query.projectActive()
-                    ? "\"PROJECT\".\"INACTIVE_SINCE\" IS NULL"
-                    : "\"PROJECT\".\"INACTIVE_SINCE\" IS NOT NULL");
+            whereConditions.add(
+                    query.projectActive()
+                            ? "\"PROJECT\".\"INACTIVE_SINCE\" IS NULL"
+                            : "\"PROJECT\".\"INACTIVE_SINCE\" IS NOT NULL");
         }
         if (query.projectIsLatest() != null) {
-            whereConditions.add(query.projectIsLatest()
-                    ? "\"PROJECT\".\"IS_LATEST\""
-                    : "NOT \"PROJECT\".\"IS_LATEST\"");
+            whereConditions.add(
+                    query.projectIsLatest() ? "\"PROJECT\".\"IS_LATEST\"" : "NOT \"PROJECT\".\"IS_LATEST\"");
         }
         if (query.hashType() != null && query.hashValue() != null) {
-            final String hashColumn = switch (query.hashType()) {
-                case MD5 -> "\"C\".\"MD5\"";
-                case SHA1 -> "\"C\".\"SHA1\"";
-                case SHA_256 -> "\"C\".\"SHA_256\"";
-                case SHA_384 -> "\"C\".\"SHA_384\"";
-                case SHA_512 -> "\"C\".\"SHA_512\"";
-                case SHA3_256 -> "\"C\".\"SHA3_256\"";
-                case SHA3_384 -> "\"C\".\"SHA3_384\"";
-                case SHA3_512 -> "\"C\".\"SHA3_512\"";
-                case BLAKE2B_256 -> "\"C\".\"BLAKE2B_256\"";
-                case BLAKE2B_384 -> "\"C\".\"BLAKE2B_384\"";
-                case BLAKE2B_512 -> "\"C\".\"BLAKE2B_512\"";
-                case BLAKE3 -> "\"C\".\"BLAKE3\"";
-                case STREEBOG_256 -> "\"C\".\"STREEBOG_256\"";
-                case STREEBOG_512 -> "\"C\".\"STREEBOG_512\"";
-            };
+            final String hashColumn =
+                    switch (query.hashType()) {
+                        case MD5 -> "\"C\".\"MD5\"";
+                        case SHA1 -> "\"C\".\"SHA1\"";
+                        case SHA_256 -> "\"C\".\"SHA_256\"";
+                        case SHA_384 -> "\"C\".\"SHA_384\"";
+                        case SHA_512 -> "\"C\".\"SHA_512\"";
+                        case SHA3_256 -> "\"C\".\"SHA3_256\"";
+                        case SHA3_384 -> "\"C\".\"SHA3_384\"";
+                        case SHA3_512 -> "\"C\".\"SHA3_512\"";
+                        case BLAKE2B_256 -> "\"C\".\"BLAKE2B_256\"";
+                        case BLAKE2B_384 -> "\"C\".\"BLAKE2B_384\"";
+                        case BLAKE2B_512 -> "\"C\".\"BLAKE2B_512\"";
+                        case BLAKE3 -> "\"C\".\"BLAKE3\"";
+                        case STREEBOG_256 -> "\"C\".\"STREEBOG_256\"";
+                        case STREEBOG_512 -> "\"C\".\"STREEBOG_512\"";
+                    };
             whereConditions.add("%s = :componentHash".formatted(hashColumn));
             queryParams.put("componentHash", query.hashValue());
         }
@@ -425,20 +425,22 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
         if (decodedPageToken != null) {
             totalCount = decodedPageToken.totalCount();
-            effectiveSortBy = decodedPageToken.sortBy() != null
-                    ? decodedPageToken.sortBy()
-                    : ListComponentsQuery.SortBy.NAME;
+            effectiveSortBy =
+                    decodedPageToken.sortBy() != null ? decodedPageToken.sortBy() : ListComponentsQuery.SortBy.NAME;
             effectiveSortDirection = decodedPageToken.sortDirection();
-            queryParams.put("lastSortValue", switch (effectiveSortBy) {
-                case NAME -> decodedPageToken.lastName();
-                case GROUP -> decodedPageToken.lastGroup();
-                case LAST_RISKSCORE -> decodedPageToken.lastRiskScore();
-            });
+            queryParams.put(
+                    "lastSortValue",
+                    switch (effectiveSortBy) {
+                        case NAME -> decodedPageToken.lastName();
+                        case GROUP -> decodedPageToken.lastGroup();
+                        case LAST_RISKSCORE -> decodedPageToken.lastRiskScore();
+                    });
         } else {
             final String projectJoin = (query.projectActive() != null || query.projectIsLatest() != null)
                     ? "INNER JOIN \"PROJECT\" ON \"C\".\"PROJECT_ID\" = \"PROJECT\".\"ID\""
                     : "";
-            totalCount = getBoundedTotalCountWithProjectAcl("""
+            totalCount = getBoundedTotalCountWithProjectAcl(
+                    """
                             FROM "COMPONENT" "C"
                             %s
                             WHERE %s
@@ -446,28 +448,21 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                     queryParams,
                     10000,
                     "\"C\".\"PROJECT_ID\"");
-            effectiveSortBy = query.sortBy() != null
-                    ? query.sortBy()
-                    : ListComponentsQuery.SortBy.NAME;
-            effectiveSortDirection = query.sortDirection() != null
-                    ? query.sortDirection()
-                    : SortDirection.ASC;
+            effectiveSortBy = query.sortBy() != null ? query.sortBy() : ListComponentsQuery.SortBy.NAME;
+            effectiveSortDirection = query.sortDirection() != null ? query.sortDirection() : SortDirection.ASC;
         }
 
         final List<ListedComponent> rows = listComponents(
                 whereConditions,
                 queryParams,
                 query.limit() + 1,
-                decodedPageToken != null
-                        ? decodedPageToken.lastId()
-                        : null,
+                decodedPageToken != null ? decodedPageToken.lastId() : null,
                 effectiveSortBy,
                 effectiveSortDirection,
                 decodedPageToken != null);
 
-        final List<ListedComponent> resultRows = rows.size() > 1
-                ? rows.subList(0, Math.min(rows.size(), query.limit()))
-                : rows;
+        final List<ListedComponent> resultRows =
+                rows.size() > 1 ? rows.subList(0, Math.min(rows.size(), query.limit())) : rows;
 
         final ListComponentsQuery.PageToken nextPageToken;
         if (rows.size() > query.limit()) {
@@ -476,12 +471,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
             nextPageToken = new ListComponentsQuery.PageToken(
                     lastComponent.getId(),
-                    effectiveSortBy == ListComponentsQuery.SortBy.NAME
-                            ? lastComponent.getName()
-                            : null,
-                    effectiveSortBy == ListComponentsQuery.SortBy.GROUP
-                            ? lastComponent.getGroup()
-                            : null,
+                    effectiveSortBy == ListComponentsQuery.SortBy.NAME ? lastComponent.getName() : null,
+                    effectiveSortBy == ListComponentsQuery.SortBy.GROUP ? lastComponent.getGroup() : null,
                     effectiveSortBy == ListComponentsQuery.SortBy.LAST_RISKSCORE
                             ? lastComponent.getLastInheritedRiskScore()
                             : null,
@@ -492,9 +483,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             nextPageToken = null;
         }
 
-        final List<Component> components = resultRows.stream()
-                .map(ListedComponent::component)
-                .toList();
+        final List<Component> components =
+                resultRows.stream().map(ListedComponent::component).toList();
         return new Page<>(components, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
 
@@ -588,45 +578,54 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             @Bind Long lastId,
             @Define ListComponentsQuery.SortBy sortByColumn,
             @Define SortDirection sortDirection,
-            @Define boolean hasCursor
-    );
+            @Define boolean hasCursor);
 
-    record ListedComponent(Component component, Long publishedAtMicros) {
-    }
+    record ListedComponent(Component component, Long publishedAtMicros) {}
 
     class ComponentListRowMapper implements RowMapper<ListedComponent> {
 
         private final RowMapper<Component> componentRowMapper = BeanMapper.of(Component.class);
 
         @Override
+        public RowMapper<ListedComponent> specialize(ResultSet rs, StatementContext ctx) throws SQLException {
+            final RowMapper<Component> beanMapper = componentRowMapper.specialize(rs, ctx);
+            final var columns = Columns.of(rs);
+            return (r, c) -> map(r, c, beanMapper, columns);
+        }
+
+        @Override
         public ListedComponent map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-            final Component component = componentRowMapper.map(rs, ctx);
-            if (hasColumn(rs, "projectUuid") && rs.getString("projectUuid") != null) {
+            return specialize(rs, ctx).map(rs, ctx);
+        }
+
+        private static ListedComponent map(
+                ResultSet rs, StatementContext ctx, RowMapper<Component> beanMapper, Columns columns)
+                throws SQLException {
+            final Component component = beanMapper.map(rs, ctx);
+            if (columns.contains("projectUuid") && rs.getString("projectUuid") != null) {
                 final var project = new Project();
                 project.setUuid(UUID.fromString(rs.getString("projectUuid")));
-                maybeSet(rs, "projectName", ResultSet::getString, project::setName);
-                maybeSet(rs, "projectVersion", ResultSet::getString, project::setVersion);
+                columns.maybeSet(rs, "projectName", ResultSet::getString, project::setName);
+                columns.maybeSet(rs, "projectVersion", ResultSet::getString, project::setVersion);
                 component.setProject(project);
             }
-            maybeSet(rs, "PURL", ResultSet::getString, component::setPurl);
+            columns.maybeSet(rs, "PURL", ResultSet::getString, component::setPurl);
             if (rs.getString("LAST_RISKSCORE") != null) {
-                maybeSet(rs, "LAST_RISKSCORE", ResultSet::getDouble, component::setLastInheritedRiskScore);
+                columns.maybeSet(rs, "LAST_RISKSCORE", ResultSet::getDouble, component::setLastInheritedRiskScore);
             }
-            if (hasColumn(rs, "licenseUuid") && rs.getString("licenseUuid") != null) {
+            if (columns.contains("licenseUuid") && rs.getString("licenseUuid") != null) {
                 final var license = new License();
                 license.setUuid(UUID.fromString(rs.getString("licenseUuid")));
-                maybeSet(rs, "licenseId", ResultSet::getString, license::setLicenseId);
-                maybeSet(rs, "licenseName", ResultSet::getString, license::setName);
-                maybeSet(rs, "isCustomLicense", ResultSet::getBoolean, license::setCustomLicense);
-                maybeSet(rs, "isFsfLibre", ResultSet::getBoolean, license::setFsfLibre);
-                maybeSet(rs, "isOsiApproved", ResultSet::getBoolean, license::setOsiApproved);
+                columns.maybeSet(rs, "licenseId", ResultSet::getString, license::setLicenseId);
+                columns.maybeSet(rs, "licenseName", ResultSet::getString, license::setName);
+                columns.maybeSet(rs, "isCustomLicense", ResultSet::getBoolean, license::setCustomLicense);
+                columns.maybeSet(rs, "isFsfLibre", ResultSet::getBoolean, license::setFsfLibre);
+                columns.maybeSet(rs, "isOsiApproved", ResultSet::getBoolean, license::setOsiApproved);
                 component.setResolvedLicense(license);
             }
-            if (hasColumn(rs, "occurrenceCount")) {
-                maybeSet(rs, "occurrenceCount", ResultSet::getLong, component::setOccurrenceCount);
-            }
+            columns.maybeSet(rs, "occurrenceCount", ResultSet::getLong, component::setOccurrenceCount);
             Long publishedAtMicros = null;
-            if (hasColumn(rs, "artifactPublishedAtMicros")) {
+            if (columns.contains("artifactPublishedAtMicros")) {
                 final long value = rs.getLong("artifactPublishedAtMicros");
                 if (!rs.wasNull()) {
                     publishedAtMicros = value;
@@ -635,5 +634,4 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             return new ListedComponent(component, publishedAtMicros);
         }
     }
-
 }

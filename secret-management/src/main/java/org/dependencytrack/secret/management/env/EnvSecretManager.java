@@ -27,6 +27,7 @@ import org.dependencytrack.secret.management.SecretMetadata;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -38,9 +39,7 @@ final class EnvSecretManager implements SecretManager {
     private final Map<String, String> secretValueByName;
     private final PageTokenEncoder pageTokenEncoder;
 
-    EnvSecretManager(
-            Map<String, String> secretValueByName,
-            PageTokenEncoder pageTokenEncoder) {
+    EnvSecretManager(Map<String, String> secretValueByName, PageTokenEncoder pageTokenEncoder) {
         this.secretValueByName = secretValueByName;
         this.pageTokenEncoder = pageTokenEncoder;
     }
@@ -84,23 +83,20 @@ final class EnvSecretManager implements SecretManager {
         return secretValueByName.get(name);
     }
 
-    record ListSecretsPageToken(String lastName) implements PageToken {
-    }
+    record ListSecretsPageToken(String lastName) implements PageToken {}
 
     @Override
     public Page<SecretMetadata> listSecretMetadata(ListSecretsRequest request) {
         final var pageTokenValue = pageTokenEncoder.decode(request.pageToken(), ListSecretsPageToken.class);
 
-        final String searchText = request.searchText() != null
-                ? request.searchText().toLowerCase()
-                : null;
+        final String searchText =
+                request.searchText() != null ? request.searchText().toLowerCase(Locale.ROOT) : null;
 
-        final Predicate<String> filterPredicate =
-                secretName -> searchText == null || secretName.toLowerCase().startsWith(searchText);
+        final Predicate<String> filterPredicate = secretName ->
+                searchText == null || secretName.toLowerCase(Locale.ROOT).startsWith(searchText);
 
-        final long totalCount = secretValueByName.keySet().stream()
-                .filter(filterPredicate)
-                .count();
+        final long totalCount =
+                secretValueByName.keySet().stream().filter(filterPredicate).count();
 
         final List<SecretMetadata> allMatching = secretValueByName.keySet().stream()
                 .sorted()
@@ -110,16 +106,14 @@ final class EnvSecretManager implements SecretManager {
                 .map(name -> new SecretMetadata(name, null, null, null))
                 .toList();
 
-        final List<SecretMetadata> resultItems = allMatching.size() > request.limit()
-                ? allMatching.subList(0, request.limit())
-                : allMatching;
+        final List<SecretMetadata> resultItems =
+                allMatching.size() > request.limit() ? allMatching.subList(0, request.limit()) : allMatching;
 
         final String nextPageToken = allMatching.size() > request.limit()
-                ? pageTokenEncoder.encode(new ListSecretsPageToken(resultItems.getLast().name()))
+                ? pageTokenEncoder.encode(
+                        new ListSecretsPageToken(resultItems.getLast().name()))
                 : null;
 
-        return new Page<>(resultItems, nextPageToken)
-                .withTotalCount(totalCount, Page.TotalCount.Type.EXACT);
+        return new Page<>(resultItems, nextPageToken).withTotalCount(totalCount, Page.TotalCount.Type.EXACT);
     }
-
 }

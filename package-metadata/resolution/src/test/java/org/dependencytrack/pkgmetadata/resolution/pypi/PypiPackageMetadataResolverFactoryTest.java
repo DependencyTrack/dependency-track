@@ -27,22 +27,25 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class PypiPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest<PackageMetadataResolver, PypiPackageMetadataResolverFactory> {
+class PypiPackageMetadataResolverFactoryTest
+        extends AbstractExtensionFactoryTest<PackageMetadataResolver, PypiPackageMetadataResolverFactory> {
 
     protected PypiPackageMetadataResolverFactoryTest() {
         super(PypiPackageMetadataResolverFactory.class);
     }
 
     @ParameterizedTest
-    @CsvSource(nullValues = "", value = {
-            "pkg:pypi/foo@1.0, pkg:pypi/foo@1.0",
-            "pkg:pypi/ns/foo@1.0, pkg:pypi/ns/foo@1.0",
-            "pkg:npm/foo@1.0, ",
-            "pkg:pypi/foo, ",
-            "pkg:pypi/ns/foo@1.0?key=value#sub/path, pkg:pypi/ns/foo@1.0",
-            "pkg:pypi/foo@1.0?file_name=foo-1.0.tar.gz, pkg:pypi/foo@1.0?file_name=foo-1.0.tar.gz",
-            "pkg:pypi/foo@1.0?file_name=foo-1.0.tar.gz&other=x, pkg:pypi/foo@1.0?file_name=foo-1.0.tar.gz",
-    })
+    @CsvSource(
+            nullValues = "",
+            value = {
+                "pkg:pypi/foo@1.0, pkg:pypi/foo@1.0",
+                "pkg:pypi/ns/foo@1.0, pkg:pypi/ns/foo@1.0",
+                "pkg:npm/foo@1.0, ",
+                "pkg:pypi/foo, ",
+                "pkg:pypi/ns/foo@1.0?key=value#sub/path, pkg:pypi/ns/foo@1.0",
+                "pkg:pypi/foo@1.0?file_name=foo-1.0.tar.gz, pkg:pypi/foo@1.0?file_name=foo-1.0.tar.gz",
+                "pkg:pypi/foo@1.0?file_name=foo-1.0.tar.gz&other=x, pkg:pypi/foo@1.0?file_name=foo-1.0.tar.gz",
+            })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))
                 .isEqualTo(expected != null ? new PackageURL(expected) : null);
@@ -52,5 +55,4 @@ class PypiPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTes
     void shouldRequireRepository() {
         assertThat(factory.requiresRepository()).isTrue();
     }
-
 }

@@ -28,5 +28,4 @@ public interface PayloadConverter<T> {
 
     @Nullable
     T convertFromPayload(@Nullable Payload payload);
-
 }

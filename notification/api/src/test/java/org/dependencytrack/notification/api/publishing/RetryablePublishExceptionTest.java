@@ -40,5 +40,4 @@ class RetryablePublishExceptionTest {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new RetryablePublishException(null, Duration.of(0, ChronoUnit.SECONDS)));
     }
-
 }

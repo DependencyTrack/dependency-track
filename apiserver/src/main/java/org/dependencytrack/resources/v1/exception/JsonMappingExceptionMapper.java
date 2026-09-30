@@ -20,14 +20,15 @@ package org.dependencytrack.resources.v1.exception;
 
 import com.fasterxml.jackson.core.exc.StreamConstraintsException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import jakarta.annotation.Priority;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.dependencytrack.resources.v1.vo.VexSubmitRequest;
 
+import jakarta.annotation.Priority;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
+
 import java.util.Objects;
 
 /**
@@ -52,8 +53,7 @@ public class JsonMappingExceptionMapper implements ExceptionMapper<JsonMappingEx
         }
 
         final JsonMappingException.Reference reference = exception.getPath().getFirst();
-        if (Objects.equals(reference.getFrom(), BomSubmitRequest.class)
-                && "bom".equals(reference.getFieldName())) {
+        if (Objects.equals(reference.getFrom(), BomSubmitRequest.class) && "bom".equals(reference.getFieldName())) {
             return """
                     The BOM is too large to be transmitted safely via Base64 encoded JSON value. \
                     Please use the "POST /api/v1/bom" endpoint with Content-Type "multipart/form-data" instead. \
@@ -68,5 +68,4 @@ public class JsonMappingExceptionMapper implements ExceptionMapper<JsonMappingEx
 
         return exception.getMessage();
     }
-
 }

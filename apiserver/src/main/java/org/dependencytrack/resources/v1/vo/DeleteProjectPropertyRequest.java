@@ -22,10 +22,11 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.jspecify.annotations.NullMarked;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.jspecify.annotations.NullMarked;
 
 /// @since 5.1.0
 @NullMarked
@@ -43,5 +44,4 @@ public record DeleteProjectPropertyRequest(
         @Pattern(regexp = "\\P{Cc}+", message = "The propertyName must not contain control characters")
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Name of the property", requiredMode = Schema.RequiredMode.REQUIRED)
-        String propertyName) {
-}
+        String propertyName) {}

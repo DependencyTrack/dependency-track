@@ -69,7 +69,7 @@ final class QueryTimeoutDataSource implements DataSource, Closeable {
         if (iface.isInstance(this)) {
             return iface.cast(this);
         }
-        
+
         return delegate.unwrap(iface);
     }
 
@@ -104,13 +104,7 @@ final class QueryTimeoutDataSource implements DataSource, Closeable {
     }
 
     private Connection withQueryTimeout(Connection connection) throws SQLException {
-        connection
-                .unwrap(PGConnection.class)
-                .setQueryTimeout(
-                        !QueryTimeout.isBypassed()
-                                ? timeoutSeconds
-                                : 0);
+        connection.unwrap(PGConnection.class).setQueryTimeout(!QueryTimeout.isBypassed() ? timeoutSeconds : 0);
         return connection;
     }
-
 }

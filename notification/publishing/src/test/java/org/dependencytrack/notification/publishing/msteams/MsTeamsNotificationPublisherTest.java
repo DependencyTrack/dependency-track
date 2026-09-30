@@ -61,9 +61,7 @@ class MsTeamsNotificationPublisherTest extends AbstractNotificationPublisherTest
     protected void beforeEach() throws Exception {
         super.beforeEach();
 
-        WIREMOCK.stubFor(post(anyUrl())
-                .willReturn(aResponse()
-                        .withStatus(200)));
+        WIREMOCK.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(200)));
     }
 
     @Override
@@ -271,5 +269,4 @@ class MsTeamsNotificationPublisherTest extends AbstractNotificationPublisherTest
                         }
                         """)));
     }
-
 }

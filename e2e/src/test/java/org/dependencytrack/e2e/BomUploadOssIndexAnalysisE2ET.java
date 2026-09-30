@@ -23,7 +23,8 @@ import org.dependencytrack.e2e.api.model.EventProcessingResponse;
 import org.dependencytrack.e2e.api.model.EventTokenResponse;
 import org.dependencytrack.e2e.api.model.Finding;
 import org.dependencytrack.e2e.api.model.Project;
-import org.dependencytrack.e2e.api.model.UpdateExtensionConfigRequest;
+import org.dependencytrack.e2e.api.v2.ExtensionsApi;
+import org.dependencytrack.e2e.api.v2.model.UpdateExtensionConfigRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -64,29 +65,31 @@ class BomUploadOssIndexAnalysisE2ET extends AbstractE2ET {
 
     @Test
     void test() throws Exception {
+        final var extensionsApi = new ExtensionsApi(apiV2Client);
+
         logger.info("Disabling internal vuln analyzer");
-        apiClient.updateExtensionConfig(
-                "vuln-analyzer",
-                "internal",
-                new UpdateExtensionConfigRequest(Map.of("enabled", false)));
+        extensionsApi.updateExtensionConfig(
+                "vuln-analyzer", "internal", new UpdateExtensionConfigRequest().config(Map.of("enabled", false)));
 
         logger.info("Configuring OSS Index vuln analyzer");
-        apiClient.updateExtensionConfig(
+        extensionsApi.updateExtensionConfig(
                 "vuln-analyzer",
                 "oss-index",
-                new UpdateExtensionConfigRequest(
-                        Map.ofEntries(
+                new UpdateExtensionConfigRequest()
+                        .config(Map.ofEntries(
                                 Map.entry("enabled", true),
                                 Map.entry("apiUrl", "https://ossindex.sonatype.org"),
                                 Map.entry("username", ossIndexUsername),
                                 Map.entry("apiToken", "OSSINDEX_API_TOKEN"))));
 
         // Parse and base64 encode a BOM.
-        final byte[] bomBytes = getClass().getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json").readAllBytes();
+        final byte[] bomBytes = getClass()
+                .getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json")
+                .readAllBytes();
         final String bomBase64 = Base64.getEncoder().encodeToString(bomBytes);
 
         // Upload the BOM
-        final EventTokenResponse response = apiClient.uploadBom(new BomUploadRequest("foo", "bar", true, bomBase64));
+        final EventTokenResponse response = apiV1Client.uploadBom(new BomUploadRequest("foo", "bar", true, bomBase64));
         assertThat(response.token()).isNotEmpty();
 
         // Wait up to 15sec for the BOM processing to complete.
@@ -94,33 +97,29 @@ class BomUploadOssIndexAnalysisE2ET extends AbstractE2ET {
                 .atMost(Duration.ofSeconds(30))
                 .pollDelay(Duration.ofMillis(250))
                 .untilAsserted(() -> {
-                    final EventProcessingResponse processingResponse = apiClient.isEventBeingProcessed(response.token());
+                    final EventProcessingResponse processingResponse =
+                            apiV1Client.isEventBeingProcessed(response.token());
                     assertThat(processingResponse.processing()).isFalse();
                 });
 
         // Lookup the project we just created.
-        final Project project = apiClient.lookupProject("foo", "bar");
+        final Project project = apiV1Client.lookupProject("foo", "bar");
 
         // Ensure that vulnerabilities have been reported correctly.
-        final List<Finding> findings = apiClient.getFindings(project.uuid(), false);
-        assertThat(findings)
-                .hasSizeGreaterThan(1)
-                .allSatisfy(
-                        finding -> {
-                            assertThat(finding.vulnerability()).satisfiesAnyOf(
-                                    vuln -> {
-                                        assertThat(vuln.vulnId()).startsWith("CVE-");
-                                        assertThat(vuln.source()).isEqualTo("NVD");
-                                    },
-                                    vuln -> {
-                                        assertThat(vuln.vulnId()).startsWith("sonatype-");
-                                        assertThat(vuln.source()).isEqualTo("OSSINDEX");
-                                    }
-                            );
-                            assertThat(finding.attribution().analyzerIdentity()).isEqualTo("oss-index");
-                            assertThat(finding.attribution().attributedOn()).isNotBlank();
-                        }
-                );
+        final List<Finding> findings = apiV1Client.getFindings(project.uuid(), false);
+        assertThat(findings).hasSizeGreaterThan(1).allSatisfy(finding -> {
+            assertThat(finding.vulnerability())
+                    .satisfiesAnyOf(
+                            vuln -> {
+                                assertThat(vuln.vulnId()).startsWith("CVE-");
+                                assertThat(vuln.source()).isEqualTo("NVD");
+                            },
+                            vuln -> {
+                                assertThat(vuln.vulnId()).startsWith("sonatype-");
+                                assertThat(vuln.source()).isEqualTo("OSSINDEX");
+                            });
+            assertThat(finding.attribution().analyzerIdentity()).isEqualTo("oss-index");
+            assertThat(finding.attribution().attributedOn()).isNotBlank();
+        });
     }
-
 }

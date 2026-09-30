@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
-import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.SingleValue;
+import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jspecify.annotations.Nullable;
 
@@ -40,5 +40,4 @@ public interface BomDao {
     @SingleValue
     @Nullable
     byte[] getLatestOriginalFileMetadata(@Bind UUID projectUuid);
-
 }

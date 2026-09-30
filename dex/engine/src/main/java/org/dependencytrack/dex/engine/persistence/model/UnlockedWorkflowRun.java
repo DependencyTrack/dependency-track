@@ -25,5 +25,5 @@ import java.util.UUID;
 /// @param id                  ID of the workflow run that got unlocked.
 /// @param queueName           Name of the task queue the workflow run resides on.
 /// @param freedConcurrencyKey The concurrency key freed by termination of this run, if any.
-public record UnlockedWorkflowRun(UUID id, String queueName, @Nullable String freedConcurrencyKey) {
-}
+public record UnlockedWorkflowRun(
+        UUID id, String queueName, @Nullable String freedConcurrencyKey) {}

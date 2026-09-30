@@ -26,5 +26,4 @@ public interface CacheProvider {
     String name();
 
     CacheManager create();
-
 }

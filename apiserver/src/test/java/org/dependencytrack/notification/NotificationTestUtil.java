@@ -18,23 +18,26 @@
  */
 package org.dependencytrack.notification;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.persistence.QueryManager;
 
+import java.util.List;
 import java.util.Set;
+
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
  * @since 5.0.0
  */
 public final class NotificationTestUtil {
 
-    private NotificationTestUtil() {
-    }
+    private NotificationTestUtil() {}
 
-    public static NotificationRule createCatchAllNotificationRule(
-            QueryManager qm,
-            NotificationScope scope) {
+    public static NotificationRule createCatchAllNotificationRule(QueryManager qm, NotificationScope scope) {
         return qm.callInTransaction(() -> {
             final NotificationPublisher publisher = qm.createNotificationPublisher(
                     "catchAllPublisher",
@@ -44,15 +47,31 @@ public final class NotificationTestUtil {
                     "templateMimeType",
                     /* isDefault */ false);
 
-            final NotificationRule rule = qm.createNotificationRule(
-                    "catchAll",
-                    scope,
-                    NotificationLevel.INFORMATIONAL,
-                    publisher);
+            final NotificationRule rule =
+                    qm.createNotificationRule("catchAll", scope, NotificationLevel.INFORMATIONAL, publisher);
             rule.setNotifyOn(Set.of(NotificationGroup.values()));
 
             return rule;
         });
     }
 
+    public static List<Notification> getNotificationOutbox() {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT "PAYLOAD"
+                          FROM "NOTIFICATION_OUTBOX"
+                         ORDER BY "ID"
+                        """)
+                .map((rs, _) -> {
+                    try {
+                        return Notification.parseFrom(rs.getBytes("PAYLOAD"));
+                    } catch (InvalidProtocolBufferException e) {
+                        throw new IllegalStateException(e);
+                    }
+                })
+                .list());
+    }
+
+    public static void truncateNotificationOutbox() {
+        useJdbiHandle(handle -> handle.execute("TRUNCATE TABLE \"NOTIFICATION_OUTBOX\""));
+    }
 }

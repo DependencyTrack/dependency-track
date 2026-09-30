@@ -27,24 +27,33 @@ import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
+import org.dependencytrack.support.net.OutboundConnectionDeniedException;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
+import org.jdbi.v3.core.mapper.reflect.BeanMapper;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
 import java.util.List;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.ProtobufTestUtil.generateBomFromJson;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -60,8 +69,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
     }
 
     private PluginManager createPluginManager(String extensionName, VulnDataSource dataSource) {
-        return createPluginManager(List.of(
-                new TestVulnDataSourceFactory(extensionName, () -> dataSource)));
+        return createPluginManager(List.of(new TestVulnDataSourceFactory(extensionName, () -> dataSource)));
     }
 
     private PluginManager createPluginManager(List<VulnDataSourceFactory> factories) {
@@ -71,6 +79,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnDataSource.class));
         pluginManager.loadPlugins(List.of(() -> List.copyOf(factories)));
         return pluginManager;
@@ -84,6 +93,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnDataSource.class));
         pluginManager.loadPlugins(List.of());
 
@@ -105,9 +115,9 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnDataSource.class));
-        pluginManager.loadPlugins(List.of(
-                () -> List.of(new DisabledVulnDataSourceFactory("nvd"))));
+        pluginManager.loadPlugins(List.of(() -> List.of(new DisabledVulnDataSourceFactory("nvd"))));
 
         final var activity = new MirrorVulnDataSourceActivity(pluginManager);
         final var arg = MirrorVulnDataSourceArg.newBuilder()
@@ -130,6 +140,26 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
 
         assertThatExceptionOfType(TerminalApplicationFailureException.class)
                 .isThrownBy(() -> activity.execute(mock(ActivityContext.class), arg));
+    }
+
+    @Test
+    void shouldFailTerminallyWhenOutboundConnectionDenied() {
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doThrow(new UncheckedIOException(
+                        new OutboundConnectionDeniedException("Connections to osv.invalid are not allowed")))
+                .when(dataSourceMock)
+                .hasNext();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("osv", dataSourceMock));
+
+        assertThatExceptionOfType(TerminalApplicationFailureException.class)
+                .isThrownBy(() -> activity.execute(
+                        mock(ActivityContext.class),
+                        MirrorVulnDataSourceArg.newBuilder()
+                                .setDataSourceName("osv")
+                                .setSourceName("OSV")
+                                .build()))
+                .withRootCauseInstanceOf(OutboundConnectionDeniedException.class);
     }
 
     @Test
@@ -163,13 +193,60 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 new TestVulnDataSourceFactory("github", () -> mock(VulnDataSource.class))));
 
         final var activity = new MirrorVulnDataSourceActivity(pluginManager);
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder()
-                .setDataSourceName("osv").setSourceName("OSV").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("osv")
+                        .setSourceName("OSV")
+                        .build());
 
         verify(osvDataSourceMock).markProcessed(eq(bov));
         final Vulnerability vuln = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-fxwm-579q-49qq");
         assertThat(vuln).isNotNull();
         assertThat(vuln.getDescription()).isEqualTo("Authoritative GHSA description");
+    }
+
+    @Test
+    void shouldOverwriteExistingVulnWhenIncomingDataIsOlder() throws Exception {
+        final Bom newerBov = generateBomFromJson(/* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "description": "Newer data",
+                      "updated": "2024-02-01T00:00:00Z"
+                    }
+                  ]
+                }
+                """);
+        final Bom olderBov = generateBomFromJson(/* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "description": "Older data",
+                      "updated": "2024-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+                """);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(newerBov, olderBov).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getDescription()).isEqualTo("Older data");
     }
 
     @Test
@@ -197,8 +274,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 new TestVulnDataSourceFactory("github", () -> mock(VulnDataSource.class))));
 
         final var activity = new MirrorVulnDataSourceActivity(pluginManager);
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder()
-                .setDataSourceName("osv").setSourceName("OSV").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("osv")
+                        .setSourceName("OSV")
+                        .build());
 
         verify(osvDataSourceMock).markProcessed(eq(bov));
         final Vulnerability vuln = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-fxwm-579q-49qq");
@@ -226,12 +307,16 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(true, false).when(osvDataSourceMock).hasNext();
         doReturn(bov).when(osvDataSourceMock).next();
 
-        final var pluginManager = createPluginManager(List.of(
-                new TestVulnDataSourceFactory("osv", () -> osvDataSourceMock)));
+        final var pluginManager =
+                createPluginManager(List.of(new TestVulnDataSourceFactory("osv", () -> osvDataSourceMock)));
 
         final var activity = new MirrorVulnDataSourceActivity(pluginManager);
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder()
-                .setDataSourceName("osv").setSourceName("OSV").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("osv")
+                        .setSourceName("OSV")
+                        .build());
 
         verify(osvDataSourceMock).markProcessed(eq(bov));
         assertThat(qm.getVulnerabilityByVulnId("GITHUB", "GHSA-fxwm-579q-49qq")).isNotNull();
@@ -258,8 +343,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(bov).when(osvDataSourceMock).next();
 
         final var activity = new MirrorVulnDataSourceActivity(createPluginManager("osv", osvDataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder()
-                .setDataSourceName("osv").setSourceName("OSV").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("osv")
+                        .setSourceName("OSV")
+                        .build());
 
         verify(osvDataSourceMock).markProcessed(eq(bov));
         assertThat(qm.getVulnerabilityByVulnId("INTERNAL", "INT-001")).isNull();
@@ -318,7 +407,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(bov).when(dataSourceMock).next();
 
         final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("nvd")
+                        .setSourceName("NVD")
+                        .build());
 
         verify(dataSourceMock).markProcessed(eq(bov));
 
@@ -406,8 +500,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(bov).when(dataSourceMock).next();
 
         final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder()
-                .setDataSourceName("nvd").setSourceName("NVD").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("nvd")
+                        .setSourceName("NVD")
+                        .build());
 
         verify(dataSourceMock).markProcessed(eq(bov));
         final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2022-40489");
@@ -489,7 +587,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(bov).when(dataSourceMock).next();
 
         final var activity = new MirrorVulnDataSourceActivity(createPluginManager("github", dataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("github").setSourceName("GITHUB").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("github")
+                        .setSourceName("GITHUB")
+                        .build());
 
         verify(dataSourceMock).markProcessed(eq(bov));
 
@@ -498,7 +601,9 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         assertThat(vuln.getVulnId()).isEqualTo("GHSA-fxwm-579q-49qq");
         assertThat(vuln.getFriendlyVulnId()).isNull();
         assertThat(vuln.getSource()).isEqualTo("GITHUB");
-        assertThat(vuln.getTitle()).isEqualTo("Moderate severity vulnerability that affects Bootstrap.Less, bootstrap, and bootstrap.sass");
+        assertThat(vuln.getTitle())
+                .isEqualTo(
+                        "Moderate severity vulnerability that affects Bootstrap.Less, bootstrap, and bootstrap.sass");
         assertThat(vuln.getSubTitle()).isNull();
         assertThat(vuln.getDescription()).isEqualTo("In Bootstrap 4 before 4.3.1 and Bootstrap 3 before 3.4.1,");
         assertThat(vuln.getDetail()).isNull();
@@ -527,116 +632,116 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         assertThat(vuln.getVulnerableVersions()).isNull();
         assertThat(vuln.getPatchedVersions()).isNull();
 
-        assertThat(vuln.getVulnerableSoftware()).satisfiesExactlyInAnyOrder(
-                vs -> {
-                    assertThat(vs.getCpe22()).isNull();
-                    assertThat(vs.getCpe23()).isNull();
-                    assertThat(vs.getPart()).isNull();
-                    assertThat(vs.getVendor()).isNull();
-                    assertThat(vs.getProduct()).isNull();
-                    assertThat(vs.getVersion()).isNull();
-                    assertThat(vs.getUpdate()).isNull();
-                    assertThat(vs.getEdition()).isNull();
-                    assertThat(vs.getLanguage()).isNull();
-                    assertThat(vs.getSwEdition()).isNull();
-                    assertThat(vs.getTargetSw()).isNull();
-                    assertThat(vs.getTargetHw()).isNull();
-                    assertThat(vs.getOther()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isEqualTo("3.0.0");
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isEqualTo("3.4.1");
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isEqualTo("nuget");
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isEqualTo("bootstrap");
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isEqualTo("pkg:nuget/bootstrap");
-                },
-                vs -> {
-                    assertThat(vs.getCpe22()).isNull();
-                    assertThat(vs.getCpe23()).isNull();
-                    assertThat(vs.getPart()).isNull();
-                    assertThat(vs.getVendor()).isNull();
-                    assertThat(vs.getProduct()).isNull();
-                    assertThat(vs.getVersion()).isNull();
-                    assertThat(vs.getUpdate()).isNull();
-                    assertThat(vs.getEdition()).isNull();
-                    assertThat(vs.getLanguage()).isNull();
-                    assertThat(vs.getSwEdition()).isNull();
-                    assertThat(vs.getTargetSw()).isNull();
-                    assertThat(vs.getTargetHw()).isNull();
-                    assertThat(vs.getOther()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isEqualTo("4.0.0");
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isEqualTo("4.3.1");
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isEqualTo("nuget");
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isEqualTo("bootstrap");
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isEqualTo("pkg:nuget/bootstrap");
-                },
-                vs -> {
-                    assertThat(vs.getCpe22()).isNull();
-                    assertThat(vs.getCpe23()).isNull();
-                    assertThat(vs.getPart()).isNull();
-                    assertThat(vs.getVendor()).isNull();
-                    assertThat(vs.getProduct()).isNull();
-                    assertThat(vs.getVersion()).isNull();
-                    assertThat(vs.getUpdate()).isNull();
-                    assertThat(vs.getEdition()).isNull();
-                    assertThat(vs.getLanguage()).isNull();
-                    assertThat(vs.getSwEdition()).isNull();
-                    assertThat(vs.getTargetSw()).isNull();
-                    assertThat(vs.getTargetHw()).isNull();
-                    assertThat(vs.getOther()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isEqualTo("4.3.1");
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isEqualTo("nuget");
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isEqualTo("bootstrap.sass");
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isEqualTo("pkg:nuget/bootstrap.sass");
-                },
-                vs -> {
-                    assertThat(vs.getCpe22()).isNull();
-                    assertThat(vs.getCpe23()).isNull();
-                    assertThat(vs.getPart()).isNull();
-                    assertThat(vs.getVendor()).isNull();
-                    assertThat(vs.getProduct()).isNull();
-                    assertThat(vs.getVersion()).isNull();
-                    assertThat(vs.getUpdate()).isNull();
-                    assertThat(vs.getEdition()).isNull();
-                    assertThat(vs.getLanguage()).isNull();
-                    assertThat(vs.getSwEdition()).isNull();
-                    assertThat(vs.getTargetSw()).isNull();
-                    assertThat(vs.getTargetHw()).isNull();
-                    assertThat(vs.getOther()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isEqualTo("3.0.0");
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isEqualTo("3.4.1");
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isEqualTo("nuget");
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isEqualTo("Bootstrap.Less");
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isEqualTo("pkg:nuget/Bootstrap.Less");
-                }
-        );
+        assertThat(vuln.getVulnerableSoftware())
+                .satisfiesExactlyInAnyOrder(
+                        vs -> {
+                            assertThat(vs.getCpe22()).isNull();
+                            assertThat(vs.getCpe23()).isNull();
+                            assertThat(vs.getPart()).isNull();
+                            assertThat(vs.getVendor()).isNull();
+                            assertThat(vs.getProduct()).isNull();
+                            assertThat(vs.getVersion()).isNull();
+                            assertThat(vs.getUpdate()).isNull();
+                            assertThat(vs.getEdition()).isNull();
+                            assertThat(vs.getLanguage()).isNull();
+                            assertThat(vs.getSwEdition()).isNull();
+                            assertThat(vs.getTargetSw()).isNull();
+                            assertThat(vs.getTargetHw()).isNull();
+                            assertThat(vs.getOther()).isNull();
+                            assertThat(vs.getVersionStartIncluding()).isEqualTo("3.0.0");
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isEqualTo("3.4.1");
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isEqualTo("nuget");
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isEqualTo("bootstrap");
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isEqualTo("pkg:nuget/bootstrap");
+                        },
+                        vs -> {
+                            assertThat(vs.getCpe22()).isNull();
+                            assertThat(vs.getCpe23()).isNull();
+                            assertThat(vs.getPart()).isNull();
+                            assertThat(vs.getVendor()).isNull();
+                            assertThat(vs.getProduct()).isNull();
+                            assertThat(vs.getVersion()).isNull();
+                            assertThat(vs.getUpdate()).isNull();
+                            assertThat(vs.getEdition()).isNull();
+                            assertThat(vs.getLanguage()).isNull();
+                            assertThat(vs.getSwEdition()).isNull();
+                            assertThat(vs.getTargetSw()).isNull();
+                            assertThat(vs.getTargetHw()).isNull();
+                            assertThat(vs.getOther()).isNull();
+                            assertThat(vs.getVersionStartIncluding()).isEqualTo("4.0.0");
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isEqualTo("4.3.1");
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isEqualTo("nuget");
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isEqualTo("bootstrap");
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isEqualTo("pkg:nuget/bootstrap");
+                        },
+                        vs -> {
+                            assertThat(vs.getCpe22()).isNull();
+                            assertThat(vs.getCpe23()).isNull();
+                            assertThat(vs.getPart()).isNull();
+                            assertThat(vs.getVendor()).isNull();
+                            assertThat(vs.getProduct()).isNull();
+                            assertThat(vs.getVersion()).isNull();
+                            assertThat(vs.getUpdate()).isNull();
+                            assertThat(vs.getEdition()).isNull();
+                            assertThat(vs.getLanguage()).isNull();
+                            assertThat(vs.getSwEdition()).isNull();
+                            assertThat(vs.getTargetSw()).isNull();
+                            assertThat(vs.getTargetHw()).isNull();
+                            assertThat(vs.getOther()).isNull();
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isEqualTo("4.3.1");
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isEqualTo("nuget");
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isEqualTo("bootstrap.sass");
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isEqualTo("pkg:nuget/bootstrap.sass");
+                        },
+                        vs -> {
+                            assertThat(vs.getCpe22()).isNull();
+                            assertThat(vs.getCpe23()).isNull();
+                            assertThat(vs.getPart()).isNull();
+                            assertThat(vs.getVendor()).isNull();
+                            assertThat(vs.getProduct()).isNull();
+                            assertThat(vs.getVersion()).isNull();
+                            assertThat(vs.getUpdate()).isNull();
+                            assertThat(vs.getEdition()).isNull();
+                            assertThat(vs.getLanguage()).isNull();
+                            assertThat(vs.getSwEdition()).isNull();
+                            assertThat(vs.getTargetSw()).isNull();
+                            assertThat(vs.getTargetHw()).isNull();
+                            assertThat(vs.getOther()).isNull();
+                            assertThat(vs.getVersionStartIncluding()).isEqualTo("3.0.0");
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isEqualTo("3.4.1");
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isEqualTo("nuget");
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isEqualTo("Bootstrap.Less");
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isEqualTo("pkg:nuget/Bootstrap.Less");
+                        });
     }
 
     @Test
@@ -702,7 +807,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(bov).when(dataSourceMock).next();
 
         final var activity = new MirrorVulnDataSourceActivity(createPluginManager("osv", dataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("osv").setSourceName("OSV").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("osv")
+                        .setSourceName("OSV")
+                        .build());
 
         verify(dataSourceMock).markProcessed(eq(bov));
 
@@ -711,7 +821,8 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         assertThat(vuln.getVulnId()).isEqualTo("GHSA-2cc5-23r7-vc4v");
         assertThat(vuln.getFriendlyVulnId()).isNull();
         assertThat(vuln.getSource()).isEqualTo("GITHUB");
-        assertThat(vuln.getTitle()).isEqualTo("Ratpack's default client side session signing key is highly predictable");
+        assertThat(vuln.getTitle())
+                .isEqualTo("Ratpack's default client side session signing key is highly predictable");
         assertThat(vuln.getSubTitle()).isNull();
         assertThat(vuln.getDescription()).isEqualTo("### Impact");
         assertThat(vuln.getDetail()).isNull();
@@ -743,89 +854,89 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         assertThat(vuln.getVulnerableVersions()).isNull();
         assertThat(vuln.getPatchedVersions()).isNull();
 
-        assertThat(vuln.getVulnerableSoftware()).satisfiesExactlyInAnyOrder(
-                vs -> {
-                    assertThat(vs.getCpe22()).isNull();
-                    assertThat(vs.getCpe23()).isNull();
-                    assertThat(vs.getPart()).isNull();
-                    assertThat(vs.getVendor()).isNull();
-                    assertThat(vs.getProduct()).isNull();
-                    assertThat(vs.getVersion()).isNull();
-                    assertThat(vs.getUpdate()).isNull();
-                    assertThat(vs.getEdition()).isNull();
-                    assertThat(vs.getLanguage()).isNull();
-                    assertThat(vs.getSwEdition()).isNull();
-                    assertThat(vs.getTargetSw()).isNull();
-                    assertThat(vs.getTargetHw()).isNull();
-                    assertThat(vs.getOther()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isEqualTo("0");
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isEqualTo("1.9.0");
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isEqualTo("maven");
-                    assertThat(vs.getPurlNamespace()).isEqualTo("io.ratpack");
-                    assertThat(vs.getPurlName()).isEqualTo("ratpack-session");
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isEqualTo("pkg:maven/io.ratpack/ratpack-session");
-                },
-                vs -> {
-                    assertThat(vs.getCpe22()).isNull();
-                    assertThat(vs.getCpe23()).isNull();
-                    assertThat(vs.getPart()).isNull();
-                    assertThat(vs.getVendor()).isNull();
-                    assertThat(vs.getProduct()).isNull();
-                    assertThat(vs.getVersion()).isEqualTo("0.9.0");
-                    assertThat(vs.getUpdate()).isNull();
-                    assertThat(vs.getEdition()).isNull();
-                    assertThat(vs.getLanguage()).isNull();
-                    assertThat(vs.getSwEdition()).isNull();
-                    assertThat(vs.getTargetSw()).isNull();
-                    assertThat(vs.getTargetHw()).isNull();
-                    assertThat(vs.getOther()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isNull();
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isEqualTo("maven");
-                    assertThat(vs.getPurlNamespace()).isEqualTo("io.ratpack");
-                    assertThat(vs.getPurlName()).isEqualTo("ratpack-session");
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isEqualTo("pkg:maven/io.ratpack/ratpack-session");
-                },
-                vs -> {
-                    assertThat(vs.getCpe22()).isNull();
-                    assertThat(vs.getCpe23()).isNull();
-                    assertThat(vs.getPart()).isNull();
-                    assertThat(vs.getVendor()).isNull();
-                    assertThat(vs.getProduct()).isNull();
-                    assertThat(vs.getVersion()).isEqualTo("0.9.1");
-                    assertThat(vs.getUpdate()).isNull();
-                    assertThat(vs.getEdition()).isNull();
-                    assertThat(vs.getLanguage()).isNull();
-                    assertThat(vs.getSwEdition()).isNull();
-                    assertThat(vs.getTargetSw()).isNull();
-                    assertThat(vs.getTargetHw()).isNull();
-                    assertThat(vs.getOther()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isNull();
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isEqualTo("maven");
-                    assertThat(vs.getPurlNamespace()).isEqualTo("io.ratpack");
-                    assertThat(vs.getPurlName()).isEqualTo("ratpack-session");
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isEqualTo("pkg:maven/io.ratpack/ratpack-session");
-                }
-        );
+        assertThat(vuln.getVulnerableSoftware())
+                .satisfiesExactlyInAnyOrder(
+                        vs -> {
+                            assertThat(vs.getCpe22()).isNull();
+                            assertThat(vs.getCpe23()).isNull();
+                            assertThat(vs.getPart()).isNull();
+                            assertThat(vs.getVendor()).isNull();
+                            assertThat(vs.getProduct()).isNull();
+                            assertThat(vs.getVersion()).isNull();
+                            assertThat(vs.getUpdate()).isNull();
+                            assertThat(vs.getEdition()).isNull();
+                            assertThat(vs.getLanguage()).isNull();
+                            assertThat(vs.getSwEdition()).isNull();
+                            assertThat(vs.getTargetSw()).isNull();
+                            assertThat(vs.getTargetHw()).isNull();
+                            assertThat(vs.getOther()).isNull();
+                            assertThat(vs.getVersionStartIncluding()).isEqualTo("0");
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isEqualTo("1.9.0");
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isEqualTo("maven");
+                            assertThat(vs.getPurlNamespace()).isEqualTo("io.ratpack");
+                            assertThat(vs.getPurlName()).isEqualTo("ratpack-session");
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isEqualTo("pkg:maven/io.ratpack/ratpack-session");
+                        },
+                        vs -> {
+                            assertThat(vs.getCpe22()).isNull();
+                            assertThat(vs.getCpe23()).isNull();
+                            assertThat(vs.getPart()).isNull();
+                            assertThat(vs.getVendor()).isNull();
+                            assertThat(vs.getProduct()).isNull();
+                            assertThat(vs.getVersion()).isEqualTo("0.9.0");
+                            assertThat(vs.getUpdate()).isNull();
+                            assertThat(vs.getEdition()).isNull();
+                            assertThat(vs.getLanguage()).isNull();
+                            assertThat(vs.getSwEdition()).isNull();
+                            assertThat(vs.getTargetSw()).isNull();
+                            assertThat(vs.getTargetHw()).isNull();
+                            assertThat(vs.getOther()).isNull();
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isNull();
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isEqualTo("maven");
+                            assertThat(vs.getPurlNamespace()).isEqualTo("io.ratpack");
+                            assertThat(vs.getPurlName()).isEqualTo("ratpack-session");
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isEqualTo("pkg:maven/io.ratpack/ratpack-session");
+                        },
+                        vs -> {
+                            assertThat(vs.getCpe22()).isNull();
+                            assertThat(vs.getCpe23()).isNull();
+                            assertThat(vs.getPart()).isNull();
+                            assertThat(vs.getVendor()).isNull();
+                            assertThat(vs.getProduct()).isNull();
+                            assertThat(vs.getVersion()).isEqualTo("0.9.1");
+                            assertThat(vs.getUpdate()).isNull();
+                            assertThat(vs.getEdition()).isNull();
+                            assertThat(vs.getLanguage()).isNull();
+                            assertThat(vs.getSwEdition()).isNull();
+                            assertThat(vs.getTargetSw()).isNull();
+                            assertThat(vs.getTargetHw()).isNull();
+                            assertThat(vs.getOther()).isNull();
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isNull();
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isEqualTo("maven");
+                            assertThat(vs.getPurlNamespace()).isEqualTo("io.ratpack");
+                            assertThat(vs.getPurlName()).isEqualTo("ratpack-session");
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isEqualTo("pkg:maven/io.ratpack/ratpack-session");
+                        });
     }
 
     @Test
@@ -857,7 +968,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(bov).when(dataSourceMock).next();
 
         final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("nvd")
+                        .setSourceName("NVD")
+                        .build());
 
         verify(dataSourceMock).markProcessed(eq(bov));
 
@@ -932,7 +1048,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(bov).when(dataSourceMock).next();
 
         final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("nvd")
+                        .setSourceName("NVD")
+                        .build());
 
         verify(dataSourceMock).markProcessed(eq(bov));
 
@@ -1033,7 +1154,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(bov).when(dataSourceMock).next();
 
         final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("nvd")
+                        .setSourceName("NVD")
+                        .build());
 
         verify(dataSourceMock).markProcessed(eq(bov));
 
@@ -1069,322 +1195,322 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         assertThat(vuln.getVulnerableVersions()).isNull();
         assertThat(vuln.getPatchedVersions()).isNull();
 
-        assertThat(vuln.getVulnerableSoftware()).satisfiesExactlyInAnyOrder(
-                // vers:foobar/<1
-                vs -> {
-                    assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
-                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
-                    assertThat(vs.getPart()).isEqualTo("a");
-                    assertThat(vs.getVendor()).isEqualTo("thinkcmf");
-                    assertThat(vs.getProduct()).isEqualTo("thinkcmf");
-                    assertThat(vs.getVersion()).isEqualTo("*");
-                    assertThat(vs.getUpdate()).isEqualTo("*");
-                    assertThat(vs.getEdition()).isEqualTo("*");
-                    assertThat(vs.getLanguage()).isEqualTo("*");
-                    assertThat(vs.getSwEdition()).isEqualTo("*");
-                    assertThat(vs.getTargetSw()).isEqualTo("*");
-                    assertThat(vs.getTargetHw()).isEqualTo("*");
-                    assertThat(vs.getOther()).isEqualTo("*");
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isEqualTo("1");
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isNull();
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isNull();
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isNull();
-                },
-                // vers:generic/*
-                vs -> {
-                    assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
-                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
-                    assertThat(vs.getPart()).isEqualTo("a");
-                    assertThat(vs.getVendor()).isEqualTo("thinkcmf");
-                    assertThat(vs.getProduct()).isEqualTo("thinkcmf");
-                    assertThat(vs.getVersion()).isEqualTo("*");
-                    assertThat(vs.getUpdate()).isEqualTo("*");
-                    assertThat(vs.getEdition()).isEqualTo("*");
-                    assertThat(vs.getLanguage()).isEqualTo("*");
-                    assertThat(vs.getSwEdition()).isEqualTo("*");
-                    assertThat(vs.getTargetSw()).isEqualTo("*");
-                    assertThat(vs.getTargetHw()).isEqualTo("*");
-                    assertThat(vs.getOther()).isEqualTo("*");
-                    assertThat(vs.getVersionStartIncluding()).isEqualTo("0");
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isNull();
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isNull();
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isNull();
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isNull();
-                },
-                // vers:generic/>0
-                vs -> {
-                    assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
-                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
-                    assertThat(vs.getPart()).isEqualTo("a");
-                    assertThat(vs.getVendor()).isEqualTo("thinkcmf");
-                    assertThat(vs.getProduct()).isEqualTo("thinkcmf");
-                    assertThat(vs.getVersion()).isEqualTo("*");
-                    assertThat(vs.getUpdate()).isEqualTo("*");
-                    assertThat(vs.getEdition()).isEqualTo("*");
-                    assertThat(vs.getLanguage()).isEqualTo("*");
-                    assertThat(vs.getSwEdition()).isEqualTo("*");
-                    assertThat(vs.getTargetSw()).isEqualTo("*");
-                    assertThat(vs.getTargetHw()).isEqualTo("*");
-                    assertThat(vs.getOther()).isEqualTo("*");
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isEqualTo("0");
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isNull();
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isNull();
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isNull();
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isNull();
-                },
-                // Exact-version constraints (vers:generic/0, vers:generic/1, and the 6.0.1
-                // exact part of vers:generic/>5|<6|6.0.1) collapse into a single CPE entry,
-                // because the CPE's version is always taken from the CPE itself ("*" here).
-                //
-                // Note that the constellations in this test are fabricated and do not represent
-                // real-world data. It thus merely documents behaviour.
-                vs -> {
-                    assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
-                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
-                    assertThat(vs.getPart()).isEqualTo("a");
-                    assertThat(vs.getVendor()).isEqualTo("thinkcmf");
-                    assertThat(vs.getProduct()).isEqualTo("thinkcmf");
-                    assertThat(vs.getVersion()).isEqualTo("*");
-                    assertThat(vs.getUpdate()).isEqualTo("*");
-                    assertThat(vs.getEdition()).isEqualTo("*");
-                    assertThat(vs.getLanguage()).isEqualTo("*");
-                    assertThat(vs.getSwEdition()).isEqualTo("*");
-                    assertThat(vs.getTargetSw()).isEqualTo("*");
-                    assertThat(vs.getTargetHw()).isEqualTo("*");
-                    assertThat(vs.getOther()).isEqualTo("*");
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isNull();
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isNull();
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isNull();
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isNull();
-                },
-                // vers:generic/>2
-                vs -> {
-                    assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
-                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
-                    assertThat(vs.getPart()).isEqualTo("a");
-                    assertThat(vs.getVendor()).isEqualTo("thinkcmf");
-                    assertThat(vs.getProduct()).isEqualTo("thinkcmf");
-                    assertThat(vs.getVersion()).isEqualTo("*");
-                    assertThat(vs.getUpdate()).isEqualTo("*");
-                    assertThat(vs.getEdition()).isEqualTo("*");
-                    assertThat(vs.getLanguage()).isEqualTo("*");
-                    assertThat(vs.getSwEdition()).isEqualTo("*");
-                    assertThat(vs.getTargetSw()).isEqualTo("*");
-                    assertThat(vs.getTargetHw()).isEqualTo("*");
-                    assertThat(vs.getOther()).isEqualTo("*");
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isEqualTo("2");
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isNull();
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isNull();
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isNull();
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isNull();
-                },
-                // vers:generic/>3|<4
-                vs -> {
-                    assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
-                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
-                    assertThat(vs.getPart()).isEqualTo("a");
-                    assertThat(vs.getVendor()).isEqualTo("thinkcmf");
-                    assertThat(vs.getProduct()).isEqualTo("thinkcmf");
-                    assertThat(vs.getVersion()).isEqualTo("*");
-                    assertThat(vs.getUpdate()).isEqualTo("*");
-                    assertThat(vs.getEdition()).isEqualTo("*");
-                    assertThat(vs.getLanguage()).isEqualTo("*");
-                    assertThat(vs.getSwEdition()).isEqualTo("*");
-                    assertThat(vs.getTargetSw()).isEqualTo("*");
-                    assertThat(vs.getTargetHw()).isEqualTo("*");
-                    assertThat(vs.getOther()).isEqualTo("*");
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isEqualTo("3");
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isEqualTo("4");
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isNull();
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isNull();
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isNull();
-                },
-                // Range part of vers:generic/>5|<6|6.0.1.
-                // The exact "6.0.1" part collapses into the shared exact-version CPE entry above.
-                vs -> {
-                    assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
-                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
-                    assertThat(vs.getPart()).isEqualTo("a");
-                    assertThat(vs.getVendor()).isEqualTo("thinkcmf");
-                    assertThat(vs.getProduct()).isEqualTo("thinkcmf");
-                    assertThat(vs.getVersion()).isEqualTo("*");
-                    assertThat(vs.getUpdate()).isEqualTo("*");
-                    assertThat(vs.getEdition()).isEqualTo("*");
-                    assertThat(vs.getLanguage()).isEqualTo("*");
-                    assertThat(vs.getSwEdition()).isEqualTo("*");
-                    assertThat(vs.getTargetSw()).isEqualTo("*");
-                    assertThat(vs.getTargetHw()).isEqualTo("*");
-                    assertThat(vs.getOther()).isEqualTo("*");
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isEqualTo("5");
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isEqualTo("6");
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isNull();
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isNull();
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isNull();
-                },
-                // vers:generic/>*|<7
-                vs -> {
-                    assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
-                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
-                    assertThat(vs.getPart()).isEqualTo("a");
-                    assertThat(vs.getVendor()).isEqualTo("thinkcmf");
-                    assertThat(vs.getProduct()).isEqualTo("thinkcmf");
-                    assertThat(vs.getVersion()).isEqualTo("*");
-                    assertThat(vs.getUpdate()).isEqualTo("*");
-                    assertThat(vs.getEdition()).isEqualTo("*");
-                    assertThat(vs.getLanguage()).isEqualTo("*");
-                    assertThat(vs.getSwEdition()).isEqualTo("*");
-                    assertThat(vs.getTargetSw()).isEqualTo("*");
-                    assertThat(vs.getTargetHw()).isEqualTo("*");
-                    assertThat(vs.getOther()).isEqualTo("*");
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isEqualTo("*");
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isEqualTo("7");
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isNull();
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isNull();
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isNull();
-                },
-                // vers:generic/>8
-                vs -> {
-                    assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
-                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
-                    assertThat(vs.getPart()).isEqualTo("a");
-                    assertThat(vs.getVendor()).isEqualTo("thinkcmf");
-                    assertThat(vs.getProduct()).isEqualTo("thinkcmf");
-                    assertThat(vs.getVersion()).isEqualTo("*");
-                    assertThat(vs.getUpdate()).isEqualTo("*");
-                    assertThat(vs.getEdition()).isEqualTo("*");
-                    assertThat(vs.getLanguage()).isEqualTo("*");
-                    assertThat(vs.getSwEdition()).isEqualTo("*");
-                    assertThat(vs.getTargetSw()).isEqualTo("*");
-                    assertThat(vs.getTargetHw()).isEqualTo("*");
-                    assertThat(vs.getOther()).isEqualTo("*");
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isEqualTo("8");
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isNull();
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isNull();
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isNull();
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isNull();
-                },
-                // vers:generic/<13
-                vs -> {
-                    assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
-                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
-                    assertThat(vs.getPart()).isEqualTo("a");
-                    assertThat(vs.getVendor()).isEqualTo("thinkcmf");
-                    assertThat(vs.getProduct()).isEqualTo("thinkcmf");
-                    assertThat(vs.getVersion()).isEqualTo("*");
-                    assertThat(vs.getUpdate()).isEqualTo("*");
-                    assertThat(vs.getEdition()).isEqualTo("*");
-                    assertThat(vs.getLanguage()).isEqualTo("*");
-                    assertThat(vs.getSwEdition()).isEqualTo("*");
-                    assertThat(vs.getTargetSw()).isEqualTo("*");
-                    assertThat(vs.getTargetHw()).isEqualTo("*");
-                    assertThat(vs.getOther()).isEqualTo("*");
-                    assertThat(vs.getVersionStartIncluding()).isNull();
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isEqualTo("13");
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isNull();
-                    assertThat(vs.getPurlNamespace()).isNull();
-                    assertThat(vs.getPurlName()).isNull();
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isNull();
-                },
-                // purl with vers:generic/*
-                vs -> {
-                    assertThat(vs.getCpe22()).isNull();
-                    assertThat(vs.getCpe23()).isNull();
-                    assertThat(vs.getPart()).isNull();
-                    assertThat(vs.getVendor()).isNull();
-                    assertThat(vs.getProduct()).isNull();
-                    assertThat(vs.getVersion()).isNull();
-                    assertThat(vs.getUpdate()).isNull();
-                    assertThat(vs.getEdition()).isNull();
-                    assertThat(vs.getLanguage()).isNull();
-                    assertThat(vs.getSwEdition()).isNull();
-                    assertThat(vs.getTargetSw()).isNull();
-                    assertThat(vs.getTargetHw()).isNull();
-                    assertThat(vs.getOther()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isEqualTo("0");
-                    assertThat(vs.getVersionStartExcluding()).isNull();
-                    assertThat(vs.getVersionEndIncluding()).isNull();
-                    assertThat(vs.getVersionEndExcluding()).isNull();
-                    assertThat(vs.isVulnerable()).isTrue();
-                    assertThat(vs.getPurlType()).isEqualTo("maven");
-                    assertThat(vs.getPurlNamespace()).isEqualTo("com.example");
-                    assertThat(vs.getPurlName()).isEqualTo("foo");
-                    assertThat(vs.getPurlVersion()).isNull();
-                    assertThat(vs.getPurlQualifiers()).isNull();
-                    assertThat(vs.getPurlSubpath()).isNull();
-                    assertThat(vs.getPurl()).isEqualTo("pkg:maven/com.example/foo");
-                }
-        );
+        assertThat(vuln.getVulnerableSoftware())
+                .satisfiesExactlyInAnyOrder(
+                        // vers:foobar/<1
+                        vs -> {
+                            assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
+                            assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
+                            assertThat(vs.getPart()).isEqualTo("a");
+                            assertThat(vs.getVendor()).isEqualTo("thinkcmf");
+                            assertThat(vs.getProduct()).isEqualTo("thinkcmf");
+                            assertThat(vs.getVersion()).isEqualTo("*");
+                            assertThat(vs.getUpdate()).isEqualTo("*");
+                            assertThat(vs.getEdition()).isEqualTo("*");
+                            assertThat(vs.getLanguage()).isEqualTo("*");
+                            assertThat(vs.getSwEdition()).isEqualTo("*");
+                            assertThat(vs.getTargetSw()).isEqualTo("*");
+                            assertThat(vs.getTargetHw()).isEqualTo("*");
+                            assertThat(vs.getOther()).isEqualTo("*");
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isEqualTo("1");
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isNull();
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isNull();
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isNull();
+                        },
+                        // vers:generic/*
+                        vs -> {
+                            assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
+                            assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
+                            assertThat(vs.getPart()).isEqualTo("a");
+                            assertThat(vs.getVendor()).isEqualTo("thinkcmf");
+                            assertThat(vs.getProduct()).isEqualTo("thinkcmf");
+                            assertThat(vs.getVersion()).isEqualTo("*");
+                            assertThat(vs.getUpdate()).isEqualTo("*");
+                            assertThat(vs.getEdition()).isEqualTo("*");
+                            assertThat(vs.getLanguage()).isEqualTo("*");
+                            assertThat(vs.getSwEdition()).isEqualTo("*");
+                            assertThat(vs.getTargetSw()).isEqualTo("*");
+                            assertThat(vs.getTargetHw()).isEqualTo("*");
+                            assertThat(vs.getOther()).isEqualTo("*");
+                            assertThat(vs.getVersionStartIncluding()).isEqualTo("0");
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isNull();
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isNull();
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isNull();
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isNull();
+                        },
+                        // vers:generic/>0
+                        vs -> {
+                            assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
+                            assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
+                            assertThat(vs.getPart()).isEqualTo("a");
+                            assertThat(vs.getVendor()).isEqualTo("thinkcmf");
+                            assertThat(vs.getProduct()).isEqualTo("thinkcmf");
+                            assertThat(vs.getVersion()).isEqualTo("*");
+                            assertThat(vs.getUpdate()).isEqualTo("*");
+                            assertThat(vs.getEdition()).isEqualTo("*");
+                            assertThat(vs.getLanguage()).isEqualTo("*");
+                            assertThat(vs.getSwEdition()).isEqualTo("*");
+                            assertThat(vs.getTargetSw()).isEqualTo("*");
+                            assertThat(vs.getTargetHw()).isEqualTo("*");
+                            assertThat(vs.getOther()).isEqualTo("*");
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isEqualTo("0");
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isNull();
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isNull();
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isNull();
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isNull();
+                        },
+                        // Exact-version constraints (vers:generic/0, vers:generic/1, and the 6.0.1
+                        // exact part of vers:generic/>5|<6|6.0.1) collapse into a single CPE entry,
+                        // because the CPE's version is always taken from the CPE itself ("*" here).
+                        //
+                        // Note that the constellations in this test are fabricated and do not represent
+                        // real-world data. It thus merely documents behaviour.
+                        vs -> {
+                            assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
+                            assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
+                            assertThat(vs.getPart()).isEqualTo("a");
+                            assertThat(vs.getVendor()).isEqualTo("thinkcmf");
+                            assertThat(vs.getProduct()).isEqualTo("thinkcmf");
+                            assertThat(vs.getVersion()).isEqualTo("*");
+                            assertThat(vs.getUpdate()).isEqualTo("*");
+                            assertThat(vs.getEdition()).isEqualTo("*");
+                            assertThat(vs.getLanguage()).isEqualTo("*");
+                            assertThat(vs.getSwEdition()).isEqualTo("*");
+                            assertThat(vs.getTargetSw()).isEqualTo("*");
+                            assertThat(vs.getTargetHw()).isEqualTo("*");
+                            assertThat(vs.getOther()).isEqualTo("*");
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isNull();
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isNull();
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isNull();
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isNull();
+                        },
+                        // vers:generic/>2
+                        vs -> {
+                            assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
+                            assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
+                            assertThat(vs.getPart()).isEqualTo("a");
+                            assertThat(vs.getVendor()).isEqualTo("thinkcmf");
+                            assertThat(vs.getProduct()).isEqualTo("thinkcmf");
+                            assertThat(vs.getVersion()).isEqualTo("*");
+                            assertThat(vs.getUpdate()).isEqualTo("*");
+                            assertThat(vs.getEdition()).isEqualTo("*");
+                            assertThat(vs.getLanguage()).isEqualTo("*");
+                            assertThat(vs.getSwEdition()).isEqualTo("*");
+                            assertThat(vs.getTargetSw()).isEqualTo("*");
+                            assertThat(vs.getTargetHw()).isEqualTo("*");
+                            assertThat(vs.getOther()).isEqualTo("*");
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isEqualTo("2");
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isNull();
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isNull();
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isNull();
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isNull();
+                        },
+                        // vers:generic/>3|<4
+                        vs -> {
+                            assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
+                            assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
+                            assertThat(vs.getPart()).isEqualTo("a");
+                            assertThat(vs.getVendor()).isEqualTo("thinkcmf");
+                            assertThat(vs.getProduct()).isEqualTo("thinkcmf");
+                            assertThat(vs.getVersion()).isEqualTo("*");
+                            assertThat(vs.getUpdate()).isEqualTo("*");
+                            assertThat(vs.getEdition()).isEqualTo("*");
+                            assertThat(vs.getLanguage()).isEqualTo("*");
+                            assertThat(vs.getSwEdition()).isEqualTo("*");
+                            assertThat(vs.getTargetSw()).isEqualTo("*");
+                            assertThat(vs.getTargetHw()).isEqualTo("*");
+                            assertThat(vs.getOther()).isEqualTo("*");
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isEqualTo("3");
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isEqualTo("4");
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isNull();
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isNull();
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isNull();
+                        },
+                        // Range part of vers:generic/>5|<6|6.0.1.
+                        // The exact "6.0.1" part collapses into the shared exact-version CPE entry above.
+                        vs -> {
+                            assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
+                            assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
+                            assertThat(vs.getPart()).isEqualTo("a");
+                            assertThat(vs.getVendor()).isEqualTo("thinkcmf");
+                            assertThat(vs.getProduct()).isEqualTo("thinkcmf");
+                            assertThat(vs.getVersion()).isEqualTo("*");
+                            assertThat(vs.getUpdate()).isEqualTo("*");
+                            assertThat(vs.getEdition()).isEqualTo("*");
+                            assertThat(vs.getLanguage()).isEqualTo("*");
+                            assertThat(vs.getSwEdition()).isEqualTo("*");
+                            assertThat(vs.getTargetSw()).isEqualTo("*");
+                            assertThat(vs.getTargetHw()).isEqualTo("*");
+                            assertThat(vs.getOther()).isEqualTo("*");
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isEqualTo("5");
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isEqualTo("6");
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isNull();
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isNull();
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isNull();
+                        },
+                        // vers:generic/>*|<7
+                        vs -> {
+                            assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
+                            assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
+                            assertThat(vs.getPart()).isEqualTo("a");
+                            assertThat(vs.getVendor()).isEqualTo("thinkcmf");
+                            assertThat(vs.getProduct()).isEqualTo("thinkcmf");
+                            assertThat(vs.getVersion()).isEqualTo("*");
+                            assertThat(vs.getUpdate()).isEqualTo("*");
+                            assertThat(vs.getEdition()).isEqualTo("*");
+                            assertThat(vs.getLanguage()).isEqualTo("*");
+                            assertThat(vs.getSwEdition()).isEqualTo("*");
+                            assertThat(vs.getTargetSw()).isEqualTo("*");
+                            assertThat(vs.getTargetHw()).isEqualTo("*");
+                            assertThat(vs.getOther()).isEqualTo("*");
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isEqualTo("*");
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isEqualTo("7");
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isNull();
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isNull();
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isNull();
+                        },
+                        // vers:generic/>8
+                        vs -> {
+                            assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
+                            assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
+                            assertThat(vs.getPart()).isEqualTo("a");
+                            assertThat(vs.getVendor()).isEqualTo("thinkcmf");
+                            assertThat(vs.getProduct()).isEqualTo("thinkcmf");
+                            assertThat(vs.getVersion()).isEqualTo("*");
+                            assertThat(vs.getUpdate()).isEqualTo("*");
+                            assertThat(vs.getEdition()).isEqualTo("*");
+                            assertThat(vs.getLanguage()).isEqualTo("*");
+                            assertThat(vs.getSwEdition()).isEqualTo("*");
+                            assertThat(vs.getTargetSw()).isEqualTo("*");
+                            assertThat(vs.getTargetHw()).isEqualTo("*");
+                            assertThat(vs.getOther()).isEqualTo("*");
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isEqualTo("8");
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isNull();
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isNull();
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isNull();
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isNull();
+                        },
+                        // vers:generic/<13
+                        vs -> {
+                            assertThat(vs.getCpe22()).isEqualTo("cpe:/a:thinkcmf:thinkcmf");
+                            assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:a:thinkcmf:thinkcmf:*:*:*:*:*:*:*:*");
+                            assertThat(vs.getPart()).isEqualTo("a");
+                            assertThat(vs.getVendor()).isEqualTo("thinkcmf");
+                            assertThat(vs.getProduct()).isEqualTo("thinkcmf");
+                            assertThat(vs.getVersion()).isEqualTo("*");
+                            assertThat(vs.getUpdate()).isEqualTo("*");
+                            assertThat(vs.getEdition()).isEqualTo("*");
+                            assertThat(vs.getLanguage()).isEqualTo("*");
+                            assertThat(vs.getSwEdition()).isEqualTo("*");
+                            assertThat(vs.getTargetSw()).isEqualTo("*");
+                            assertThat(vs.getTargetHw()).isEqualTo("*");
+                            assertThat(vs.getOther()).isEqualTo("*");
+                            assertThat(vs.getVersionStartIncluding()).isNull();
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isEqualTo("13");
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isNull();
+                            assertThat(vs.getPurlNamespace()).isNull();
+                            assertThat(vs.getPurlName()).isNull();
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isNull();
+                        },
+                        // purl with vers:generic/*
+                        vs -> {
+                            assertThat(vs.getCpe22()).isNull();
+                            assertThat(vs.getCpe23()).isNull();
+                            assertThat(vs.getPart()).isNull();
+                            assertThat(vs.getVendor()).isNull();
+                            assertThat(vs.getProduct()).isNull();
+                            assertThat(vs.getVersion()).isNull();
+                            assertThat(vs.getUpdate()).isNull();
+                            assertThat(vs.getEdition()).isNull();
+                            assertThat(vs.getLanguage()).isNull();
+                            assertThat(vs.getSwEdition()).isNull();
+                            assertThat(vs.getTargetSw()).isNull();
+                            assertThat(vs.getTargetHw()).isNull();
+                            assertThat(vs.getOther()).isNull();
+                            assertThat(vs.getVersionStartIncluding()).isEqualTo("0");
+                            assertThat(vs.getVersionStartExcluding()).isNull();
+                            assertThat(vs.getVersionEndIncluding()).isNull();
+                            assertThat(vs.getVersionEndExcluding()).isNull();
+                            assertThat(vs.isVulnerable()).isTrue();
+                            assertThat(vs.getPurlType()).isEqualTo("maven");
+                            assertThat(vs.getPurlNamespace()).isEqualTo("com.example");
+                            assertThat(vs.getPurlName()).isEqualTo("foo");
+                            assertThat(vs.getPurlVersion()).isNull();
+                            assertThat(vs.getPurlQualifiers()).isNull();
+                            assertThat(vs.getPurlSubpath()).isNull();
+                            assertThat(vs.getPurl()).isEqualTo("pkg:maven/com.example/foo");
+                        });
     }
 
     @Test
@@ -1460,7 +1586,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(bov).when(dataSourceMock).next();
 
         final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("nvd")
+                        .setSourceName("NVD")
+                        .build());
 
         verify(dataSourceMock).markProcessed(eq(bov));
 
@@ -1531,19 +1662,29 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(bov).when(dataSourceMock).next();
 
         final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("nvd")
+                        .setSourceName("NVD")
+                        .build());
 
         Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
-        List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        List<AffectedVersionAttribution> attributions = getAffectedVersionAttributions(vuln);
         assertThat(attributions).hasSize(1);
         final long attributionId = attributions.getFirst().getId();
 
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("nvd")
+                        .setSourceName("NVD")
+                        .build());
 
         vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
-        attributions = qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
-        assertThat(attributions).satisfiesExactly(
-                attribution -> assertThat(attribution.getId()).isEqualTo(attributionId));
+        attributions = getAffectedVersionAttributions(vuln);
+        assertThat(attributions)
+                .satisfiesExactly(attribution -> assertThat(attribution.getId()).isEqualTo(attributionId));
     }
 
     @Test
@@ -1578,11 +1719,15 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         doReturn(generateBomFromJson(bovJson)).when(dataSourceMock).next();
 
         var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("nvd")
+                        .setSourceName("NVD")
+                        .build());
 
         Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
-        List<AffectedVersionAttribution> attributions =
-                qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        List<AffectedVersionAttribution> attributions = getAffectedVersionAttributions(vuln);
         assertThat(attributions).hasSize(1);
         final long attributionId = attributions.getFirst().getId();
 
@@ -1590,15 +1735,377 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         pluginManager.close();
         final var dataSourceMockVersionLess = mock(VulnDataSource.class);
         doReturn(true, false).when(dataSourceMockVersionLess).hasNext();
-        doReturn(generateBomFromJson(bovJsonVersionLess)).when(dataSourceMockVersionLess).next();
+        doReturn(generateBomFromJson(bovJsonVersionLess))
+                .when(dataSourceMockVersionLess)
+                .next();
 
         activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMockVersionLess));
-        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("nvd")
+                        .setSourceName("NVD")
+                        .build());
 
         vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
-        attributions = qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        attributions = getAffectedVersionAttributions(vuln);
         assertThat(attributions).hasSize(1);
         assertThat(attributions.getFirst().getId()).isEqualTo(attributionId);
+    }
+
+    @Test
+    void shouldReAttributeExistingVulnerableSoftwareThatNoLongerMatchesByIdentity() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+
+        // The lookup for existing records ignores the vulnerable flag, whereas the identity comparison does not.
+        // Flipping it makes the existing record match by lookup but not by identity,
+        // which is how re-attribution of an already associated record gets exercised.
+        useJdbiTransaction(handle -> handle.execute("""
+                UPDATE "VULNERABLESOFTWARE" SET "VULNERABLE" = FALSE
+                """));
+
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getVulnerableSoftware()).hasSize(1);
+        assertThat(getAffectedVersionAttributions(vuln))
+                .satisfiesExactly(
+                        attribution -> assertThat(attribution.getSource()).isEqualTo(Vulnerability.Source.NVD));
+    }
+
+    @Test
+    void shouldKeepAttributionOfOtherSourceWhenReAttributingExistingVulnerableSoftware() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+
+        useJdbiTransaction(handle -> handle.execute("""
+                UPDATE "VULNERABLESOFTWARE" SET "VULNERABLE" = FALSE
+                """));
+        useJdbiTransaction(handle -> handle.execute("""
+                UPDATE "AFFECTEDVERSIONATTRIBUTION" SET "SOURCE" = 'GITHUB'
+                """));
+
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getVulnerableSoftware()).hasSize(1);
+        assertThat(getAffectedVersionAttributions(vuln))
+                .extracting(AffectedVersionAttribution::getSource)
+                .containsExactlyInAnyOrder(Vulnerability.Source.GITHUB, Vulnerability.Source.NVD);
+    }
+
+    @Test
+    void shouldDisassociateAndUnattributeVulnerableSoftwareThatSourceNoLongerReports() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+        final Bom bovWithoutVulnerableSoftware = generateBomFromJson(/* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" }
+                    }
+                  ]
+                }
+                """);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov, bovWithoutVulnerableSoftware).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getVulnerableSoftware()).isEmpty();
+        final long associationCount = withJdbiHandle(handle ->
+                handle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*) FROM "VULNERABLESOFTWARE_VULNERABILITIES"
+                        """).mapTo(Long.class).one());
+        assertThat(associationCount).isZero();
+        final long attributionCount = withJdbiHandle(handle ->
+                handle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*) FROM "AFFECTEDVERSIONATTRIBUTION"
+                        """).mapTo(Long.class).one());
+        assertThat(attributionCount).isZero();
+    }
+
+    @Test
+    void shouldKeepVulnerableSoftwareAttributedToOtherSourceThatSourceNoLongerReports() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+        final Bom bovWithoutVulnerableSoftware = generateBomFromJson(/* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" }
+                    }
+                  ]
+                }
+                """);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov, bovWithoutVulnerableSoftware).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+
+        useJdbiTransaction(handle -> handle.execute("""
+                UPDATE "AFFECTEDVERSIONATTRIBUTION" SET "SOURCE" = 'GITHUB'
+                """));
+
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getVulnerableSoftware()).hasSize(1);
+        assertThat(getAffectedVersionAttributions(vuln))
+                .extracting(AffectedVersionAttribution::getSource)
+                .containsExactly(Vulnerability.Source.GITHUB);
+    }
+
+    @Test
+    void shouldDropUnattributedVulnerableSoftwareThatSourceNoLongerReports() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+        final Bom bovWithoutVulnerableSoftware = generateBomFromJson(/* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" }
+                    }
+                  ]
+                }
+                """);
+        final var arg = MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd")
+                .setSourceName("NVD")
+                .build();
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov, bovWithoutVulnerableSoftware).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), arg);
+
+        // Records created before 4.7.0 carry no attribution at all. Without one there is nothing
+        // to show that another source still reports them, so they are dropped rather than kept.
+        useJdbiTransaction(handle -> handle.execute("""
+                DELETE FROM "AFFECTEDVERSIONATTRIBUTION"
+                """));
+
+        activity.execute(mock(ActivityContext.class), arg);
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        assertThat(vuln.getVulnerableSoftware()).isEmpty();
+        final long associationCount = withJdbiHandle(handle ->
+                handle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*) FROM "VULNERABLESOFTWARE_VULNERABILITIES"
+                        """).mapTo(Long.class).one());
+        assertThat(associationCount).isZero();
+    }
+
+    @Test
+    void shouldCollapseDuplicateVulnsInBatch() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "2a24a29f-9ff3-52b8-bc81-471f326a5b3e",
+                      "name": "io.ratpack:ratpack-session",
+                      "purl": "pkg:maven/io.ratpack/ratpack-session"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "GHSA-2cc5-23r7-vc4v",
+                      "source": { "name": "GITHUB" },
+                      "affects": [
+                        {
+                          "ref": "2a24a29f-9ff3-52b8-bc81-471f326a5b3e",
+                          "versions": [
+                            { "version": "1.0.0" },
+                            { "version": "2.0.0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+
+        final Bom bov = generateBomFromJson(bovJson);
+        final Bom duplicateBov = generateBomFromJson(bovJson);
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, true, false).when(dataSourceMock).hasNext();
+        doReturn(bov, duplicateBov).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("osv", dataSourceMock));
+        activity.execute(
+                mock(ActivityContext.class),
+                MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName("osv")
+                        .setSourceName("OSV")
+                        .build());
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-2cc5-23r7-vc4v");
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getVulnerableSoftware())
+                .extracting(VulnerableSoftware::getVersion)
+                .containsExactlyInAnyOrder("1.0.0", "2.0.0");
+        assertThat(getAffectedVersionAttributions(vuln)).hasSize(2);
     }
 
     private static class TestVulnDataSourceFactory implements VulnDataSourceFactory {
@@ -1617,12 +2124,17 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public String extensionName() {
+        public @NonNull String extensionName() {
             return name;
         }
 
         @Override
-        public Class<? extends VulnDataSource> extensionClass() {
+        public @NonNull String displayName() {
+            return name;
+        }
+
+        @Override
+        public @NonNull Class<? extends VulnDataSource> extensionClass() {
             return TestVulnDataSource.class;
         }
 
@@ -1632,14 +2144,12 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(ServiceRegistry serviceRegistry) {
-        }
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
-        public VulnDataSource create() {
+        public @NonNull VulnDataSource create() {
             return dataSourceSupplier.get();
         }
-
     }
 
     private static class TestVulnDataSource implements VulnDataSource {
@@ -1653,7 +2163,6 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         public Bom next() {
             throw new UnsupportedOperationException();
         }
-
     }
 
     private static class DisabledVulnDataSourceFactory implements VulnDataSourceFactory {
@@ -1670,12 +2179,17 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public String extensionName() {
+        public @NonNull String extensionName() {
             return name;
         }
 
         @Override
-        public Class<? extends VulnDataSource> extensionClass() {
+        public @NonNull String displayName() {
+            return name;
+        }
+
+        @Override
+        public @NonNull Class<? extends VulnDataSource> extensionClass() {
             return TestVulnDataSource.class;
         }
 
@@ -1685,14 +2199,30 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(ServiceRegistry serviceRegistry) {
-        }
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
-        public VulnDataSource create() {
+        public @NonNull VulnDataSource create() {
             throw new UnsupportedOperationException();
         }
-
     }
 
+    private static List<AffectedVersionAttribution> getAffectedVersionAttributions(Vulnerability vuln) {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT ava."ID"
+                             , ava."SOURCE"
+                             , ava."FIRST_SEEN"
+                          FROM "AFFECTEDVERSIONATTRIBUTION" AS ava
+                         WHERE ava."VULNERABILITY" = :vulnId
+                           AND EXISTS(
+                             SELECT 1
+                               FROM "VULNERABLESOFTWARE_VULNERABILITIES" AS vsv
+                              WHERE vsv."VULNERABILITY_ID" = ava."VULNERABILITY"
+                                AND vsv."VULNERABLESOFTWARE_ID" = ava."VULNERABLE_SOFTWARE"
+                           )
+                        """)
+                .bind("vulnId", vuln.getId())
+                .map(BeanMapper.of(AffectedVersionAttribution.class))
+                .list());
+    }
 }

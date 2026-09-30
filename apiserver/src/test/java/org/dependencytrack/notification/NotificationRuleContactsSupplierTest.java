@@ -38,18 +38,10 @@ class NotificationRuleContactsSupplierTest extends PersistenceCapableTest {
     @BeforeEach
     void beforeEach() {
         final NotificationPublisher publisher = qm.createNotificationPublisher(
-                "test",
-                "description",
-                "extensionName",
-                "templateContent",
-                "templateMimeType",
-                false);
+                "test", "description", "extensionName", "templateContent", "templateMimeType", false);
 
         rule = qm.createNotificationRule(
-                "test",
-                NotificationScope.PORTFOLIO,
-                NotificationLevel.INFORMATIONAL,
-                publisher);
+                "test", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
     }
 
     @Test
@@ -93,5 +85,4 @@ class NotificationRuleContactsSupplierTest extends PersistenceCapableTest {
             assertThat(contact.email()).isEqualTo("test@example.com");
         });
     }
-
 }

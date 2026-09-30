@@ -28,7 +28,6 @@
     </configuration>
     <input>
         <global>
-            <glob>{*.java,*.properties,*.proto,*.sql,*.xml,*.yaml}</glob>
             <includes>
                 <include>src/</include>
             </includes>
@@ -40,6 +39,7 @@
                 <execution artifactId="maven-dependency-plugin">
                     <execIds>
                         <execId>copy-dependencies</execId>
+                        <execId>copy-internal-dependencies</execId>
                     </execIds>
                 </execution>
                 <execution artifactId="jacoco-maven-plugin">

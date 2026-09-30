@@ -19,11 +19,6 @@
 package org.dependencytrack.resources.v2;
 
 import alpine.server.auth.PermissionRequired;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.SecretsApi;
 import org.dependencytrack.api.v2.model.CreateSecretRequest;
 import org.dependencytrack.api.v2.model.ListSecretsResponse;
@@ -40,6 +35,12 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+
 @Provider
 public class SecretsResource extends AbstractApiResource implements SecretsApi {
 
@@ -49,16 +50,10 @@ public class SecretsResource extends AbstractApiResource implements SecretsApi {
     private SecretManager secretManager;
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SECRET_MANAGEMENT,
-            Permissions.Constants.SECRET_MANAGEMENT_CREATE
-    })
+    @PermissionRequired({Permissions.Constants.SECRET_MANAGEMENT, Permissions.Constants.SECRET_MANAGEMENT_CREATE})
     public Response createSecret(final CreateSecretRequest request) {
         try {
-            secretManager.createSecret(
-                    request.getName(),
-                    request.getDescription(),
-                    request.getValue());
+            secretManager.createSecret(request.getName(), request.getDescription(), request.getValue());
         } catch (SecretAlreadyExistsException e) {
             throw new AlreadyExistsException(e.getMessage(), e);
         } catch (UnsupportedOperationException e) {
@@ -66,8 +61,8 @@ public class SecretsResource extends AbstractApiResource implements SecretsApi {
         }
 
         LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Created secret: {}", request.getName());
-        return Response
-                .created(getUriInfo().getBaseUriBuilder()
+        return Response.created(getUriInfo()
+                        .getBaseUriBuilder()
                         .path("/secrets")
                         .path(request.getName())
                         .build())
@@ -75,17 +70,11 @@ public class SecretsResource extends AbstractApiResource implements SecretsApi {
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SECRET_MANAGEMENT,
-            Permissions.Constants.SECRET_MANAGEMENT_UPDATE
-    })
+    @PermissionRequired({Permissions.Constants.SECRET_MANAGEMENT, Permissions.Constants.SECRET_MANAGEMENT_UPDATE})
     public Response updateSecret(final String name, final UpdateSecretRequest request) {
         final boolean updated;
         try {
-            updated = secretManager.updateSecret(
-                    name,
-                    request.getDescription(),
-                    request.getValue());
+            updated = secretManager.updateSecret(name, request.getDescription(), request.getValue());
         } catch (UnsupportedOperationException e) {
             throw new BadRequestException(e.getMessage(), e);
         }
@@ -98,10 +87,7 @@ public class SecretsResource extends AbstractApiResource implements SecretsApi {
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SECRET_MANAGEMENT,
-            Permissions.Constants.SECRET_MANAGEMENT_DELETE
-    })
+    @PermissionRequired({Permissions.Constants.SECRET_MANAGEMENT, Permissions.Constants.SECRET_MANAGEMENT_DELETE})
     public Response deleteSecret(final String name) {
         try {
             secretManager.deleteSecret(name);
@@ -114,10 +100,7 @@ public class SecretsResource extends AbstractApiResource implements SecretsApi {
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response getSecretMetadata(String name) {
         final SecretMetadata secretMetadata = secretManager.getSecretMetadata(name);
         if (secretMetadata == null) {
@@ -128,22 +111,15 @@ public class SecretsResource extends AbstractApiResource implements SecretsApi {
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response listSecretMetadata(String q, String pageToken, Integer limit) {
-        final Page<SecretMetadata> secretsPage = secretManager.listSecretMetadata(
-                new ListSecretsRequest()
-                        .withSearchText(q)
-                        .withPageToken(pageToken)
-                        .withLimit(limit));
+        final Page<SecretMetadata> secretsPage = secretManager.listSecretMetadata(new ListSecretsRequest()
+                .withSearchText(q)
+                .withPageToken(pageToken)
+                .withLimit(limit));
 
         final var response = ListSecretsResponse.builder()
-                .items(
-                        secretsPage.items().stream()
-                                .map(this::convert)
-                                .toList())
+                .items(secretsPage.items().stream().map(this::convert).toList())
                 .nextPageToken(secretsPage.nextPageToken())
                 .total(convertTotalCount(secretsPage.totalCount()))
                 .build();
@@ -155,13 +131,14 @@ public class SecretsResource extends AbstractApiResource implements SecretsApi {
         return org.dependencytrack.api.v2.model.SecretMetadata.builder()
                 .name(secretMetadata.name())
                 .description(secretMetadata.description())
-                .createdAt(secretMetadata.createdAt() != null
-                        ? secretMetadata.createdAt().toEpochMilli()
-                        : null)
-                .updatedAt(secretMetadata.updatedAt() != null
-                        ? secretMetadata.updatedAt().toEpochMilli()
-                        : null)
+                .createdAt(
+                        secretMetadata.createdAt() != null
+                                ? secretMetadata.createdAt().toEpochMilli()
+                                : null)
+                .updatedAt(
+                        secretMetadata.updatedAt() != null
+                                ? secretMetadata.updatedAt().toEpochMilli()
+                                : null)
                 .build();
     }
-
 }

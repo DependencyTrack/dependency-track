@@ -47,9 +47,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @since 5.0.0
@@ -66,7 +69,8 @@ final class KafkaNotificationPublisher implements NotificationPublisher {
     public void publish(NotificationPublishContext ctx, Notification notification) {
         final var ruleConfig = ctx.ruleConfig(KafkaNotificationPublisherRuleConfigV1.class);
 
-        final RenderedNotificationTemplate renderedTemplate = ctx.templateRenderer().render(notification);
+        final RenderedNotificationTemplate renderedTemplate =
+                ctx.templateRenderer().render(notification);
 
         final String mimeType;
         final byte[] notificationContent;
@@ -76,7 +80,7 @@ final class KafkaNotificationPublisher implements NotificationPublisher {
             notificationContent = notification.toByteArray();
         } else if (renderedTemplate != null) {
             mimeType = renderedTemplate.mimeType();
-            notificationContent = renderedTemplate.content().getBytes();
+            notificationContent = renderedTemplate.content().getBytes(UTF_8);
         } else {
             throw new IllegalStateException("No template configured");
         }
@@ -93,13 +97,13 @@ final class KafkaNotificationPublisher implements NotificationPublisher {
                 /* partition */ null,
                 recordKey,
                 notificationContent,
-                new RecordHeaders()
-                        .add("content-type", mimeType.getBytes()));
+                new RecordHeaders().add("content-type", mimeType.getBytes(UTF_8)));
 
         try {
             kafkaProducer.send(producerRecord).get(10, TimeUnit.SECONDS);
         } catch (IllegalStateException e) {
-            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("closed")) {
+            if (e.getMessage() != null
+                    && e.getMessage().toLowerCase(Locale.ROOT).contains("closed")) {
                 throw new RetryablePublishException("Kafka publisher is closed", e);
             }
 
@@ -156,15 +160,19 @@ final class KafkaNotificationPublisher implements NotificationPublisher {
                 yield subject.getProject().getUuid();
             }
             case GROUP_PROJECT_AUDIT_CHANGE -> {
-                final Class<? extends Message> matchingSubject = requireSubjectOfTypeAnyOf(notification, List.of(
-                        PolicyViolationAnalysisDecisionChangeSubject.class,
-                        VulnerabilityAnalysisDecisionChangeSubject.class));
+                final Class<? extends Message> matchingSubject = requireSubjectOfTypeAnyOf(
+                        notification,
+                        List.of(
+                                PolicyViolationAnalysisDecisionChangeSubject.class,
+                                VulnerabilityAnalysisDecisionChangeSubject.class));
 
                 if (matchingSubject == PolicyViolationAnalysisDecisionChangeSubject.class) {
-                    final var subject = notification.getSubject().unpack(PolicyViolationAnalysisDecisionChangeSubject.class);
+                    final var subject =
+                            notification.getSubject().unpack(PolicyViolationAnalysisDecisionChangeSubject.class);
                     yield subject.getProject().getUuid();
                 } else {
-                    final var subject = notification.getSubject().unpack(VulnerabilityAnalysisDecisionChangeSubject.class);
+                    final var subject =
+                            notification.getSubject().unpack(VulnerabilityAnalysisDecisionChangeSubject.class);
                     yield subject.getProject().getUuid();
                 }
             }
@@ -183,10 +191,16 @@ final class KafkaNotificationPublisher implements NotificationPublisher {
                 final var subject = notification.getSubject().unpack(UserSubject.class);
                 yield subject.getUsername();
             }
-            case GROUP_ANALYZER, GROUP_CONFIGURATION, GROUP_DATASOURCE_MIRRORING,
-                 GROUP_FILE_SYSTEM, GROUP_INTEGRATION, GROUP_REPOSITORY,
-                 GROUP_NEW_VULNERABILITIES_SUMMARY, GROUP_NEW_POLICY_VIOLATIONS_SUMMARY -> null;
-            case GROUP_UNSPECIFIED, UNRECOGNIZED -> throw new IllegalArgumentException("""
+            case GROUP_ANALYZER,
+                    GROUP_CONFIGURATION,
+                    GROUP_DATASOURCE_MIRRORING,
+                    GROUP_FILE_SYSTEM,
+                    GROUP_INTEGRATION,
+                    GROUP_REPOSITORY,
+                    GROUP_NEW_VULNERABILITIES_SUMMARY,
+                    GROUP_NEW_POLICY_VIOLATIONS_SUMMARY -> null;
+            case GROUP_UNSPECIFIED, UNRECOGNIZED ->
+                throw new IllegalArgumentException("""
                     Unable to determine record key because the notification does not \
                     specify a notification group: %s""".formatted(notification.getGroup()));
             // NB: The lack of a default case is intentional. This way, the compiler will fail
@@ -195,18 +209,17 @@ final class KafkaNotificationPublisher implements NotificationPublisher {
     }
 
     private static Class<? extends Message> requireSubjectOfTypeAnyOf(
-            Notification notification,
-            Collection<Class<? extends Message>> subjectClasses) {
+            Notification notification, Collection<Class<? extends Message>> subjectClasses) {
         if (!notification.hasSubject()) {
             throw new IllegalArgumentException(
-                    "Expected subject of type matching any of %s, but notification has no subject".formatted(subjectClasses));
+                    "Expected subject of type matching any of %s, but notification has no subject"
+                            .formatted(subjectClasses));
         }
 
         return subjectClasses.stream()
-                .filter(notification.getSubject()::is).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Expected subject of type matching any of %s, but is %s".formatted(
-                                subjectClasses, notification.getSubject().getTypeUrl())));
+                .filter(notification.getSubject()::is)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Expected subject of type matching any of %s, but is %s"
+                        .formatted(subjectClasses, notification.getSubject().getTypeUrl())));
     }
-
 }

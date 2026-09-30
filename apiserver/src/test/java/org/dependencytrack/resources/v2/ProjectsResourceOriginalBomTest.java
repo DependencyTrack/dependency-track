@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v2;
 
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -31,6 +30,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import jakarta.ws.rs.core.Response;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -50,18 +51,15 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 class ProjectsResourceOriginalBomTest extends ResourceTest {
 
-    private static final FileStorage FILE_STORAGE_MOCK =
-            mock(FileStorage.class);
+    private static final FileStorage FILE_STORAGE_MOCK = mock(FileStorage.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(FILE_STORAGE_MOCK).to(FileStorage.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(new AbstractBinder() {
+        @Override
+        protected void configure() {
+            bind(FILE_STORAGE_MOCK).to(FileStorage.class);
+        }
+    }));
 
     @AfterEach
     void afterEach() {
@@ -81,20 +79,9 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
                 .setSha256Digest("older")
                 .build();
 
-        final Bom olderRetainedBom = qm.createBom(
-                project,
-                Date.from(Instant.parse("2026-01-01T00:00:00Z")),
-                Bom.Format.CYCLONEDX,
-                "1.5",
-                1,
-                null,
-                UUID.randomUUID(),
-                null);
-        olderRetainedBom.setOriginalFileMetadata(
-                olderFileMetadata.toByteArray());
+        persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.5", olderFileMetadata.toByteArray());
 
-        final byte[] expectedBomBytes =
-                "newest retained BOM".getBytes(StandardCharsets.UTF_8);
+        final byte[] expectedBomBytes = "newest retained BOM".getBytes(StandardCharsets.UTF_8);
         final FileMetadata expectedFileMetadata = FileMetadata.newBuilder()
                 .setProviderName("test")
                 .setLocation("test:///project-original-bom-newest.json")
@@ -102,47 +89,24 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
                 .setSha256Digest("newest")
                 .build();
 
-        final Bom newestRetainedBom = qm.createBom(
-                project,
-                Date.from(Instant.parse("2026-01-02T00:00:00Z")),
-                Bom.Format.CYCLONEDX,
-                "1.6",
-                1,
-                null,
-                UUID.randomUUID(),
-                null);
-        newestRetainedBom.setOriginalFileMetadata(
-                expectedFileMetadata.toByteArray());
+        persistBom(project, Instant.parse("2026-01-02T00:00:00Z"), "1.6", expectedFileMetadata.toByteArray());
 
-        qm.createBom(
-                project,
-                Date.from(Instant.parse("2026-01-03T00:00:00Z")),
-                Bom.Format.CYCLONEDX,
-                "1.6",
-                1,
-                null,
-                UUID.randomUUID(),
-                null);
+        persistBomWithoutMetadata(project, Instant.parse("2026-01-03T00:00:00Z"), "1.6");
 
         doReturn(new ByteArrayInputStream(expectedBomBytes))
                 .when(FILE_STORAGE_MOCK)
                 .get(expectedFileMetadata);
 
-        final Response response = jersey
-                .target("/projects/%s/bom/original".formatted(
-                        project.getUuid()))
+        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
                 .request()
                 .property(DISABLE_OPENAPI_VALIDATION, "true")
                 .header(X_API_KEY, apiKey)
                 .get();
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getMediaType().toString())
-                .isEqualTo("application/vnd.cyclonedx+json");
-        assertThat(response.getHeaderString("Content-Disposition"))
-                .isEqualTo("attachment; filename=\"bom.json\"");
-        assertThat(response.readEntity(byte[].class))
-                .containsExactly(expectedBomBytes);
+        assertThat(response.getMediaType().toString()).isEqualTo("application/vnd.cyclonedx+json");
+        assertThat(response.getHeaderString("Content-Disposition")).isEqualTo("attachment; filename=\"bom.json\"");
+        assertThat(response.readEntity(byte[].class)).containsExactly(expectedBomBytes);
 
         verify(FILE_STORAGE_MOCK).get(expectedFileMetadata);
     }
@@ -153,19 +117,9 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
 
         final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
 
-        qm.createBom(
-                project,
-                Date.from(Instant.parse("2026-01-01T00:00:00Z")),
-                Bom.Format.CYCLONEDX,
-                "1.6",
-                1,
-                null,
-                UUID.randomUUID(),
-                null);
+        persistBomWithoutMetadata(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6");
 
-        final Response response = jersey
-                .target("/projects/%s/bom/original".formatted(
-                        project.getUuid()))
+        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -176,8 +130,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
     }
 
     @Test
-    void getProjectOriginalBomShouldReturnNotFoundWhenFileIsMissing()
-            throws Exception {
+    void getProjectOriginalBomShouldReturnNotFoundWhenFileIsMissing() throws Exception {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
         final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
@@ -189,24 +142,13 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
                 .setSha256Digest("missing")
                 .build();
 
-        final Bom bom = qm.createBom(
-                project,
-                Date.from(Instant.parse("2026-01-01T00:00:00Z")),
-                Bom.Format.CYCLONEDX,
-                "1.6",
-                1,
-                null,
-                UUID.randomUUID(),
-                null);
-        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
+        persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6", fileMetadata.toByteArray());
 
         doThrow(new NoSuchFileException(fileMetadata.getLocation()))
                 .when(FILE_STORAGE_MOCK)
                 .get(fileMetadata);
 
-        final Response response = jersey
-                .target("/projects/%s/bom/original".formatted(
-                        project.getUuid()))
+        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -222,8 +164,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
 
         final UUID projectUuid = UUID.randomUUID();
 
-        final Response response = jersey
-                .target("/projects/%s/bom/original".formatted(projectUuid))
+        final Response response = jersey.target("/projects/%s/bom/original".formatted(projectUuid))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -240,9 +181,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
 
         final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
 
-        final Response response = jersey
-                .target("/projects/%s/bom/original".formatted(
-                        project.getUuid()))
+        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -256,8 +195,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
     void getProjectOriginalBomShouldReturnForbiddenWithoutPermission() {
         initializeWithPermissions();
 
-        final Response response = jersey
-                .target("/projects/%s/bom/original".formatted(UUID.randomUUID()))
+        final Response response = jersey.target("/projects/%s/bom/original".formatted(UUID.randomUUID()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -273,8 +211,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
 
         final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
 
-        final byte[] expectedBomBytes =
-                "<bom>retained XML BOM</bom>".getBytes(StandardCharsets.UTF_8);
+        final byte[] expectedBomBytes = "<bom>retained XML BOM</bom>".getBytes(StandardCharsets.UTF_8);
         final FileMetadata fileMetadata = FileMetadata.newBuilder()
                 .setProviderName("test")
                 .setLocation("test:///project-original-bom.xml")
@@ -282,36 +219,22 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
                 .setSha256Digest("xml")
                 .build();
 
-        final Bom bom = qm.createBom(
-                project,
-                Date.from(Instant.parse("2026-01-01T00:00:00Z")),
-                Bom.Format.CYCLONEDX,
-                "1.6",
-                1,
-                null,
-                UUID.randomUUID(),
-                null);
-        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
+        persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6", fileMetadata.toByteArray());
 
         doReturn(new ByteArrayInputStream(expectedBomBytes))
                 .when(FILE_STORAGE_MOCK)
                 .get(fileMetadata);
 
-        final Response response = jersey
-                .target("/projects/%s/bom/original".formatted(
-                        project.getUuid()))
+        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
                 .request()
                 .property(DISABLE_OPENAPI_VALIDATION, "true")
                 .header(X_API_KEY, apiKey)
                 .get();
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getMediaType().toString())
-                .isEqualTo("application/vnd.cyclonedx+xml");
-        assertThat(response.getHeaderString("Content-Disposition"))
-                .isEqualTo("attachment; filename=\"bom.xml\"");
-        assertThat(response.readEntity(byte[].class))
-                .containsExactly(expectedBomBytes);
+        assertThat(response.getMediaType().toString()).isEqualTo("application/vnd.cyclonedx+xml");
+        assertThat(response.getHeaderString("Content-Disposition")).isEqualTo("attachment; filename=\"bom.xml\"");
+        assertThat(response.readEntity(byte[].class)).containsExactly(expectedBomBytes);
 
         verify(FILE_STORAGE_MOCK).get(fileMetadata);
     }
@@ -322,20 +245,9 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
 
         final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
 
-        final Bom bom = qm.createBom(
-                project,
-                Date.from(Instant.parse("2026-01-01T00:00:00Z")),
-                Bom.Format.CYCLONEDX,
-                "1.6",
-                1,
-                null,
-                UUID.randomUUID(),
-                null);
-        bom.setOriginalFileMetadata(new byte[]{(byte) 0x80});
+        persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6", new byte[] {(byte) 0x80});
 
-        final Response response = jersey
-                .target("/projects/%s/bom/original".formatted(
-                        project.getUuid()))
+        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
                 .request()
                 .property(DISABLE_OPENAPI_VALIDATION, "true")
                 .header(X_API_KEY, apiKey)
@@ -347,8 +259,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
     }
 
     @Test
-    void getProjectOriginalBomShouldReturnServerErrorWhenStorageFails()
-            throws Exception {
+    void getProjectOriginalBomShouldReturnServerErrorWhenStorageFails() throws Exception {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
         final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
@@ -360,24 +271,11 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
                 .setSha256Digest("unavailable")
                 .build();
 
-        final Bom bom = qm.createBom(
-                project,
-                Date.from(Instant.parse("2026-01-01T00:00:00Z")),
-                Bom.Format.CYCLONEDX,
-                "1.6",
-                1,
-                null,
-                UUID.randomUUID(),
-                null);
-        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
+        persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6", fileMetadata.toByteArray());
 
-        doThrow(new IOException("Storage unavailable"))
-                .when(FILE_STORAGE_MOCK)
-                .get(fileMetadata);
+        doThrow(new IOException("Storage unavailable")).when(FILE_STORAGE_MOCK).get(fileMetadata);
 
-        final Response response = jersey
-                .target("/projects/%s/bom/original".formatted(
-                        project.getUuid()))
+        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
                 .request()
                 .property(DISABLE_OPENAPI_VALIDATION, "true")
                 .header(X_API_KEY, apiKey)
@@ -388,4 +286,23 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
         verify(FILE_STORAGE_MOCK).get(fileMetadata);
     }
 
+    private Bom persistBom(
+            final Project project,
+            final Instant importedAt,
+            final String specVersion,
+            final byte[] originalFileMetadata) {
+        final Bom bom = persistBomWithoutMetadata(project, importedAt, specVersion);
+        bom.setOriginalFileMetadata(originalFileMetadata);
+        return bom;
+    }
+
+    private Bom persistBomWithoutMetadata(final Project project, final Instant importedAt, final String specVersion) {
+        final var bom = new Bom();
+        bom.setProject(project);
+        bom.setImported(Date.from(importedAt));
+        bom.setBomFormat(Bom.Format.CYCLONEDX);
+        bom.setSpecVersion(specVersion);
+        bom.setBomVersion(1);
+        return qm.persist(bom);
+    }
 }

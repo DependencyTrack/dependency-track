@@ -39,7 +39,8 @@ public class DTGrizzlyWebTestContainerFactory implements TestContainerFactory {
     @Override
     public TestContainer create(URI baseUri, DeploymentContext deploymentContext) {
         if (!(deploymentContext instanceof ServletDeploymentContext)) {
-            throw new IllegalArgumentException("The deployment context must be an instance of ServletDeploymentContext.");
+            throw new IllegalArgumentException(
+                    "The deployment context must be an instance of ServletDeploymentContext.");
         }
 
         final TestContainer testContainer = new GrizzlyWebTestContainerFactory().create(baseUri, deploymentContext);

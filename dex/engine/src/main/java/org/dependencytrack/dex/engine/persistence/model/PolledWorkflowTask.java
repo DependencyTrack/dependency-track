@@ -35,5 +35,4 @@ public record PolledWorkflowTask(
         @Nullable Map<String, String> labels,
         int continuedAsNewGeneration,
         Instant lockedUntil,
-        int lockVersion) {
-}
+        int lockVersion) {}

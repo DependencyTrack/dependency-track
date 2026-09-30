@@ -20,5 +20,4 @@ package org.dependencytrack.resources.v1.vo;
 
 import java.util.UUID;
 
-public record VisibleTeams(String name, UUID uuid) {
-}
+public record VisibleTeams(String name, UUID uuid) {}

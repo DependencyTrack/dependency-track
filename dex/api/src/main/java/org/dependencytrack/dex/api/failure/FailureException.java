@@ -20,13 +20,13 @@ package org.dependencytrack.dex.api.failure;
 
 import org.jspecify.annotations.Nullable;
 
-public abstract sealed class FailureException extends RuntimeException permits
-        ActivityFailureException,
-        ApplicationFailureException,
-        CancellationFailureException,
-        ChildWorkflowFailureException,
-        InternalFailureException,
-        SideEffectFailureException {
+public abstract sealed class FailureException extends RuntimeException
+        permits ActivityFailureException,
+                ApplicationFailureException,
+                CancellationFailureException,
+                ChildWorkflowFailureException,
+                InternalFailureException,
+                SideEffectFailureException {
 
     private final @Nullable String originalMessage;
 
@@ -40,15 +40,11 @@ public abstract sealed class FailureException extends RuntimeException permits
     }
 
     FailureException(
-            final @Nullable String message,
-            final @Nullable String originalMessage,
-            final @Nullable Throwable cause) {
+            final @Nullable String message, final @Nullable String originalMessage, final @Nullable Throwable cause) {
         this(message, originalMessage, cause, true);
     }
-
 
     public @Nullable String getOriginalMessage() {
         return originalMessage;
     }
-
 }

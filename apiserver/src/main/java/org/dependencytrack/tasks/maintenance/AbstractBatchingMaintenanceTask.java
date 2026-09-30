@@ -38,15 +38,8 @@ abstract class AbstractBatchingMaintenanceTask implements Runnable {
         this.logger = LoggerFactory.getLogger(getClass());
     }
 
-    final int runBatched(
-            final int batchSize,
-            final ToIntFunction<Handle> batchFn) {
-        return runBatched(
-                batchSize,
-                handle -> batchFn.applyAsInt(handle),
-                result -> result,
-                result -> {
-                });
+    final int runBatched(final int batchSize, final ToIntFunction<Handle> batchFn) {
+        return runBatched(batchSize, handle -> batchFn.applyAsInt(handle), result -> result, result -> {});
     }
 
     final <T> int runBatched(
@@ -58,13 +51,11 @@ abstract class AbstractBatchingMaintenanceTask implements Runnable {
         int iteration = 0;
 
         while (iteration < maxIterations) {
-            final T batchResult =
-                    inJdbiTransaction(batchFn::apply);
+            final T batchResult = inJdbiTransaction(batchFn::apply);
 
             afterCommitFn.accept(batchResult);
 
-            final int processed =
-                    processedCountFn.applyAsInt(batchResult);
+            final int processed = processedCountFn.applyAsInt(batchResult);
 
             iteration++;
             totalProcessed += processed;
@@ -74,13 +65,9 @@ abstract class AbstractBatchingMaintenanceTask implements Runnable {
         }
 
         if (iteration >= maxIterations) {
-            logger.warn(
-                    "Reached safety cap of {} iterations; "
-                            + "will resume on next run",
-                    maxIterations);
+            logger.warn("Reached safety cap of {} iterations; " + "will resume on next run", maxIterations);
         }
 
         return totalProcessed;
     }
-
 }

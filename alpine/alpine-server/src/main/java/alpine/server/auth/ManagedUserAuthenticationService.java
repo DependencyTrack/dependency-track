@@ -23,7 +23,6 @@ import alpine.persistence.AlpineQueryManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.Principal;
 
 /**
  * Class that performs authentication against internally managed users.
@@ -31,7 +30,7 @@ import java.security.Principal;
  * @author Steve Springett
  * @since 1.0.0
  */
-public class ManagedUserAuthenticationService implements AuthenticationService {
+public class ManagedUserAuthenticationService implements AuthenticationService<ManagedUser> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagedUserAuthenticationService.class);
     private final String username;
@@ -55,20 +54,22 @@ public class ManagedUserAuthenticationService implements AuthenticationService {
      * @return always will return true
      * @since 1.0.0
      */
+    @Override
     public boolean isSpecified() {
         return true;
     }
 
     /**
      * Authenticates the username/password combo against the directory service
-     * and returns a Principal if authentication is successful. Otherwise,
+     * and returns the user if authentication is successful. Otherwise,
      * returns an AuthenticationException.
      *
-     * @return a Principal if authentication was successful
+     * @return the authenticated user
      * @throws AlpineAuthenticationException when authentication is unsuccessful
      * @since 1.0.0
      */
-    public Principal authenticate() throws AlpineAuthenticationException {
+    @Override
+    public ManagedUser authenticate() throws AlpineAuthenticationException {
         LOGGER.debug("Attempting to authenticate user: {}", username);
         try (AlpineQueryManager qm = new AlpineQueryManager()) {
             final ManagedUser user = qm.getManagedUser(username);

@@ -32,5 +32,4 @@ public interface RuntimeConfigurable {
      * @return The runtime config specification.
      */
     RuntimeConfigSpec runtimeConfigSpec();
-
 }

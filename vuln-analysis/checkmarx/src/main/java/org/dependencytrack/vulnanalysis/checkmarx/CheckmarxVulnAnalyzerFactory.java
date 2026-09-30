@@ -20,8 +20,8 @@ package org.dependencytrack.vulnanalysis.checkmarx;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.cache.api.CacheManager;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
@@ -49,17 +49,21 @@ public final class CheckmarxVulnAnalyzerFactory implements VulnAnalyzerFactory, 
     }
 
     @Override
+    public String displayName() {
+        return "Checkmarx SCA";
+    }
+
+    @Override
     public Class<? extends VulnAnalyzer> extensionClass() {
         return CheckmarxVulnAnalyzer.class;
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        cacheManager = serviceRegistry.require(CacheManager.class);
-        httpClient = serviceRegistry.require(HttpClient.class);
-        objectMapper = new ObjectMapper()
-                .disable(FAIL_ON_UNKNOWN_PROPERTIES);
+    public void init(ExtensionContext context) {
+        configRegistry = context.configRegistry();
+        cacheManager = context.cacheManager();
+        httpClient = context.httpClient();
+        objectMapper = new ObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
     @Override
@@ -85,16 +89,15 @@ public final class CheckmarxVulnAnalyzerFactory implements VulnAnalyzerFactory, 
                 config.getApiBaseUrl());
 
         return new CheckmarxVulnAnalyzer(
-                cacheManager.getCache("results"),
-                objectMapper,
-                apiClient,
-                config.isAliasSyncEnabled());
+                cacheManager.getCache("results"), objectMapper, apiClient, config.isAliasSyncEnabled());
     }
 
     @Override
     public boolean isEnabled() {
         requireNonNull(configRegistry);
-        return configRegistry.getRuntimeConfig(CheckmarxVulnAnalyzerConfigV1.class).isEnabled();
+        return configRegistry
+                .getRuntimeConfig(CheckmarxVulnAnalyzerConfigV1.class)
+                .isEnabled();
     }
 
     @Override
@@ -104,27 +107,22 @@ public final class CheckmarxVulnAnalyzerFactory implements VulnAnalyzerFactory, 
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new CheckmarxVulnAnalyzerConfigV1()
-                        .withEnabled(false),
-                config -> {
-                    if (!config.isEnabled()) {
-                        return;
-                    }
-                    if (config.getAuthApiBaseUrl() == null) {
-                        throw new InvalidRuntimeConfigException("No authentication API base URL provided");
-                    }
-                    if (config.getApiBaseUrl() == null) {
-                        throw new InvalidRuntimeConfigException("No API base URL provided");
-                    }
-                    if (config.getApiKey() == null) {
-                        throw new InvalidRuntimeConfigException("No API Key provided");
-                    }
-                    if (config.getOrgId() == null) {
-                        throw new InvalidRuntimeConfigException("No Organization ID provided");
-                    }
-                });
+        return RuntimeConfigSpec.of(new CheckmarxVulnAnalyzerConfigV1().withEnabled(false), config -> {
+            if (!config.isEnabled()) {
+                return;
+            }
+            if (config.getAuthApiBaseUrl() == null) {
+                throw new InvalidRuntimeConfigException("No authentication API base URL provided");
+            }
+            if (config.getApiBaseUrl() == null) {
+                throw new InvalidRuntimeConfigException("No API base URL provided");
+            }
+            if (config.getApiKey() == null) {
+                throw new InvalidRuntimeConfigException("No API Key provided");
+            }
+            if (config.getOrgId() == null) {
+                throw new InvalidRuntimeConfigException("No Organization ID provided");
+            }
+        });
     }
-
 }
-

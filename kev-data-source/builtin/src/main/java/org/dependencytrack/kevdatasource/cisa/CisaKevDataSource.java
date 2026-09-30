@@ -38,10 +38,7 @@ import java.util.List;
 /// @since 5.1.0
 final class CisaKevDataSource extends AbstractJsonFeedKevDataSource {
 
-    CisaKevDataSource(
-            HttpClient httpClient,
-            ObjectMapper objectMapper,
-            URI feedUrl) {
+    CisaKevDataSource(HttpClient httpClient, ObjectMapper objectMapper, URI feedUrl) {
         super(httpClient, objectMapper, feedUrl);
     }
 
@@ -80,5 +77,4 @@ final class CisaKevDataSource extends AbstractJsonFeedKevDataSource {
                 entry.shortDescription(),
                 entryNode);
     }
-
 }

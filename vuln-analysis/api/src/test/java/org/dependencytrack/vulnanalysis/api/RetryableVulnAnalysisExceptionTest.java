@@ -48,59 +48,53 @@ class RetryableVulnAnalysisExceptionTest {
     @SuppressWarnings("ThrowableNotThrown")
     void shouldRejectNonPositiveRetryAfter(long seconds) {
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> new RetryableVulnAnalysisException(
-                        null, null, Duration.of(seconds, ChronoUnit.SECONDS)));
+                .isThrownBy(
+                        () -> new RetryableVulnAnalysisException(null, null, Duration.of(seconds, ChronoUnit.SECONDS)));
     }
 
     @ParameterizedTest
     @ValueSource(ints = {200, 400, 401, 402, 403, 404})
     void shouldNotThrowForSuccessOrPermanentError(int statusCode) {
-        assertThatNoException().isThrownBy(
-                () -> RetryableVulnAnalysisException.throwIfRetryableHttpError(
-                        responseOf(statusCode, null)));
+        assertThatNoException()
+                .isThrownBy(
+                        () -> RetryableVulnAnalysisException.throwIfRetryableHttpError(responseOf(statusCode, null)));
     }
 
     @ParameterizedTest
     @ValueSource(ints = {503, 504})
     void shouldThrowWithoutRetryAfterOnServerError(int statusCode) {
         assertThatExceptionOfType(RetryableVulnAnalysisException.class)
-                .isThrownBy(() -> RetryableVulnAnalysisException.throwIfRetryableHttpError(
-                        responseOf(statusCode, null)))
+                .isThrownBy(
+                        () -> RetryableVulnAnalysisException.throwIfRetryableHttpError(responseOf(statusCode, null)))
                 .satisfies(e -> assertThat(e.retryAfter()).isNull());
     }
 
     @Test
     void shouldThrowWithRetryAfterOnTooManyRequests() {
         assertThatExceptionOfType(RetryableVulnAnalysisException.class)
-                .isThrownBy(() -> RetryableVulnAnalysisException.throwIfRetryableHttpError(
-                        responseOf(429, "30")))
+                .isThrownBy(() -> RetryableVulnAnalysisException.throwIfRetryableHttpError(responseOf(429, "30")))
                 .satisfies(e -> assertThat(e.retryAfter()).isEqualTo(Duration.ofSeconds(30)));
     }
 
     @Test
     void shouldThrowForTransientIoException() {
-        assertThatExceptionOfType(RetryableVulnAnalysisException.class).isThrownBy(
-                () -> RetryableVulnAnalysisException.throwIfRetryableNetworkError(
+        assertThatExceptionOfType(RetryableVulnAnalysisException.class)
+                .isThrownBy(() -> RetryableVulnAnalysisException.throwIfRetryableNetworkError(
                         new SocketException("reset"), "boom"));
     }
 
     @Test
     void shouldNotThrowForPermanentIoException() {
-        assertThatNoException().isThrownBy(
-                () -> RetryableVulnAnalysisException.throwIfRetryableNetworkError(
+        assertThatNoException()
+                .isThrownBy(() -> RetryableVulnAnalysisException.throwIfRetryableNetworkError(
                         new SSLHandshakeException("bad cert"), "boom"));
     }
 
     private static HttpResponse<?> responseOf(int statusCode, @Nullable String retryAfter) {
         final HttpHeaders headers = HttpHeaders.of(
-                retryAfter != null
-                        ? Map.of("Retry-After", List.of(retryAfter))
-                        : Map.of(),
-                (_, _) -> true);
-        final var request = HttpRequest
-                .newBuilder(URI.create("https://example.com"))
-                .GET()
-                .build();
+                retryAfter != null ? Map.of("Retry-After", List.of(retryAfter)) : Map.of(), (_, _) -> true);
+        final var request =
+                HttpRequest.newBuilder(URI.create("https://example.com")).GET().build();
 
         return new HttpResponse<>() {
             @Override
@@ -144,5 +138,4 @@ class RetryableVulnAnalysisExceptionTest {
             }
         };
     }
-
 }

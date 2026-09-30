@@ -37,5 +37,4 @@ class PackageRepositoryTest {
                 .isThrownBy(() -> new PackageRepository("example", null, null, null))
                 .withMessage("url must not be null");
     }
-
 }

@@ -49,8 +49,7 @@ class CreateWorkflowRunRequestTest {
     @ValueSource(ints = {-1, 101})
     void shouldThrowWhenPriorityIsInvalid(final int priority) {
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> new CreateWorkflowRunRequest<>("workflowName", 1)
-                        .withPriority(priority))
+                .isThrownBy(() -> new CreateWorkflowRunRequest<>("workflowName", 1).withPriority(priority))
                 .withMessage("priority must be between 0 and 100, but is " + priority);
     }
 
@@ -71,5 +70,4 @@ class CreateWorkflowRunRequestTest {
         assertThat(request.labels()).containsEntry("foo", "bar");
         assertThat(request.argument()).isEqualTo(Payload.getDefaultInstance());
     }
-
 }

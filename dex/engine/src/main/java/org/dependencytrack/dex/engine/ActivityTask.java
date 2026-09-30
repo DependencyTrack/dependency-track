@@ -55,17 +55,12 @@ public final class ActivityTask implements Task {
     static ActivityTask of(final PolledActivityTask polledTask) {
         return new ActivityTask(
                 polledTask.activityName(),
-                new ActivityTaskId(
-                        polledTask.queueName(),
-                        polledTask.workflowRunId(),
-                        polledTask.createdEventId()),
+                new ActivityTaskId(polledTask.queueName(), polledTask.workflowRunId(), polledTask.createdEventId()),
                 polledTask.argument(),
                 RetryPolicy.fromProto(polledTask.retryPolicy()),
                 polledTask.attempt(),
                 UUID.randomUUID().toString(),
-                new TaskLock(
-                        polledTask.lockedUntil(),
-                        polledTask.lockVersion()));
+                new TaskLock(polledTask.lockedUntil(), polledTask.lockVersion()));
     }
 
     @Override
@@ -104,5 +99,4 @@ public final class ActivityTask implements Task {
     void setLock(final TaskLock lock) {
         this.lock = lock;
     }
-
 }

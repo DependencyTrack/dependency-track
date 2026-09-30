@@ -40,5 +40,4 @@ sealed interface NvdDataFeed {
             return String.valueOf(year);
         }
     }
-
 }

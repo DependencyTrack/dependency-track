@@ -21,5 +21,4 @@ package org.dependencytrack.e2e.api.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record EventProcessingResponse(Boolean processing) {
-}
+public record EventProcessingResponse(Boolean processing) {}

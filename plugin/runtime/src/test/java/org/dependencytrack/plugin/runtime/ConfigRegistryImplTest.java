@@ -65,14 +65,10 @@ class ConfigRegistryImplTest {
             """;
 
     private static final RuntimeConfigSpec CONFIG_SPEC = RuntimeConfigSpec.of(
-            new TestConfig("https://example.com", null),
-            new RuntimeConfigSchemaSource.Literal(SCHEMA_JSON),
-            null);
+            new TestConfig("https://example.com", null), new RuntimeConfigSchemaSource.Literal(SCHEMA_JSON), null);
 
     private static final RuntimeConfigSpec VALIDATING_CONFIG_SPEC = RuntimeConfigSpec.of(
-            new TestConfig("https://example.com", null),
-            new RuntimeConfigSchemaSource.Literal(SCHEMA_JSON),
-            config -> {
+            new TestConfig("https://example.com", null), new RuntimeConfigSchemaSource.Literal(SCHEMA_JSON), config -> {
                 if ("https://forbidden.example.com".equals(config.url())) {
                     throw new InvalidRuntimeConfigException("URL is forbidden");
                 }
@@ -80,21 +76,17 @@ class ConfigRegistryImplTest {
 
     private static final Config CONFIG = new SmallRyeConfigBuilder().build();
 
-    private final Jdbi jdbi = Jdbi
-            .create(database.jdbcUrl(), database.username(), database.password())
+    private final Jdbi jdbi = Jdbi.create(database.jdbcUrl(), database.username(), database.password())
             .installPlugin(new PostgresPlugin());
     private final RuntimeConfigMapper runtimeConfigMapper = RuntimeConfigMapper.getInstance();
 
     record TestConfig(
             @JsonProperty("url") String url,
-            @JsonProperty("token") String token) implements RuntimeConfig {
-    }
+            @JsonProperty("token") String token) implements RuntimeConfig {}
 
     @Test
     void shouldReturnEmptyWhenNoRuntimeConfigSpecProvided() {
-        final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                null, null, null);
+        final var registry = new ConfigRegistryImpl(jdbi, CONFIG, EXTENSION_POINT, EXTENSION, null, null, null);
 
         assertThat(registry.getOptionalRuntimeConfig()).isEmpty();
     }
@@ -102,8 +94,7 @@ class ConfigRegistryImplTest {
     @Test
     void shouldReturnEmptyWhenNoConfigExistsInDatabase() {
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         assertThat(registry.getOptionalRuntimeConfig()).isEmpty();
     }
@@ -115,8 +106,7 @@ class ConfigRegistryImplTest {
                 """);
 
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         final var config = registry.getOptionalRuntimeConfig(TestConfig.class);
         assertThat(config).isPresent();
@@ -130,8 +120,12 @@ class ConfigRegistryImplTest {
                 """);
 
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper,
+                jdbi,
+                CONFIG,
+                EXTENSION_POINT,
+                EXTENSION,
+                CONFIG_SPEC,
+                runtimeConfigMapper,
                 secretName -> "my-secret".equals(secretName) ? "resolved-value" : null);
 
         final var config = registry.getOptionalRuntimeConfig(TestConfig.class);
@@ -146,8 +140,13 @@ class ConfigRegistryImplTest {
                 """);
 
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                VALIDATING_CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi,
+                CONFIG,
+                EXTENSION_POINT,
+                EXTENSION,
+                VALIDATING_CONFIG_SPEC,
+                runtimeConfigMapper,
+                secretName -> null);
 
         assertThatExceptionOfType(InvalidRuntimeConfigException.class)
                 .isThrownBy(registry::getOptionalRuntimeConfig)
@@ -157,8 +156,7 @@ class ConfigRegistryImplTest {
     @Test
     void shouldSetRuntimeConfig() {
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         final boolean created = registry.setRuntimeConfig(new TestConfig("https://example.com", null));
         assertThat(created).isTrue();
@@ -171,21 +169,20 @@ class ConfigRegistryImplTest {
     @Test
     void shouldReturnFalseWhenSettingIdenticalRuntimeConfig() {
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
-        assertThat(registry.setRuntimeConfig(new TestConfig("https://example.com", null))).isTrue();
-        assertThat(registry.setRuntimeConfig(new TestConfig("https://example.com", null))).isFalse();
+        assertThat(registry.setRuntimeConfig(new TestConfig("https://example.com", null)))
+                .isTrue();
+        assertThat(registry.setRuntimeConfig(new TestConfig("https://example.com", null)))
+                .isFalse();
     }
 
     @Test
     void shouldRejectConfigOfWrongType() {
-        record OtherConfig(String foo) implements RuntimeConfig {
-        }
+        record OtherConfig(String foo) implements RuntimeConfig {}
 
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> registry.setRuntimeConfig(new OtherConfig("bar")));
@@ -194,8 +191,7 @@ class ConfigRegistryImplTest {
     @Test
     void shouldValidateSchemaWhenSettingRuntimeConfig() {
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         assertThatExceptionOfType(RuntimeConfigSchemaValidationException.class)
                 .isThrownBy(() -> registry.setRuntimeConfig(new TestConfig(null, null)));
@@ -204,12 +200,16 @@ class ConfigRegistryImplTest {
     @Test
     void shouldInvokeValidatorWhenSettingRuntimeConfig() {
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                VALIDATING_CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi,
+                CONFIG,
+                EXTENSION_POINT,
+                EXTENSION,
+                VALIDATING_CONFIG_SPEC,
+                runtimeConfigMapper,
+                secretName -> null);
 
         assertThatExceptionOfType(InvalidRuntimeConfigException.class)
-                .isThrownBy(() -> registry.setRuntimeConfig(
-                        new TestConfig("https://forbidden.example.com", null)))
+                .isThrownBy(() -> registry.setRuntimeConfig(new TestConfig("https://forbidden.example.com", null)))
                 .withMessage("URL is forbidden");
     }
 
@@ -220,8 +220,7 @@ class ConfigRegistryImplTest {
                 """);
 
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         final var rawConfig = registry.getRawRuntimeConfig();
         assertThat(rawConfig).isPresent();
@@ -231,8 +230,7 @@ class ConfigRegistryImplTest {
     @Test
     void shouldReturnEmptyRawRuntimeConfigWhenNoneExists() {
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         assertThat(registry.getRawRuntimeConfig()).isEmpty();
     }
@@ -240,8 +238,7 @@ class ConfigRegistryImplTest {
     @Test
     void shouldSetRawRuntimeConfig() {
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         final boolean created = registry.setRawRuntimeConfig(/* language=JSON */ """
                 {"url": "https://example.com"}
@@ -254,8 +251,7 @@ class ConfigRegistryImplTest {
     @Test
     void shouldReturnFalseWhenSettingIdenticalRawRuntimeConfig() {
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         final String configJson = /* language=JSON */ """
                 {"url": "https://example.com"}
@@ -266,9 +262,7 @@ class ConfigRegistryImplTest {
 
     @Test
     void shouldReportHasRuntimeConfigFalseWhenNoSpec() {
-        final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                null, null, null);
+        final var registry = new ConfigRegistryImpl(jdbi, CONFIG, EXTENSION_POINT, EXTENSION, null, null, null);
 
         assertThat(registry.hasRuntimeConfig()).isFalse();
     }
@@ -276,8 +270,7 @@ class ConfigRegistryImplTest {
     @Test
     void shouldReportHasRuntimeConfigFalseWhenNoneExists() {
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         assertThat(registry.hasRuntimeConfig()).isFalse();
     }
@@ -289,15 +282,12 @@ class ConfigRegistryImplTest {
                 """);
 
         final var registry = new ConfigRegistryImpl(
-                jdbi, CONFIG, EXTENSION_POINT, EXTENSION,
-                CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
+                jdbi, CONFIG, EXTENSION_POINT, EXTENSION, CONFIG_SPEC, runtimeConfigMapper, secretName -> null);
 
         assertThat(registry.hasRuntimeConfig()).isTrue();
     }
 
     private void seedConfig(String configJson) {
-        jdbi.useHandle(handle ->
-                new ExtensionConfigDao(handle).save(EXTENSION_POINT, EXTENSION, configJson));
+        jdbi.useHandle(handle -> new ExtensionConfigDao(handle).save(EXTENSION_POINT, EXTENSION, configJson));
     }
-
 }

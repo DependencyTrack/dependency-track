@@ -39,10 +39,7 @@ import java.util.List;
 /// @since 5.1.0
 final class EnisaKevDataSource extends AbstractJsonFeedKevDataSource {
 
-    EnisaKevDataSource(
-            HttpClient httpClient,
-            ObjectMapper objectMapper,
-            URI feedUrl) {
+    EnisaKevDataSource(HttpClient httpClient, ObjectMapper objectMapper, URI feedUrl) {
         super(httpClient, objectMapper, feedUrl);
     }
 
@@ -85,5 +82,4 @@ final class EnisaKevDataSource extends AbstractJsonFeedKevDataSource {
                 entry.shortDescription(),
                 entryNode);
     }
-
 }

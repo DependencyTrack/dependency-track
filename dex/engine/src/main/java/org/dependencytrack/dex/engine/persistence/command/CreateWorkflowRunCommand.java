@@ -35,5 +35,4 @@ public record CreateWorkflowRunCommand(
         @Nullable String concurrencyKey,
         int priority,
         @Nullable Map<String, String> labels,
-        Instant createdAt) {
-}
+        Instant createdAt) {}

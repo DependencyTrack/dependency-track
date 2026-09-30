@@ -20,9 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.parser.common.resolver.CweDictionary;
@@ -30,6 +27,10 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.core.Response;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -41,19 +42,15 @@ public class CweResourceTest extends ResourceTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(CweResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+            new ResourceConfig(CweResource.class).register(ApiFilter.class).register(AuthFeature.class));
 
     @Test
     public void getCwesTest() {
-        Response response = jersey.target(V1_CWE).request()
-                .header(X_API_KEY, apiKey)
-                .get(Response.class);
+        Response response =
+                jersey.target(V1_CWE).request().header(X_API_KEY, apiKey).get(Response.class);
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertEquals(
-                String.valueOf(CweDictionary.DICTIONARY.size()),
-                response.getHeaderString(TOTAL_COUNT_HEADER));
+                String.valueOf(CweDictionary.DICTIONARY.size()), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(100, json.size());
@@ -120,13 +117,12 @@ public class CweResourceTest extends ResourceTest {
                 .get());
 
         assertThatJson(upperBody).isEqualTo(lowerBody);
-        assertThatJson(upperBody)
-                .isArray()
-                .isNotEmpty();
+        assertThatJson(upperBody).isArray().isNotEmpty();
         assertThatJson(upperBody)
                 .inPath("$[?(@.cweId == 79)].name")
                 .isArray()
-                .containsExactly("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
+                .containsExactly(
+                        "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
     }
 
     @Test
@@ -156,15 +152,15 @@ public class CweResourceTest extends ResourceTest {
 
         final String body = getPlainTextBody(response);
         assertThatJson(body).isArray().hasSizeLessThanOrEqualTo(5);
-        assertThatJson(body).inPath("$[*].name")
+        assertThatJson(body)
+                .inPath("$[*].name")
                 .isArray()
                 .allSatisfy(name -> assertThat(((String) name).toLowerCase()).contains("injection"));
     }
 
     @Test
     public void shouldSortByCweIdAscending() {
-        final Response response = jersey
-                .target(V1_CWE)
+        final Response response = jersey.target(V1_CWE)
                 .queryParam("sortName", "cweId")
                 .queryParam("sortOrder", "asc")
                 .queryParam("pageSize", "3")
@@ -181,8 +177,7 @@ public class CweResourceTest extends ResourceTest {
 
     @Test
     public void shouldSortByCweIdDescending() {
-        final Response response = jersey
-                .target(V1_CWE)
+        final Response response = jersey.target(V1_CWE)
                 .queryParam("sortName", "cweId")
                 .queryParam("sortOrder", "desc")
                 .queryParam("pageSize", "3")
@@ -194,13 +189,13 @@ public class CweResourceTest extends ResourceTest {
         assertThatJson(getPlainTextBody(response))
                 .inPath("$[*].cweId")
                 .isArray()
-                .isSortedAccordingTo(Comparator.comparingInt((Object cweId) -> ((Number) cweId).intValue()).reversed());
+                .isSortedAccordingTo(Comparator.comparingInt((Object cweId) -> ((Number) cweId).intValue())
+                        .reversed());
     }
 
     @Test
     public void shouldDefaultToAscendingWhenSortOrderOmitted() {
-        final Response response = jersey
-                .target(V1_CWE)
+        final Response response = jersey.target(V1_CWE)
                 .queryParam("sortName", "cweId")
                 .queryParam("pageSize", "3")
                 .queryParam("pageNumber", "1")
@@ -216,29 +211,26 @@ public class CweResourceTest extends ResourceTest {
 
     @Test
     public void shouldIgnoreUnsupportedSortField() {
-        final String sortedBody = getPlainTextBody(
-                jersey.target(V1_CWE)
-                        .queryParam("sortName", "name")
-                        .queryParam("sortOrder", "asc")
-                        .queryParam("pageSize", "5")
-                        .queryParam("pageNumber", "1")
-                        .request()
-                        .header(X_API_KEY, apiKey)
-                        .get());
-        final String defaultBody = getPlainTextBody(
-                jersey.target(V1_CWE)
-                        .queryParam("pageSize", "5")
-                        .queryParam("pageNumber", "1")
-                        .request()
-                        .header(X_API_KEY, apiKey)
-                        .get());
+        final String sortedBody = getPlainTextBody(jersey.target(V1_CWE)
+                .queryParam("sortName", "name")
+                .queryParam("sortOrder", "asc")
+                .queryParam("pageSize", "5")
+                .queryParam("pageNumber", "1")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get());
+        final String defaultBody = getPlainTextBody(jersey.target(V1_CWE)
+                .queryParam("pageSize", "5")
+                .queryParam("pageNumber", "1")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get());
         assertThatJson(sortedBody).isEqualTo(defaultBody);
     }
 
     @Test
     public void shouldCombineFilterSortAndPagination() {
-        final Response response = jersey
-                .target(V1_CWE)
+        final Response response = jersey.target(V1_CWE)
                 .queryParam("searchText", "injection")
                 .queryParam("sortName", "cweId")
                 .queryParam("sortOrder", "asc")
@@ -253,17 +245,20 @@ public class CweResourceTest extends ResourceTest {
 
         final String body = getPlainTextBody(response);
         assertThatJson(body).isArray().hasSizeLessThanOrEqualTo(5);
-        assertThatJson(body).inPath("$[*].name")
+        assertThatJson(body)
+                .inPath("$[*].name")
                 .isArray()
                 .allSatisfy(name -> assertThat(((String) name).toLowerCase()).contains("injection"));
-        assertThatJson(body).inPath("$[*].cweId")
+        assertThatJson(body)
+                .inPath("$[*].cweId")
                 .isArray()
                 .isSortedAccordingTo(Comparator.comparingInt((Object cweId) -> ((Number) cweId).intValue()));
     }
 
     @Test
     public void getCweTest() {
-        Response response = jersey.target(V1_CWE + "/79").request()
+        Response response = jersey.target(V1_CWE + "/79")
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus(), 0);
@@ -271,6 +266,8 @@ public class CweResourceTest extends ResourceTest {
         JsonObject json = parseJsonObject(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(79, json.getInt("cweId"));
-        Assertions.assertEquals("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')", json.getString("name"));
+        Assertions.assertEquals(
+                "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+                json.getString("name"));
     }
 }

@@ -55,5 +55,4 @@ public interface VulnAnalyzerFactory extends ExtensionFactory<VulnAnalyzer> {
      * @return Requirements for this analyzer.
      */
     EnumSet<VulnAnalyzerRequirement> analyzerRequirements();
-
 }

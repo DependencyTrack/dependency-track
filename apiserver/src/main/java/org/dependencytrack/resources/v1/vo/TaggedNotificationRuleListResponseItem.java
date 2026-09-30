@@ -28,6 +28,8 @@ import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
  * @since 4.12.0
  */
 public record TaggedNotificationRuleListResponseItem(
-        @Schema(description = "UUID of the notification rule", requiredMode = REQUIRED) UUID uuid,
-        @Schema(description = "Name of the notification rule", requiredMode = REQUIRED) String name) {
-}
+        @Schema(description = "UUID of the notification rule", requiredMode = REQUIRED)
+        UUID uuid,
+
+        @Schema(description = "Name of the notification rule", requiredMode = REQUIRED)
+        String name) {}

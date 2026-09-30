@@ -18,11 +18,12 @@
  */
 package org.dependencytrack.resources.v1.exception;
 
+import org.dependencytrack.exception.InvalidSortFieldException;
+import org.dependencytrack.resources.v1.problems.InvalidSortFieldProblemDetails;
+
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
-import org.dependencytrack.exception.InvalidSortFieldException;
-import org.dependencytrack.resources.v1.problems.InvalidSortFieldProblemDetails;
 
 /// @since 5.0.0
 @Provider
@@ -30,10 +31,9 @@ public final class InvalidSortFieldExceptionMapper implements ExceptionMapper<In
 
     @Override
     public Response toResponse(InvalidSortFieldException exception) {
-        final var problemDetails = new InvalidSortFieldProblemDetails(
-                exception.getFieldName(), exception.getAllowedFieldNames());
+        final var problemDetails =
+                new InvalidSortFieldProblemDetails(exception.getFieldName(), exception.getAllowedFieldNames());
         problemDetails.setDetail(exception.getMessage());
         return problemDetails.toResponse();
     }
-
 }

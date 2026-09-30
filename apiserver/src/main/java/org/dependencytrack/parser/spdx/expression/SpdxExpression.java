@@ -53,7 +53,6 @@ public sealed interface SpdxExpression {
         public String toString() {
             return id;
         }
-
     }
 
     /**
@@ -69,7 +68,6 @@ public sealed interface SpdxExpression {
         public String toString() {
             return "+(%s)".formatted(license);
         }
-
     }
 
     /**
@@ -86,7 +84,6 @@ public sealed interface SpdxExpression {
         public String toString() {
             return "WITH(%s, %s)".formatted(license, exception);
         }
-
     }
 
     /**
@@ -102,19 +99,14 @@ public sealed interface SpdxExpression {
             if (operands.size() < 2) {
                 throw new IllegalArgumentException("AND requires at least 2 operands");
             }
-            operands = operands.stream()
-                    .sorted(OPERAND_COMPARATOR)
-                    .toList();
+            operands = operands.stream().sorted(OPERAND_COMPARATOR).toList();
         }
 
         @Override
         public String toString() {
-            return "AND(%s)".formatted(
-                    operands.stream()
-                            .map(SpdxExpression::toString)
-                            .collect(Collectors.joining(", ")));
+            return "AND(%s)"
+                    .formatted(operands.stream().map(SpdxExpression::toString).collect(Collectors.joining(", ")));
         }
-
     }
 
     /**
@@ -130,19 +122,13 @@ public sealed interface SpdxExpression {
             if (operands.size() < 2) {
                 throw new IllegalArgumentException("OR requires at least 2 operands");
             }
-            operands = operands.stream()
-                    .sorted(OPERAND_COMPARATOR)
-                    .toList();
+            operands = operands.stream().sorted(OPERAND_COMPARATOR).toList();
         }
 
         @Override
         public String toString() {
-            return "OR(%s)".formatted(
-                    operands.stream()
-                            .map(SpdxExpression::toString)
-                            .collect(Collectors.joining(", ")));
+            return "OR(%s)"
+                    .formatted(operands.stream().map(SpdxExpression::toString).collect(Collectors.joining(", ")));
         }
-
     }
-
 }

@@ -50,19 +50,22 @@ public record ListWorkflowRunHistoryRequest(
     }
 
     public ListWorkflowRunHistoryRequest withFromSequenceNumber(@Nullable Integer fromSequenceNumber) {
-        return new ListWorkflowRunHistoryRequest(this.runId, fromSequenceNumber, this.pageToken, this.limit, this.sortDirection);
+        return new ListWorkflowRunHistoryRequest(
+                this.runId, fromSequenceNumber, this.pageToken, this.limit, this.sortDirection);
     }
 
     public ListWorkflowRunHistoryRequest withPageToken(@Nullable String pageToken) {
-        return new ListWorkflowRunHistoryRequest(this.runId, this.fromSequenceNumber, pageToken, this.limit, this.sortDirection);
+        return new ListWorkflowRunHistoryRequest(
+                this.runId, this.fromSequenceNumber, pageToken, this.limit, this.sortDirection);
     }
 
     public ListWorkflowRunHistoryRequest withLimit(int limit) {
-        return new ListWorkflowRunHistoryRequest(this.runId, this.fromSequenceNumber, this.pageToken, limit, this.sortDirection);
+        return new ListWorkflowRunHistoryRequest(
+                this.runId, this.fromSequenceNumber, this.pageToken, limit, this.sortDirection);
     }
 
     public ListWorkflowRunHistoryRequest withSortDirection(@Nullable SortDirection sortDirection) {
-        return new ListWorkflowRunHistoryRequest(this.runId, this.fromSequenceNumber, this.pageToken, this.limit, sortDirection);
+        return new ListWorkflowRunHistoryRequest(
+                this.runId, this.fromSequenceNumber, this.pageToken, this.limit, sortDirection);
     }
-
 }

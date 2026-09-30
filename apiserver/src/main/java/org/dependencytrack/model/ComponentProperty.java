@@ -24,11 +24,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.MoreObjects;
+import org.apache.commons.lang3.StringUtils;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.ForeignKey;
@@ -55,7 +56,6 @@ public class ComponentProperty implements IConfigProperty, Serializable {
         public Identity(final ComponentProperty property) {
             this(property.getGroupName(), property.getPropertyName(), property.getPropertyValue());
         }
-
     }
 
     @PrimaryKey
@@ -113,10 +113,12 @@ public class ComponentProperty implements IConfigProperty, Serializable {
     @NotNull
     private UUID uuid;
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(final long id) {
         this.id = id;
     }
@@ -129,42 +131,52 @@ public class ComponentProperty implements IConfigProperty, Serializable {
         this.component = component;
     }
 
+    @Override
     public String getGroupName() {
         return groupName;
     }
 
+    @Override
     public void setGroupName(final String groupName) {
         this.groupName = groupName;
     }
 
+    @Override
     public String getPropertyName() {
         return propertyName;
     }
 
+    @Override
     public void setPropertyName(final String propertyName) {
         this.propertyName = propertyName;
     }
 
+    @Override
     public String getPropertyValue() {
         return propertyValue;
     }
 
+    @Override
     public void setPropertyValue(final String propertyValue) {
         this.propertyValue = StringUtils.abbreviate(propertyValue, 1024);
     }
 
+    @Override
     public PropertyType getPropertyType() {
         return propertyType;
     }
 
+    @Override
     public void setPropertyType(final PropertyType propertyType) {
         this.propertyType = propertyType;
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
 
+    @Override
     public void setDescription(final String description) {
         this.description = description;
     }
@@ -191,5 +203,4 @@ public class ComponentProperty implements IConfigProperty, Serializable {
                 .omitNullValues()
                 .toString();
     }
-
 }

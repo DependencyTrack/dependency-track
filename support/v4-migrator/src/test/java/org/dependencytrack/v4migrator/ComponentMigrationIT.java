@@ -96,9 +96,9 @@ class ComponentMigrationIT {
                     'pkg:maven/g/a@1', :ext
                 )
                 """)
-                .bind("u", "00000000-0000-0000-0000-000000000001")
-                .bind("ext", new byte[]{0x01, 0x02, 0x03})
-                .execute();
+                    .bind("u", "00000000-0000-0000-0000-000000000001")
+                    .bind("ext", new byte[] {0x01, 0x02, 0x03})
+                    .execute();
 
             // Child of (1). Points at the LOSER project (100); should be rewritten to 200.
             h.execute("""
@@ -145,8 +145,8 @@ class ComponentMigrationIT {
         runPipeline();
 
         // Malformed UUID probed.
-        final List<Map<String, Object>> probe = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> probe =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT table_name, orig_id, bad_uuid
                       FROM "dt_v4_migration".probe_invalid_uuids
                      WHERE table_name = 'COMPONENT'
@@ -154,28 +154,24 @@ class ComponentMigrationIT {
                     """).mapToMap().list());
         assertThat(probe).hasSize(1);
         assertThat(probe.get(0))
-            .containsEntry("table_name", "COMPONENT")
-            .containsEntry("orig_id", 5L)
-            .containsEntry("bad_uuid", "not-a-uuid");
+                .containsEntry("table_name", "COMPONENT")
+                .containsEntry("orig_id", 5L)
+                .containsEntry("bad_uuid", "not-a-uuid");
 
         // identity component_canonical_id_map for valid-UUID rows.
-        final List<Map<String, Object>> map = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> map =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT orig_id, canonical_id
                       FROM dt_v4_migration.component_canonical_id_map
                      ORDER BY orig_id
                     """).mapToMap().list());
-        assertThat(map).extracting("orig_id", "canonical_id").containsExactly(
-            tuple(1L, 1L),
-            tuple(2L, 2L),
-            tuple(3L, 3L),
-            tuple(6L, 6L),
-            tuple(7L, 7L)
-        );
+        assertThat(map)
+                .extracting("orig_id", "canonical_id")
+                .containsExactly(tuple(1L, 1L), tuple(2L, 2L), tuple(3L, 3L), tuple(6L, 6L), tuple(7L, 7L));
 
         // Full v5 COMPONENT contents.
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "NAME", "UUID", "CLASSIFIER", "SCOPE",
                            "PROJECT_ID", "PARENT_COMPONENT_ID", "SHA_256", "PURL",
                            "EXTERNAL_REFERENCES",
@@ -187,40 +183,33 @@ class ComponentMigrationIT {
 
         // (1) parent: full pass-through, PROJECT_ID stays at canonical 200, native UUID.
         assertThat(rows.get(0))
-            .containsEntry("name", "parent")
-            .containsEntry("uuid", UUID.fromString("00000000-0000-0000-0000-000000000001"))
-            .containsEntry("classifier", "LIBRARY")
-            .containsEntry("scope", "REQUIRED")
-            .containsEntry("project_id", 200L)
-            .containsEntry("parent_component_id", null)
-            .containsEntry("sha_256", "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef")
-            .containsEntry("purl", "pkg:maven/g/a@1");
-        assertThat((byte[]) rows.get(0).get("external_references"))
-            .containsExactly(0x01, 0x02, 0x03);
+                .containsEntry("name", "parent")
+                .containsEntry("uuid", UUID.fromString("00000000-0000-0000-0000-000000000001"))
+                .containsEntry("classifier", "LIBRARY")
+                .containsEntry("scope", "REQUIRED")
+                .containsEntry("project_id", 200L)
+                .containsEntry("parent_component_id", null)
+                .containsEntry("sha_256", "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef")
+                .containsEntry("purl", "pkg:maven/g/a@1");
+        assertThat((byte[]) rows.get(0).get("external_references")).containsExactly(0x01, 0x02, 0x03);
         assertThat(rows.get(0).get("dd_text")).asString().contains("\"ref\"").contains("x");
 
         // (2) child: PROJECT_ID rewritten from loser (100) to winner (200);
         // PARENT_COMPONENT_ID preserved.
         assertThat(rows.get(1))
-            .containsEntry("name", "child")
-            .containsEntry("project_id", 200L)
-            .containsEntry("parent_component_id", 1L)
-            .containsEntry("classifier", "APPLICATION");
+                .containsEntry("name", "child")
+                .containsEntry("project_id", 200L)
+                .containsEntry("parent_component_id", 1L)
+                .containsEntry("classifier", "APPLICATION");
 
         // (3) CLASSIFIER='NONE' → NULL.
-        assertThat(rows.get(2))
-            .containsEntry("name", "c-none")
-            .containsEntry("classifier", null);
+        assertThat(rows.get(2)).containsEntry("name", "c-none").containsEntry("classifier", null);
 
         // (6) Orphan: parent had malformed UUID → PARENT_COMPONENT_ID NULL, child survives.
-        assertThat(rows.get(3))
-            .containsEntry("name", "c-orphan")
-            .containsEntry("parent_component_id", null);
+        assertThat(rows.get(3)).containsEntry("name", "c-orphan").containsEntry("parent_component_id", null);
 
         // (7) Malformed DIRECT_DEPENDENCIES → NULL.
-        assertThat(rows.get(4))
-            .containsEntry("name", "c-bad-json")
-            .containsEntry("dd_text", null);
+        assertThat(rows.get(4)).containsEntry("name", "c-bad-json").containsEntry("dd_text", null);
     }
 
     private void runPipeline() throws Exception {

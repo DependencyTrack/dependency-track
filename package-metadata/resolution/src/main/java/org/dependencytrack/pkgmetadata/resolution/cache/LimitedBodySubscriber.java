@@ -69,8 +69,7 @@ final class LimitedBodySubscriber implements HttpResponse.BodySubscriber<byte[]>
                     subscription.cancel();
                 }
                 chunks.clear();
-                result.completeExceptionally(
-                        new IOException("Response body exceeds %d bytes".formatted(maxBytes)));
+                result.completeExceptionally(new IOException("Response body exceeds %d bytes".formatted(maxBytes)));
                 return;
             }
 

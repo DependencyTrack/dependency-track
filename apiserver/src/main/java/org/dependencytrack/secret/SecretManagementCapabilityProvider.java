@@ -36,8 +36,7 @@ public final class SecretManagementCapabilityProvider implements CapabilityProvi
     private @Nullable Supplier<SecretManager> secretManagerSupplier;
 
     @SuppressWarnings("unused") // Used by ServiceLoader.
-    public SecretManagementCapabilityProvider() {
-    }
+    public SecretManagementCapabilityProvider() {}
 
     @Override
     public String namespace() {
@@ -55,10 +54,8 @@ public final class SecretManagementCapabilityProvider implements CapabilityProvi
             return Map.of();
         }
 
-        final SecretManager secretManager = requireNonNull(
-                secretManagerSupplier.get(),
-                "secretManager must not be null");
+        final SecretManager secretManager =
+                requireNonNull(secretManagerSupplier.get(), "secretManager must not be null");
         return Map.of("read_only", secretManager.isReadOnly());
     }
-
 }

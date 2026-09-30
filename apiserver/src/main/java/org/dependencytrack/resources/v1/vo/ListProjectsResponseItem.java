@@ -23,13 +23,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
@@ -54,16 +54,21 @@ public record ListProjectsResponseItem(
         @Nullable Classifier classifier,
         @Nullable String description,
         @Nullable String publisher,
-        @Schema(type = "string")
-        @Nullable @JsonSerialize(using = CustomPackageURLSerializer.class) PackageURL purl,
+
+        @Schema(type = "string") @Nullable @JsonSerialize(using = CustomPackageURLSerializer.class)
+        PackageURL purl,
+
         @Nullable String swidTagId,
         @Nullable String cpe,
         @Nullable String directDependencies,
         @JsonProperty("isLatest") boolean isLatest,
-        @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-        @Nullable Date inactiveSince,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-        @Nullable Date lastBomImport,
+
+        @Schema(accessMode = Schema.AccessMode.READ_ONLY) @Nullable
+        Date inactiveSince,
+
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @Nullable
+        Date lastBomImport,
+
         @Nullable String lastBomImportFormat,
         @Nullable Date lastVulnerabilityAnalysis,
         @Nullable Double lastInheritedRiskScore,
@@ -77,13 +82,12 @@ public record ListProjectsResponseItem(
         @Nullable ProjectCollectionLogic collectionLogic,
         @Nullable Tag collectionTag,
         @Nullable Parent parent,
+
         @Schema(description = "Whether the project has child projects", requiredMode = Schema.RequiredMode.REQUIRED)
         boolean hasChildren) {
 
     public static List<ListProjectsResponseItem> of(Collection<ListProjectsRow> rows) {
-        return rows.stream()
-                .map(ListProjectsResponseItem::of)
-                .toList();
+        return rows.stream().map(ListProjectsResponseItem::of).toList();
     }
 
     public static ListProjectsResponseItem of(ListProjectsRow row) {
@@ -115,9 +119,7 @@ public record ListProjectsResponseItem(
                 row.metadata(),
                 row.metrics(),
                 row.collectionLogic(),
-                row.collectionTagName() != null
-                        ? new Tag(row.collectionTagName())
-                        : null,
+                row.collectionTagName() != null ? new Tag(row.collectionTagName()) : null,
                 Parent.of(row.parentUuid(), row.parentName(), row.parentVersion()),
                 row.hasChildren());
     }
@@ -128,21 +130,20 @@ public record ListProjectsResponseItem(
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Parent(
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID uuid,
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String name,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            UUID uuid,
+
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            String name,
+
             @Nullable String version) {
 
-        private static @Nullable Parent of(
-                @Nullable UUID uuid,
-                @Nullable String name,
-                @Nullable String version) {
+        private static @Nullable Parent of(@Nullable UUID uuid, @Nullable String name, @Nullable String version) {
             if (uuid == null) {
                 return null;
             }
 
             return new Parent(uuid, requireNonNull(name, "name must not be null"), version);
         }
-
     }
-
 }

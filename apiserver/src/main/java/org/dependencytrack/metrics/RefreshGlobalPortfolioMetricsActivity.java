@@ -21,7 +21,6 @@ package org.dependencytrack.metrics;
 import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivityContext;
 import org.dependencytrack.dex.api.ActivitySpec;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.jspecify.annotations.Nullable;
 
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
@@ -37,5 +36,4 @@ public final class RefreshGlobalPortfolioMetricsActivity implements Activity<Voi
         useJdbiTransaction(handle -> handle.attach(MetricsDao.class).refreshGlobalPortfolioMetrics());
         return null;
     }
-
 }

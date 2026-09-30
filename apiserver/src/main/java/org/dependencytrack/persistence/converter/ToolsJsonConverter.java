@@ -39,5 +39,4 @@ public class ToolsJsonConverter extends AbstractJsonConverter<Tools> {
         // Overriding is required for DataNucleus to correctly detect the return type.
         return super.convertToAttribute(datastoreValue);
     }
-
 }

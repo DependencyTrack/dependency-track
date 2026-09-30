@@ -47,6 +47,7 @@ import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationActivityArg;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,9 +85,9 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                 secretName -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(NotificationPublisher.class));
-        pluginManager.loadPlugins(List.of(
-                new DefaultNotificationPublishersPlugin()));
+        pluginManager.loadPlugins(List.of(new DefaultNotificationPublishersPlugin()));
 
         fileStorage = new MemoryFileStorage();
 
@@ -106,22 +107,18 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                 protoConverter(PublishNotificationActivityArg.class),
                 voidConverter());
         engine.registerActivity(
-                new DeleteFilesActivity(fileStorage),
-                protoConverter(DeleteFilesArgument.class),
-                voidConverter());
+                new DeleteFilesActivity(fileStorage), protoConverter(DeleteFilesArgument.class), voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "notifications", 1));
 
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
         engine.registerTaskWorker(
                 new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-notification", "notifications", 1)
                         .withMinPollInterval(Duration.ofMillis(25))
@@ -139,8 +136,8 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
 
     @Test
     void shouldFailWhenArgumentIsNull() {
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class));
+        final UUID runId =
+                workflowTest.getEngine().createRun(new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class));
 
         final WorkflowRun run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
         assertThat(run).isNotNull();
@@ -158,9 +155,9 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                 .setNotification(notification)
                 .build();
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class)
-                        .withArgument(argument));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class).withArgument(argument));
 
         final WorkflowRun run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
         assertThat(run).isNotNull();
@@ -183,9 +180,9 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                 .setNotification(notification)
                 .build();
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class)
-                        .withArgument(argument));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class).withArgument(argument));
 
         final WorkflowRun run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
         assertThat(run).isNotNull();
@@ -208,9 +205,9 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                 .setNotification(notification)
                 .build();
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class)
-                        .withArgument(argument));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class).withArgument(argument));
 
         final WorkflowRun run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
         assertThat(run).isNotNull();
@@ -234,9 +231,9 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                 .setNotificationFileMetadata(fileMetadata)
                 .build();
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class)
-                        .withArgument(argument));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class).withArgument(argument));
 
         final WorkflowRun run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
         assertThat(run).isNotNull();
@@ -246,7 +243,6 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                 .isThrownBy(() -> fileStorage.get(fileMetadata));
     }
 
-
     @Test
     void shouldFailWhenNoNotificationProvided() {
         final NotificationRule rule = createRule("console");
@@ -255,14 +251,15 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                 .addNotificationRuleNames(rule.getName())
                 .build();
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class)
-                        .withArgument(argument));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class).withArgument(argument));
 
         final WorkflowRun run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
         assertThat(run).isNotNull();
         assertThat(run.failure()).isNotNull();
-        assertThat(run.failure().getMessage()).isEqualTo("Neither notification nor notification file metadata provided");
+        assertThat(run.failure().getMessage())
+                .isEqualTo("Neither notification nor notification file metadata provided");
     }
 
     @Test
@@ -277,9 +274,9 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                 .setNotification(notification)
                 .build();
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class)
-                        .withArgument(argument));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class).withArgument(argument));
 
         final WorkflowRun run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
         assertThat(run).isNotNull();
@@ -304,5 +301,4 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
         rule.setPublisher(publisher);
         return qm.persist(rule);
     }
-
 }

@@ -22,7 +22,6 @@ package org.dependencytrack.vulnanalysis.api;
  * @since 5.0.0
  */
 public enum VulnAnalyzerRequirement {
-
     COMPONENT_CPE,
 
     COMPONENT_PURL,
@@ -30,5 +29,4 @@ public enum VulnAnalyzerRequirement {
     COMPONENT_TYPE,
 
     COMPONENT_PROPERTIES
-
 }

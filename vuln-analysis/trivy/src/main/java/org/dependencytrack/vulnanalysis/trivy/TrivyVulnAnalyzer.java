@@ -44,6 +44,7 @@ import trivy.proto.scanner.v1.ScanResponse;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -101,14 +102,16 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                 continue;
             }
 
-            if (component.hasPurl() && component.hasBomRef()) {
-                processComponentWithPurl(component, apps, pkgs, bomRefsByPurl);
-            } else if (component.getType() == Classification.CLASSIFICATION_OPERATING_SYSTEM) {
+            if (component.getType() == Classification.CLASSIFICATION_OPERATING_SYSTEM) {
                 final String key = "%s-%s".formatted(component.getName(), component.getVersion());
-                osMap.put(key, OS.newBuilder()
-                        .setFamily(component.getName())
-                        .setName(component.getVersion())
-                        .build());
+                osMap.put(
+                        key,
+                        OS.newBuilder()
+                                .setFamily(component.getName())
+                                .setName(component.getVersion())
+                                .build());
+            } else if (component.hasPurl() && component.hasBomRef()) {
+                processComponentWithPurl(component, apps, pkgs, bomRefsByPurl);
             }
         }
 
@@ -124,9 +127,8 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
         }
 
         pkgs.forEach((key, value) -> {
-            final BlobInfo.Builder builder = BlobInfo.newBuilder()
-                    .setSchemaVersion(2)
-                    .addPackageInfos(value);
+            final BlobInfo.Builder builder =
+                    BlobInfo.newBuilder().setSchemaVersion(2).addPackageInfos(value);
             final OS os = osMap.get(key);
             if (os != null) {
                 builder.setOs(os);
@@ -182,12 +184,11 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
             }
         }
 
-        bomRefsByPurl
-                .computeIfAbsent(purl.toString(), _ -> new HashSet<>())
-                .add(component.getBomRef());
+        bomRefsByPurl.computeIfAbsent(purl.toString(), _ -> new HashSet<>()).add(component.getBomRef());
 
         if (!PurlType.APP_TYPE_PACKAGES.equals(appType)) {
-            final Application.Builder app = apps.computeIfAbsent(appType, k -> Application.newBuilder().setType(k));
+            final Application.Builder app =
+                    apps.computeIfAbsent(appType, k -> Application.newBuilder().setType(k));
             app.addPackages(trivy.proto.common.Package.newBuilder()
                     .setName(name)
                     .setVersion(purl.getVersion())
@@ -199,10 +200,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
         }
     }
 
-    private void processOsPackage(
-            Component component,
-            PackageURL purl,
-            Map<String, PackageInfo.Builder> pkgs) {
+    private void processOsPackage(Component component, PackageURL purl, Map<String, PackageInfo.Builder> pkgs) {
 
         String srcName = null;
         String srcVersion = null;
@@ -284,6 +282,8 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
         } finally {
             try {
                 deleteBlobs(putBlobRequest);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
                 LOGGER.warn("Failed to delete blob {}", diffId, e);
             }
@@ -292,8 +292,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
 
     private void putBlob(PutBlobRequest request) throws InterruptedException {
         final byte[] responseBytes = sendProtobufRequest(
-                "%s/twirp/trivy.cache.v1.Cache/PutBlob".formatted(apiBaseUrl),
-                request.toByteArray());
+                "%s/twirp/trivy.cache.v1.Cache/PutBlob".formatted(apiBaseUrl), request.toByteArray());
         LOGGER.debug("PutBlob succeeded ({} bytes response)", responseBytes.length);
     }
 
@@ -314,8 +313,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                 .build();
 
         final byte[] responseBytes = sendProtobufRequest(
-                "%s/twirp/trivy.scanner.v1.Scanner/Scan".formatted(apiBaseUrl),
-                scanRequest.toByteArray());
+                "%s/twirp/trivy.scanner.v1.Scanner/Scan".formatted(apiBaseUrl), scanRequest.toByteArray());
 
         try {
             return ScanResponse.parseFrom(responseBytes);
@@ -330,19 +328,21 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                 .build();
 
         sendProtobufRequest(
-                "%s/twirp/trivy.cache.v1.Cache/DeleteBlobs".formatted(apiBaseUrl),
-                deleteRequest.toByteArray());
+                "%s/twirp/trivy.cache.v1.Cache/DeleteBlobs".formatted(apiBaseUrl), deleteRequest.toByteArray());
     }
 
     private byte[] sendProtobufRequest(String url, byte[] body) throws InterruptedException {
-        final var request = HttpRequest.newBuilder()
-                .uri(java.net.URI.create(url))
+        final HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                .uri(URI.create(url))
                 .header("Accept", "application/protobuf")
                 .header("Content-Type", "application/protobuf")
-                .header(TOKEN_HEADER, apiToken)
                 .timeout(Duration.ofSeconds(30))
-                .POST(HttpRequest.BodyPublishers.ofByteArray(body))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofByteArray(body));
+        // Trivy servers only require a token when one was configured with --token.
+        if (apiToken != null) {
+            requestBuilder.header(TOKEN_HEADER, apiToken);
+        }
+        final HttpRequest request = requestBuilder.build();
 
         final HttpResponse<byte[]> response;
         try {
@@ -376,20 +376,17 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                 if (bomRefs == null) {
                     LOGGER.warn(
                             "Vulnerability {} reported for PURL {}, but no matching component; Skipping",
-                            trivyVuln.getVulnerabilityId(), purl);
+                            trivyVuln.getVulnerabilityId(),
+                            purl);
                     continue;
                 }
 
-                final Vulnerability.Builder vulnBuilder =
-                        vulnBuilderByVulnId.computeIfAbsent(
-                                trivyVuln.getVulnerabilityId(),
-                                _ -> TrivyModelConverter.convert(trivyVuln));
+                final Vulnerability.Builder vulnBuilder = vulnBuilderByVulnId.computeIfAbsent(
+                        trivyVuln.getVulnerabilityId(), _ -> TrivyModelConverter.convert(trivyVuln));
 
                 for (final String bomRef : bomRefs) {
                     vulnBuilder.addAffects(
-                            VulnerabilityAffects.newBuilder()
-                                    .setRef(bomRef)
-                                    .build());
+                            VulnerabilityAffects.newBuilder().setRef(bomRef).build());
                 }
             }
         }
@@ -399,16 +396,16 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
         }
 
         return Bom.newBuilder()
-                .addAllVulnerabilities(
-                        vulnBuilderByVulnId.values().stream()
-                                .map(Vulnerability.Builder::build)
-                                .toList())
+                .addAllVulnerabilities(vulnBuilderByVulnId.values().stream()
+                        .map(Vulnerability.Builder::build)
+                        .toList())
                 .build();
     }
 
     private static boolean isInternalComponent(Component component) {
-        return component.getPropertiesList().stream().anyMatch(
-                property -> "dependencytrack:internal:is-internal-component".equalsIgnoreCase(property.getName()));
+        return component.getPropertiesList().stream()
+                .anyMatch(property ->
+                        "dependencytrack:internal:is-internal-component".equalsIgnoreCase(property.getName()));
     }
 
     private static String sha256Hex(String input) {
@@ -420,5 +417,4 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
             throw new IllegalStateException(e);
         }
     }
-
 }

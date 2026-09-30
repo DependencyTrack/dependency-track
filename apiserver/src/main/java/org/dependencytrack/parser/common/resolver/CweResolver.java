@@ -42,8 +42,7 @@ public class CweResolver {
 
     private static final CweResolver INSTANCE = new CweResolver();
 
-    private CweResolver() {
-    }
+    private CweResolver() {}
 
     public static CweResolver getInstance() {
         return INSTANCE;
@@ -136,17 +135,15 @@ public class CweResolver {
                 ? searchText.trim().toLowerCase(Locale.ROOT)
                 : null;
 
-        Stream<Map.Entry<Integer, String>> dictEntryStream =
-                CweDictionary.DICTIONARY.entrySet().stream()
-                        .filter(entry -> needle == null
-                                || entry.getValue().toLowerCase(Locale.ROOT).contains(needle)
-                                || ("cwe-" + entry.getKey()).contains(needle));
+        Stream<Map.Entry<Integer, String>> dictEntryStream = CweDictionary.DICTIONARY.entrySet().stream()
+                .filter(entry -> needle == null
+                        || entry.getValue().toLowerCase(Locale.ROOT).contains(needle)
+                        || ("cwe-" + entry.getKey()).contains(needle));
 
         if ("cweId".equals(orderBy)) {
-            final Comparator<Map.Entry<Integer, String>> comparator =
-                    orderDirection == OrderDirection.DESCENDING
-                            ? Map.Entry.<Integer, String>comparingByKey().reversed()
-                            : Map.Entry.comparingByKey();
+            final Comparator<Map.Entry<Integer, String>> comparator = orderDirection == OrderDirection.DESCENDING
+                    ? Map.Entry.<Integer, String>comparingByKey().reversed()
+                    : Map.Entry.comparingByKey();
             dictEntryStream = dictEntryStream.sorted(comparator);
         }
 
@@ -172,5 +169,4 @@ public class CweResolver {
                 .toList();
         return new PaginatedResult().objects(cwes).total(total);
     }
-
 }

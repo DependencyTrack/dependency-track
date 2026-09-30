@@ -20,7 +20,6 @@ package org.dependencytrack.resources.v2;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.smallrye.config.SmallRyeConfigBuilder;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -34,10 +33,11 @@ import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
@@ -45,6 +45,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.core.Response;
 
 import java.net.http.HttpClient;
 import java.time.Instant;
@@ -62,14 +64,12 @@ class VulnsResourceTest extends ResourceTest {
     private static PluginManager pluginManager;
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bindFactory(() -> pluginManager).to(PluginManager.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(new AbstractBinder() {
+        @Override
+        protected void configure() {
+            bindFactory(() -> pluginManager).to(PluginManager.class);
+        }
+    }));
 
     @BeforeAll
     static void beforeAll() {
@@ -84,6 +84,7 @@ class VulnsResourceTest extends ResourceTest {
                 secretManager::getSecretValue,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(KevDataSource.class));
     }
 
@@ -96,8 +97,7 @@ class VulnsResourceTest extends ResourceTest {
 
     @Test
     void listVulnerabilityKevAssertionsShouldListKevAssertionsIncludingThoseOfAliases() {
-        pluginManager.loadPlugins(List.of(
-                () -> List.of(new DummyKevDataSourceFactory())));
+        pluginManager.loadPlugins(List.of(() -> List.of(new DummyKevDataSourceFactory())));
 
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
@@ -114,14 +114,16 @@ class VulnsResourceTest extends ResourceTest {
         qm.createVulnerability(ghsa);
 
         useJdbiTransaction(handle -> {
-            new VulnerabilityAliasDao(handle).syncAssertions(
-                    "TEST",
-                    new VulnerabilityKey("CVE-2021-44228", Vulnerability.Source.NVD),
-                    Set.of(new VulnerabilityKey("GHSA-jfh8-c2jp-5v3q", Vulnerability.Source.GITHUB)));
+            new VulnerabilityAliasDao(handle)
+                    .syncAssertions(
+                            "TEST",
+                            new VulnerabilityKey("CVE-2021-44228", Vulnerability.Source.NVD),
+                            Set.of(new VulnerabilityKey("GHSA-jfh8-c2jp-5v3q", Vulnerability.Source.GITHUB)));
 
             final var kevDao = handle.attach(KevDao.class);
-            kevDao.upsertBatch("dummy-kev-data-source", List.of(
-                    new KevAssertion(
+            kevDao.upsertBatch(
+                    "dummy-kev-data-source",
+                    List.of(new KevAssertion(
                             "NVD",
                             "CVE-2021-44228",
                             Instant.parse("2021-12-10T00:00:00Z"),
@@ -129,8 +131,9 @@ class VulnsResourceTest extends ResourceTest {
                             true,
                             "Log4Shell",
                             JsonNodeFactory.instance.objectNode().put("cveID", "CVE-2021-44228"))));
-            kevDao.upsertBatch("unregistered-kev-data-source", List.of(
-                    new KevAssertion(
+            kevDao.upsertBatch(
+                    "unregistered-kev-data-source",
+                    List.of(new KevAssertion(
                             "GITHUB",
                             "GHSA-jfh8-c2jp-5v3q",
                             null,
@@ -140,8 +143,7 @@ class VulnsResourceTest extends ResourceTest {
                             JsonNodeFactory.instance.objectNode())));
         });
 
-        final Response response = jersey
-                .target("/vulns/GITHUB/GHSA-jfh8-c2jp-5v3q/kev-assertions")
+        final Response response = jersey.target("/vulns/GITHUB/GHSA-jfh8-c2jp-5v3q/kev-assertions")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -189,8 +191,7 @@ class VulnsResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.CRITICAL);
         qm.createVulnerability(vuln);
 
-        final Response response = jersey
-                .target("/vulns/NVD/CVE-2022-22965/kev-assertions")
+        final Response response = jersey.target("/vulns/NVD/CVE-2022-22965/kev-assertions")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -211,8 +212,7 @@ class VulnsResourceTest extends ResourceTest {
     void listVulnerabilityKevAssertionsShouldReturnNotFoundWhenVulnerabilityDoesNotExist() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
-        final Response response = jersey
-                .target("/vulns/NVD/CVE-0000-0000/kev-assertions")
+        final Response response = jersey.target("/vulns/NVD/CVE-0000-0000/kev-assertions")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -222,8 +222,7 @@ class VulnsResourceTest extends ResourceTest {
 
     @Test
     void listVulnerabilityKevAssertionsShouldReturnForbiddenWithoutPermission() {
-        final Response response = jersey
-                .target("/vulns/NVD/CVE-2021-44228/kev-assertions")
+        final Response response = jersey.target("/vulns/NVD/CVE-2021-44228/kev-assertions")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -242,7 +241,6 @@ class VulnsResourceTest extends ResourceTest {
         public KevAssertion next() {
             throw new NoSuchElementException();
         }
-
     }
 
     private static final class DummyKevDataSourceFactory implements KevDataSourceFactory {
@@ -268,8 +266,7 @@ class VulnsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {
-        }
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public boolean isEnabled() {
@@ -280,7 +277,5 @@ class VulnsResourceTest extends ResourceTest {
         public @NonNull KevDataSource create() {
             throw new UnsupportedOperationException();
         }
-
     }
-
 }

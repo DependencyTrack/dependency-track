@@ -49,7 +49,8 @@ class MemoryFileStorageTest {
         assertThat(fileMetadata.getProviderName()).isEqualTo("memory");
         assertThat(fileMetadata.getLocation()).isEqualTo("memory:///foo/bar");
         assertThat(fileMetadata.getMediaType()).isEqualTo("application/octet-stream");
-        assertThat(fileMetadata.getSha256Digest()).isEqualTo("baa5a0964d3320fbc0c6a922140453c8513ea24ab8fd0577034804a967248096");
+        assertThat(fileMetadata.getSha256Digest())
+                .isEqualTo("baa5a0964d3320fbc0c6a922140453c8513ea24ab8fd0577034804a967248096");
 
         final InputStream fileStream = storage.get(fileMetadata);
         assertThat(fileStream).isNotNull();
@@ -88,11 +89,10 @@ class MemoryFileStorageTest {
         final FileStorage storage = createStorage();
 
         assertThatExceptionOfType(NoSuchFileException.class)
-                .isThrownBy(() -> storage.get(
-                        FileMetadata.newBuilder()
-                                .setLocation("memory:///foo/bar")
-                                .setSha256Digest("some-digest")
-                                .build()));
+                .isThrownBy(() -> storage.get(FileMetadata.newBuilder()
+                        .setLocation("memory:///foo/bar")
+                        .setSha256Digest("some-digest")
+                        .build()));
     }
 
     @Test
@@ -102,9 +102,7 @@ class MemoryFileStorageTest {
 
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> storage.get(
-                        FileMetadata.newBuilder()
-                                .setLocation("foo:///bar")
-                                .build()))
+                        FileMetadata.newBuilder().setLocation("foo:///bar").build()))
                 .withMessage("foo:///bar: Unexpected scheme foo, expected memory");
     }
 
@@ -114,9 +112,7 @@ class MemoryFileStorageTest {
         final FileStorage storage = createStorage();
 
         final boolean deleted = storage.delete(
-                FileMetadata.newBuilder()
-                        .setLocation("memory:///foo")
-                        .build());
+                FileMetadata.newBuilder().setLocation("memory:///foo").build());
         assertThat(deleted).isFalse();
     }
 
@@ -127,16 +123,11 @@ class MemoryFileStorageTest {
 
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> storage.delete(
-                        FileMetadata.newBuilder()
-                                .setLocation("foo:///bar")
-                                .build()))
+                        FileMetadata.newBuilder().setLocation("foo:///bar").build()))
                 .withMessage("foo:///bar: Unexpected scheme foo, expected memory");
     }
 
     private static FileStorage createStorage() {
-        return new MemoryFileStorageProvider().create(
-                new SmallRyeConfigBuilder().build(),
-                ProxySelector.getDefault());
+        return new MemoryFileStorageProvider().create(new SmallRyeConfigBuilder().build(), ProxySelector.getDefault());
     }
-
 }

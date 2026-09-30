@@ -26,5 +26,4 @@ public final class SpdxExpressionParseException extends RuntimeException {
     SpdxExpressionParseException(String message) {
         super(message);
     }
-
 }

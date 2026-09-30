@@ -32,24 +32,18 @@ import java.util.Map;
 /**
  * @since 5.0.0
  */
-record NpmPackageDocument(
-        @Nullable String latestVersion,
-        Map<String, VersionInfo> versions) {
+record NpmPackageDocument(@Nullable String latestVersion, Map<String, VersionInfo> versions) {
 
     private static final String INTEGRITY_PREFIX = "sha512-";
 
     @JsonFormat(shape = JsonFormat.Shape.ARRAY)
-    record PackageInfo(
-            Instant resolvedAt,
-            String version) {
-    }
+    record PackageInfo(Instant resolvedAt, String version) {}
 
     @JsonFormat(shape = JsonFormat.Shape.ARRAY)
     record VersionInfo(
             @Nullable Instant publishedAt,
             @Nullable String shasum,
-            @Nullable String integrity) {
-    }
+            @Nullable String integrity) {}
 
     static NpmPackageDocument parseFrom(JsonParser parser) throws IOException {
         // NB: Package documents can be absurdly large for projects with
@@ -124,6 +118,7 @@ record NpmPackageDocument(
                 try {
                     timestamps.put(version, Instant.parse(parser.getText()));
                 } catch (DateTimeParseException _) {
+                    // Publish timestamps are optional, so malformed ones are ignored.
                 }
             }
         }
@@ -177,5 +172,4 @@ record NpmPackageDocument(
 
         return new VersionInfo(null, shasum, integrity);
     }
-
 }

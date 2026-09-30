@@ -23,11 +23,9 @@ import java.util.List;
 
 public final class CelPolicyFieldMappingRegistry {
 
-    private CelPolicyFieldMappingRegistry() {
-    }
+    private CelPolicyFieldMappingRegistry() {}
 
-    public record FieldMapping(String protoFieldName, String sqlExpression) {
-    }
+    public record FieldMapping(String protoFieldName, String sqlExpression) {}
 
     static final List<FieldMapping> COMPONENT_FIELDS = List.of(
             new FieldMapping("uuid", "c.\"UUID\""),
@@ -106,9 +104,8 @@ public final class CelPolicyFieldMappingRegistry {
             new FieldMapping("is_deprecated_id", "l.\"ISDEPRECATED\""),
             new FieldMapping("is_custom", "l.\"ISCUSTOMLICENSE\""));
 
-    static final List<FieldMapping> LICENSE_GROUP_FIELDS = List.of(
-            new FieldMapping("uuid", "lg.\"UUID\""),
-            new FieldMapping("name", "lg.\"NAME\""));
+    static final List<FieldMapping> LICENSE_GROUP_FIELDS =
+            List.of(new FieldMapping("uuid", "lg.\"UUID\""), new FieldMapping("name", "lg.\"NAME\""));
 
     static final List<FieldMapping> PROJECT_FIELDS = List.of(
             new FieldMapping("uuid", "p.\"UUID\""),
@@ -131,13 +128,10 @@ public final class CelPolicyFieldMappingRegistry {
             new FieldMapping("value", "pp.\"PROPERTYVALUE\""),
             new FieldMapping("type", "pp.\"PROPERTYTYPE\""));
 
-    static List<String> selectColumns(
-            List<FieldMapping> fields,
-            Collection<String> requiredProtoFields) {
+    static List<String> selectColumns(List<FieldMapping> fields, Collection<String> requiredProtoFields) {
         return fields.stream()
                 .filter(fieldMapping -> requiredProtoFields.contains(fieldMapping.protoFieldName()))
                 .map(fieldMapping -> fieldMapping.sqlExpression() + " AS \"" + fieldMapping.protoFieldName() + "\"")
                 .toList();
     }
-
 }

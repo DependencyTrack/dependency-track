@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.integrations.kenna;
 
-import alpine.model.ConfigProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.common.Mappers;
@@ -42,6 +41,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
@@ -77,9 +77,9 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
 
     @Override
     public boolean isEnabled() {
-        final ConfigProperty connector = qm.getConfigProperty(KENNA_CONNECTOR_ID.getGroupName(), KENNA_CONNECTOR_ID.getPropertyName());
-        if (qm.isEnabled(KENNA_ENABLED) && connector != null && connector.getPropertyValue() != null) {
-            connectorId = connector.getPropertyValue();
+        final String connector = getConfigValue(KENNA_CONNECTOR_ID);
+        if (isConfigEnabled(KENNA_ENABLED) && connector != null) {
+            connectorId = connector;
             return true;
         }
         return false;
@@ -98,15 +98,17 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
             }
 
             for (final Project project : projects) {
-                try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
-                     var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
-                     var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
+                try (var _ = MDC.putCloseable(
+                                MDC_PROJECT_UUID, project.getUuid().toString());
+                        var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
+                        var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
                     if (Thread.currentThread().isInterrupted()) {
                         LOGGER.warn("Interrupted before project could be processed");
                         break;
                     }
 
-                    final ProjectProperty externalId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
+                    final ProjectProperty externalId =
+                            qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
                     if (externalId != null && externalId.getPropertyValue() != null) {
                         LOGGER.debug("Transforming findings to KDI format");
                         kdi.process(project, externalId.getPropertyValue());
@@ -114,23 +116,23 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                 }
             }
 
-            qm.getPersistenceManager().evictAll(false, Project.class);
+            qm.getPersistenceManager().evictAll();
             projects = fetchNextProjectBatch(qm, projects.getLast().getId());
         }
 
-        return new ByteArrayInputStream(kdi.generate().toString().getBytes());
+        return new ByteArrayInputStream(kdi.generate().toString().getBytes(UTF_8));
     }
 
     @Override
     public void upload(final InputStream payload) {
         LOGGER.debug("Uploading payload to KennaSecurity");
-        final ConfigProperty apiUrlProperty = qm.getConfigProperty(KENNA_API_URL.getGroupName(), KENNA_API_URL.getPropertyName());
-        final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
-        if (tokenProperty == null) {
+        final String apiUrl = getConfigValue(KENNA_API_URL);
+        final String token = getConfigValue(KENNA_TOKEN);
+        if (token == null) {
             LOGGER.warn("Kenna Security token not specified. Aborting");
             return;
         }
-        final String tokenSecretName = StringUtils.trimToNull(tokenProperty.getPropertyValue());
+        final String tokenSecretName = StringUtils.trimToNull(token);
         if (tokenSecretName == null) {
             LOGGER.warn("Kenna Security token not specified. Aborting");
             return;
@@ -147,15 +149,14 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                     .addFilePart("file", "findings.json", payload, "application/json");
 
             final var request = HttpRequest.newBuilder()
-                    .uri(URI.create("%s/connectors/%s/data_file".formatted(apiUrlProperty.getPropertyValue(), connectorId)))
+                    .uri(URI.create("%s/connectors/%s/data_file".formatted(apiUrl, connectorId)))
                     .header("X-Risk-Token", tokenValue)
                     .header("Accept", "application/json")
                     .header("Content-Type", multipart.contentType())
                     .POST(multipart.build())
                     .build();
 
-            final HttpResponse<String> response = httpClient
-                    .send(request, HttpResponse.BodyHandlers.ofString());
+            final HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200 && response.body() != null) {
                 final JsonNode root = Mappers.jsonMapper().readTree(response.body());
                 if ("true".equals(root.path("success").asText())) {
@@ -166,6 +167,8 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
             } else {
                 handleUnexpectedHttpResponse(LOGGER, request.uri().toString(), response.statusCode(), response.body());
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to Kenna Security", e);
         }
@@ -189,5 +192,4 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
             query.closeAll();
         }
     }
-
 }

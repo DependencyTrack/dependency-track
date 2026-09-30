@@ -38,8 +38,7 @@ public final class InitTasksHealthCheck implements HealthCheck, InitTaskListener
     @Override
     public HealthCheckResponse call() {
         final HealthCheckResponseBuilder builder =
-                HealthCheckResponse.named("init-tasks")
-                        .status(initialized);
+                HealthCheckResponse.named("init-tasks").status(initialized);
         taskStatuses.forEach(builder::withData);
         return builder.build();
     }
@@ -62,5 +61,4 @@ public final class InitTasksHealthCheck implements HealthCheck, InitTaskListener
     public void markInitialized() {
         initialized = true;
     }
-
 }

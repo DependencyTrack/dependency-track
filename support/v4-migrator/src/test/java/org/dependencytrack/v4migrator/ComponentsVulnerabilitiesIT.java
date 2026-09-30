@@ -92,34 +92,37 @@ class ComponentsVulnerabilitiesIT {
                 """);
 
             // CV: one good join, one referencing the malformed-UUID vuln (must drop), and a dup.
-            h.execute("INSERT INTO \"COMPONENTS_VULNERABILITIES\" (\"COMPONENT_ID\", \"VULNERABILITY_ID\") VALUES (10, 100)");
-            h.execute("INSERT INTO \"COMPONENTS_VULNERABILITIES\" (\"COMPONENT_ID\", \"VULNERABILITY_ID\") VALUES (10, 100)");
-            h.execute("INSERT INTO \"COMPONENTS_VULNERABILITIES\" (\"COMPONENT_ID\", \"VULNERABILITY_ID\") VALUES (10, 200)");
+            h.execute(
+                    "INSERT INTO \"COMPONENTS_VULNERABILITIES\" (\"COMPONENT_ID\", \"VULNERABILITY_ID\") VALUES (10, 100)");
+            h.execute(
+                    "INSERT INTO \"COMPONENTS_VULNERABILITIES\" (\"COMPONENT_ID\", \"VULNERABILITY_ID\") VALUES (10, 100)");
+            h.execute(
+                    "INSERT INTO \"COMPONENTS_VULNERABILITIES\" (\"COMPONENT_ID\", \"VULNERABILITY_ID\") VALUES (10, 200)");
 
             // VV: one good, one referencing malformed-UUID vuln (must drop).
-            h.execute("INSERT INTO \"VULNERABLESOFTWARE_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"VULNERABLESOFTWARE_ID\") VALUES (100, 1000)");
-            h.execute("INSERT INTO \"VULNERABLESOFTWARE_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"VULNERABLESOFTWARE_ID\") VALUES (200, 1000)");
+            h.execute(
+                    "INSERT INTO \"VULNERABLESOFTWARE_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"VULNERABLESOFTWARE_ID\") VALUES (100, 1000)");
+            h.execute(
+                    "INSERT INTO \"VULNERABLESOFTWARE_VULNERABILITIES\" (\"VULNERABILITY_ID\", \"VULNERABLESOFTWARE_ID\") VALUES (200, 1000)");
         });
 
         runPipeline();
 
-        final List<Map<String, Object>> cv = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> cv =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "COMPONENT_ID", "VULNERABILITY_ID"
                       FROM "COMPONENTS_VULNERABILITIES"
                      ORDER BY "COMPONENT_ID", "VULNERABILITY_ID"
                     """).mapToMap().list());
-        assertThat(cv).extracting("component_id", "vulnerability_id")
-            .containsExactly(tuple(10L, 100L));
+        assertThat(cv).extracting("component_id", "vulnerability_id").containsExactly(tuple(10L, 100L));
 
-        final List<Map<String, Object>> vv = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> vv =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"
                       FROM "VULNERABLESOFTWARE_VULNERABILITIES"
                      ORDER BY "VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"
                     """).mapToMap().list());
-        assertThat(vv).extracting("vulnerability_id", "vulnerablesoftware_id")
-            .containsExactly(tuple(100L, 1000L));
+        assertThat(vv).extracting("vulnerability_id", "vulnerablesoftware_id").containsExactly(tuple(100L, 1000L));
     }
 
     private void runPipeline() throws Exception {

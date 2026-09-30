@@ -35,9 +35,12 @@ class WatermarkManagerTest {
     @Test
     void createShouldInitializeWatermarkWhenAvailable() {
         kvStore.putMany(Map.ofEntries(
-                Map.entry("watermark/maven", String.valueOf(Instant.ofEpochSecond(666).toEpochMilli())),
-                Map.entry("watermark/npm", String.valueOf(Instant.ofEpochSecond(555).toEpochMilli()))
-        ));
+                Map.entry(
+                        "watermark/maven",
+                        String.valueOf(Instant.ofEpochSecond(666).toEpochMilli())),
+                Map.entry(
+                        "watermark/npm",
+                        String.valueOf(Instant.ofEpochSecond(555).toEpochMilli()))));
 
         final var watermarkManager = new WatermarkManager(List.of("maven", "npm"), kvStore);
         assertThat(watermarkManager).isNotNull();

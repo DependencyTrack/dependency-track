@@ -180,5 +180,4 @@ public record ListProjectsConciseQuery(
                 this.searchText,
                 includeMetrics);
     }
-
 }

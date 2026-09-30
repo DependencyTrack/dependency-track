@@ -76,7 +76,8 @@ final class QueryTimingSqlLogger implements SqlLogger {
                 .record(latencyNanos, TimeUnit.NANOSECONDS);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Query {} completed with outcome {} in {}", queryName, outcome, Duration.ofNanos(latencyNanos));
+            LOGGER.debug(
+                    "Query {} completed with outcome {} in {}", queryName, outcome, Duration.ofNanos(latencyNanos));
         }
     }
 
@@ -87,12 +88,12 @@ final class QueryTimingSqlLogger implements SqlLogger {
 
         final ExtensionMethod extensionMethod = context.getExtensionMethod();
         if (extensionMethod != null) {
-            return "%s#%s".formatted(
-                    extensionMethod.getType().getSimpleName(),
-                    extensionMethod.getMethod().getName());
+            return "%s#%s"
+                    .formatted(
+                            extensionMethod.getType().getSimpleName(),
+                            extensionMethod.getMethod().getName());
         }
 
         return null;
     }
-
 }

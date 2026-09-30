@@ -28,6 +28,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
+import javax.jdo.annotations.ForeignKey;
 import javax.jdo.annotations.ForeignKeyAction;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Join;
@@ -37,7 +38,6 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import java.io.Serializable;
-import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 
@@ -49,7 +49,7 @@ import java.util.List;
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ApiKey implements Serializable, Principal {
+public class ApiKey implements Serializable {
 
     private static final long serialVersionUID = 1582714693932260365L;
 
@@ -97,12 +97,24 @@ public class ApiKey implements Serializable, Principal {
     @Column(name = "LAST_USED")
     private Date lastUsed;
 
+    /// @since 5.2.0
+    @Persistent
+    @Column(name = "EXPIRES_AT", allowsNull = "true")
+    private Date expiresAt;
+
     @Persistent(table = "APIKEYS_TEAMS", defaultFetchGroup = "true")
     @Join(column = "APIKEY_ID", primaryKey = "APIKEYS_TEAMS_PK", foreignKey = "APIKEYS_TEAMS_APIKEY_FK", deleteAction = ForeignKeyAction.CASCADE)
     @Element(column = "TEAM_ID", foreignKey = "APIKEYS_TEAMS_TEAM_FK", deleteAction = ForeignKeyAction.CASCADE)
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     @JsonIgnore
     private List<Team> teams;
+
+    /// @since 5.2.0
+    @Persistent
+    @Column(name = "USER_ID", allowsNull = "true")
+    @ForeignKey(name = "APIKEY_USER_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE)
+    @JsonIgnore
+    private User user;
 
     @Persistent
     @Unique(name = "APIKEY_PUBLIC_IDX")
@@ -155,18 +167,6 @@ public class ApiKey implements Serializable, Principal {
         return PREFIX + publicId + "*".repeat(API_KEY_LENGTH);
     }
 
-    /**
-     * Do not use - only here to satisfy Principal implementation requirement.
-     *
-     * @return a String presentation of the username
-     * @deprecated use {@link #getMaskedKey()}
-     */
-    @Deprecated
-    @JsonIgnore
-    public String getName() {
-        return getMaskedKey();
-    }
-
     public String getComment() {
         return comment;
     }
@@ -191,12 +191,28 @@ public class ApiKey implements Serializable, Principal {
         this.lastUsed = lastUsed;
     }
 
+    public Date getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(Date expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
     public List<Team> getTeams() {
         return teams;
     }
 
     public void setTeams(List<Team> teams) {
         this.teams = teams;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getPublicId() {

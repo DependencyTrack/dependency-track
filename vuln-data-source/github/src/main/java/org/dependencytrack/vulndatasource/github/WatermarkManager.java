@@ -75,7 +75,8 @@ final class WatermarkManager {
         return new WatermarkManager(clock, kvStore, null, null);
     }
 
-    @Nullable Instant getWatermark() {
+    @Nullable
+    Instant getWatermark() {
         return committedWatermark;
     }
 
@@ -90,8 +91,7 @@ final class WatermarkManager {
     }
 
     void maybeCommit(final boolean ignoreMinCommitInterval) {
-        if (pendingWatermark == null
-                || (committedWatermark != null && committedWatermark.equals(pendingWatermark))) {
+        if (pendingWatermark == null || (committedWatermark != null && committedWatermark.equals(pendingWatermark))) {
             return;
         }
         if (!ignoreMinCommitInterval
@@ -101,9 +101,7 @@ final class WatermarkManager {
 
         LOGGER.debug("Committing watermark {} to KV store", pendingWatermark);
         final CompareAndPutResult capResult = kvStore.compareAndPut(
-                "watermark",
-                String.valueOf(pendingWatermark.toEpochMilli()),
-                committedWatermarkVersion);
+                "watermark", String.valueOf(pendingWatermark.toEpochMilli()), committedWatermarkVersion);
         switch (capResult) {
             case CompareAndPutResult.Success(long newVersion) -> {
                 committedWatermark = pendingWatermark;
@@ -111,10 +109,8 @@ final class WatermarkManager {
                 lastCommittedAt = Instant.now(clock);
             }
             case CompareAndPutResult.Failure(CompareAndPutResult.Failure.Reason reason) ->
-                    throw new IllegalStateException(
-                            "Failed to commit watermark %s to KV store: %s".formatted(
-                                    pendingWatermark, reason));
+                throw new IllegalStateException(
+                        "Failed to commit watermark %s to KV store: %s".formatted(pendingWatermark, reason));
         }
     }
-
 }

@@ -143,8 +143,8 @@ class NotificationRuleStubIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "ENABLED", "NAME",
                            "NOTIFICATION_LEVEL"::text AS notification_level,
                            "NOTIFY_ON",
@@ -161,52 +161,54 @@ class NotificationRuleStubIT {
         assertThat(rows).hasSize(4);
 
         final Map<String, Object> good = rows.get(0);
-        assertThat(good).containsEntry("id", 10L)
-            .containsEntry("enabled", false)
-            .containsEntry("name", "Good Rule")
-            .containsEntry("notification_level", "INFORMATIONAL")
-            .containsEntry("trigger_type", "EVENT")
-            .containsEntry("schedule_cron", null)
-            .containsEntry("schedule_last_triggered_at", null)
-            .containsEntry("schedule_next_trigger_at", null)
-            .containsEntry("schedule_skip_unchanged", null);
+        assertThat(good)
+                .containsEntry("id", 10L)
+                .containsEntry("enabled", false)
+                .containsEntry("name", "Good Rule")
+                .containsEntry("notification_level", "INFORMATIONAL")
+                .containsEntry("trigger_type", "EVENT")
+                .containsEntry("schedule_cron", null)
+                .containsEntry("schedule_last_triggered_at", null)
+                .containsEntry("schedule_next_trigger_at", null)
+                .containsEntry("schedule_skip_unchanged", null);
         assertThat((String[]) ((java.sql.Array) good.get("notify_on")).getArray())
-            .containsExactly("BOM_PROCESSED", "NEW_VULNERABILITY");
+                .containsExactly("BOM_PROCESSED", "NEW_VULNERABILITY");
         assertThat((String) good.get("publisher_config"))
-            .contains("\"destinationUrl\"")
-            .contains("https://hooks.slack.com/abc");
+                .contains("\"destinationUrl\"")
+                .contains("https://hooks.slack.com/abc");
 
         final Map<String, Object> bad = rows.get(1);
-        assertThat(bad).containsEntry("id", 11L)
-            .containsEntry("enabled", false)
-            .containsEntry("name", "Bad Rule")
-            .containsEntry("notification_level", "WARNING")
-            .containsEntry("trigger_type", "EVENT");
+        assertThat(bad)
+                .containsEntry("id", 11L)
+                .containsEntry("enabled", false)
+                .containsEntry("name", "Bad Rule")
+                .containsEntry("notification_level", "WARNING")
+                .containsEntry("trigger_type", "EVENT");
         assertThat(bad.get("notify_on")).isNull();
         assertThat((String) bad.get("publisher_config"))
-            .contains("\"destinationUrl\"")
-            .contains("https://example.com");
+                .contains("\"destinationUrl\"")
+                .contains("https://example.com");
 
         final Map<String, Object> scheduled = rows.get(2);
-        assertThat(scheduled).containsEntry("id", 12L)
-            .containsEntry("enabled", false)
-            .containsEntry("name", "Scheduled Rule")
-            .containsEntry("notification_level", "INFORMATIONAL")
-            .containsEntry("trigger_type", "SCHEDULE")
-            .containsEntry("schedule_cron", "0 6 * * *")
-            .containsEntry("schedule_skip_unchanged", true);
+        assertThat(scheduled)
+                .containsEntry("id", 12L)
+                .containsEntry("enabled", false)
+                .containsEntry("name", "Scheduled Rule")
+                .containsEntry("notification_level", "INFORMATIONAL")
+                .containsEntry("trigger_type", "SCHEDULE")
+                .containsEntry("schedule_cron", "0 6 * * *")
+                .containsEntry("schedule_skip_unchanged", true);
         assertThat(((Timestamp) scheduled.get("schedule_last_triggered_at")).toInstant())
-            .isEqualTo(Instant.parse("2026-06-04T06:00:00Z"));
+                .isEqualTo(Instant.parse("2026-06-04T06:00:00Z"));
         assertThat(((Timestamp) scheduled.get("schedule_next_trigger_at")).toInstant())
-            .isEqualTo(Instant.parse("2026-06-05T06:00:00Z"));
+                .isEqualTo(Instant.parse("2026-06-05T06:00:00Z"));
         assertThat((String[]) ((java.sql.Array) scheduled.get("notify_on")).getArray())
-            .containsExactly("NEW_VULNERABILITIES_SUMMARY");
+                .containsExactly("NEW_VULNERABILITIES_SUMMARY");
 
         final Map<String, Object> obsolete = rows.get(3);
-        assertThat(obsolete).containsEntry("id", 13L)
-            .containsEntry("name", "Obsolete Rule");
+        assertThat(obsolete).containsEntry("id", 13L).containsEntry("name", "Obsolete Rule");
         assertThat((String[]) ((java.sql.Array) obsolete.get("notify_on")).getArray())
-            .isEmpty();
+                .isEmpty();
     }
 
     private void runPipeline() throws Exception {

@@ -36,39 +36,31 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @Parameters({
-        @Parameter(
-                name = "pageNumber",
-                in = ParameterIn.QUERY,
-                schema = @Schema(defaultValue = "1"),
-                description = "The page to return. To be used in conjunction with <code>pageSize</code>."
-        ),
-        @Parameter(
-                name = "pageSize",
-                in = ParameterIn.QUERY,
-                schema = @Schema(defaultValue = "100"),
-                description = "Number of elements to return per page. To be used in conjunction with <code>pageNumber</code>."
-        ),
-        @Parameter(
-                name = "offset",
-                in = ParameterIn.QUERY,
-                description = "Offset to start returning elements from. To be used in conjunction with <code>limit</code>."
-        ),
-        @Parameter(
-                name = "limit",
-                in = ParameterIn.QUERY,
-                description = "Number of elements to return per page. To be used in conjunction with <code>offset</code>."
-        ),
-        @Parameter(
-                name = "sortName",
-                in = ParameterIn.QUERY,
-                description = "Name of the resource field to sort on."
-        ),
-        @Parameter(
-                name = "sortOrder",
-                in = ParameterIn.QUERY,
-                schema = @Schema(allowableValues = "asc, desc"),
-                description = "Ordering of items when sorting with <code>sortName</code>."
-        )
+    @Parameter(
+            name = "pageNumber",
+            in = ParameterIn.QUERY,
+            schema = @Schema(defaultValue = "1"),
+            description = "The page to return. To be used in conjunction with <code>pageSize</code>."),
+    @Parameter(
+            name = "pageSize",
+            in = ParameterIn.QUERY,
+            schema = @Schema(defaultValue = "100"),
+            description =
+                    "Number of elements to return per page. To be used in conjunction with <code>pageNumber</code>."),
+    @Parameter(
+            name = "offset",
+            in = ParameterIn.QUERY,
+            description =
+                    "Offset to start returning elements from. To be used in conjunction with <code>limit</code>."),
+    @Parameter(
+            name = "limit",
+            in = ParameterIn.QUERY,
+            description = "Number of elements to return per page. To be used in conjunction with <code>offset</code>."),
+    @Parameter(name = "sortName", in = ParameterIn.QUERY, description = "Name of the resource field to sort on."),
+    @Parameter(
+            name = "sortOrder",
+            in = ParameterIn.QUERY,
+            schema = @Schema(allowableValues = "asc, desc"),
+            description = "Ordering of items when sorting with <code>sortName</code>.")
 })
-public @interface PaginatedApi {
-}
+public @interface PaginatedApi {}

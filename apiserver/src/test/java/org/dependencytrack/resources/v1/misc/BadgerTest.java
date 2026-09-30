@@ -19,7 +19,7 @@
 package org.dependencytrack.resources.v1.misc;
 
 import org.apache.commons.io.FileUtils;
-import org.dependencytrack.model.ProjectMetrics;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -160,8 +160,7 @@ public class BadgerTest {
     }
 
     private static String strip(String svg) {
-        return svg
-                .trim()
+        return svg.trim()
                 .replaceAll(" {2}", "")
                 .replaceAll("\r\n", "\n")
                 .replaceAll(">\\s+<", "><")

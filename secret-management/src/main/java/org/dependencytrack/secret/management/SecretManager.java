@@ -80,13 +80,15 @@ public interface SecretManager extends Closeable {
      * @param name Name of the secret.
      * @return The plain text value of the secret.
      */
-    @Nullable String getSecretValue(String name);
+    @Nullable
+    String getSecretValue(String name);
 
     /**
      * @param name Name of the secret.
      * @return Secret metadata.
      */
-    @Nullable SecretMetadata getSecretMetadata(String name);
+    @Nullable
+    SecretMetadata getSecretMetadata(String name);
 
     /**
      * @return A list of metadata about all secrets.
@@ -94,8 +96,7 @@ public interface SecretManager extends Closeable {
     Page<SecretMetadata> listSecretMetadata(ListSecretsRequest request);
 
     @Override
-    default void close() {
-    }
+    default void close() {}
 
     Pattern VALID_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]{1,64}$");
 
@@ -103,9 +104,7 @@ public interface SecretManager extends Closeable {
         requireNonNull(name, "name must not be null");
         if (!VALID_NAME_PATTERN.matcher(name).matches()) {
             throw new IllegalArgumentException(
-                    "name does not match expected pattern %s: %s".formatted(
-                            VALID_NAME_PATTERN.pattern(), name));
+                    "name does not match expected pattern %s: %s".formatted(VALID_NAME_PATTERN.pattern(), name));
         }
     }
-
 }

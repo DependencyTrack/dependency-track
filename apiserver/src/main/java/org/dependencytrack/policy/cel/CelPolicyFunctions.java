@@ -22,7 +22,6 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.github.nscuro.versatile.Vers;
 import io.github.nscuro.versatile.VersException;
-import jakarta.annotation.Nullable;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.parser.spdx.expression.SpdxExpressions;
 import org.dependencytrack.policy.cel.persistence.CelPolicyDao;
@@ -35,22 +34,19 @@ import org.jdbi.v3.core.statement.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.annotation.Nullable;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.substringAfter;
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_QUERY_NAME;
@@ -68,12 +64,12 @@ final class CelPolicyFunctions {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CelPolicyFunctions.class);
 
-    private CelPolicyFunctions() {
-    }
+    private CelPolicyFunctions() {}
 
     static boolean dependsOn(final Project project, final Component component) {
         if (project.getUuid().isBlank()) {
-            LOGGER.warn("%s: project does not have a UUID; Unable to evaluate, returning false".formatted(DEPENDS_ON.functionName()));
+            LOGGER.warn("%s: project does not have a UUID; Unable to evaluate, returning false"
+                    .formatted(DEPENDS_ON.functionName()));
             return false;
         }
 
@@ -98,8 +94,10 @@ final class CelPolicyFunctions {
                          WHERE "PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
                            AND ${filters}
                         """);
-                return query
-                        .define(ATTRIBUTE_QUERY_NAME, "%s#dependsOn_withoutInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                return query.define(
+                                ATTRIBUTE_QUERY_NAME,
+                                "%s#dependsOn_withoutInMemoryFilters"
+                                        .formatted(CelPolicyFunctions.class.getSimpleName()))
                         .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                         .bind("projectUuid", UUID.fromString(project.getUuid()))
                         .bindMap(compositeNodeFilter.sqlFilterParams())
@@ -120,7 +118,9 @@ final class CelPolicyFunctions {
                        AND ${filters}
                     """);
             return query
-                    .define(ATTRIBUTE_QUERY_NAME, "%s#dependsOn_withInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                    .define(
+                            ATTRIBUTE_QUERY_NAME,
+                            "%s#dependsOn_withInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
                     .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                     .define("selectColumnNames", compositeNodeFilter.sqlSelectColumns())
                     .bind("projectUuid", UUID.fromString(project.getUuid()))
@@ -131,17 +131,18 @@ final class CelPolicyFunctions {
         }
     }
 
-    static boolean isDependencyOf(final Component leafComponent, final Component rootComponent) {
-        if (leafComponent.getUuid().isBlank()) {
-            LOGGER.warn("%s: leaf component does not have a UUID; Unable to evaluate, returning false".formatted(IS_DEPENDENCY_OF.functionName()));
+    static boolean isDependencyOf(final Component dependencyComponent, final Component dependentTemplate) {
+        if (dependencyComponent.getUuid().isBlank()) {
+            LOGGER.warn("%s: dependency component does not have a UUID; Unable to evaluate, returning false"
+                    .formatted(IS_DEPENDENCY_OF.functionName()));
             return false;
         }
 
-        final var compositeNodeFilter = CompositeDependencyNodeFilter.of(rootComponent);
+        final var compositeNodeFilter = CompositeDependencyNodeFilter.of(dependentTemplate);
         if (!compositeNodeFilter.hasSqlFilters()) {
             LOGGER.warn("""
-                    %s: Unable to construct filter expression from root component %s; \
-                    Unable to evaluate, returning false""".formatted(IS_DEPENDENCY_OF.functionName(), rootComponent));
+                    %s: Unable to construct filter expression from dependent component %s; \
+                    Unable to evaluate, returning false""".formatted(IS_DEPENDENCY_OF.functionName(), dependentTemplate));
             return false;
         }
 
@@ -151,7 +152,7 @@ final class CelPolicyFunctions {
                         WITH RECURSIVE "CTE_PROJECT" AS (
                           SELECT "PROJECT_ID" AS "ID"
                             FROM "COMPONENT"
-                           WHERE "UUID" = :leafComponentUuid
+                           WHERE "UUID" = :dependencyUuid
                         ),
                         "CTE_MATCHES" AS (
                           SELECT "ID"
@@ -160,35 +161,34 @@ final class CelPolicyFunctions {
                              AND "DIRECT_DEPENDENCIES" IS NOT NULL
                              AND ${filters}
                         ),
-                        "CTE_DEPENDENCIES" ("UUID", "PROJECT_ID", "FOUND", "PATH") AS (
+                        "CTE_DEPENDENTS" ("UUID", "PROJECT_ID", "FOUND") AS (
                           SELECT "C"."UUID"                                       AS "UUID"
                                , "C"."PROJECT_ID"                                 AS "PROJECT_ID"
                                , ("C"."ID" = ANY(SELECT "ID" FROM "CTE_MATCHES")) AS "FOUND"
-                               , ARRAY["C"."ID"]::BIGINT[]                        AS "PATH"
                             FROM "COMPONENT" AS "C"
                            WHERE EXISTS(SELECT 1 FROM "CTE_MATCHES")
                              AND "C"."PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
-                             AND "C"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', :leafComponentUuid))
-                          UNION ALL
+                             AND "C"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', :dependencyUuid))
+                          UNION
                           SELECT "C"."UUID"                                       AS "UUID"
                                , "C"."PROJECT_ID"                                 AS "PROJECT_ID"
                                , ("C"."ID" = ANY(SELECT "ID" FROM "CTE_MATCHES")) AS "FOUND"
-                               , ARRAY_APPEND("PREVIOUS"."PATH", "C"."ID")        AS "PATH"
                             FROM "COMPONENT" AS "C"
-                           INNER JOIN "CTE_DEPENDENCIES" AS "PREVIOUS"
+                           INNER JOIN "CTE_DEPENDENTS" AS "PREVIOUS"
                               ON "PREVIOUS"."PROJECT_ID" = "C"."PROJECT_ID"
                            WHERE NOT "PREVIOUS"."FOUND"
-                             AND NOT ("C"."ID" = ANY("PREVIOUS"."PATH"))
                              AND "C"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "PREVIOUS"."UUID"))
                         )
                         SELECT BOOL_OR("FOUND")
-                          FROM "CTE_DEPENDENCIES"
+                          FROM "CTE_DEPENDENTS"
                         """);
 
-                return query
-                        .define(ATTRIBUTE_QUERY_NAME, "%s#isDependencyOf_withoutInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                return query.define(
+                                ATTRIBUTE_QUERY_NAME,
+                                "%s#isDependencyOf_withoutInMemoryFilters"
+                                        .formatted(CelPolicyFunctions.class.getSimpleName()))
                         .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
-                        .bind("leafComponentUuid", UUID.fromString(leafComponent.getUuid()))
+                        .bind("dependencyUuid", UUID.fromString(dependencyComponent.getUuid()))
                         .bindMap(compositeNodeFilter.sqlFilterParams())
                         .mapTo(Boolean.class)
                         .findOne()
@@ -199,7 +199,7 @@ final class CelPolicyFunctions {
                     WITH RECURSIVE "CTE_PROJECT" AS (
                       SELECT "PROJECT_ID" AS "ID"
                         FROM "COMPONENT"
-                       WHERE "UUID" = :leafComponentUuid
+                       WHERE "UUID" = :dependencyUuid
                     ),
                     "CTE_MATCHES" AS (
                       SELECT "ID"
@@ -208,7 +208,7 @@ final class CelPolicyFunctions {
                          AND "DIRECT_DEPENDENCIES" IS NOT NULL
                          AND ${filters}
                     ),
-                    "CTE_DEPENDENCIES" ("UUID", "PROJECT_ID", ${selectColumnNames?join(", ", "", ", ")} "FOUND", "PATH") AS (
+                    "CTE_DEPENDENTS" ("UUID", "PROJECT_ID", ${selectColumnNames?join(", ", "", ", ")} "FOUND") AS (
                       SELECT "C"."UUID" AS "UUID"
                            , "C"."PROJECT_ID" AS "PROJECT_ID"
                            <#list selectColumnNames as columnName>
@@ -218,12 +218,11 @@ final class CelPolicyFunctions {
                              END AS ${columnName}
                            </#list>
                            , ("C"."ID" = ANY(SELECT "ID" FROM "CTE_MATCHES")) AS "FOUND"
-                           , ARRAY["C"."ID"]::BIGINT[] AS "PATH"
                         FROM "COMPONENT" AS "C"
                        WHERE EXISTS(SELECT 1 FROM "CTE_MATCHES")
                          AND "C"."PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
-                         AND "C"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', :leafComponentUuid))
-                      UNION ALL
+                         AND "C"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', :dependencyUuid))
+                      UNION
                       SELECT "C"."UUID" AS "UUID"
                            , "C"."PROJECT_ID" AS "PROJECT_ID"
                            <#list selectColumnNames as columnName>
@@ -233,23 +232,23 @@ final class CelPolicyFunctions {
                              END AS ${columnName}
                            </#list>
                            , ("C"."ID" = ANY(SELECT "ID" FROM "CTE_MATCHES")) AS "FOUND"
-                           , ARRAY_APPEND("PREVIOUS"."PATH", "C"."ID") AS "PATH"
                         FROM "COMPONENT" AS "C"
-                       INNER JOIN "CTE_DEPENDENCIES" AS "PREVIOUS"
+                       INNER JOIN "CTE_DEPENDENTS" AS "PREVIOUS"
                           ON "PREVIOUS"."PROJECT_ID" = "C"."PROJECT_ID"
-                       WHERE NOT ("C"."ID" = ANY("PREVIOUS"."PATH"))
-                         AND "C"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "PREVIOUS"."UUID"))
+                       WHERE "C"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "PREVIOUS"."UUID"))
                     )
                     SELECT ${selectColumnNames?join(", ")}
-                      FROM "CTE_DEPENDENCIES"
+                      FROM "CTE_DEPENDENTS"
                      WHERE "FOUND"
                     """);
 
             return query
-                    .define(ATTRIBUTE_QUERY_NAME, "%s#isDependencyOf_withInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                    .define(
+                            ATTRIBUTE_QUERY_NAME,
+                            "%s#isDependencyOf_withInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
                     .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                     .define("selectColumnNames", compositeNodeFilter.sqlSelectColumns())
-                    .bind("leafComponentUuid", UUID.fromString(leafComponent.getUuid()))
+                    .bind("dependencyUuid", UUID.fromString(dependencyComponent.getUuid()))
                     .bindMap(compositeNodeFilter.sqlFilterParams())
                     .map(ConstructorMapper.of(DependencyNode.class))
                     .stream()
@@ -257,117 +256,124 @@ final class CelPolicyFunctions {
         }
     }
 
-    static boolean isExclusiveDependencyOf(final Component leafComponent, final Component rootComponent) {
-        if (leafComponent.getUuid().isBlank()) {
-            LOGGER.warn("%s: leaf component does not have a UUID; Unable to evaluate, returning false".formatted(IS_EXCLUSIVE_DEPENDENCY_OF.functionName()));
+    static boolean isExclusiveDependencyOf(final Component dependencyComponent, final Component dependentTemplate) {
+        if (dependencyComponent.getUuid().isBlank()) {
+            LOGGER.warn("%s: dependency component does not have a UUID; Unable to evaluate, returning false"
+                    .formatted(IS_EXCLUSIVE_DEPENDENCY_OF.functionName()));
             return false;
         }
 
-        final var compositeNodeFilter = CompositeDependencyNodeFilter.of(rootComponent);
+        final var compositeNodeFilter = CompositeDependencyNodeFilter.of(dependentTemplate);
         if (!compositeNodeFilter.hasSqlFilters()) {
             LOGGER.warn("""
-                    %s: Unable to construct filter expression from root component %s; \
-                    Unable to evaluate, returning false""".formatted(IS_EXCLUSIVE_DEPENDENCY_OF.functionName(), rootComponent));
+                    %s: Unable to construct filter expression from dependent component %s; \
+                    Unable to evaluate, returning false""".formatted(IS_EXCLUSIVE_DEPENDENCY_OF.functionName(), dependentTemplate));
             return false;
         }
 
         try (final Handle jdbiHandle = openJdbiHandle()) {
-            if (new CelPolicyDao(jdbiHandle).isDirectDependency(leafComponent)) {
+            if (new CelPolicyDao(jdbiHandle).isDirectDependency(dependencyComponent)) {
                 return false;
             }
 
+            final Query matchesQuery = jdbiHandle.createQuery("""
+                    WITH "CTE_PROJECT" AS (
+                      SELECT "PROJECT_ID" AS "ID"
+                        FROM "COMPONENT"
+                       WHERE "UUID" = :dependencyUuid
+                    )
+                    SELECT ${selectColumnNames?join(", ", "", ", ")} "ID"
+                      FROM "COMPONENT"
+                     WHERE "PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
+                       AND "DIRECT_DEPENDENCIES" IS NOT NULL
+                       AND ${filters}
+                    """);
+
+            final List<Long> matchedComponentIds = matchesQuery
+                    .define(
+                            ATTRIBUTE_QUERY_NAME,
+                            "%s#isExclusiveDependencyOf_matches".formatted(CelPolicyFunctions.class.getSimpleName()))
+                    .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
+                    .define("selectColumnNames", compositeNodeFilter.sqlSelectColumns())
+                    .bind("dependencyUuid", UUID.fromString(dependencyComponent.getUuid()))
+                    .bindMap(compositeNodeFilter.sqlFilterParams())
+                    .map(ConstructorMapper.of(DependencyNode.class))
+                    .stream()
+                    .filter(compositeNodeFilter.inMemoryFiltersConjunctive())
+                    .map(DependencyNode::id)
+                    .toList();
+            if (matchedComponentIds.isEmpty()) {
+                return false;
+            }
+
+            // Walk the graph upwards from the dependency component, stopping at matching components.
+            // It is an exclusive dependency of them if no path escapes to a component that is a
+            // direct dependency of the project, or that nothing else depends on.
             final Query query = jdbiHandle.createQuery("""
                     WITH RECURSIVE "CTE_PROJECT" AS (
                       SELECT "PROJECT_ID" AS "ID"
                         FROM "COMPONENT"
-                       WHERE "UUID" = :leafComponentUuid
+                       WHERE "UUID" = :dependencyUuid
                     ),
-                    "CTE_MATCHES" AS (
-                      SELECT "ID"
-                        FROM "COMPONENT"
-                       WHERE "PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
-                         AND "DIRECT_DEPENDENCIES" IS NOT NULL
-                         AND ${filters}
-                    ),
-                    "CTE_DEPENDENCIES" ("ID", "UUID", "PROJECT_ID", ${selectColumnNames?join(", ", "", ", ")} "FOUND", "PATH") AS (
-                      SELECT "C"."ID" AS "ID"
-                           , "C"."UUID" AS "UUID"
+                    "CTE_DEPENDENTS" ("UUID", "PROJECT_ID", "FOUND") AS (
+                      SELECT "C"."UUID" AS "UUID"
                            , "C"."PROJECT_ID" AS "PROJECT_ID"
-                           <#list selectColumnNames as columnName>
-                           , CASE
-                               WHEN ("C"."ID" = ANY(SELECT "ID" FROM "CTE_MATCHES"))
-                               THEN "C".${columnName}
-                             END AS ${columnName}
-                           </#list>
-                           , ("C"."ID" = ANY(SELECT "ID" FROM "CTE_MATCHES")) AS "FOUND"
-                           , ARRAY["C"."ID"]::BIGINT[] AS "PATH"
+                           , ("C"."ID" = ANY(:matchedComponentIds)) AS "FOUND"
                         FROM "COMPONENT" AS "C"
-                       WHERE EXISTS(SELECT 1 FROM "CTE_MATCHES")
-                         AND "C"."PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
-                         AND "C"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', :leafComponentUuid))
-                      UNION ALL
-                      SELECT "C"."ID" AS "ID"
-                           , "C"."UUID" AS "UUID"
+                       WHERE "C"."PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
+                         AND "C"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', :dependencyUuid))
+                      UNION
+                      SELECT "C"."UUID" AS "UUID"
                            , "C"."PROJECT_ID" AS "PROJECT_ID"
-                           <#list selectColumnNames as columnName>
-                           , CASE
-                               WHEN ("C"."ID" = ANY(SELECT "ID" FROM "CTE_MATCHES"))
-                               THEN "C".${columnName}
-                             END AS ${columnName}
-                           </#list>
-                           , ("C"."ID" = ANY(SELECT "ID" FROM "CTE_MATCHES")) AS "FOUND"
-                           , ARRAY_APPEND("PREVIOUS"."PATH", "C"."ID") AS "PATH"
+                           , ("C"."ID" = ANY(:matchedComponentIds)) AS "FOUND"
                         FROM "COMPONENT" AS "C"
-                       INNER JOIN "CTE_DEPENDENCIES" AS "PREVIOUS"
+                       INNER JOIN "CTE_DEPENDENTS" AS "PREVIOUS"
                           ON "PREVIOUS"."PROJECT_ID" = "C"."PROJECT_ID"
-                       WHERE NOT ("C"."ID" = ANY("PREVIOUS"."PATH"))
+                       WHERE NOT "PREVIOUS"."FOUND"
                          AND "C"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "PREVIOUS"."UUID"))
                     )
-                    SELECT "ID"
-                         , ${selectColumnNames?join(", ", "", ", ")} "FOUND"
-                         , "PATH"
-                      FROM "CTE_DEPENDENCIES"
+                    SELECT EXISTS(SELECT 1 FROM "CTE_DEPENDENTS")
+                       AND NOT EXISTS(
+                         SELECT 1
+                           FROM "CTE_DEPENDENTS" AS "DEPENDENT"
+                          WHERE NOT "DEPENDENT"."FOUND"
+                            AND (EXISTS(
+                              SELECT 1
+                                FROM "PROJECT"
+                               WHERE "PROJECT"."ID" = "DEPENDENT"."PROJECT_ID"
+                                 AND "PROJECT"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "DEPENDENT"."UUID")))
+                                  OR NOT EXISTS(
+                                    SELECT 1
+                                      FROM "COMPONENT" AS "DIRECT_DEPENDENT"
+                                     WHERE "DIRECT_DEPENDENT"."PROJECT_ID" = "DEPENDENT"."PROJECT_ID"
+                                       AND "DIRECT_DEPENDENT"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "DEPENDENT"."UUID"))
+                                  )
+                            )
+                       )
                     """);
 
-            final List<DependencyNode> nodes = query
-                    .define(ATTRIBUTE_QUERY_NAME, "%s#isExclusiveDependencyOf".formatted(CelPolicyFunctions.class.getSimpleName()))
-                    .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
-                    .define("selectColumnNames", compositeNodeFilter.sqlSelectColumns())
-                    .bind("leafComponentUuid", UUID.fromString(leafComponent.getUuid()))
-                    .bindMap(compositeNodeFilter.sqlFilterParams())
-                    .map(ConstructorMapper.of(DependencyNode.class))
-                    .list();
-            if (nodes.isEmpty()) {
-                return false;
-            }
-
-            final Set<Long> matchedNodeIds = nodes.stream()
-                    .filter(node -> node.found() != null && node.found())
-                    .filter(compositeNodeFilter.inMemoryFiltersConjunctive())
-                    .map(DependencyNode::id)
-                    .collect(Collectors.toSet());
-            if (matchedNodeIds.isEmpty()) {
-                return false;
-            }
-
-            final List<List<Long>> paths = reducePaths(nodes);
-
-            return paths.stream().allMatch(path -> path.stream().anyMatch(matchedNodeIds::contains));
+            return query.define(
+                            ATTRIBUTE_QUERY_NAME,
+                            "%s#isExclusiveDependencyOf".formatted(CelPolicyFunctions.class.getSimpleName()))
+                    .bind("dependencyUuid", UUID.fromString(dependencyComponent.getUuid()))
+                    .bindArray("matchedComponentIds", Long.class, matchedComponentIds)
+                    .mapTo(Boolean.class)
+                    .one();
         }
     }
 
-    static boolean isDirectDependencyOf(final Component childComponent,
-                                        final Component parentTemplate) {
-        if (childComponent.getUuid().isBlank()) {
-            LOGGER.warn("%s: leaf component does not have a UUID; returning false".formatted(IS_DIRECT_DEPENDENCY_OF.functionName()));
+    static boolean isDirectDependencyOf(final Component dependencyComponent, final Component dependentTemplate) {
+        if (dependencyComponent.getUuid().isBlank()) {
+            LOGGER.warn("%s: dependency component does not have a UUID; returning false"
+                    .formatted(IS_DIRECT_DEPENDENCY_OF.functionName()));
             return false;
         }
 
-        final var compositeNodeFilter = CompositeDependencyNodeFilter.of(parentTemplate);
+        final var compositeNodeFilter = CompositeDependencyNodeFilter.of(dependentTemplate);
         if (!compositeNodeFilter.hasSqlFilters()) {
             LOGGER.warn("""
-                    %s: Unable to construct filter expression from parent component %s; \
-                    returning false""".formatted(IS_DIRECT_DEPENDENCY_OF.functionName(), parentTemplate));
+                    %s: Unable to construct filter expression from dependent component %s; \
+                    returning false""".formatted(IS_DIRECT_DEPENDENCY_OF.functionName(), dependentTemplate));
             return false;
         }
 
@@ -377,22 +383,23 @@ final class CelPolicyFunctions {
                         WITH "CTE_PROJECT" AS (
                           SELECT "PROJECT_ID" AS "ID"
                             FROM "COMPONENT"
-                           WHERE "UUID" = :childUuid
+                           WHERE "UUID" = :dependencyUuid
                         )
                         SELECT EXISTS(
                           SELECT 1
-                            FROM "COMPONENT" AS "PARENT"
-                           WHERE "PARENT"."PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
-                             AND "PARENT"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(
-                                   JSONB_BUILD_OBJECT('uuid', :childUuid))
+                            FROM "COMPONENT" AS "DEPENDENT"
+                           WHERE "DEPENDENT"."PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
+                             AND "DEPENDENT"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(
+                                   JSONB_BUILD_OBJECT('uuid', :dependencyUuid))
                              AND ${filters}
                         )
                         """);
-                return query
-                        .define(ATTRIBUTE_QUERY_NAME,
-                                "%s#isDirectDependencyOf_withoutInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                return query.define(
+                                ATTRIBUTE_QUERY_NAME,
+                                "%s#isDirectDependencyOf_withoutInMemoryFilters"
+                                        .formatted(CelPolicyFunctions.class.getSimpleName()))
                         .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
-                        .bind("childUuid", UUID.fromString(childComponent.getUuid()))
+                        .bind("dependencyUuid", UUID.fromString(dependencyComponent.getUuid()))
                         .bindMap(compositeNodeFilter.sqlFilterParams())
                         .mapTo(Boolean.class)
                         .one();
@@ -402,38 +409,24 @@ final class CelPolicyFunctions {
                     WITH "CTE_PROJECT" AS (
                       SELECT "PROJECT_ID" AS "ID"
                         FROM "COMPONENT"
-                       WHERE "UUID" = :childUuid
-                    ),
-                    "CTE_PARENTS" ("ID", "UUID", "PROJECT_ID"
-                         , ${selectColumnNames?join(", ", "", ", ")} "FOUND", "PATH") AS (
-                      SELECT "PARENT"."ID" AS "ID"
-                           , "PARENT"."UUID" AS "UUID"
-                           , "PARENT"."PROJECT_ID" AS "PROJECT_ID"
-                           <#list selectColumnNames as columnName>
-                           , "PARENT".${columnName} AS ${columnName}
-                           </#list>
-                           , TRUE AS "FOUND"
-                           , ARRAY["PARENT"."ID"]::BIGINT[] AS "PATH"
-                        FROM "COMPONENT" AS "PARENT"
-                       WHERE "PARENT"."PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
-                         AND "PARENT"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(
-                               JSONB_BUILD_OBJECT('uuid', :childUuid))
-                         AND ${filters}
+                       WHERE "UUID" = :dependencyUuid
                     )
-                    SELECT "ID"
-                         , "UUID"
-                         , "PROJECT_ID"
-                         , ${selectColumnNames?join(", ", "", ", ")} "FOUND"
-                         , "PATH"
-                      FROM "CTE_PARENTS"
+                    SELECT ${selectColumnNames?join(", ", "", ", ")} "DEPENDENT"."ID" AS "ID"
+                      FROM "COMPONENT" AS "DEPENDENT"
+                     WHERE "DEPENDENT"."PROJECT_ID" = (SELECT "ID" FROM "CTE_PROJECT")
+                       AND "DEPENDENT"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(
+                             JSONB_BUILD_OBJECT('uuid', :dependencyUuid))
+                       AND ${filters}
                     """);
 
             return query
-                    .define(ATTRIBUTE_QUERY_NAME,
-                            "%s#isDirectDependencyOf_withInMemoryFilters".formatted(CelPolicyFunctions.class.getSimpleName()))
+                    .define(
+                            ATTRIBUTE_QUERY_NAME,
+                            "%s#isDirectDependencyOf_withInMemoryFilters"
+                                    .formatted(CelPolicyFunctions.class.getSimpleName()))
                     .define("filters", compositeNodeFilter.sqlFiltersConjunctive())
                     .define("selectColumnNames", compositeNodeFilter.sqlSelectColumns())
-                    .bind("childUuid", UUID.fromString(childComponent.getUuid()))
+                    .bind("dependencyUuid", UUID.fromString(dependencyComponent.getUuid()))
                     .bindMap(compositeNodeFilter.sqlFilterParams())
                     .map(ConstructorMapper.of(DependencyNode.class))
                     .stream()
@@ -445,8 +438,10 @@ final class CelPolicyFunctions {
         try {
             return Vers.parseLenient(versStr).contains(version);
         } catch (VersException e) {
-            LOGGER.warn("%s: Failed to check if version %s matches range %s"
-                    .formatted(MATCHES_RANGE.functionName(), version, versStr), e);
+            LOGGER.warn(
+                    "%s: Failed to check if version %s matches range %s"
+                            .formatted(MATCHES_RANGE.functionName(), version, versStr),
+                    e);
             return false;
         }
     }
@@ -454,20 +449,24 @@ final class CelPolicyFunctions {
     static boolean matchesVersionDistance(Component component, String comparator, VersionDistance value) {
         try {
             if (!component.hasPurl()) {
-                LOGGER.warn("%s: Component does not have a purl; returning false".formatted(VERSION_DISTANCE.functionName()));
+                LOGGER.warn("%s: Component does not have a purl; returning false"
+                        .formatted(VERSION_DISTANCE.functionName()));
                 return false;
             }
             try {
                 if (RepositoryType.resolve(new PackageURL(component.getPurl())) == RepositoryType.UNSUPPORTED) {
-                    LOGGER.warn("%s: Unsupported repository type for component; returning false".formatted(VERSION_DISTANCE.functionName()));
+                    LOGGER.warn("%s: Unsupported repository type for component; returning false"
+                            .formatted(VERSION_DISTANCE.functionName()));
                     return false;
                 }
             } catch (MalformedPackageURLException ex) {
-                LOGGER.warn("%s: Invalid package url %s; returning false".formatted(VERSION_DISTANCE.functionName(), component.getPurl()));
+                LOGGER.warn("%s: Invalid package url %s; returning false"
+                        .formatted(VERSION_DISTANCE.functionName(), component.getPurl()));
                 return false;
             }
             if (!component.hasLatestVersion()) {
-                LOGGER.warn("%s: Component does not have latest version information; returning false".formatted(VERSION_DISTANCE.functionName()));
+                LOGGER.warn("%s: Component does not have latest version information; returning false"
+                        .formatted(VERSION_DISTANCE.functionName()));
                 return false;
             }
             return evaluateVersionDistance(component, comparator, value);
@@ -480,35 +479,44 @@ final class CelPolicyFunctions {
     }
 
     private static boolean evaluateVersionDistance(Component component, String comparator, VersionDistance value) {
-        String comparatorComputed = switch (comparator) {
-            case "NUMERIC_GREATER_THAN", ">" -> "NUMERIC_GREATER_THAN";
-            case "NUMERIC_GREATER_THAN_OR_EQUAL", ">=" -> "NUMERIC_GREATER_THAN_OR_EQUAL";
-            case "NUMERIC_EQUAL", "==" -> "NUMERIC_EQUAL";
-            case "NUMERIC_NOT_EQUAL", "!=" -> "NUMERIC_NOT_EQUAL";
-            case "NUMERIC_LESSER_THAN_OR_EQUAL", "<=" -> "NUMERIC_LESSER_THAN_OR_EQUAL";
-            case "NUMERIC_LESS_THAN", "<" -> "NUMERIC_LESS_THAN";
-            default -> "";
-        };
+        String comparatorComputed =
+                switch (comparator) {
+                    case "NUMERIC_GREATER_THAN", ">" -> "NUMERIC_GREATER_THAN";
+                    case "NUMERIC_GREATER_THAN_OR_EQUAL", ">=" -> "NUMERIC_GREATER_THAN_OR_EQUAL";
+                    case "NUMERIC_EQUAL", "==" -> "NUMERIC_EQUAL";
+                    case "NUMERIC_NOT_EQUAL", "!=" -> "NUMERIC_NOT_EQUAL";
+                    case "NUMERIC_LESSER_THAN_OR_EQUAL", "<=" -> "NUMERIC_LESSER_THAN_OR_EQUAL";
+                    case "NUMERIC_LESS_THAN", "<" -> "NUMERIC_LESS_THAN";
+                    default -> "";
+                };
         if (comparatorComputed.isEmpty()) {
             LOGGER.warn("""
                     %s: Unsupported operator %s for version distance policy; \
                     Unable to resolve, returning false""".formatted(VERSION_DISTANCE.functionName(), comparator));
             return false;
         }
-        final org.dependencytrack.model.VersionDistance versionDistance;
+        final org.dependencytrack.policy.cel.VersionDistance versionDistance;
         try {
-            versionDistance = org.dependencytrack.model.VersionDistance.getVersionDistance(
+            versionDistance = org.dependencytrack.policy.cel.VersionDistance.getVersionDistance(
                     component.getVersion(), component.getLatestVersion());
         } catch (RuntimeException e) {
-            LOGGER.warn("""
+            LOGGER.warn(
+                    """
                     %s: Failed to compute version distance for component %s (UUID: %s), \
                     between component version %s and latest version %s; Skipping\
-                    """.formatted(VERSION_DISTANCE.functionName(), component, component.getUuid(), component.getVersion(), component.getLatestVersion()), e);
+                    """.formatted(
+                                    VERSION_DISTANCE.functionName(),
+                                    component,
+                                    component.getUuid(),
+                                    component.getVersion(),
+                                    component.getLatestVersion()),
+                    e);
             return false;
         }
-        final boolean isDirectDependency = withJdbiHandle(
-                handle -> new CelPolicyDao(handle).isDirectDependency(component));
-        return isDirectDependency && org.dependencytrack.model.VersionDistance.evaluate(value, comparatorComputed, versionDistance);
+        final boolean isDirectDependency =
+                withJdbiHandle(handle -> new CelPolicyDao(handle).isDirectDependency(component));
+        return isDirectDependency
+                && org.dependencytrack.policy.cel.VersionDistance.evaluate(value, comparatorComputed, versionDistance);
     }
 
     static boolean isComponentOld(Component component, String comparator, String age) {
@@ -534,7 +542,8 @@ final class CelPolicyFunctions {
             return false;
         }
         if (agePeriod.isZero() || agePeriod.isNegative()) {
-            LOGGER.warn("%s: Age durations must not be zero or negative, but was %s".formatted(COMPARE_AGE.functionName(), agePeriod));
+            LOGGER.warn("%s: Age durations must not be zero or negative, but was %s"
+                    .formatted(COMPARE_AGE.functionName(), agePeriod));
             return false;
         }
         Instant instant = Instant.ofEpochSecond(componentPublishedDate.getSeconds(), componentPublishedDate.getNanos());
@@ -549,7 +558,8 @@ final class CelPolicyFunctions {
             case "NUMERIC_LESSER_THAN_OR_EQUAL", "<=" -> ageDate.isEqual(today) || ageDate.isAfter(today);
             case "NUMERIC_LESS_THAN", "<" -> ageDate.isAfter(today);
             default -> {
-                LOGGER.warn("%s: Operator %s is not supported for component age conditions".formatted(COMPARE_AGE.functionName(), comparator));
+                LOGGER.warn("%s: Operator %s is not supported for component age conditions"
+                        .formatted(COMPARE_AGE.functionName(), comparator));
                 yield false;
             }
         };
@@ -578,47 +588,8 @@ final class CelPolicyFunctions {
         return SpdxExpressions.requiresAny(expr, (List<String>) ids);
     }
 
-    /**
-     * Reduce paths of all {@link DependencyNode}s to complete, unique paths.
-     * e.g. [[3, 2, 1], [2, 1], [1]] reduces to [[3, 2, 1]].
-     */
-    static List<List<Long>> reducePaths(final List<DependencyNode> nodes) {
-        return nodes.stream()
-                .map(DependencyNode::path)
-                .sorted(Collections.reverseOrder(Comparator.comparingInt(List::size)))
-                .collect(
-                        ArrayList::new,
-                        (ArrayList<List<Long>> paths, List<Long> newPath) -> {
-                            final boolean isCovered = paths.stream()
-                                    .anyMatch(path -> containsExactly(path, newPath));
-                            if (!isCovered) {
-                                paths.add(newPath);
-                            }
-                        },
-                        ArrayList::addAll
-                );
-    }
-
-    private static <T> boolean containsExactly(final List<T> lhs, final List<T> rhs) {
-        final int lhsSize = lhs.size();
-        final int rhsSize = rhs.size();
-        final int maxSize = Math.min(lhsSize, rhsSize);
-
-        if (lhsSize > rhsSize) {
-            return Objects.equals(lhs.subList(0, maxSize), rhs);
-        } else if (lhsSize < rhsSize) {
-            return Objects.equals(lhs, rhs.subList(0, maxSize));
-        }
-
-        return Objects.equals(lhs, rhs);
-    }
-
     public record DependencyNode(
-            @Nullable Long id,
-            @Nullable String version,
-            @Nullable Boolean found,
-            @Nullable List<Long> path) {
-    }
+            @Nullable Long id, @Nullable String version) {}
 
     record CompositeDependencyNodeFilter(
             List<String> sqlFilters,
@@ -727,7 +698,5 @@ final class CelPolicyFunctions {
         Predicate<DependencyNode> inMemoryFiltersConjunctive() {
             return inMemoryFilters.stream().reduce(Predicate::and).orElse(node -> true);
         }
-
     }
-
 }

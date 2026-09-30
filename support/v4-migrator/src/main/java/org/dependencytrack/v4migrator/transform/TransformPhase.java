@@ -47,9 +47,8 @@ public final class TransformPhase {
         new StagingSchema(target, options.stagingSchema).ensure();
         // Re-running transform invalidates load state (per pipeline §4.2). The transforms
         // themselves drop and rebuild every tgt_* table; we just clear the LOAD ledger.
-        target.useHandle(h -> h.execute(
-            "DELETE FROM \"%s\".migration_state WHERE phase = 'LOAD'"
-                .formatted(options.stagingSchema)));
+        target.useHandle(h ->
+                h.execute("DELETE FROM \"%s\".migration_state WHERE phase = 'LOAD'".formatted(options.stagingSchema)));
         // src_* tables are bulk-loaded via COPY into UNLOGGED tables and autovacuum may not
         // analyze them in time. Without stats the planner defaults to nested-loop joins for
         // transforms like PACKAGE_METADATA, which can stall for hours on production-sized
@@ -100,10 +99,10 @@ public final class TransformPhase {
     }
 
     private long countTgt(final String name) {
-        return target.withHandle(h ->
-            h.createQuery("SELECT count(*) FROM \"%s\".tgt_%s".formatted(options.stagingSchema, name))
-                .mapTo(Long.class)
-                .one());
+        return target.withHandle(
+                h -> h.createQuery("SELECT count(*) FROM \"%s\".tgt_%s".formatted(options.stagingSchema, name))
+                        .mapTo(Long.class)
+                        .one());
     }
 
     private void markState(final String table, final String status) {
@@ -113,9 +112,9 @@ public final class TransformPhase {
                 ON CONFLICT (table_name, phase) DO UPDATE
                     SET status = :s, started_at = NOW(), completed_at = NULL, rows_processed = 0
                 """.formatted(options.stagingSchema))
-            .bind("t", table)
-            .bind("s", status)
-            .execute());
+                .bind("t", table)
+                .bind("s", status)
+                .execute());
     }
 
     private void markCompleted(final String table, final long rows) {
@@ -124,8 +123,8 @@ public final class TransformPhase {
                    SET status = 'COMPLETED', rows_processed = :r, completed_at = NOW()
                  WHERE table_name = :t AND phase = 'TRANSFORM'
                 """.formatted(options.stagingSchema))
-            .bind("t", table)
-            .bind("r", rows)
-            .execute());
+                .bind("t", table)
+                .bind("r", rows)
+                .execute());
     }
 }

@@ -34,17 +34,9 @@ import org.dependencytrack.proto.policy.v1.VersionDistance;
 import org.dependencytrack.proto.policy.v1.Vulnerability;
 
 public enum CelPolicyType {
-
-    COMPONENT(
-            CelPolicyVariable.COMPONENT,
-            CelPolicyVariable.PROJECT,
-            CelPolicyVariable.VULNS,
-            CelPolicyVariable.NOW),
+    COMPONENT(CelPolicyVariable.COMPONENT, CelPolicyVariable.PROJECT, CelPolicyVariable.VULNS, CelPolicyVariable.NOW),
     VULNERABILITY(
-            CelPolicyVariable.COMPONENT,
-            CelPolicyVariable.PROJECT,
-            CelPolicyVariable.VULN,
-            CelPolicyVariable.NOW);
+            CelPolicyVariable.COMPONENT, CelPolicyVariable.PROJECT, CelPolicyVariable.VULN, CelPolicyVariable.NOW);
 
     private final CelCompiler compiler;
     private final CelRuntime runtime;
@@ -55,39 +47,35 @@ public enum CelPolicyType {
         // NB: Message types must be registered directly on the builders,
         // not inside CelRuntimeLibrary#setRuntimeOptions, because the runtime's build()
         // creates the descriptor pool before invoking library callbacks.
-        final var compilerBuilder = CelCompilerFactory
-                .standardCelCompilerBuilder()
+        final var compilerBuilder = CelCompilerFactory.standardCelCompilerBuilder()
                 .setStandardMacros(CelStandardMacro.STANDARD_MACROS)
                 .addLibraries(CelExtensions.strings(), library)
                 .addMessageTypes(messageTypes());
         for (final CelPolicyVariable variable : variables) {
             compilerBuilder.addVarDeclarations(
-                    CelVarDecl.newVarDeclaration(
-                            variable.variableName(),
-                            variable.celType()));
+                    CelVarDecl.newVarDeclaration(variable.variableName(), variable.celType()));
         }
         this.compiler = compilerBuilder.build();
 
-        this.runtime = CelRuntimeFactory
-                .standardCelRuntimeBuilder()
+        this.runtime = CelRuntimeFactory.standardCelRuntimeBuilder()
                 .addLibraries(CelExtensions.strings(), library)
                 .addMessageTypes(messageTypes())
                 .build();
     }
 
     private static Descriptor[] messageTypes() {
-        return new Descriptor[]{
-                Component.getDescriptor(),
-                Component.Property.getDescriptor(),
-                License.getDescriptor(),
-                License.Group.getDescriptor(),
-                Project.getDescriptor(),
-                Project.Metadata.getDescriptor(),
-                Project.Property.getDescriptor(),
-                Tools.getDescriptor(),
-                Vulnerability.getDescriptor(),
-                Vulnerability.Alias.getDescriptor(),
-                VersionDistance.getDescriptor(),
+        return new Descriptor[] {
+            Component.getDescriptor(),
+            Component.Property.getDescriptor(),
+            License.getDescriptor(),
+            License.Group.getDescriptor(),
+            Project.getDescriptor(),
+            Project.Metadata.getDescriptor(),
+            Project.Property.getDescriptor(),
+            Tools.getDescriptor(),
+            Vulnerability.getDescriptor(),
+            Vulnerability.Alias.getDescriptor(),
+            VersionDistance.getDescriptor(),
         };
     }
 
@@ -98,5 +86,4 @@ public enum CelPolicyType {
     CelRuntime runtime() {
         return runtime;
     }
-
 }

@@ -68,12 +68,13 @@ public class OrganizationalContactsJsonConverterTest {
 
     @Test
     public void testConvertToDatastoreNull() {
-        assertThat(new OrganizationalContactsJsonConverter().convertToDatastore(null)).isNull();
+        assertThat(new OrganizationalContactsJsonConverter().convertToDatastore(null))
+                .isNull();
     }
 
     @Test
     public void testConvertToAttributeNull() {
-        assertThat(new OrganizationalContactsJsonConverter().convertToAttribute(null)).isNull();
+        assertThat(new OrganizationalContactsJsonConverter().convertToAttribute(null))
+                .isNull();
     }
-
 }

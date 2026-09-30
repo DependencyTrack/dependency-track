@@ -70,12 +70,10 @@ message WorkflowEvent {
 }
 
 // WorkflowTaskStarted informs about a workflow task having started.
-message WorkflowTaskStarted {
-}
+message WorkflowTaskStarted {}
 
 // WorkflowTaskCompleted informs about a workflow task having completed.
-message WorkflowTaskCompleted {
-}
+message WorkflowTaskCompleted {}
 
 // RunCreated records information about the workflow run having been created.
 message RunCreated {
@@ -126,8 +124,7 @@ message RunCreated {
 
 // RunStarted informs about a workflow run having started.
 // Emitted during the first execution of a run.
-message RunStarted {
-}
+message RunStarted {}
 
 // RunCanceled informs about a workflow run having been canceled.
 message RunCanceled {
@@ -136,12 +133,10 @@ message RunCanceled {
 }
 
 // RunSuspended informs about a workflow run having been suspended.
-message RunSuspended {
-}
+message RunSuspended {}
 
 // RunResumed informs about a workflow run having been resumed.
-message RunResumed {
-}
+message RunResumed {}
 
 // RunCompleted informs about the completion of a workflow run.
 message RunCompleted {

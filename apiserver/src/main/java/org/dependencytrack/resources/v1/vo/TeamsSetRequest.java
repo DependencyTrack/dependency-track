@@ -18,29 +18,26 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
-import java.util.Set;
-
-import org.dependencytrack.model.validation.ValidUuid;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
 import alpine.common.validation.RegexSequence;
 import alpine.server.json.TrimmedStringDeserializer;
-
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.model.validation.ValidUuid;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
+import java.util.Set;
+
 public record TeamsSetRequest(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
-        @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The username may only contain printable characters")
+        @Pattern(
+                regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS,
+                message = "The username may only contain printable characters")
         String username,
 
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotNull
-        Set<@ValidUuid String> teams) {
-}
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @NotNull
+        Set<@ValidUuid String> teams) {}

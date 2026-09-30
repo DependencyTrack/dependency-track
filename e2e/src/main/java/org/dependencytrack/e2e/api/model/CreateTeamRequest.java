@@ -18,5 +18,4 @@
  */
 package org.dependencytrack.e2e.api.model;
 
-public record CreateTeamRequest(String name) {
-}
+public record CreateTeamRequest(String name) {}

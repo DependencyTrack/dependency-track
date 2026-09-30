@@ -68,8 +68,7 @@ public final class InitTaskExecutor {
                 .peek(requireUniqueName())
                 .peek(requireValidPriority())
                 .filter(isTaskEnabled())
-                .sorted(comparing(InitTask::priority, reverseOrder())
-                        .thenComparing(InitTask::name))
+                .sorted(comparing(InitTask::priority, reverseOrder()).thenComparing(InitTask::name))
                 .toList();
 
         final long startTimeNanos = System.nanoTime();
@@ -86,10 +85,10 @@ public final class InitTaskExecutor {
         // The intended workaround is to use a separate set of connection
         // details specifically for init tasks, which bypasses PgBouncer.
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement lockStatement = connection.prepareStatement("""
+                final PreparedStatement lockStatement = connection.prepareStatement("""
                      SELECT PG_TRY_ADVISORY_LOCK(?)
                      """);
-             final PreparedStatement unlockStatement = connection.prepareStatement("""
+                final PreparedStatement unlockStatement = connection.prepareStatement("""
                      SELECT PG_ADVISORY_UNLOCK(?)
                      """)) {
             boolean lockAcquired = false;
@@ -116,8 +115,7 @@ public final class InitTaskExecutor {
             final long lockWaitMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNanos);
             if (!lockAcquired) {
                 throw new IllegalStateException(
-                        "Failed to acquire lock %d after %dms".formatted(
-                                ADVISORY_LOCK_KEY, lockWaitMillis));
+                        "Failed to acquire lock %d after %dms".formatted(ADVISORY_LOCK_KEY, lockWaitMillis));
             }
             LOGGER.debug("Lock {} acquired after {}ms", ADVISORY_LOCK_KEY, lockWaitMillis);
 
@@ -163,8 +161,7 @@ public final class InitTaskExecutor {
         }
 
         LOGGER.info(
-                "All init tasks completed in {}ms",
-                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNanos));
+                "All init tasks completed in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNanos));
     }
 
     private static List<InitTask> loadInitTasks() {
@@ -174,34 +171,31 @@ public final class InitTaskExecutor {
     }
 
     private Consumer<InitTask> requireUniqueName() {
-        final var seenTaskClassesByTaskName =
-                new HashMap<String, Class<? extends InitTask>>(this.tasks.size());
+        final var seenTaskClassesByTaskName = new HashMap<String, Class<? extends InitTask>>(this.tasks.size());
 
         return task -> {
-            final Class<? extends InitTask> previousClass =
-                    seenTaskClassesByTaskName.put(task.name(), task.getClass());
+            final Class<? extends InitTask> previousClass = seenTaskClassesByTaskName.put(task.name(), task.getClass());
             if (previousClass != null) {
-                throw new IllegalStateException(
-                        "Duplicate task name %s: Registered by %s and %s".formatted(
-                                task.name(), previousClass.getName(), task.getClass().getName()));
+                throw new IllegalStateException("Duplicate task name %s: Registered by %s and %s"
+                        .formatted(
+                                task.name(),
+                                previousClass.getName(),
+                                task.getClass().getName()));
             }
         };
     }
 
     private Consumer<InitTask> requireValidPriority() {
         return task -> {
-            if (task.priority() < InitTask.PRIORITY_LOWEST
-                    || task.priority() > InitTask.PRIORITY_HIGHEST) {
-                throw new IllegalStateException(
-                        "Invalid priority of task %s: Must be within [%d..%d] but is %d".formatted(
-                                task.name(), InitTask.PRIORITY_LOWEST, InitTask.PRIORITY_HIGHEST, task.priority()));
+            if (task.priority() < InitTask.PRIORITY_LOWEST || task.priority() > InitTask.PRIORITY_HIGHEST) {
+                throw new IllegalStateException("Invalid priority of task %s: Must be within [%d..%d] but is %d"
+                        .formatted(task.name(), InitTask.PRIORITY_LOWEST, InitTask.PRIORITY_HIGHEST, task.priority()));
             }
         };
     }
 
     private Predicate<InitTask> isTaskEnabled() {
-        return task -> config.getOptionalValue(
-                "dt.init-task.%s.enabled".formatted(task.name()), Boolean.class).orElse(true);
+        return task -> config.getOptionalValue("dt.init-task.%s.enabled".formatted(task.name()), Boolean.class)
+                .orElse(true);
     }
-
 }

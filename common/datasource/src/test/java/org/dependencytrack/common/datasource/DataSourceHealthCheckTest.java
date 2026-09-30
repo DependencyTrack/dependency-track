@@ -38,8 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DataSourceHealthCheckTest {
 
     @Container
-    private static final PostgreSQLContainer postgresContainer =
-            new PostgreSQLContainer("postgres:14-alpine");
+    private static final PostgreSQLContainer postgresContainer = new PostgreSQLContainer("postgres:14-alpine");
 
     private HikariDataSource dataSource;
     private DataSourceRegistry dataSourceRegistry;
@@ -89,5 +88,4 @@ class DataSourceHealthCheckTest {
         assertThat(response.getData()).isPresent();
         assertThat(response.getData().get()).containsExactly(Map.entry("foo", "DOWN"));
     }
-
 }

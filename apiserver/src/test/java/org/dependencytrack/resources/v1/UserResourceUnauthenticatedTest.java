@@ -22,10 +22,6 @@ import alpine.model.ManagedUser;
 import alpine.server.auth.PasswordService;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Form;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -34,13 +30,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Form;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 public class UserResourceUnauthenticatedTest extends ResourceTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(UserResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+            new ResourceConfig(UserResource.class).register(ApiFilter.class).register(AuthFeature.class));
 
     private ManagedUser testUser;
 
@@ -57,13 +56,14 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
-        Response response = jersey.target(V1_USER + "/login").request()
+        Response response = jersey.target(V1_USER + "/login")
+                .request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
         Assertions.assertEquals(200, response.getStatus(), 0);
         String token = getPlainTextBody(response);
         Assertions.assertNotNull(token);
-        //Assert.assertEquals(token, response.getCookies().get("Authorization-Token").getValue());
+        // Assert.assertEquals(token, response.getCookies().get("Authorization-Token").getValue());
     }
 
     @Test
@@ -74,7 +74,8 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
-        Response response = jersey.target(V1_USER + "/login").request()
+        Response response = jersey.target(V1_USER + "/login")
+                .request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
         Assertions.assertEquals(403, response.getStatus(), 0);
@@ -85,7 +86,8 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "wrong");
-        Response response = jersey.target(V1_USER + "/login").request()
+        Response response = jersey.target(V1_USER + "/login")
+                .request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
         Assertions.assertEquals(401, response.getStatus(), 0);
@@ -96,7 +98,8 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         final Form form = new Form();
         form.param("accessToken", "accessToken");
 
-        final Response response = jersey.target(V1_USER + "/oidc/login").request()
+        final Response response = jersey.target(V1_USER + "/oidc/login")
+                .request()
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         // OIDC is disabled by default
@@ -111,7 +114,8 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "Password1!");
         Assertions.assertTrue(PasswordService.matches("testuser".toCharArray(), testUser));
-        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
+        Response response = jersey.target(V1_USER + "/forceChangePassword")
+                .request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
         Assertions.assertEquals(200, response.getStatus(), 0);
@@ -131,7 +135,8 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "Password1!");
         Assertions.assertTrue(PasswordService.matches("testuser".toCharArray(), testUser));
-        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
+        Response response = jersey.target(V1_USER + "/forceChangePassword")
+                .request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
         Assertions.assertEquals(200, response.getStatus(), 0);
@@ -147,7 +152,8 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         form.param("password", "testuser");
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "blah");
-        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
+        Response response = jersey.target(V1_USER + "/forceChangePassword")
+                .request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
         Assertions.assertEquals(406, response.getStatus(), 0);
@@ -163,7 +169,8 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         form.param("password", "testuser");
         form.param("newPassword", "testuser");
         form.param("confirmPassword", "testuser");
-        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
+        Response response = jersey.target(V1_USER + "/forceChangePassword")
+                .request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
         Assertions.assertEquals(406, response.getStatus(), 0);
@@ -181,7 +188,8 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         form.param("password", "testuser");
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "Password1!");
-        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
+        Response response = jersey.target(V1_USER + "/forceChangePassword")
+                .request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
         Assertions.assertEquals(403, response.getStatus(), 0);
@@ -197,7 +205,8 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         form.param("password", "blah");
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "Password1!");
-        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
+        Response response = jersey.target(V1_USER + "/forceChangePassword")
+                .request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
         Assertions.assertEquals(401, response.getStatus(), 0);

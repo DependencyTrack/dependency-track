@@ -63,8 +63,8 @@ class ModelConverterTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnerability, component, "internal");
 
         // Resolve the findings up front, mirroring what the exporter does before conversion.
-        final List<Finding> findings = withJdbiHandle(handle ->
-                handle.attach(FindingDao.class).getFindings(project.getId(), true));
+        final List<Finding> findings =
+                withJdbiHandle(handle -> handle.attach(FindingDao.class).getFindings(project.getId(), true));
         assertThat(findings).hasSize(1);
 
         // Simulate the component being deleted in the window between the findings query
@@ -73,8 +73,8 @@ class ModelConverterTest extends PersistenceCapableTest {
         withJdbiHandle(handle -> handle.attach(ComponentDao.class).deleteComponent(deletedComponent.getUuid()));
 
         // Before the fix this threw a NullPointerException and aborted the whole export.
-        assertThatNoException().isThrownBy(() ->
-                ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, findings));
+        assertThatNoException()
+                .isThrownBy(() -> ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, findings));
 
         final List<org.cyclonedx.model.vulnerability.Vulnerability> result =
                 ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, findings);
@@ -98,8 +98,8 @@ class ModelConverterTest extends PersistenceCapableTest {
         component = qm.createComponent(component, false);
         qm.addVulnerability(vulnerability, component, "internal");
 
-        final List<Finding> findings = withJdbiHandle(handle ->
-                handle.attach(FindingDao.class).getFindings(project.getId(), true));
+        final List<Finding> findings =
+                withJdbiHandle(handle -> handle.attach(FindingDao.class).getFindings(project.getId(), true));
 
         final List<org.cyclonedx.model.vulnerability.Vulnerability> result =
                 ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, findings);
@@ -139,9 +139,7 @@ class ModelConverterTest extends PersistenceCapableTest {
         void hashFixturesShouldCoverAllAlgorithms() {
             // Make sure we detect when upstream schema adds new hash algos
             // that we don't have coverage for yet.
-            assertThat(hashFixtures())
-                    .map(HashFixture::algorithm)
-                    .containsExactlyInAnyOrder(Hash.Algorithm.values());
+            assertThat(hashFixtures()).map(HashFixture::algorithm).containsExactlyInAnyOrder(Hash.Algorithm.values());
         }
 
         private record HashFixture(
@@ -154,7 +152,6 @@ class ModelConverterTest extends PersistenceCapableTest {
             public @NonNull String toString() {
                 return algorithm.name();
             }
-
         }
 
         private static List<HashFixture> hashFixtures() {
@@ -171,8 +168,10 @@ class ModelConverterTest extends PersistenceCapableTest {
                     hashFixture(Hash.Algorithm.BLAKE2b_384, 96, Component::setBlake2b_384, Component::getBlake2b_384),
                     hashFixture(Hash.Algorithm.BLAKE2b_512, 128, Component::setBlake2b_512, Component::getBlake2b_512),
                     hashFixture(Hash.Algorithm.BLAKE3, 64, Component::setBlake3, Component::getBlake3),
-                    hashFixture(Hash.Algorithm.STREEBOG_256, 64, Component::setStreebog_256, Component::getStreebog_256),
-                    hashFixture(Hash.Algorithm.STREEBOG_512, 128, Component::setStreebog_512, Component::getStreebog_512));
+                    hashFixture(
+                            Hash.Algorithm.STREEBOG_256, 64, Component::setStreebog_256, Component::getStreebog_256),
+                    hashFixture(
+                            Hash.Algorithm.STREEBOG_512, 128, Component::setStreebog_512, Component::getStreebog_512));
         }
 
         private static HashFixture hashFixture(
@@ -181,12 +180,7 @@ class ModelConverterTest extends PersistenceCapableTest {
                 BiConsumer<Component, String> setter,
                 Function<Component, String> getter) {
             return new HashFixture(
-                    algorithm,
-                    "%02x".formatted(algorithm.ordinal()) + "a".repeat(valueLength - 2),
-                    setter,
-                    getter);
+                    algorithm, "%02x".formatted(algorithm.ordinal()) + "a".repeat(valueLength - 2), setter, getter);
         }
-
     }
-
 }

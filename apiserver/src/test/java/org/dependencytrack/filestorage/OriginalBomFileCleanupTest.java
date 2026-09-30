@@ -45,19 +45,15 @@ class OriginalBomFileCleanupTest {
 
     @Test
     void shouldDeleteDistinctOriginalBomFiles() throws Exception {
-        final FileMetadata firstFileMetadata = fileMetadata(
-                "test:///original-bom-first");
-        final FileMetadata secondFileMetadata = fileMetadata(
-                "test:///original-bom-second");
+        final FileMetadata firstFileMetadata = fileMetadata("test:///original-bom-first");
+        final FileMetadata secondFileMetadata = fileMetadata("test:///original-bom-second");
 
         final List<OriginalBomFileMetadataRow> originalBomFiles = List.of(
                 originalBomFile(firstFileMetadata),
                 originalBomFile(firstFileMetadata),
                 originalBomFile(secondFileMetadata));
 
-        OriginalBomFileCleanup.deleteOriginalBomFiles(
-                fileStorage,
-                originalBomFiles);
+        OriginalBomFileCleanup.deleteOriginalBomFiles(fileStorage, originalBomFiles);
 
         verify(fileStorage).delete(firstFileMetadata);
         verify(fileStorage).delete(secondFileMetadata);
@@ -65,42 +61,30 @@ class OriginalBomFileCleanupTest {
 
     @Test
     void shouldSkipMalformedMetadataAndContinue() throws Exception {
-        final FileMetadata validFileMetadata = fileMetadata(
-                "test:///original-bom-valid");
+        final FileMetadata validFileMetadata = fileMetadata("test:///original-bom-valid");
 
         final List<OriginalBomFileMetadataRow> originalBomFiles = List.of(
-                new OriginalBomFileMetadataRow(
-                        UUID.randomUUID(),
-                        new byte[]{(byte) 0x80}),
+                new OriginalBomFileMetadataRow(UUID.randomUUID(), new byte[] {(byte) 0x80}),
                 originalBomFile(validFileMetadata));
 
-        assertThatNoException().isThrownBy(() ->
-                OriginalBomFileCleanup.deleteOriginalBomFiles(
-                        fileStorage,
-                        originalBomFiles));
+        assertThatNoException()
+                .isThrownBy(() -> OriginalBomFileCleanup.deleteOriginalBomFiles(fileStorage, originalBomFiles));
 
         verify(fileStorage).delete(validFileMetadata);
     }
 
     @Test
     void shouldContinueWhenFileDeletionFails() throws Exception {
-        final FileMetadata failingFileMetadata = fileMetadata(
-                "test:///original-bom-failing");
-        final FileMetadata successfulFileMetadata = fileMetadata(
-                "test:///original-bom-successful");
+        final FileMetadata failingFileMetadata = fileMetadata("test:///original-bom-failing");
+        final FileMetadata successfulFileMetadata = fileMetadata("test:///original-bom-successful");
 
-        doThrow(new IOException("Storage unavailable"))
-                .when(fileStorage)
-                .delete(failingFileMetadata);
+        doThrow(new IOException("Storage unavailable")).when(fileStorage).delete(failingFileMetadata);
 
-        final List<OriginalBomFileMetadataRow> originalBomFiles = List.of(
-                originalBomFile(failingFileMetadata),
-                originalBomFile(successfulFileMetadata));
+        final List<OriginalBomFileMetadataRow> originalBomFiles =
+                List.of(originalBomFile(failingFileMetadata), originalBomFile(successfulFileMetadata));
 
-        assertThatNoException().isThrownBy(() ->
-                OriginalBomFileCleanup.deleteOriginalBomFiles(
-                        fileStorage,
-                        originalBomFiles));
+        assertThatNoException()
+                .isThrownBy(() -> OriginalBomFileCleanup.deleteOriginalBomFiles(fileStorage, originalBomFiles));
 
         verify(fileStorage).delete(failingFileMetadata);
         verify(fileStorage).delete(successfulFileMetadata);
@@ -108,27 +92,22 @@ class OriginalBomFileCleanupTest {
 
     @Test
     void shouldQuietlyIgnoreMissingFileAndContinue() throws Exception {
-        final FileMetadata missingFileMetadata = fileMetadata(
-                "test:///original-bom-missing");
-        final FileMetadata existingFileMetadata = fileMetadata(
-                "test:///original-bom-existing");
+        final FileMetadata missingFileMetadata = fileMetadata("test:///original-bom-missing");
+        final FileMetadata existingFileMetadata = fileMetadata("test:///original-bom-existing");
 
         doThrow(new NoSuchFileException(missingFileMetadata.getLocation()))
                 .when(fileStorage)
                 .delete(missingFileMetadata);
 
-        final Logger logger =
-                (Logger) getLogger(OriginalBomFileCleanup.class);
+        final Logger logger = (Logger) getLogger(OriginalBomFileCleanup.class);
         final var appender = new ListAppender<ILoggingEvent>();
         appender.start();
         logger.addAppender(appender);
         try {
-            assertThatNoException().isThrownBy(() ->
-                    OriginalBomFileCleanup.deleteOriginalBomFiles(
+            assertThatNoException()
+                    .isThrownBy(() -> OriginalBomFileCleanup.deleteOriginalBomFiles(
                             fileStorage,
-                            List.of(
-                                    originalBomFile(missingFileMetadata),
-                                    originalBomFile(existingFileMetadata))));
+                            List.of(originalBomFile(missingFileMetadata), originalBomFile(existingFileMetadata))));
         } finally {
             logger.detachAppender(appender);
             appender.stop();
@@ -141,21 +120,17 @@ class OriginalBomFileCleanupTest {
 
     @Test
     void shouldContinueWhenProviderThrowsRuntimeException() throws Exception {
-        final FileMetadata failingFileMetadata = fileMetadata(
-                "test:///original-bom-runtime-failure");
-        final FileMetadata successfulFileMetadata = fileMetadata(
-                "test:///original-bom-after-runtime-failure");
+        final FileMetadata failingFileMetadata = fileMetadata("test:///original-bom-runtime-failure");
+        final FileMetadata successfulFileMetadata = fileMetadata("test:///original-bom-after-runtime-failure");
 
         doThrow(new IllegalStateException("Storage provider failed"))
                 .when(fileStorage)
                 .delete(failingFileMetadata);
 
-        assertThatNoException().isThrownBy(() ->
-                OriginalBomFileCleanup.deleteOriginalBomFiles(
+        assertThatNoException()
+                .isThrownBy(() -> OriginalBomFileCleanup.deleteOriginalBomFiles(
                         fileStorage,
-                        List.of(
-                                originalBomFile(failingFileMetadata),
-                                originalBomFile(successfulFileMetadata))));
+                        List.of(originalBomFile(failingFileMetadata), originalBomFile(successfulFileMetadata))));
 
         verify(fileStorage).delete(failingFileMetadata);
         verify(fileStorage).delete(successfulFileMetadata);
@@ -163,18 +138,13 @@ class OriginalBomFileCleanupTest {
 
     @Test
     void shouldDoNothingWhenNoOriginalBomFilesExist() {
-        OriginalBomFileCleanup.deleteOriginalBomFiles(
-                fileStorage,
-                List.of());
+        OriginalBomFileCleanup.deleteOriginalBomFiles(fileStorage, List.of());
 
         verifyNoInteractions(fileStorage);
     }
 
-    private static OriginalBomFileMetadataRow originalBomFile(
-            final FileMetadata fileMetadata) {
-        return new OriginalBomFileMetadataRow(
-                UUID.randomUUID(),
-                fileMetadata.toByteArray());
+    private static OriginalBomFileMetadataRow originalBomFile(final FileMetadata fileMetadata) {
+        return new OriginalBomFileMetadataRow(UUID.randomUUID(), fileMetadata.toByteArray());
     }
 
     private static FileMetadata fileMetadata(final String location) {

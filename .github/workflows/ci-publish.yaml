@@ -42,24 +42,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up JDK
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # tag=v5.7.0
-        with:
-          distribution: 'temurin'
-          java-version: '25'
-          cache: 'maven'
-
       - name: Parse Version from POM
         id: parse
         run: |-
-          VERSION=$(mvn -q -Dexec.skip=true help:evaluate -Dexpression=project.version -DforceStdout)
+          VERSION=$(yq -p xml -oy '.project.version' pom.xml)
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
   call-build:
     name: Build
     needs:
       - read-version
-    uses: ./.github/workflows/_meta-build.yaml
+    uses: $/.github/workflows/_meta-build.yaml
     with:
       app-version: ${{ needs.read-version.outputs.version }}
       publish-container: true

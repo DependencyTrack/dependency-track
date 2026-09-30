@@ -109,13 +109,11 @@ public final class DataSourceRegistry {
     void add(final String name, final DataSource dataSource) {
         final DataSource existing = dataSourceByName.putIfAbsent(name, dataSource);
         if (existing != null) {
-            throw new IllegalStateException(
-                    "A data source with name %s was already registered".formatted(name));
+            throw new IllegalStateException("A data source with name %s was already registered".formatted(name));
         }
     }
 
     Map<String, DataSource> getAll() {
         return Map.copyOf(dataSourceByName);
     }
-
 }

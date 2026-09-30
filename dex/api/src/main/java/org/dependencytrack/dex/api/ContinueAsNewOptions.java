@@ -29,5 +29,4 @@ public record ContinueAsNewOptions<A>(@Nullable A argument) {
     public ContinueAsNewOptions<A> withArgument(final @Nullable A argument) {
         return new ContinueAsNewOptions<>(argument);
     }
-
 }

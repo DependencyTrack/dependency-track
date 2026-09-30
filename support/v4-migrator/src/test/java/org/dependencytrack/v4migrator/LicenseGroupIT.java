@@ -67,7 +67,7 @@ class LicenseGroupIT {
     @Test
     void migratesLicenseGroupAndJoin() throws Exception {
         final UUID apacheUuid = UUID.fromString("c5b25734-69ce-4e9b-a4f3-1f0fa5b27d5f");
-        final UUID groupUuid  = UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd");
+        final UUID groupUuid = UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd");
         source.jdbi().useHandle(h -> {
             h.createUpdate("""
                     INSERT INTO "LICENSE"
@@ -86,23 +86,23 @@ class LicenseGroupIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> groups = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> groups =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "NAME", "RISKWEIGHT", "UUID"
                       FROM "LICENSEGROUP"
                      ORDER BY "ID"
                     """).mapToMap().list());
-        assertThat(groups).extracting("id", "name", "riskweight", "uuid")
-            .containsExactly(tuple(10L, "Permissive", 1, groupUuid));
+        assertThat(groups)
+                .extracting("id", "name", "riskweight", "uuid")
+                .containsExactly(tuple(10L, "Permissive", 1, groupUuid));
 
-        final List<Map<String, Object>> joins = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> joins =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "LICENSEGROUP_ID", "LICENSE_ID"
                       FROM "LICENSEGROUP_LICENSE"
                      ORDER BY "LICENSEGROUP_ID", "LICENSE_ID"
                     """).mapToMap().list());
-        assertThat(joins).extracting("licensegroup_id", "license_id")
-            .containsExactly(tuple(10L, 1L));
+        assertThat(joins).extracting("licensegroup_id", "license_id").containsExactly(tuple(10L, 1L));
     }
 
     private void runPipeline() throws Exception {

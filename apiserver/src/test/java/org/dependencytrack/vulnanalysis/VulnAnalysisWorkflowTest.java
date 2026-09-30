@@ -54,11 +54,11 @@ import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.FindingDao;
 import org.dependencytrack.persistence.jdbi.FindingDao.FindingRow;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.cel.CelVulnerabilityPolicyEvaluator;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyOperation;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyRating;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
@@ -69,6 +69,7 @@ import org.dependencytrack.proto.internal.workflow.v1.PrepareVulnAnalysisRes;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowContext;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.dependencytrack.vulnanalysis.internal.InternalVulnAnalyzerConfigV1;
@@ -100,6 +101,8 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.protoConverter;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.voidConverter;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
+import static org.dependencytrack.notification.NotificationTestUtil.truncateNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABILITY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABLE_DEPENDENCY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
@@ -110,8 +113,8 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
 
     @RegisterExtension
-    private final WorkflowTestExtension workflowTest
-            = new WorkflowTestExtension(DataSourceRegistry.getInstance().getDefault());
+    private final WorkflowTestExtension workflowTest =
+            new WorkflowTestExtension(DataSourceRegistry.getInstance().getDefault());
 
     private FileStorage fileStorage;
     private PluginManager pluginManager;
@@ -124,7 +127,8 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
 
         fileStorage = new MemoryFileStorage();
 
-        final var mockAnalyzerPlugin = new MockVulnAnalyzerPlugin(bom -> mockAnalyzerFunction.get().apply(bom));
+        final var mockAnalyzerPlugin =
+                new MockVulnAnalyzerPlugin(bom -> mockAnalyzerFunction.get().apply(bom));
 
         pluginManager = new PluginManager(
                 new SmallRyeConfigBuilder()
@@ -134,10 +138,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnAnalyzer.class, VulnDataSource.class));
-        pluginManager.loadPlugins(List.of(
-                new InternalVulnAnalyzerPlugin(),
-                mockAnalyzerPlugin));
+        pluginManager.loadPlugins(List.of(new InternalVulnAnalyzerPlugin(), mockAnalyzerPlugin));
 
         final DexEngine engine = workflowTest.getEngine();
 
@@ -147,9 +150,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                 voidConverter(),
                 Duration.ofSeconds(5));
         engine.registerActivity(
-                new DeleteFilesActivity(fileStorage),
-                protoConverter(DeleteFilesArgument.class),
-                voidConverter());
+                new DeleteFilesActivity(fileStorage), protoConverter(DeleteFilesArgument.class), voidConverter());
         engine.registerActivity(
                 new InvokeVulnAnalyzerActivity(fileStorage, pluginManager),
                 protoConverter(InvokeVulnAnalyzerArg.class),
@@ -160,9 +161,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                 protoConverter(PrepareVulnAnalysisRes.class));
         engine.registerActivity(
                 new ReconcileVulnAnalysisResultsActivity(
-                        fileStorage,
-                        pluginManager,
-                        new CelVulnerabilityPolicyEvaluator()),
+                        fileStorage, pluginManager, new CelVulnerabilityPolicyEvaluator()),
                 protoConverter(ReconcileVulnAnalysisResultsArg.class),
                 voidConverter());
 
@@ -171,22 +170,23 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "vuln-analyses", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "vuln-analysis-reconciliations", 1));
 
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
         engine.registerTaskWorker(
                 new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-vuln-analysis", "vuln-analyses", 1)
                         .withMinPollInterval(Duration.ofMillis(25))
                         .withPollBackoffFunction(IntervalFunction.of(25)));
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-vuln-analysis-reconciliation", "vuln-analysis-reconciliations", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(
+                        TaskType.ACTIVITY,
+                        "activity-worker-vuln-analysis-reconciliation",
+                        "vuln-analysis-reconciliations",
+                        1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
 
         engine.start();
     }
@@ -227,8 +227,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.9.8");
         qm.persist(component);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -237,7 +238,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         final List<Vulnerability> vulns = qm.getVulnerabilities(project, true);
         assertThat(vulns).hasSize(1);
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getGroup()).isEqualTo(GROUP_NEW_VULNERABILITY);
         });
 
@@ -282,19 +283,18 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                 "application/protobuf",
                 new ByteArrayInputStream(context.toByteArray()));
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .setContextFileMetadata(contextFileMetadata)
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
-                .containsExactlyInAnyOrder(
-                        GROUP_NEW_VULNERABILITY,
-                        GROUP_NEW_VULNERABLE_DEPENDENCY);
+                .containsExactlyInAnyOrder(GROUP_NEW_VULNERABILITY, GROUP_NEW_VULNERABLE_DEPENDENCY);
     }
 
     @Test
@@ -316,9 +316,8 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, component, "internal");
 
         final long projectId = project.getId();
-        final Supplier<List<FindingRow>> findingsSupplier = () -> withJdbiHandle(
-                handle -> handle
-                        .attach(FindingDao.class)
+        final Supplier<List<FindingRow>> findingsSupplier =
+                () -> withJdbiHandle(handle -> handle.attach(FindingDao.class)
                         .selectFindingsByProject(
                                 projectId,
                                 /* includeInactive */ false,
@@ -335,8 +334,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         List<FindingRow> findings = findingsSupplier.get();
         assertThat(findings).hasSize(1);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -345,7 +345,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         findings = findingsSupplier.get();
         assertThat(findings).isEmpty();
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactly(GROUP_VULNERABILITY_RETRACTED);
     }
@@ -381,34 +381,38 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         component = qm.persist(component);
 
         // Run first analysis to create the finding.
-        UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactly(GROUP_NEW_VULNERABILITY);
-        qm.truncateNotificationOutbox();
+        truncateNotificationOutbox();
 
         // Remove vulnerable software so the internal analyzer no longer reports the finding.
         qm.delete(vs);
 
-        runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactly(GROUP_VULNERABILITY_RETRACTED);
 
-        final org.dependencytrack.notification.proto.v1.Notification notification = qm.getNotificationOutbox().getFirst();
-        final var subject = notification.getSubject()
+        final org.dependencytrack.notification.proto.v1.Notification notification =
+                getNotificationOutbox().getFirst();
+        final var subject = notification
+                .getSubject()
                 .unpack(org.dependencytrack.notification.proto.v1.VulnerabilityRetractedSubject.class);
         assertThat(subject.getVulnerability().getVulnId()).isEqualTo("INT-200");
     }
@@ -438,17 +442,18 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, component, "internal");
 
         // Run 1: Internal analyzer finds nothing -> attribution soft-deleted -> finding inactive.
-        UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactly(GROUP_VULNERABILITY_RETRACTED);
-        qm.truncateNotificationOutbox();
+        truncateNotificationOutbox();
 
         // Add vulnerable software so the internal analyzer can match the component.
         final var vs = new VulnerableSoftware();
@@ -462,19 +467,22 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.persist(vs);
 
         // Run 2: Internal analyzer reports finding -> reactivation.
-        runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactly(GROUP_NEW_VULNERABILITY);
 
-        final org.dependencytrack.notification.proto.v1.Notification notification = qm.getNotificationOutbox().getFirst();
-        final var subject = notification.getSubject()
+        final org.dependencytrack.notification.proto.v1.Notification notification =
+                getNotificationOutbox().getFirst();
+        final var subject = notification
+                .getSubject()
                 .unpack(org.dependencytrack.notification.proto.v1.NewVulnerabilitySubject.class);
         assertThat(subject.getVulnerability().getVulnId()).isEqualTo("INT-201");
     }
@@ -522,12 +530,16 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         cvssV3Rating.setScore(3.7);
         cvssV3Rating.setSeverity(VulnerabilityPolicyRating.Severity.LOW);
 
-        createPolicy("testPolicy", "testAuthor",
+        createPolicy(
+                "testPolicy",
+                "testAuthor",
                 "has(component.name) && project.version != \"\"",
-                policyAnalysis, List.of(cvssV3Rating));
+                policyAnalysis,
+                List.of(cvssV3Rating));
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -556,11 +568,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                             "CVSSv3 Score: (None) → 3.7");
         });
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
-                .containsExactlyInAnyOrder(
-                        GROUP_NEW_VULNERABILITY,
-                        GROUP_PROJECT_AUDIT_CHANGE);
+                .containsExactlyInAnyOrder(GROUP_NEW_VULNERABILITY, GROUP_PROJECT_AUDIT_CHANGE);
     }
 
     @Test
@@ -604,12 +614,11 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         cvssV4Rating.setScore(0.0);
         cvssV4Rating.setSeverity(VulnerabilityPolicyRating.Severity.LOW);
 
-        createPolicy("suppressPolicy", "testAuthor",
-                "true",
-                policyAnalysis, List.of(cvssV4Rating));
+        createPolicy("suppressPolicy", "testAuthor", "true", policyAnalysis, List.of(cvssV4Rating));
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -620,7 +629,8 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
             assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.FALSE_POSITIVE);
             assertThat(analysis.isSuppressed()).isTrue();
             assertThat(analysis.getSeverity()).isEqualTo(Severity.LOW);
-            assertThat(analysis.getCvssV4Vector()).isEqualTo("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
+            assertThat(analysis.getCvssV4Vector())
+                    .isEqualTo("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
             assertThat(analysis.getCvssV4Score()).isEqualByComparingTo("0.0");
             assertThat(analysis.getAnalysisComments())
                     .extracting(AnalysisComment::getComment)
@@ -635,8 +645,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
 
         // Suppressed finding should NOT generate a NEW_VULNERABILITY notification,
         // but should still generate a PROJECT_AUDIT_CHANGE notification.
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification ->
-                assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE));
+        assertThat(getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE));
     }
 
     @Test
@@ -673,16 +684,14 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, component, "internal");
 
         // Pre-create analysis with different values than the policy will set.
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vuln)
-                        .withState(AnalysisState.IN_TRIAGE)
-                        .withJustification(AnalysisJustification.NOT_SET)
-                        .withResponse(AnalysisResponse.NOT_SET)
-                        .withDetails("old details")
-                        .withSuppress(false)
-                        .withOptions(Set.of(
-                                MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL,
-                                MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+                .withState(AnalysisState.IN_TRIAGE)
+                .withJustification(AnalysisJustification.NOT_SET)
+                .withResponse(AnalysisResponse.NOT_SET)
+                .withDetails("old details")
+                .withSuppress(false)
+                .withOptions(Set.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
 
         final var policyAnalysis = new VulnerabilityPolicyAnalysis();
         policyAnalysis.setState(VulnerabilityPolicyAnalysis.State.NOT_AFFECTED);
@@ -697,12 +706,11 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         cvssV3Rating.setScore(3.7);
         cvssV3Rating.setSeverity(VulnerabilityPolicyRating.Severity.LOW);
 
-        createPolicy("updatePolicy", "testAuthor",
-                "has(component.name)",
-                policyAnalysis, List.of(cvssV3Rating));
+        createPolicy("updatePolicy", "testAuthor", "has(component.name)", policyAnalysis, List.of(cvssV3Rating));
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -734,8 +742,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
 
         // Existing finding should not trigger NEW_VULNERABILITY notification,
         // but state and suppression changed, so PROJECT_AUDIT_CHANGE should be emitted.
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification ->
-                assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE));
+        assertThat(getNotificationOutbox())
+                .satisfiesExactly(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE));
     }
 
     @Test
@@ -771,23 +780,20 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, component, "internal");
 
         // Pre-create analysis with values that exactly match the policy.
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vuln)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withSuppress(false)
-                        .withOptions(Set.of(
-                                MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL,
-                                MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withSuppress(false)
+                .withOptions(Set.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
 
         final var policyAnalysis = new VulnerabilityPolicyAnalysis();
         policyAnalysis.setState(VulnerabilityPolicyAnalysis.State.NOT_AFFECTED);
 
-        createPolicy("matchingPolicy", "testAuthor",
-                "true",
-                policyAnalysis, null);
+        createPolicy("matchingPolicy", "testAuthor", "true", policyAnalysis, null);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -852,8 +858,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         expiredPolicy.setValidUntil(ZonedDateTime.now().minusDays(30));
         withJdbiHandle(handle -> handle.attach(VulnerabilityPolicyDao.class).create(expiredPolicy));
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -896,25 +903,22 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, component, "internal");
 
         // Pre-create analysis with same state/suppressed as policy but different details.
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vuln)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withDetails("old details")
-                        .withSuppress(false)
-                        .withOptions(Set.of(
-                                MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL,
-                                MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withDetails("old details")
+                .withSuppress(false)
+                .withOptions(Set.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
 
         final var policyAnalysis = new VulnerabilityPolicyAnalysis();
         policyAnalysis.setState(VulnerabilityPolicyAnalysis.State.NOT_AFFECTED);
         policyAnalysis.setDetails("new details");
 
-        createPolicy("detailsPolicy", "testAuthor",
-                "true",
-                policyAnalysis, null);
+        createPolicy("detailsPolicy", "testAuthor", "true", policyAnalysis, null);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -927,13 +931,11 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
             assertThat(analysis.isSuppressed()).isFalse();
             assertThat(analysis.getAnalysisComments())
                     .extracting(AnalysisComment::getComment)
-                    .containsExactly(
-                            "Matched on condition: true",
-                            "Details: new details");
+                    .containsExactly("Matched on condition: true", "Details: new details");
         });
 
         // No state or suppression change, so no NEW_VULNERABILITY or PROJECT_AUDIT_CHANGE.
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test
@@ -976,8 +978,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         policy.setOperationMode(VulnerabilityPolicyOperation.LOG);
         withJdbiHandle(handle -> handle.attach(VulnerabilityPolicyDao.class).create(policy));
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -1040,7 +1043,8 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         analysisA.setCvssV4Score(BigDecimal.valueOf(4.4));
         analysisA.setSuppressed(true);
         qm.persist(analysisA);
-        useJdbiHandle(jdbiHandle -> jdbiHandle.createUpdate("""
+        useJdbiHandle(jdbiHandle -> jdbiHandle
+                .createUpdate("""
                         UPDATE
                           "ANALYSIS"
                         SET
@@ -1085,8 +1089,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         vsB.addVulnerability(vulnB);
         qm.persist(vsB);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -1134,9 +1139,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
     void shouldFailWhenAllAnalyzersFailed() {
         pluginManager
                 .getMutableConfigRegistry(VulnAnalyzer.class, "internal")
-                .setRuntimeConfig(
-                        new InternalVulnAnalyzerConfigV1()
-                                .withEnabled(false));
+                .setRuntimeConfig(new InternalVulnAnalyzerConfigV1().withEnabled(false));
 
         mockAnalyzerFunction.set(_ -> null);
 
@@ -1150,8 +1153,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.example/acme-lib@1.0.0");
         qm.persist(component);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -1183,8 +1187,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.example/acme-lib@1.0.0");
         qm.persist(component);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -1202,8 +1207,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         final var invocations = new AtomicInteger();
         mockAnalyzerFunction.set(_ -> {
             if (invocations.incrementAndGet() == 1) {
-                throw new RetryableVulnAnalysisException(
-                        "Rate limited", null, Duration.ofMillis(100));
+                throw new RetryableVulnAnalysisException("Rate limited", null, Duration.ofMillis(100));
             }
 
             return Bom.getDefaultInstance();
@@ -1219,8 +1223,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.example/acme-lib@1.0.0");
         qm.persist(component);
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -1244,18 +1249,19 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.persist(component);
 
         mockAnalyzerFunction.set(bom -> Bom.newBuilder()
-                .addVulnerabilities(
-                        org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
-                                .setId("CVE-2024-1234")
-                                .setSource(Source.newBuilder().setName("NVD"))
-                                .addAffects(VulnerabilityAffects.newBuilder().setRef(bom.getComponents(0).getBomRef()))
-                                .addReferences(VulnerabilityReference.newBuilder()
-                                        .setId("GHSA-xxxx-xxxx-xxxx")
-                                        .setSource(Source.newBuilder().setName("GITHUB"))))
+                .addVulnerabilities(org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
+                        .setId("CVE-2024-1234")
+                        .setSource(Source.newBuilder().setName("NVD"))
+                        .addAffects(VulnerabilityAffects.newBuilder()
+                                .setRef(bom.getComponents(0).getBomRef()))
+                        .addReferences(VulnerabilityReference.newBuilder()
+                                .setId("GHSA-xxxx-xxxx-xxxx")
+                                .setSource(Source.newBuilder().setName("GITHUB"))))
                 .build());
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -1266,26 +1272,26 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                 .containsExactly("CVE-2024-1234");
 
         final long projectId = project.getId();
-        final List<FindingDao.FindingRow> findings = withJdbiHandle(
-                handle -> handle.attach(FindingDao.class)
-                        .selectFindingsByProject(
-                                projectId,
-                                /* includeInactive */ false,
-                                /* includeSuppressed */ false,
-                                /* searchText */ null,
-                                /* hasAnalysis */ null,
-                                /* source */ null,
-                                /* epssFrom */ null,
-                                /* epssTo */ null,
-                                /* isKev */ null,
-                                /* emitTotalCount */ false,
-                                /* paginate */ false));
+        final List<FindingDao.FindingRow> findings = withJdbiHandle(handle -> handle.attach(FindingDao.class)
+                .selectFindingsByProject(
+                        projectId,
+                        /* includeInactive */ false,
+                        /* includeSuppressed */ false,
+                        /* searchText */ null,
+                        /* hasAnalysis */ null,
+                        /* source */ null,
+                        /* epssFrom */ null,
+                        /* epssTo */ null,
+                        /* isKev */ null,
+                        /* emitTotalCount */ false,
+                        /* paginate */ false));
         assertThat(findings).hasSize(1);
 
-        assertThat(getAllAliasGroups()).satisfiesExactly(group ->
-                assertThat(group).containsExactlyInAnyOrder(
-                        new VulnerabilityKey("CVE-2024-1234", "NVD"),
-                        new VulnerabilityKey("GHSA-xxxx-xxxx-xxxx", "GITHUB")));
+        assertThat(getAllAliasGroups())
+                .satisfiesExactly(group -> assertThat(group)
+                        .containsExactlyInAnyOrder(
+                                new VulnerabilityKey("CVE-2024-1234", "NVD"),
+                                new VulnerabilityKey("GHSA-xxxx-xxxx-xxxx", "GITHUB")));
     }
 
     @Test
@@ -1303,18 +1309,19 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.persist(component);
 
         mockAnalyzerFunction.set(bom -> Bom.newBuilder()
-                .addVulnerabilities(
-                        org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
-                                .setId("CVE-2024-1234")
-                                .setSource(Source.newBuilder().setName("NVD"))
-                                .addAffects(VulnerabilityAffects.newBuilder().setRef(bom.getComponents(0).getBomRef()))
-                                .addReferences(VulnerabilityReference.newBuilder()
-                                        .setId("GHSA-xxxx-xxxx-xxxx")
-                                        .setSource(Source.newBuilder().setName("GITHUB"))))
+                .addVulnerabilities(org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
+                        .setId("CVE-2024-1234")
+                        .setSource(Source.newBuilder().setName("NVD"))
+                        .addAffects(VulnerabilityAffects.newBuilder()
+                                .setRef(bom.getComponents(0).getBomRef()))
+                        .addReferences(VulnerabilityReference.newBuilder()
+                                .setId("GHSA-xxxx-xxxx-xxxx")
+                                .setSource(Source.newBuilder().setName("GITHUB"))))
                 .build());
 
-        UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -1323,15 +1330,16 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         assertThat(getAllAliasGroups()).hasSize(1);
 
         mockAnalyzerFunction.set(bom -> Bom.newBuilder()
-                .addVulnerabilities(
-                        org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
-                                .setId("CVE-2024-1234")
-                                .setSource(Source.newBuilder().setName("NVD"))
-                                .addAffects(VulnerabilityAffects.newBuilder().setRef(bom.getComponents(0).getBomRef())))
+                .addVulnerabilities(org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
+                        .setId("CVE-2024-1234")
+                        .setSource(Source.newBuilder().setName("NVD"))
+                        .addAffects(VulnerabilityAffects.newBuilder()
+                                .setRef(bom.getComponents(0).getBomRef())))
                 .build());
 
-        runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -1355,29 +1363,30 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.persist(component);
 
         mockAnalyzerFunction.set(bom -> Bom.newBuilder()
-                .addVulnerabilities(
-                        org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
-                                .setId("FOO-1")
-                                .setSource(Source.newBuilder().setName("FOO"))
-                                .addAffects(VulnerabilityAffects.newBuilder().setRef(bom.getComponents(0).getBomRef()))
-                                .addReferences(VulnerabilityReference.newBuilder()
-                                        .setId("GHSA-aaaa-aaaa-aaaa")
-                                        .setSource(Source.newBuilder().setName("GITHUB"))))
-                .addVulnerabilities(
-                        org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
-                                .setId("CVE-2024-9999")
-                                .setSource(Source.newBuilder().setName("NVD"))
-                                .addAffects(VulnerabilityAffects.newBuilder().setRef(bom.getComponents(0).getBomRef()))
-                                .addReferences(VulnerabilityReference.newBuilder()
-                                        .setId("FOO-9")
-                                        .setSource(Source.newBuilder().setName("FOO")))
-                                .addReferences(VulnerabilityReference.newBuilder()
-                                        .setId("GHSA-bbbb-bbbb-bbbb")
-                                        .setSource(Source.newBuilder().setName("GITHUB"))))
+                .addVulnerabilities(org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
+                        .setId("FOO-1")
+                        .setSource(Source.newBuilder().setName("FOO"))
+                        .addAffects(VulnerabilityAffects.newBuilder()
+                                .setRef(bom.getComponents(0).getBomRef()))
+                        .addReferences(VulnerabilityReference.newBuilder()
+                                .setId("GHSA-aaaa-aaaa-aaaa")
+                                .setSource(Source.newBuilder().setName("GITHUB"))))
+                .addVulnerabilities(org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
+                        .setId("CVE-2024-9999")
+                        .setSource(Source.newBuilder().setName("NVD"))
+                        .addAffects(VulnerabilityAffects.newBuilder()
+                                .setRef(bom.getComponents(0).getBomRef()))
+                        .addReferences(VulnerabilityReference.newBuilder()
+                                .setId("FOO-9")
+                                .setSource(Source.newBuilder().setName("FOO")))
+                        .addReferences(VulnerabilityReference.newBuilder()
+                                .setId("GHSA-bbbb-bbbb-bbbb")
+                                .setSource(Source.newBuilder().setName("GITHUB"))))
                 .build());
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
                         .withArgument(VulnAnalysisWorkflowArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
@@ -1389,14 +1398,14 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                         tuple("FOO-1", Vulnerability.Source.UNKNOWN.name()),
                         tuple("CVE-2024-9999", Vulnerability.Source.NVD.name()));
 
-        assertThat(getAllAliasGroups()).satisfiesExactly(group ->
-                assertThat(group).containsExactlyInAnyOrder(
-                        new VulnerabilityKey("CVE-2024-9999", "NVD"),
-                        new VulnerabilityKey("GHSA-bbbb-bbbb-bbbb", "GITHUB")));
+        assertThat(getAllAliasGroups())
+                .satisfiesExactly(group -> assertThat(group)
+                        .containsExactlyInAnyOrder(
+                                new VulnerabilityKey("CVE-2024-9999", "NVD"),
+                                new VulnerabilityKey("GHSA-bbbb-bbbb-bbbb", "GITHUB")));
     }
 
-    private record AliasRow(UUID groupId, String source, String vulnId) {
-    }
+    private record AliasRow(UUID groupId, String source, String vulnId) {}
 
     private List<Set<VulnerabilityKey>> getAllAliasGroups() {
         return withJdbiHandle(handle -> handle
@@ -1407,9 +1416,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                           FROM "VULNERABILITY_ALIAS"
                         """)
                 .map((rs, _) -> new AliasRow(
-                        rs.getObject("group_id", UUID.class),
-                        rs.getString("source"),
-                        rs.getString("vuln_id")))
+                        rs.getObject("group_id", UUID.class), rs.getString("source"), rs.getString("vuln_id")))
                 .list()
                 .stream()
                 .collect(Collectors.groupingBy(AliasRow::groupId))
@@ -1435,5 +1442,4 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         policy.setRatings(ratings);
         withJdbiHandle(handle -> handle.attach(VulnerabilityPolicyDao.class).create(policy));
     }
-
 }

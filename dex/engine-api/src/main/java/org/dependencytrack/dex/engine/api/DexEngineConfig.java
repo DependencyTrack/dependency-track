@@ -42,8 +42,7 @@ public class DexEngineConfig {
         private Duration flushInterval = Duration.ofMillis(100);
         private int maxBatchSize = 100;
 
-        private BufferConfig() {
-        }
+        private BufferConfig() {}
 
         /**
          * @return Interval at which the buffer content is flushed.
@@ -74,7 +73,6 @@ public class DexEngineConfig {
                     .add("maxBatchSize=" + maxBatchSize)
                     .toString();
         }
-
     }
 
     public static class CacheConfig {
@@ -82,8 +80,7 @@ public class DexEngineConfig {
         private Duration evictAfterAccess = Duration.ofMinutes(5);
         private int maxSize = 1000;
 
-        private CacheConfig() {
-        }
+        private CacheConfig() {}
 
         public Duration evictAfterAccess() {
             return evictAfterAccess;
@@ -108,7 +105,6 @@ public class DexEngineConfig {
                     .add("maxSize=" + maxSize)
                     .toString();
         }
-
     }
 
     public static class LeaderElectionConfig {
@@ -117,8 +113,7 @@ public class DexEngineConfig {
         private Duration leaseDuration = Duration.ofSeconds(30);
         private Duration leaseCheckInterval = Duration.ofSeconds(15);
 
-        private LeaderElectionConfig() {
-        }
+        private LeaderElectionConfig() {}
 
         public boolean isEnabled() {
             return enabled;
@@ -158,7 +153,6 @@ public class DexEngineConfig {
                     .add("leaseCheckInterval=" + leaseCheckInterval)
                     .toString();
         }
-
     }
 
     public static class MaintenanceConfig {
@@ -169,8 +163,7 @@ public class DexEngineConfig {
         private Duration workerInitialDelay = Duration.ofMinutes(1);
         private Duration workerInterval = Duration.ofMinutes(30);
 
-        private MaintenanceConfig() {
-        }
+        private MaintenanceConfig() {}
 
         /**
          * @return Duration to retain completed workflow runs for.
@@ -237,7 +230,6 @@ public class DexEngineConfig {
                     .add("workerInterval=" + workerInterval)
                     .toString();
         }
-
     }
 
     public static class MetricsConfig {
@@ -247,8 +239,7 @@ public class DexEngineConfig {
         private Duration collectorInitialDelay = Duration.ofSeconds(15);
         private Duration collectorInterval = Duration.ofSeconds(30);
 
-        private MetricsConfig() {
-        }
+        private MetricsConfig() {}
 
         public MeterRegistry meterRegistry() {
             return meterRegistry;
@@ -271,7 +262,8 @@ public class DexEngineConfig {
         }
 
         public void setCollectorInitialDelay(Duration collectorInitialDelay) {
-            this.collectorInitialDelay = requireNonNull(collectorInitialDelay, "collectorInitialDelay must not be null");
+            this.collectorInitialDelay =
+                    requireNonNull(collectorInitialDelay, "collectorInitialDelay must not be null");
         }
 
         public Duration collectorInterval() {
@@ -291,7 +283,6 @@ public class DexEngineConfig {
                     .add("collectorInterval=" + collectorInterval)
                     .toString();
         }
-
     }
 
     public static class TaskSchedulerConfig {
@@ -300,8 +291,7 @@ public class DexEngineConfig {
         private IntervalFunction pollBackoffFunction = ofExponentialRandomBackoff(100L, 2.0, 0.3, 3000L);
         private Duration concurrencyKeyWakeupRepairInterval = Duration.ofSeconds(60);
 
-        private TaskSchedulerConfig() {
-        }
+        private TaskSchedulerConfig() {}
 
         public Duration pollInterval() {
             return pollInterval;
@@ -341,7 +331,6 @@ public class DexEngineConfig {
                     .add("concurrencyKeyWakeupRepairInterval=" + concurrencyKeyWakeupRepairInterval)
                     .toString();
         }
-
     }
 
     private final String instanceId;
@@ -529,5 +518,4 @@ public class DexEngineConfig {
 
         return "%s-%s".formatted(hostName, UUID.randomUUID().toString().substring(0, 8));
     }
-
 }

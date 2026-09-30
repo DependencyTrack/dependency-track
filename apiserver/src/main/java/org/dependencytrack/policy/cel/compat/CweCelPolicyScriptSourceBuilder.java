@@ -30,7 +30,8 @@ public class CweCelPolicyScriptSourceBuilder implements CelPolicyScriptSourceBui
 
     @Override
     public String apply(final PolicyCondition policyCondition) {
-        final List<Integer> conditionCwes = Arrays.stream(policyCondition.getValue().split(","))
+        final List<Integer> conditionCwes = Arrays.stream(
+                        policyCondition.getValue().split(","))
                 .map(String::trim)
                 .map(CweResolver.getInstance()::parseCweString)
                 .filter(Objects::nonNull)
@@ -40,9 +41,8 @@ public class CweCelPolicyScriptSourceBuilder implements CelPolicyScriptSourceBui
             return null;
         }
 
-        final String celCweListLiteral = "[%s]".formatted(conditionCwes.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(", ")));
+        final String celCweListLiteral =
+                "[%s]".formatted(conditionCwes.stream().map(String::valueOf).collect(Collectors.joining(", ")));
 
         if (policyCondition.getOperator() == PolicyCondition.Operator.CONTAINS_ANY) {
             // ANY of the vulnerabilities affecting the component have ANY of the
@@ -68,5 +68,4 @@ public class CweCelPolicyScriptSourceBuilder implements CelPolicyScriptSourceBui
 
         return null;
     }
-
 }

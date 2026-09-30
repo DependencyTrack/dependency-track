@@ -56,5 +56,4 @@ public final class HealthCheckRegistry {
                 .map(ServiceLoader.Provider::get)
                 .forEach(this::addCheck);
     }
-
 }

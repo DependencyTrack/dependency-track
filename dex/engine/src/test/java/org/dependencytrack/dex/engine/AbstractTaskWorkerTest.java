@@ -69,9 +69,12 @@ class AbstractTaskWorkerTest {
 
         await("Backpressure skips increment")
                 .atMost(Duration.ofSeconds(2))
-                .untilAsserted(() -> assertThat(meterRegistry.get("dt.dex.engine.task.worker.poll.skipped.backpressure")
-                        .tag("workerType", "TestWorker")
-                        .counter().count()).isGreaterThan(0.0));
+                .untilAsserted(() -> assertThat(meterRegistry
+                                .get("dt.dex.engine.task.worker.poll.skipped.backpressure")
+                                .tag("workerType", "TestWorker")
+                                .counter()
+                                .count())
+                        .isGreaterThan(0.0));
 
         assertThat(processStarted.getCount()).isEqualTo(1);
 
@@ -88,10 +91,13 @@ class AbstractTaskWorkerTest {
         worker = new TestWorker("test", 4, meterRegistry, processGate, processStarted, () -> true);
         worker.start();
 
-        assertThat(meterRegistry.get("dt.dex.engine.task.worker.concurrency.utilization")
-                .tag("workerType", "TestWorker")
-                .tag("name", "test")
-                .gauge().value()).isEqualTo(0.0);
+        assertThat(meterRegistry
+                        .get("dt.dex.engine.task.worker.concurrency.utilization")
+                        .tag("workerType", "TestWorker")
+                        .tag("name", "test")
+                        .gauge()
+                        .value())
+                .isEqualTo(0.0);
 
         worker.queueTwoTasks();
 
@@ -99,19 +105,25 @@ class AbstractTaskWorkerTest {
 
         await("Utilization climbs to 0.5")
                 .atMost(Duration.ofSeconds(2))
-                .untilAsserted(() -> assertThat(meterRegistry.get("dt.dex.engine.task.worker.concurrency.utilization")
-                        .tag("workerType", "TestWorker")
-                        .tag("name", "test")
-                        .gauge().value()).isEqualTo(0.5));
+                .untilAsserted(() -> assertThat(meterRegistry
+                                .get("dt.dex.engine.task.worker.concurrency.utilization")
+                                .tag("workerType", "TestWorker")
+                                .tag("name", "test")
+                                .gauge()
+                                .value())
+                        .isEqualTo(0.5));
 
         processGate.countDown();
 
         await("Utilization returns to 0")
                 .atMost(Duration.ofSeconds(5))
-                .untilAsserted(() -> assertThat(meterRegistry.get("dt.dex.engine.task.worker.concurrency.utilization")
-                        .tag("workerType", "TestWorker")
-                        .tag("name", "test")
-                        .gauge().value()).isEqualTo(0.0));
+                .untilAsserted(() -> assertThat(meterRegistry
+                                .get("dt.dex.engine.task.worker.concurrency.utilization")
+                                .tag("workerType", "TestWorker")
+                                .tag("name", "test")
+                                .gauge()
+                                .value())
+                        .isEqualTo(0.0));
     }
 
     private static final class TestWorker extends AbstractTaskWorker<ActivityTask> {
@@ -177,9 +189,6 @@ class AbstractTaskWorkerTest {
         }
 
         @Override
-        void abandon(final ActivityTask task) {
-        }
-
+        void abandon(final ActivityTask task) {}
     }
-
 }

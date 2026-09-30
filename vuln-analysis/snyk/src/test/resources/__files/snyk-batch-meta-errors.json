@@ -1,0 +1,16 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [],
+  "meta": {
+    "errors": [
+      {
+        "id": "error-1",
+        "status": "400",
+        "detail": "Unsupported Ecosystem"
+      }
+    ],
+    "packages": {}
+  }
+}

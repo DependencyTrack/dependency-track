@@ -26,5 +26,5 @@ import org.dependencytrack.dex.engine.api.DexEngine;
  * Note that only workflow runs that were completed by the {@link DexEngine} to which
  * this listener is registered, will be notified about.
  */
-public non-sealed interface WorkflowRunsCompletedEventListener extends DexEngineEventListener<WorkflowRunsCompletedEvent> {
-}
+public non-sealed interface WorkflowRunsCompletedEventListener
+        extends DexEngineEventListener<WorkflowRunsCompletedEvent> {}

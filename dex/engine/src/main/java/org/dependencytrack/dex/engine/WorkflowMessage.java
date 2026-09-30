@@ -34,7 +34,8 @@ import static java.util.Objects.requireNonNull;
  * @param visibleFrom    When the message becomes visible to the recipient.
  *                       {@code null} means "immediately visible".
  */
-public record WorkflowMessage(UUID recipientRunId, WorkflowEvent event, @Nullable Instant visibleFrom) {
+public record WorkflowMessage(
+        UUID recipientRunId, WorkflowEvent event, @Nullable Instant visibleFrom) {
 
     public WorkflowMessage {
         requireNonNull(recipientRunId, "recipientRunId must not be null");
@@ -44,5 +45,4 @@ public record WorkflowMessage(UUID recipientRunId, WorkflowEvent event, @Nullabl
     public WorkflowMessage(UUID recipientRunId, WorkflowEvent event) {
         this(recipientRunId, event, null);
     }
-
 }

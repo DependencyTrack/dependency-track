@@ -119,4 +119,4 @@ public class RepositoryTypeTest {
         final var purl = new PackageURL("pkg:nixpkgs/artifact@1.0.0");
         Assertions.assertEquals(RepositoryType.NIXPKGS, RepositoryType.resolve(purl));
     }
-} 
+}

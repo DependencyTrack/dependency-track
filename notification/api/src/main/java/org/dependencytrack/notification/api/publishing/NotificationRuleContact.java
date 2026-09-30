@@ -26,6 +26,4 @@ import org.jspecify.annotations.Nullable;
  * @since 5.0.0
  */
 public record NotificationRuleContact(
-        String username,
-        @Nullable String email) {
-}
+        String username, @Nullable String email) {}

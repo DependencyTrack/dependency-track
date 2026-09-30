@@ -66,5 +66,4 @@ public final class JdoNotificationEmitter extends JdbcNotificationEmitter {
             jdoConnection.close();
         }
     }
-
 }

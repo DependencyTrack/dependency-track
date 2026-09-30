@@ -63,7 +63,8 @@ public class DatabaseSeedingInitTaskTest extends PersistenceCapableTest {
             assertThat(property.getPropertyType()).isNotNull();
             assertThat(property.getDescription()).isNotNull();
         });
-        assertThat(configProperties).anySatisfy(property -> assertThat(property.getPropertyValue()).isNotBlank());
+        assertThat(configProperties)
+                .anySatisfy(property -> assertThat(property.getPropertyValue()).isNotBlank());
 
         final List<Permission> permissions = qm.getPermissions();
         assertThat(permissions).hasSize(Permissions.values().length);
@@ -100,12 +101,17 @@ public class DatabaseSeedingInitTaskTest extends PersistenceCapableTest {
             assertThat(license.getName()).isNotBlank();
             assertThat(license.getUuid()).isNotNull();
         });
-        assertThat(licenses).anySatisfy(license -> assertThat(license.getHeader()).isNotBlank());
-        assertThat(licenses).anySatisfy(license -> assertThat(license.getHeader()).isNotBlank());
+        assertThat(licenses)
+                .anySatisfy(license -> assertThat(license.getHeader()).isNotBlank());
+        assertThat(licenses)
+                .anySatisfy(license -> assertThat(license.getHeader()).isNotBlank());
         assertThat(licenses).anySatisfy(license -> assertThat(license.getText()).isNotBlank());
-        assertThat(licenses).anySatisfy(license -> assertThat(license.getTemplate()).isNotBlank());
-        assertThat(licenses).anySatisfy(license -> assertThat(license.getComment()).isNotBlank());
-        assertThat(licenses).anySatisfy(license -> assertThat(license.getSeeAlso()).isNotEmpty());
+        assertThat(licenses)
+                .anySatisfy(license -> assertThat(license.getTemplate()).isNotBlank());
+        assertThat(licenses)
+                .anySatisfy(license -> assertThat(license.getComment()).isNotBlank());
+        assertThat(licenses)
+                .anySatisfy(license -> assertThat(license.getSeeAlso()).isNotEmpty());
 
         final List<LicenseGroup> licenseGroups = qm.getLicenseGroups().getList(LicenseGroup.class);
         assertThat(licenseGroups).isNotEmpty();
@@ -176,9 +182,8 @@ public class DatabaseSeedingInitTaskTest extends PersistenceCapableTest {
         assertThat(license.getName()).isEqualTo("GNU Lesser General Public License v2.1 or later");
         assertThat(license.getComment()).isNotEqualTo("comment");
         assertThat(license.getHeader()).isNotEqualTo("header");
-        assertThat(license.getSeeAlso()).isNotEqualTo(new String[]{"seeAlso"});
+        assertThat(license.getSeeAlso()).isNotEqualTo(new String[] {"seeAlso"});
         assertThat(license.getTemplate()).isNotEqualTo("template");
         assertThat(license.getText()).isNotEqualTo("text");
     }
-
 }

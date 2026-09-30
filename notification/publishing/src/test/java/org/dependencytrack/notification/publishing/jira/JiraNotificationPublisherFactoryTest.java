@@ -23,7 +23,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class JiraNotificationPublisherFactoryTest extends AbstractNotificationPublisherFactoryTest<JiraNotificationPublisherFactory> {
+class JiraNotificationPublisherFactoryTest
+        extends AbstractNotificationPublisherFactoryTest<JiraNotificationPublisherFactory> {
 
     protected JiraNotificationPublisherFactoryTest() {
         super(JiraNotificationPublisherFactory.class);
@@ -35,5 +36,4 @@ class JiraNotificationPublisherFactoryTest extends AbstractNotificationPublisher
             assertThat(publisherFactory.defaultTemplate()).isNotNull();
         }
     }
-
 }

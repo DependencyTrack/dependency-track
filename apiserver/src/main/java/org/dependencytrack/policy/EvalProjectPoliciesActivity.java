@@ -45,7 +45,8 @@ public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPo
     }
 
     @Override
-    public @Nullable Void execute(ActivityContext ctx, @Nullable EvalProjectPoliciesArg argument) throws Exception {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable EvalProjectPoliciesArg argument)
+            throws InterruptedException {
         if (argument == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -56,5 +57,4 @@ public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPo
 
         return null;
     }
-
 }

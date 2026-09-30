@@ -40,22 +40,22 @@ public final class SystemCapabilitiesAggregator {
     private final Map<String, CapabilityProvider> providerByNamespace;
 
     public SystemCapabilitiesAggregator(ServiceLocator serviceLocator) {
-        this(ServiceLoader.load(CapabilityProvider.class).stream()
-                .map(ServiceLoader.Provider::get)
-                .toList(), serviceLocator);
+        this(
+                ServiceLoader.load(CapabilityProvider.class).stream()
+                        .map(ServiceLoader.Provider::get)
+                        .toList(),
+                serviceLocator);
     }
 
-    public SystemCapabilitiesAggregator(
-            List<CapabilityProvider> providers,
-            ServiceLocator serviceLocator) {
+    public SystemCapabilitiesAggregator(List<CapabilityProvider> providers, ServiceLocator serviceLocator) {
         final var byNamespace = new TreeMap<String, CapabilityProvider>();
 
         for (final CapabilityProvider provider : providers) {
             final String namespace = provider.namespace();
             final CapabilityProvider previous = byNamespace.putIfAbsent(namespace, provider);
             if (previous != null) {
-                throw new IllegalStateException(
-                        "Duplicate capability namespace '%s' contributed by %s and %s".formatted(
+                throw new IllegalStateException("Duplicate capability namespace '%s' contributed by %s and %s"
+                        .formatted(
                                 namespace,
                                 previous.getClass().getName(),
                                 provider.getClass().getName()));
@@ -86,9 +86,7 @@ public final class SystemCapabilitiesAggregator {
 
                 result.put(namespace, Collections.unmodifiableMap(new TreeMap<>(capabilities)));
             } catch (RuntimeException e) {
-                LOGGER.warn(
-                        "Failed to collect capabilities for namespace '{}'; omitting from response",
-                        namespace, e);
+                LOGGER.warn("Failed to collect capabilities for namespace '{}'; omitting from response", namespace, e);
             }
         }
 
@@ -100,8 +98,7 @@ public final class SystemCapabilitiesAggregator {
             return s;
         }
 
-        throw new IllegalStateException(
-                "Capability '%s' has invalid key: %s".formatted(path, key));
+        throw new IllegalStateException("Capability '%s' has invalid key: %s".formatted(path, key));
     }
 
     private static void requireValidCapabilities(String namespace, @Nullable Map<String, Object> capabilities) {
@@ -135,9 +132,7 @@ public final class SystemCapabilitiesAggregator {
             return;
         }
 
-        throw new IllegalStateException(
-                "Capability '%s' has unsupported value type %s".formatted(
-                        path, value.getClass().getName()));
+        throw new IllegalStateException("Capability '%s' has unsupported value type %s"
+                .formatted(path, value.getClass().getName()));
     }
-
 }

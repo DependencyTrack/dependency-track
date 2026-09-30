@@ -59,5 +59,4 @@ message ChildWorkflowFailureDetails {
   int32 workflow_version = 3;
 }
 
-message InternalFailureDetails {
-}
+message InternalFailureDetails {}

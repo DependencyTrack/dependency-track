@@ -18,13 +18,15 @@
  */
 package org.dependencytrack.resources.v2.exception;
 
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.model.InvalidSortFieldProblemDetails;
 import org.dependencytrack.exception.InvalidSortFieldException;
 
+import jakarta.ws.rs.ext.Provider;
+
 /// @since 5.0.0
 @Provider
-public final class InvalidSortFieldExceptionMapper extends ProblemDetailsExceptionMapper<InvalidSortFieldException, InvalidSortFieldProblemDetails> {
+public final class InvalidSortFieldExceptionMapper
+        extends ProblemDetailsExceptionMapper<InvalidSortFieldException, InvalidSortFieldProblemDetails> {
 
     @Override
     InvalidSortFieldProblemDetails map(InvalidSortFieldException exception) {
@@ -37,5 +39,4 @@ public final class InvalidSortFieldExceptionMapper extends ProblemDetailsExcepti
                 .supportedFields(exception.getAllowedFieldNames())
                 .build();
     }
-
 }

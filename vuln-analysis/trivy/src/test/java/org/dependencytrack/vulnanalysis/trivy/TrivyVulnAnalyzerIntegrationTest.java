@@ -44,7 +44,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testcontainers.containers.wait.strategy.Wait.forLogMessage;
 
-@Disabled("Pulling Trivy images is unreliable until https://github.com/aquasecurity/trivy/discussions/10425 is fully resolved.")
+@Disabled(
+        "Pulling Trivy images is unreliable until https://github.com/aquasecurity/trivy/discussions/10425 is fully resolved.")
 class TrivyVulnAnalyzerIntegrationTest {
 
     private static final String LATEST_VERSION = "0.69.3";
@@ -57,15 +58,15 @@ class TrivyVulnAnalyzerIntegrationTest {
         return List.of(
                 Arguments.of("0.51.1"), // Pre breaking change of Application#libraries -> Application#packages
                 Arguments.of("0.51.2"), // Post breaking change of Application#libraries -> Application#packages
-                Arguments.of(LATEST_VERSION)
-        );
+                Arguments.of(LATEST_VERSION));
     }
 
     @BeforeAll
     @SuppressWarnings("resource")
     static void beforeAll() {
         final DockerClient dockerClient = DockerClientFactory.lazyClient();
-        final CreateVolumeResponse response = dockerClient.createVolumeCmd()
+        final CreateVolumeResponse response = dockerClient
+                .createVolumeCmd()
                 .withName("dtrack-test-trivy-cache")
                 .exec();
         trivyCacheVolumeName = response.getName();
@@ -76,8 +77,8 @@ class TrivyVulnAnalyzerIntegrationTest {
         trivyContainer = new GenericContainer<>(DockerImageName.parse("aquasec/trivy:" + trivyVersion))
                 .withCommand("server --cache-dir /tmp/cache --listen :8080 --token TrivyToken")
                 .withExposedPorts(8080)
-                .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
-                        .withBinds(Bind.parse("%s:/tmp/cache".formatted(trivyCacheVolumeName))))
+                .withCreateContainerCmdModifier(cmd ->
+                        cmd.getHostConfig().withBinds(Bind.parse("%s:/tmp/cache".formatted(trivyCacheVolumeName))))
                 .waitingFor(forLogMessage(".*Listening :8080.*", 1))
                 .withEnv("TRIVY_DB_REPOSITORY", "public.ecr.aws/aquasecurity/trivy-db:2")
                 .withEnv("TRIVY_JAVA_DB_REPOSITORY", "public.ecr.aws/aquasecurity/trivy-java-db:1");
@@ -85,9 +86,7 @@ class TrivyVulnAnalyzerIntegrationTest {
 
         analyzer = new TrivyVulnAnalyzer(
                 HttpClient.newHttpClient(),
-                "http://%s:%d".formatted(
-                        trivyContainer.getHost(),
-                        trivyContainer.getFirstMappedPort()),
+                "http://%s:%d".formatted(trivyContainer.getHost(), trivyContainer.getFirstMappedPort()),
                 "TrivyToken",
                 false,
                 true,
@@ -176,13 +175,21 @@ class TrivyVulnAnalyzerIntegrationTest {
                         .setPurl("pkg:deb/ubuntu/libc6@2.35-0ubuntu3.4?arch=amd64&distro=ubuntu-22.04")
                         .setType(Classification.CLASSIFICATION_LIBRARY)
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcName").setValue("glibc").build())
+                                .setName("aquasecurity:trivy:SrcName")
+                                .setValue("glibc")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcVersion").setValue("2.35").build())
+                                .setName("aquasecurity:trivy:SrcVersion")
+                                .setValue("2.35")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcRelease").setValue("0ubuntu3.4").build())
+                                .setName("aquasecurity:trivy:SrcRelease")
+                                .setValue("0ubuntu3.4")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:PkgType").setValue("ubuntu").build())
+                                .setName("aquasecurity:trivy:PkgType")
+                                .setValue("ubuntu")
+                                .build())
                         .build())
                 .build();
 
@@ -211,13 +218,21 @@ class TrivyVulnAnalyzerIntegrationTest {
                         .setPurl("pkg:apk/alpine/git@2.43.0-r0?arch=x86_64&distro=3.19.1")
                         .setType(Classification.CLASSIFICATION_LIBRARY)
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:PkgID").setValue("git@2.43.0-r0").build())
+                                .setName("aquasecurity:trivy:PkgID")
+                                .setValue("git@2.43.0-r0")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:PkgType").setValue("alpine").build())
+                                .setName("aquasecurity:trivy:PkgType")
+                                .setValue("alpine")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcName").setValue("git").build())
+                                .setName("aquasecurity:trivy:SrcName")
+                                .setValue("git")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcVersion").setValue("2.43.0-r0").build())
+                                .setName("aquasecurity:trivy:SrcVersion")
+                                .setValue("2.43.0-r0")
+                                .build())
                         .build())
                 .build();
 
@@ -256,9 +271,13 @@ class TrivyVulnAnalyzerIntegrationTest {
                         .setVersion("2 (Karoo)")
                         .setType(Classification.CLASSIFICATION_OPERATING_SYSTEM)
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:Class").setValue("os-pkgs").build())
+                                .setName("aquasecurity:trivy:Class")
+                                .setValue("os-pkgs")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:Type").setValue("amazon").build())
+                                .setName("aquasecurity:trivy:Type")
+                                .setValue("amazon")
+                                .build())
                         .build())
                 .addComponents(Component.newBuilder()
                         .setBomRef("1")
@@ -267,18 +286,25 @@ class TrivyVulnAnalyzerIntegrationTest {
                         .setPurl("pkg:rpm/amazon/libxml2@2.9.1-6.amzn2.5.18?arch=x86_64&distro=amazon-2+%28Karoo%29")
                         .setType(Classification.CLASSIFICATION_LIBRARY)
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:PkgType").setValue("amazon").build())
+                                .setName("aquasecurity:trivy:PkgType")
+                                .setValue("amazon")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcName").setValue("libxml2").build())
+                                .setName("aquasecurity:trivy:SrcName")
+                                .setValue("libxml2")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcVersion").setValue("2.9.1").build())
+                                .setName("aquasecurity:trivy:SrcVersion")
+                                .setValue("2.9.1")
+                                .build())
                         .addProperties(Property.newBuilder()
-                                .setName("aquasecurity:trivy:SrcRelease").setValue("6.amzn2.5.18").build())
+                                .setName("aquasecurity:trivy:SrcRelease")
+                                .setValue("6.amzn2.5.18")
+                                .build())
                         .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
         assertThat(vdr.getVulnerabilitiesList()).hasSizeGreaterThanOrEqualTo(1);
     }
-
 }

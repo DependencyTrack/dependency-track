@@ -33,10 +33,15 @@ import java.util.UUID;
 public record LicenseGroupResponse(
         @Schema(description = "Name of the license group", requiredMode = Schema.RequiredMode.REQUIRED)
         String name,
+
         @Schema(description = "Licenses belonging to the license group", requiredMode = Schema.RequiredMode.REQUIRED)
         List<License> licenses,
-        @Schema(description = "Risk weight assigned to violations of this group", requiredMode = Schema.RequiredMode.REQUIRED)
+
+        @Schema(
+                description = "Risk weight assigned to violations of this group",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         int riskWeight,
+
         @Schema(description = "UUID of the license group", requiredMode = Schema.RequiredMode.REQUIRED)
         UUID uuid) {
 
@@ -44,35 +49,40 @@ public record LicenseGroupResponse(
         // NB: The API originally returned JDO models directly, and JDO populates loaded-but-empty
         // fields as empty lists, not null. This DTO replicates that behaviour for backward-compat.
         final List<org.dependencytrack.model.License> jdoLicenses = group.getLicenses();
-        final List<License> licenses = jdoLicenses != null
-                ? jdoLicenses.stream().map(License::of).toList()
-                : List.of();
+        final List<License> licenses =
+                jdoLicenses != null ? jdoLicenses.stream().map(License::of).toList() : List.of();
 
-        return new LicenseGroupResponse(
-                group.getName(),
-                licenses,
-                group.getRiskWeight(),
-                group.getUuid());
+        return new LicenseGroupResponse(group.getName(), licenses, group.getRiskWeight(), group.getUuid());
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record License(
             @Schema(description = "Name of the license", requiredMode = Schema.RequiredMode.REQUIRED)
             String name,
+
             @Schema(description = "SPDX license identifier", requiredMode = Schema.RequiredMode.REQUIRED)
             String licenseId,
+
             @JsonProperty("isOsiApproved")
             @Schema(description = "Whether the license is OSI-approved", requiredMode = Schema.RequiredMode.REQUIRED)
             boolean osiApproved,
+
             @JsonProperty("isFsfLibre")
             @Schema(description = "Whether the license is FSF Libre", requiredMode = Schema.RequiredMode.REQUIRED)
             boolean fsfLibre,
+
             @JsonProperty("isDeprecatedLicenseId")
-            @Schema(description = "Whether the license identifier has been deprecated by SPDX", requiredMode = Schema.RequiredMode.REQUIRED)
+            @Schema(
+                    description = "Whether the license identifier has been deprecated by SPDX",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
             boolean deprecatedLicenseId,
+
             @JsonProperty("isCustomLicense")
-            @Schema(description = "Whether the license is custom (user-defined)", requiredMode = Schema.RequiredMode.REQUIRED)
+            @Schema(
+                    description = "Whether the license is custom (user-defined)",
+                    requiredMode = Schema.RequiredMode.REQUIRED)
             boolean customLicense,
+
             @Schema(description = "UUID of the license", requiredMode = Schema.RequiredMode.REQUIRED)
             UUID uuid) {
 
@@ -87,5 +97,4 @@ public record LicenseGroupResponse(
                     jdo.getUuid());
         }
     }
-
 }

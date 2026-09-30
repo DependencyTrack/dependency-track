@@ -30,21 +30,21 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.Path;
 
 import java.util.Set;
 
 import static com.tngtech.archunit.base.DescribedPredicate.describe;
-
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
 @AnalyzeClasses(
         packages = "org.dependencytrack.resources",
         importOptions = {
-                DoNotIncludeJars.class,
-                DoNotIncludeTests.class,
+            DoNotIncludeJars.class,
+            DoNotIncludeTests.class,
         })
 class ResourceAuthorizationArchitectureTest {
 
@@ -68,39 +68,40 @@ class ResourceAuthorizationArchitectureTest {
             "UserResource.updateSelf");
 
     @ArchTest
-    static final ArchRule resourceMethodsMustDeclarePermissions =
-            methods()
-                    .that().areMetaAnnotatedWith(HttpMethod.class)
-                    .should(new ArchCondition<>("be annotated with @PermissionRequired or @AuthenticationNotRequired") {
-                        @Override
-                        public void check(final JavaMethod method, final ConditionEvents events) {
-                            final String key = method.getOwner().getSimpleName() + "." + method.getName();
-                            if (PERMISSION_ANNOTATION_ALLOWLIST.contains(key)) {
-                                return;
-                            }
+    static final ArchRule resourceMethodsMustDeclarePermissions = methods()
+            .that()
+            .areMetaAnnotatedWith(HttpMethod.class)
+            .should(new ArchCondition<>("be annotated with @PermissionRequired or @AuthenticationNotRequired") {
+                @Override
+                public void check(final JavaMethod method, final ConditionEvents events) {
+                    final String key = method.getOwner().getSimpleName() + "." + method.getName();
+                    if (PERMISSION_ANNOTATION_ALLOWLIST.contains(key)) {
+                        return;
+                    }
 
-                            final boolean hasPermissionRequired = method.isAnnotatedWith(PermissionRequired.class);
-                            final boolean hasAuthNotRequired = method.isAnnotatedWith(AuthenticationNotRequired.class);
-                            if (!hasPermissionRequired && !hasAuthNotRequired) {
-                                events.add(SimpleConditionEvent.violated(method, """
+                    final boolean hasPermissionRequired = method.isAnnotatedWith(PermissionRequired.class);
+                    final boolean hasAuthNotRequired = method.isAnnotatedWith(AuthenticationNotRequired.class);
+                    if (!hasPermissionRequired && !hasAuthNotRequired) {
+                        events.add(SimpleConditionEvent.violated(method, """
                                         %s is missing @PermissionRequired or @AuthenticationNotRequired\
                                         """.formatted(method.getFullName())));
-                            }
-                        }
-                    });
+                    }
+                }
+            });
 
     @ArchTest
-    static final ArchRule resourceClassesMustExtendAbstractApiResource =
-            classes()
-                    .that(describe("are annotated with @Path or implement a @Path-annotated interface",
-                            (JavaClass javaClass) -> javaClass.isAnnotatedWith(Path.class)
-                                    || javaClass.getRawInterfaces().stream()
+    static final ArchRule resourceClassesMustExtendAbstractApiResource = classes()
+            .that(describe(
+                    "are annotated with @Path or implement a @Path-annotated interface",
+                    (JavaClass javaClass) -> javaClass.isAnnotatedWith(Path.class)
+                            || javaClass.getRawInterfaces().stream()
                                     .anyMatch(iface -> iface.isAnnotatedWith(Path.class))))
-                    // v1 OpenApiResource extends BaseOpenApiResource from Swagger library.
-                    .and().doNotHaveSimpleName("OpenApiResource")
-                    .should().beAssignableTo(AbstractApiResource.class)
-                    .because("""
+            // v1 OpenApiResource extends BaseOpenApiResource from Swagger library.
+            .and()
+            .doNotHaveSimpleName("OpenApiResource")
+            .should()
+            .beAssignableTo(AbstractApiResource.class)
+            .because("""
                             Resource classes must extend AbstractApiResource to have access \
                             to helper methods for project access control enforcement.""");
-
 }

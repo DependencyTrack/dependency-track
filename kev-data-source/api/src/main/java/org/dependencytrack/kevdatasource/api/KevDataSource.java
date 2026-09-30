@@ -34,5 +34,4 @@ import java.util.Iterator;
 ///
 /// @since 5.1.0
 @ExtensionPointSpec(name = "kev-data-source")
-public interface KevDataSource extends ExtensionPoint, Iterator<KevAssertion> {
-}
+public interface KevDataSource extends ExtensionPoint, Iterator<KevAssertion> {}

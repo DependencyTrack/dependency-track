@@ -16,11 +16,42 @@
      AND alias_self."VULN_ID" = ${vulnId}
 </#macro>
 
-<#macro isKev vulnSource vulnId>
+<#--
+  Whether one vulnerability is known exploited.
+  Use for point-lookups or enrichment in a SELECT, NOT for filtering large result sets.
+-->
+<#macro isKevColumn vulnSource vulnId>
   EXISTS (
     SELECT 1
       FROM "KEV_ASSERTION" AS ka
      WHERE (ka."VULN_SOURCE", ka."VULN_ID") IN (<@vulnAliasGroup vulnSource=vulnSource vulnId=vulnId/>)
+  )
+</#macro>
+
+<#--
+  Whether a vulnerability is known exploited.
+  Use for filtering large result sets, use `isKevColumn` otherwise.
+
+  This variant computes the full set of KEV vulns upfront,
+  which pays off for filtering but degrades badly for point-lookups and SELECT enrichment.
+
+  NB: Keep the ARRAY(...) notation! Postgres then builds the set once and counts it,
+  so it knows the filter keeps very few rows. IN or a join leaves it guessing,
+  and for a sorted page it scans the whole VULNERABILITY table instead of the
+  few rows that match.
+-->
+<#macro isKevFilter vulnIdColumn>
+  (
+    ${vulnIdColumn} = ANY(ARRAY(
+      SELECT DISTINCT kev_v."ID"
+        FROM "KEV_ASSERTION" AS kev_ka
+       INNER JOIN LATERAL (
+         <@vulnAliasGroup vulnSource='kev_ka."VULN_SOURCE"' vulnId='kev_ka."VULN_ID"'/>
+       ) AS kev_group("SOURCE", "VULN_ID") ON TRUE
+       INNER JOIN "VULNERABILITY" AS kev_v
+          ON kev_v."VULNID" = kev_group."VULN_ID"
+         AND kev_v."SOURCE" = kev_group."SOURCE"
+    ))
   )
 </#macro>
 

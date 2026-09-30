@@ -59,9 +59,8 @@ class ProtobufPayloadConverterTest {
     void convertFromPayloadShouldReturnProtobufContent() {
         final var converter = new ProtobufPayloadConverter<>(WorkflowEvent.class);
         final var event = WorkflowEvent.getDefaultInstance();
-        final var payload = Payload.newBuilder()
-                .setProtoContent(Any.pack(event))
-                .build();
+        final var payload =
+                Payload.newBuilder().setProtoContent(Any.pack(event)).build();
 
         assertThat(converter.convertFromPayload(payload)).isEqualTo(event);
     }
@@ -89,5 +88,4 @@ class ProtobufPayloadConverterTest {
                         Expected Protobuf payload to be of type org.dependencytrack.dex.proto.event.v1.WorkflowEvent, \
                         but was type.googleapis.com/org.dependencytrack.dex.failure.v1.Failure""");
     }
-
 }

@@ -71,9 +71,7 @@ class JiraNotificationPublisherTest extends AbstractNotificationPublisherTest {
     protected void beforeEach() throws Exception {
         super.beforeEach();
 
-        WIREMOCK.stubFor(post(anyUrl())
-                .willReturn(aResponse()
-                        .withStatus(201)));
+        WIREMOCK.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(201)));
     }
 
     @Override
@@ -186,5 +184,4 @@ class JiraNotificationPublisherTest extends AbstractNotificationPublisherTest {
                         }
                         """)));
     }
-
 }

@@ -21,20 +21,22 @@ package org.dependencytrack.model;
 import alpine.common.validation.RegexSequence;
 import alpine.model.Team;
 import alpine.server.json.TrimmedStringDeserializer;
+import com.asahaf.javacron.InvalidExpressionException;
 import com.asahaf.javacron.Schedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import org.dependencytrack.model.validation.ValidCronExpression;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
@@ -85,7 +87,9 @@ public class NotificationRule implements Serializable {
     @NotBlank
     @Size(min = 1, max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The name may only contain printable characters")
     private String name;
 
     @Persistent
@@ -115,25 +119,43 @@ public class NotificationRule implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "NOTIFICATION_LEVEL", jdbcType = "VARCHAR")
-    @Extensions(value = {
-            @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS notification_level)"),
-            @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS notification_level)")
-    })
+    @Extensions(
+            value = {
+                @Extension(
+                        vendorName = "datanucleus",
+                        key = "insert-function",
+                        value = "CAST(? AS notification_level)"),
+                @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS notification_level)")
+            })
     private NotificationLevel notificationLevel;
 
     @Persistent(table = "NOTIFICATIONRULE_PROJECTS", defaultFetchGroup = "true")
-    @Join(column = "NOTIFICATIONRULE_ID", foreignKey = "NOTIFICATIONRULE_PROJECTS_NOTIFICATIONRULE_FK", deleteAction = ForeignKeyAction.CASCADE)
-    @Element(column = "PROJECT_ID", foreignKey = "NOTIFICATIONRULE_PROJECTS_PROJECT_FK", deleteAction = ForeignKeyAction.CASCADE)
+    @Join(
+            column = "NOTIFICATIONRULE_ID",
+            foreignKey = "NOTIFICATIONRULE_PROJECTS_NOTIFICATIONRULE_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
+    @Element(
+            column = "PROJECT_ID",
+            foreignKey = "NOTIFICATIONRULE_PROJECTS_PROJECT_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC, version ASC"))
     private List<Project> projects;
 
-    @Persistent(table = "NOTIFICATIONRULE_TAGS", defaultFetchGroup = "true", mappedBy = "notificationRules")
-    @Join(column = "NOTIFICATIONRULE_ID", primaryKey = "NOTIFICATIONRULE_TAGS_PK", foreignKey = "NOTIFICATIONRULE_TAGS_NOTIFICATIONRULE_FK", deleteAction = ForeignKeyAction.CASCADE)
+    @Persistent(table = "NOTIFICATIONRULE_TAGS", defaultFetchGroup = "true")
+    @Join(
+            column = "NOTIFICATIONRULE_ID",
+            primaryKey = "NOTIFICATIONRULE_TAGS_PK",
+            foreignKey = "NOTIFICATIONRULE_TAGS_NOTIFICATIONRULE_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
     @Element(column = "TAG_ID", foreignKey = "NOTIFICATIONRULE_TAGS_TAG_FK", deleteAction = ForeignKeyAction.CASCADE)
     private Set<Tag> tags;
 
     @Persistent(table = "NOTIFICATIONRULE_TEAMS", defaultFetchGroup = "true")
-    @Join(column = "NOTIFICATIONRULE_ID", primaryKey = "NOTIFICATIONRULE_TEAMS_PK", foreignKey = "NOTIFICATIONRULE_TEAMS_NOTIFICATIONRULE_FK", deleteAction = ForeignKeyAction.CASCADE)
+    @Join(
+            column = "NOTIFICATIONRULE_ID",
+            primaryKey = "NOTIFICATIONRULE_TEAMS_PK",
+            foreignKey = "NOTIFICATIONRULE_TEAMS_NOTIFICATIONRULE_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
     @Element(column = "TEAM_ID", foreignKey = "NOTIFICATIONRULE_TEAMS_TEAM_FK", deleteAction = ForeignKeyAction.CASCADE)
     private Set<Team> teams;
 
@@ -145,20 +167,27 @@ public class NotificationRule implements Serializable {
     @Column(name = "MESSAGE", length = 1024)
     @Size(max = 1024)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The message may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The message may only contain printable characters")
     private String message;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "NOTIFICATIONRULE_NOTIFICATIONPUBLISHER_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "NOTIFICATIONRULE_NOTIFICATIONPUBLISHER_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PUBLISHER")
     private NotificationPublisher publisher;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "PUBLISHER_CONFIG", jdbcType = "CLOB")
-    @Extensions(value = {
-            @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS JSONB)"),
-            @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS JSONB)")
-    })
+    @Extensions(
+            value = {
+                @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS JSONB)"),
+                @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS JSONB)")
+            })
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String publisherConfig;
 
@@ -187,7 +216,9 @@ public class NotificationRule implements Serializable {
      */
     @Persistent
     @Column(name = "SCHEDULE_LAST_TRIGGERED_AT")
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "When the schedule last triggered, as UNIX epoch timestamp in milliseconds")
+    @Schema(
+            accessMode = Schema.AccessMode.READ_ONLY,
+            description = "When the schedule last triggered, as UNIX epoch timestamp in milliseconds")
     private Date scheduleLastTriggeredAt;
 
     /**
@@ -195,7 +226,9 @@ public class NotificationRule implements Serializable {
      */
     @Persistent
     @Column(name = "SCHEDULE_NEXT_TRIGGER_AT")
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "When the schedule triggers next, as UNIX epoch timestamp in milliseconds")
+    @Schema(
+            accessMode = Schema.AccessMode.READ_ONLY,
+            description = "When the schedule triggers next, as UNIX epoch timestamp in milliseconds")
     private Date scheduleNextTriggerAt;
 
     /**
@@ -252,7 +285,6 @@ public class NotificationRule implements Serializable {
     public void setNotifyChildren(boolean notifyChildren) {
         this.notifyChildren = notifyChildren;
     }
-
 
     public boolean isLogSuccessfulPublish() {
         return logSuccessfulPublish;
@@ -316,18 +348,14 @@ public class NotificationRule implements Serializable {
             return null;
         }
 
-        return notifyOn.stream()
-                .map(NotificationGroup::valueOf)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        return notifyOn.stream().map(NotificationGroup::valueOf).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public void setNotifyOn(Set<NotificationGroup> groups) {
         if (groups == null) {
             this.notifyOn = null;
         } else {
-            this.notifyOn = groups.stream()
-                    .map(Enum::name)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            this.notifyOn = groups.stream().map(Enum::name).collect(Collectors.toCollection(LinkedHashSet::new));
         }
     }
 
@@ -422,7 +450,7 @@ public class NotificationRule implements Serializable {
                     ? scheduleLastTriggeredAt
                     : now;
             this.scheduleNextTriggerAt = schedule.next(baseDate);
-        } catch (com.asahaf.javacron.InvalidExpressionException e) {
+        } catch (InvalidExpressionException e) {
             throw new IllegalArgumentException("Invalid cron expression: " + scheduleCron, e);
         }
     }
@@ -443,5 +471,4 @@ public class NotificationRule implements Serializable {
             throw new IllegalStateException(message);
         }
     }
-
 }

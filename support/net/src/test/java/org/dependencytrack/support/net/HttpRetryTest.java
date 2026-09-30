@@ -58,8 +58,7 @@ class HttpRetryTest {
 
     @Test
     void shouldParseRetryAfterAsDelaySeconds() {
-        assertThat(HttpRetry.parseRetryAfterHeader("60", CLOCK))
-                .isEqualTo(Duration.ofSeconds(60));
+        assertThat(HttpRetry.parseRetryAfterHeader("60", CLOCK)).isEqualTo(Duration.ofSeconds(60));
     }
 
     @ParameterizedTest
@@ -71,19 +70,17 @@ class HttpRetryTest {
     @Test
     void shouldParseRetryAfterAsHttpDate() {
         final Instant deadline = NOW.plus(Duration.ofMinutes(10));
-        final String httpDate = DateTimeFormatter.RFC_1123_DATE_TIME
-                .format(deadline.atZone(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS));
+        final String httpDate = DateTimeFormatter.RFC_1123_DATE_TIME.format(
+                deadline.atZone(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS));
 
-        assertThat(HttpRetry.parseRetryAfterHeader(httpDate, CLOCK))
-                .isEqualTo(Duration.ofMinutes(10));
+        assertThat(HttpRetry.parseRetryAfterHeader(httpDate, CLOCK)).isEqualTo(Duration.ofMinutes(10));
     }
 
     @Test
     void shouldReturnNullWhenHttpDateIsInPast() {
-        final String httpDate = DateTimeFormatter.RFC_1123_DATE_TIME
-                .format(NOW.minus(Duration.ofMinutes(5)).atZone(ZoneOffset.UTC));
+        final String httpDate = DateTimeFormatter.RFC_1123_DATE_TIME.format(
+                NOW.minus(Duration.ofMinutes(5)).atZone(ZoneOffset.UTC));
 
         assertThat(HttpRetry.parseRetryAfterHeader(httpDate, CLOCK)).isNull();
     }
-
 }

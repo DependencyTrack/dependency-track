@@ -19,30 +19,31 @@
 package org.dependencytrack.resources.v2;
 
 import com.github.packageurl.PackageURL;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.filestorage.api.FileStorage;
+import org.dependencytrack.metrics.MetricsDao;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.License;
-import org.dependencytrack.model.PackageArtifactMetadata;
-import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Scope;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
+import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 
 import java.time.Instant;
 import java.util.Date;
@@ -59,14 +60,12 @@ public class ProjectsResourceTest extends ResourceTest {
     private static final FileStorage FILE_STORAGE_MOCK = mock(FileStorage.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-                new ResourceConfig()
-                .register(new AbstractBinder() {
-                @Override
-                protected void configure() {
-                   bind(FILE_STORAGE_MOCK).to(FileStorage.class);
-                }
-        }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(new AbstractBinder() {
+        @Override
+        protected void configure() {
+            bind(FILE_STORAGE_MOCK).to(FileStorage.class);
+        }
+    }));
 
     @Test
     public void listProjectComponents() {
@@ -178,7 +177,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(nameMatch.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(nameMatch)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(nameMatch))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("widget-core", "WIDGET-ui");
 
@@ -188,7 +188,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(groupMatch.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(groupMatch)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(groupMatch))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("widget-core");
     }
@@ -215,7 +216,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("lib_foo");
     }
@@ -242,7 +244,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("lib%foo");
     }
@@ -284,8 +287,8 @@ public class ProjectsResourceTest extends ResourceTest {
             final Response response = target.request().header(X_API_KEY, apiKey).get();
             assertThat(response.getStatus()).isEqualTo(200);
             final JsonObject body = parseJsonObject(response);
-            body.getJsonArray("items").forEach(v ->
-                    collected.add(v.asJsonObject().getString("name")));
+            body.getJsonArray("items")
+                    .forEach(v -> collected.add(v.asJsonObject().getString("name")));
             pageToken = body.containsKey("next_page_token") ? body.getString("next_page_token") : null;
         } while (pageToken != null);
 
@@ -329,8 +332,8 @@ public class ProjectsResourceTest extends ResourceTest {
             final Response response = target.request().header(X_API_KEY, apiKey).get();
             assertThat(response.getStatus()).isEqualTo(200);
             final JsonObject body = parseJsonObject(response);
-            body.getJsonArray("items").forEach(v ->
-                    collected.add(v.asJsonObject().getString("name")));
+            body.getJsonArray("items")
+                    .forEach(v -> collected.add(v.asJsonObject().getString("name")));
             pageToken = body.containsKey("next_page_token") ? body.getString("next_page_token") : null;
         } while (pageToken != null);
 
@@ -352,7 +355,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isEqualTo(/* language=JSON */ "[\"old\", \"new\", \"unresolved\"]");
     }
 
@@ -367,7 +371,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].name")
                 .isEqualTo(/* language=JSON */ "[\"new\", \"old\", \"unresolved\"]");
     }
 
@@ -397,24 +402,34 @@ public class ProjectsResourceTest extends ResourceTest {
         final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
         final var oldPackagePurl = new PackageURL("maven", "test", "old", null, null, null);
         final var newPackagePurl = new PackageURL("maven", "test", "new", null, null, null);
-        useJdbiHandle(handle ->
-                new PackageMetadataDao(handle).upsertAll(java.util.List.of(
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(java.util.List.of(
                         new PackageMetadata(oldPackagePurl, null, null, resolvedAt, null, null),
                         new PackageMetadata(newPackagePurl, null, null, resolvedAt, null, null))));
-        useJdbiHandle(handle ->
-                new PackageArtifactMetadataDao(handle).upsertAll(java.util.List.of(
+        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle)
+                .upsertAll(java.util.List.of(
                         new PackageArtifactMetadata(
                                 new PackageURL("maven", "test", "old", "1.0", null, null),
                                 oldPackagePurl,
-                                null, null, null, null,
+                                null,
+                                null,
+                                null,
+                                null,
                                 Instant.ofEpochMilli(1_500_000_000_000L),
-                                null, "central", resolvedAt),
+                                null,
+                                "central",
+                                resolvedAt),
                         new PackageArtifactMetadata(
                                 new PackageURL("maven", "test", "new", "1.0", null, null),
                                 newPackagePurl,
-                                null, null, null, null,
+                                null,
+                                null,
+                                null,
+                                null,
                                 Instant.ofEpochMilli(1_700_000_000_000L),
-                                null, "central", resolvedAt))));
+                                null,
+                                "central",
+                                resolvedAt))));
         return project;
     }
 
@@ -445,7 +460,8 @@ public class ProjectsResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].occurrence_count")
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[*].occurrence_count")
                 .isArray()
                 .containsExactly(2);
     }
@@ -508,8 +524,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
         final var project = prepareProject();
 
-        final Response response = jersey
-                .target("/projects/" + project.getUuid() + "/components")
+        final Response response = jersey.target("/projects/" + project.getUuid() + "/components")
                 .queryParam("sort_by", "invalid_field")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -679,12 +694,12 @@ public class ProjectsResourceTest extends ResourceTest {
                 """);
     }
 
-
     @Test
     public void cloneProjectShouldUpdateMetrics() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
-        final Project project = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, null, false, false);
+        final Project project =
+                qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, null, false, false);
 
         final Component comp = new Component();
         comp.setId(111L);
@@ -700,7 +715,8 @@ public class ProjectsResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.HIGH);
         qm.persist(vuln);
 
-        qm.addVulnerability(vuln, comp, "INTERNAL_ANALYZER", "Vuln1", "http://vuln.com/vuln1", new Date(1708559165229L));
+        qm.addVulnerability(
+                vuln, comp, "INTERNAL_ANALYZER", "Vuln1", "http://vuln.com/vuln1", new Date(1708559165229L));
 
         final Response response = jersey.target("/projects/%s/clone".formatted(project.getUuid()))
                 .request()
@@ -717,8 +733,8 @@ public class ProjectsResourceTest extends ResourceTest {
         final Project clonedProject = qm.getObjectByUuid(Project.class, clonedProjectUuid);
         assertThat(clonedProject).isNotNull();
 
-        final ProjectMetrics metrics = withJdbiHandle(handle ->
-                handle.attach(MetricsDao.class).getMostRecentProjectMetrics(clonedProject.getId()));
+        final ProjectMetrics metrics = withJdbiHandle(
+                handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(clonedProject.getId()));
         assertThat(metrics).isNotNull();
         assertThat(metrics.getComponents()).isEqualTo(1);
         assertThat(metrics.getHigh()).isEqualTo(1);

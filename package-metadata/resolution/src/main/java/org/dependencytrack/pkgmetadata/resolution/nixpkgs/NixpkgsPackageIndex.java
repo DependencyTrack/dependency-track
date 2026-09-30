@@ -46,8 +46,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 final class NixpkgsPackageIndex {
 
-    private record IndexEntry(Map<String, String> versionByName, Instant lastRefreshed) {
-    }
+    private record IndexEntry(Map<String, String> versionByName, Instant lastRefreshed) {}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NixpkgsPackageIndex.class);
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
@@ -65,7 +64,8 @@ final class NixpkgsPackageIndex {
         this.jsonFactory = jsonFactory;
     }
 
-    @Nullable String getVersion(String pname, String repoUrl) throws InterruptedException {
+    @Nullable
+    String getVersion(String pname, String repoUrl) throws InterruptedException {
         ensureFresh(repoUrl);
 
         final IndexEntry entry = indexEntryByRepoUrl.get(repoUrl);
@@ -132,12 +132,12 @@ final class NixpkgsPackageIndex {
         try (final InputStream body = response.body()) {
             RetryableResolutionException.throwIfRetryableHttpError(response, Clock.systemUTC());
             if (response.statusCode() != 200) {
-                throw new UncheckedIOException(new IOException(
-                        "Unexpected status code %d for %s".formatted(response.statusCode(), url)));
+                throw new UncheckedIOException(
+                        new IOException("Unexpected status code %d for %s".formatted(response.statusCode(), url)));
             }
 
             try (final var brotliStream = new BrotliInputStream(body);
-                 final JsonParser parser = jsonFactory.createParser(brotliStream)) {
+                    final JsonParser parser = jsonFactory.createParser(brotliStream)) {
                 return parsePackages(parser);
             }
         } catch (IOException e) {
@@ -172,5 +172,4 @@ final class NixpkgsPackageIndex {
 
         return versionByName;
     }
-
 }

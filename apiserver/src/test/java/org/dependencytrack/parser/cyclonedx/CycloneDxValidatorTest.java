@@ -127,7 +127,8 @@ public class CycloneDxValidatorTest {
                           <components/>
                         </bom>
                         """.getBytes()))
-                .withMessage("Unable to determine schema version from XML namespaces [http://cyclonedx.org/schema/bom/666]");
+                .withMessage(
+                        "Unable to determine schema version from XML namespaces [http://cyclonedx.org/schema/bom/666]");
     }
 
     @Test
@@ -149,7 +150,8 @@ public class CycloneDxValidatorTest {
                         }
                         """.getBytes()))
                 .withMessage("Schema validation failed")
-                .extracting(InvalidBomException::getValidationErrors).asInstanceOf(list(String.class))
+                .extracting(InvalidBomException::getValidationErrors)
+                .asInstanceOf(list(String.class))
                 .containsExactly("""
                         /components/0/type: does not have a value in the enumeration \
                         ["application", "framework", "library", "container", "operating-system", "device", "firmware", "file"]\
@@ -171,21 +173,19 @@ public class CycloneDxValidatorTest {
                          </bom>
                         """.getBytes()))
                 .withMessage("Schema validation failed")
-                .extracting(InvalidBomException::getValidationErrors).asInstanceOf(list(String.class))
-                .containsExactly(
-                        """
+                .extracting(InvalidBomException::getValidationErrors)
+                .asInstanceOf(list(String.class))
+                .containsExactly("""
                                 cvc-enumeration-valid: Value 'foo' is not facet-valid with respect to enumeration \
                                 '[application, framework, library, container, operating-system, device, firmware, file]'. \
-                                It must be a value from the enumeration.""",
-                        """
+                                It must be a value from the enumeration.""", """
                                 cvc-attribute.3: The value 'foo' of attribute 'type' on element 'component' is not \
                                 valid with respect to its type, 'classification'.""");
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3696
     public void testValidateJsonWithSpecVersionAtTheBottom() {
-        assertThatNoException()
-                .isThrownBy(() -> validator.validate("""
+        assertThatNoException().isThrownBy(() -> validator.validate("""
                         {
                           "metadata": {},
                           "components": [],
@@ -225,8 +225,7 @@ public class CycloneDxValidatorTest {
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3831
     public void testValidateJsonWithUrlContainingEncodedBrackets() {
-        assertThatNoException()
-                .isThrownBy(() -> validator.validate("""
+        assertThatNoException().isThrownBy(() -> validator.validate("""
                         {
                           "bomFormat": "CycloneDX",
                           "specVersion": "1.5",
@@ -258,17 +257,14 @@ public class CycloneDxValidatorTest {
                             <?xml version="1.0" encoding="UTF-8"?>
                             <!DOCTYPE bom [<!ENTITY %% sp SYSTEM "http://localhost:%d/does-not-exist/file.dtd"> %%sp;]>
                             <bom xmlns="http://cyclonedx.org/schema/bom/1.5"/>
-                            """.formatted(wireMock.port()).getBytes())
-            );
+                            """.formatted(wireMock.port()).getBytes()));
 
             // Ensure we failed for the right reason.
             assertThat(throwable.getSuppressed()).hasSize(2);
-            assertThat(throwable.getSuppressed()).anySatisfy(suppressed -> assertThat(suppressed)
-                    .hasMessageContaining("""
+            assertThat(throwable.getSuppressed())
+                    .anySatisfy(suppressed -> assertThat(suppressed).hasMessageContaining("""
                             Encountered a reference to external entity "sp", but stream reader has feature \
-                            "javax.xml.stream.isSupportingExternalEntities" disabled"""
-                    )
-            );
+                            "javax.xml.stream.isSupportingExternalEntities" disabled"""));
 
             // Ensure that in fact no request was performed.
             wireMock.verify(0, anyRequestedFor(anyUrl()));
@@ -276,5 +272,4 @@ public class CycloneDxValidatorTest {
             wireMock.stop();
         }
     }
-
 }

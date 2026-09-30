@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.resources.v2;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -34,6 +32,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 
 import java.time.Instant;
 import java.util.List;
@@ -55,14 +56,12 @@ class SecretsResourceTest extends ResourceTest {
     private static final SecretManager SECRET_MANAGER_MOCK = mock(SecretManager.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(SECRET_MANAGER_MOCK).to(SecretManager.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(new AbstractBinder() {
+        @Override
+        protected void configure() {
+            bind(SECRET_MANAGER_MOCK).to(SecretManager.class);
+        }
+    }));
 
     @AfterEach
     void afterEach() {
@@ -73,8 +72,7 @@ class SecretsResourceTest extends ResourceTest {
     void createSecretShouldCreateSecretAndReturnCreated() {
         initializeWithPermissions(Permissions.SECRET_MANAGEMENT_CREATE);
 
-        final Response response = jersey
-                .target("/secrets")
+        final Response response = jersey.target("/secrets")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -96,10 +94,10 @@ class SecretsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SECRET_MANAGEMENT_CREATE);
 
         doThrow(new UnsupportedOperationException("Not supported"))
-                .when(SECRET_MANAGER_MOCK).createSecret(eq("foo"), any(), any());
+                .when(SECRET_MANAGER_MOCK)
+                .createSecret(eq("foo"), any(), any());
 
-        final Response response = jersey
-                .target("/secrets")
+        final Response response = jersey.target("/secrets")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -125,10 +123,10 @@ class SecretsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SECRET_MANAGEMENT_CREATE);
 
         doThrow(new SecretAlreadyExistsException("foo"))
-                .when(SECRET_MANAGER_MOCK).createSecret(anyString(), any(), any());
+                .when(SECRET_MANAGER_MOCK)
+                .createSecret(anyString(), any(), any());
 
-        final Response response = jersey
-                .target("/secrets")
+        final Response response = jersey.target("/secrets")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -155,8 +153,7 @@ class SecretsResourceTest extends ResourceTest {
 
         doReturn(true).when(SECRET_MANAGER_MOCK).updateSecret(eq("foo"), any(), any());
 
-        final Response response = jersey
-                .target("/secrets/foo")
+        final Response response = jersey.target("/secrets/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .method("PATCH", Entity.json(/* language=JSON */ """
@@ -176,8 +173,7 @@ class SecretsResourceTest extends ResourceTest {
 
         doReturn(true).when(SECRET_MANAGER_MOCK).updateSecret(eq("foo"), any(), any());
 
-        final Response response = jersey
-                .target("/secrets/foo")
+        final Response response = jersey.target("/secrets/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .method("PATCH", Entity.json(/* language=JSON */ """
@@ -197,8 +193,7 @@ class SecretsResourceTest extends ResourceTest {
 
         doReturn(false).when(SECRET_MANAGER_MOCK).updateSecret(eq("foo"), any(), any());
 
-        final Response response = jersey
-                .target("/secrets/foo")
+        final Response response = jersey.target("/secrets/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .method("PATCH", Entity.json(/* language=JSON */ """
@@ -215,10 +210,10 @@ class SecretsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SECRET_MANAGEMENT_UPDATE);
 
         doThrow(new UnsupportedOperationException("Not supported"))
-                .when(SECRET_MANAGER_MOCK).updateSecret(eq("foo"), any(), any());
+                .when(SECRET_MANAGER_MOCK)
+                .updateSecret(eq("foo"), any(), any());
 
-        final Response response = jersey
-                .target("/secrets/foo")
+        final Response response = jersey.target("/secrets/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .method("PATCH", Entity.json(/* language=JSON */ """
@@ -242,10 +237,10 @@ class SecretsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SECRET_MANAGEMENT_UPDATE);
 
         doThrow(new NoSuchElementException("No secret with name foo found"))
-                .when(SECRET_MANAGER_MOCK).updateSecret(eq("foo"), any(), any());
+                .when(SECRET_MANAGER_MOCK)
+                .updateSecret(eq("foo"), any(), any());
 
-        final Response response = jersey
-                .target("/secrets/foo")
+        final Response response = jersey.target("/secrets/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .method("PATCH", Entity.json(/* language=JSON */ """
@@ -268,8 +263,7 @@ class SecretsResourceTest extends ResourceTest {
     void deleteSecretShouldDeleteSecretAndReturnNoContent() {
         initializeWithPermissions(Permissions.SECRET_MANAGEMENT_DELETE);
 
-        final Response response = jersey
-                .target("/secrets/foo")
+        final Response response = jersey.target("/secrets/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -284,10 +278,10 @@ class SecretsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SECRET_MANAGEMENT_DELETE);
 
         doThrow(new UnsupportedOperationException("Not supported"))
-                .when(SECRET_MANAGER_MOCK).deleteSecret(eq("foo"));
+                .when(SECRET_MANAGER_MOCK)
+                .deleteSecret(eq("foo"));
 
-        final Response response = jersey
-                .target("/secrets/foo")
+        final Response response = jersey.target("/secrets/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -307,10 +301,10 @@ class SecretsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SECRET_MANAGEMENT_DELETE);
 
         doThrow(new NoSuchElementException("No secret with name foo found"))
-                .when(SECRET_MANAGER_MOCK).deleteSecret(eq("foo"));
+                .when(SECRET_MANAGER_MOCK)
+                .deleteSecret(eq("foo"));
 
-        final Response response = jersey
-                .target("/secrets/foo")
+        final Response response = jersey.target("/secrets/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -330,10 +324,10 @@ class SecretsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
         doReturn(new SecretMetadata("foo", "foo-description", Instant.now(), null))
-                .when(SECRET_MANAGER_MOCK).getSecretMetadata(eq("foo"));
+                .when(SECRET_MANAGER_MOCK)
+                .getSecretMetadata(eq("foo"));
 
-        final Response response = jersey
-                .target("/secrets/foo")
+        final Response response = jersey.target("/secrets/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -352,10 +346,10 @@ class SecretsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
         doReturn(new SecretMetadata("foo", "foo-description", Instant.now(), Instant.now()))
-                .when(SECRET_MANAGER_MOCK).getSecretMetadata(eq("foo"));
+                .when(SECRET_MANAGER_MOCK)
+                .getSecretMetadata(eq("foo"));
 
-        final Response response = jersey
-                .target("/secrets/foo")
+        final Response response = jersey.target("/secrets/foo")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -376,8 +370,7 @@ class SecretsResourceTest extends ResourceTest {
 
         doReturn(null).when(SECRET_MANAGER_MOCK).getSecretMetadata(eq("doesNotExist"));
 
-        final Response response = jersey
-                .target("/secrets/doesNotExist")
+        final Response response = jersey.target("/secrets/doesNotExist")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -398,11 +391,8 @@ class SecretsResourceTest extends ResourceTest {
 
         doReturn(Page.empty()).when(SECRET_MANAGER_MOCK).listSecretMetadata(any(ListSecretsRequest.class));
 
-        final Response response = jersey
-                .target("/secrets")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Response response =
+                jersey.target("/secrets").request().header(X_API_KEY, apiKey).get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
@@ -420,17 +410,15 @@ class SecretsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
         doReturn(new Page<>(List.of(
-                new SecretMetadata("foo", "foo-description", Instant.now(), null),
-                new SecretMetadata("bar", "bar-description", Instant.now(), Instant.now()),
-                new SecretMetadata("baz", "baz-description", Instant.now(), null)))
-                .withTotalCount(3, Page.TotalCount.Type.EXACT))
-                .when(SECRET_MANAGER_MOCK).listSecretMetadata(any());
+                                new SecretMetadata("foo", "foo-description", Instant.now(), null),
+                                new SecretMetadata("bar", "bar-description", Instant.now(), Instant.now()),
+                                new SecretMetadata("baz", "baz-description", Instant.now(), null)))
+                        .withTotalCount(3, Page.TotalCount.Type.EXACT))
+                .when(SECRET_MANAGER_MOCK)
+                .listSecretMetadata(any());
 
-        final Response response = jersey
-                .target("/secrets")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Response response =
+                jersey.target("/secrets").request().header(X_API_KEY, apiKey).get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response))
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
@@ -461,5 +449,4 @@ class SecretsResourceTest extends ResourceTest {
                         }
                         """);
     }
-
 }

@@ -36,5 +36,4 @@ public record PackageMetadata(
     public PackageMetadata {
         requireNonNull(resolvedAt, "resolvedAt must not be null");
     }
-
 }

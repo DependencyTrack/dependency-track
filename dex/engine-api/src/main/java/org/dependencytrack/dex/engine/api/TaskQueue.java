@@ -29,5 +29,4 @@ public record TaskQueue(
         int capacity,
         int depth,
         Instant createdAt,
-        @Nullable Instant updatedAt) {
-}
+        @Nullable Instant updatedAt) {}

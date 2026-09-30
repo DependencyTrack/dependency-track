@@ -87,7 +87,9 @@ public class FindingTest extends PersistenceCapableTest {
     @Test
     public void testAnalysisWithDetail() {
         final var project = qm.createProject("acme-app-b", null, "1.0.0", null, null, null, null, false);
-        final var map = new Finding(buildFindingRow(project.getUuid(), project.getName(), project.getVersion(), "analyst note")).getAnalysis();
+        final var map = new Finding(
+                        buildFindingRow(project.getUuid(), project.getName(), project.getVersion(), "analyst note"))
+                .getAnalysis();
         Assertions.assertEquals("analyst note", map.get("detail"));
     }
 
@@ -98,12 +100,11 @@ public class FindingTest extends PersistenceCapableTest {
 
     @Test
     public void testGetCwes() {
-        assertThat(Finding.getCwes(List.of(787,79,89)))
+        assertThat(Finding.getCwes(List.of(787, 79, 89)))
                 .satisfiesExactly(
                         cwe -> assertThat(cwe.getCweId()).isEqualTo(787),
                         cwe -> assertThat(cwe.getCweId()).isEqualTo(79),
-                        cwe -> assertThat(cwe.getCweId()).isEqualTo(89)
-                );
+                        cwe -> assertThat(cwe.getCweId()).isEqualTo(89));
     }
 
     @Test
@@ -122,13 +123,52 @@ public class FindingTest extends PersistenceCapableTest {
         return new Finding(buildFindingRow(project.getUuid(), project.getName(), project.getVersion(), null));
     }
 
-    private FindingDao.FindingRow buildFindingRow(UUID projectUuid, String projectName, String projectVersion, String analysisDetail) {
-        return new FindingDao.FindingRow(projectUuid, UUID.randomUUID(), projectName, projectVersion,
-                "component-name", "component-group", "component-version", "pkg:maven/foo/bar@1.2.3", "component-cpe", Scope.REQUIRED.name(),
-                true, UUID.randomUUID(), Vulnerability.Source.GITHUB, "vuln-vulnId", "vuln-title", "vuln-subtitle", "vuln-description",
-                "vuln-recommendation", "vuln-references", Instant.now(), Severity.HIGH, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
-                "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
-                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, true, analysisDetail, /* totalCount */ null);
+    private FindingDao.FindingRow buildFindingRow(
+            UUID projectUuid, String projectName, String projectVersion, String analysisDetail) {
+        return new FindingDao.FindingRow(
+                projectUuid,
+                UUID.randomUUID(),
+                projectName,
+                projectVersion,
+                "component-name",
+                "component-group",
+                "component-version",
+                "pkg:maven/foo/bar@1.2.3",
+                "component-cpe",
+                Scope.REQUIRED.name(),
+                true,
+                UUID.randomUUID(),
+                Vulnerability.Source.GITHUB,
+                "vuln-vulnId",
+                "vuln-title",
+                "vuln-subtitle",
+                "vuln-description",
+                "vuln-recommendation",
+                "vuln-references",
+                Instant.now(),
+                Severity.HIGH,
+                null,
+                BigDecimal.valueOf(7.2),
+                BigDecimal.valueOf(8.4),
+                BigDecimal.valueOf(8.4),
+                "cvssV2-vector",
+                "cvssV3-vector",
+                "cvssV4-vector",
+                BigDecimal.valueOf(1.25),
+                BigDecimal.valueOf(1.75),
+                BigDecimal.valueOf(1.3),
+                "owasp-vector",
+                null,
+                BigDecimal.valueOf(0.5),
+                BigDecimal.valueOf(0.9),
+                false,
+                "internal",
+                Instant.now(),
+                null,
+                null,
+                AnalysisState.NOT_AFFECTED,
+                true,
+                analysisDetail, /* totalCount */
+                null);
     }
 }

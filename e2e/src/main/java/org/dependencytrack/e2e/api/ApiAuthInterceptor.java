@@ -47,5 +47,4 @@ public class ApiAuthInterceptor implements RequestInterceptor {
         ApiAuthInterceptor.bearerToken = null;
         ApiAuthInterceptor.apiKey = null;
     }
-
 }

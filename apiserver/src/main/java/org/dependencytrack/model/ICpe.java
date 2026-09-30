@@ -21,41 +21,54 @@ package org.dependencytrack.model;
 public interface ICpe {
 
     String getCpe22();
+
     void setCpe22(String cpe22);
 
     String getCpe23();
+
     void setCpe23(String cpe23);
 
     String getPart();
+
     void setPart(String part);
 
     String getVendor();
+
     void setVendor(String vendor);
 
     String getProduct();
+
     void setProduct(String product);
 
     String getVersion();
+
     void setVersion(String version);
 
     String getUpdate();
+
     void setUpdate(String update);
 
     String getEdition();
+
     void setEdition(String edition);
 
     String getLanguage();
+
     void setLanguage(String language);
 
     String getSwEdition();
+
     void setSwEdition(String swEdition);
 
     String getTargetSw();
+
     void setTargetSw(String targetSw);
 
     String getTargetHw();
+
     void setTargetHw(String targetHw);
 
     String getOther();
+
     void setOther(String other);
 }

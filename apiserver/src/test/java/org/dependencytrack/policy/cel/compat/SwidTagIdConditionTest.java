@@ -33,25 +33,60 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SwidTagIdConditionTest extends PersistenceCapableTest {
 
     private static Object[] parameters() {
-        return new Object[]{
-                // MATCHES with exact match
-                new Object[]{Operator.MATCHES, "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1", "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1", true},
-                // MATCHES with regex match
-                new Object[]{Operator.MATCHES, "swidgen-242eb18a-[a-z0-9]{4}-ca37-393b-cf156ef09691_9.1.1", "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1", true},
-                // MATCHES with no match
-                new Object[]{Operator.MATCHES, "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1", "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_6.6.6", false},
-                // NO_MATCH with no match
-                new Object[]{Operator.NO_MATCH, "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1", "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_6.6.6", true},
-                // NO_MATCH with exact match
-                new Object[]{Operator.NO_MATCH, "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1", "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1", false},
-                // MATCHES with quotes
-                new Object[]{Operator.MATCHES, "\"swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1", "\"swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1", true}
+        return new Object[] {
+            // MATCHES with exact match
+            new Object[] {
+                Operator.MATCHES,
+                "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1",
+                "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1",
+                true
+            },
+            // MATCHES with regex match
+            new Object[] {
+                Operator.MATCHES,
+                "swidgen-242eb18a-[a-z0-9]{4}-ca37-393b-cf156ef09691_9.1.1",
+                "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1",
+                true
+            },
+            // MATCHES with no match
+            new Object[] {
+                Operator.MATCHES,
+                "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1",
+                "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_6.6.6",
+                false
+            },
+            // NO_MATCH with no match
+            new Object[] {
+                Operator.NO_MATCH,
+                "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1",
+                "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_6.6.6",
+                true
+            },
+            // NO_MATCH with exact match
+            new Object[] {
+                Operator.NO_MATCH,
+                "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1",
+                "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1",
+                false
+            },
+            // MATCHES with quotes
+            new Object[] {
+                Operator.MATCHES,
+                "\"swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1",
+                "\"swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1",
+                true
+            }
         };
     }
 
     @ParameterizedTest
     @MethodSource("parameters")
-    public void testCondition(final Operator operator, final String conditionSwidTagId, final String componentSwidTagId, final boolean expectViolation) throws Exception {
+    public void testCondition(
+            final Operator operator,
+            final String conditionSwidTagId,
+            final String componentSwidTagId,
+            final boolean expectViolation)
+            throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.SWID_TAGID, operator, conditionSwidTagId);
 
@@ -72,5 +107,4 @@ public class SwidTagIdConditionTest extends PersistenceCapableTest {
             assertThat(qm.getAllPolicyViolations(component)).isEmpty();
         }
     }
-
 }

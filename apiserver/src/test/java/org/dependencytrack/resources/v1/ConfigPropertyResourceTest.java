@@ -21,8 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -34,6 +32,9 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,16 +51,15 @@ class ConfigPropertyResourceTest extends ResourceTest {
     private static final SecretManager secretManager = mock(SecretManager.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(ConfigPropertyResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class)
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(secretManager).to(SecretManager.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(ConfigPropertyResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class)
+            .register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bind(secretManager).to(SecretManager.class);
+                }
+            }));
 
     @Test
     void shouldReturnFullJsonForGetConfigProperties() {
@@ -68,8 +68,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
         qm.createConfigProperty("my.group", "my.string", "ABC", PropertyType.STRING, "A string");
         qm.createConfigProperty("my.group", "my.integer", "1", PropertyType.INTEGER, "A integer");
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -101,8 +100,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
         qm.createConfigProperty("my.group", "my.string", "ABC", PropertyType.STRING, "A string");
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -131,8 +129,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
         qm.createConfigProperty("my.group", "my.boolean", "false", PropertyType.BOOLEAN, "A boolean");
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -161,8 +158,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
         qm.createConfigProperty("my.group", "my.number", "7.75", PropertyType.NUMBER, "A number");
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -191,8 +187,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
         qm.createConfigProperty("my.group", "my.url", "http://localhost", PropertyType.URL, "A url");
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -219,10 +214,10 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldUpdateUuidProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty("my.group", "my.uuid", "a496cabc-749d-4751-b9e5-3b49b656d018", PropertyType.UUID, "A uuid");
+        qm.createConfigProperty(
+                "my.group", "my.uuid", "a496cabc-749d-4751-b9e5-3b49b656d018", PropertyType.UUID, "A uuid");
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -256,8 +251,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getPropertyType(),
                 ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -278,8 +272,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
         createRiskScoreProperties();
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -292,7 +285,8 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(getPlainTextBody(response))
-                .isEqualTo("Risk score \"weight.critical\" must be between 1 and 10. An invalid value of 11 was provided.");
+                .isEqualTo(
+                        "Risk score \"weight.critical\" must be between 1 and 10. An invalid value of 11 was provided.");
     }
 
     @Test
@@ -301,8 +295,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
         createRiskScoreProperties();
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -333,8 +326,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
         qm.createConfigProperty("my.group", "my.string2", "DEF", PropertyType.STRING, "A string");
         qm.createConfigProperty("my.group", "my.string3", "GHI", PropertyType.STRING, "A string");
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY + "/aggregate")
+        final Response response = jersey.target(V1_CONFIG_PROPERTY + "/aggregate")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -391,8 +383,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
         qm.createConfigProperty("my.group", "known", "ABC", PropertyType.STRING, "A string");
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY + "/aggregate")
+        final Response response = jersey.target(V1_CONFIG_PROPERTY + "/aggregate")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -436,8 +427,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyType(),
                 ConfigPropertyConstants.BOM_VALIDATION_MODE.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -471,8 +461,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyType(),
                 ConfigPropertyConstants.BOM_VALIDATION_MODE.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -499,8 +488,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
                 ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -534,8 +522,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
                 ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -561,8 +548,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
                 ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -596,8 +582,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
                 ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -625,8 +610,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
         when(secretManager.getSecretMetadata("nonexistent-secret")).thenReturn(null);
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -656,8 +640,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
         when(secretManager.getSecretMetadata("my-secret"))
                 .thenReturn(new SecretMetadata("my-secret", null, null, null));
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -684,8 +667,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldReturn404WhenUpdatingUnknownConfigProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY)
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -711,8 +693,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
                 ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY
+        final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/public/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName()
                         + "/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName())
                 .request()
@@ -743,18 +724,14 @@ class ConfigPropertyResourceTest extends ResourceTest {
                     configProperty.getPropertyType(),
                     configProperty.getDescription());
 
-            final Response response = jersey
-                    .target(V1_CONFIG_PROPERTY
+            final Response response = jersey.target(V1_CONFIG_PROPERTY
                             + "/public/" + configProperty.getGroupName()
                             + "/" + configProperty.getPropertyName())
                     .request()
                     .header(X_API_KEY, apiKey)
                     .get();
 
-            final int expectedStatus =
-                    configProperty.getVisibility() == ConfigPropertyVisibility.PUBLIC
-                            ? 200
-                            : 403;
+            final int expectedStatus = configProperty.getVisibility() == ConfigPropertyVisibility.PUBLIC ? 200 : 403;
             assertThat(response.getStatus()).isEqualTo(expectedStatus);
         }
     }
@@ -763,8 +740,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldReturn403WhenPublicEndpointPathParamsDoNotMatchKnownProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY + "/public/unknown.group/unknown.property")
+        final Response response = jersey.target(V1_CONFIG_PROPERTY + "/public/unknown.group/unknown.property")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -776,8 +752,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldReturn404WhenPublicConfigPropertyDoesNotExist() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY
+        final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/public/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName()
                         + "/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName())
                 .request()
@@ -799,8 +774,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.BANNER_CONFIG.getPropertyType(),
                 ConfigPropertyConstants.BANNER_CONFIG.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY
+        final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/internal/" + ConfigPropertyConstants.BANNER_CONFIG.getGroupName()
                         + "/" + ConfigPropertyConstants.BANNER_CONFIG.getPropertyName())
                 .request()
@@ -831,8 +805,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                     configProperty.getPropertyType(),
                     configProperty.getDescription());
 
-            final Response response = jersey
-                    .target(V1_CONFIG_PROPERTY
+            final Response response = jersey.target(V1_CONFIG_PROPERTY
                             + "/internal/" + configProperty.getGroupName()
                             + "/" + configProperty.getPropertyName())
                     .request()
@@ -840,9 +813,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                     .get();
 
             final int expectedStatus =
-                    configProperty.getVisibility() == ConfigPropertyVisibility.RESTRICTED
-                            ? 403
-                            : 200;
+                    configProperty.getVisibility() == ConfigPropertyVisibility.RESTRICTED ? 403 : 200;
             assertThat(response.getStatus()).isEqualTo(expectedStatus);
         }
     }
@@ -856,8 +827,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
                 ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY
+        final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/public/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName()
                         + "/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName())
                 .request()
@@ -875,8 +845,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.BANNER_CONFIG.getPropertyType(),
                 ConfigPropertyConstants.BANNER_CONFIG.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY
+        final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/internal/" + ConfigPropertyConstants.BANNER_CONFIG.getGroupName()
                         + "/" + ConfigPropertyConstants.BANNER_CONFIG.getPropertyName())
                 .request()
@@ -894,8 +863,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.BANNER_CONFIG.getPropertyType(),
                 ConfigPropertyConstants.BANNER_CONFIG.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY
+        final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/internal/" + ConfigPropertyConstants.BANNER_CONFIG.getGroupName()
                         + "/" + ConfigPropertyConstants.BANNER_CONFIG.getPropertyName())
                 .request()
@@ -914,8 +882,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
                 ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
 
-        final Response response = jersey
-                .target(V1_CONFIG_PROPERTY
+        final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/internal/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName()
                         + "/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName())
                 .request()
@@ -966,5 +933,4 @@ class ConfigPropertyResourceTest extends ResourceTest {
                 CUSTOM_RISK_SCORE_UNASSIGNED.getPropertyType(),
                 CUSTOM_RISK_SCORE_UNASSIGNED.getDescription());
     }
-
 }

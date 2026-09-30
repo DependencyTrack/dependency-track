@@ -56,9 +56,8 @@ final class GoModulesPackageMetadataResolver implements PackageMetadataResolver 
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         String modulePath = purl.getName();
@@ -85,7 +84,8 @@ final class GoModulesPackageMetadataResolver implements PackageMetadataResolver 
         PackageArtifactMetadata artifactMetadata = null;
         if (purl.getVersion().equals(latestVersion)) {
             artifactMetadata = latestVersionPublishedAt != null
-                    ? new PackageArtifactMetadata(resolvedAt, latestVersionPublishedAt, Map.of()) : null;
+                    ? new PackageArtifactMetadata(resolvedAt, latestVersionPublishedAt, Map.of())
+                    : null;
         } else if (prior != null && prior.publishedAt() != null) {
             // Go module versions are immutable by proxy contract,
             // so any prior publishedAt for this PURL is safe to reuse.
@@ -94,29 +94,24 @@ final class GoModulesPackageMetadataResolver implements PackageMetadataResolver 
             final byte[] versionBody = fetchVersionInfo(modulePath, purl.getVersion(), repository);
             if (versionBody != null) {
                 final var publishedAt = extractPublishedAt(parseJson(versionBody));
-                artifactMetadata = publishedAt != null
-                        ? new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of()) : null;
+                artifactMetadata =
+                        publishedAt != null ? new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of()) : null;
             }
         }
 
         return new PackageMetadata(latestVersion, latestVersionPublishedAt, resolvedAt, artifactMetadata);
     }
 
-    private byte @Nullable [] fetchModule(
-            String modulePath,
-            PackageRepository repository) throws InterruptedException {
+    private byte @Nullable [] fetchModule(String modulePath, PackageRepository repository) throws InterruptedException {
         final String[] moduleSegments = modulePath.split("/");
         final String url = UrlUtils.join(UrlUtils.join(repository.url(), moduleSegments), "@latest");
         return fetch(url, repository);
     }
 
-    private byte @Nullable [] fetchVersionInfo(
-            String modulePath,
-            String version,
-            PackageRepository repository) throws InterruptedException {
+    private byte @Nullable [] fetchVersionInfo(String modulePath, String version, PackageRepository repository)
+            throws InterruptedException {
         final String[] moduleSegments = modulePath.split("/");
-        final String url = UrlUtils.join(
-                UrlUtils.join(repository.url(), moduleSegments), "@v", version + ".info");
+        final String url = UrlUtils.join(UrlUtils.join(repository.url(), moduleSegments), "@v", version + ".info");
         return fetch(url, repository);
     }
 
@@ -138,8 +133,8 @@ final class GoModulesPackageMetadataResolver implements PackageMetadataResolver 
         final String authHeaderValue;
         if (repository.username() != null) {
             final String credentials = repository.username() + ":" + repository.password();
-            authHeaderValue = "Basic " + Base64.getEncoder().encodeToString(
-                    credentials.getBytes(StandardCharsets.UTF_8));
+            authHeaderValue =
+                    "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         } else {
             authHeaderValue = "Bearer " + repository.password();
         }
@@ -167,5 +162,4 @@ final class GoModulesPackageMetadataResolver implements PackageMetadataResolver 
             throw new UncheckedIOException(e);
         }
     }
-
 }

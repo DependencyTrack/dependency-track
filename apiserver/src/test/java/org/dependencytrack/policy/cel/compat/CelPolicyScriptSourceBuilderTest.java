@@ -49,5 +49,4 @@ class CelPolicyScriptSourceBuilderTest {
     void shouldReturnInputWhenNothingToEscape() {
         assertThat(escapeQuotes("foobar")).isEqualTo("foobar");
     }
-
 }

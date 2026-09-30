@@ -74,7 +74,6 @@ public record ListComponentsQuery(
             @Nullable Double lastRiskScore,
             @Nullable SortBy sortBy,
             @Nullable SortDirection sortDirection,
-            Page.TotalCount totalCount) implements org.dependencytrack.common.pagination.PageToken {
-    }
-
+            Page.TotalCount totalCount)
+            implements org.dependencytrack.common.pagination.PageToken {}
 }

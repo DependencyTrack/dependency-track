@@ -40,19 +40,14 @@ final class NoopCache implements Cache {
     }
 
     @Override
-    public void put(String key, byte @Nullable [] value) {
-    }
+    public void put(String key, byte @Nullable [] value) {}
 
     @Override
-    public void putMany(Map<String, byte @Nullable []> entries) {
-    }
+    public void putMany(Map<String, byte @Nullable []> entries) {}
 
     @Override
-    public void invalidateMany(Set<String> keys) {
-    }
+    public void invalidateMany(Set<String> keys) {}
 
     @Override
-    public void invalidateAll() {
-    }
-
+    public void invalidateAll() {}
 }

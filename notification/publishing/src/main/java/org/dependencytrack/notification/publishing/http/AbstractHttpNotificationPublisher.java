@@ -51,13 +51,13 @@ public abstract class AbstractHttpNotificationPublisher implements NotificationP
     public void publish(NotificationPublishContext ctx, Notification notification) throws IOException {
         final var ruleConfig = ctx.ruleConfig(HttpNotificationPublisherRuleConfigV1.class);
 
-        final RenderedNotificationTemplate renderedTemplate = ctx.templateRenderer().render(notification);
+        final RenderedNotificationTemplate renderedTemplate =
+                ctx.templateRenderer().render(notification);
         if (renderedTemplate == null) {
             throw new IllegalStateException("No template configured");
         }
 
-        final var request = HttpRequest
-                .newBuilder(ruleConfig.getDestinationUrl())
+        final var request = HttpRequest.newBuilder(ruleConfig.getDestinationUrl())
                 .header("Content-Type", renderedTemplate.mimeType())
                 .POST(BodyPublishers.ofString(renderedTemplate.content()))
                 .timeout(Duration.ofSeconds(10))
@@ -74,5 +74,4 @@ public abstract class AbstractHttpNotificationPublisher implements NotificationP
             throw e;
         }
     }
-
 }

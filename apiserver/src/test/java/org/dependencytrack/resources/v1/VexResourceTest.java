@@ -18,12 +18,10 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import com.fasterxml.jackson.core.StreamReadConstraints;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -37,11 +35,11 @@ import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.BomValidationMode;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -54,6 +52,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
 
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -62,10 +63,10 @@ import java.util.function.Supplier;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
+import static org.dependencytrack.parser.cyclonedx.CycloneDxBomAssert.assertThatBom;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -76,18 +77,17 @@ public class VexResourceTest extends ResourceTest {
     private static final DexEngine DEX_ENGINE_MOCK = mock(DexEngine.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(VexResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class)
-                    .register(MultiPartFeature.class)
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bindFactory(MemoryFileStorage::new).to(FileStorage.class);
-                            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(VexResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class)
+            .register(MultiPartFeature.class)
+            .register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bindFactory(MemoryFileStorage::new).to(FileStorage.class);
+                    bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+                }
+            }));
 
     private UUID stubbedRunId;
 
@@ -146,14 +146,13 @@ public class VexResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setDirectDependencies("[]");
         qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnB, componentWithVulnAndAnalysis, "internal");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentWithVulnAndAnalysis, vulnB)
-                        .withState(AnalysisState.RESOLVED)
-                        .withResponse(AnalysisResponse.UPDATE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentWithVulnAndAnalysis, vulnB)
+                .withState(AnalysisState.RESOLVED)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
 
         // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
-        componentWithoutVuln.setDirectDependencies("""
+        componentWithoutVuln.setDirectDependencies(/* language=JSON */ """
                 [
                     {"uuid": "%s"}
                 ]
@@ -161,16 +160,14 @@ public class VexResourceTest extends ResourceTest {
 
         // Make project depend on componentWithoutVuln (acme-lib-a)
         // and componentWithVulnAndAnalysis (acme-lib-c)
-        project.setDirectDependencies("""
+        project.setDirectDependencies(
+                /* language=JSON */ """
                 [
                     {"uuid": "%s"},
                     {"uuid": "%s"}
                 ]
-                """
-                .formatted(
-                        componentWithoutVuln.getUuid(),
-                        componentWithVulnAndAnalysis.getUuid()
-                ));
+                """.formatted(
+                                componentWithoutVuln.getUuid(), componentWithVulnAndAnalysis.getUuid()));
         qm.persist(project);
 
         final Response response = jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
@@ -179,13 +176,17 @@ public class VexResourceTest extends ResourceTest {
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
-                .withMatcher("vulnAUuid", equalTo(vulnA.getUuid().toString()))
-                .withMatcher("vulnBUuid", equalTo(vulnB.getUuid().toString()))
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
-                .isEqualTo("""
+                .withMatcher(
+                        "componentWithVulnUuid",
+                        equalTo(componentWithVuln.getUuid().toString()))
+                .withMatcher(
+                        "componentWithVulnAndAnalysisUuid",
+                        equalTo(componentWithVulnAndAnalysis.getUuid().toString()))
+                .isEqualTo(/* language=JSON */ """
                         {
                           "bomFormat": "CycloneDX",
                           "specVersion": "1.5",
@@ -199,17 +200,35 @@ public class VexResourceTest extends ResourceTest {
                               "name": "acme-app",
                               "version": "1.0.0"
                             },
-                            "tools": [
-                              {
-                                "vendor": "OWASP",
-                                "name": "Dependency-Track",
-                                "version": "${json-unit.any-string}"
-                              }
-                            ]
+                            "tools": {
+                              "components": [
+                                {
+                                  "type": "application",
+                                  "supplier": {
+                                    "name": "OWASP"
+                                  },
+                                  "name": "Dependency-Track",
+                                  "version": "${json-unit.any-string}"
+                                }
+                              ]
+                            }
                           },
+                          "components": [
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentWithVulnUuid}",
+                              "name": "acme-lib-b",
+                              "version": "1.0.0"
+                            },
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
+                              "name": "acme-lib-c",
+                              "version": "1.0.0"
+                            }
+                          ],
                           "vulnerabilities": [
                             {
-                              "bom-ref": "${json-unit.matches:vulnAUuid}",
                               "id": "INT-001",
                               "source": {
                                 "name": "INTERNAL"
@@ -225,12 +244,11 @@ public class VexResourceTest extends ResourceTest {
                               ],
                               "affects": [
                                 {
-                                  "ref": "${json-unit.matches:projectUuid}"
+                                  "ref": "${json-unit.matches:componentWithVulnUuid}"
                                 }
                               ]
                             },
                             {
-                              "bom-ref": "${json-unit.matches:vulnBUuid}",
                               "id": "INT-002",
                               "source": {
                                 "name": "INTERNAL"
@@ -252,7 +270,7 @@ public class VexResourceTest extends ResourceTest {
                               },
                               "affects": [
                                 {
-                                  "ref": "${json-unit.matches:projectUuid}"
+                                  "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
                                 }
                               ]
                             }
@@ -270,11 +288,11 @@ public class VexResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -311,10 +329,11 @@ public class VexResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
 
         String expectedCdxVersionSpec = version.isEmpty() ? "1.5" : version;
-        assertThatJson(jsonResponse, json -> json.inPath("specVersion").isEqualTo("\"" + expectedCdxVersionSpec + "\""));
+        assertThatJson(
+                jsonResponse, json -> json.inPath("specVersion").isEqualTo("\"" + expectedCdxVersionSpec + "\""));
     }
 
     @ParameterizedTest
@@ -347,7 +366,7 @@ public class VexResourceTest extends ResourceTest {
         project.setVersion("1.0.0");
         qm.persist(project);
 
-        final String encodedVex = Base64.getEncoder().encodeToString("""
+        final String encodedVex = Base64.getEncoder().encodeToString(/* language=JSON */ """
                 {
                   "bomFormat": "CycloneDX",
                   "specVersion": "1.2",
@@ -363,18 +382,19 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        final Response response = jersey.target(V1_VEX).request()
+        final Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "projectName": "acme-app",
                           "projectVersion": "1.0.0",
                           "vex": "%s"
                         }
-                        """.formatted(encodedVex), MediaType.APPLICATION_JSON));
+                        """.formatted(encodedVex)));
 
         assertThat(response.getStatus()).isEqualTo(400);
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "status": 400,
                   "title": "The uploaded BOM is invalid",
@@ -395,7 +415,7 @@ public class VexResourceTest extends ResourceTest {
         project.setVersion("1.0.0");
         qm.persist(project);
 
-        final String encodedVex = Base64.getEncoder().encodeToString("""
+        final String encodedVex = Base64.getEncoder().encodeToString(/* language=XML */ """
                 <?xml version="1.0"?>
                 <bom serialNumber="urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79" version="1" xmlns="http://cyclonedx.org/schema/bom/1.2">
                     <components>
@@ -407,18 +427,19 @@ public class VexResourceTest extends ResourceTest {
                 </bom>
                 """.getBytes());
 
-        final Response response = jersey.target(V1_VEX).request()
+        final Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "projectName": "acme-app",
                           "projectVersion": "1.0.0",
                           "vex": "%s"
                         }
-                        """.formatted(encodedVex), MediaType.APPLICATION_JSON));
+                        """.formatted(encodedVex)));
 
         assertThat(response.getStatus()).isEqualTo(400);
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "status": 400,
                   "title": "The uploaded BOM is invalid",
@@ -442,18 +463,19 @@ public class VexResourceTest extends ResourceTest {
 
         final String vex = "a".repeat(StreamReadConstraints.DEFAULT_MAX_STRING_LEN + 1);
 
-        final Response response = jersey.target(V1_VEX).request()
+        final Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "projectName": "acme-app",
                           "projectVersion": "1.0.0",
                           "vex": "%s"
                         }
-                        """.formatted(vex), MediaType.APPLICATION_JSON));
+                        """.formatted(vex)));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "status": 400,
                   "title": "The provided JSON payload could not be mapped",
@@ -480,7 +502,8 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        final Supplier<Response> responseSupplier = () -> jersey.target(V1_VEX).request()
+        final Supplier<Response> responseSupplier = () -> jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -516,6 +539,88 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
+    public void exportVexShouldOnlyIncludeComponentIdentityTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_READ);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setClassifier(Classifier.APPLICATION);
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.acme");
+        component.setName("acme-lib-a");
+        component.setVersion("1.0.0");
+        component.setClassifier(Classifier.LIBRARY);
+        component.setPurl("pkg:maven/com.acme/acme-lib-a@1.0.0?type=jar");
+        component.setCpe("cpe:2.3:a:acme:acme-lib-a:1.0.0:*:*:*:*:*:*:*");
+        component.setSwidTagId("swidgen-acme-lib-a");
+        component.setMd5("0cc175b9c0f1b6a831c399e269772661");
+        component.setSha1("86f7e437faa5a7fce15d1ddcb9eaeaea377667b8");
+        component.setDescription("Internal build of the Acme library");
+        component.setCopyright("Copyright (c) Acme Inc");
+        component.setLicense("Apache-2.0");
+        qm.persist(component);
+
+        final var componentProperty = new ComponentProperty();
+        componentProperty.setComponent(component);
+        componentProperty.setGroupName("internal");
+        componentProperty.setPropertyName("buildHost");
+        componentProperty.setPropertyValue("build-07.internal.acme.example");
+        componentProperty.setPropertyType(IConfigProperty.PropertyType.STRING);
+        qm.persist(componentProperty);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, component, "none");
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln).withState(AnalysisState.NOT_AFFECTED));
+
+        final Response response = jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
+        assertThatJson(jsonResponse)
+                .withMatcher("componentUuid", equalTo(component.getUuid().toString()))
+                .inPath("components")
+                .isEqualTo(/* language=JSON */ """
+                        [
+                          {
+                            "type": "library",
+                            "bom-ref": "${json-unit.matches:componentUuid}",
+                            "group": "com.acme",
+                            "name": "acme-lib-a",
+                            "version": "1.0.0",
+                            "cpe": "cpe:2.3:a:acme:acme-lib-a:1.0.0:*:*:*:*:*:*:*",
+                            "purl": "pkg:maven/com.acme/acme-lib-a@1.0.0?type=jar",
+                            "swid": {
+                              "tagId": "swidgen-acme-lib-a",
+                              "name": "acme-lib-a",
+                              "version": "1.0.0"
+                            },
+                            "hashes": [
+                              {
+                                "alg": "MD5",
+                                "content": "0cc175b9c0f1b6a831c399e269772661"
+                              },
+                              {
+                                "alg": "SHA-1",
+                                "content": "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8"
+                              }
+                            ]
+                          }
+                        ]
+                        """);
+    }
+
+    @Test
     public void exportVexWithSameVulnAnalysisValidJsonTest() {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_READ);
 
@@ -543,18 +648,16 @@ public class VexResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln);
         qm.addVulnerability(vuln, componentAWithVuln, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentAWithVuln, vuln)
-                        .withState(AnalysisState.RESOLVED)
-                        .withResponse(AnalysisResponse.UPDATE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentAWithVuln, vuln)
+                .withState(AnalysisState.RESOLVED)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
 
         qm.addVulnerability(vuln, componentBWithVuln, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentBWithVuln, vuln)
-                        .withState(AnalysisState.RESOLVED)
-                        .withResponse(AnalysisResponse.UPDATE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentBWithVuln, vuln)
+                .withState(AnalysisState.RESOLVED)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
 
         qm.persist(project);
 
@@ -564,12 +667,15 @@ public class VexResourceTest extends ResourceTest {
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
-                .withMatcher("vulnUuid", equalTo(vuln.getUuid().toString()))
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
-                .isEqualTo("""
+                .withMatcher(
+                        "componentAUuid", equalTo(componentAWithVuln.getUuid().toString()))
+                .withMatcher(
+                        "componentBUuid", equalTo(componentBWithVuln.getUuid().toString()))
+                .isEqualTo(/* language=JSON */ """
                         {
                           "bomFormat": "CycloneDX",
                           "specVersion": "1.5",
@@ -583,17 +689,35 @@ public class VexResourceTest extends ResourceTest {
                               "name": "acme-app",
                               "version": "1.0.0"
                             },
-                            "tools": [
-                              {
-                                "vendor": "OWASP",
-                                "name": "Dependency-Track",
-                                "version": "${json-unit.any-string}"
-                              }
-                            ]
+                            "tools": {
+                              "components": [
+                                {
+                                  "type": "application",
+                                  "supplier": {
+                                    "name": "OWASP"
+                                  },
+                                  "name": "Dependency-Track",
+                                  "version": "${json-unit.any-string}"
+                                }
+                              ]
+                            }
                           },
+                          "components": [
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentAUuid}",
+                              "name": "acme-lib-a",
+                              "version": "1.0.0"
+                            },
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentBUuid}",
+                              "name": "acme-lib-b",
+                              "version": "1.0.0"
+                            }
+                          ],
                           "vulnerabilities": [
                             {
-                              "bom-ref": "${json-unit.matches:vulnUuid}",
                               "id": "INT-001",
                               "source": {
                                 "name": "INTERNAL"
@@ -615,7 +739,10 @@ public class VexResourceTest extends ResourceTest {
                               },
                               "affects": [
                                 {
-                                  "ref": "${json-unit.matches:projectUuid}"
+                                  "ref": "${json-unit.matches:componentAUuid}"
+                                },
+                                {
+                                  "ref": "${json-unit.matches:componentBUuid}"
                                 }
                               ]
                             }
@@ -652,18 +779,16 @@ public class VexResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln);
         qm.addVulnerability(vuln, componentAWithVuln, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentAWithVuln, vuln)
-                        .withState(AnalysisState.IN_TRIAGE)
-                        .withResponse(AnalysisResponse.UPDATE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentAWithVuln, vuln)
+                .withState(AnalysisState.IN_TRIAGE)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
 
         qm.addVulnerability(vuln, componentBWithVuln, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentBWithVuln, vuln)
-                        .withState(AnalysisState.EXPLOITABLE)
-                        .withResponse(AnalysisResponse.UPDATE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentBWithVuln, vuln)
+                .withState(AnalysisState.EXPLOITABLE)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
 
         qm.persist(project);
 
@@ -673,12 +798,15 @@ public class VexResourceTest extends ResourceTest {
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
-                .withMatcher("vulnUuid", equalTo(vuln.getUuid().toString()))
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
-                .isEqualTo("""
+                .withMatcher(
+                        "componentAUuid", equalTo(componentAWithVuln.getUuid().toString()))
+                .withMatcher(
+                        "componentBUuid", equalTo(componentBWithVuln.getUuid().toString()))
+                .isEqualTo(/* language=JSON */ """
                         {
                           "bomFormat": "CycloneDX",
                           "specVersion": "1.5",
@@ -692,17 +820,35 @@ public class VexResourceTest extends ResourceTest {
                               "name": "acme-app",
                               "version": "1.0.0"
                             },
-                            "tools": [
-                              {
-                                "vendor": "OWASP",
-                                "name": "Dependency-Track",
-                                "version": "${json-unit.any-string}"
-                              }
-                            ]
+                            "tools": {
+                              "components": [
+                                {
+                                  "type": "application",
+                                  "supplier": {
+                                    "name": "OWASP"
+                                  },
+                                  "name": "Dependency-Track",
+                                  "version": "${json-unit.any-string}"
+                                }
+                              ]
+                            }
                           },
+                          "components": [
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentAUuid}",
+                              "name": "acme-lib-a",
+                              "version": "1.0.0"
+                            },
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentBUuid}",
+                              "name": "acme-lib-b",
+                              "version": "1.0.0"
+                            }
+                          ],
                           "vulnerabilities": [
                             {
-                              "bom-ref": "${json-unit.matches:vulnUuid}",
                               "id": "INT-001",
                               "source": {
                                 "name": "INTERNAL"
@@ -724,12 +870,11 @@ public class VexResourceTest extends ResourceTest {
                               },
                               "affects": [
                                 {
-                                  "ref": "${json-unit.matches:projectUuid}"
+                                  "ref": "${json-unit.matches:componentAUuid}"
                                 }
                               ]
                             },
                             {
-                              "bom-ref": "${json-unit.matches:vulnUuid}",
                               "id": "INT-001",
                               "source": {
                                 "name": "INTERNAL"
@@ -751,7 +896,7 @@ public class VexResourceTest extends ResourceTest {
                               },
                               "affects": [
                                 {
-                                  "ref": "${json-unit.matches:projectUuid}"
+                                  "ref": "${json-unit.matches:componentBUuid}"
                                 }
                               ]
                             }
@@ -769,15 +914,14 @@ public class VexResourceTest extends ResourceTest {
                 BOM_VALIDATION_MODE.getPropertyName(),
                 BomValidationMode.DISABLED.name(),
                 BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription()
-        );
+                BOM_VALIDATION_MODE.getDescription());
 
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
         qm.persist(project);
 
-        final String encodedBom = Base64.getEncoder().encodeToString("""
+        final String encodedBom = Base64.getEncoder().encodeToString(/* language=JSON */ """
                 {
                   "bomFormat": "CycloneDX",
                   "specVersion": "1.2",
@@ -793,15 +937,16 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        final Response response = jersey.target(V1_VEX).request()
+        final Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "projectName": "acme-app",
                           "projectVersion": "1.0.0",
                           "vex": "%s"
                         }
-                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
+                        """.formatted(encodedBom)));
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
@@ -814,15 +959,13 @@ public class VexResourceTest extends ResourceTest {
                 BOM_VALIDATION_MODE.getPropertyName(),
                 BomValidationMode.ENABLED_FOR_TAGS.name(),
                 BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription()
-        );
+                BOM_VALIDATION_MODE.getDescription());
         qm.createConfigProperty(
                 BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
                 BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
                 "[\"foo\"]",
                 BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getDescription()
-        );
+                BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -831,7 +974,7 @@ public class VexResourceTest extends ResourceTest {
 
         qm.bind(project, List.of(qm.createTag("foo")));
 
-        final String encodedBom = Base64.getEncoder().encodeToString("""
+        final String encodedBom = Base64.getEncoder().encodeToString(/* language=JSON */ """
                 {
                   "bomFormat": "CycloneDX",
                   "specVersion": "1.2",
@@ -847,28 +990,30 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        Response response = jersey.target(V1_VEX).request()
+        Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "projectName": "acme-app",
                           "projectVersion": "1.0.0",
                           "vex": "%s"
                         }
-                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
+                        """.formatted(encodedBom)));
         assertThat(response.getStatus()).isEqualTo(400);
 
         qm.bind(project, Collections.emptyList());
 
-        response = jersey.target(V1_VEX).request()
+        response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "projectName": "acme-app",
                           "projectVersion": "1.0.0",
                           "vex": "%s"
                         }
-                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
+                        """.formatted(encodedBom)));
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
@@ -881,15 +1026,13 @@ public class VexResourceTest extends ResourceTest {
                 BOM_VALIDATION_MODE.getPropertyName(),
                 BomValidationMode.DISABLED_FOR_TAGS.name(),
                 BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription()
-        );
+                BOM_VALIDATION_MODE.getDescription());
         qm.createConfigProperty(
                 BOM_VALIDATION_TAGS_EXCLUSIVE.getGroupName(),
                 BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyName(),
                 "[\"foo\"]",
                 BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription()
-        );
+                BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -898,7 +1041,7 @@ public class VexResourceTest extends ResourceTest {
 
         qm.bind(project, List.of(qm.createTag("foo")));
 
-        final String encodedBom = Base64.getEncoder().encodeToString("""
+        final String encodedBom = Base64.getEncoder().encodeToString(/* language=JSON */ """
                 {
                   "bomFormat": "CycloneDX",
                   "specVersion": "1.2",
@@ -914,28 +1057,30 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        Response response = jersey.target(V1_VEX).request()
+        Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "projectName": "acme-app",
                           "projectVersion": "1.0.0",
                           "vex": "%s"
                         }
-                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
+                        """.formatted(encodedBom)));
         assertThat(response.getStatus()).isEqualTo(200);
 
         qm.bind(project, Collections.emptyList());
 
-        response = jersey.target(V1_VEX).request()
+        response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "projectName": "acme-app",
                           "projectVersion": "1.0.0",
                           "vex": "%s"
                         }
-                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
+                        """.formatted(encodedBom)));
         assertThat(response.getStatus()).isEqualTo(400);
     }
 
@@ -949,7 +1094,7 @@ public class VexResourceTest extends ResourceTest {
         project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
         qm.persist(project);
 
-        final String encodedVex = Base64.getEncoder().encodeToString("""
+        final String encodedVex = Base64.getEncoder().encodeToString(/* language=JSON */ """
                 {
                   "bomFormat": "CycloneDX",
                   "specVersion": "1.5",
@@ -957,15 +1102,16 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        final Response response = jersey.target(V1_VEX).request()
+        final Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "projectName": "acme-app",
                           "projectVersion": "1.0.0",
                           "vex": "%s"
                         }
-                        """.formatted(encodedVex), MediaType.APPLICATION_JSON));
+                        """.formatted(encodedVex)));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(getPlainTextBody(response)).isEqualTo("VEX cannot be uploaded to a collection project.");
     }

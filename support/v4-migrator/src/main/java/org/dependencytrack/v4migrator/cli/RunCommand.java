@@ -43,12 +43,10 @@ public final class RunCommand extends AbstractMigratorCommand {
     @Mixin
     MetricsRetentionOptions metricsOpts = new MetricsRetentionOptions();
 
-    @Option(names = "--sample",
-        description = "Sample mode: extract at most N rows per table.")
+    @Option(names = "--sample", description = "Sample mode: extract at most N rows per table.")
     long sampleRowsPerTable = Long.MAX_VALUE;
 
-    @Option(names = "--drop-staging",
-        description = "Drop the staging schema after a successful load.")
+    @Option(names = "--drop-staging", description = "Drop the staging schema after a successful load.")
     boolean dropStaging;
 
     @Override
@@ -58,12 +56,11 @@ public final class RunCommand extends AbstractMigratorCommand {
 
     @Override
     protected int execute(final Jdbi target) throws Exception {
-        new ExtractPhase(global, sourceOpts, target, sampleRowsPerTable,
-            metricsOpts.metricsRetentionDays).run();
+        new ExtractPhase(global, sourceOpts, target, sampleRowsPerTable, metricsOpts.metricsRetentionDays).run();
         new TransformPhase(global, target).run();
         new LoadPhase(global, target, dropStaging).run();
         LOGGER.info("Migration completed: extract + transform + load finished. "
-            + "Run 'verify' to review row counts and probes.");
+                + "Run 'verify' to review row counts and probes.");
         return ExitCode.OK;
     }
 
@@ -74,9 +71,9 @@ public final class RunCommand extends AbstractMigratorCommand {
         System.out.println("  Target staging schema: " + global.stagingSchema);
         System.out.println("  Drop staging after: " + dropStaging);
         System.out.println("  Sample rows per table: "
-            + (sampleRowsPerTable == Long.MAX_VALUE ? "unlimited" : sampleRowsPerTable));
+                + (sampleRowsPerTable == Long.MAX_VALUE ? "unlimited" : sampleRowsPerTable));
         System.out.println("  Tables (extract " + TableRegistry.extracted().size()
-            + ", transform " + TableRegistry.transformed().size()
-            + ", load " + TableRegistry.loaded().size() + ")");
+                + ", transform " + TableRegistry.transformed().size()
+                + ", load " + TableRegistry.loaded().size() + ")");
     }
 }

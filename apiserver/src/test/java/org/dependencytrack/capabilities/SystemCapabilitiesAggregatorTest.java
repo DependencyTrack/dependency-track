@@ -65,9 +65,10 @@ class SystemCapabilitiesAggregatorTest {
 
         final var aggregator = new SystemCapabilitiesAggregator(providers, null);
 
-        assertThat(aggregator.collect()).containsExactly(
-                Map.entry("alpha", Map.of("a", "y", "z", "x")),
-                Map.entry("zebra", Map.of("alpha", 2, "zeta", 1)));
+        assertThat(aggregator.collect())
+                .containsExactly(
+                        Map.entry("alpha", Map.of("a", "y", "z", "x")),
+                        Map.entry("zebra", Map.of("alpha", 2, "zeta", 1)));
         assertThat(aggregator.collect().get("alpha").keySet()).containsExactly("a", "z");
         assertThat(aggregator.collect().get("zebra").keySet()).containsExactly("alpha", "zeta");
     }
@@ -75,8 +76,7 @@ class SystemCapabilitiesAggregatorTest {
     @Test
     void shouldOmitEmptyNamespaces() {
         final var providers = List.<CapabilityProvider>of(
-                new DummyProvider("empty", Map.of()),
-                new DummyProvider("non_empty", Map.of("flag", true)));
+                new DummyProvider("empty", Map.of()), new DummyProvider("non_empty", Map.of("flag", true)));
 
         final var aggregator = new SystemCapabilitiesAggregator(providers, null);
 
@@ -85,8 +85,8 @@ class SystemCapabilitiesAggregatorTest {
 
     @Test
     void shouldOmitNamespaceWhenValueIsUnsupportedType() {
-        final var providers = List.<CapabilityProvider>of(
-                new DummyProvider("namespace", Map.of("when", Instant.EPOCH)));
+        final var providers =
+                List.<CapabilityProvider>of(new DummyProvider("namespace", Map.of("when", Instant.EPOCH)));
 
         final var aggregator = new SystemCapabilitiesAggregator(providers, null);
 
@@ -96,8 +96,7 @@ class SystemCapabilitiesAggregatorTest {
     @Test
     void shouldOmitNamespaceWhenNestedValueIsUnsupportedType() {
         final var providers = List.<CapabilityProvider>of(
-                new DummyProvider("namespace", Map.of(
-                        "nested", Map.of("when", Instant.EPOCH))));
+                new DummyProvider("namespace", Map.of("nested", Map.of("when", Instant.EPOCH))));
 
         final var aggregator = new SystemCapabilitiesAggregator(providers, null);
 
@@ -106,9 +105,8 @@ class SystemCapabilitiesAggregatorTest {
 
     @Test
     void shouldOmitNamespaceWhenTopLevelKeyIsNonString() {
-        @SuppressWarnings({"unchecked", "rawtypes"}) final var providers =
-                List.<CapabilityProvider>of(
-                        new DummyProvider("ns", (Map) Map.of(42, true)));
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        final var providers = List.<CapabilityProvider>of(new DummyProvider("ns", (Map) Map.of(42, true)));
 
         final var aggregator = new SystemCapabilitiesAggregator(providers, null);
 
@@ -117,8 +115,7 @@ class SystemCapabilitiesAggregatorTest {
 
     @Test
     void shouldOmitNamespaceWhenNestedKeyIsNonString() {
-        final var providers = List.<CapabilityProvider>of(
-                new DummyProvider("ns", Map.of("nested", Map.of(42, true))));
+        final var providers = List.<CapabilityProvider>of(new DummyProvider("ns", Map.of("nested", Map.of(42, true))));
 
         final var aggregator = new SystemCapabilitiesAggregator(providers, null);
 
@@ -127,21 +124,26 @@ class SystemCapabilitiesAggregatorTest {
 
     @Test
     void shouldAcceptNestedPrimitivesListsAndMaps() {
-        final var providers = List.<CapabilityProvider>of(
-                new DummyProvider("namespace", Map.of(
-                        "flag", true,
-                        "count", 42,
-                        "mode", "strict",
-                        "tags", List.of("a", "b"),
-                        "nested", Map.of("flag", false))));
+        final var providers = List.<CapabilityProvider>of(new DummyProvider(
+                "namespace",
+                Map.of(
+                        "flag",
+                        true,
+                        "count",
+                        42,
+                        "mode",
+                        "strict",
+                        "tags",
+                        List.of("a", "b"),
+                        "nested",
+                        Map.of("flag", false))));
 
         final var aggregator = new SystemCapabilitiesAggregator(providers, null);
 
         assertThat(aggregator.collect()).containsOnlyKeys("namespace");
     }
 
-    private record DummyProvider(String namespace, Map<String, Object> capabilities) implements CapabilityProvider {
-    }
+    private record DummyProvider(String namespace, Map<String, Object> capabilities) implements CapabilityProvider {}
 
     private record ThrowingProvider(String namespace) implements CapabilityProvider {
 
@@ -149,7 +151,5 @@ class SystemCapabilitiesAggregatorTest {
         public @NonNull Map<String, Object> capabilities() {
             throw new RuntimeException("boom");
         }
-
     }
-
 }

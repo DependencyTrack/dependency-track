@@ -83,7 +83,6 @@ class NotificationRouterTest extends PersistenceCapableTest {
                     .isThrownBy(() -> new NotificationRouter(jdbiHandle, null))
                     .withMessage("meterRegistry must not be null");
         }
-
     }
 
     @Nested
@@ -169,11 +168,10 @@ class NotificationRouterTest extends PersistenceCapableTest {
                     TestNotificationFactory.createBomConsumedTestNotification().toBuilder();
             final BomConsumedOrProcessedSubject.Builder subjectBuilder =
                     notificationBuilder.getSubject().unpack(BomConsumedOrProcessedSubject.class).toBuilder();
-            subjectBuilder.setProject(
-                    org.dependencytrack.notification.proto.v1.Project.newBuilder()
-                            .setUuid(projectA.getUuid().toString())
-                            .setName(projectA.getName())
-                            .build());
+            subjectBuilder.setProject(org.dependencytrack.notification.proto.v1.Project.newBuilder()
+                    .setUuid(projectA.getUuid().toString())
+                    .setName(projectA.getName())
+                    .build());
             final Notification notification = notificationBuilder
                     .setSubject(Any.pack(subjectBuilder.build()))
                     .build();
@@ -227,11 +225,10 @@ class NotificationRouterTest extends PersistenceCapableTest {
                     TestNotificationFactory.createBomConsumedTestNotification().toBuilder();
             final BomConsumedOrProcessedSubject.Builder subjectBuilder =
                     notificationBuilder.getSubject().unpack(BomConsumedOrProcessedSubject.class).toBuilder();
-            subjectBuilder.setProject(
-                    org.dependencytrack.notification.proto.v1.Project.newBuilder()
-                            .setUuid(childProject.getUuid().toString())
-                            .setName(childProject.getName())
-                            .build());
+            subjectBuilder.setProject(org.dependencytrack.notification.proto.v1.Project.newBuilder()
+                    .setUuid(childProject.getUuid().toString())
+                    .setName(childProject.getName())
+                    .build());
             final Notification notification = notificationBuilder
                     .setSubject(Any.pack(subjectBuilder.build()))
                     .build();
@@ -281,12 +278,11 @@ class NotificationRouterTest extends PersistenceCapableTest {
                     TestNotificationFactory.createBomConsumedTestNotification().toBuilder();
             final BomConsumedOrProcessedSubject.Builder subjectBuilder =
                     notificationBuilder.getSubject().unpack(BomConsumedOrProcessedSubject.class).toBuilder();
-            subjectBuilder.setProject(
-                    org.dependencytrack.notification.proto.v1.Project.newBuilder()
-                            .setUuid(project.getUuid().toString())
-                            .setName(project.getName())
-                            .addTags(tagA.getName())
-                            .build());
+            subjectBuilder.setProject(org.dependencytrack.notification.proto.v1.Project.newBuilder()
+                    .setUuid(project.getUuid().toString())
+                    .setName(project.getName())
+                    .addTags(tagA.getName())
+                    .build());
             final Notification notification = notificationBuilder
                     .setSubject(Any.pack(subjectBuilder.build()))
                     .build();
@@ -333,7 +329,8 @@ class NotificationRouterTest extends PersistenceCapableTest {
             for (final var scope : Scope.values()) {
                 for (final var group : Group.values()) {
                     for (final var level : Level.values()) {
-                        final Notification notification = TestNotificationFactory.createTestNotification(scope, group, level);
+                        final Notification notification =
+                                TestNotificationFactory.createTestNotification(scope, group, level);
                         if (notification != null) {
                             notifications.add(notification);
                         }
@@ -361,7 +358,6 @@ class NotificationRouterTest extends PersistenceCapableTest {
                 assertThat(result.notification()).isEqualTo(notification);
             });
         }
-
     }
 
     @Nested
@@ -418,8 +414,8 @@ class NotificationRouterTest extends PersistenceCapableTest {
 
             final Notification notification = TestNotificationFactory.createNewVulnerabilityTestNotification();
 
-            assertThat(router.route(List.of(notification))).satisfiesExactly(
-                    result -> assertThat(result.ruleNames()).containsOnly(rule.getName()));
+            assertThat(router.route(List.of(notification)))
+                    .satisfiesExactly(result -> assertThat(result.ruleNames()).containsOnly(rule.getName()));
         }
 
         @Test
@@ -436,8 +432,8 @@ class NotificationRouterTest extends PersistenceCapableTest {
 
             final Notification notification = TestNotificationFactory.createBomConsumedTestNotification();
 
-            assertThat(router.route(List.of(notification))).satisfiesExactly(
-                    result -> assertThat(result.ruleNames()).containsOnly(rule.getName()));
+            assertThat(router.route(List.of(notification)))
+                    .satisfiesExactly(result -> assertThat(result.ruleNames()).containsOnly(rule.getName()));
         }
 
         @Test
@@ -454,8 +450,8 @@ class NotificationRouterTest extends PersistenceCapableTest {
 
             final Notification notification = TestNotificationFactory.createNewVulnerabilityTestNotification();
 
-            assertThat(router.route(List.of(notification))).satisfiesExactly(
-                    result -> assertThat(result.ruleNames()).containsOnly(rule.getName()));
+            assertThat(router.route(List.of(notification)))
+                    .satisfiesExactly(result -> assertThat(result.ruleNames()).containsOnly(rule.getName()));
         }
 
         @Test
@@ -486,8 +482,8 @@ class NotificationRouterTest extends PersistenceCapableTest {
 
             final Notification notification = TestNotificationFactory.createBomConsumedTestNotification();
 
-            assertThat(router.route(List.of(notification))).satisfiesExactly(
-                    result -> assertThat(result.ruleNames()).containsOnly(invalidRule.getName()));
+            assertThat(router.route(List.of(notification)))
+                    .satisfiesExactly(result -> assertThat(result.ruleNames()).containsOnly(invalidRule.getName()));
         }
 
         @Test
@@ -516,15 +512,13 @@ class NotificationRouterTest extends PersistenceCapableTest {
             final Notification.Builder notificationBuilder =
                     TestNotificationFactory.createBomConsumedTestNotification().toBuilder();
             final Notification notification = notificationBuilder
-                    .setSubject(Any.pack(notificationBuilder.getSubject()
-                            .unpack(BomConsumedOrProcessedSubject.class)
-                            .toBuilder()
-                            .setProject(
-                                    org.dependencytrack.notification.proto.v1.Project.newBuilder()
+                    .setSubject(Any.pack(
+                            notificationBuilder.getSubject().unpack(BomConsumedOrProcessedSubject.class).toBuilder()
+                                    .setProject(org.dependencytrack.notification.proto.v1.Project.newBuilder()
                                             .setUuid(project.getUuid().toString())
                                             .setName(project.getName())
                                             .build())
-                            .build()))
+                                    .build()))
                     .build();
 
             assertThat(router.route(List.of(notification))).isEmpty();
@@ -544,10 +538,8 @@ class NotificationRouterTest extends PersistenceCapableTest {
 
             final Notification notification = TestNotificationFactory.createBomConsumedTestNotification();
 
-            assertThat(router.route(List.of(notification))).satisfiesExactly(
-                    result -> assertThat(result.ruleNames()).containsOnly(rule.getName()));
+            assertThat(router.route(List.of(notification)))
+                    .satisfiesExactly(result -> assertThat(result.ruleNames()).containsOnly(rule.getName()));
         }
-
     }
-
 }

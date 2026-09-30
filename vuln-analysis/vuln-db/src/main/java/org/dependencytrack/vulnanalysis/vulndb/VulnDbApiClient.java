@@ -70,11 +70,10 @@ final class VulnDbApiClient {
         int page = 1;
 
         while (true) {
-            final var uri = URI.create(
-                    apiBaseUrl + "/api/v1/vulnerabilities/find_by_cpe"
-                            + "?cpe=" + URLEncoder.encode(cpe, StandardCharsets.UTF_8)
-                            + "&size=" + PAGE_SIZE
-                            + "&page=" + page);
+            final var uri = URI.create(apiBaseUrl + "/api/v1/vulnerabilities/find_by_cpe"
+                    + "?cpe=" + URLEncoder.encode(cpe, StandardCharsets.UTF_8)
+                    + "&size=" + PAGE_SIZE
+                    + "&page=" + page);
 
             final String accessToken = tokenManager.getAccessToken(apiBaseUrl, clientId, clientSecret);
 
@@ -118,5 +117,4 @@ final class VulnDbApiClient {
 
         return allVulnerabilities;
     }
-
 }

@@ -90,5 +90,4 @@ final class HealthCheckResponseBuilder extends org.eclipse.microprofile.health.H
 
         return new HealthCheckResponse(name, status, Optional.of(data).filter(not(Map::isEmpty)));
     }
-
 }

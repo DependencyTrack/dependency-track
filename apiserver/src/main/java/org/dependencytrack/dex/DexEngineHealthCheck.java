@@ -41,5 +41,4 @@ public final class DexEngineHealthCheck implements HealthCheck {
     public HealthCheckResponse call() {
         return engine.probeHealth();
     }
-
 }

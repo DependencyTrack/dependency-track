@@ -59,20 +59,16 @@ public class BomPersistenceTest extends PersistenceCapableTest {
 
         final Bom reloadedBom = qm.getObjectById(Bom.class, bomId);
 
-        assertThat(reloadedBom.getOriginalFileMetadata())
-                .isEqualTo(expectedBytes);
+        assertThat(reloadedBom.getOriginalFileMetadata()).isEqualTo(expectedBytes);
         assertThat(FileMetadata.parseFrom(reloadedBom.getOriginalFileMetadata()))
                 .isEqualTo(fileMetadata);
 
-        final byte[] storedBytes = withJdbiHandle(handle -> handle
-                .createQuery("""
+        final byte[] storedBytes = withJdbiHandle(handle ->
+                handle.createQuery("""
                         SELECT "ORIGINAL_FILE_METADATA"
                         FROM "BOM"
                         WHERE "ID" = :bomId
-                        """)
-                .bind("bomId", bomId)
-                .mapTo(byte[].class)
-                .one());
+                        """).bind("bomId", bomId).mapTo(byte[].class).one());
 
         assertThat(storedBytes).containsExactly(expectedBytes);
         assertThat(FileMetadata.parseFrom(storedBytes)).isEqualTo(fileMetadata);
@@ -100,8 +96,7 @@ public class BomPersistenceTest extends PersistenceCapableTest {
 
         assertThat(reloadedBom.getOriginalFileMetadata()).isNull();
 
-        final boolean metadataIsNull = withJdbiHandle(handle -> handle
-                .createQuery("""
+        final boolean metadataIsNull = withJdbiHandle(handle -> handle.createQuery("""
                         SELECT "ORIGINAL_FILE_METADATA" IS NULL
                         FROM "BOM"
                         WHERE "ID" = :bomId

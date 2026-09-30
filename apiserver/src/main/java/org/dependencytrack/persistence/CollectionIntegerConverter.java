@@ -31,6 +31,7 @@ public class CollectionIntegerConverter implements AttributeConverter<Collection
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CollectionIntegerConverter.class);
 
+    @Override
     public String convertToDatastore(final Collection<Integer> attribute) {
         if (attribute == null) {
             return null;
@@ -46,12 +47,13 @@ public class CollectionIntegerConverter implements AttributeConverter<Collection
         return sb.toString();
     }
 
+    @Override
     public Collection<Integer> convertToAttribute(final String columnValue) {
         if (columnValue == null || StringUtils.isBlank(columnValue)) {
             return null;
         }
         final Collection<Integer> collection = new ArrayList<>();
-        for (String s: columnValue.split(",")) {
+        for (String s : columnValue.split(",")) {
             try {
                 collection.add(Integer.valueOf(s));
             } catch (NumberFormatException e) {

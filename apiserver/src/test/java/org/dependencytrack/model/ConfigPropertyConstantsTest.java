@@ -32,5 +32,4 @@ class ConfigPropertyConstantsTest {
         assumeThat(property.getVisibility()).isNotEqualTo(ConfigPropertyVisibility.RESTRICTED);
         assertThat(property.isSecretName()).isFalse();
     }
-
 }

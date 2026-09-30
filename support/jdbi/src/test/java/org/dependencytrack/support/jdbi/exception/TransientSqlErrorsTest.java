@@ -33,13 +33,15 @@ class TransientSqlErrorsTest {
     @ParameterizedTest
     @ValueSource(strings = {"40001", "40P01", "08000", "08001", "08006", "08007", "53300", "55P03", "57P03"})
     void shouldClassifyTransientSqlStatesAsTransient(String sqlState) {
-        assertThat(TransientSqlErrors.isTransient(new SQLException("boom", sqlState))).isTrue();
+        assertThat(TransientSqlErrors.isTransient(new SQLException("boom", sqlState)))
+                .isTrue();
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"08P01", "23505", "23514", "23502", "42601", "22P02"})
     void shouldClassifyPermanentSqlStatesAsNotTransient(String sqlState) {
-        assertThat(TransientSqlErrors.isTransient(new SQLException("boom", sqlState))).isFalse();
+        assertThat(TransientSqlErrors.isTransient(new SQLException("boom", sqlState)))
+                .isFalse();
     }
 
     @Test
@@ -50,7 +52,8 @@ class TransientSqlErrorsTest {
 
     @Test
     void shouldReturnFalseWhenNoSqlExceptionInCauseChain() {
-        assertThat(TransientSqlErrors.isTransient(new RuntimeException("no sql here"))).isFalse();
+        assertThat(TransientSqlErrors.isTransient(new RuntimeException("no sql here")))
+                .isFalse();
     }
 
     @Test
@@ -60,15 +63,15 @@ class TransientSqlErrorsTest {
 
     @Test
     void shouldClassifySqlRecoverableExceptionAsTransient() {
-        assertThat(TransientSqlErrors.isTransient(
-                new SQLRecoverableException("Connection is closed"))).isTrue();
+        assertThat(TransientSqlErrors.isTransient(new SQLRecoverableException("Connection is closed")))
+                .isTrue();
     }
 
     @Test
     void shouldClassifySqlTransientExceptionAsTransientRegardlessOfSqlState() {
         assertThat(TransientSqlErrors.isTransient(
-                new SQLTransientConnectionException(
-                        "Connection is not available, request timed out"))).isTrue();
+                        new SQLTransientConnectionException("Connection is not available, request timed out")))
+                .isTrue();
     }
 
     @Test
@@ -76,5 +79,4 @@ class TransientSqlErrorsTest {
         final var wrapped = new SQLException("wrapper", "23505", new SQLException("boom", "40001"));
         assertThat(TransientSqlErrors.isTransient(wrapped)).isTrue();
     }
-
 }

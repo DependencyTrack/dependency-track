@@ -113,44 +113,43 @@ class BomVexIT {
         runPipeline();
 
         // Malformed UUIDs landed in the probe.
-        final List<Map<String, Object>> probe = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> probe =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT table_name, orig_id, bad_uuid
                       FROM "dt_v4_migration".probe_invalid_uuids
                      WHERE table_name IN ('BOM', 'VEX')
                      ORDER BY table_name, orig_id
                     """).mapToMap().list());
-        assertThat(probe).extracting("table_name", "orig_id", "bad_uuid").containsExactly(
-            tuple("BOM", 11L, "not-a-uuid"),
-            tuple("VEX", 21L, "not-a-uuid")
-        );
+        assertThat(probe)
+                .extracting("table_name", "orig_id", "bad_uuid")
+                .containsExactly(tuple("BOM", 11L, "not-a-uuid"), tuple("VEX", 21L, "not-a-uuid"));
 
-        final List<Map<String, Object>> boms = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> boms =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "BOM_FORMAT", "PROJECT_ID", "UUID", "GENERATED"
                       FROM "BOM"
                      ORDER BY "ID"
                     """).mapToMap().list());
         assertThat(boms).hasSize(1);
         assertThat(boms.get(0))
-            .containsEntry("id", 10L)
-            .containsEntry("bom_format", "CycloneDX")
-            .containsEntry("project_id", 1L)
-            .containsEntry("uuid", bomUuid)
-            .containsEntry("generated", null);
+                .containsEntry("id", 10L)
+                .containsEntry("bom_format", "CycloneDX")
+                .containsEntry("project_id", 1L)
+                .containsEntry("uuid", bomUuid)
+                .containsEntry("generated", null);
 
-        final List<Map<String, Object>> vexes = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> vexes =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "VEX_FORMAT", "PROJECT_ID", "UUID"
                       FROM "VEX"
                      ORDER BY "ID"
                     """).mapToMap().list());
         assertThat(vexes).hasSize(1);
         assertThat(vexes.get(0))
-            .containsEntry("id", 20L)
-            .containsEntry("vex_format", "CycloneDX")
-            .containsEntry("project_id", 1L)
-            .containsEntry("uuid", vexUuid);
+                .containsEntry("id", 20L)
+                .containsEntry("vex_format", "CycloneDX")
+                .containsEntry("project_id", 1L)
+                .containsEntry("uuid", vexUuid);
     }
 
     private void runPipeline() throws Exception {

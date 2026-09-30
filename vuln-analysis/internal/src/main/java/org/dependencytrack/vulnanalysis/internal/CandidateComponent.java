@@ -26,7 +26,4 @@ import us.springett.parsers.cpe.Cpe;
  * @since 5.0.0
  */
 record CandidateComponent(
-        long id,
-        @Nullable Cpe parsedCpe,
-        @Nullable PackageURL parsedPurl) {
-}
+        long id, @Nullable Cpe parsedCpe, @Nullable PackageURL parsedPurl) {}

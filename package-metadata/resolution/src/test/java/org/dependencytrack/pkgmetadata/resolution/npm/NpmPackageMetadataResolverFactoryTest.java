@@ -27,22 +27,25 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class NpmPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest<PackageMetadataResolver, NpmPackageMetadataResolverFactory> {
+class NpmPackageMetadataResolverFactoryTest
+        extends AbstractExtensionFactoryTest<PackageMetadataResolver, NpmPackageMetadataResolverFactory> {
 
     protected NpmPackageMetadataResolverFactoryTest() {
         super(NpmPackageMetadataResolverFactory.class);
     }
 
     @ParameterizedTest
-    @CsvSource(nullValues = "", value = {
-            "pkg:npm/foo@1.0, pkg:npm/foo@1.0",
-            "pkg:npm/%40scope/foo@1.0, pkg:npm/%40scope/foo@1.0",
-            "pkg:pypi/foo@1.0, ",
-            "pkg:npm/foo, ",
-            "pkg:npm/%40scope/foo@1.0?key=value#sub/path, pkg:npm/%40scope/foo@1.0",
-            "pkg:npm/ns/foo@1.0, ",
-            "pkg:npm/angular/cli/node_modules/open@8.4.0, ",
-    })
+    @CsvSource(
+            nullValues = "",
+            value = {
+                "pkg:npm/foo@1.0, pkg:npm/foo@1.0",
+                "pkg:npm/%40scope/foo@1.0, pkg:npm/%40scope/foo@1.0",
+                "pkg:pypi/foo@1.0, ",
+                "pkg:npm/foo, ",
+                "pkg:npm/%40scope/foo@1.0?key=value#sub/path, pkg:npm/%40scope/foo@1.0",
+                "pkg:npm/ns/foo@1.0, ",
+                "pkg:npm/angular/cli/node_modules/open@8.4.0, ",
+            })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))
                 .isEqualTo(expected != null ? new PackageURL(expected) : null);
@@ -52,5 +55,4 @@ class NpmPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest
     void shouldRequireRepository() {
         assertThat(factory.requiresRepository()).isTrue();
     }
-
 }

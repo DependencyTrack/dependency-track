@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v2;
 
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.capabilities.CapabilityProvider;
@@ -30,6 +29,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 import java.util.Map;
@@ -44,18 +45,16 @@ class SystemCapabilitiesResourceTest extends ResourceTest {
     private static final SecretManager SECRET_MANAGER_MOCK = mock(SecretManager.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(SECRET_MANAGER_MOCK).to(SecretManager.class);
-                            bind(new SystemCapabilitiesAggregator(List.of(
-                                    new SecretManagementProviderUnderTest(SECRET_MANAGER_MOCK)),
-                                    /* serviceLocator */ null))
-                                    .to(SystemCapabilitiesAggregator.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(new AbstractBinder() {
+        @Override
+        protected void configure() {
+            bind(SECRET_MANAGER_MOCK).to(SecretManager.class);
+            bind(new SystemCapabilitiesAggregator(
+                            List.of(new SecretManagementProviderUnderTest(SECRET_MANAGER_MOCK)),
+                            /* serviceLocator */ null))
+                    .to(SystemCapabilitiesAggregator.class);
+        }
+    }));
 
     @AfterEach
     void afterEach() {
@@ -64,10 +63,8 @@ class SystemCapabilitiesResourceTest extends ResourceTest {
 
     @Test
     void shouldReturnUnauthorizedWhenNoCredentials() {
-        final Response response = jersey
-                .target("/internal/system-capabilities")
-                .request()
-                .get();
+        final Response response =
+                jersey.target("/internal/system-capabilities").request().get();
         assertThat(response.getStatus()).isEqualTo(401);
     }
 
@@ -75,8 +72,7 @@ class SystemCapabilitiesResourceTest extends ResourceTest {
     void shouldReturnCapabilitiesWhenAuthenticated() {
         doReturn(false).when(SECRET_MANAGER_MOCK).isReadOnly();
 
-        final Response response = jersey
-                .target("/internal/system-capabilities")
+        final Response response = jersey.target("/internal/system-capabilities")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -97,8 +93,7 @@ class SystemCapabilitiesResourceTest extends ResourceTest {
     void shouldReflectReadOnlySecretManager() {
         doReturn(true).when(SECRET_MANAGER_MOCK).isReadOnly();
 
-        final Response response = jersey
-                .target("/internal/system-capabilities")
+        final Response response = jersey.target("/internal/system-capabilities")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -132,7 +127,5 @@ class SystemCapabilitiesResourceTest extends ResourceTest {
         public @NonNull Map<String, Object> capabilities() {
             return Map.of("read_only", secretManager.isReadOnly());
         }
-
     }
-
 }

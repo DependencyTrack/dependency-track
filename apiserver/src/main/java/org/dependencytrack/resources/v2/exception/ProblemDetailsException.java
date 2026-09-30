@@ -34,17 +34,15 @@ public final class ProblemDetailsException extends RuntimeException {
     }
 
     public static ProblemDetailsException of(ProblemType type, String detail) {
-        return new ProblemDetailsException(
-                ProblemDetails.builder()
-                        .type(type.type())
-                        .status(type.status())
-                        .title(type.title())
-                        .detail(detail)
-                        .build());
+        return new ProblemDetailsException(ProblemDetails.builder()
+                .type(type.type())
+                .status(type.status())
+                .title(type.title())
+                .detail(detail)
+                .build());
     }
 
     public ProblemDetails getProblemDetails() {
         return problemDetails;
     }
-
 }

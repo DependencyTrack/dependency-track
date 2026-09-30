@@ -62,15 +62,13 @@ class KennaSecurityUploaderTest extends PersistenceCapableTest {
                 KENNA_ENABLED.getPropertyName(),
                 "true",
                 IConfigProperty.PropertyType.BOOLEAN,
-                null
-        );
+                null);
         qm.createConfigProperty(
                 KENNA_ENABLED.getGroupName(),
                 KENNA_CONNECTOR_ID.getPropertyName(),
                 "Dependency-Track (KDI)",
                 IConfigProperty.PropertyType.STRING,
-                null
-        );
+                null);
         KennaSecurityUploader extension = new KennaSecurityUploader(httpClient, new TestSecretManager());
         extension.setQueryManager(qm);
         Assertions.assertTrue(extension.isEnabled());

@@ -45,7 +45,8 @@ class ModelConverterTest {
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
         DefCveItem cveItem = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .registerModule(new JavaTimeModule()).readValue(jsonString, DefCveItem.class);
+                .registerModule(new JavaTimeModule())
+                .readValue(jsonString, DefCveItem.class);
 
         Bom bov = ModelConverter.convert(cveItem);
 
@@ -133,7 +134,8 @@ class ModelConverterTest {
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
         DefCveItem cveItem = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .registerModule(new JavaTimeModule()).readValue(jsonString, DefCveItem.class);
+                .registerModule(new JavaTimeModule())
+                .readValue(jsonString, DefCveItem.class);
 
         Bom bov = ModelConverter.convert(cveItem);
         assertThatJson(JsonFormat.printer().print(bov))
@@ -195,11 +197,14 @@ class ModelConverterTest {
 
     @Test
     public void testConversionWithDuplicateExactVersionMatches() throws Exception {
-        final byte[] cveBytes = Files.readAllBytes(Path.of(getClass().getClassLoader().getResource(
-                "CVE-2021-0002-duplicate-exact-version-matches.json").toURI()));
+        final byte[] cveBytes = Files.readAllBytes(Path.of(getClass()
+                .getClassLoader()
+                .getResource("CVE-2021-0002-duplicate-exact-version-matches.json")
+                .toURI()));
         final DefCveItem cveItem = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .registerModule(new JavaTimeModule()).readValue(cveBytes, DefCveItem.class);
+                .registerModule(new JavaTimeModule())
+                .readValue(cveBytes, DefCveItem.class);
 
         final Bom bov = ModelConverter.convert(cveItem);
         assertThatJson(JsonFormat.printer().print(bov))
@@ -327,11 +332,14 @@ class ModelConverterTest {
 
     @Test
     void testConversionWithWildcardVersions() throws Exception {
-        final byte[] cveBytes = Files.readAllBytes(Path.of(getClass().getClassLoader().getResource(
-                "CVE-2022-31022-all-versions-vulnerable.json").toURI()));
+        final byte[] cveBytes = Files.readAllBytes(Path.of(getClass()
+                .getClassLoader()
+                .getResource("CVE-2022-31022-all-versions-vulnerable.json")
+                .toURI()));
         final DefCveItem cveItem = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .registerModule(new JavaTimeModule()).readValue(cveBytes, DefCveItem.class);
+                .registerModule(new JavaTimeModule())
+                .readValue(cveBytes, DefCveItem.class);
 
         final Bom bov = ModelConverter.convert(cveItem);
         assertThatJson(JsonFormat.printer().print(bov))
@@ -415,11 +423,14 @@ class ModelConverterTest {
 
     @Test
     void testConversionWithCvssV3Rating() throws Exception {
-        final byte[] cveBytes = Files.readAllBytes(Path.of(getClass().getClassLoader().getResource(
-                "CVE-2017-5638-cvssv3-rating.json").toURI()));
+        final byte[] cveBytes = Files.readAllBytes(Path.of(getClass()
+                .getClassLoader()
+                .getResource("CVE-2017-5638-cvssv3-rating.json")
+                .toURI()));
         final DefCveItem cveItem = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .registerModule(new JavaTimeModule()).readValue(cveBytes, DefCveItem.class);
+                .registerModule(new JavaTimeModule())
+                .readValue(cveBytes, DefCveItem.class);
 
         final Bom bov = ModelConverter.convert(cveItem);
         assertThatJson(JsonFormat.printer().print(bov))
@@ -535,11 +546,14 @@ class ModelConverterTest {
 
     @Test
     void testConversionWithCvssV4Rating() throws Exception {
-        final byte[] cveBytes = Files.readAllBytes(Path.of(getClass().getClassLoader().getResource(
-                "CVE-2017-5638-cvssv4-rating.json").toURI()));
+        final byte[] cveBytes = Files.readAllBytes(Path.of(getClass()
+                .getClassLoader()
+                .getResource("CVE-2017-5638-cvssv4-rating.json")
+                .toURI()));
         final DefCveItem cveItem = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .registerModule(new JavaTimeModule()).readValue(cveBytes, DefCveItem.class);
+                .registerModule(new JavaTimeModule())
+                .readValue(cveBytes, DefCveItem.class);
 
         final Bom bov = ModelConverter.convert(cveItem);
         assertThatJson(JsonFormat.printer().print(bov))
@@ -646,23 +660,24 @@ class ModelConverterTest {
 
     @Test
     public void testConversionWithIgnoringAmbiguousRunningOnCpeMatchesAlt() throws Exception {
-        final byte[] cveBytes = Files.readAllBytes(Path.of(getClass().getClassLoader().getResource(
-                "cve-2024-23113.json").toURI()));
+        final byte[] cveBytes = Files.readAllBytes(Path.of(
+                getClass().getClassLoader().getResource("cve-2024-23113.json").toURI()));
         final DefCveItem cveItem = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .registerModule(new JavaTimeModule()).readValue(cveBytes, DefCveItem.class);
+                .registerModule(new JavaTimeModule())
+                .readValue(cveBytes, DefCveItem.class);
 
         final Bom bov = ModelConverter.convert(cveItem);
 
         final var components = bov.getComponentsList();
         assertThat(components).isNotNull();
-        assertThat(components).extracting(Component::getCpe).containsExactlyInAnyOrder(
-                "cpe:2.3:a:fortinet:fortiproxy:*:*:*:*:*:*:*:*",
-                "cpe:2.3:a:fortinet:fortiswitchmanager:*:*:*:*:*:*:*:*",
-                "cpe:2.3:o:fortinet:fortios:*:*:*:*:*:*:*:*",
-                "cpe:2.3:o:fortinet:fortipam:*:*:*:*:*:*:*:*",
-                "cpe:2.3:o:fortinet:fortipam:1.2.0:*:*:*:*:*:*:*"
-        );
+        assertThat(components)
+                .extracting(Component::getCpe)
+                .containsExactlyInAnyOrder(
+                        "cpe:2.3:a:fortinet:fortiproxy:*:*:*:*:*:*:*:*",
+                        "cpe:2.3:a:fortinet:fortiswitchmanager:*:*:*:*:*:*:*:*",
+                        "cpe:2.3:o:fortinet:fortios:*:*:*:*:*:*:*:*",
+                        "cpe:2.3:o:fortinet:fortipam:*:*:*:*:*:*:*:*",
+                        "cpe:2.3:o:fortinet:fortipam:1.2.0:*:*:*:*:*:*:*");
     }
 }
-

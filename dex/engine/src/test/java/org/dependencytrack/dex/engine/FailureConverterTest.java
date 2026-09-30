@@ -33,9 +33,9 @@ class FailureConverterTest {
     @Test
     void shouldSerializeStackTrace() {
         var exception = new ApplicationFailureException("test", null);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Foo", "doStuff", "Foo.java", 42),
-                new StackTraceElement("com.example.Bar", "run", "Bar.java", 10),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Foo", "doStuff", "Foo.java", 42),
+            new StackTraceElement("com.example.Bar", "run", "Bar.java", 10),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -47,8 +47,8 @@ class FailureConverterTest {
     @Test
     void shouldSerializeStackTraceWithoutFileName() {
         var exception = new ApplicationFailureException("test", null);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Foo", "doStuff", null, -1),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Foo", "doStuff", null, -1),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -59,9 +59,9 @@ class FailureConverterTest {
     @Test
     void shouldSerializeConstructorFrame() {
         var exception = new ApplicationFailureException("test", null);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Foo", "<init>", "Foo.java", 15),
-                new StackTraceElement("com.example.Bar", "create", "Bar.java", 30),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Foo", "<init>", "Foo.java", 15),
+            new StackTraceElement("com.example.Bar", "create", "Bar.java", 30),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -73,8 +73,8 @@ class FailureConverterTest {
     @Test
     void shouldSerializeStaticInitializerFrame() {
         var exception = new ApplicationFailureException("test", null);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Foo", "<clinit>", "Foo.java", 5),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Foo", "<clinit>", "Foo.java", 5),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -85,9 +85,9 @@ class FailureConverterTest {
     @Test
     void shouldRoundTripConstructorFrame() {
         var exception = new ApplicationFailureException("constructor fail", null);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Foo", "<init>", "Foo.java", 15),
-                new StackTraceElement("com.example.Bar", "create", "Bar.java", 30),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Foo", "<init>", "Foo.java", 15),
+            new StackTraceElement("com.example.Bar", "create", "Bar.java", 30),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -111,8 +111,8 @@ class FailureConverterTest {
     @Test
     void shouldRoundTripStaticInitializerFrame() {
         var exception = new ApplicationFailureException("clinit fail", null);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Foo", "<clinit>", "Foo.java", 5),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Foo", "<clinit>", "Foo.java", 5),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -125,9 +125,8 @@ class FailureConverterTest {
     @Test
     void shouldRoundTripHiddenClassFrame() {
         var exception = new ApplicationFailureException("lambda fail", null);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement(
-                        "com.example.Foo$$Lambda/0x00007f8e8c0a1000", "run", null, -1),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Foo$$Lambda/0x00007f8e8c0a1000", "run", null, -1),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -135,8 +134,7 @@ class FailureConverterTest {
 
         assertThat(restored.getStackTrace()).hasSize(1);
         assertThat(restored.getStackTrace()[0]).satisfies(e -> {
-            assertThat(e.getClassName())
-                    .isEqualTo("com.example.Foo$$Lambda/0x00007f8e8c0a1000");
+            assertThat(e.getClassName()).isEqualTo("com.example.Foo$$Lambda/0x00007f8e8c0a1000");
             assertThat(e.getMethodName()).isEqualTo("run");
             assertThat(e.getFileName()).isNull();
         });
@@ -145,8 +143,8 @@ class FailureConverterTest {
     @Test
     void shouldRoundTripInnerClassFrame() {
         var exception = new ApplicationFailureException("inner class fail", null);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Outer$Inner", "process", "Outer.java", 99),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Outer$Inner", "process", "Outer.java", 99),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -164,8 +162,8 @@ class FailureConverterTest {
     @Test
     void shouldRoundTripLambdaMethodFrame() {
         var exception = new ApplicationFailureException("lambda method fail", null);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Foo", "lambda$process$0", "Foo.java", 42),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Foo", "lambda$process$0", "Foo.java", 42),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -181,8 +179,8 @@ class FailureConverterTest {
     @Test
     void shouldRoundTripFrameWithoutFileInfo() {
         var exception = new ApplicationFailureException("no file", null);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Foo", "doStuff", null, -1),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Foo", "doStuff", null, -1),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -247,12 +245,12 @@ class FailureConverterTest {
     @Test
     void shouldRoundTripCauseStackTrace() {
         var cause = new ApplicationFailureException("root cause", null);
-        cause.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Root", "<init>", "Root.java", 1),
+        cause.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Root", "<init>", "Root.java", 1),
         });
         var exception = new ApplicationFailureException("wrapper", cause);
-        exception.setStackTrace(new StackTraceElement[]{
-                new StackTraceElement("com.example.Wrapper", "wrap", "Wrapper.java", 10),
+        exception.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("com.example.Wrapper", "wrap", "Wrapper.java", 10),
         });
 
         final Failure failure = FailureConverter.toFailure(exception);
@@ -279,5 +277,4 @@ class FailureConverterTest {
         assertThat(restored.getOriginalMessage()).isEqualTo("unknown");
         assertThat(((ApplicationFailureException) restored).isTerminal()).isFalse();
     }
-
 }

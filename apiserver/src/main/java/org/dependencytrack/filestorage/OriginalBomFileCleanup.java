@@ -34,24 +34,18 @@ import java.util.UUID;
 
 public final class OriginalBomFileCleanup {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(OriginalBomFileCleanup.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OriginalBomFileCleanup.class);
 
-    private OriginalBomFileCleanup() {
-    }
+    private OriginalBomFileCleanup() {}
 
     public static void deleteOriginalBomFiles(
-            final FileStorage fileStorage,
-            final List<OriginalBomFileMetadataRow> originalBomFiles) {
-        final Map<FileMetadata, UUID> uniqueFileMetadata =
-                new LinkedHashMap<>();
+            final FileStorage fileStorage, final List<OriginalBomFileMetadataRow> originalBomFiles) {
+        final Map<FileMetadata, UUID> uniqueFileMetadata = new LinkedHashMap<>();
 
-        for (final OriginalBomFileMetadataRow originalBomFile
-                : originalBomFiles) {
+        for (final OriginalBomFileMetadataRow originalBomFile : originalBomFiles) {
             final FileMetadata fileMetadata;
             try {
-                fileMetadata = FileMetadata.parseFrom(
-                        originalBomFile.serializedFileMetadata());
+                fileMetadata = FileMetadata.parseFrom(originalBomFile.serializedFileMetadata());
             } catch (InvalidProtocolBufferException e) {
                 LOGGER.warn(
                         "Failed to parse original BOM file metadata for "
@@ -62,13 +56,10 @@ public final class OriginalBomFileCleanup {
                 continue;
             }
 
-            uniqueFileMetadata.putIfAbsent(
-                    fileMetadata,
-                    originalBomFile.projectUuid());
+            uniqueFileMetadata.putIfAbsent(fileMetadata, originalBomFile.projectUuid());
         }
 
-        for (final Map.Entry<FileMetadata, UUID> entry
-                : uniqueFileMetadata.entrySet()) {
+        for (final Map.Entry<FileMetadata, UUID> entry : uniqueFileMetadata.entrySet()) {
             final FileMetadata fileMetadata = entry.getKey();
             final UUID projectUuid = entry.getValue();
 

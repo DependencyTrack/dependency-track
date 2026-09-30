@@ -19,10 +19,10 @@
 package org.dependencytrack.vulnanalysis;
 
 import org.cyclonedx.proto.v1_7.Bom;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionFactory;
 import org.dependencytrack.plugin.api.ExtensionPoint;
 import org.dependencytrack.plugin.api.Plugin;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzerFactory;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzerRequirement;
@@ -80,13 +80,17 @@ public final class MockVulnAnalyzerPlugin implements Plugin {
         }
 
         @Override
+        public @NonNull String displayName() {
+            return "Mock";
+        }
+
+        @Override
         public @NonNull Class<? extends VulnAnalyzer> extensionClass() {
             return MockVulnAnalyzer.class;
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {
-        }
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public @NonNull VulnAnalyzer create() {
@@ -103,5 +107,4 @@ public final class MockVulnAnalyzerPlugin implements Plugin {
             return requirements;
         }
     }
-
 }

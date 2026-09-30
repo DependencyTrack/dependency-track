@@ -19,7 +19,6 @@
 package org.dependencytrack.persistence;
 
 import alpine.persistence.PaginatedResult;
-import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
@@ -28,13 +27,10 @@ import org.dependencytrack.model.Tag;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.proto.v1.Notification;
 import org.jspecify.annotations.NonNull;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -42,9 +38,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.Locale;
 
-import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
@@ -76,7 +71,8 @@ public class NotificationQueryManager extends QueryManager {
      * @return a new NotificationRule
      */
     @Override
-    public NotificationRule createNotificationRule(String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
+    public NotificationRule createNotificationRule(
+            String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
         return callInTransaction(() -> {
             final NotificationRule rule = new NotificationRule();
             rule.setName(name);
@@ -96,10 +92,7 @@ public class NotificationQueryManager extends QueryManager {
      */
     @Override
     public NotificationRule createScheduledNotificationRule(
-            String name,
-            NotificationScope scope,
-            NotificationLevel level,
-            NotificationPublisher publisher) {
+            String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
         return callInTransaction(() -> {
             final var rule = new NotificationRule();
             rule.setName(name);
@@ -126,8 +119,7 @@ public class NotificationQueryManager extends QueryManager {
     public NotificationRule updateNotificationRule(NotificationRule transientRule) {
         return callInTransaction(() -> {
             final var rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
-            if (transientRule.getTriggerType() != null
-                    && rule.getTriggerType() != transientRule.getTriggerType()) {
+            if (transientRule.getTriggerType() != null && rule.getTriggerType() != transientRule.getTriggerType()) {
                 throw new IllegalArgumentException("Trigger type can not be changed");
             }
 
@@ -136,9 +128,8 @@ public class NotificationQueryManager extends QueryManager {
                         .filter(group -> group.getSupportedTriggerType() != NotificationTriggerType.SCHEDULE)
                         .toList();
                 if (!invalidGroups.isEmpty()) {
-                    throw new IllegalArgumentException(
-                            "Groups %s are not supported for trigger type %s".formatted(
-                                    invalidGroups, rule.getTriggerType()));
+                    throw new IllegalArgumentException("Groups %s are not supported for trigger type %s"
+                            .formatted(invalidGroups, rule.getTriggerType()));
                 }
 
                 rule.setScheduleCron(transientRule.getScheduleCron());
@@ -149,9 +140,8 @@ public class NotificationQueryManager extends QueryManager {
                         .filter(group -> group.getSupportedTriggerType() != NotificationTriggerType.EVENT)
                         .toList();
                 if (!invalidGroups.isEmpty()) {
-                    throw new IllegalArgumentException(
-                            "Groups %s are not supported for trigger type %s".formatted(
-                                    invalidGroups, rule.getTriggerType()));
+                    throw new IllegalArgumentException("Groups %s are not supported for trigger type %s"
+                            .formatted(invalidGroups, rule.getTriggerType()));
                 }
             }
 
@@ -183,7 +173,7 @@ public class NotificationQueryManager extends QueryManager {
         }
         if (this.filter != null) {
             filterParts.add("name.toLowerCase().matches(:name) || publisher.name.toLowerCase().matches(:name)");
-            filterParams.put("name", ".*" + filter.toLowerCase() + ".*");
+            filterParams.put("name", ".*" + filter.toLowerCase(Locale.ROOT) + ".*");
         }
 
         final Query<NotificationRule> query = pm.newQuery(NotificationRule.class);
@@ -207,7 +197,7 @@ public class NotificationQueryManager extends QueryManager {
         final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class);
         query.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
         query.setOrdering("name asc");
-        return (List<NotificationPublisher>)query.execute();
+        return (List<NotificationPublisher>) query.execute();
     }
 
     /**
@@ -251,7 +241,8 @@ public class NotificationQueryManager extends QueryManager {
      * @since 4.12.3
      */
     @Override
-    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags, final boolean keepExisting) {
+    public boolean bind(
+            final NotificationRule notificationRule, final Collection<Tag> tags, final boolean keepExisting) {
         assertPersistent(notificationRule, "notificationRule must be persistent");
         assertPersistentAll(tags, "tags must be persistent");
 
@@ -263,14 +254,12 @@ public class NotificationQueryManager extends QueryManager {
             }
 
             if (!keepExisting) {
-                final Iterator<Tag> existingTagsIterator = notificationRule.getTags().iterator();
+                final Iterator<Tag> existingTagsIterator =
+                        notificationRule.getTags().iterator();
                 while (existingTagsIterator.hasNext()) {
                     final Tag existingTag = existingTagsIterator.next();
                     if (!tags.contains(existingTag)) {
                         existingTagsIterator.remove();
-                        if (existingTag.getNotificationRules() != null) {
-                            existingTag.getNotificationRules().remove(notificationRule);
-                        }
                         modified = true;
                     }
                 }
@@ -278,13 +267,6 @@ public class NotificationQueryManager extends QueryManager {
             for (final Tag tag : tags) {
                 if (!notificationRule.getTags().contains(tag)) {
                     notificationRule.getTags().add(tag);
-
-                    if (tag.getNotificationRules() == null) {
-                        tag.setNotificationRules(new HashSet<>(Set.of(notificationRule)));
-                    } else {
-                        tag.getNotificationRules().add(notificationRule);
-                    }
-
                     modified = true;
                 }
             }
@@ -299,41 +281,4 @@ public class NotificationQueryManager extends QueryManager {
     public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
         return bind(notificationRule, tags, /* keepExisting */ false);
     }
-
-    /**
-     * @return All notifications in the notification outbox.
-     * @since 5.0.0
-     */
-    @Override
-    public List<Notification> getNotificationOutbox() {
-        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                SELECT "PAYLOAD"
-                  FROM "NOTIFICATION_OUTBOX"
-                 ORDER BY "ID"
-                """);
-
-        return executeAndCloseResultList(query, byte[].class).stream()
-                .map(data -> {
-                    try {
-                        return Notification.parseFrom(data);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                })
-                .toList();
-    }
-
-    /**
-     * @since 5.0.0
-     */
-    @Override
-    public void truncateNotificationOutbox() {
-        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
-            final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                TRUNCATE TABLE "NOTIFICATION_OUTBOX"
-                """);
-            executeAndClose(query);
-        }
-    }
-
 }

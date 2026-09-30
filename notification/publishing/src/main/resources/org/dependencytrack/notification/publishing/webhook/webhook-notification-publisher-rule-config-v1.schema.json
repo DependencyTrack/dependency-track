@@ -26,6 +26,13 @@
       "minLength": 1,
       "x-secret-ref": true
     },
+    "signingSecret": {
+      "type": "string",
+      "title": "Signing Secret",
+      "description": "Shared secret used to sign webhook payloads with HMAC-SHA256.",
+      "minLength": 1,
+      "x-secret-ref": true
+    },
     "publishProtobuf": {
       "type": "boolean",
       "title": "Publish Protobuf",

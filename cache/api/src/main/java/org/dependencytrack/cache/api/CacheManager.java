@@ -38,9 +38,7 @@ public interface CacheManager extends Closeable {
         requireNonNull(name, "name must not be null");
         if (!VALID_NAME_PATTERN.matcher(name).matches()) {
             throw new IllegalArgumentException(
-                    "name does not match expected pattern %s: %s".formatted(
-                            VALID_NAME_PATTERN.pattern(), name));
+                    "name does not match expected pattern %s: %s".formatted(VALID_NAME_PATTERN.pattern(), name));
         }
     }
-
 }

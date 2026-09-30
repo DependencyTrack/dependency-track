@@ -23,12 +23,13 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 /// @since 5.1.0
 @NullMarked
@@ -52,15 +53,15 @@ public record CreateProjectPropertyRequest(
         @Pattern(regexp = "\\P{Cc}+", message = "The propertyValue must not contain control characters")
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Value of the property")
-        @Nullable String propertyValue,
+        @Nullable
+        String propertyValue,
 
-        @NotNull
-        @Schema(description = "Type of the property", requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotNull @Schema(description = "Type of the property", requiredMode = Schema.RequiredMode.REQUIRED)
         IConfigProperty.PropertyType propertyType,
 
         @Size(max = 255)
         @Pattern(regexp = "\\P{Cc}+", message = "The description must not contain control characters")
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Description of the property")
-        @Nullable String description) {
-}
+        @Nullable
+        String description) {}

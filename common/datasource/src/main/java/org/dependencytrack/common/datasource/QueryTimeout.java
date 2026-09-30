@@ -25,8 +25,7 @@ public final class QueryTimeout {
 
     private static final ScopedValue<Boolean> BYPASSED = ScopedValue.newInstance();
 
-    private QueryTimeout() {
-    }
+    private QueryTimeout() {}
 
     /// Runs {@code op} with the data source's global query timeout bypassed.
     ///
@@ -48,5 +47,4 @@ public final class QueryTimeout {
     static boolean isBypassed() {
         return BYPASSED.isBound() && BYPASSED.get();
     }
-
 }

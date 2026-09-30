@@ -27,9 +27,8 @@ import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.memory.MemoryCacheProvider;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.config.RuntimeConfigMapper;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
@@ -39,7 +38,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Map;
@@ -70,10 +68,7 @@ class OssIndexVulnAnalyzerTest {
         analyzer = createAnalyzer(wmRuntimeInfo, "foo@example.com", "710bcaff-790b-494d-872a-eb97cdc676ef");
     }
 
-    private VulnAnalyzer createAnalyzer(
-            WireMockRuntimeInfo wmRuntimeInfo,
-            String username,
-            String apiToken) {
+    private VulnAnalyzer createAnalyzer(WireMockRuntimeInfo wmRuntimeInfo, String username, String apiToken) {
         final var cacheProvider = new MemoryCacheProvider(new SmallRyeConfigBuilder().build());
         cacheManager = cacheProvider.create();
 
@@ -89,16 +84,12 @@ class OssIndexVulnAnalyzerTest {
         }
 
         final var configRegistry = new MockConfigRegistry(
-                Map.of("allow-local-connections", "true"),
-                analyzerFactory.runtimeConfigSpec(),
-                RuntimeConfigMapper.getInstance(),
-                config);
+                Map.of(), analyzerFactory.runtimeConfigSpec(), RuntimeConfigMapper.getInstance(), config);
 
-        analyzerFactory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(CacheManager.class, cacheManager)
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(configRegistry)
+                .withCacheManager(cacheManager)
+                .build());
 
         return analyzerFactory.create();
     }
@@ -116,17 +107,14 @@ class OssIndexVulnAnalyzerTest {
     @Test
     void shouldAnalyzeAndCacheWithNoVulns() throws Exception {
         stubFor(post(urlPathEqualTo("/api/v3/component-report"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("no-vulns-response.json")));
+                .willReturn(aResponse().withStatus(200).withBodyFile("no-vulns-response.json")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("jackson-databind")
-                                .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -139,19 +127,58 @@ class OssIndexVulnAnalyzerTest {
     }
 
     @Test
-    void shouldAnalyzeAndCacheWithVulns() throws Exception {
+    void shouldRetainThreatMetricsInCvssV4Score() throws Exception {
         stubFor(post(urlPathEqualTo("/api/v3/component-report"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("vulns-response.json")));
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
+                        [
+                          {
+                            "coordinates": "pkg:composer/symfony/monolog-bridge@6.4.0",
+                            "vulnerabilities": [
+                              {
+                                "id": "CVE-2026-45077",
+                                "cvssScore": 8.1,
+                                "cvssVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U",
+                                "cve": "CVE-2026-45077"
+                              }
+                            ]
+                          }
+                        ]
+                        """)));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("jackson-databind")
-                                .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("monolog-bridge")
+                        .setPurl("pkg:composer/symfony/monolog-bridge@6.4.0")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThatJson(JsonFormat.printer().print(vdr))
+                .inPath("$.vulnerabilities[0].ratings")
+                .isEqualTo(/* language=JSON */ """
+                        [
+                          {
+                            "source": { "name": "OSSINDEX" },
+                            "score": 8.1,
+                            "method": "SCORE_METHOD_CVSSV4",
+                            "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U"
+                          }
+                        ]
+                        """);
+    }
+
+    @Test
+    void shouldAnalyzeAndCacheWithVulns() throws Exception {
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+                .willReturn(aResponse().withStatus(200).withBodyFile("vulns-response.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -209,12 +236,11 @@ class OssIndexVulnAnalyzerTest {
                 """);
 
         final var secondBom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("jackson-databind")
-                                .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1?foo=bar#baz")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1?foo=bar#baz")
+                        .build())
                 .build();
 
         final Bom secondVdr = analyzer.analyze(secondBom);
@@ -226,11 +252,26 @@ class OssIndexVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeComponentWithoutBomRef() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setName("acme-lib")
-                                .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
+
+        verify(0, postRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void shouldNotAnalyzeComponentWithVersionlessPurl() throws Exception {
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/org.acme/acme-lib")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -242,11 +283,10 @@ class OssIndexVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeComponentWithoutPurl() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-lib")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -258,12 +298,11 @@ class OssIndexVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeComponentsWithUnsupportedPurlType() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-artefact")
-                                .setPurl("pkg:generic/acme-artefact@1.2.3")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-artefact")
+                        .setPurl("pkg:generic/acme-artefact@1.2.3")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -275,17 +314,15 @@ class OssIndexVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeInternalComponents() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-lib")
-                                .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
-                                .addProperties(
-                                        Property.newBuilder()
-                                                .setName("dependencytrack:internal:is-internal-component")
-                                                .setValue("does-not-matter")
-                                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .addProperties(Property.newBuilder()
+                                .setName("dependencytrack:internal:is-internal-component")
+                                .setValue("does-not-matter")
                                 .build())
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -297,31 +334,24 @@ class OssIndexVulnAnalyzerTest {
     @Test
     void shouldBatchRequestsWithUpTo128Purls() throws Exception {
         stubFor(post(urlPathEqualTo("/api/v3/component-report"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("[]")));
+                .willReturn(aResponse().withStatus(200).withBody("[]")));
 
         final var components = new ArrayList<Component>(150);
         for (int i = 0; i < 150; i++) {
-            components.add(
-                    Component.newBuilder()
-                            .setBomRef(String.valueOf(i))
-                            .setName("acme-lib")
-                            .setPurl("pkg:maven/com.acme/acme-lib@1.0." + i)
-                            .build());
+            components.add(Component.newBuilder()
+                    .setBomRef(String.valueOf(i))
+                    .setName("acme-lib")
+                    .setPurl("pkg:maven/com.acme/acme-lib@1.0." + i)
+                    .build());
         }
 
-        final var bom = Bom.newBuilder()
-                .addAllComponents(components)
-                .build();
+        final var bom = Bom.newBuilder().addAllComponents(components).build();
 
         final Bom vdr = analyzer.analyze(bom);
         assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
 
-        verify(1, postRequestedFor(anyUrl())
-                .withRequestBody(matchingJsonPath("$[?(@.coordinates.size() == 128)]")));
-        verify(1, postRequestedFor(anyUrl())
-                .withRequestBody(matchingJsonPath("$[?(@.coordinates.size() == 22)]")));
+        verify(1, postRequestedFor(anyUrl()).withRequestBody(matchingJsonPath("$[?(@.coordinates.size() == 128)]")));
+        verify(1, postRequestedFor(anyUrl()).withRequestBody(matchingJsonPath("$[?(@.coordinates.size() == 22)]")));
     }
 
     @Test
@@ -365,12 +395,11 @@ class OssIndexVulnAnalyzerTest {
 
     private static Bom bomWithSingleComponent() {
         return Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("jackson-databind")
-                                .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1")
+                        .build())
                 .build();
     }
 
@@ -384,12 +413,11 @@ class OssIndexVulnAnalyzerTest {
                 .willReturn(aResponse().withStatus(200).withBody("[]")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-lib")
-                                .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -398,5 +426,4 @@ class OssIndexVulnAnalyzerTest {
         verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
                 .withHeader("Authorization", equalTo("Bearer sonatype_pat_test")));
     }
-
 }

@@ -109,8 +109,7 @@ public final class WorkflowDao extends AbstractDao {
                      , exists(select 1 from cte_updated_queue) as updated
                 """);
 
-        final Map.Entry<Boolean, Boolean> existsAndUpdated = query
-                .bindMethods(request)
+        final Map.Entry<Boolean, Boolean> existsAndUpdated = query.bindMethods(request)
                 .map((rs, _) -> Map.entry(rs.getBoolean(1), rs.getBoolean(2)))
                 .one();
 
@@ -133,14 +132,10 @@ public final class WorkflowDao extends AbstractDao {
                 )
                 """);
 
-        return query
-                .bind("name", name)
-                .mapTo(boolean.class)
-                .one();
+        return query.bind("name", name).mapTo(boolean.class).one();
     }
 
-    record ListWorkflowTaskQueuesPageToken(String lastName) implements PageToken {
-    }
+    record ListWorkflowTaskQueuesPageToken(String lastName) implements PageToken {}
 
     public Page<TaskQueue> listWorkflowTaskQueues(ListTaskQueuesRequest request) {
         requireNonNull(request, "request must not be null");
@@ -173,16 +168,13 @@ public final class WorkflowDao extends AbstractDao {
         final int limit = request.limit() > 0 ? request.limit() : 100;
         final int limitWithNext = limit + 1;
 
-        final List<TaskQueue> rows = query
-                .bind("limit", limitWithNext)
+        final List<TaskQueue> rows = query.bind("limit", limitWithNext)
                 .bind("lastName", pageTokenValue != null ? pageTokenValue.lastName() : null)
                 .defineNamedBindings()
                 .mapTo(TaskQueue.class)
                 .list();
 
-        final List<TaskQueue> resultItems = rows.size() > 1
-                ? rows.subList(0, Math.min(rows.size(), limit))
-                : rows;
+        final List<TaskQueue> resultItems = rows.size() > 1 ? rows.subList(0, Math.min(rows.size(), limit)) : rows;
 
         final ListWorkflowTaskQueuesPageToken nextPageToken = rows.size() == limitWithNext
                 ? new ListWorkflowTaskQueuesPageToken(resultItems.getLast().name())
@@ -273,7 +265,8 @@ public final class WorkflowDao extends AbstractDao {
         final var createdAts = new Instant[commands.size()];
 
         final TypedJsonMapper jsonMapper = jdbiHandle
-                .getConfig(JsonConfig.class).getJsonMapper()
+                .getConfig(JsonConfig.class)
+                .getJsonMapper()
                 .forType(parameterizeClass(Map.class, String.class, String.class), jdbiHandle.getConfig());
 
         int i = 0;
@@ -299,8 +292,7 @@ public final class WorkflowDao extends AbstractDao {
             i++;
         }
 
-        return query
-                .bind("requestIds", requestIds)
+        return query.bind("requestIds", requestIds)
                 .bind("ids", ids)
                 .bind("parentIds", parentIds)
                 .bind("workflowNames", workflowNames)
@@ -311,15 +303,12 @@ public final class WorkflowDao extends AbstractDao {
                 .bind("priorities", priorities)
                 .bind("labelsJsons", labelsJsons)
                 .bind("createdAts", createdAts)
-                .map((rs, _) -> Map.entry(
-                        rs.getObject("request_id", UUID.class),
-                        rs.getObject("run_id", UUID.class)))
+                .map((rs, _) -> Map.entry(rs.getObject("request_id", UUID.class), rs.getObject("run_id", UUID.class)))
                 .collectToMap(Map.Entry::getKey, Map.Entry::getValue);
     }
 
     public List<UnlockedWorkflowRun> updateAndUnlockRuns(
-            String engineInstanceId,
-            Collection<UpdateAndUnlockRunCommand> commands) {
+            String engineInstanceId, Collection<UpdateAndUnlockRunCommand> commands) {
         final Query query = jdbiHandle.createQuery("""
                 with
                 cte_cmd as (
@@ -390,9 +379,7 @@ public final class WorkflowDao extends AbstractDao {
             statuses[i] = command.status();
             customStatuses[i] = command.customStatus();
             continuedAsNews[i] = command.continuedAsNew();
-            stickyTos[i] = (command.status() != null && !command.status().isTerminal())
-                    ? engineInstanceId
-                    : null;
+            stickyTos[i] = (command.status() != null && !command.status().isTerminal()) ? engineInstanceId : null;
             updatedAts[i] = command.updatedAt();
             startedAts[i] = command.startedAt();
             completedAts[i] = command.completedAt();
@@ -400,8 +387,7 @@ public final class WorkflowDao extends AbstractDao {
             i++;
         }
 
-        return query
-                .bind("engineInstanceId", engineInstanceId)
+        return query.bind("engineInstanceId", engineInstanceId)
                 .bind("ids", ids)
                 .bind("queueNames", queueNames)
                 .bind("statuses", statuses)
@@ -489,11 +475,7 @@ public final class WorkflowDao extends AbstractDao {
                  where id = :id
                 """);
 
-        return query
-                .bind("id", id)
-                .mapTo(WorkflowRunMetadata.class)
-                .findOne()
-                .orElse(null);
+        return query.bind("id", id).mapTo(WorkflowRunMetadata.class).findOne().orElse(null);
     }
 
     public @Nullable WorkflowRunMetadata getRunMetadataByInstanceId(String instanceId) {
@@ -504,18 +486,14 @@ public final class WorkflowDao extends AbstractDao {
                    and status in ('CREATED', 'RUNNING', 'SUSPENDED')
                 """);
 
-        return query
-                .bind("instanceId", instanceId)
+        return query.bind("instanceId", instanceId)
                 .mapTo(WorkflowRunMetadata.class)
                 .findOne()
                 .orElse(null);
     }
 
     public Map<UUID, PolledWorkflowTask> pollAndLockWorkflowTasks(
-            String engineInstanceId,
-            String queueName,
-            Collection<PollWorkflowTaskCommand> commands,
-            int limit) {
+            String engineInstanceId, String queueName, Collection<PollWorkflowTaskCommand> commands, int limit) {
         final Query query = jdbiHandle.createQuery("""
                 with
                 cte_poll_req as (
@@ -585,8 +563,7 @@ public final class WorkflowDao extends AbstractDao {
             i++;
         }
 
-        return query
-                .bind("engineInstanceId", engineInstanceId)
+        return query.bind("engineInstanceId", engineInstanceId)
                 .bind("queueName", queueName)
                 .bind("workflowNames", workflowNames)
                 .bind("lockTimeouts", lockTimeouts)
@@ -620,8 +597,7 @@ public final class WorkflowDao extends AbstractDao {
             i++;
         }
 
-        return update
-                .bind("engineInstanceId", engineInstanceId)
+        return update.bind("engineInstanceId", engineInstanceId)
                 .bind("queueNames", queueNames)
                 .bind("runIds", runIds)
                 .bind("lockVersions", lockVersions)
@@ -654,8 +630,7 @@ public final class WorkflowDao extends AbstractDao {
             i++;
         }
 
-        return update
-                .bind("runIds", runIds)
+        return update.bind("runIds", runIds)
                 .bind("visibleFroms", visibleFroms)
                 .bind("events", events)
                 .execute();
@@ -714,8 +689,7 @@ public final class WorkflowDao extends AbstractDao {
             i++;
         }
 
-        final List<PolledWorkflowEvent> polledEvents = query
-                .bind("runIds", runIds)
+        final List<PolledWorkflowEvent> polledEvents = query.bind("runIds", runIds)
                 .bind("historyOffsets", historyOffsets)
                 .mapTo(PolledWorkflowEvent.class)
                 .list();
@@ -728,23 +702,24 @@ public final class WorkflowDao extends AbstractDao {
         for (final PolledWorkflowEvent polledEvent : polledEvents) {
             switch (polledEvent.eventType()) {
                 case HISTORY -> {
-                    final List<WorkflowEvent> history = historyByRunId.computeIfAbsent(
-                            polledEvent.workflowRunId(), _ -> new ArrayList<>());
+                    final List<WorkflowEvent> history =
+                            historyByRunId.computeIfAbsent(polledEvent.workflowRunId(), _ -> new ArrayList<>());
                     history.add(polledEvent.event());
 
                     maxHistorySequenceNumberByRunId.compute(
                             polledEvent.workflowRunId(),
-                            (_, previousMax) -> (previousMax == null || previousMax < polledEvent.historySequenceNumber())
-                                    ? polledEvent.historySequenceNumber()
-                                    : previousMax);
+                            (_, previousMax) ->
+                                    (previousMax == null || previousMax < polledEvent.historySequenceNumber())
+                                            ? polledEvent.historySequenceNumber()
+                                            : previousMax);
                 }
                 case INBOX -> {
-                    final List<WorkflowEvent> inbox = inboxByRunId.computeIfAbsent(
-                            polledEvent.workflowRunId(), _ -> new ArrayList<>());
+                    final List<WorkflowEvent> inbox =
+                            inboxByRunId.computeIfAbsent(polledEvent.workflowRunId(), _ -> new ArrayList<>());
                     inbox.add(polledEvent.event());
 
-                    final List<Long> messageIds = inboxMessageIdsByRunId.computeIfAbsent(
-                            polledEvent.workflowRunId(), _ -> new ArrayList<>());
+                    final List<Long> messageIds =
+                            inboxMessageIdsByRunId.computeIfAbsent(polledEvent.workflowRunId(), _ -> new ArrayList<>());
                     messageIds.add(polledEvent.inboxMessageId());
                 }
             }
@@ -752,11 +727,13 @@ public final class WorkflowDao extends AbstractDao {
 
         final var polledEventsByRunId = new HashMap<UUID, PolledWorkflowEvents>(requests.size());
         for (final UUID runId : runIds) {
-            polledEventsByRunId.put(runId, new PolledWorkflowEvents(
-                    historyByRunId.getOrDefault(runId, Collections.emptyList()),
-                    inboxByRunId.getOrDefault(runId, Collections.emptyList()),
-                    maxHistorySequenceNumberByRunId.getOrDefault(runId, -1),
-                    inboxMessageIdsByRunId.getOrDefault(runId, Collections.emptyList())));
+            polledEventsByRunId.put(
+                    runId,
+                    new PolledWorkflowEvents(
+                            historyByRunId.getOrDefault(runId, Collections.emptyList()),
+                            inboxByRunId.getOrDefault(runId, Collections.emptyList()),
+                            maxHistorySequenceNumberByRunId.getOrDefault(runId, -1),
+                            inboxMessageIdsByRunId.getOrDefault(runId, Collections.emptyList())));
         }
 
         return polledEventsByRunId;
@@ -770,10 +747,7 @@ public final class WorkflowDao extends AbstractDao {
                  order by id
                 """);
 
-        return query
-                .bind("runId", runId)
-                .mapTo(WorkflowEvent.class)
-                .list();
+        return query.bind("runId", runId).mapTo(WorkflowEvent.class).list();
     }
 
     public int deleteMessages(Collection<DeleteWorkflowMessagesCommand> commands) {
@@ -804,8 +778,7 @@ public final class WorkflowDao extends AbstractDao {
             i++;
         }
 
-        return update
-                .bind("runIds", runIds)
+        return update.bind("runIds", runIds)
                 .bind("messageIdArrays", messageIdArrays)
                 .execute();
     }
@@ -832,8 +805,7 @@ public final class WorkflowDao extends AbstractDao {
             i++;
         }
 
-        return update
-                .bind("runIds", runIds)
+        return update.bind("runIds", runIds)
                 .bind("sequenceNumbers", sequenceNumbers)
                 .bind("events", events)
                 .execute();
@@ -846,9 +818,6 @@ public final class WorkflowDao extends AbstractDao {
                  where workflow_run_id = any(:runIds)
                 """);
 
-        return update
-                .bindArray("runIds", UUID.class, runIds)
-                .execute();
+        return update.bindArray("runIds", UUID.class, runIds).execute();
     }
-
 }

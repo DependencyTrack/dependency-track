@@ -26,11 +26,8 @@ import java.util.Map;
 /**
  * @since 4.14.0
  */
-public sealed interface OsDistribution permits
-        AlpineDistribution,
-        DebianDistribution,
-        RedHatDistribution,
-        UbuntuDistribution {
+public sealed interface OsDistribution
+        permits AlpineDistribution, DebianDistribution, RedHatDistribution, UbuntuDistribution {
 
     String purlQualifierValue();
 
@@ -42,9 +39,7 @@ public sealed interface OsDistribution permits
         }
 
         final Map<String, String> qualifiers = purl.getQualifiers();
-        final String distroQualifier = qualifiers != null
-                ? qualifiers.get("distro")
-                : null;
+        final String distroQualifier = qualifiers != null ? qualifiers.get("distro") : null;
 
         if (distroQualifier != null && !distroQualifier.isEmpty()) {
             if ("apk".equals(purl.getType())) {
@@ -70,5 +65,4 @@ public sealed interface OsDistribution permits
 
         return null;
     }
-
 }

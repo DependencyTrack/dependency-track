@@ -34,8 +34,7 @@ final class FindingDao {
     }
 
     List<FindingAttribution> getExistingAttributions(long projectId) {
-        return handle
-                .createQuery("""
+        return handle.createQuery("""
                         SELECT fa."ID"
                              , fa."COMPONENT_ID"
                              , fa."VULNERABILITY_ID"
@@ -68,8 +67,7 @@ final class FindingDao {
             i++;
         }
 
-        return handle
-                .createUpdate("""
+        return handle.createUpdate("""
                         INSERT INTO "COMPONENTS_VULNERABILITIES" ("COMPONENT_ID", "VULNERABILITY_ID")
                         SELECT *
                           FROM UNNEST(:componentIds, :vulnIds)
@@ -83,9 +81,7 @@ final class FindingDao {
                 .bind("componentIds", componentIds)
                 .bind("vulnIds", vulnIds)
                 .executeAndReturnGeneratedKeys()
-                .map((rs, ctx) -> new FindingKey(
-                        rs.getLong("COMPONENT_ID"),
-                        rs.getLong("VULNERABILITY_ID")))
+                .map((rs, ctx) -> new FindingKey(rs.getLong("COMPONENT_ID"), rs.getLong("VULNERABILITY_ID")))
                 .list();
     }
 
@@ -110,8 +106,7 @@ final class FindingDao {
             i++;
         }
 
-        return handle
-                .createUpdate("""
+        return handle.createUpdate("""
                         INSERT INTO "FINDINGATTRIBUTION" AS fa (
                           "VULNERABILITY_ID"
                         , "COMPONENT_ID"
@@ -150,8 +145,7 @@ final class FindingDao {
             return 0;
         }
 
-        return handle
-                .createUpdate("""
+        return handle.createUpdate("""
                         UPDATE "FINDINGATTRIBUTION"
                            SET "DELETED_AT" = NOW()
                          WHERE "ID" = ANY(:ids)
@@ -161,19 +155,12 @@ final class FindingDao {
                 .execute();
     }
 
-    record FindingAttribution(
-            long id,
-            long componentId,
-            long vulnDbId,
-            String analyzerName) {
-    }
+    record FindingAttribution(long id, long componentId, long vulnDbId, String analyzerName) {}
 
     record CreateAttributionCommand(
             long vulnDbId,
             long componentId,
             long projectId,
             String analyzerName,
-            @Nullable String referenceUrl) {
-    }
-
+            @Nullable String referenceUrl) {}
 }

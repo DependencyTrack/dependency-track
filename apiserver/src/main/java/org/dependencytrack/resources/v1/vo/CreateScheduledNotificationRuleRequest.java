@@ -21,25 +21,29 @@ package org.dependencytrack.resources.v1.vo;
 import alpine.common.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.dependencytrack.notification.NotificationLevel;
+import org.dependencytrack.notification.NotificationScope;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.dependencytrack.notification.NotificationLevel;
-import org.dependencytrack.notification.NotificationScope;
 
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record CreateScheduledNotificationRuleRequest(
-        @NotBlank @Size(min = 1, max = 255)
-        @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+        @NotBlank
+        @Size(min = 1, max = 255)
+        @Pattern(
+                regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+                message = "The name may only contain printable characters")
         String name,
+
         @NotNull NotificationScope scope,
         @JsonAlias("notificationLevel") @NotNull NotificationLevel level,
         @NotNull @Valid Publisher publisher) {
 
-    public record Publisher(@NotNull UUID uuid) {
-    }
+    public record Publisher(@NotNull UUID uuid) {}
 }

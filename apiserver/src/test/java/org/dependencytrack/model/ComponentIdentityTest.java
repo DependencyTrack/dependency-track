@@ -28,133 +28,87 @@ public class ComponentIdentityTest {
 
     @SuppressWarnings("unused")
     private static Object[] testEqualsAndHashCodeParams() throws Exception {
-        return new Object[]{
-                // Equal
-                new Object[]{
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "cpe",
-                                "swidTagId",
-                                "group",
-                                "name",
-                                "version"
-                        ),
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "cpe",
-                                "swidTagId",
-                                "group",
-                                "name",
-                                "version"
-                        ),
-                        true
-                },
-                // Different coordinates
-                new Object[]{
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "cpe",
-                                "swidTagId",
-                                "group",
-                                "name",
-                                "version"
-                        ),
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "cpe",
-                                "swidTagId",
-                                "otherGroup",
-                                "otherName",
-                                "otherVersion"
-                        ),
-                        false
-                },
-                // Different version
-                new Object[]{
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "cpe",
-                                "swidTagId",
-                                "group",
-                                "name",
-                                "version"
-                        ),
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "cpe",
-                                "swidTagId",
-                                "group",
-                                "name",
-                                "otherVersion"
-                        ),
-                        false
-                },
-                // Different PURLs
-                new Object[]{
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "cpe",
-                                "swidTagId",
-                                "group",
-                                "name",
-                                "version"
-                        ),
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/otherGroup/otherName@otherVersion"),
-                                "cpe",
-                                "swidTagId",
-                                "group",
-                                "name",
-                                "version"
-                        ),
-                        false
-                },
-                // Different CPEs
-                new Object[]{
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "cpe",
-                                "swidTagId",
-                                "group",
-                                "name",
-                                "version"
-                        ),
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "otherCpe",
-                                "swidTagId",
-                                "group",
-                                "name",
-                                "version"
-                        ),
-                        false
-                },
-                // Different SWID Tag ID
-                new Object[]{
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "cpe",
-                                "swidTagId",
-                                "group",
-                                "name",
-                                "version"
-                        ),
-                        new ComponentIdentity(
-                                new PackageURL("pkg:maven/group/name@version"),
-                                "cpe",
-                                "otherSwidTagId",
-                                "group",
-                                "name",
-                                "version"
-                        ),
-                        false
-                }
+        return new Object[] {
+            // Equal
+            new Object[] {
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"), "cpe", "swidTagId", "group", "name", "version"),
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"), "cpe", "swidTagId", "group", "name", "version"),
+                true
+            },
+            // Different coordinates
+            new Object[] {
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"), "cpe", "swidTagId", "group", "name", "version"),
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"),
+                        "cpe",
+                        "swidTagId",
+                        "otherGroup",
+                        "otherName",
+                        "otherVersion"),
+                false
+            },
+            // Different version
+            new Object[] {
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"), "cpe", "swidTagId", "group", "name", "version"),
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"),
+                        "cpe",
+                        "swidTagId",
+                        "group",
+                        "name",
+                        "otherVersion"),
+                false
+            },
+            // Different PURLs
+            new Object[] {
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"), "cpe", "swidTagId", "group", "name", "version"),
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/otherGroup/otherName@otherVersion"),
+                        "cpe",
+                        "swidTagId",
+                        "group",
+                        "name",
+                        "version"),
+                false
+            },
+            // Different CPEs
+            new Object[] {
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"), "cpe", "swidTagId", "group", "name", "version"),
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"),
+                        "otherCpe",
+                        "swidTagId",
+                        "group",
+                        "name",
+                        "version"),
+                false
+            },
+            // Different SWID Tag ID
+            new Object[] {
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"), "cpe", "swidTagId", "group", "name", "version"),
+                new ComponentIdentity(
+                        new PackageURL("pkg:maven/group/name@version"),
+                        "cpe",
+                        "otherSwidTagId",
+                        "group",
+                        "name",
+                        "version"),
+                false
+            }
         };
     }
 
     @ParameterizedTest
     @MethodSource("testEqualsAndHashCodeParams")
-    public void testEqualsAndHashCode(final ComponentIdentity left, final ComponentIdentity right, final boolean expectEqual) {
+    public void testEqualsAndHashCode(
+            final ComponentIdentity left, final ComponentIdentity right, final boolean expectEqual) {
         if (expectEqual) {
             assertThat(left).isEqualTo(right);
             assertThat(right).isEqualTo(left);
@@ -165,6 +119,4 @@ public class ComponentIdentityTest {
             assertThat(left.hashCode()).isNotEqualTo(right.hashCode());
         }
     }
-
-
 }

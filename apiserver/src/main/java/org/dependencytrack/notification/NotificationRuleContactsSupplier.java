@@ -57,8 +57,7 @@ final class NotificationRuleContactsSupplier implements Supplier<Set<Notificatio
                      WHERE r."NAME" = :ruleName
                     """);
 
-            return query
-                    .bind("ruleName", ruleName)
+            return query.bind("ruleName", ruleName)
                     .map(ConstructorMapper.of(NotificationRuleContact.class))
                     .set();
         });

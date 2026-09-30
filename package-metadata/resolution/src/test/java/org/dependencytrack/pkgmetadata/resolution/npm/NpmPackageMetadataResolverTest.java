@@ -21,21 +21,14 @@ package org.dependencytrack.pkgmetadata.resolution.npm;
 import com.github.packageurl.PackageURLBuilder;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import org.dependencytrack.cache.api.CacheManager;
-import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.HashAlgorithm;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.net.http.HttpClient;
-import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -82,11 +75,7 @@ class NpmPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         factory = new NpmPackageMetadataResolverFactory();
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(CacheManager.class, new NoopCacheManager())
-                        .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new ExtensionContextBuilder().build());
         resolver = (NpmPackageMetadataResolver) factory.create();
     }
 
@@ -121,8 +110,7 @@ class NpmPackageMetadataResolverTest {
 
     @Test
     void shouldReturnNullWhenPackageNotFound(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo("/nonexistent"))
-                .willReturn(aResponse().withStatus(404)));
+        stubFor(get(urlPathEqualTo("/nonexistent")).willReturn(aResponse().withStatus(404)));
 
         final var purl = PackageURLBuilder.aPackageURL()
                 .withType("npm")
@@ -144,8 +132,7 @@ class NpmPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -267,8 +254,7 @@ class NpmPackageMetadataResolverTest {
 
     @Test
     void shouldThrowRetryableExceptionOnServerError(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo("/mypackage"))
-                .willReturn(aResponse().withStatus(503)));
+        stubFor(get(urlPathEqualTo("/mypackage")).willReturn(aResponse().withStatus(503)));
 
         final var purl = PackageURLBuilder.aPackageURL()
                 .withType("npm")
@@ -295,8 +281,6 @@ class NpmPackageMetadataResolverTest {
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, "my-token");
         resolver.resolve(purl, repo, null);
 
-        verify(getRequestedFor(urlPathEqualTo("/mypackage"))
-                .withHeader("Authorization", equalTo("Bearer my-token")));
+        verify(getRequestedFor(urlPathEqualTo("/mypackage")).withHeader("Authorization", equalTo("Bearer my-token")));
     }
-
 }

@@ -38,7 +38,7 @@ public class OrganizationalEntityJsonConverterTest {
 
         final var entity = new OrganizationalEntity();
         entity.setName("foo");
-        entity.setUrls(new String[]{"https://example.com"});
+        entity.setUrls(new String[] {"https://example.com"});
         entity.setContacts(List.of(contact));
 
         assertThatJson(new OrganizationalEntityJsonConverter().convertToDatastore(entity))
@@ -89,12 +89,13 @@ public class OrganizationalEntityJsonConverterTest {
 
     @Test
     public void testConvertToDatastoreNull() {
-        assertThat(new OrganizationalEntityJsonConverter().convertToDatastore(null)).isNull();
+        assertThat(new OrganizationalEntityJsonConverter().convertToDatastore(null))
+                .isNull();
     }
 
     @Test
     public void testConvertToAttributeNull() {
-        assertThat(new OrganizationalEntityJsonConverter().convertToAttribute(null)).isNull();
+        assertThat(new OrganizationalEntityJsonConverter().convertToAttribute(null))
+                .isNull();
     }
-
 }

@@ -28,13 +28,15 @@ import org.dependencytrack.api.v2.model.PackageMetadata;
 import org.dependencytrack.api.v2.model.Scope;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Project;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
 public class ModelMapper {
 
-    public static List<org.dependencytrack.model.OrganizationalContact> mapOrganizationalContacts(final List<OrganizationalContact> contacts) {
+    public static List<org.dependencytrack.model.OrganizationalContact> mapOrganizationalContacts(
+            final List<OrganizationalContact> contacts) {
         return contacts.stream()
                 .map(contact -> {
                     var mappedContact = new org.dependencytrack.model.OrganizationalContact();
@@ -42,7 +44,8 @@ public class ModelMapper {
                     mappedContact.setEmail(contact.getEmail());
                     mappedContact.setPhone(contact.getPhone());
                     return mappedContact;
-                }).toList();
+                })
+                .toList();
     }
 
     public static License mapLicense(org.dependencytrack.model.License license) {
@@ -59,7 +62,7 @@ public class ModelMapper {
                 .build();
     }
 
-    public static ComponentProject mapProject(org.dependencytrack.model.Project project) {
+    public static ComponentProject mapProject(Project project) {
         if (project == null) {
             return null;
         }
@@ -70,7 +73,7 @@ public class ModelMapper {
                 .build();
     }
 
-    public static DependencyMetrics mapDependencyMetrics(org.dependencytrack.model.DependencyMetrics metrics) {
+    public static DependencyMetrics mapDependencyMetrics(org.dependencytrack.metrics.DependencyMetrics metrics) {
         if (metrics == null) {
             return null;
         }
@@ -163,42 +166,36 @@ public class ModelMapper {
         };
     }
 
-    public static PackageMetadata map(org.dependencytrack.model.@Nullable PackageMetadata pm) {
+    public static PackageMetadata map(org.dependencytrack.pkgmetadata.@Nullable PackageMetadata pm) {
         if (pm == null) {
             return null;
         }
 
         return PackageMetadata.builder()
                 .latestVersion(pm.latestVersion())
-                .latestVersionPublishedAt(pm.latestVersionPublishedAt() != null
-                        ? pm.latestVersionPublishedAt().toEpochMilli()
-                        : null)
+                .latestVersionPublishedAt(
+                        pm.latestVersionPublishedAt() != null
+                                ? pm.latestVersionPublishedAt().toEpochMilli()
+                                : null)
                 .resolvedAt(pm.resolvedAt().toEpochMilli())
                 .build();
     }
 
-    public static PackageArtifactMetadata map(org.dependencytrack.model.@Nullable PackageArtifactMetadata pam) {
+    public static PackageArtifactMetadata map(org.dependencytrack.pkgmetadata.@Nullable PackageArtifactMetadata pam) {
         if (pam == null) {
             return null;
         }
 
         return PackageArtifactMetadata.builder()
                 .hashes(mapHashes(pam))
-                .publishedAt(pam.publishedAt() != null
-                        ? pam.publishedAt().toEpochMilli()
-                        : null)
+                .publishedAt(pam.publishedAt() != null ? pam.publishedAt().toEpochMilli() : null)
                 .resolvedFrom(pam.resolvedFrom())
-                .resolvedAt(pam.resolvedAt() != null
-                        ? pam.resolvedAt().toEpochMilli()
-                        : null)
+                .resolvedAt(pam.resolvedAt() != null ? pam.resolvedAt().toEpochMilli() : null)
                 .build();
     }
 
-    private static Hashes mapHashes(org.dependencytrack.model.PackageArtifactMetadata pam) {
-        if (pam.md5() == null
-                && pam.sha1() == null
-                && pam.sha256() == null
-                && pam.sha512() == null) {
+    private static Hashes mapHashes(org.dependencytrack.pkgmetadata.PackageArtifactMetadata pam) {
+        if (pam.md5() == null && pam.sha1() == null && pam.sha256() == null && pam.sha512() == null) {
             return null;
         }
 
@@ -209,5 +206,4 @@ public class ModelMapper {
                 .sha512(pam.sha512())
                 .build();
     }
-
 }

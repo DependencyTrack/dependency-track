@@ -27,11 +27,8 @@ import java.util.List;
  *
  * @since 5.0.0
  */
-public record CheckmarxApiResponse(
-        List<CheckmarxDataObject> packageRisks) {
+public record CheckmarxApiResponse(List<CheckmarxDataObject> packageRisks) {
 
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
-    public CheckmarxApiResponse {
-    }
-
+    public CheckmarxApiResponse {}
 }

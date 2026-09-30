@@ -18,9 +18,7 @@
  */
 package alpine.server.filters;
 
-import alpine.model.ApiKey;
 import alpine.persistence.AlpineQueryManager;
-import jakarta.ws.rs.ext.Provider;
 import org.glassfish.jersey.server.monitoring.ApplicationEvent;
 import org.glassfish.jersey.server.monitoring.ApplicationEventListener;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
@@ -28,8 +26,9 @@ import org.glassfish.jersey.server.monitoring.RequestEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.ws.rs.ext.Provider;
+
 import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.datastore.JDOConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -71,7 +70,9 @@ public class ApiKeyUsageTracker implements ApplicationEventListener {
     @Override
     public void onEvent(final ApplicationEvent event) {
         switch (event.getType()) {
-            case INITIALIZATION_FINISHED -> flushExecutor.scheduleAtFixedRate(this::flush, 5, 30, TimeUnit.SECONDS);
+            case INITIALIZATION_FINISHED -> {
+                var _ = flushExecutor.scheduleAtFixedRate(this::flush, 5, 30, TimeUnit.SECONDS);
+            }
             case DESTROY_FINISHED -> {
                 flushExecutor.shutdown();
                 try {
@@ -88,6 +89,7 @@ public class ApiKeyUsageTracker implements ApplicationEventListener {
 
                 flush();
             }
+            default -> {}
         }
     }
 
@@ -96,19 +98,19 @@ public class ApiKeyUsageTracker implements ApplicationEventListener {
         return null;
     }
 
-    static void onApiKeyUsed(final ApiKey apiKey) {
-        final var event = new ApiKeyUsedEvent(apiKey.getId(), Instant.now().toEpochMilli());
+    static void onApiKeyUsed(long apiKeyId) {
+        final var event = new ApiKeyUsedEvent(apiKeyId, Instant.now().toEpochMilli());
         if (!EVENT_QUEUE.offer(event)) {
             // Prefer lost events over blocking when the queue is saturated.
             // We do not want to add additional latency to requests.
-            LOGGER.debug("Usage of API key %s can not be tracked because the event queue is already saturated"
-                    .formatted(apiKey.getMaskedKey()));
+            LOGGER.debug("Usage of API key %d can not be tracked because the event queue is already saturated"
+                    .formatted(apiKeyId));
         }
     }
 
     private void flush() {
+        flushLock.lock();
         try {
-            flushLock.lock();
             if (EVENT_QUEUE.isEmpty()) {
                 return;
             }
@@ -155,11 +157,6 @@ public class ApiKeyUsageTracker implements ApplicationEventListener {
             } finally {
                 jdoConnection.close();
             }
-
-            // Evict ApiKey objects from L2 cache.
-            // DataNucleus does the same when using the bulk UPDATE feature ¯\_(ツ)_/¯
-            final PersistenceManagerFactory pmf = pm.getPersistenceManagerFactory();
-            pmf.getDataStoreCache().evictAll(false, ApiKey.class);
         }
     }
 

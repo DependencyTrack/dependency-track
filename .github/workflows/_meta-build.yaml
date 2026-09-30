@@ -50,14 +50,24 @@ jobs:
           persist-credentials: false
 
       - name: Set up JDK
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # tag=v5.7.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # tag=v6.0.1
         with:
           distribution: 'temurin'
           java-version: '25'
-          cache: 'maven'
+
+      - name: Restore Maven repository
+        if: ${{ github.ref_type != 'tag' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-repository-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            maven-repository-
 
       - name: Restore Maven build cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
+        id: restore-maven-build-cache
+        if: ${{ github.ref_type != 'tag' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
         with:
           path: ~/.m2/build-cache
           key: maven-build-cache-build-${{ hashFiles('.mvn/maven-build-cache-config.xml') }}-${{ github.run_id }}
@@ -77,12 +87,29 @@ jobs:
         run: |-
           mvn -B -Pquick,dist -Dservices.bom.merge.skip=false package
 
+      - name: Save Maven build cache
+        if: ${{ github.event_name == 'push' && github.ref_type == 'branch' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
+        with:
+          path: ~/.m2/build-cache
+          key: ${{ steps.restore-maven-build-cache.outputs.cache-primary-key }}
+
       - name: Upload Distribution Archive
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
         with:
           name: assembled-dist
           path: |-
             apiserver/target/dependency-track-apiserver-dist.tar.gz
+
+      - name: Upload Container Image Context
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        with:
+          name: container-context
+          retention-days: 1
+          path: |-
+            apiserver/target/dependency-track-apiserver.jar
+            apiserver/target/lib/
+            apiserver/target/lib-internal/
 
       - name: Upload BOM
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
@@ -127,8 +154,8 @@ jobs:
         include:
           - name: apiserver
             context: apiserver
-            artifact: assembled-dist
-            prepare-cmd: tar xzf apiserver/target/dependency-track-apiserver-dist.tar.gz -C apiserver/target
+            artifact: container-context
+            prepare-cmd: ":" # no-op
           - name: v4-migrator
             context: support/v4-migrator
             artifact: v4-migrator-jar
@@ -149,10 +176,10 @@ jobs:
         run: ${{ matrix.prepare-cmd }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # tag=v4.2.0
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # tag=v4.4.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # tag=v4.2.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # tag=v4.4.1
         id: buildx
         with:
           install: true
@@ -199,7 +226,7 @@ jobs:
 
       - name: Build multi-arch Container Image
         id: push
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # tag=v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # tag=v7.4.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-

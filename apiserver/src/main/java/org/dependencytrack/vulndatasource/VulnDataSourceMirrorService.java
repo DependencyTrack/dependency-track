@@ -58,18 +58,13 @@ public final class VulnDataSourceMirrorService {
 
     public sealed interface TriggerResult {
 
-        record Triggered(UUID runId) implements TriggerResult {
-        }
+        record Triggered(UUID runId) implements TriggerResult {}
 
-        record AlreadyRunning() implements TriggerResult {
-        }
+        record AlreadyRunning() implements TriggerResult {}
 
-        record NotEnabled() implements TriggerResult {
-        }
+        record NotEnabled() implements TriggerResult {}
 
-        record NotFound() implements TriggerResult {
-        }
-
+        record NotFound() implements TriggerResult {}
     }
 
     public TriggerResult trigger(String dataSourceName, @Nullable String triggeredBy) {
@@ -84,13 +79,13 @@ public final class VulnDataSourceMirrorService {
             return new TriggerResult.NotEnabled();
         }
 
-        CreateWorkflowRunRequest<MirrorVulnDataSourceArg> request =
-                new CreateWorkflowRunRequest<>(MirrorVulnDataSourceWorkflow.class)
-                        .withWorkflowInstanceId(workflowInstanceId(dataSourceName))
-                        .withArgument(MirrorVulnDataSourceArg.newBuilder()
-                                .setDataSourceName(dataSourceName)
-                                .setSourceName(dataSourceName.toUpperCase(Locale.ROOT))
-                                .build());
+        CreateWorkflowRunRequest<MirrorVulnDataSourceArg> request = new CreateWorkflowRunRequest<>(
+                        MirrorVulnDataSourceWorkflow.class)
+                .withWorkflowInstanceId(workflowInstanceId(dataSourceName))
+                .withArgument(MirrorVulnDataSourceArg.newBuilder()
+                        .setDataSourceName(dataSourceName)
+                        .setSourceName(dataSourceName.toUpperCase(Locale.ROOT))
+                        .build());
         if (triggeredBy != null) {
             request = request.withLabels(Map.of(WF_LABEL_TRIGGERED_BY, triggeredBy));
         }
@@ -110,7 +105,6 @@ public final class VulnDataSourceMirrorService {
             @Nullable String failureReason) {
 
         public enum Status {
-
             PENDING,
             RUNNING,
             COMPLETED,
@@ -124,9 +118,7 @@ public final class VulnDataSourceMirrorService {
                     case CANCELLED, FAILED -> MirrorStatus.Status.FAILED;
                 };
             }
-
         }
-
     }
 
     public @Nullable MirrorStatus getLatestStatus(String dataSourceName) {
@@ -136,22 +128,22 @@ public final class VulnDataSourceMirrorService {
             return null;
         }
 
-        final Page<WorkflowRunMetadata> runsPage = dexEngine.listRuns(
-                new ListWorkflowRunsRequest()
-                        .withWorkflowInstanceId(workflowInstanceId(dataSourceName))
-                        .withSortBy(ListWorkflowRunsRequest.SortBy.CREATED_AT)
-                        .withSortDirection(SortDirection.DESC)
-                        .withLimit(1));
+        final Page<WorkflowRunMetadata> runsPage = dexEngine.listRuns(new ListWorkflowRunsRequest()
+                .withWorkflowInstanceId(workflowInstanceId(dataSourceName))
+                .withSortBy(ListWorkflowRunsRequest.SortBy.CREATED_AT)
+                .withSortDirection(SortDirection.DESC)
+                .withLimit(1));
         if (runsPage.items().isEmpty()) {
             return null;
         }
 
         final WorkflowRunMetadata runMetadata = runsPage.items().getFirst();
-        final String failureReason = switch (runMetadata.status()) {
-            case FAILED -> extractFailureReason(runMetadata.id());
-            case CANCELLED -> "Cancelled";
-            default -> null;
-        };
+        final String failureReason =
+                switch (runMetadata.status()) {
+                    case FAILED -> extractFailureReason(runMetadata.id());
+                    case CANCELLED -> "Cancelled";
+                    default -> null;
+                };
 
         return new MirrorStatus(
                 MirrorStatus.Status.of(runMetadata.status()),
@@ -167,12 +159,11 @@ public final class VulnDataSourceMirrorService {
         }
 
         return switch (run.failure().getFailureDetailsCase()) {
-            case ACTIVITY_FAILURE_DETAILS,
-                 CHILD_WORKFLOW_FAILURE_DETAILS -> {
+            case ACTIVITY_FAILURE_DETAILS, CHILD_WORKFLOW_FAILURE_DETAILS -> {
                 if (!run.failure().hasCause()) {
                     yield "Unknown failure";
                 }
-                
+
                 final String causeMessage = run.failure().getCause().getMessage();
                 yield causeMessage.isEmpty() ? "Unknown failure" : causeMessage;
             }
@@ -183,5 +174,4 @@ public final class VulnDataSourceMirrorService {
     private static String workflowInstanceId(String dataSourceName) {
         return WORKFLOW_INSTANCE_ID_PREFIX + dataSourceName;
     }
-
 }

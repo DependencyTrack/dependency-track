@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,8 +42,7 @@ public record DebianDistribution(String series, @Nullable String version) implem
     private static final List<DebianDistribution> KNOWN_DISTRIBUTIONS = loadKnownDistributions();
     private static final Pattern SERIES_PATTERN = Pattern.compile("^[A-Za-z]+$");
     private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)(\\.\\d+)?$");
-    private static final Pattern QUALIFIER_PATTERN =
-            Pattern.compile("(?:debian-)?(.+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern QUALIFIER_PATTERN = Pattern.compile("(?:debian-)?(.+)", Pattern.CASE_INSENSITIVE);
 
     public DebianDistribution {
         requireNonNull(series, "series must not be null");
@@ -118,15 +118,19 @@ public record DebianDistribution(String series, @Nullable String version) implem
     }
 
     private static Optional<DebianDistribution> ofUnknownSeries(@Nullable String series) {
-        if (series == null || series.isEmpty() || !SERIES_PATTERN.matcher(series).matches()) {
+        if (series == null
+                || series.isEmpty()
+                || !SERIES_PATTERN.matcher(series).matches()) {
             return Optional.empty();
         }
 
-        return Optional.of(new DebianDistribution(series.toLowerCase(), null));
+        return Optional.of(new DebianDistribution(series.toLowerCase(Locale.ROOT), null));
     }
 
     private static Optional<DebianDistribution> ofUnknownVersion(@Nullable String version) {
-        if (version == null || version.isEmpty() || !VERSION_PATTERN.matcher(version).matches()) {
+        if (version == null
+                || version.isEmpty()
+                || !VERSION_PATTERN.matcher(version).matches()) {
             return Optional.empty();
         }
 
@@ -141,7 +145,7 @@ public record DebianDistribution(String series, @Nullable String version) implem
 
             final List<DebianDistribution> distros = new ArrayList<>();
             try (final var isReader = new InputStreamReader(is, StandardCharsets.UTF_8);
-                 final var reader = new BufferedReader(isReader)) {
+                    final var reader = new BufferedReader(isReader)) {
                 final String header = reader.readLine();
                 if (header == null) {
                     throw new IllegalStateException("CSV file is empty");
@@ -181,5 +185,4 @@ public record DebianDistribution(String series, @Nullable String version) implem
             throw new IllegalStateException("Failed to load CSV file", e);
         }
     }
-
 }

@@ -19,12 +19,12 @@
 package alpine.server.auth;
 
 import alpine.persistence.AlpineQueryManager;
-import alpine.server.persistence.PersistenceManagerFactory;
 import org.assertj.core.api.SoftAssertionsProvider.ThrowingRunnable;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.time.Duration;
 
@@ -32,10 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ManagedUserAuthenticationServiceTest {
 
-    @AfterEach
-    public void tearDown() {
-        PersistenceManagerFactory.tearDown();
-    }
+    @RegisterExtension
+    static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
 
     @Test
     @Disabled("Flaky")

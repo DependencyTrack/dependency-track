@@ -104,10 +104,11 @@ class GitHubAppTokenProviderTest {
         final String claims = new String(urlDecoder.decode(parts[1]), StandardCharsets.UTF_8);
 
         assertThatJson(header).isEqualTo("{\"alg\":\"RS256\",\"typ\":\"JWT\"}");
-        assertThatJson(claims).and(
-                a -> a.node("iss").isString().isEqualTo("123456"),
-                a -> a.node("iat").isEqualTo(1_000_000 - 60),
-                a -> a.node("exp").isEqualTo(1_000_000 + 300));
+        assertThatJson(claims)
+                .and(
+                        a -> a.node("iss").isString().isEqualTo("123456"),
+                        a -> a.node("iat").isEqualTo(1_000_000 - 60),
+                        a -> a.node("exp").isEqualTo(1_000_000 + 300));
 
         // Signature covers "<header>.<claims>" and verifies with the App public key.
         final var verifier = Signature.getInstance("SHA256withRSA");
@@ -133,8 +134,7 @@ class GitHubAppTokenProviderTest {
     class TokenExchange {
 
         private GitHubAppTokenProvider provider(final String baseUrl, final Clock clock) throws Exception {
-            return new GitHubAppTokenProvider(
-                    "123456", "42", testKeyPem(), baseUrl, HttpClient.newHttpClient(), clock);
+            return new GitHubAppTokenProvider("123456", "42", testKeyPem(), baseUrl, HttpClient.newHttpClient(), clock);
         }
 
         private Clock clockAt(final String instant) {
@@ -149,7 +149,8 @@ class GitHubAppTokenProviderTest {
                             .withHeader("Content-Type", "application/json")
                             .withBody("{\"token\":\"ghs_abc123\",\"expires_at\":\"2026-07-02T13:00:00Z\"}")));
 
-            final String token = provider(wm.getHttpBaseUrl(), clockAt("2026-07-02T12:00:00Z")).currentToken();
+            final String token = provider(wm.getHttpBaseUrl(), clockAt("2026-07-02T12:00:00Z"))
+                    .currentToken();
 
             assertThat(token).isEqualTo("ghs_abc123");
             verify(postRequestedFor(urlPathEqualTo("/app/installations/42/access_tokens"))
@@ -174,13 +175,17 @@ class GitHubAppTokenProviderTest {
         @Test
         void currentTokenShouldRemintWhenNearExpiry(final WireMockRuntimeInfo wm) throws Exception {
             stubFor(post(urlPathEqualTo("/app/installations/42/access_tokens"))
-                    .inScenario("refresh").whenScenarioStateIs(STARTED)
-                    .willReturn(aResponse().withStatus(201)
+                    .inScenario("refresh")
+                    .whenScenarioStateIs(STARTED)
+                    .willReturn(aResponse()
+                            .withStatus(201)
                             .withBody("{\"token\":\"ghs_first\",\"expires_at\":\"2026-07-02T12:10:00Z\"}"))
                     .willSetStateTo("second"));
             stubFor(post(urlPathEqualTo("/app/installations/42/access_tokens"))
-                    .inScenario("refresh").whenScenarioStateIs("second")
-                    .willReturn(aResponse().withStatus(201)
+                    .inScenario("refresh")
+                    .whenScenarioStateIs("second")
+                    .willReturn(aResponse()
+                            .withStatus(201)
                             .withBody("{\"token\":\"ghs_second\",\"expires_at\":\"2026-07-02T13:00:00Z\"}")));
 
             final var clock = new MutableClock(Instant.parse("2026-07-02T12:00:00Z"));

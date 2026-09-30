@@ -26,7 +26,5 @@ final class CycloneDxPropertyNames {
     static final String OSV_ECOSYSTEM = "internal:osv:ecosystem";
     static final String VULN_TITLE = "dependency-track:vuln:title";
 
-    private CycloneDxPropertyNames() {
-    }
-
+    private CycloneDxPropertyNames() {}
 }

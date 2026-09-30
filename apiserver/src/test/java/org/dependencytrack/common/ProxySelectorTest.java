@@ -37,8 +37,8 @@ public class ProxySelectorTest {
         proxyConfig.setNoProxy(Set.of("subdomain.example.com"));
 
         final var proxySelector = new ProxySelector(proxyConfig);
-        assertThat(proxySelector.select(URI.create("https://subdomain.example.com"))).containsOnly(Proxy.NO_PROXY);
+        assertThat(proxySelector.select(URI.create("https://subdomain.example.com")))
+                .containsOnly(Proxy.NO_PROXY);
         assertThat(proxySelector.select(URI.create("https://foo.example.com"))).containsOnly(proxyConfig.getProxy());
     }
-
 }

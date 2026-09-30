@@ -53,11 +53,9 @@ final class TaskSchedulerHealthCheck implements HealthCheck {
             stateStr = "unknown";
         }
 
-        return HealthCheckResponse
-                .named("task-scheduler")
+        return HealthCheckResponse.named("task-scheduler")
                 .status(state.isStarted() && !state.isShuttingDown())
                 .withData("state", stateStr)
                 .build();
     }
-
 }

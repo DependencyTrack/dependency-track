@@ -18,7 +18,6 @@
  */
 package org.dependencytrack;
 
-import jakarta.ws.rs.client.WebTarget;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.dependencytrack.resources.v2.OpenApiValidationClientResponseFilter;
@@ -38,6 +37,8 @@ import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+
+import jakarta.ws.rs.client.WebTarget;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -62,11 +63,10 @@ public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback,
 
             @Override
             protected void configureClient(final ClientConfig config) {
-                config.connectorProvider(
-                        new HttpUrlConnectorProvider()
-                                // Required for PATCH support.
-                                // See https://github.com/eclipse-ee4j/jersey/issues/4825
-                                .useSetMethodWorkaround());
+                config.connectorProvider(new HttpUrlConnectorProvider()
+                        // Required for PATCH support.
+                        // See https://github.com/eclipse-ee4j/jersey/issues/4825
+                        .useSetMethodWorkaround());
 
                 if (isV2) {
                     config.register(OpenApiValidationClientResponseFilter.class);
@@ -86,10 +86,9 @@ public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback,
                     resourceConfig.packages("org.dependencytrack.resources.v1.exception");
                 }
 
-                return ServletDeploymentContext.forServlet(
-                        new ServletContainer(resourceConfig)).build();
+                return ServletDeploymentContext.forServlet(new ServletContainer(resourceConfig))
+                        .build();
             }
-
         };
     }
 
@@ -108,12 +107,10 @@ public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback,
     }
 
     @Override
-    public void beforeEach(ExtensionContext context) {
-    }
+    public void beforeEach(ExtensionContext context) {}
 
     @Override
-    public void afterEach(ExtensionContext context) {
-    }
+    public void afterEach(ExtensionContext context) {}
 
     public WebTarget target() {
         return jerseyTest.target();
@@ -127,8 +124,7 @@ public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback,
         WebTarget target = jerseyTest.target(uri.getPath());
 
         if (uri.getQuery() != null) {
-            final List<NameValuePair> uriQueryParams =
-                    URLEncodedUtils.parse(uri, StandardCharsets.UTF_8);
+            final List<NameValuePair> uriQueryParams = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8);
             for (final NameValuePair queryParam : uriQueryParams) {
                 target = target.queryParam(queryParam.getName(), queryParam.getValue());
             }
@@ -146,5 +142,4 @@ public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback,
 
         return false;
     }
-
 }

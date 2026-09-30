@@ -30,8 +30,7 @@ import java.time.ZoneOffset;
  */
 public final class TaskUtil {
 
-    private TaskUtil() {
-    }
+    private TaskUtil() {}
 
     public static Schedule getCronScheduleFromConfig(final Config config, final String configName) {
         return cronSchedule(config.getValue(configName, String.class));
@@ -44,5 +43,4 @@ public final class TaskUtil {
             throw new IllegalStateException("Invalid cron expression: %s".formatted(cronExpression), e);
         }
     }
-
 }

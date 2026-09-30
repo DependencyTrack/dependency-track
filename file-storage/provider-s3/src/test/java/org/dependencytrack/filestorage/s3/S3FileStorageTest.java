@@ -45,9 +45,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 class S3FileStorageTest {
 
     @Container
-    private static final S3MockContainer s3MockContainer =
-            new S3MockContainer("5.0.0")
-                    .withInitialBuckets("test");
+    private static final S3MockContainer s3MockContainer = new S3MockContainer("5.0.0").withInitialBuckets("test");
 
     @Test
     void shouldThrowWhenBucketDoesNotExist() {
@@ -83,7 +81,8 @@ class S3FileStorageTest {
             assertThat(fileMetadata.getProviderName()).isEqualTo("s3");
             assertThat(fileMetadata.getLocation()).isEqualTo("s3://test/foo/bar");
             assertThat(fileMetadata.getMediaType()).isEqualTo("application/octet-stream");
-            assertThat(fileMetadata.getSha256Digest()).isEqualTo("018e647e32f8c2b320b731ddd7de9842616209d93a3aeeea985a48b7fe0e5eda");
+            assertThat(fileMetadata.getSha256Digest())
+                    .isEqualTo("018e647e32f8c2b320b731ddd7de9842616209d93a3aeeea985a48b7fe0e5eda");
 
             final InputStream fileStream = storage.get(fileMetadata);
             assertThat(fileStream).isNotNull();
@@ -118,21 +117,20 @@ class S3FileStorageTest {
     void getShouldThrowWhenFileDoesNotExist() throws Exception {
         try (final FileStorage storage = createStorage()) {
             assertThatExceptionOfType(NoSuchFileException.class)
-                    .isThrownBy(() -> storage.get(
-                            FileMetadata.newBuilder()
-                                    .setLocation("s3://test/foo/bar")
-                                    .setSha256Digest("some-digest")
-                                    .build()));
+                    .isThrownBy(() -> storage.get(FileMetadata.newBuilder()
+                            .setLocation("s3://test/foo/bar")
+                            .setSha256Digest("some-digest")
+                            .build()));
         }
     }
 
     @Test
     void deleteShouldReturnTrueWhenFileDoesNotExist() throws Exception {
         try (final FileStorage storage = createStorage()) {
-            assertThat(storage.delete(
-                    FileMetadata.newBuilder()
+            assertThat(storage.delete(FileMetadata.newBuilder()
                             .setLocation("s3://test/foo")
-                            .build())).isTrue();
+                            .build()))
+                    .isTrue();
         }
     }
 
@@ -188,7 +186,6 @@ class S3FileStorageTest {
                     .isThrownBy(() -> storage.delete(storedFileMetadata))
                     .withRootCauseInstanceOf(ConnectException.class);
         }
-
     }
 
     private FileStorage createStorage() {
@@ -200,10 +197,8 @@ class S3FileStorageTest {
     }
 
     private static FileStorage createStorage(Map<String, String> configValues) {
-        final Config config = new SmallRyeConfigBuilder()
-                .withDefaultValues(configValues)
-                .build();
+        final Config config =
+                new SmallRyeConfigBuilder().withDefaultValues(configValues).build();
         return new S3FileStorageProvider().create(config, ProxySelector.getDefault());
     }
-
 }

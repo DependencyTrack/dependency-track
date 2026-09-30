@@ -94,8 +94,7 @@ class KeyValueStoreTest {
 
         @Test
         void shouldNotThrowWhenUpdatedAtIsNull() {
-            assertThatNoException()
-                    .isThrownBy(() -> new KeyValueStore.Entry("key", "value", Instant.now(), null, 0));
+            assertThatNoException().isThrownBy(() -> new KeyValueStore.Entry("key", "value", Instant.now(), null, 0));
         }
 
         @Test
@@ -104,7 +103,6 @@ class KeyValueStoreTest {
                     .isThrownBy(() -> new KeyValueStore.Entry("key", "value", Instant.now(), Instant.now(), -1))
                     .withMessage("version must not be negative");
         }
-
     }
 
     private static class DummyKVStore implements KeyValueStore {
@@ -115,7 +113,8 @@ class KeyValueStoreTest {
         }
 
         @Override
-        public @NonNull CompareAndPutResult compareAndPut(@NonNull String key, @NonNull String value, Long expectedVersion) {
+        public @NonNull CompareAndPutResult compareAndPut(
+                @NonNull String key, @NonNull String value, Long expectedVersion) {
             throw new UnsupportedOperationException();
         }
 
@@ -138,7 +137,5 @@ class KeyValueStoreTest {
         public @NonNull CompareAndDeleteResult compareAndDelete(@NonNull String key, long expectedVersion) {
             throw new UnsupportedOperationException();
         }
-
     }
-
 }

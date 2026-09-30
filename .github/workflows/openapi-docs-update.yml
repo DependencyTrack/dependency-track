@@ -16,7 +16,9 @@
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 name: Update OpenAPI Documentation
 
-on:
+# NB: `workflow_run` is required to access secrets for dispatching the update in another repository.
+# No untrusted code is checked out or executed.
+on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows:
     - Build CI

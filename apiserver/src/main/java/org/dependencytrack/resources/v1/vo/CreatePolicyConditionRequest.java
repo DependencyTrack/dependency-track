@@ -20,11 +20,12 @@ package org.dependencytrack.resources.v1.vo;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+
+import jakarta.validation.constraints.NotBlank;
 
 /// @since 5.1.0
 @NullMarked
@@ -32,11 +33,14 @@ import org.jspecify.annotations.Nullable;
 public record CreatePolicyConditionRequest(
         @Schema(description = "Subject the condition evaluates", requiredMode = Schema.RequiredMode.REQUIRED)
         PolicyCondition.Subject subject,
-        @Schema(description = "Operator used to compare the subject to the value", requiredMode = Schema.RequiredMode.REQUIRED)
+
+        @Schema(
+                description = "Operator used to compare the subject to the value",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         PolicyCondition.Operator operator,
-        @NotBlank
-        @Schema(description = "Value the subject is compared to", requiredMode = Schema.RequiredMode.REQUIRED)
+
+        @NotBlank @Schema(description = "Value the subject is compared to", requiredMode = Schema.RequiredMode.REQUIRED)
         String value,
+
         @Schema(description = "Violation type produced when the condition matches. Required for `EXPRESSION` subjects")
-        PolicyViolation.@Nullable Type violationType) {
-}
+        PolicyViolation.@Nullable Type violationType) {}

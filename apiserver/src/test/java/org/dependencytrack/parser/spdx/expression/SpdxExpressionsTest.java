@@ -49,8 +49,14 @@ class SpdxExpressionsTest {
                     Arguments.of("MIT AND Apache-2.0", List.of("MIT", "Apache-2.0"), true),
                     Arguments.of("MIT AND BSD-3-Clause", List.of("MIT", "BSD-3-Clause"), true),
                     Arguments.of("MIT AND Apache-2.0", List.of("MIT", "Apache-1.0", "Apache-2.0"), true),
-                    Arguments.of("GPL-2.0 WITH Classpath-exception-2.0", List.of("GPL-2.0 WITH Classpath-exception-2.0"), true),
-                    Arguments.of("GPL-2.0 WITH Classpath-exception-2.0", List.of("GPL-2.0", "Classpath-exception-2.0"), false),
+                    Arguments.of(
+                            "GPL-2.0 WITH Classpath-exception-2.0",
+                            List.of("GPL-2.0 WITH Classpath-exception-2.0"),
+                            true),
+                    Arguments.of(
+                            "GPL-2.0 WITH Classpath-exception-2.0",
+                            List.of("GPL-2.0", "Classpath-exception-2.0"),
+                            false),
                     Arguments.of("(MIT OR GPL-2.0)", List.of("ISC", "MIT"), true),
                     Arguments.of("(MIT AND GPL-2.0)", List.of("MIT", "GPL-2.0"), true),
                     Arguments.of("(MIT AND GPL-2.0)", List.of("GPL-2.0", "MIT"), true),
@@ -59,12 +65,22 @@ class SpdxExpressionsTest {
                     Arguments.of("(MIT OR GPL-2.0) AND ISC", List.of("MIT", "ISC"), true),
                     Arguments.of("MIT AND ISC", List.of("MIT", "GPL-2.0", "ISC"), true),
                     Arguments.of("(MIT OR Apache-2.0) AND (ISC OR GPL-2.0)", List.of("Apache-2.0", "ISC"), true),
-                    Arguments.of("(MIT OR Apache-2.0) AND (GPL-3.0 OR BSD-3-Clause)", List.of("MIT", "BSD-3-Clause"), true),
+                    Arguments.of(
+                            "(MIT OR Apache-2.0) AND (GPL-3.0 OR BSD-3-Clause)", List.of("MIT", "BSD-3-Clause"), true),
                     Arguments.of("MIT", List.of("GPL-2.0", "MIT", "MIT", "ISC"), true),
                     Arguments.of("MIT AND ICU", List.of("MIT", "GPL-2.0", "ISC", "Apache-2.0", "ICU"), true),
-                    Arguments.of("LicenseRef-X-BSD-3-Clause-Golang", List.of("MIT", "Apache-2.0", "LicenseRef-X-BSD-3-Clause-Golang"), true),
-                    Arguments.of("MIT AND LicenseRef-X-BSD-3-Clause-Golang", List.of("MIT", "Apache-2.0", "LicenseRef-X-BSD-3-Clause-Golang"), true),
-                    Arguments.of("MIT AND Apache-2.0", List.of("MIT", "Apache-2.0", "LicenseRef-X-BSD-3-Clause-Golang"), true),
+                    Arguments.of(
+                            "LicenseRef-X-BSD-3-Clause-Golang",
+                            List.of("MIT", "Apache-2.0", "LicenseRef-X-BSD-3-Clause-Golang"),
+                            true),
+                    Arguments.of(
+                            "MIT AND LicenseRef-X-BSD-3-Clause-Golang",
+                            List.of("MIT", "Apache-2.0", "LicenseRef-X-BSD-3-Clause-Golang"),
+                            true),
+                    Arguments.of(
+                            "MIT AND Apache-2.0",
+                            List.of("MIT", "Apache-2.0", "LicenseRef-X-BSD-3-Clause-Golang"),
+                            true),
                     Arguments.of("MIT", List.of("Apache-2.0"), false),
                     Arguments.of("MIT OR GPL-3.0", List.of("Apache-2.0"), false),
                     Arguments.of("GPL-2.0", List.of("MIT", "Apache-2.0"), false),
@@ -85,8 +101,12 @@ class SpdxExpressionsTest {
                     Arguments.of("GPL-2.0", List.of("GPL-2.0-only"), true),
                     Arguments.of("GPL-2.0-only", List.of("GPL-2.0"), true),
                     Arguments.of("LGPL-3.0", List.of("LGPL-2.0-or-later"), true),
-                    Arguments.of("GPL-2.0-with-classpath-exception", List.of("GPL-2.0-only WITH Classpath-exception-2.0"), true),
-                    Arguments.of("GPL-2.0-with-classpath-exception", List.of("GPL-2.0 WITH Classpath-exception-2.0"), true),
+                    Arguments.of(
+                            "GPL-2.0-with-classpath-exception",
+                            List.of("GPL-2.0-only WITH Classpath-exception-2.0"),
+                            true),
+                    Arguments.of(
+                            "GPL-2.0-with-classpath-exception", List.of("GPL-2.0 WITH Classpath-exception-2.0"), true),
                     Arguments.of("Apache-1.0+", List.of("Apache-2.0"), true),
                     Arguments.of("GPL-2.0", List.of("GPL-2.0+"), true),
                     Arguments.of("GPL-2.0", List.of("GPL-2.0-or-later"), true),
@@ -96,7 +116,8 @@ class SpdxExpressionsTest {
                     Arguments.of("GPL-2.0-only", List.of("GPL-2.0-only"), true),
                     Arguments.of("GPL-2.0", List.of("GPL-2.0-only"), true),
                     Arguments.of("GPL-3.0-only", List.of("GPL-2.0+"), true),
-                    Arguments.of("GPL-3.0 WITH Bison-exception-2.2", List.of("GPL-2.0+ WITH Bison-exception-2.2"), true),
+                    Arguments.of(
+                            "GPL-3.0 WITH Bison-exception-2.2", List.of("GPL-2.0+ WITH Bison-exception-2.2"), true),
                     Arguments.of("Apache-2.0", List.of("Apache-2.0-or-later"), true),
                     Arguments.of("GPL-1.0", List.of("GPL-2.0+"), false),
                     Arguments.of("Apache-1.0", List.of("Apache-2.0+"), false),
@@ -109,7 +130,6 @@ class SpdxExpressionsTest {
         void shouldEvaluate(String expression, List<String> allowedIds, boolean expected) {
             assertThat(SpdxExpressions.allows(expression, allowedIds)).isEqualTo(expected);
         }
-
     }
 
     @Nested
@@ -120,7 +140,10 @@ class SpdxExpressionsTest {
                     Arguments.of("MIT", List.of("MIT"), true),
                     Arguments.of("MIT", List.of("mit"), true),
                     Arguments.of("MIT AND BSD-3-Clause", List.of("MIT"), true),
-                    Arguments.of("GPL-2.0 WITH Classpath-exception-2.0", List.of("GPL-2.0 WITH Classpath-exception-2.0"), true),
+                    Arguments.of(
+                            "GPL-2.0 WITH Classpath-exception-2.0",
+                            List.of("GPL-2.0 WITH Classpath-exception-2.0"),
+                            true),
                     Arguments.of("GPL-2.0 WITH Classpath-exception-2.0", List.of("GPL-2.0"), false),
                     Arguments.of("GPL-2.0-only", List.of("GPL-2.0"), true),
                     Arguments.of("GPL-2.0+", List.of("GPL-2.0"), true),
@@ -128,12 +151,14 @@ class SpdxExpressionsTest {
                     Arguments.of("MIT OR BSD-3-Clause", List.of("MIT", "BSD-3-Clause"), true),
                     Arguments.of("(MIT AND Apache-2.0) OR (MIT AND GPL-3.0)", List.of("MIT"), true),
                     Arguments.of("GPL-2.0+", List.of("GPL-3.0"), false),
-                    Arguments.of("GPL-2.0 WITH Classpath-exception-2.0", List.of("GPL-2.0-only WITH Classpath-exception-2.0"), true),
+                    Arguments.of(
+                            "GPL-2.0 WITH Classpath-exception-2.0",
+                            List.of("GPL-2.0-only WITH Classpath-exception-2.0"),
+                            true),
                     Arguments.of("GPL-2.0+ OR MIT", List.of("GPL-3.0"), false),
                     Arguments.of("MIT OR GPL-3.0", List.of("MIT"), false),
                     Arguments.of("MIT OR GPL-3.0", List.of("MIT", "Apache-2.0"), false),
-                    Arguments.of("(MIT", List.of("MIT"), false)
-            );
+                    Arguments.of("(MIT", List.of("MIT"), false));
         }
 
         @ParameterizedTest
@@ -141,7 +166,5 @@ class SpdxExpressionsTest {
         void shouldEvaluate(String expression, List<String> ids, boolean expected) {
             assertThat(SpdxExpressions.requiresAny(expression, ids)).isEqualTo(expected);
         }
-
     }
-
 }

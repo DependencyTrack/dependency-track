@@ -52,20 +52,15 @@ class AbstractBatchingMaintenanceTaskTest extends PersistenceCapableTest {
         assertThat(callbackResult.get()).isEqualTo(new BatchResult(1));
     }
 
-    private record BatchResult(int processedCount) {
-    }
+    private record BatchResult(int processedCount) {}
 
-    private static final class TestBatchingMaintenanceTask
-            extends AbstractBatchingMaintenanceTask {
+    private static final class TestBatchingMaintenanceTask extends AbstractBatchingMaintenanceTask {
 
         private TestBatchingMaintenanceTask() {
             super(2);
         }
 
         @Override
-        public void run() {
-        }
-
+        public void run() {}
     }
-
 }

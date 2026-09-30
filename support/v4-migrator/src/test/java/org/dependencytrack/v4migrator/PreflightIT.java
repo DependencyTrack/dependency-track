@@ -59,8 +59,8 @@ class PreflightIT {
 
         final PreflightResult result = new Preflight(target.jdbi(), null, opts).run();
         assertThat(result.ok())
-            .as("preflight should pass on a fresh v5 schema; failures: %s", result.failures())
-            .isTrue();
+                .as("preflight should pass on a fresh v5 schema; failures: %s", result.failures())
+                .isTrue();
     }
 
     @Test
@@ -101,8 +101,8 @@ class PreflightIT {
 
         final PreflightResult result = new Preflight(target.jdbi(), src, opts).run();
         assertThat(result.ok())
-            .as("preflight should pass with reachable source; failures: %s", result.failures())
-            .isTrue();
+                .as("preflight should pass with reachable source; failures: %s", result.failures())
+                .isTrue();
     }
 
     @Test
@@ -129,8 +129,8 @@ class PreflightIT {
 
             final PreflightResult result = new Preflight(target.jdbi(), src, opts).run();
             assertThat(result.ok())
-                .as("preflight should find PROJECT under alt_v4; failures: %s", result.failures())
-                .isTrue();
+                    .as("preflight should find PROJECT under alt_v4; failures: %s", result.failures())
+                    .isTrue();
         } finally {
             target.jdbi().useHandle(h -> h.execute("DROP SCHEMA alt_v4 CASCADE"));
         }
@@ -156,8 +156,7 @@ class PreflightIT {
 
             final PreflightResult result = new Preflight(target.jdbi(), src, opts).run();
             assertThat(result.ok()).isFalse();
-            assertThat(result.failures())
-                .anyMatch(f -> f.contains("does not contain expected v4 table PROJECT"));
+            assertThat(result.failures()).anyMatch(f -> f.contains("does not contain expected v4 table PROJECT"));
         } finally {
             target.jdbi().useHandle(h -> h.execute("DROP SCHEMA empty_v4 CASCADE"));
         }
@@ -172,8 +171,9 @@ class PreflightIT {
         opts.stagingSchema = "dt_v4_migration_populated";
         opts.logLevel = "INFO";
 
-        target.jdbi().useHandle(h -> h.execute(
-            "INSERT INTO \"PROJECT\" (\"NAME\", \"UUID\") VALUES ('test', gen_random_uuid())"));
+        target.jdbi()
+                .useHandle(h ->
+                        h.execute("INSERT INTO \"PROJECT\" (\"NAME\", \"UUID\") VALUES ('test', gen_random_uuid())"));
         try {
             final PreflightResult result = new Preflight(target.jdbi(), null, opts).run();
             assertThat(result.ok()).isFalse();
@@ -193,13 +193,14 @@ class PreflightIT {
         opts.stagingSchema = "dt_v4_migration_post_load";
         opts.logLevel = "INFO";
 
-        target.jdbi().useHandle(h -> h.execute(
-            "INSERT INTO \"PROJECT\" (\"NAME\", \"UUID\") VALUES ('test', gen_random_uuid())"));
+        target.jdbi()
+                .useHandle(h ->
+                        h.execute("INSERT INTO \"PROJECT\" (\"NAME\", \"UUID\") VALUES ('test', gen_random_uuid())"));
         try {
             final PreflightResult result = new Preflight(target.jdbi(), null, opts, Mode.POST_LOAD).run();
             assertThat(result.ok())
-                .as("POST_LOAD preflight must tolerate populated v5 tables; failures: %s", result.failures())
-                .isTrue();
+                    .as("POST_LOAD preflight must tolerate populated v5 tables; failures: %s", result.failures())
+                    .isTrue();
         } finally {
             target.jdbi().useHandle(h -> h.execute("TRUNCATE \"PROJECT\" CASCADE"));
         }

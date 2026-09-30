@@ -30,7 +30,12 @@ import java.util.List;
  */
 public record CheckmarxDataObject(@JsonProperty("package") Package pkg, List<Vulnerability> vulnerabilities) {
 
-    record Package(String status, String purl, String name, String version, @Nullable Remediation remediation) {}
+    record Package(
+            String status,
+            String purl,
+            String name,
+            String version,
+            @Nullable Remediation remediation) {}
 
     record Vulnerability(String cve, String cxId, Double score, String severity, VulnerabilityDetail details) {}
 
@@ -43,8 +48,7 @@ public record CheckmarxDataObject(@JsonProperty("package") Package pkg, List<Vul
             @Nullable List<Reference> references,
             @Nullable Cvss cvss2,
             @Nullable Cvss cvss3,
-            @Nullable Cvss cvss4
-    ) {}
+            @Nullable Cvss cvss4) {}
 
     record Reference(String url) {}
 

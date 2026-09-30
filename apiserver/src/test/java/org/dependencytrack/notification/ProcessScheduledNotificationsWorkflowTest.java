@@ -75,32 +75,28 @@ class ProcessScheduledNotificationsWorkflowTest extends PersistenceCapableTest {
                 voidConverter(),
                 Duration.ofSeconds(15));
         engine.registerActivity(
-                new ProcessScheduledNotificationRuleActivity(
-                        engine,
-                        new MemoryFileStorage(),
-                        Integer.MAX_VALUE),
+                new ProcessScheduledNotificationRuleActivity(engine, new MemoryFileStorage(), Integer.MAX_VALUE),
                 protoConverter(ProcessScheduledNotificationRuleArg.class),
                 voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "notifications", 1));
 
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker", "notifications", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker", "notifications", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
 
         engine.start();
     }
 
     @Test
     void shouldFailWhenArgumentIsNull() {
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ProcessScheduledNotificationsWorkflow.class));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ProcessScheduledNotificationsWorkflow.class));
 
         final WorkflowRun run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
         assertThat(run).isNotNull();
@@ -115,9 +111,10 @@ class ProcessScheduledNotificationsWorkflowTest extends PersistenceCapableTest {
                 .addRuleNames(UUID.randomUUID().toString())
                 .build();
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ProcessScheduledNotificationsWorkflow.class)
-                        .withArgument(arg));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(
+                        new CreateWorkflowRunRequest<>(ProcessScheduledNotificationsWorkflow.class).withArgument(arg));
 
         final WorkflowRun run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
         assertThat(run).isNotNull();
@@ -134,9 +131,10 @@ class ProcessScheduledNotificationsWorkflowTest extends PersistenceCapableTest {
                 .addRuleNames(rule.getName())
                 .build();
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ProcessScheduledNotificationsWorkflow.class)
-                        .withArgument(arg));
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(
+                        new CreateWorkflowRunRequest<>(ProcessScheduledNotificationsWorkflow.class).withArgument(arg));
 
         final WorkflowRun run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
         assertThat(run).isNotNull();
@@ -160,8 +158,8 @@ class ProcessScheduledNotificationsWorkflowTest extends PersistenceCapableTest {
         qm.persist(vuln);
         qm.addVulnerability(vuln, component, "internal", null, null, new Date());
 
-        final var publisher = qm.createNotificationPublisher(
-                "test-publisher", null, "webhook", "template", "text/plain", false);
+        final var publisher =
+                qm.createNotificationPublisher("test-publisher", null, "webhook", "template", "text/plain", false);
         final NotificationRule rule = qm.createScheduledNotificationRule(
                 "test-rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY));

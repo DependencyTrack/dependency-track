@@ -68,6 +68,11 @@ public abstract class AbstractExtensionFactoryTest<T extends ExtensionPoint, U e
     }
 
     @Test
+    void shouldDefineDisplayName() {
+        assertThat(factory.displayName()).isNotBlank();
+    }
+
+    @Test
     void shouldDefineExtensionClass() {
         assertThat(factory.extensionClass()).isNotNull();
     }
@@ -98,10 +103,7 @@ public abstract class AbstractExtensionFactoryTest<T extends ExtensionPoint, U e
             assertThat(defaultConfig).isNotNull();
 
             assertThatNoException()
-                    .isThrownBy(() -> RuntimeConfigMapper.getInstance().validate(
-                            defaultConfig, runtimeConfigSpec));
+                    .isThrownBy(() -> RuntimeConfigMapper.getInstance().validate(defaultConfig, runtimeConfigSpec));
         }
-
     }
-
 }

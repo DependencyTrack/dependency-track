@@ -68,5 +68,4 @@ class LoggingConfigurationTest {
 
         assertThat(loggerContext.getLogger("org.dependencytrack").getLevel()).isNull();
     }
-
 }

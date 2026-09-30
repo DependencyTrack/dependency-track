@@ -20,8 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -30,15 +28,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import us.springett.owasp.riskrating.Level;
 
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.core.Response;
+
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 
 public class CalculatorResourceTest extends ResourceTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(CalculatorResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(CalculatorResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class));
 
     @Test
     public void getCvssScoresV3Test() {
@@ -53,7 +53,8 @@ public class CalculatorResourceTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals(9.8, json.getJsonNumber("baseScore").doubleValue(), 0);
         Assertions.assertEquals(5.9, json.getJsonNumber("impactSubScore").doubleValue(), 0);
-        Assertions.assertEquals(3.9, json.getJsonNumber("exploitabilitySubScore").doubleValue(), 0);
+        Assertions.assertEquals(
+                3.9, json.getJsonNumber("exploitabilitySubScore").doubleValue(), 0);
     }
 
     @Test
@@ -69,7 +70,8 @@ public class CalculatorResourceTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals(7.5, json.getJsonNumber("baseScore").doubleValue(), 0);
         Assertions.assertEquals(6.4, json.getJsonNumber("impactSubScore").doubleValue(), 0);
-        Assertions.assertEquals(10.0, json.getJsonNumber("exploitabilitySubScore").doubleValue(), 0);
+        Assertions.assertEquals(
+                10.0, json.getJsonNumber("exploitabilitySubScore").doubleValue(), 0);
     }
 
     @Test
@@ -114,9 +116,12 @@ public class CalculatorResourceTest extends ResourceTest {
         Assertions.assertEquals(1.0, json.getJsonNumber("likelihoodScore").doubleValue(), 0);
         Assertions.assertEquals(1.25, json.getJsonNumber("technicalImpactScore").doubleValue(), 0);
         Assertions.assertEquals(1.75, json.getJsonNumber("businessImpactScore").doubleValue(), 0);
-        Assertions.assertEquals(Level.LOW.name(), json.getJsonString("likelihood").getString());
-        Assertions.assertEquals(Level.LOW.name(), json.getJsonString("technicalImpact").getString());
-        Assertions.assertEquals(Level.LOW.name(), json.getJsonString("businessImpact").getString());
+        Assertions.assertEquals(
+                Level.LOW.name(), json.getJsonString("likelihood").getString());
+        Assertions.assertEquals(
+                Level.LOW.name(), json.getJsonString("technicalImpact").getString());
+        Assertions.assertEquals(
+                Level.LOW.name(), json.getJsonString("businessImpact").getString());
     }
 
     @Test
@@ -129,6 +134,8 @@ public class CalculatorResourceTest extends ResourceTest {
         Assertions.assertEquals(400, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assertions.assertEquals("Provided vector foobar does not match OWASP RR Vector pattern SL:\\d/M:\\d/O:\\d/S:\\d/ED:\\d/EE:\\d/A:\\d/ID:\\d/LC:\\d/LI:\\d/LAV:\\d/LAC:\\d/FD:\\d/RD:\\d/NC:\\d/PV:\\d", body);
+        Assertions.assertEquals(
+                "Provided vector foobar does not match OWASP RR Vector pattern SL:\\d/M:\\d/O:\\d/S:\\d/ED:\\d/EE:\\d/A:\\d/ID:\\d/LC:\\d/LI:\\d/LAV:\\d/LAC:\\d/FD:\\d/RD:\\d/NC:\\d/PV:\\d",
+                body);
     }
 }

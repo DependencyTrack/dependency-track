@@ -25,6 +25,7 @@ import org.dependencytrack.dex.api.WorkflowSpec;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.metrics.UpdateProjectMetricsActivity;
 import org.dependencytrack.policy.EvalProjectPoliciesActivity;
+import org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.EvalProjectPoliciesArg;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
@@ -33,18 +34,23 @@ import org.dependencytrack.vulnanalysis.VulnAnalysisWorkflow;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
 
+import java.util.UUID;
+
+import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 
 /**
  * @since 5.0.0
  */
-@WorkflowSpec(name = "analyze-project")
+@WorkflowSpec(name = AnalyzeProjectWorkflow.NAME)
 public final class AnalyzeProjectWorkflow implements Workflow<AnalyzeProjectWorkflowArg, Void> {
+
+    static final String NAME = "analyze-project";
 
     @Override
     public @Nullable Void execute(
-            WorkflowContext<AnalyzeProjectWorkflowArg> ctx,
-            @Nullable AnalyzeProjectWorkflowArg arg) throws Exception {
+            WorkflowContext<@Nullable AnalyzeProjectWorkflowArg> ctx, @Nullable AnalyzeProjectWorkflowArg arg)
+            throws Exception {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -81,4 +87,32 @@ public final class AnalyzeProjectWorkflow implements Workflow<AnalyzeProjectWork
         }
     }
 
+    public static String concurrencyKeyForProject(UUID projectUuid) {
+        requireNonNull(projectUuid, "projectUuid must not be null");
+        return NAME + ":" + projectUuid;
+    }
+
+    public static String instanceIdForBomUpload(UUID bomUploadToken) {
+        requireNonNull(bomUploadToken, "bomUploadToken must not be null");
+        return "%s:bom-upload:%s".formatted(NAME, bomUploadToken);
+    }
+
+    public static String instanceIdForManual(UUID projectUuid) {
+        requireNonNull(projectUuid, "projectUuid must not be null");
+        return "%s-manual:%s".formatted(NAME, projectUuid);
+    }
+
+    public static String instanceIdForScheduled(UUID projectUuid) {
+        requireNonNull(projectUuid, "projectUuid must not be null");
+        return "%s-scheduled:%s".formatted(NAME, projectUuid);
+    }
+
+    public static String triggerLabelValue(AnalysisTrigger trigger) {
+        return switch (trigger) {
+            case ANALYSIS_TRIGGER_BOM_UPLOAD -> "bom-upload";
+            case ANALYSIS_TRIGGER_MANUAL -> "manual";
+            case ANALYSIS_TRIGGER_SCHEDULE -> "schedule";
+            default -> throw new IllegalArgumentException("Unexpected analysis trigger: " + trigger);
+        };
+    }
 }

@@ -21,6 +21,7 @@ package org.dependencytrack.persistence.jdbi.mapping;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.persistence.jdbi.mapping.OptionalColumnRowMapper.Columns;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.mapper.reflect.BeanMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -30,25 +31,34 @@ import java.sql.SQLException;
 import java.util.List;
 
 import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.deserializeJson;
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
 
 /**
  * @since 5.0.0
  */
-public class VulnerableSoftwareRowMapper implements RowMapper<VulnerableSoftware> {
+public final class VulnerableSoftwareRowMapper implements RowMapper<VulnerableSoftware> {
 
-    private static final TypeReference<List<AffectedVersionAttribution>> ATTRIBUTIONS_TYPE_REF = new TypeReference<>() {
-    };
+    private static final TypeReference<List<AffectedVersionAttribution>> ATTRIBUTIONS_TYPE_REF =
+            new TypeReference<>() {};
 
     private final RowMapper<VulnerableSoftware> vulnerableSoftwareMapper = BeanMapper.of(VulnerableSoftware.class);
 
     @Override
-    public VulnerableSoftware map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-        final VulnerableSoftware vs = vulnerableSoftwareMapper.map(rs, ctx);
-        maybeSet(rs, "attributionsJson",
-                (_, columnName) -> deserializeJson(rs, columnName, ATTRIBUTIONS_TYPE_REF),
-                vs::setAffectedVersionAttributions);
-        return vs;
+    public RowMapper<VulnerableSoftware> specialize(ResultSet rs, StatementContext ctx) throws SQLException {
+        final RowMapper<VulnerableSoftware> beanMapper = vulnerableSoftwareMapper.specialize(rs, ctx);
+        final var columns = Columns.of(rs);
+        return (r, c) -> {
+            final VulnerableSoftware vs = beanMapper.map(r, c);
+            columns.maybeSet(
+                    r,
+                    "attributionsJson",
+                    (_, columnName) -> deserializeJson(r, columnName, ATTRIBUTIONS_TYPE_REF),
+                    vs::setAffectedVersionAttributions);
+            return vs;
+        };
     }
 
+    @Override
+    public VulnerableSoftware map(ResultSet rs, StatementContext ctx) throws SQLException {
+        return specialize(rs, ctx).map(rs, ctx);
+    }
 }

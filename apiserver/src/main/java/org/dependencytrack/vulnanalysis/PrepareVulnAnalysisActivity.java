@@ -75,9 +75,8 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
     }
 
     @Override
-    public PrepareVulnAnalysisRes execute(
-            ActivityContext ctx,
-            @Nullable PrepareVulnAnalysisArg argument) throws Exception {
+    public PrepareVulnAnalysisRes execute(ActivityContext ctx, @Nullable PrepareVulnAnalysisArg argument)
+            throws Exception {
         if (argument == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -139,8 +138,7 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
 
         final Map<Long, List<Property>> propertiesByComponentId;
         if (requiresProperties) {
-            propertiesByComponentId = withJdbiHandle(handle -> handle
-                    .createQuery("""
+            propertiesByComponentId = withJdbiHandle(handle -> handle.createQuery("""
                             SELECT cp."COMPONENT_ID"
                                  , cp."GROUPNAME"
                                  , cp."PROPERTYNAME"
@@ -151,28 +149,21 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
                              WHERE c."PROJECT_ID" = (SELECT "ID" FROM "PROJECT" WHERE "UUID" = CAST(:projectUuid AS UUID))
                             """)
                     .bind("projectUuid", projectUuid)
-                    .reduceRows(
-                            new HashMap<>(),
-                            (map, rowView) -> {
-                                final long componentId = rowView.getColumn("component_id", Long.class);
-                                final String groupName = rowView.getColumn("groupname", String.class);
-                                final String propertyName = rowView.getColumn("propertyname", String.class);
-                                final String propertyValue = rowView.getColumn("propertyvalue", String.class);
+                    .reduceRows(new HashMap<>(), (map, rowView) -> {
+                        final long componentId = rowView.getColumn("component_id", Long.class);
+                        final String groupName = rowView.getColumn("groupname", String.class);
+                        final String propertyName = rowView.getColumn("propertyname", String.class);
+                        final String propertyValue = rowView.getColumn("propertyvalue", String.class);
 
-                                final var propertyBuilder =
-                                        Property.newBuilder()
-                                                .setName(groupName != null
-                                                        ? "%s:%s".formatted(groupName, propertyName)
-                                                        : propertyName);
-                                if (propertyValue != null) {
-                                    propertyBuilder.setValue(propertyValue);
-                                }
+                        final var propertyBuilder = Property.newBuilder()
+                                .setName(groupName != null ? "%s:%s".formatted(groupName, propertyName) : propertyName);
+                        if (propertyValue != null) {
+                            propertyBuilder.setValue(propertyValue);
+                        }
 
-                                map
-                                        .computeIfAbsent(componentId, _ -> new ArrayList<>())
-                                        .add(propertyBuilder.build());
-                                return map;
-                            }));
+                        map.computeIfAbsent(componentId, _ -> new ArrayList<>()).add(propertyBuilder.build());
+                        return map;
+                    }));
         } else {
             propertiesByComponentId = Map.of();
         }
@@ -197,8 +188,7 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
                      WHERE "PROJECT_ID" = (SELECT "ID" FROM "PROJECT" WHERE "UUID" = CAST(:projectUuid AS UUID))
                     """);
 
-            return query
-                    .bind("projectUuid", projectUuid)
+            return query.bind("projectUuid", projectUuid)
                     .define("requirements", requirements)
                     .map((rs, _) -> {
                         final long componentId = rs.getLong("id");
@@ -206,24 +196,19 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
                         final var componentBuilder = Component.newBuilder()
                                 .setBomRef(String.valueOf(componentId))
                                 .setName(rs.getString("name"));
-                        Optional.ofNullable(rs.getString("group"))
-                                .ifPresent(componentBuilder::setGroup);
-                        Optional.ofNullable(rs.getString("version"))
-                                .ifPresent(componentBuilder::setVersion);
+                        Optional.ofNullable(rs.getString("group")).ifPresent(componentBuilder::setGroup);
+                        Optional.ofNullable(rs.getString("version")).ifPresent(componentBuilder::setVersion);
                         if (rs.getBoolean("internal")) {
-                            componentBuilder.addProperties(
-                                    Property.newBuilder()
-                                            .setName("dependencytrack:internal:is-internal-component")
-                                            .setValue("true")
-                                            .build());
+                            componentBuilder.addProperties(Property.newBuilder()
+                                    .setName("dependencytrack:internal:is-internal-component")
+                                    .setValue("true")
+                                    .build());
                         }
                         if (requirements.contains(VulnAnalyzerRequirement.COMPONENT_CPE)) {
-                            Optional.ofNullable(rs.getString("cpe"))
-                                    .ifPresent(componentBuilder::setCpe);
+                            Optional.ofNullable(rs.getString("cpe")).ifPresent(componentBuilder::setCpe);
                         }
                         if (requirements.contains(VulnAnalyzerRequirement.COMPONENT_PURL)) {
-                            Optional.ofNullable(rs.getString("purl"))
-                                    .ifPresent(componentBuilder::setPurl);
+                            Optional.ofNullable(rs.getString("purl")).ifPresent(componentBuilder::setPurl);
                         }
                         if (requirements.contains(VulnAnalyzerRequirement.COMPONENT_TYPE)) {
                             Optional.ofNullable(rs.getString("classifier"))
@@ -243,9 +228,7 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
                     .list();
         });
 
-        return Bom.newBuilder()
-                .addAllComponents(components)
-                .build();
+        return Bom.newBuilder().addAllComponents(components).build();
     }
 
     private FileMetadata storeBom(ActivityContext ctx, Bom bom) throws IOException {
@@ -276,5 +259,4 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
             case CRYPTOGRAPHIC_ASSET -> Classification.CLASSIFICATION_CRYPTOGRAPHIC_ASSET;
         };
     }
-
 }

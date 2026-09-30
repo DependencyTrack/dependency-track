@@ -18,11 +18,12 @@
  */
 package org.dependencytrack.cache;
 
+import org.dependencytrack.cache.api.CacheManager;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContext;
-import org.dependencytrack.cache.api.CacheManager;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import static java.util.Objects.requireNonNull;
 
@@ -33,9 +34,7 @@ public final class CacheManagerBinder extends AbstractBinder {
 
     @Override
     protected void configure() {
-        bindFactory(Factory.class)
-                .to(CacheManager.class)
-                .in(Singleton.class);
+        bindFactory(Factory.class).to(CacheManager.class).in(Singleton.class);
     }
 
     private static final class Factory implements org.glassfish.hk2.api.Factory<CacheManager> {
@@ -57,7 +56,5 @@ public final class CacheManagerBinder extends AbstractBinder {
         public void dispose(CacheManager instance) {
             // Lifecycle is managed by CacheInitializer.
         }
-
     }
-
 }

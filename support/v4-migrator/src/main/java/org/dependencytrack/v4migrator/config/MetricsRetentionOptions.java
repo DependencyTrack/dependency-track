@@ -29,10 +29,11 @@ import picocli.CommandLine.Option;
  */
 public final class MetricsRetentionOptions {
 
-    @Option(names = "--metrics-retention-days",
-        description = "DEPENDENCYMETRICS / PROJECTMETRICS retention window. v4 had no retention "
-            + "concept; you must decide explicitly. 0 drops all metrics; N > 0 keeps the last N "
-            + "days. Large values pre-create one daily partition per retained day.",
-        required = true)
+    @Option(
+            names = "--metrics-retention-days",
+            description = "DEPENDENCYMETRICS / PROJECTMETRICS retention window. v4 had no retention "
+                    + "concept; you must decide explicitly. 0 drops all metrics; N > 0 keeps the last N "
+                    + "days. Large values pre-create one daily partition per retained day.",
+            required = true)
     public int metricsRetentionDays;
 }

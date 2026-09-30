@@ -22,7 +22,6 @@ import dev.cel.common.types.CelType;
 import dev.cel.common.types.SimpleType;
 
 enum CelPolicyVariable {
-
     COMPONENT("component", CelPolicyTypes.TYPE_COMPONENT),
     PROJECT("project", CelPolicyTypes.TYPE_PROJECT),
     VULN("vuln", CelPolicyTypes.TYPE_VULNERABILITY),
@@ -44,5 +43,4 @@ enum CelPolicyVariable {
     CelType celType() {
         return type;
     }
-
 }

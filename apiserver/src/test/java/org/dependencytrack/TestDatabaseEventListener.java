@@ -20,8 +20,8 @@ package org.dependencytrack;
 
 import alpine.server.persistence.PersistenceManagerFactory;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.support.config.source.memory.MemoryConfigSource;
 import org.jspecify.annotations.NullMarked;
 import org.postgresql.ds.PGSimpleDataSource;
@@ -55,8 +55,9 @@ public final class TestDatabaseEventListener implements org.dependencytrack.test
 
     @Override
     public void onTablesTruncated() {
-        try (final Connection connection = DataSourceRegistry.getInstance().getDefault().getConnection();
-             final Statement statement = connection.createStatement()) {
+        try (final Connection connection =
+                        DataSourceRegistry.getInstance().getDefault().getConnection();
+                final Statement statement = connection.createStatement()) {
             statement.execute("""
                     DO $$
                     DECLARE
@@ -80,5 +81,4 @@ public final class TestDatabaseEventListener implements org.dependencytrack.test
             throw new IllegalStateException("Failed to drop stale metrics partitions", e);
         }
     }
-
 }

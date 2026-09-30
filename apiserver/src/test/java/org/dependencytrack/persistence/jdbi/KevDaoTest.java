@@ -54,23 +54,19 @@ class KevDaoTest extends PersistenceCapableTest {
 
     @Test
     void shouldReconcileUpdatesAndDeletions() {
-        kevDao.upsertBatch("cisa", List.of(
-                new KevAssertion(
-                        "NVD",
-                        "CVE-1",
-                        null,
-                        "action-a",
-                        false,
-                        "desc-a",
-                        JsonNodeFactory.instance.objectNode().put("v", 1)),
-                new KevAssertion(
-                        "NVD",
-                        "CVE-2",
-                        null,
-                        null,
-                        null,
-                        null,
-                        JsonNodeFactory.instance.objectNode())));
+        kevDao.upsertBatch(
+                "cisa",
+                List.of(
+                        new KevAssertion(
+                                "NVD",
+                                "CVE-1",
+                                null,
+                                "action-a",
+                                false,
+                                "desc-a",
+                                JsonNodeFactory.instance.objectNode().put("v", 1)),
+                        new KevAssertion(
+                                "NVD", "CVE-2", null, null, null, null, JsonNodeFactory.instance.objectNode())));
 
         final var current = List.of(
                 new KevAssertion(
@@ -81,14 +77,7 @@ class KevDaoTest extends PersistenceCapableTest {
                         true,
                         "desc-b",
                         JsonNodeFactory.instance.objectNode().put("v", 2)),
-                new KevAssertion(
-                        "NVD",
-                        "CVE-3",
-                        null,
-                        null,
-                        null,
-                        null,
-                        JsonNodeFactory.instance.objectNode()));
+                new KevAssertion("NVD", "CVE-3", null, null, null, null, JsonNodeFactory.instance.objectNode()));
         kevDao.upsertBatch("cisa", current);
         kevDao.deleteStale("cisa", vulnKeysOf(current));
 
@@ -97,31 +86,24 @@ class KevDaoTest extends PersistenceCapableTest {
                           FROM "KEV_ASSERTION"
                          WHERE "ASSERTER" = 'cisa'
                          ORDER BY "VULN_ID"
-                        """)
-                .mapTo(String.class)
-                .list())
-                .containsExactly("CVE-1", "CVE-3");
+                        """).mapTo(String.class).list()).containsExactly("CVE-1", "CVE-3");
         assertThat(jdbiHandle.createQuery("""
                         SELECT "REQUIRED_ACTION"
                           FROM "KEV_ASSERTION"
                          WHERE "VULN_ID" = 'CVE-1'
-                        """)
-                .mapTo(String.class)
-                .one())
-                .isEqualTo("action-b");
+                        """).mapTo(String.class).one()).isEqualTo("action-b");
     }
 
     @Test
     void shouldNotTouchUpdatedAtWhenUnchanged() {
-        final var assertions = List.of(
-                new KevAssertion(
-                        "NVD",
-                        "CVE-1",
-                        null,
-                        "action",
-                        false,
-                        "desc",
-                        JsonNodeFactory.instance.objectNode().put("v", 1)));
+        final var assertions = List.of(new KevAssertion(
+                "NVD",
+                "CVE-1",
+                null,
+                "action",
+                false,
+                "desc",
+                JsonNodeFactory.instance.objectNode().put("v", 1)));
         kevDao.upsertBatch("cisa", assertions);
         final Instant firstUpdatedAt = getUpdatedAt("CVE-1");
 
@@ -131,24 +113,14 @@ class KevDaoTest extends PersistenceCapableTest {
 
     @Test
     void shouldKeepAssertionsOfOtherAssertersSeparate() {
-        kevDao.upsertBatch("cisa", List.of(
-                new KevAssertion(
-                        "NVD",
-                        "CVE-1",
-                        null,
-                        null,
-                        null,
-                        null,
-                        JsonNodeFactory.instance.objectNode())));
-        kevDao.upsertBatch("enisa", List.of(
-                new KevAssertion(
-                        "NVD",
-                        "CVE-1",
-                        null,
-                        null,
-                        null,
-                        null,
-                        JsonNodeFactory.instance.objectNode())));
+        kevDao.upsertBatch(
+                "cisa",
+                List.of(new KevAssertion(
+                        "NVD", "CVE-1", null, null, null, null, JsonNodeFactory.instance.objectNode())));
+        kevDao.upsertBatch(
+                "enisa",
+                List.of(new KevAssertion(
+                        "NVD", "CVE-1", null, null, null, null, JsonNodeFactory.instance.objectNode())));
 
         kevDao.deleteStale("cisa", List.of());
 
@@ -158,14 +130,13 @@ class KevDaoTest extends PersistenceCapableTest {
 
     private static List<VulnerabilityKey> vulnKeysOf(Collection<KevAssertion> assertions) {
         return assertions.stream()
-                .map(assertion -> new VulnerabilityKey(
-                        assertion.vulnId(),
-                        assertion.vulnSource()))
+                .map(assertion -> new VulnerabilityKey(assertion.vulnId(), assertion.vulnSource()))
                 .toList();
     }
 
     private int countKevAssertions(String asserter) {
-        return jdbiHandle.createQuery("""
+        return jdbiHandle
+                .createQuery("""
                         SELECT COUNT(*)
                           FROM "KEV_ASSERTION"
                          WHERE "ASSERTER" = :asserter
@@ -176,7 +147,8 @@ class KevDaoTest extends PersistenceCapableTest {
     }
 
     private Instant getUpdatedAt(String vulnId) {
-        return jdbiHandle.createQuery("""
+        return jdbiHandle
+                .createQuery("""
                         SELECT "UPDATED_AT"
                           FROM "KEV_ASSERTION"
                          WHERE "VULN_ID" = :vulnId
@@ -185,5 +157,4 @@ class KevDaoTest extends PersistenceCapableTest {
                 .mapTo(Instant.class)
                 .one();
     }
-
 }

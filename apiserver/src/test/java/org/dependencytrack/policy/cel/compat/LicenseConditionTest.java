@@ -41,7 +41,11 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         license = qm.persist(license);
 
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, license.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE,
+                PolicyCondition.Operator.IS,
+                license.getUuid().toString());
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -64,7 +68,11 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         license = qm.persist(license);
 
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, UUID.randomUUID().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE,
+                PolicyCondition.Operator.IS,
+                UUID.randomUUID().toString());
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -88,7 +96,11 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         license = qm.persist(license);
 
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.MATCHES, license.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE,
+                PolicyCondition.Operator.MATCHES,
+                license.getUuid().toString());
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -112,7 +124,11 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         qm.persist(license);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, license.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE,
+                PolicyCondition.Operator.IS,
+                license.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -137,7 +153,11 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         qm.persist(license);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, license.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE,
+                PolicyCondition.Operator.IS,
+                license.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -162,7 +182,11 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         qm.persist(mit);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS_NOT, mit.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE,
+                PolicyCondition.Operator.IS_NOT,
+                mit.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -187,7 +211,11 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         qm.persist(gpl);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, gpl.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE,
+                PolicyCondition.Operator.IS,
+                gpl.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -206,7 +234,8 @@ public class LicenseConditionTest extends PersistenceCapableTest {
     @Test
     void shouldViolateIsNotUnresolvedWhenLicenseExpressionIsSet() throws Exception {
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS_NOT, "unresolved");
+        qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS_NOT, "unresolved");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -230,7 +259,11 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         qm.persist(custom);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, custom.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE,
+                PolicyCondition.Operator.IS,
+                custom.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -280,4 +313,3 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         assertThat(qm.getAllPolicyViolations(componentWithLicense)).hasSize(0);
     }
 }
-

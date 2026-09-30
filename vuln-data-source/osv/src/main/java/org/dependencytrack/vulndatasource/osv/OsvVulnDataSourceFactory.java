@@ -20,8 +20,8 @@ package org.dependencytrack.vulndatasource.osv;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
@@ -52,6 +52,11 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
+    public String displayName() {
+        return "OSV";
+    }
+
+    @Override
     public Class<? extends VulnDataSource> extensionClass() {
         return OsvVulnDataSource.class;
     }
@@ -62,12 +67,11 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        this.kvStore = serviceRegistry.require(KeyValueStore.class);
-        this.httpClient = serviceRegistry.require(HttpClient.class);
-        this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule());
+    public void init(ExtensionContext context) {
+        this.configRegistry = context.configRegistry();
+        this.kvStore = context.keyValueStore();
+        this.httpClient = context.httpClient();
+        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Override
@@ -110,9 +114,8 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
         }
 
-        final WatermarkManager watermarkManager = config.isIncrementalMirroringEnabled()
-                ? new WatermarkManager(config.getEcosystems(), kvStore)
-                : null;
+        final WatermarkManager watermarkManager =
+                config.isIncrementalMirroringEnabled() ? new WatermarkManager(config.getEcosystems(), kvStore) : null;
 
         return new OsvVulnDataSource(
                 watermarkManager,
@@ -122,5 +125,4 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
                 httpClient,
                 config.getAliasSyncEnabled());
     }
-
 }

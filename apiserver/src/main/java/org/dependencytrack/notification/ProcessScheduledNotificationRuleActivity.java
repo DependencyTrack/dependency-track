@@ -34,6 +34,8 @@ import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.model.FindingKey;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.notification.ScheduledNotificationDao.NewFinding;
+import org.dependencytrack.notification.ScheduledNotificationDao.NewPolicyViolation;
 import org.dependencytrack.notification.proto.v1.Component;
 import org.dependencytrack.notification.proto.v1.NewPolicyViolationsSummarySubject;
 import org.dependencytrack.notification.proto.v1.NewPolicyViolationsSummarySubject.ProjectSummaryEntry;
@@ -43,10 +45,6 @@ import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.PolicyCondition;
 import org.dependencytrack.notification.proto.v1.Project;
 import org.dependencytrack.notification.proto.v1.Vulnerability;
-import org.dependencytrack.persistence.jdbi.NotificationSubjectDao;
-import org.dependencytrack.persistence.jdbi.ScheduledNotificationDao;
-import org.dependencytrack.persistence.jdbi.ScheduledNotificationDao.NewFinding;
-import org.dependencytrack.persistence.jdbi.ScheduledNotificationDao.NewPolicyViolation;
 import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificationRuleArg;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.jspecify.annotations.Nullable;
@@ -91,9 +89,7 @@ public final class ProcessScheduledNotificationRuleActivity
     private final int largeNotificationThresholdBytes;
 
     public ProcessScheduledNotificationRuleActivity(
-            DexEngine dexEngine,
-            FileStorage fileStorage,
-            int largeNotificationThresholdBytes) {
+            DexEngine dexEngine, FileStorage fileStorage, int largeNotificationThresholdBytes) {
         this.dexEngine = requireNonNull(dexEngine);
         this.fileStorage = requireNonNull(fileStorage);
         this.largeNotificationThresholdBytes = largeNotificationThresholdBytes;
@@ -106,11 +102,9 @@ public final class ProcessScheduledNotificationRuleActivity
         }
 
         final NotificationRule rule = withJdbiHandle(
-                handle -> new ScheduledNotificationDao(handle)
-                        .getScheduledNotificationRuleByName(arg.getRuleName()));
+                handle -> new ScheduledNotificationDao(handle).getScheduledNotificationRuleByName(arg.getRuleName()));
         if (rule == null) {
-            throw new TerminalApplicationFailureException(
-                    "Rule with name %s not found".formatted(arg.getRuleName()));
+            throw new TerminalApplicationFailureException("Rule with name %s not found".formatted(arg.getRuleName()));
         }
 
         try (var _ = MDC.putCloseable(MDC_NOTIFICATION_RULE_NAME, rule.getName())) {
@@ -156,18 +150,20 @@ public final class ProcessScheduledNotificationRuleActivity
                 continue;
             }
 
-            final String notificationId = createDeterministicNotificationId(
-                    rule.getName(), group, rule.getScheduleLastTriggeredAt());
+            final String notificationId =
+                    createDeterministicNotificationId(rule.getName(), group, rule.getScheduleLastTriggeredAt());
 
             final Notification notification = withJdbiHandle(handle -> {
                 final var scheduledDao = new ScheduledNotificationDao(handle);
                 final var subjectDao = handle.attach(NotificationSubjectDao.class);
 
                 return switch (group) {
-                    case NEW_VULNERABILITIES_SUMMARY -> createNewVulnerabilitiesNotification(
-                            notificationId, scheduledDao, subjectDao, rule, projectIds, processingStartedAt);
-                    case NEW_POLICY_VIOLATIONS_SUMMARY -> createNewPolicyViolationsNotification(
-                            notificationId, scheduledDao, subjectDao, rule, projectIds, processingStartedAt);
+                    case NEW_VULNERABILITIES_SUMMARY ->
+                        createNewVulnerabilitiesNotification(
+                                notificationId, scheduledDao, subjectDao, rule, projectIds, processingStartedAt);
+                    case NEW_POLICY_VIOLATIONS_SUMMARY ->
+                        createNewPolicyViolationsNotification(
+                                notificationId, scheduledDao, subjectDao, rule, projectIds, processingStartedAt);
                     default -> throw new TerminalApplicationFailureException("Unexpected group: " + group);
                 };
             });
@@ -183,10 +179,10 @@ public final class ProcessScheduledNotificationRuleActivity
     private void advanceSchedule(NotificationRule rule, Instant lastTriggeredAt) {
         try {
             final Schedule schedule = Schedule.create(rule.getScheduleCron());
-            final Instant nextTriggerAt = schedule.next(Date.from(lastTriggeredAt)).toInstant();
-            useJdbiTransaction(
-                    handle -> new ScheduledNotificationDao(handle)
-                            .updateRuleLastTriggered(rule.getId(), lastTriggeredAt, nextTriggerAt));
+            final Instant nextTriggerAt =
+                    schedule.next(Date.from(lastTriggeredAt)).toInstant();
+            useJdbiTransaction(handle -> new ScheduledNotificationDao(handle)
+                    .updateRuleLastTriggered(rule.getId(), lastTriggeredAt, nextTriggerAt));
         } catch (InvalidExpressionException e) {
             LOGGER.error("Invalid cron expression: '{}'", rule.getScheduleCron(), e);
         }
@@ -199,12 +195,11 @@ public final class ProcessScheduledNotificationRuleActivity
             NotificationRule rule,
             Set<Long> projectIds,
             Instant processingStartedAt) {
-        final Instant sinceAttributedOn =
-                rule.getScheduleLastTriggeredAt() != null
-                        ? rule.getScheduleLastTriggeredAt().toInstant()
-                        : Instant.EPOCH;
-        final List<NewFinding> newFindings = dao.getNewFindingsSince(
-                projectIds, sinceAttributedOn, processingStartedAt);
+        final Instant sinceAttributedOn = rule.getScheduleLastTriggeredAt() != null
+                ? rule.getScheduleLastTriggeredAt().toInstant()
+                : Instant.EPOCH;
+        final List<NewFinding> newFindings =
+                dao.getNewFindingsSince(projectIds, sinceAttributedOn, processingStartedAt);
         if (newFindings.isEmpty() && Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())) {
             LOGGER.info("No new findings since rule was last processed");
             return null;
@@ -223,26 +218,27 @@ public final class ProcessScheduledNotificationRuleActivity
         final Map<Long, Component> componentById = subjectDao.getComponentsById(findingComponentIds);
         final Map<FindingKey, Vulnerability> vulnByFindingKey = subjectDao.getVulnsByFindingKey(findingKeys);
 
-        final var findingsByProjectId = new HashMap<Long, List<NewVulnerabilitiesSummarySubject.Finding>>(projectById.size());
+        final var findingsByProjectId =
+                new HashMap<Long, List<NewVulnerabilitiesSummarySubject.Finding>>(projectById.size());
         for (final NewFinding newFinding : newFindings) {
             final Project project = projectById.get(newFinding.projectId());
             final Component component = componentById.get(newFinding.componentId());
-            final Vulnerability vuln = vulnByFindingKey.get(
-                    new FindingKey(newFinding.componentId(), newFinding.vulnerabilityId()));
+            final Vulnerability vuln =
+                    vulnByFindingKey.get(new FindingKey(newFinding.componentId(), newFinding.vulnerabilityId()));
             if (project == null || component == null || vuln == null) {
                 continue;
             }
 
-            final var protoFinding =
-                    NewVulnerabilitiesSummarySubject.Finding.newBuilder()
-                            .setComponent(component)
-                            .setVulnerability(vuln)
-                            .setSuppressed(newFinding.suppressed());
+            final var protoFinding = NewVulnerabilitiesSummarySubject.Finding.newBuilder()
+                    .setComponent(component)
+                    .setVulnerability(vuln)
+                    .setSuppressed(newFinding.suppressed());
             if (newFinding.analyzerIdentity() != null) {
                 protoFinding.setAnalyzerIdentity(newFinding.analyzerIdentity());
             }
             if (newFinding.attributedOn() != null) {
-                protoFinding.setAttributedOn(Timestamps.fromMillis(newFinding.attributedOn().toEpochMilli()));
+                protoFinding.setAttributedOn(
+                        Timestamps.fromMillis(newFinding.attributedOn().toEpochMilli()));
             }
             if (newFinding.referenceUrl() != null) {
                 protoFinding.setReferenceUrl(newFinding.referenceUrl());
@@ -270,8 +266,8 @@ public final class ProcessScheduledNotificationRuleActivity
             if (newFinding.suppressed()) {
                 suppressedCount++;
             } else {
-                final Vulnerability vuln = vulnByFindingKey.get(
-                        new FindingKey(newFinding.componentId(), newFinding.vulnerabilityId()));
+                final Vulnerability vuln =
+                        vulnByFindingKey.get(new FindingKey(newFinding.componentId(), newFinding.vulnerabilityId()));
                 if (vuln != null && vuln.hasSeverity()) {
                     countBySeverity.merge(vuln.getSeverity(), 1, Integer::sum);
                 }
@@ -289,9 +285,7 @@ public final class ProcessScheduledNotificationRuleActivity
                 .build();
 
         // Build per-project summaries and findings entries.
-        final var subjectBuilder =
-                NewVulnerabilitiesSummarySubject.newBuilder()
-                        .setOverview(overview);
+        final var subjectBuilder = NewVulnerabilitiesSummarySubject.newBuilder().setOverview(overview);
 
         for (final var entry : findingsByProjectId.entrySet()) {
             final Long projectId = entry.getKey();
@@ -319,17 +313,15 @@ public final class ProcessScheduledNotificationRuleActivity
                 }
             }
 
-            subjectBuilder.addProjectSummaries(
-                    NewVulnerabilitiesSummarySubject.ProjectSummaryEntry.newBuilder()
-                            .setProject(project)
-                            .putAllNewVulnerabilitiesCountBySeverity(newBySeverity)
-                            .putAllSuppressedNewVulnerabilitiesCountBySeverity(suppressedBySeverity)
-                            .putAllTotalNewVulnerabilitiesCountBySeverity(totalBySeverity));
+            subjectBuilder.addProjectSummaries(NewVulnerabilitiesSummarySubject.ProjectSummaryEntry.newBuilder()
+                    .setProject(project)
+                    .putAllNewVulnerabilitiesCountBySeverity(newBySeverity)
+                    .putAllSuppressedNewVulnerabilitiesCountBySeverity(suppressedBySeverity)
+                    .putAllTotalNewVulnerabilitiesCountBySeverity(totalBySeverity));
 
-            subjectBuilder.addFindingsByProject(
-                    NewVulnerabilitiesSummarySubject.ProjectFindingsEntry.newBuilder()
-                            .setProject(project)
-                            .addAllFindings(entry.getValue()));
+            subjectBuilder.addFindingsByProject(NewVulnerabilitiesSummarySubject.ProjectFindingsEntry.newBuilder()
+                    .setProject(project)
+                    .addAllFindings(entry.getValue()));
         }
 
         if (rule.getScheduleLastTriggeredAt() != null) {
@@ -346,12 +338,11 @@ public final class ProcessScheduledNotificationRuleActivity
             NotificationRule rule,
             Set<Long> projectIds,
             Instant processingStartedAt) {
-        final Instant sinceTimestamp =
-                rule.getScheduleLastTriggeredAt() != null
-                        ? rule.getScheduleLastTriggeredAt().toInstant()
-                        : Instant.EPOCH;
-        final List<NewPolicyViolation> violations = dao.getNewPolicyViolationsSince(
-                projectIds, sinceTimestamp, processingStartedAt);
+        final Instant sinceTimestamp = rule.getScheduleLastTriggeredAt() != null
+                ? rule.getScheduleLastTriggeredAt().toInstant()
+                : Instant.EPOCH;
+        final List<NewPolicyViolation> violations =
+                dao.getNewPolicyViolationsSince(projectIds, sinceTimestamp, processingStartedAt);
         if (violations.isEmpty() && Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())) {
             LOGGER.info("No new policy violations since rule was last processed");
             return null;
@@ -368,9 +359,11 @@ public final class ProcessScheduledNotificationRuleActivity
 
         final Map<Long, Project> projectById = subjectDao.getProjectsById(violationProjectIds);
         final Map<Long, Component> componentById = subjectDao.getComponentsById(violationComponentIds);
-        final Map<Long, PolicyCondition> conditionById = subjectDao.getPolicyConditionsById(violationPolicyConditionIds);
+        final Map<Long, PolicyCondition> conditionById =
+                subjectDao.getPolicyConditionsById(violationPolicyConditionIds);
 
-        final var violationsByProjectId = new HashMap<Long, List<NewPolicyViolationsSummarySubject.Violation>>(projectById.size());
+        final var violationsByProjectId =
+                new HashMap<Long, List<NewPolicyViolationsSummarySubject.Violation>>(projectById.size());
         for (final NewPolicyViolation violation : violations) {
             final Project project = projectById.get(violation.projectId());
             final Component component = componentById.get(violation.componentId());
@@ -379,17 +372,17 @@ public final class ProcessScheduledNotificationRuleActivity
                 continue;
             }
 
-            final var entryBuilder =
-                    NewPolicyViolationsSummarySubject.Violation.newBuilder()
-                            .setUuid(violation.uuid().toString())
-                            .setComponent(component)
-                            .setPolicyCondition(condition)
-                            .setSuppressed(violation.suppressed());
+            final var entryBuilder = NewPolicyViolationsSummarySubject.Violation.newBuilder()
+                    .setUuid(violation.uuid().toString())
+                    .setComponent(component)
+                    .setPolicyCondition(condition)
+                    .setSuppressed(violation.suppressed());
             if (violation.violationType() != null) {
                 entryBuilder.setType(violation.violationType());
             }
             if (violation.timestamp() != null) {
-                entryBuilder.setTimestamp(Timestamps.fromMillis(violation.timestamp().toEpochMilli()));
+                entryBuilder.setTimestamp(
+                        Timestamps.fromMillis(violation.timestamp().toEpochMilli()));
             }
             if (violation.analysisState() != null) {
                 entryBuilder.setAnalysisState(violation.analysisState());
@@ -421,19 +414,17 @@ public final class ProcessScheduledNotificationRuleActivity
             }
         }
 
-        final var overview =
-                NewPolicyViolationsSummarySubject.Overview.newBuilder()
-                        .setAffectedProjectsCount(violationsByProjectId.size())
-                        .setAffectedComponentsCount(componentIdsSeen.size())
-                        .setNewViolationsCount(newViolationsCount)
-                        .putAllNewViolationsCountByType(countByType)
-                        .setSuppressedNewViolationsCount(suppressedCount)
-                        .setTotalNewViolationsCount(totalCount)
-                        .build();
+        final var overview = NewPolicyViolationsSummarySubject.Overview.newBuilder()
+                .setAffectedProjectsCount(violationsByProjectId.size())
+                .setAffectedComponentsCount(componentIdsSeen.size())
+                .setNewViolationsCount(newViolationsCount)
+                .putAllNewViolationsCountByType(countByType)
+                .setSuppressedNewViolationsCount(suppressedCount)
+                .setTotalNewViolationsCount(totalCount)
+                .build();
 
         final var subjectBuilder =
-                NewPolicyViolationsSummarySubject.newBuilder()
-                        .setOverview(overview);
+                NewPolicyViolationsSummarySubject.newBuilder().setOverview(overview);
 
         for (final var entry : violationsByProjectId.entrySet()) {
             final Long projectId = entry.getKey();
@@ -461,17 +452,14 @@ public final class ProcessScheduledNotificationRuleActivity
                 }
             }
 
-            subjectBuilder.addProjectSummaries(
-                    ProjectSummaryEntry.newBuilder()
-                            .setProject(project)
-                            .putAllNewViolationsCountByType(newByType)
-                            .putAllSuppressedNewViolationsCountByType(suppressedByType)
-                            .putAllTotalNewViolationsCountByType(totalByType));
+            subjectBuilder.addProjectSummaries(ProjectSummaryEntry.newBuilder()
+                    .setProject(project)
+                    .putAllNewViolationsCountByType(newByType)
+                    .putAllSuppressedNewViolationsCountByType(suppressedByType)
+                    .putAllTotalNewViolationsCountByType(totalByType));
 
             subjectBuilder.addViolationsByProject(
-                    ProjectViolationsEntry.newBuilder()
-                            .setProject(project)
-                            .addAllViolations(entry.getValue()));
+                    ProjectViolationsEntry.newBuilder().setProject(project).addAllViolations(entry.getValue()));
         }
 
         if (rule.getScheduleLastTriggeredAt() != null) {
@@ -482,9 +470,7 @@ public final class ProcessScheduledNotificationRuleActivity
     }
 
     private boolean evaluateFilterExpression(
-            NotificationRule rule,
-            Notification notification,
-            NotificationGroup group) {
+            NotificationRule rule, Notification notification, NotificationGroup group) {
         final String filterExpression = rule.getFilterExpression();
         if (filterExpression == null || filterExpression.isBlank()) {
             return true;
@@ -511,10 +497,10 @@ public final class ProcessScheduledNotificationRuleActivity
 
         try {
             return switch (group) {
-                case NEW_VULNERABILITIES_SUMMARY -> notification.getSubject().unpack(
-                        NewVulnerabilitiesSummarySubject.class);
-                case NEW_POLICY_VIOLATIONS_SUMMARY -> notification.getSubject().unpack(
-                        NewPolicyViolationsSummarySubject.class);
+                case NEW_VULNERABILITIES_SUMMARY ->
+                    notification.getSubject().unpack(NewVulnerabilitiesSummarySubject.class);
+                case NEW_POLICY_VIOLATIONS_SUMMARY ->
+                    notification.getSubject().unpack(NewPolicyViolationsSummarySubject.class);
                 default -> null;
             };
         } catch (InvalidProtocolBufferException e) {
@@ -534,7 +520,8 @@ public final class ProcessScheduledNotificationRuleActivity
             if (notification.getSerializedSize() > largeNotificationThresholdBytes) {
                 LOGGER.warn(
                         "Notification size {}b exceeds threshold of {}b; offloading to file storage",
-                        notification.getSerializedSize(), largeNotificationThresholdBytes);
+                        notification.getSerializedSize(),
+                        largeNotificationThresholdBytes);
                 try {
                     final FileMetadata fileMetadata = fileStorage.store(
                             "notifications/%s.proto".formatted(notification.getId()),
@@ -548,10 +535,9 @@ public final class ProcessScheduledNotificationRuleActivity
                 workflowArgBuilder.setNotification(notification);
             }
 
-            final UUID runId = dexEngine.createRun(
-                    new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class)
-                            .withWorkflowInstanceId(workflowInstanceId)
-                            .withArgument(workflowArgBuilder.build()));
+            final UUID runId = dexEngine.createRun(new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class)
+                    .withWorkflowInstanceId(workflowInstanceId)
+                    .withArgument(workflowArgBuilder.build()));
             if (runId != null) {
                 LOGGER.debug("Created publish workflow run {}", runId);
             } else {
@@ -563,22 +549,15 @@ public final class ProcessScheduledNotificationRuleActivity
     }
 
     private static String createDeterministicNotificationId(
-            String ruleName,
-            NotificationGroup group,
-            @Nullable Date lastTriggeredAt) {
-        final long timestampMillis = lastTriggeredAt != null
-                ? lastTriggeredAt.getTime()
-                : 0;
+            String ruleName, NotificationGroup group, @Nullable Date lastTriggeredAt) {
+        final long timestampMillis = lastTriggeredAt != null ? lastTriggeredAt.getTime() : 0;
 
         final String randomSeedInput = "%s:%s:%d".formatted(ruleName, group, timestampMillis);
-        final long randomSeed = UUID
-                .nameUUIDFromBytes(randomSeedInput.getBytes(StandardCharsets.UTF_8))
+        final long randomSeed = UUID.nameUUIDFromBytes(randomSeedInput.getBytes(StandardCharsets.UTF_8))
                 .getMostSignificantBits();
 
-        return Generators
-                .timeBasedEpochRandomGenerator(new Random(randomSeed))
+        return Generators.timeBasedEpochRandomGenerator(new Random(randomSeed))
                 .construct(timestampMillis)
                 .toString();
     }
-
 }

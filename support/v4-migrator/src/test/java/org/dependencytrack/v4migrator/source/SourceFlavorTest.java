@@ -27,27 +27,26 @@ class SourceFlavorTest {
 
     @Test
     void detectsPostgresql() {
-        assertThat(SourceFlavor.fromJdbcUrl("jdbc:postgresql://host:5432/db"))
-            .isEqualTo(SourceFlavor.POSTGRESQL);
+        assertThat(SourceFlavor.fromJdbcUrl("jdbc:postgresql://host:5432/db")).isEqualTo(SourceFlavor.POSTGRESQL);
     }
 
     @Test
     void detectsMssql() {
         assertThat(SourceFlavor.fromJdbcUrl("jdbc:sqlserver://host:1433;databaseName=db"))
-            .isEqualTo(SourceFlavor.MSSQL);
+                .isEqualTo(SourceFlavor.MSSQL);
     }
 
     @Test
     void rejectsNull() {
         assertThatThrownBy(() -> SourceFlavor.fromJdbcUrl(null))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("required");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("required");
     }
 
     @Test
     void rejectsUnknownFlavor() {
         assertThatThrownBy(() -> SourceFlavor.fromJdbcUrl("jdbc:mysql://host/db"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Unsupported");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unsupported");
     }
 }

@@ -35,14 +35,14 @@ public record ProjectPropertyResponse(
         @Schema(description = "Name of the property", requiredMode = Schema.RequiredMode.REQUIRED)
         String propertyName,
 
-        @Schema(description = "Value of the property")
-        @Nullable String propertyValue,
+        @Schema(description = "Value of the property") @Nullable
+        String propertyValue,
 
         @Schema(description = "Type of the property", requiredMode = Schema.RequiredMode.REQUIRED)
         IConfigProperty.PropertyType propertyType,
 
-        @Schema(description = "Description of the property")
-        @Nullable String description) {
+        @Schema(description = "Description of the property") @Nullable
+        String description) {
 
     public static ProjectPropertyResponse of(ProjectProperty property) {
         return new ProjectPropertyResponse(
@@ -52,5 +52,4 @@ public record ProjectPropertyResponse(
                 property.getPropertyType(),
                 property.getDescription());
     }
-
 }

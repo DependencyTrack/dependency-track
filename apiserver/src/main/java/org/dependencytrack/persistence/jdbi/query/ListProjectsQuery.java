@@ -204,5 +204,4 @@ public record ListProjectsQuery(
                 this.onlyRoot,
                 includeMetrics);
     }
-
 }

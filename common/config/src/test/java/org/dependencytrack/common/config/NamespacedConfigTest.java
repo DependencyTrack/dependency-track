@@ -60,7 +60,8 @@ class NamespacedConfigTest {
 
         assertThat(namespacedConfig.getOptionalValue("foo", String.class)).isNotPresent();
         assertThat(namespacedConfig.getOptionalValue("foo.bar", String.class)).isNotPresent();
-        assertThat(namespacedConfig.getOptionalValue("foo.bar.baz", String.class)).isNotPresent();
+        assertThat(namespacedConfig.getOptionalValue("foo.bar.baz", String.class))
+                .isNotPresent();
         assertThat(namespacedConfig.getOptionalValue("bar", String.class)).isNotPresent();
         assertThat(namespacedConfig.getOptionalValue("bar.baz", String.class)).isNotPresent();
 
@@ -72,9 +73,7 @@ class NamespacedConfigTest {
     void shouldResolveExpressionsToNonNamespacedConfigs() {
         final Config config = new SmallRyeConfigBuilder()
                 .withInterceptors(new ExpressionConfigSourceInterceptor())
-                .withDefaultValues(Map.ofEntries(
-                        Map.entry("foo", "bar"),
-                        Map.entry("foo.bar", "${foo}")))
+                .withDefaultValues(Map.ofEntries(Map.entry("foo", "bar"), Map.entry("foo.bar", "${foo}")))
                 .build();
         assertThat(config.getOptionalValue("foo.bar", String.class)).contains("bar");
 
@@ -95,5 +94,4 @@ class NamespacedConfigTest {
         final Config namespacedConfig = new NamespacedConfig(config, "foo.bar");
         assertThat(namespacedConfig.getPropertyNames()).containsExactlyInAnyOrder("baz", "baz.qux");
     }
-
 }

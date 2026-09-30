@@ -19,9 +19,10 @@
 package org.dependencytrack.filters;
 
 import io.micrometer.core.instrument.Metrics;
-import jakarta.ws.rs.ext.Provider;
 import org.glassfish.jersey.micrometer.server.DefaultJerseyTagsProvider;
 import org.glassfish.jersey.micrometer.server.MetricsApplicationEventListener;
+
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @since 5.0.0
@@ -36,5 +37,4 @@ public class JerseyMetricsApplicationEventListener extends MetricsApplicationEve
                 /* metricName */ "http.server.requests",
                 /* autoTimeRequests */ true);
     }
-
 }

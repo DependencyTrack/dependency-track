@@ -48,9 +48,7 @@ class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
 
     @RegisterExtension
     private static final WireMockExtension wireMock =
-            WireMockExtension.newInstance()
-                    .options(options().dynamicPort())
-                    .build();
+            WireMockExtension.newInstance().options(options().dynamicPort()).build();
 
     private static HttpClient httpClient;
 
@@ -70,8 +68,7 @@ class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
     void shouldSubmitTelemetryWhenEnabledAndDue() {
         createTelemetryConfigProperties("true", null);
 
-        wireMock.stubFor(post(urlEqualTo("/"))
-                .willReturn(aResponse().withStatus(200)));
+        wireMock.stubFor(post(urlEqualTo("/")).willReturn(aResponse().withStatus(200)));
 
         final Config config = new SmallRyeConfigBuilder()
                 .withDefaultValue("alpine.build-info.application.version", "999-SNAPSHOT")
@@ -97,8 +94,7 @@ class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
         assertThat(lastSubmissionEpoch.getPropertyValue()).isNotNull();
 
         final ConfigProperty lastSubmissionData = qm.getConfigProperty(
-                TELEMETRY_LAST_SUBMISSION_DATA.getGroupName(),
-                TELEMETRY_LAST_SUBMISSION_DATA.getPropertyName());
+                TELEMETRY_LAST_SUBMISSION_DATA.getGroupName(), TELEMETRY_LAST_SUBMISSION_DATA.getPropertyName());
         assertThat(lastSubmissionData).isNotNull();
         assertThatJson(lastSubmissionData.getPropertyValue()).isEqualTo("""
                 {
@@ -152,8 +148,7 @@ class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
     void shouldNotRecordSubmissionOn429() {
         createTelemetryConfigProperties("true", null);
 
-        wireMock.stubFor(post(urlEqualTo("/"))
-                .willReturn(aResponse().withStatus(429)));
+        wireMock.stubFor(post(urlEqualTo("/")).willReturn(aResponse().withStatus(429)));
 
         final Config config = new SmallRyeConfigBuilder()
                 .withDefaultValue("alpine.build-info.application.version", "999-SNAPSHOT")
@@ -172,8 +167,7 @@ class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
     void shouldNotRecordSubmissionOnServerError() {
         createTelemetryConfigProperties("true", null);
 
-        wireMock.stubFor(post(urlEqualTo("/"))
-                .willReturn(aResponse().withStatus(500)));
+        wireMock.stubFor(post(urlEqualTo("/")).willReturn(aResponse().withStatus(500)));
 
         final Config config = new SmallRyeConfigBuilder()
                 .withDefaultValue("alpine.build-info.application.version", "999-SNAPSHOT")
@@ -208,5 +202,4 @@ class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
                 TELEMETRY_LAST_SUBMISSION_DATA.getPropertyType(),
                 TELEMETRY_LAST_SUBMISSION_DATA.getDescription());
     }
-
 }

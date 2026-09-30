@@ -123,15 +123,10 @@ public interface WorkflowContext<A extends @Nullable Object> {
      * @return An {@link Awaitable} wrapping the side effect's result, if any.
      */
     <SA, SR> Awaitable<SR> executeSideEffect(
-            String name,
-            @Nullable SA argument,
-            PayloadConverter<SR> resultConverter,
-            Function<SA, SR> function);
+            String name, @Nullable SA argument, PayloadConverter<SR> resultConverter, Function<SA, SR> function);
 
     default <SR> Awaitable<SR> executeSideEffect(
-            String name,
-            PayloadConverter<SR> resultConverter,
-            Supplier<SR> supplier) {
+            String name, PayloadConverter<SR> resultConverter, Supplier<SR> supplier) {
         return executeSideEffect(name, null, resultConverter, _ -> supplier.get());
     }
 
@@ -156,9 +151,7 @@ public interface WorkflowContext<A extends @Nullable Object> {
      * @return An {@link Awaitable} wrapping the external event's content, if any.
      */
     <ER> Awaitable<ER> waitForExternalEvent(
-            String externalEventId,
-            PayloadConverter<ER> resultConverter,
-            Duration timeout);
+            String externalEventId, PayloadConverter<ER> resultConverter, Duration timeout);
 
     /**
      * Restart this workflow with a truncated history.
@@ -168,5 +161,4 @@ public interface WorkflowContext<A extends @Nullable Object> {
      * @param options Options for the restarted workflow.
      */
     void continueAsNew(ContinueAsNewOptions<A> options);
-
 }

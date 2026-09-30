@@ -84,5 +84,4 @@ class StringPayloadConverterTest {
                 .isThrownBy(() -> converter.convertFromPayload(payload))
                 .withMessage("Expected binary content of type text/plain, but got application/json");
     }
-
 }

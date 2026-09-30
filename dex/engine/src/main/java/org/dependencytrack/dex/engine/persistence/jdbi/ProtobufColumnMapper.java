@@ -50,5 +50,4 @@ final class ProtobufColumnMapper<T extends Message> implements ColumnMapper<T> {
             throw new UncheckedIOException("Failed to parse Protobuf message", e);
         }
     }
-
 }

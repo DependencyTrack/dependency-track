@@ -51,5 +51,4 @@ public record WorkflowCallOptions<A extends @Nullable Object>(
     public WorkflowCallOptions<A> withConcurrencyKey(@Nullable String concurrencyKey) {
         return new WorkflowCallOptions<>(this.workflowInstanceId, this.taskQueueName, this.argument, concurrencyKey);
     }
-
 }

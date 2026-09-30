@@ -27,11 +27,11 @@ import org.jspecify.annotations.Nullable;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 final class OsvEcosystems {
 
-    private OsvEcosystems() {
-    }
+    private OsvEcosystems() {}
 
     static @Nullable OsDistribution toOsDistribution(@Nullable String ecosystem) {
         if (ecosystem == null || ecosystem.isEmpty()) {
@@ -46,7 +46,7 @@ final class OsvEcosystems {
         final String ecosystemName = ecosystem.substring(0, colonIndex);
         final String suffix = ecosystem.substring(colonIndex + 1);
 
-        return switch (ecosystemName.toLowerCase()) {
+        return switch (ecosystemName.toLowerCase(Locale.ROOT)) {
             case "alpine" -> AlpineDistribution.ofVersion(suffix);
             case "debian" -> DebianDistribution.of(suffix);
             case "ubuntu" -> {
@@ -67,9 +67,6 @@ final class OsvEcosystems {
         // Some ecosystems contain spaces, e.g. "Red Hat".
         // NB: URLEncoder encodes spaces as "+", but GCS (where OSV hosts its data dumps)
         // requires spaces to be percent-encoded.
-        return URLEncoder
-                .encode(ecosystem, StandardCharsets.UTF_8)
-                .replace("+", "%20");
+        return URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20");
     }
-
 }

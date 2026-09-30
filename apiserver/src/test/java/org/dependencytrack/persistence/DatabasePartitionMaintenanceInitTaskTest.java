@@ -22,7 +22,7 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.init.InitTaskContext;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
+import org.dependencytrack.metrics.MetricsDao;
 import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
@@ -40,8 +40,8 @@ public class DatabasePartitionMaintenanceInitTaskTest extends PersistenceCapable
     public void testMetricsPartitionsForTodayAndTomorrow() throws Exception {
         final DataSource dataSource = DataSourceRegistry.getInstance().getDefault();
 
-        new DatabasePartitionMaintenanceInitTask().execute(
-                new InitTaskContext(new SmallRyeConfigBuilder().build(), dataSource));
+        new DatabasePartitionMaintenanceInitTask()
+                .execute(new InitTaskContext(new SmallRyeConfigBuilder().build(), dataSource));
 
         useJdbiHandle(handle -> {
             final LocalDate todayDate = LocalDate.now(ZoneOffset.UTC);
@@ -49,11 +49,19 @@ public class DatabasePartitionMaintenanceInitTaskTest extends PersistenceCapable
             var tomorrow = todayDate.plusDays(1).format(DateTimeFormatter.BASIC_ISO_DATE);
 
             var metricsDao = handle.attach(MetricsDao.class);
-            assertThat(Collections.frequency(metricsDao.getProjectMetricsPartitions(), "\"PROJECTMETRICS_%s\"".formatted(today))).isEqualTo(1);
-            assertThat(Collections.frequency(metricsDao.getProjectMetricsPartitions(), "\"PROJECTMETRICS_%s\"".formatted(tomorrow))).isEqualTo(1);
-            assertThat(Collections.frequency(metricsDao.getDependencyMetricsPartitions(), "\"DEPENDENCYMETRICS_%s\"".formatted(today))).isEqualTo(1);
-            assertThat(Collections.frequency(metricsDao.getDependencyMetricsPartitions(), "\"DEPENDENCYMETRICS_%s\"".formatted(tomorrow))).isEqualTo(1);
+            assertThat(Collections.frequency(
+                            metricsDao.getProjectMetricsPartitions(), "\"PROJECTMETRICS_%s\"".formatted(today)))
+                    .isEqualTo(1);
+            assertThat(Collections.frequency(
+                            metricsDao.getProjectMetricsPartitions(), "\"PROJECTMETRICS_%s\"".formatted(tomorrow)))
+                    .isEqualTo(1);
+            assertThat(Collections.frequency(
+                            metricsDao.getDependencyMetricsPartitions(), "\"DEPENDENCYMETRICS_%s\"".formatted(today)))
+                    .isEqualTo(1);
+            assertThat(Collections.frequency(
+                            metricsDao.getDependencyMetricsPartitions(),
+                            "\"DEPENDENCYMETRICS_%s\"".formatted(tomorrow)))
+                    .isEqualTo(1);
         });
     }
-
 }

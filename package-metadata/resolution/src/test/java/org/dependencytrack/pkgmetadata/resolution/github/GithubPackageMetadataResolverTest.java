@@ -20,22 +20,16 @@ package org.dependencytrack.pkgmetadata.resolution.github;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import org.dependencytrack.cache.api.CacheManager;
-import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.http.HttpClient;
 import java.time.Instant;
-import java.util.Map;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -57,10 +51,7 @@ class GithubPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         resolverFactory = new GithubPackageMetadataResolverFactory();
-        resolverFactory.init(new MutableServiceRegistry()
-                .register(CacheManager.class, new NoopCacheManager())
-                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        resolverFactory.init(new ExtensionContextBuilder().build());
         resolver = resolverFactory.create();
     }
 
@@ -101,11 +92,9 @@ class GithubPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-02-10T08:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-02-10T08:00:00Z"));
     }
 
     @Test
@@ -130,17 +119,16 @@ class GithubPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
 
         verify(0, getRequestedFor(urlPathEqualTo("/repos/acme/project/releases/tags/v1.5.0")));
     }
 
     @Test
-    void shouldReturnNullArtifactMetadataWhenVersionNotFoundAsRelease(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldReturnNullArtifactMetadataWhenVersionNotFoundAsRelease(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubFor(get(urlPathEqualTo("/repos/acme/project/releases/latest"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                         {
@@ -164,8 +152,7 @@ class GithubPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 
@@ -190,8 +177,7 @@ class GithubPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 
@@ -228,8 +214,7 @@ class GithubPackageMetadataResolverTest {
                 .withVersion("v1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -302,11 +287,12 @@ class GithubPackageMetadataResolverTest {
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-01-05T09:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-01-05T09:00:00Z"));
 
-        verify(0, getRequestedFor(urlPathEqualTo(
-                "/repos/acme/project/releases/tags/4359dee1b7bd29ee25bc78e358a1254a0277ee96")));
+        verify(
+                0,
+                getRequestedFor(
+                        urlPathEqualTo("/repos/acme/project/releases/tags/4359dee1b7bd29ee25bc78e358a1254a0277ee96")));
     }
 
     @Test
@@ -342,8 +328,7 @@ class GithubPackageMetadataResolverTest {
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-01-05T09:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-01-05T09:00:00Z"));
     }
 
     @Test
@@ -375,12 +360,12 @@ class GithubPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-01-06T10:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-01-06T10:00:00Z"));
     }
 
     @Test
-    void shouldReturnNullArtifactMetadataWhenAuthorAndCommitterDatesMissing(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldReturnNullArtifactMetadataWhenAuthorAndCommitterDatesMissing(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubFor(get(urlPathEqualTo("/repos/acme/project/releases/latest"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                         {"tag_name": "v1.5.0", "published_at": "2024-03-15T12:00:00Z"}
@@ -413,7 +398,8 @@ class GithubPackageMetadataResolverTest {
     }
 
     @Test
-    void shouldReturnNullArtifactMetadataWhenNeitherCommitNorTagFound(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldReturnNullArtifactMetadataWhenNeitherCommitNorTagFound(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubFor(get(urlPathEqualTo("/repos/acme/project/releases/latest"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                         {"tag_name": "v1.5.0", "published_at": "2024-03-15T12:00:00Z"}
@@ -440,7 +426,8 @@ class GithubPackageMetadataResolverTest {
     }
 
     @Test
-    void shouldFallBackToReleaseTagWhenShaShapedVersionIsActuallyATag(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldFallBackToReleaseTagWhenShaShapedVersionIsActuallyATag(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubFor(get(urlPathEqualTo("/repos/acme/project/releases/latest"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                         {"tag_name": "v2.0.0", "published_at": "2024-06-01T00:00:00Z"}
@@ -466,8 +453,7 @@ class GithubPackageMetadataResolverTest {
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v2.0.0");
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-04-01T00:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-04-01T00:00:00Z"));
     }
 
     @Test
@@ -516,8 +502,7 @@ class GithubPackageMetadataResolverTest {
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("abcdef1");
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-03-15T12:00:00Z"));
         verify(0, getRequestedFor(urlPathEqualTo("/repos/acme/project/commits/abcdef1")));
     }
 
@@ -564,5 +549,4 @@ class GithubPackageMetadataResolverTest {
         assertThatExceptionOfType(RetryableResolutionException.class)
                 .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
-
 }

@@ -271,5 +271,4 @@ public record ListWorkflowRunsRequest(
                 this.pageToken,
                 this.limit);
     }
-
 }

@@ -34,6 +34,7 @@ public class CweTest {
     public void testName() {
         Cwe cwe = new Cwe();
         cwe.setName("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
-        Assertions.assertEquals("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')", cwe.getName());
+        Assertions.assertEquals(
+                "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')", cwe.getName());
     }
-} 
+}

@@ -18,9 +18,6 @@
  */
 package org.dependencytrack.resources.v1.exception;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
@@ -31,6 +28,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response;
+
 import static java.util.Objects.requireNonNull;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,9 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class QueryTimeoutExceptionMapperTest extends ResourceTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(TestResource.class)
-                    .register(QueryTimeoutExceptionMapper.class));
+    static JerseyTestExtension jersey =
+            new JerseyTestExtension(new ResourceConfig(TestResource.class).register(QueryTimeoutExceptionMapper.class));
 
     @Test
     void shouldMapToGatewayTimeoutProblem() {
@@ -63,10 +63,8 @@ class QueryTimeoutExceptionMapperTest extends ResourceTest {
 
         @GET
         public Response get() {
-            throw requireNonNull(QueryTimeoutException.of(new PSQLException(
-                    "canceling statement due to statement timeout", PSQLState.QUERY_CANCELED)));
+            throw requireNonNull(QueryTimeoutException.of(
+                    new PSQLException("canceling statement due to statement timeout", PSQLState.QUERY_CANCELED)));
         }
-
     }
-
 }

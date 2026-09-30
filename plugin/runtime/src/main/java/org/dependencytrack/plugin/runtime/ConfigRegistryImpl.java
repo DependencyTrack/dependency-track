@@ -76,9 +76,8 @@ final class ConfigRegistryImpl implements MutableConfigRegistry {
         requireNonNull(runtimeConfigMapper, "runtimeConfigMapper is not initialized");
         requireNonNull(secretResolver, "secretResolver is not initialized");
 
-        final String configJson = jdbi.withHandle(
-                handle -> new ExtensionConfigDao(handle).get(
-                        extensionPointName, extensionName));
+        final String configJson =
+                jdbi.withHandle(handle -> new ExtensionConfigDao(handle).get(extensionPointName, extensionName));
         if (configJson == null) {
             return Optional.empty();
         }
@@ -87,7 +86,8 @@ final class ConfigRegistryImpl implements MutableConfigRegistry {
 
         runtimeConfigMapper.resolveSecretRefs(configJsonNode, runtimeConfigSpec, secretResolver);
 
-        final RuntimeConfig runtimeConfig = runtimeConfigMapper.convert(configJsonNode, runtimeConfigSpec.configClass());
+        final RuntimeConfig runtimeConfig =
+                runtimeConfigMapper.convert(configJsonNode, runtimeConfigSpec.configClass());
 
         if (runtimeConfigSpec.validator() != null) {
             runtimeConfigSpec.validator().validate(runtimeConfig);
@@ -106,7 +106,8 @@ final class ConfigRegistryImpl implements MutableConfigRegistry {
             throw new IllegalArgumentException("""
                     The provided config of type %s is not an instance of the \
                     extension's declared config type %s\
-                    """.formatted(config.getClass().getName(), runtimeConfigSpec.configClass().getName()));
+                    """.formatted(
+                    config.getClass().getName(), runtimeConfigSpec.configClass().getName()));
         }
 
         runtimeConfigMapper.validate(config, runtimeConfigSpec);
@@ -114,16 +115,13 @@ final class ConfigRegistryImpl implements MutableConfigRegistry {
         final String configJson = runtimeConfigMapper.serialize(config);
 
         return jdbi.inTransaction(
-                handle -> new ExtensionConfigDao(handle).save(
-                        extensionPointName, extensionName, configJson));
+                handle -> new ExtensionConfigDao(handle).save(extensionPointName, extensionName, configJson));
     }
 
     @Override
     public Optional<String> getRawRuntimeConfig() {
         return Optional.ofNullable(
-                jdbi.withHandle(
-                        handle -> new ExtensionConfigDao(handle).get(
-                                extensionPointName, extensionName)));
+                jdbi.withHandle(handle -> new ExtensionConfigDao(handle).get(extensionPointName, extensionName)));
     }
 
     @Override
@@ -131,8 +129,7 @@ final class ConfigRegistryImpl implements MutableConfigRegistry {
         requireNonNull(configJson, "configJson must not be null");
 
         return jdbi.inTransaction(
-                handle -> new ExtensionConfigDao(handle).save(
-                        extensionPointName, extensionName, configJson));
+                handle -> new ExtensionConfigDao(handle).save(extensionPointName, extensionName, configJson));
     }
 
     boolean hasRuntimeConfig() {
@@ -140,9 +137,6 @@ final class ConfigRegistryImpl implements MutableConfigRegistry {
             return false;
         }
 
-        return jdbi.withHandle(
-                handle -> new ExtensionConfigDao(handle).exists(
-                        extensionPointName, extensionName));
+        return jdbi.withHandle(handle -> new ExtensionConfigDao(handle).exists(extensionPointName, extensionName));
     }
-
 }

@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
-import org.dependencytrack.model.DependencyMetrics;
-import org.dependencytrack.model.ProjectMetrics;
+import org.dependencytrack.metrics.DependencyMetrics;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -182,12 +182,7 @@ public interface MetricsTestDao extends SqlObject {
         String sql = String.format("""
             CREATE TABLE IF NOT EXISTS %s PARTITION OF %s
             FOR VALUES FROM (CAST('%s' AS timestamp) AT TIME ZONE 'UTC') TO (CAST('%s' AS timestamp) AT TIME ZONE 'UTC');
-        """,
-                "\"" + partitionName + "\"",
-                "\"" + tableName + "\"",
-                targetDate,
-                nextDay
-        );
+        """, "\"" + partitionName + "\"", "\"" + tableName + "\"", targetDate, nextDay);
         getHandle().execute(sql);
     }
 

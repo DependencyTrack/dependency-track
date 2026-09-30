@@ -21,5 +21,4 @@ package org.dependencytrack.dex.engine.api;
 public interface DexEngineFactory {
 
     DexEngine create(DexEngineConfig config);
-
 }

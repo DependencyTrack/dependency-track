@@ -16,13 +16,13 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.model; 
+package org.dependencytrack.model;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class RepositoryTest {
-    
+
     @Test
     public void testId() {
         Repository repo = new Repository();
@@ -35,7 +35,7 @@ public class RepositoryTest {
         Repository repo = new Repository();
         repo.setType(RepositoryType.MAVEN);
         Assertions.assertEquals(RepositoryType.MAVEN, repo.getType());
-    } 
+    }
 
     @Test
     public void testIdentifier() {
@@ -49,14 +49,14 @@ public class RepositoryTest {
         Repository repo = new Repository();
         repo.setUrl("https://repo.maven.apache.org/maven2");
         Assertions.assertEquals("https://repo.maven.apache.org/maven2", repo.getUrl());
-    } 
+    }
 
     @Test
     public void testResolutionOrder() {
         Repository repo = new Repository();
         repo.setResolutionOrder(5);
         Assertions.assertEquals(5, repo.getResolutionOrder());
-    } 
+    }
 
     @Test
     public void testEnabled() {
@@ -78,4 +78,4 @@ public class RepositoryTest {
         repo.setAuthenticationRequired(false);
         Assertions.assertFalse(repo.isAuthenticationRequired());
     }
-} 
+}

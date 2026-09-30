@@ -37,5 +37,4 @@ public class InvalidBomProblemDetails extends ProblemDetails {
     public void setErrors(final List<String> errors) {
         this.errors = errors;
     }
-
 }

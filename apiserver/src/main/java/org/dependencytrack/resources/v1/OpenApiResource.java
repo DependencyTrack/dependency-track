@@ -24,19 +24,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.swagger.v3.oas.annotations.Operation;
+import org.dependencytrack.resources.OpenApiSpecEnricher;
+
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.dependencytrack.resources.OpenApiSpecEnricher;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -108,12 +110,10 @@ public class OpenApiResource {
     }
 
     private static String loadYamlFromClasspath() throws IOException {
-        try (final InputStream inputStream = OpenApiResource.class
-                .getResourceAsStream("/org/dependencytrack/api/v1/openapi.yaml")) {
+        try (final InputStream inputStream =
+                OpenApiResource.class.getResourceAsStream("/org/dependencytrack/api/v1/openapi.yaml")) {
             requireNonNull(inputStream, "OpenAPI spec not found on classpath");
-            return OpenApiSpecEnricher.enrich(
-                    new String(inputStream.readAllBytes()), new About().getVersion());
+            return OpenApiSpecEnricher.enrich(new String(inputStream.readAllBytes(), UTF_8), new About().getVersion());
         }
     }
-
 }

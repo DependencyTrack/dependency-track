@@ -36,6 +36,8 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Client for Checkmarx vulnerability API.
  */
@@ -81,8 +83,8 @@ final class CheckmarxApiClient {
 
         LOGGER.debug("Fetching Checkmarx vulnerabilities for {} PURLs", purls.size());
 
-        final URI requestUrl = apiBaseUrl.resolve("/api/v1/Packages/risks"
-                                + "?IncludeRiskDetails=true" + "&IncludeVersionDetails=true" + "&IncludeVersionRemediation=true");
+        final URI requestUrl = apiBaseUrl.resolve("/api/v1/Packages/risks" + "?IncludeRiskDetails=true"
+                + "&IncludeVersionDetails=true" + "&IncludeVersionRemediation=true");
 
         // Ensure valid access token (will be cached if still valid)
         final String accessToken = tokenManager.getAccessToken(authApiBaseUrl, orgId, apiKey);
@@ -120,19 +122,16 @@ final class CheckmarxApiClient {
             }
 
             RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
-            final String errorMessage = errorBody.toString().trim();
+            final String errorMessage = errorBody.toString(UTF_8).trim();
 
             if (!errorMessage.isEmpty()) {
                 LOGGER.debug(
                         "Checkmarx API request failed with status {} : {}",
                         response.statusCode(),
-                        errorMessage.length() > 1000
-                                ? errorMessage.substring(0, 1000) + "..."
-                                : errorMessage);
+                        errorMessage.length() > 1000 ? errorMessage.substring(0, 1000) + "..." : errorMessage);
             }
 
-            throw new IOException(
-                    "Checkmarx API request failed with status " + response.statusCode());
+            throw new IOException("Checkmarx API request failed with status " + response.statusCode());
         }
     }
 
@@ -145,14 +144,10 @@ final class CheckmarxApiClient {
 
         private static VulnerabilityRequest of(Collection<String> purls) {
             return new VulnerabilityRequest(
-                    purls.stream()
-                            .map(VulnerabilityRequestItem::new)
-                            .toList());
+                    purls.stream().map(VulnerabilityRequestItem::new).toList());
         }
-
     }
 
-    private record VulnerabilityRequestItem(@JsonProperty("purl") String purl) {
-    }
-
+    private record VulnerabilityRequestItem(
+            @JsonProperty("purl") String purl) {}
 }

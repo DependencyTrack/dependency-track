@@ -54,5 +54,4 @@ class ListWorkflowRunsRequestTest {
         assertThat(request.pageToken()).isEqualTo("pageToken");
         assertThat(request.limit()).isEqualTo(666);
     }
-
 }

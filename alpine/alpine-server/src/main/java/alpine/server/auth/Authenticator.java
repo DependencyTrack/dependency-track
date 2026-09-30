@@ -23,7 +23,8 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.Principal;
+import alpine.model.ManagedUser;
+import alpine.model.User;
 
 /**
  * Class is responsible for authenticating managed users against the internal user
@@ -57,15 +58,15 @@ public class Authenticator {
      * Attempts to authenticate the credentials internally first and if not  successful,
      * checks to see if LDAP is enabled or not. If enabled, a second attempt to authenticate
      * the credentials will be made, but this time against the directory service.
-     * @return a Principal upon successful authentication
+     * @return the authenticated user
      * @throws AlpineAuthenticationException upon authentication failure
      * @since 1.0.0
      */
-    public Principal authenticate() throws AlpineAuthenticationException {
+    public User authenticate() throws AlpineAuthenticationException {
         LOGGER.debug("Attempting to authenticate user: {}", username);
         final ManagedUserAuthenticationService userService = new ManagedUserAuthenticationService(username, password);
         try{
-	        final Principal principal = userService.authenticate();
+	        final ManagedUser principal = userService.authenticate();
 	        if (principal != null) {
 	            return principal;
 	        }

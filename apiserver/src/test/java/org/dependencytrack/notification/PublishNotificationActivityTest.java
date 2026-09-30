@@ -26,17 +26,19 @@ class PublishNotificationActivityTest {
 
     @Test
     void shouldLogSuccessfulPublishWhenRuleTestIsTrue() {
-        assertThat(PublishNotificationActivity.shouldLogSuccessfulPublish(false, true)).isTrue();
+        assertThat(PublishNotificationActivity.shouldLogSuccessfulPublish(false, true))
+                .isTrue();
     }
 
     @Test
     void shouldLogSuccessfulPublishWhenRuleSettingIsEnabled() {
-        assertThat(PublishNotificationActivity.shouldLogSuccessfulPublish(true, false)).isTrue();
+        assertThat(PublishNotificationActivity.shouldLogSuccessfulPublish(true, false))
+                .isTrue();
     }
 
     @Test
     void shouldNotLogSuccessfulPublishWhenDisabledAndNotRuleTest() {
-        assertThat(PublishNotificationActivity.shouldLogSuccessfulPublish(false, false)).isFalse();
+        assertThat(PublishNotificationActivity.shouldLogSuccessfulPublish(false, false))
+                .isFalse();
     }
-
 }

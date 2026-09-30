@@ -19,14 +19,15 @@
 package org.dependencytrack.resources.v2.exception;
 
 import alpine.server.auth.AuthenticationNotRequired;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.ServerErrorException;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.resources.v2.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.ServerErrorException;
+import jakarta.ws.rs.core.Response;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,8 +37,7 @@ public class DefaultExceptionMapperTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(JsonProcessingExceptionMapperTest.TestResource.class));
+            new ResourceConfig().register(JsonProcessingExceptionMapperTest.TestResource.class));
 
     @Test
     public void shouldReturnInternalServerError() {
@@ -87,9 +87,8 @@ public class DefaultExceptionMapperTest {
         @Path("/server-error")
         @AuthenticationNotRequired
         public Response serverError() {
-            throw new ServerErrorException(Response.status(Response.Status.SERVICE_UNAVAILABLE).build());
+            throw new ServerErrorException(
+                    Response.status(Response.Status.SERVICE_UNAVAILABLE).build());
         }
-
     }
-
 }

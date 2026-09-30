@@ -29,10 +29,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static org.dependencytrack.filestorage.OriginalBomFileCleanup.deleteOriginalBomFiles;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_DAYS;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_TYPE;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_VERSIONS;
-import static org.dependencytrack.filestorage.OriginalBomFileCleanup.deleteOriginalBomFiles;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTask {
@@ -50,10 +50,8 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
 
     @Override
     public void run() {
-        final Optional<String> retentionType = withJdbiHandle(
-                handle -> handle
-                        .attach(ConfigPropertyDao.class)
-                        .getOptionalValue(MAINTENANCE_PROJECTS_RETENTION_TYPE, String.class));
+        final Optional<String> retentionType = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getOptionalValue(MAINTENANCE_PROJECTS_RETENTION_TYPE, String.class));
 
         if (retentionType.isEmpty() || retentionType.get().isEmpty()) {
             LOGGER.debug("Inactive project deletion is disabled; nothing to do");
@@ -61,24 +59,17 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
         }
 
         if ("AGE".equals(retentionType.get())) {
-            final int retentionDays = withJdbiHandle(
-                    handle -> handle
-                            .attach(ConfigPropertyDao.class)
-                            .getValue(MAINTENANCE_PROJECTS_RETENTION_DAYS, Integer.class));
+            final int retentionDays = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                    .getValue(MAINTENANCE_PROJECTS_RETENTION_DAYS, Integer.class));
             final Instant retentionCutOff = Instant.now().minus(Duration.ofDays(retentionDays));
             final int deleted = runBatched(
                     BATCH_SIZE,
-                    handle -> handle
-                            .attach(ProjectDao.class)
-                            .deleteInactiveProjectsWithOriginalBomFiles(
-                                    retentionCutOff,
-                                    BATCH_SIZE),
+                    handle -> handle.attach(ProjectDao.class)
+                            .deleteInactiveProjectsWithOriginalBomFiles(retentionCutOff, BATCH_SIZE),
                     result -> result.deletedProjects().size(),
                     result -> {
                         logDeletedProjects(result.deletedProjects());
-                        deleteOriginalBomFiles(
-                                fileStorage,
-                                result.originalBomFiles());
+                        deleteOriginalBomFiles(fileStorage, result.originalBomFiles());
                     });
 
             if (deleted > 0) {
@@ -88,24 +79,17 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
             return;
         }
 
-        final int versionCountThreshold = withJdbiHandle(
-                handle -> handle
-                        .attach(ConfigPropertyDao.class)
-                        .getValue(MAINTENANCE_PROJECTS_RETENTION_VERSIONS, Integer.class));
+        final int versionCountThreshold = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getValue(MAINTENANCE_PROJECTS_RETENTION_VERSIONS, Integer.class));
 
         final int deleted = runBatched(
                 BATCH_SIZE,
-                handle -> handle
-                        .attach(ProjectDao.class)
-                        .deleteExcessProjectVersionsWithOriginalBomFiles(
-                                versionCountThreshold,
-                                BATCH_SIZE),
+                handle -> handle.attach(ProjectDao.class)
+                        .deleteExcessProjectVersionsWithOriginalBomFiles(versionCountThreshold, BATCH_SIZE),
                 result -> result.deletedProjects().size(),
                 result -> {
                     logDeletedProjects(result.deletedProjects());
-                    deleteOriginalBomFiles(
-                            fileStorage,
-                            result.originalBomFiles());
+                    deleteOriginalBomFiles(fileStorage, result.originalBomFiles());
                 });
 
         if (deleted > 0) {
@@ -121,5 +105,4 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
                 deletedProject.inactiveSince(),
                 deletedProject.uuid()));
     }
-
 }

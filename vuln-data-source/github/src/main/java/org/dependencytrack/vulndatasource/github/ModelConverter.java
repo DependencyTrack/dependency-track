@@ -52,13 +52,16 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static io.github.nscuro.versatile.VersUtils.versFromGhsaRange;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.cyclonedx.proto.v1_7.Severity.SEVERITY_CRITICAL;
 import static org.cyclonedx.proto.v1_7.Severity.SEVERITY_HIGH;
 import static org.cyclonedx.proto.v1_7.Severity.SEVERITY_INFO;
@@ -76,8 +79,7 @@ final class ModelConverter {
     private static final Source SOURCE = Source.newBuilder().setName("GITHUB").build();
     private static final String TITLE_PROPERTY_NAME = "dependency-track:vuln:title";
 
-    private ModelConverter() {
-    }
+    private ModelConverter() {}
 
     static Bom convert(final SecurityAdvisory advisory, boolean aliasSyncEnabled) {
         final Vulnerability.Builder vulnBuilder = Vulnerability.newBuilder()
@@ -86,8 +88,11 @@ final class ModelConverter {
                 .setDescription(Optional.ofNullable(advisory.getDescription()).orElse(""))
                 .addAllCwes(parseCwes(advisory.getCwes()));
 
-        Optional.ofNullable(advisory.getSummary()).ifPresent(title -> vulnBuilder.addProperties(
-                Property.newBuilder().setName(TITLE_PROPERTY_NAME).setValue(abbreviate(title, 255)).build()));
+        Optional.ofNullable(advisory.getSummary())
+                .ifPresent(title -> vulnBuilder.addProperties(Property.newBuilder()
+                        .setName(TITLE_PROPERTY_NAME)
+                        .setValue(abbreviate(title, 255))
+                        .build()));
 
         vulnBuilder.addAllRatings(parseRatings(advisory));
 
@@ -117,26 +122,28 @@ final class ModelConverter {
         final var componentByPurl = new HashMap<String, Component>();
         final var vulnAffectsBuilderByBomRef = new HashMap<String, VulnerabilityAffects.Builder>();
 
-        if (advisory.getVulnerabilities() != null && advisory.getVulnerabilities().getEdges() != null) {
+        if (advisory.getVulnerabilities() != null
+                && advisory.getVulnerabilities().getEdges() != null) {
 
-            for (final io.github.jeremylong.openvulnerability.client.ghsa.Vulnerability gitHubVulnerability : advisory.getVulnerabilities().getEdges()) {
+            for (final io.github.jeremylong.openvulnerability.client.ghsa.Vulnerability gitHubVulnerability :
+                    advisory.getVulnerabilities().getEdges()) {
                 PackageURL purl = convertToPurl(gitHubVulnerability.getPackage());
                 if (purl == null) {
-                    //drop mapping if purl is null
+                    // drop mapping if purl is null
                     continue;
                 }
 
                 final Component component = componentByPurl.computeIfAbsent(
                         purl.getCoordinates(),
                         purlCoordinates -> Component.newBuilder()
-                                .setBomRef(UUID.nameUUIDFromBytes(purlCoordinates.getBytes()).toString())
+                                .setBomRef(UUID.nameUUIDFromBytes(purlCoordinates.getBytes(UTF_8))
+                                        .toString())
                                 .setPurl(purlCoordinates)
                                 .build());
 
                 final VulnerabilityAffects.Builder affectsBuilder = vulnAffectsBuilderByBomRef.computeIfAbsent(
                         component.getBomRef(),
-                        bomRef -> VulnerabilityAffects.newBuilder()
-                                .setRef(bomRef));
+                        bomRef -> VulnerabilityAffects.newBuilder().setRef(bomRef));
 
                 var parsedVersionRange = parseVersionRangeAffected(gitHubVulnerability);
                 if (parsedVersionRange != null) {
@@ -147,13 +154,13 @@ final class ModelConverter {
 
         // Sort components by BOM ref to ensure consistent ordering.
         final List<Component> components = componentByPurl.values().stream()
-                .sorted(java.util.Comparator.comparing(Component::getBomRef))
+                .sorted(Comparator.comparing(Component::getBomRef))
                 .toList();
 
         // Sort affects by BOM ref to ensure consistent ordering.
         final List<VulnerabilityAffects> vulnAffects = vulnAffectsBuilderByBomRef.values().stream()
                 .map(VulnerabilityAffects.Builder::build)
-                .sorted(java.util.Comparator.comparing(VulnerabilityAffects::getRef))
+                .sorted(Comparator.comparing(VulnerabilityAffects::getRef))
                 .toList();
 
         final Bom.Builder bomBuilder = Bom.newBuilder()
@@ -170,11 +177,13 @@ final class ModelConverter {
 
         if (advisory.getCvssSeverities() != null) {
             if (advisory.getCvssSeverities().getCvssV4() != null) {
-                buildCvssRating(StringUtils.trimToNull(advisory.getCvssSeverities().getCvssV4().getVectorString()))
+                buildCvssRating(StringUtils.trimToNull(
+                                advisory.getCvssSeverities().getCvssV4().getVectorString()))
                         .ifPresent(ratings::add);
             }
             if (advisory.getCvssSeverities().getCvssV3() != null) {
-                buildCvssRating(StringUtils.trimToNull(advisory.getCvssSeverities().getCvssV3().getVectorString()))
+                buildCvssRating(StringUtils.trimToNull(
+                                advisory.getCvssSeverities().getCvssV3().getVectorString()))
                         .ifPresent(ratings::add);
             }
         }
@@ -183,11 +192,13 @@ final class ModelConverter {
             return ratings;
         }
 
-        if (advisory.getSeverity() != null && StringUtils.trimToNull(advisory.getSeverity().value()) != null) {
+        if (advisory.getSeverity() != null
+                && StringUtils.trimToNull(advisory.getSeverity().value()) != null) {
             return List.of(VulnerabilityRating.newBuilder()
                     .setSource(SOURCE)
                     .setMethod(ScoreMethod.SCORE_METHOD_OTHER)
-                    .setSeverity(mapSeverity(StringUtils.trimToNull(advisory.getSeverity().value())))
+                    .setSeverity(mapSeverity(
+                            StringUtils.trimToNull(advisory.getSeverity().value())))
                     .build());
         }
         return List.of();
@@ -207,16 +218,21 @@ final class ModelConverter {
         final VulnerabilityRating.Builder ratingBuilder = VulnerabilityRating.newBuilder()
                 .setSource(SOURCE)
                 .setVector(cvss.toString())
-                .setScore(cvss.getBakedScores().getBaseScore())
+                .setScore(calculateCvssScore(cvss))
                 .setSeverity(calculateCvssSeverity(cvss));
-        if (cvss instanceof Cvss4P0) {
-            return Optional.of(ratingBuilder.setMethod(ScoreMethod.SCORE_METHOD_CVSSV4).build());
-        } else if (cvss instanceof Cvss3P1) {
-            return Optional.of(ratingBuilder.setMethod(ScoreMethod.SCORE_METHOD_CVSSV31).build());
-        } else if (cvss instanceof Cvss3P0) {
-            return Optional.of(ratingBuilder.setMethod(ScoreMethod.SCORE_METHOD_CVSSV3).build());
-        }
-        return Optional.empty();
+        return switch (cvss) {
+            case Cvss4P0 _ ->
+                Optional.of(
+                        ratingBuilder.setMethod(ScoreMethod.SCORE_METHOD_CVSSV4).build());
+            case Cvss3P1 _ ->
+                Optional.of(ratingBuilder
+                        .setMethod(ScoreMethod.SCORE_METHOD_CVSSV31)
+                        .build());
+            case Cvss3P0 _ ->
+                Optional.of(
+                        ratingBuilder.setMethod(ScoreMethod.SCORE_METHOD_CVSSV3).build());
+            default -> Optional.empty();
+        };
     }
 
     private static @Nullable List<VulnerabilityReference> mapVulnerabilityReferences(SecurityAdvisory advisory) {
@@ -234,13 +250,15 @@ final class ModelConverter {
 
             if (!advisory.getId().equals(identifier.getValue())) {
                 // TODO: Consider mapping to CNA names instead (https://github.com/DependencyTrack/hyades/issues/1297).
-                final String source = switch (identifier.getType()) {
-                    case "CVE" -> "NVD";
-                    case "GHSA" -> "GITHUB";
-                    default -> null;
-                };
+                final String source =
+                        switch (identifier.getType()) {
+                            case "CVE" -> "NVD";
+                            case "GHSA" -> "GITHUB";
+                            default -> null;
+                        };
                 if (source == null) {
-                    LOGGER.warn("Unknown type {} for identifier {}; Skipping", identifier.getType(), identifier.getValue());
+                    LOGGER.warn(
+                            "Unknown type {} for identifier {}; Skipping", identifier.getType(), identifier.getValue());
                     continue;
                 }
 
@@ -254,21 +272,20 @@ final class ModelConverter {
         return references;
     }
 
-
     private static @Nullable List<ExternalReference> mapExternalReferences(SecurityAdvisory advisory) {
         if (advisory.getReferences() == null || advisory.getReferences().isEmpty()) {
             return null;
         }
         List<ExternalReference> externalReferences = new ArrayList<>();
-        advisory.getReferences().forEach(reference ->
-                externalReferences.add(ExternalReference.newBuilder()
+        advisory.getReferences()
+                .forEach(reference -> externalReferences.add(ExternalReference.newBuilder()
                         .setUrl(reference.getUrl())
-                        .build())
-        );
+                        .build()));
         return externalReferences;
     }
 
-    private static @Nullable VulnerabilityAffectedVersions parseVersionRangeAffected(final io.github.jeremylong.openvulnerability.client.ghsa.Vulnerability vuln) {
+    private static @Nullable VulnerabilityAffectedVersions parseVersionRangeAffected(
+            final io.github.jeremylong.openvulnerability.client.ghsa.Vulnerability vuln) {
         var vulnerableVersionRange = vuln.getVulnerableVersionRange();
         try {
             var vers = versFromGhsaRange(vuln.getPackage().getEcosystem(), vulnerableVersionRange);
@@ -294,44 +311,44 @@ final class ModelConverter {
     }
 
     private static @Nullable PackageURL convertToPurl(Package pkg) {
-        final String purlType = switch (pkg.getEcosystem().toLowerCase()) {
-            case "composer" -> PackageURL.StandardTypes.COMPOSER;
-            case "erlang" -> PackageURL.StandardTypes.HEX;
-            case "go" -> PackageURL.StandardTypes.GOLANG;
-            case "maven" -> PackageURL.StandardTypes.MAVEN;
-            case "npm" -> PackageURL.StandardTypes.NPM;
-            case "nuget" -> PackageURL.StandardTypes.NUGET;
-            case "other" -> PackageURL.StandardTypes.GENERIC;
-            case "pip" -> PackageURL.StandardTypes.PYPI;
-            case "pub" -> "pub"; // https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst#pub
-            case "rubygems" -> PackageURL.StandardTypes.GEM;
-            case "rust" -> PackageURL.StandardTypes.CARGO;
-            case "swift" -> "swift"; // https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst#swift
-            default -> {
-                // Not optimal, but still better than ignoring the package entirely.
-                LOGGER.warn(
-                        "Unrecognized ecosystem {}; Assuming PURL type {} for {}",
-                        pkg.getEcosystem(), PackageURL.StandardTypes.GENERIC, pkg);
-                yield PackageURL.StandardTypes.GENERIC;
-            }
-        };
+        final String purlType =
+                switch (pkg.getEcosystem().toLowerCase(Locale.ROOT)) {
+                    case "composer" -> PackageURL.StandardTypes.COMPOSER;
+                    case "erlang" -> PackageURL.StandardTypes.HEX;
+                    case "go" -> PackageURL.StandardTypes.GOLANG;
+                    case "maven" -> PackageURL.StandardTypes.MAVEN;
+                    case "npm" -> PackageURL.StandardTypes.NPM;
+                    case "nuget" -> PackageURL.StandardTypes.NUGET;
+                    case "other" -> PackageURL.StandardTypes.GENERIC;
+                    case "pip" -> PackageURL.StandardTypes.PYPI;
+                    case "pub" -> "pub"; // https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst#pub
+                    case "rubygems" -> PackageURL.StandardTypes.GEM;
+                    case "rust" -> PackageURL.StandardTypes.CARGO;
+                    case "swift" ->
+                        "swift"; // https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst#swift
+                    default -> {
+                        // Not optimal, but still better than ignoring the package entirely.
+                        LOGGER.warn(
+                                "Unrecognized ecosystem {}; Assuming PURL type {} for {}",
+                                pkg.getEcosystem(),
+                                PackageURL.StandardTypes.GENERIC,
+                                pkg);
+                        yield PackageURL.StandardTypes.GENERIC;
+                    }
+                };
 
         final PackageURLBuilder purlBuilder = aPackageURL().withType(purlType);
         if (PackageURL.StandardTypes.MAVEN.equals(purlType) && pkg.getName().contains(":")) {
             final String[] nameParts = pkg.getName().split(":", 2);
-            purlBuilder
-                    .withNamespace(nameParts[0])
-                    .withName(nameParts[1]);
+            purlBuilder.withNamespace(nameParts[0]).withName(nameParts[1]);
         } else if ((PackageURL.StandardTypes.COMPOSER.equals(purlType)
-                || PackageURL.StandardTypes.GOLANG.equals(purlType)
-                || PackageURL.StandardTypes.NPM.equals(purlType)
-                || PackageURL.StandardTypes.GENERIC.equals(purlType))
+                        || PackageURL.StandardTypes.GOLANG.equals(purlType)
+                        || PackageURL.StandardTypes.NPM.equals(purlType)
+                        || PackageURL.StandardTypes.GENERIC.equals(purlType))
                 && pkg.getName().contains("/")) {
             final String[] nameParts = pkg.getName().split("/");
             final String namespace = String.join("/", Arrays.copyOfRange(nameParts, 0, nameParts.length - 1));
-            purlBuilder
-                    .withNamespace(namespace)
-                    .withName(nameParts[nameParts.length - 1]);
+            purlBuilder.withNamespace(namespace).withName(nameParts[nameParts.length - 1]);
         } else {
             purlBuilder.withName(pkg.getName());
         }
@@ -344,12 +361,18 @@ final class ModelConverter {
         }
     }
 
+    private static double calculateCvssScore(CvssVector cvss) {
+        return cvss instanceof Cvss4P0
+                ? cvss.getBakedScores().getOverallScore()
+                : cvss.getBakedScores().getBaseScore();
+    }
+
     private static Severity calculateCvssSeverity(@Nullable CvssVector cvss) {
         if (cvss == null) {
             return SEVERITY_UNKNOWN;
         }
 
-        final double score = cvss.getBakedScores().getBaseScore();
+        final double score = calculateCvssScore(cvss);
         if (cvss instanceof Cvss3 || cvss instanceof Cvss4P0) {
             if (score >= 9) {
                 return SEVERITY_CRITICAL;
@@ -387,5 +410,4 @@ final class ModelConverter {
 
         return value;
     }
-
 }

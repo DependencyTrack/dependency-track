@@ -27,8 +27,7 @@ import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.memory.MemoryCacheProvider;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
@@ -37,7 +36,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
@@ -84,11 +82,10 @@ class VulnDbVulnAnalyzerTest {
                         .withOauth2ClientId("test-client-id")
                         .withOauth2ClientSecret("test-client-secret"));
 
-        analyzerFactory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(CacheManager.class, cacheManager)
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(configRegistry)
+                .withCacheManager(cacheManager)
+                .build());
 
         analyzer = analyzerFactory.create();
     }
@@ -109,12 +106,11 @@ class VulnDbVulnAnalyzerTest {
                 .willReturn(aResponse().withFault(CONNECTION_RESET_BY_PEER)));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("example-lib")
-                                .setCpe("cpe:2.3:a:example:lib:1.0:*:*:*:*:*:*:*")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("example-lib")
+                        .setCpe("cpe:2.3:a:example:lib:1.0:*:*:*:*:*:*:*")
+                        .build())
                 .build();
 
         assertThatExceptionOfType(RetryableVulnAnalysisException.class)
@@ -131,12 +127,11 @@ class VulnDbVulnAnalyzerTest {
                         .withBodyFile("vulndb-response-with-vulns.json")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("example-lib")
-                                .setCpe("cpe:2.3:a:example:lib:1.0:*:*:*:*:*:*:*")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("example-lib")
+                        .setCpe("cpe:2.3:a:example:lib:1.0:*:*:*:*:*:*:*")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -187,8 +182,7 @@ class VulnDbVulnAnalyzerTest {
         final Bom secondVdr = analyzer.analyze(bom);
         assertThat(secondVdr).isEqualTo(vdr);
 
-        verify(1, getRequestedFor(anyUrl())
-                .withHeader("Authorization", equalTo("Bearer test-token")));
+        verify(1, getRequestedFor(anyUrl()).withHeader("Authorization", equalTo("Bearer test-token")));
     }
 
     @Test
@@ -200,12 +194,11 @@ class VulnDbVulnAnalyzerTest {
                         .withBodyFile("vulndb-response-no-vulns.json")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("safe-lib")
-                                .setCpe("cpe:2.3:a:example:safe-lib:1.0:*:*:*:*:*:*:*")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("safe-lib")
+                        .setCpe("cpe:2.3:a:example:safe-lib:1.0:*:*:*:*:*:*:*")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -220,11 +213,10 @@ class VulnDbVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeComponentWithoutBomRef() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setName("example-lib")
-                                .setCpe("cpe:2.3:a:example:lib:1.0:*:*:*:*:*:*:*")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setName("example-lib")
+                        .setCpe("cpe:2.3:a:example:lib:1.0:*:*:*:*:*:*:*")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -236,11 +228,10 @@ class VulnDbVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeComponentWithoutCpe() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("example-lib")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("example-lib")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -252,17 +243,15 @@ class VulnDbVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeInternalComponents() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("internal-lib")
-                                .setCpe("cpe:2.3:a:example:internal:1.0:*:*:*:*:*:*:*")
-                                .addProperties(
-                                        Property.newBuilder()
-                                                .setName("dependencytrack:internal:is-internal-component")
-                                                .setValue("does-not-matter")
-                                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("internal-lib")
+                        .setCpe("cpe:2.3:a:example:internal:1.0:*:*:*:*:*:*:*")
+                        .addProperties(Property.newBuilder()
+                                .setName("dependencytrack:internal:is-internal-component")
+                                .setValue("does-not-matter")
                                 .build())
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -288,21 +277,24 @@ class VulnDbVulnAnalyzerTest {
                         .withBodyFile("vulndb-response-with-vulns-page2.json")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("example-lib")
-                                .setCpe("cpe:2.3:a:example:lib:1.0:*:*:*:*:*:*:*")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("example-lib")
+                        .setCpe("cpe:2.3:a:example:lib:1.0:*:*:*:*:*:*:*")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
         assertThat(vdr.getVulnerabilitiesCount()).isEqualTo(2);
 
-        verify(1, getRequestedFor(urlPathEqualTo("/api/v1/vulnerabilities/find_by_cpe"))
-                .withQueryParam("page", equalTo("1")));
-        verify(1, getRequestedFor(urlPathEqualTo("/api/v1/vulnerabilities/find_by_cpe"))
-                .withQueryParam("page", equalTo("2")));
+        verify(
+                1,
+                getRequestedFor(urlPathEqualTo("/api/v1/vulnerabilities/find_by_cpe"))
+                        .withQueryParam("page", equalTo("1")));
+        verify(
+                1,
+                getRequestedFor(urlPathEqualTo("/api/v1/vulnerabilities/find_by_cpe"))
+                        .withQueryParam("page", equalTo("2")));
     }
 
     @Test
@@ -315,12 +307,11 @@ class VulnDbVulnAnalyzerTest {
 
         final var bomBuilder = Bom.newBuilder();
         for (int i = 0; i < 10; i++) {
-            bomBuilder.addComponents(
-                    Component.newBuilder()
-                            .setBomRef(String.valueOf(i))
-                            .setName("lib-" + i)
-                            .setCpe("cpe:2.3:a:example:lib-" + i + ":1.0:*:*:*:*:*:*:*")
-                            .build());
+            bomBuilder.addComponents(Component.newBuilder()
+                    .setBomRef(String.valueOf(i))
+                    .setName("lib-" + i)
+                    .setCpe("cpe:2.3:a:example:lib-" + i + ":1.0:*:*:*:*:*:*:*")
+                    .build());
         }
 
         final Bom vdr = analyzer.analyze(bomBuilder.build());
@@ -328,5 +319,4 @@ class VulnDbVulnAnalyzerTest {
 
         verify(10, getRequestedFor(anyUrl()));
     }
-
 }

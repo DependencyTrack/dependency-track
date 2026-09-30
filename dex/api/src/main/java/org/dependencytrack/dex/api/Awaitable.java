@@ -44,5 +44,4 @@ public interface Awaitable<T extends @Nullable Object> {
      */
     @Nullable
     T await();
-
 }

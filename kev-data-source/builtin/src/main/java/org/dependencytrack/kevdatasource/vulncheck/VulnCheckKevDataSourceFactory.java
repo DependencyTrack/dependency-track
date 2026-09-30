@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.kevdatasource.api.KevDataSourceFactory;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
@@ -62,19 +62,17 @@ public final class VulnCheckKevDataSourceFactory implements KevDataSourceFactory
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        this.httpClient = serviceRegistry.require(HttpClient.class);
-        this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule());
+    public void init(ExtensionContext context) {
+        this.configRegistry = context.configRegistry();
+        this.httpClient = context.httpClient();
+        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        final var defaultConfig =
-                new VulncheckKevDataSourceConfigV1()
-                        .withEnabled(false)
-                        .withApiUrl(URI.create("https://api.vulncheck.com"));
+        final var defaultConfig = new VulncheckKevDataSourceConfigV1()
+                .withEnabled(false)
+                .withApiUrl(URI.create("https://api.vulncheck.com"));
 
         return RuntimeConfigSpec.of(defaultConfig, config -> {
             if (!config.isEnabled()) {
@@ -98,8 +96,7 @@ public final class VulnCheckKevDataSourceFactory implements KevDataSourceFactory
 
     @Override
     public KevDataSource create() {
-        final var config = requireNonNull(configRegistry)
-                .getRuntimeConfig(VulncheckKevDataSourceConfigV1.class);
+        final var config = requireNonNull(configRegistry).getRuntimeConfig(VulncheckKevDataSourceConfigV1.class);
         if (!config.isEnabled()) {
             throw new IllegalStateException("KEV data source is disabled and cannot be created");
         }
@@ -110,5 +107,4 @@ public final class VulnCheckKevDataSourceFactory implements KevDataSourceFactory
                 requireNonNull(config.getApiUrl()),
                 requireNonNull(config.getApiToken()));
     }
-
 }

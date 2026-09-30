@@ -38,28 +38,22 @@ sealed interface WorkflowCommand {
             WorkflowRunStatus status,
             @Nullable String customStatus,
             @Nullable Payload result,
-            @Nullable Failure failure) implements WorkflowCommand {
+            @Nullable Failure failure)
+            implements WorkflowCommand {
 
         public CompleteRunCommand {
             requireNonNull(status, "status must not be null");
         }
-
     }
 
-    record ContinueRunAsNewCommand(
-            int eventId,
-            @Nullable Payload argument) implements WorkflowCommand {
-    }
+    record ContinueRunAsNewCommand(int eventId, @Nullable Payload argument) implements WorkflowCommand {}
 
     record RecordSideEffectResultCommand(
-            String name,
-            int eventId,
-            @Nullable Payload result) implements WorkflowCommand {
+            String name, int eventId, @Nullable Payload result) implements WorkflowCommand {
 
         public RecordSideEffectResultCommand {
             requireNonNull(name, "name must not be null");
         }
-
     }
 
     record CreateActivityTaskCommand(
@@ -68,7 +62,8 @@ sealed interface WorkflowCommand {
             String queueName,
             int priority,
             @Nullable Payload argument,
-            RetryPolicy retryPolicy) implements WorkflowCommand {
+            RetryPolicy retryPolicy)
+            implements WorkflowCommand {
 
         public CreateActivityTaskCommand {
             requireNonNull(name, "name must not be null");
@@ -77,7 +72,6 @@ sealed interface WorkflowCommand {
                 throw new IllegalArgumentException("priority must be between 0 and 100, but is " + priority);
             }
         }
-
     }
 
     record CreateChildRunCommand(
@@ -89,18 +83,19 @@ sealed interface WorkflowCommand {
             @Nullable String concurrencyKey,
             int priority,
             @Nullable Map<String, String> labels,
-            @Nullable Payload argument) implements WorkflowCommand {
+            @Nullable Payload argument)
+            implements WorkflowCommand {
 
         public CreateChildRunCommand {
             requireNonNull(workflowName, "workflowName must not be null");
             if (workflowVersion < 1 || workflowVersion > 100) {
-                throw new IllegalArgumentException("workflowVersion must be between 1 and 100, but is " + workflowVersion);
+                throw new IllegalArgumentException(
+                        "workflowVersion must be between 1 and 100, but is " + workflowVersion);
             }
             if (priority < 0 || priority > 100) {
                 throw new IllegalArgumentException("priority must be between 0 and 100, but is " + priority);
             }
         }
-
     }
 
     /**
@@ -109,17 +104,12 @@ sealed interface WorkflowCommand {
      * @param name           Name of the timer.
      * @param elapseAt       When the timer elapses.
      */
-    record CreateTimerCommand(
-            int eventId,
-            int elapsedEventId,
-            String name,
-            Instant elapseAt) implements WorkflowCommand {
+    record CreateTimerCommand(int eventId, int elapsedEventId, String name, Instant elapseAt)
+            implements WorkflowCommand {
 
         public CreateTimerCommand {
             requireNonNull(name, "name must not be null");
             requireNonNull(elapseAt, "elapseAt must not be null");
         }
-
     }
-
 }

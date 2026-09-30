@@ -18,8 +18,9 @@
  */
 package org.dependencytrack.resources.v2.exception;
 
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.model.ProblemDetails;
+
+import jakarta.ws.rs.ext.Provider;
 
 import java.util.NoSuchElementException;
 
@@ -27,7 +28,8 @@ import java.util.NoSuchElementException;
  * @since 5.0.0
  */
 @Provider
-public final class NoSuchElementExceptionMapper extends ProblemDetailsExceptionMapper<NoSuchElementException, ProblemDetails> {
+public final class NoSuchElementExceptionMapper
+        extends ProblemDetailsExceptionMapper<NoSuchElementException, ProblemDetails> {
 
     @Override
     ProblemDetails map(final NoSuchElementException exception) {
@@ -37,5 +39,4 @@ public final class NoSuchElementExceptionMapper extends ProblemDetailsExceptionM
                 .detail(exception.getMessage())
                 .build();
     }
-
 }

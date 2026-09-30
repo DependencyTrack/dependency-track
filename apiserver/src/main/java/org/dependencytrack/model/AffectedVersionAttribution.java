@@ -52,8 +52,12 @@ import java.util.Objects;
  * @since 4.7.0
  */
 @PersistenceCapable
-@Index(name = "AFFECTEDVERSIONATTRIBUTION_KEYS_IDX", members = {"vulnerability", "vulnerableSoftware"})
-@Unique(name = "AFFECTEDVERSIONATTRIBUTION_COMPOSITE_IDX", members = {"source", "vulnerability", "vulnerableSoftware"})
+@Index(
+        name = "AFFECTEDVERSIONATTRIBUTION_KEYS_IDX",
+        members = {"vulnerability", "vulnerableSoftware"})
+@Unique(
+        name = "AFFECTEDVERSIONATTRIBUTION_COMPOSITE_IDX",
+        members = {"source", "vulnerability", "vulnerableSoftware"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AffectedVersionAttribution implements Serializable {
 
@@ -70,38 +74,37 @@ public class AffectedVersionAttribution implements Serializable {
     private Date firstSeen;
 
     @Persistent
-    @Column(name = "LAST_SEEN", allowsNull = "false")
-    @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
-            deprecated = true,
-            description = "Deprecated; always equal to firstSeen")
-    private Date lastSeen;
-
-    @Persistent
     @Column(name = "SOURCE", allowsNull = "false")
     private Source source;
 
     @Persistent
-    @ForeignKey(name = "AFFECTEDVERSIONATTRIBUTION_VULNERABILITY_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "AFFECTEDVERSIONATTRIBUTION_VULNERABILITY_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "VULNERABILITY", allowsNull = "false")
     @JsonIgnore
     private Vulnerability vulnerability;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "AFFECTEDVERSIONATTRIBUTION_VULNERABLESOFTWARE_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "AFFECTEDVERSIONATTRIBUTION_VULNERABLESOFTWARE_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "VULNERABLE_SOFTWARE", allowsNull = "false")
     @JsonIgnore
     private VulnerableSoftware vulnerableSoftware;
 
-    public AffectedVersionAttribution() {
-    }
+    public AffectedVersionAttribution() {}
 
-    public AffectedVersionAttribution(final Source source, final Vulnerability vulnerability, final VulnerableSoftware vulnerableSoftware) {
+    public AffectedVersionAttribution(
+            final Source source, final Vulnerability vulnerability, final VulnerableSoftware vulnerableSoftware) {
         this.source = Objects.requireNonNull(source, "source must not be null");
         this.vulnerability = Objects.requireNonNull(vulnerability, "vulnerability must not be null");
         this.vulnerableSoftware = Objects.requireNonNull(vulnerableSoftware, "vulnerableSoftware must not be null");
         this.firstSeen = new Date();
-        this.lastSeen = this.firstSeen;
     }
 
     public long getId() {
@@ -118,17 +121,20 @@ public class AffectedVersionAttribution implements Serializable {
 
     public void setFirstSeen(final Date firstSeen) {
         this.firstSeen = firstSeen;
-        this.lastSeen = firstSeen;
     }
 
     @Deprecated(forRemoval = true, since = "5.1.0")
+    @Schema(
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            deprecated = true,
+            description = "Deprecated; always equal to firstSeen")
     public Date getLastSeen() {
-        return lastSeen;
+        return firstSeen;
     }
 
     @Deprecated(forRemoval = true, since = "5.1.0")
-    public void setLastSeen(final Date lastSeen) {
-        this.lastSeen = lastSeen;
+    public void setLastSeen(final Date ignored) {
+        // Retained so requests echoing the deprecated field still deserialize.
     }
 
     public Source getSource() {
@@ -154,5 +160,4 @@ public class AffectedVersionAttribution implements Serializable {
     public void setVulnerableSoftware(final VulnerableSoftware vulnerableSoftware) {
         this.vulnerableSoftware = vulnerableSoftware;
     }
-
 }

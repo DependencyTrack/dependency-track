@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.v4migrator.config;
 
-import org.postgresql.ds.PGSimpleDataSource;
 import org.junit.jupiter.api.Test;
+import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.sql.DataSource;
 

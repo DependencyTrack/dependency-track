@@ -67,8 +67,7 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
                 DEFECTDOJO_ENABLED.getPropertyName(),
                 "true",
                 IConfigProperty.PropertyType.BOOLEAN,
-                null
-        );
+                null);
         Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, null, false);
         qm.createProjectProperty(
                 project,
@@ -76,8 +75,7 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
                 "defectdojo.engagementId",
                 "12345",
                 IConfigProperty.PropertyType.STRING,
-                null
-        );
+                null);
         DefectDojoUploader extension = new DefectDojoUploader(httpClient, secretManager);
         extension.setQueryManager(qm);
         Assertions.assertTrue(extension.isEnabled());
@@ -110,11 +108,9 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
                 "defectdojo.groupBy",
                 "component_name",
                 IConfigProperty.PropertyType.STRING,
-                null
-        );
+                null);
         DefectDojoUploader extension = new DefectDojoUploader(httpClient, secretManager);
         extension.setQueryManager(qm);
         Assertions.assertEquals("component_name", extension.getGroupBy(project));
     }
-
 }

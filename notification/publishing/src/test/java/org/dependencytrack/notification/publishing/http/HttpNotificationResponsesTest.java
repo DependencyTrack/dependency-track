@@ -53,26 +53,21 @@ class HttpNotificationResponsesTest {
     void truncateShouldLimitValueToMaxLength() {
         final var value = "a".repeat(150);
 
-        assertThat(HttpNotificationResponses.truncate(value, 100))
-                .hasSize(100)
-                .isEqualTo("a".repeat(100));
+        assertThat(HttpNotificationResponses.truncate(value, 100)).hasSize(100).isEqualTo("a".repeat(100));
     }
 
     @Test
     void ensureStatusCodeShouldNotThrowForExpectedStatus() throws IOException {
-        assertThatCode(() -> HttpNotificationResponses.ensureStatusCode(
-                stubResponse(201, "created"),
-                201,
-                "failed: "))
+        assertThatCode(() -> HttpNotificationResponses.ensureStatusCode(stubResponse(201, "created"), 201, "failed: "))
                 .doesNotThrowAnyException();
     }
 
     @Test
     void ensureStatusCodeShouldThrowForUnexpectedStatus() {
         assertThatThrownBy(() -> HttpNotificationResponses.ensureStatusCode(
-                stubResponse(200, "unexpected response payload"),
-                201,
-                "Request failed with retryable response code: "))
+                        stubResponse(200, "unexpected response payload"),
+                        201,
+                        "Request failed with retryable response code: "))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Request failed with retryable response code: 200");
     }
@@ -81,23 +76,22 @@ class HttpNotificationResponsesTest {
     void ensureStatusCodeShouldDrainLargeResponseBodyOnFailure() {
         final var largeBody = "a".repeat(10_000);
 
-        assertThatThrownBy(() -> HttpNotificationResponses.ensureStatusCode(
-                stubResponse(500, largeBody),
-                201,
-                "failed: "))
+        assertThatThrownBy(
+                        () -> HttpNotificationResponses.ensureStatusCode(stubResponse(500, largeBody), 201, "failed: "))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void ensureSuccessful2xxResponseShouldThrowForUnexpectedStatus() {
-        assertThatThrownBy(() -> HttpNotificationResponses.ensureSuccessful2xxResponse(
-                stubResponse(400, "bad request")))
+        assertThatThrownBy(
+                        () -> HttpNotificationResponses.ensureSuccessful2xxResponse(stubResponse(400, "bad request")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Request failed with unexpected response code: 400");
     }
 
     private static HttpResponse<InputStream> stubResponse(final int statusCode, final String body) {
-        final var request = HttpRequest.newBuilder(URI.create("http://localhost")).GET().build();
+        final var request =
+                HttpRequest.newBuilder(URI.create("http://localhost")).GET().build();
         return new HttpResponse<>() {
             @Override
             public int statusCode() {
@@ -140,5 +134,4 @@ class HttpNotificationResponsesTest {
             }
         };
     }
-
 }

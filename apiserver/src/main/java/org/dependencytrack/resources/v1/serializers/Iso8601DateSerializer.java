@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.dependencytrack.util.DateUtil;
+
 import java.io.IOException;
 import java.util.Date;
 
@@ -37,7 +38,7 @@ public class Iso8601DateSerializer extends StdSerializer<Date> {
     }
 
     @Override
-    public void serialize (Date value, JsonGenerator gen, SerializerProvider arg2)
+    public void serialize(Date value, JsonGenerator gen, SerializerProvider arg2)
             throws IOException, JsonProcessingException {
         gen.writeString(DateUtil.toISO8601(value));
     }

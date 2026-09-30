@@ -20,8 +20,11 @@ package org.dependencytrack.notification;
 
 import alpine.model.User;
 import com.google.protobuf.util.Timestamps;
+import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vex;
+import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.notification.proto.v1.Bom;
 import org.dependencytrack.notification.proto.v1.Component;
 import org.dependencytrack.notification.proto.v1.Group;
@@ -46,8 +49,7 @@ import static org.dependencytrack.util.VulnerabilityUtil.getUniqueAliases;
  */
 public final class NotificationModelConverter {
 
-    private NotificationModelConverter() {
-    }
+    private NotificationModelConverter() {}
 
     public static Group convert(NotificationGroup group) {
         return switch (group) {
@@ -137,9 +139,8 @@ public final class NotificationModelConverter {
     }
 
     public static Component convert(org.dependencytrack.model.Component component) {
-        final Component.Builder builder = Component.newBuilder()
-                .setUuid(component.getUuid().toString())
-                .setName(component.getName());
+        final Component.Builder builder =
+                Component.newBuilder().setUuid(component.getUuid().toString()).setName(component.getName());
         if (component.getGroup() != null) {
             builder.setGroup(component.getGroup());
         }
@@ -191,7 +192,7 @@ public final class NotificationModelConverter {
                 .build();
     }
 
-    public static PolicyViolationAnalysis convert(org.dependencytrack.model.ViolationAnalysis analysis) {
+    public static PolicyViolationAnalysis convert(ViolationAnalysis analysis) {
         return PolicyViolationAnalysis.newBuilder()
                 .setProject(convert(analysis.getProject()))
                 .setComponent(convert(analysis.getComponent()))
@@ -226,17 +227,15 @@ public final class NotificationModelConverter {
     }
 
     public static UserSubject convert(User user) {
-        final var builder = UserSubject.newBuilder()
-                .setUsername(user.getUsername());
+        final var builder = UserSubject.newBuilder().setUsername(user.getUsername());
         if (user.getEmail() != null) {
             builder.setEmail(user.getEmail());
         }
         return builder.build();
     }
 
-    public static Bom convert(final org.dependencytrack.model.Vex vex) {
-        final var builder = Bom.newBuilder()
-                .setContent("(Omitted)");
+    public static Bom convert(final Vex vex) {
+        final var builder = Bom.newBuilder().setContent("(Omitted)");
         if (vex.getVexFormat() != null) {
             builder.setFormat(vex.getVexFormat());
         }
@@ -294,10 +293,12 @@ public final class NotificationModelConverter {
             builder.setOwaspRrLikelihood(vuln.getOwaspRRLikelihoodScore().doubleValue());
         }
         if (vuln.getOwaspRRTechnicalImpactScore() != null) {
-            builder.setOwaspRrTechnicalImpact(vuln.getOwaspRRTechnicalImpactScore().doubleValue());
+            builder.setOwaspRrTechnicalImpact(
+                    vuln.getOwaspRRTechnicalImpactScore().doubleValue());
         }
         if (vuln.getOwaspRRBusinessImpactScore() != null) {
-            builder.setOwaspRrBusinessImpact(vuln.getOwaspRRBusinessImpactScore().doubleValue());
+            builder.setOwaspRrBusinessImpact(
+                    vuln.getOwaspRRBusinessImpactScore().doubleValue());
         }
         if (vuln.getOwaspRRVector() != null) {
             builder.setOwaspRrVector(vuln.getOwaspRRVector());
@@ -325,7 +326,7 @@ public final class NotificationModelConverter {
         return builder.build();
     }
 
-    public static VulnerabilityAnalysis convert(org.dependencytrack.model.Analysis analysis) {
+    public static VulnerabilityAnalysis convert(Analysis analysis) {
         return VulnerabilityAnalysis.newBuilder()
                 .setProject(convert(analysis.getProject()))
                 .setComponent(convert(analysis.getComponent()))
@@ -334,5 +335,4 @@ public final class NotificationModelConverter {
                 .setSuppressed(analysis.isSuppressed())
                 .build();
     }
-
 }

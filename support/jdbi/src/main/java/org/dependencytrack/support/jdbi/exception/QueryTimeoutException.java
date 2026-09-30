@@ -34,19 +34,14 @@ public final class QueryTimeoutException extends RuntimeException {
 
     public static @Nullable QueryTimeoutException of(Throwable throwable) {
         final PSQLException psqlException = PSQLExceptions.find(throwable);
-        if (psqlException == null
-                || !PSQLState.QUERY_CANCELED.getState().equals(psqlException.getSQLState())) {
+        if (psqlException == null || !PSQLState.QUERY_CANCELED.getState().equals(psqlException.getSQLState())) {
             return null;
         }
-        
-        return new QueryTimeoutException(
-                psqlException.getMessage(),
-                throwable,
-                psqlException.getSQLState());
+
+        return new QueryTimeoutException(psqlException.getMessage(), throwable, psqlException.getSQLState());
     }
 
     public String getSqlState() {
         return sqlState;
     }
-
 }

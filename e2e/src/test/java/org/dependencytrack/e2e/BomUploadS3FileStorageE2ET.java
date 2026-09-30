@@ -80,11 +80,12 @@ class BomUploadS3FileStorageE2ET extends AbstractE2ET {
 
     @Test
     void shouldUploadAndProcessBomWhenS3FileStorageConfigured() throws Exception {
-        final byte[] bomBytes = getClass().getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json").readAllBytes();
+        final byte[] bomBytes = getClass()
+                .getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json")
+                .readAllBytes();
         final String bomBase64 = Base64.getEncoder().encodeToString(bomBytes);
 
-        final EventTokenResponse response = apiClient.uploadBom(
-                new BomUploadRequest("foo", "bar", true, bomBase64));
+        final EventTokenResponse response = apiV1Client.uploadBom(new BomUploadRequest("foo", "bar", true, bomBase64));
         assertThat(response.token()).isNotEmpty();
 
         await("BOM processing")
@@ -92,12 +93,11 @@ class BomUploadS3FileStorageE2ET extends AbstractE2ET {
                 .pollDelay(Duration.ofMillis(250))
                 .untilAsserted(() -> {
                     final EventProcessingResponse processingResponse =
-                            apiClient.isEventBeingProcessed(response.token());
+                            apiV1Client.isEventBeingProcessed(response.token());
                     assertThat(processingResponse.processing()).isFalse();
                 });
 
-        final Project project = apiClient.lookupProject("foo", "bar");
+        final Project project = apiV1Client.lookupProject("foo", "bar");
         assertThat(project).isNotNull();
     }
-
 }

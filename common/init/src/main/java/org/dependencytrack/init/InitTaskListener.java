@@ -28,5 +28,4 @@ public interface InitTaskListener {
     void onTaskCompleted(String taskName);
 
     void onTaskFailed(String taskName);
-
 }

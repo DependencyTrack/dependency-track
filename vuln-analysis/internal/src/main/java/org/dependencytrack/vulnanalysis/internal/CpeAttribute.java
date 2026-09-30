@@ -19,9 +19,7 @@
 package org.dependencytrack.vulnanalysis.internal;
 
 enum CpeAttribute {
-
     PART,
     VENDOR,
     PRODUCT
-
 }

@@ -19,6 +19,7 @@
 package org.dependencytrack.model;
 
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -35,5 +36,4 @@ class PackageArtifactMetadataTest {
                 .isThrownBy(() -> new PackageArtifactMetadata(
                         purl, purl, "2.0.0", null, null, null, null, null, null, Instant.now()));
     }
-
 }

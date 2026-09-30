@@ -37,5 +37,4 @@ public record UpdateTaskQueueRequest(
             throw new IllegalArgumentException("capacity must not be negative or zero");
         }
     }
-
 }

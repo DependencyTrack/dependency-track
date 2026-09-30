@@ -28,9 +28,5 @@ import java.util.List;
 record VulnCheckBackupResponse(@Nullable List<Backup> data) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Backup(
-            @Nullable URI url,
-            @Nullable String sha256) {
-    }
-
+    record Backup(@Nullable URI url, @Nullable String sha256) {}
 }

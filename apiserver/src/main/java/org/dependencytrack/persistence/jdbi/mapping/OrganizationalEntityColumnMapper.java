@@ -22,15 +22,18 @@ import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.jdbi.v3.core.mapper.ColumnMapper;
 import org.jdbi.v3.core.statement.StatementContext;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public final class OrganizationalEntityColumnMapper implements ColumnMapper<OrganizationalEntity> {
 
-    @Override
-    public OrganizationalEntity map(ResultSet r, int columnNumber, StatementContext ctx) throws SQLException {
-        return new OrganizationalEntityJsonConverter().convertToAttribute(r.getString(columnNumber));
-    }
+    private static final OrganizationalEntityJsonConverter CONVERTER = new OrganizationalEntityJsonConverter();
 
+    @Override
+    public @Nullable OrganizationalEntity map(ResultSet rs, int columnNumber, StatementContext ctx)
+            throws SQLException {
+        return CONVERTER.convertToAttribute(rs.getString(columnNumber));
+    }
 }

@@ -22,23 +22,22 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.dependencytrack.model.ExternalReference;
 import org.jdbi.v3.core.mapper.ColumnMapper;
 import org.jdbi.v3.core.statement.StatementContext;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-@NullMarked
 public final class ExternalReferencesColumnMapper implements ColumnMapper<List<ExternalReference>> {
 
     @Override
-    public @Nullable List<ExternalReference> map(ResultSet r, int columnNumber, StatementContext ctx) throws SQLException {
-        if (r.getBytes(columnNumber) == null) {
+    public @Nullable List<ExternalReference> map(ResultSet rs, int columnNumber, StatementContext ctx)
+            throws SQLException {
+        final byte[] bytes = rs.getBytes(columnNumber);
+        if (bytes == null) {
             return null;
         }
 
-        return SerializationUtils.deserialize(r.getBytes(columnNumber));
+        return SerializationUtils.deserialize(bytes);
     }
-
 }

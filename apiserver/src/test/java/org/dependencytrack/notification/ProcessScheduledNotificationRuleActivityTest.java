@@ -96,13 +96,21 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         parentProjectComponent.setProject(parentProject);
         parentProjectComponent.setName("acme-lib-parent");
         qm.persist(parentProjectComponent);
-        qm.addVulnerability(vulnA, parentProjectComponent, "internal",
-                null, null, Date.from(afterRuleLastFiredAt));
-        qm.addVulnerability(vulnB, parentProjectComponent, "internal",
-                null, null, Date.from(afterRuleLastFiredAt));
+        qm.addVulnerability(vulnA, parentProjectComponent, "internal", null, null, Date.from(afterRuleLastFiredAt));
+        qm.addVulnerability(vulnB, parentProjectComponent, "internal", null, null, Date.from(afterRuleLastFiredAt));
         qm.makeAnalysis(new MakeAnalysisCommand(
-                parentProjectComponent, vulnB, AnalysisState.FALSE_POSITIVE,
-                null, null, null, true, null, null, null, null, Set.of()));
+                parentProjectComponent,
+                vulnB,
+                AnalysisState.FALSE_POSITIVE,
+                null,
+                null,
+                null,
+                true,
+                null,
+                null,
+                null,
+                null,
+                Set.of()));
 
         // Child project affected by vulnA (BEFORE) and vulnB (AFTER).
         final var childProject = new Project();
@@ -113,10 +121,8 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         childProjectComponent.setProject(childProject);
         childProjectComponent.setName("acme-lib-child");
         qm.persist(childProjectComponent);
-        qm.addVulnerability(vulnA, childProjectComponent, "internal",
-                null, null, Date.from(beforeRuleLastFiredAt));
-        qm.addVulnerability(vulnB, childProjectComponent, "internal",
-                null, null, Date.from(afterRuleLastFiredAt));
+        qm.addVulnerability(vulnA, childProjectComponent, "internal", null, null, Date.from(beforeRuleLastFiredAt));
+        qm.addVulnerability(vulnB, childProjectComponent, "internal", null, null, Date.from(afterRuleLastFiredAt));
 
         // Inactive project — should be excluded.
         final var inactiveProject = new Project();
@@ -127,11 +133,10 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         inactiveProjectComponent.setProject(inactiveProject);
         inactiveProjectComponent.setName("acme-lib-inactive");
         qm.persist(inactiveProjectComponent);
-        qm.addVulnerability(vulnA, inactiveProjectComponent, "internal",
-                null, null, Date.from(afterRuleLastFiredAt));
+        qm.addVulnerability(vulnA, inactiveProjectComponent, "internal", null, null, Date.from(afterRuleLastFiredAt));
 
-        final var publisher = qm.createNotificationPublisher(
-                "foo", null, "webhook", "template", "templateMimeType", false);
+        final var publisher =
+                qm.createNotificationPublisher("foo", null, "webhook", "template", "templateMimeType", false);
         final NotificationRule rule = qm.createScheduledNotificationRule(
                 "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY));
@@ -146,15 +151,16 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         final var dexEngine = mock(DexEngine.class);
         doReturn(UUID.randomUUID()).when(dexEngine).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
 
-        final var activity = new ProcessScheduledNotificationRuleActivity(
-                dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
+        final var activity =
+                new ProcessScheduledNotificationRuleActivity(dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
         activity.execute(
                 mock(ActivityContext.class),
                 ProcessScheduledNotificationRuleArg.newBuilder()
                         .setRuleName(rule.getName())
                         .build());
 
-        @SuppressWarnings("unchecked") final ArgumentCaptor<CreateWorkflowRunRequest<?>> captor =
+        @SuppressWarnings("unchecked")
+        final ArgumentCaptor<CreateWorkflowRunRequest<?>> captor =
                 ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
         verify(dexEngine).createRun(captor.capture());
 
@@ -294,8 +300,7 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         pvB_parent.setTimestamp(Date.from(afterRuleLastFiredAt));
         qm.persist(pvB_parent);
         qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(
-                parentProjectComponent, pvB_parent, ViolationAnalysisState.APPROVED,
-                true, null, null, Set.of()));
+                parentProjectComponent, pvB_parent, ViolationAnalysisState.APPROVED, true, null, null, Set.of()));
 
         // Child project with violations for policyA (BEFORE) and policyB (AFTER).
         final var childProject = new Project();
@@ -339,8 +344,8 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         pvA_inactive.setTimestamp(Date.from(beforeRuleLastFiredAt));
         qm.persist(pvA_inactive);
 
-        final var publisher = qm.createNotificationPublisher(
-                "foo", null, "webhook", "template", "templateMimeType", false);
+        final var publisher =
+                qm.createNotificationPublisher("foo", null, "webhook", "template", "templateMimeType", false);
         final NotificationRule rule = qm.createScheduledNotificationRule(
                 "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         rule.setNotifyOn(Set.of(NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY));
@@ -355,15 +360,16 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         final var dexEngine = mock(DexEngine.class);
         doReturn(UUID.randomUUID()).when(dexEngine).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
 
-        final var activity = new ProcessScheduledNotificationRuleActivity(
-                dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
+        final var activity =
+                new ProcessScheduledNotificationRuleActivity(dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
         activity.execute(
                 mock(ActivityContext.class),
                 ProcessScheduledNotificationRuleArg.newBuilder()
                         .setRuleName(rule.getName())
                         .build());
 
-        @SuppressWarnings("unchecked") final ArgumentCaptor<CreateWorkflowRunRequest<?>> captor =
+        @SuppressWarnings("unchecked")
+        final ArgumentCaptor<CreateWorkflowRunRequest<?>> captor =
                 ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
         verify(dexEngine).createRun(captor.capture());
 
@@ -458,13 +464,12 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         project.setName("acme-app");
         qm.persist(project);
 
-        final var publisher = qm.createNotificationPublisher(
-                "foo", null, "webhook", "template", "templateMimeType", false);
+        final var publisher =
+                qm.createNotificationPublisher("foo", null, "webhook", "template", "templateMimeType", false);
         final NotificationRule rule = qm.createScheduledNotificationRule(
                 "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        rule.setNotifyOn(Set.of(
-                NotificationGroup.NEW_VULNERABILITIES_SUMMARY,
-                NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY));
+        rule.setNotifyOn(
+                Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY, NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY));
         rule.setProjects(List.of(project));
         rule.setNotifyChildren(true);
         rule.setScheduleCron("* * * * *");
@@ -476,8 +481,8 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         final var dexEngine = mock(DexEngine.class);
         doReturn(UUID.randomUUID()).when(dexEngine).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
 
-        final var activity = new ProcessScheduledNotificationRuleActivity(
-                dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
+        final var activity =
+                new ProcessScheduledNotificationRuleActivity(dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
         activity.execute(
                 mock(ActivityContext.class),
                 ProcessScheduledNotificationRuleArg.newBuilder()
@@ -495,13 +500,12 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         project.setName("acme-app");
         qm.persist(project);
 
-        final var publisher = qm.createNotificationPublisher(
-                "foo", null, "webhook", "template", "templateMimeType", false);
+        final var publisher =
+                qm.createNotificationPublisher("foo", null, "webhook", "template", "templateMimeType", false);
         final NotificationRule rule = qm.createScheduledNotificationRule(
                 "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        rule.setNotifyOn(Set.of(
-                NotificationGroup.NEW_VULNERABILITIES_SUMMARY,
-                NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY));
+        rule.setNotifyOn(
+                Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY, NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY));
         rule.setProjects(List.of(project));
         rule.setNotifyChildren(true);
         rule.setScheduleCron("* * * * *");
@@ -513,8 +517,8 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         final var dexEngine = mock(DexEngine.class);
         doReturn(UUID.randomUUID()).when(dexEngine).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
 
-        final var activity = new ProcessScheduledNotificationRuleActivity(
-                dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
+        final var activity =
+                new ProcessScheduledNotificationRuleActivity(dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
         activity.execute(
                 mock(ActivityContext.class),
                 ProcessScheduledNotificationRuleArg.newBuilder()
@@ -545,11 +549,10 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
             component.setProject(project);
             component.setName("acme-lib");
             qm.persist(component);
-            qm.addVulnerability(vuln, component, "internal",
-                    null, null, Date.from(afterRuleLastFiredAt));
+            qm.addVulnerability(vuln, component, "internal", null, null, Date.from(afterRuleLastFiredAt));
 
-            final var publisher = qm.createNotificationPublisher(
-                    "foo", null, "webhook", "template", "templateMimeType", false);
+            final var publisher =
+                    qm.createNotificationPublisher("foo", null, "webhook", "template", "templateMimeType", false);
             final NotificationRule rule = qm.createScheduledNotificationRule(
                     "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
             rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY));
@@ -563,8 +566,8 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
             final var dexEngine = mock(DexEngine.class);
             doReturn(UUID.randomUUID()).when(dexEngine).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
 
-            final var activity = new ProcessScheduledNotificationRuleActivity(
-                    dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
+            final var activity =
+                    new ProcessScheduledNotificationRuleActivity(dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
             activity.execute(
                     mock(ActivityContext.class),
                     ProcessScheduledNotificationRuleArg.newBuilder()
@@ -592,11 +595,10 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
             component.setProject(project);
             component.setName("acme-lib");
             qm.persist(component);
-            qm.addVulnerability(vuln, component, "internal",
-                    null, null, Date.from(afterRuleLastFiredAt));
+            qm.addVulnerability(vuln, component, "internal", null, null, Date.from(afterRuleLastFiredAt));
 
-            final var publisher = qm.createNotificationPublisher(
-                    "foo", null, "webhook", "template", "templateMimeType", false);
+            final var publisher =
+                    qm.createNotificationPublisher("foo", null, "webhook", "template", "templateMimeType", false);
             final NotificationRule rule = qm.createScheduledNotificationRule(
                     "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
             rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY));
@@ -609,8 +611,8 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
 
             final var dexEngine = mock(DexEngine.class);
 
-            final var activity = new ProcessScheduledNotificationRuleActivity(
-                    dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
+            final var activity =
+                    new ProcessScheduledNotificationRuleActivity(dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
             activity.execute(
                     mock(ActivityContext.class),
                     ProcessScheduledNotificationRuleArg.newBuilder()
@@ -644,11 +646,10 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
             component.setProject(project);
             component.setName("acme-lib");
             qm.persist(component);
-            qm.addVulnerability(vuln, component, "internal",
-                    null, null, Date.from(afterRuleLastFiredAt));
+            qm.addVulnerability(vuln, component, "internal", null, null, Date.from(afterRuleLastFiredAt));
 
-            final var publisher = qm.createNotificationPublisher(
-                    "foo", null, "webhook", "template", "templateMimeType", false);
+            final var publisher =
+                    qm.createNotificationPublisher("foo", null, "webhook", "template", "templateMimeType", false);
             final NotificationRule rule = qm.createScheduledNotificationRule(
                     "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
             rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY));
@@ -662,8 +663,8 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
             final var dexEngine = mock(DexEngine.class);
             doReturn(UUID.randomUUID()).when(dexEngine).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
 
-            final var activity = new ProcessScheduledNotificationRuleActivity(
-                    dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
+            final var activity =
+                    new ProcessScheduledNotificationRuleActivity(dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
             activity.execute(
                     mock(ActivityContext.class),
                     ProcessScheduledNotificationRuleArg.newBuilder()
@@ -672,7 +673,5 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
 
             verify(dexEngine).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
         }
-
     }
-
 }

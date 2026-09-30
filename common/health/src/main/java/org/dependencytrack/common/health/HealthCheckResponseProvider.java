@@ -24,11 +24,11 @@ package org.dependencytrack.common.health;
  * @see <a href="https://download.eclipse.org/microprofile/microprofile-health-3.1/microprofile-health-spec-3.1.html#_spi_usage">MicroProfile Health SPI Usage</a>
  * @since 5.0.0
  */
-public final class HealthCheckResponseProvider implements org.eclipse.microprofile.health.spi.HealthCheckResponseProvider {
+public final class HealthCheckResponseProvider
+        implements org.eclipse.microprofile.health.spi.HealthCheckResponseProvider {
 
     @Override
     public org.eclipse.microprofile.health.HealthCheckResponseBuilder createResponseBuilder() {
         return new HealthCheckResponseBuilder();
     }
-
 }

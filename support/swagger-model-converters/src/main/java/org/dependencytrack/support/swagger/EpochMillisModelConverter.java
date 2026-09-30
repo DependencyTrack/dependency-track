@@ -50,12 +50,8 @@ public final class EpochMillisModelConverter implements ModelConverter {
 
     @Override
     public @Nullable Schema<?> resolve(
-            AnnotatedType type,
-            ModelConverterContext context,
-            Iterator<ModelConverter> chain) {
-        final Schema<?> resolved = chain.hasNext()
-                ? chain.next().resolve(type, context, chain)
-                : null;
+            AnnotatedType type, ModelConverterContext context, Iterator<ModelConverter> chain) {
+        final Schema<?> resolved = chain.hasNext() ? chain.next().resolve(type, context, chain) : null;
         if (resolved == null || type == null || type.getType() == null) {
             return resolved;
         }
@@ -99,13 +95,11 @@ public final class EpochMillisModelConverter implements ModelConverter {
                 return true;
             }
 
-            if (annotation instanceof JsonFormat jsonFormat
-                    && jsonFormat.shape() == JsonFormat.Shape.STRING) {
+            if (annotation instanceof JsonFormat jsonFormat && jsonFormat.shape() == JsonFormat.Shape.STRING) {
                 return true;
             }
         }
 
         return false;
     }
-
 }

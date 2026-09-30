@@ -24,13 +24,6 @@ import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import alpine.server.resources.GlobalExceptionHandler;
 import io.smallrye.config.SmallRyeConfigBuilder;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -45,6 +38,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publishing.DefaultNotificationPublishersPlugin;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.runtime.PluginManager;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -54,6 +48,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import java.net.http.HttpClient;
 import java.util.ArrayList;
@@ -72,17 +74,16 @@ class NotificationRuleResourceTest extends ResourceTest {
     private static PluginManager pluginManager;
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(NotificationRuleResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class)
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bindFactory(() -> pluginManager).to(PluginManager.class);
-                        }
-                    })
-                    .register(GlobalExceptionHandler.class));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(NotificationRuleResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class)
+            .register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bindFactory(() -> pluginManager).to(PluginManager.class);
+                }
+            })
+            .register(GlobalExceptionHandler.class));
 
     private NotificationPublisher publisher;
 
@@ -94,6 +95,7 @@ class NotificationRuleResourceTest extends ResourceTest {
                 secretName -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(org.dependencytrack.notification.api.publishing.NotificationPublisher.class));
         pluginManager.loadPlugins(List.of(new DefaultNotificationPublishersPlugin()));
     }
@@ -101,12 +103,7 @@ class NotificationRuleResourceTest extends ResourceTest {
     @BeforeEach
     void beforeEach() {
         publisher = qm.createNotificationPublisher(
-                "Slack",
-                "description",
-                "slack",
-                "templateContent",
-                "templateMimeType",
-                true);
+                "Slack", "description", "slack", "templateContent", "templateMimeType", true);
     }
 
     @AfterAll
@@ -122,7 +119,8 @@ class NotificationRuleResourceTest extends ResourceTest {
         qm.createNotificationRule("Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         qm.createNotificationRule("Rule 2", NotificationScope.PORTFOLIO, NotificationLevel.WARNING, publisher);
         qm.createNotificationRule("Rule 3", NotificationScope.SYSTEM, NotificationLevel.ERROR, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+        Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus(), 0);
@@ -134,15 +132,18 @@ class NotificationRuleResourceTest extends ResourceTest {
         Assertions.assertTrue(json.getJsonObject(0).getBoolean("enabled"));
         Assertions.assertEquals("PORTFOLIO", json.getJsonObject(0).getString("scope"));
         Assertions.assertEquals("INFORMATIONAL", json.getJsonObject(0).getString("notificationLevel"));
-        Assertions.assertEquals(0, json.getJsonObject(0).getJsonArray("notifyOn").size());
+        Assertions.assertEquals(
+                0, json.getJsonObject(0).getJsonArray("notifyOn").size());
         Assertions.assertTrue(UuidUtil.isValidUUID(json.getJsonObject(0).getString("uuid")));
-        Assertions.assertEquals("Slack", json.getJsonObject(0).getJsonObject("publisher").getString("name"));
+        Assertions.assertEquals(
+                "Slack", json.getJsonObject(0).getJsonObject("publisher").getString("name"));
     }
 
     @Test
     void createNotificationRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
-        final Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -185,7 +186,8 @@ class NotificationRuleResourceTest extends ResourceTest {
     @Test
     void createNotificationRuleInvalidPublisherTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
-        final Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -198,14 +200,14 @@ class NotificationRuleResourceTest extends ResourceTest {
                         }
                         """));
         assertThat(response.getStatus()).isEqualTo(404);
-        assertThat(getPlainTextBody(response)).isEqualTo(
-                "The UUID of the notification publisher could not be found.");
+        assertThat(getPlainTextBody(response)).isEqualTo("The UUID of the notification publisher could not be found.");
     }
 
     @Test
     void updateNotificationRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE, Permissions.SYSTEM_CONFIGURATION_UPDATE);
-        Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+        Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -223,7 +225,8 @@ class NotificationRuleResourceTest extends ResourceTest {
         ruleJson.add("name", "Example Rule");
         ruleJson.add("notifyOn", Json.createArrayBuilder().add(NotificationGroup.NEW_VULNERABILITY.name()));
 
-        response = jersey.target(V1_NOTIFICATION_RULE).request()
+        response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(ruleJson.build().toString()));
         assertThat(response.getStatus()).isEqualTo(200);
@@ -259,10 +262,12 @@ class NotificationRuleResourceTest extends ResourceTest {
     @Test
     void updateNotificationRuleInvalidTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
-        NotificationRule rule = qm.createNotificationRule("Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        NotificationRule rule = qm.createNotificationRule(
+                "Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         rule = qm.detach(NotificationRule.class, rule.getId());
         rule.setUuid(UUID.randomUUID());
-        Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+        Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
         Assertions.assertEquals(404, response.getStatus(), 0);
@@ -274,22 +279,47 @@ class NotificationRuleResourceTest extends ResourceTest {
     @Test
     void deleteNotificationRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
-        NotificationRule rule = qm.createNotificationRule("Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        rule.setName("Example Rule");
-        Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
-                .method("DELETE", Entity.entity(rule, MediaType.APPLICATION_JSON)); // HACK
-        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s"
+                        }
+                        """.formatted(rule.getUuid())));
         Assertions.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    void deleteNotificationRuleWithUnknownUuidTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
+
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "d6b6bb50-4d9f-4a56-a68a-1b2a2b7f8e5b"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(getPlainTextBody(response)).isEqualTo("The UUID of the notification rule could not be found.");
     }
 
     @Test
     void addProjectToRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
         Project project = qm.createProject("Acme Example", null, null, null, null, null, null, false);
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid().toString()).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/"
+                        + project.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assertions.assertEquals(200, response.getStatus(), 0);
@@ -297,15 +327,20 @@ class NotificationRuleResourceTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("Example Rule", json.getString("name"));
         Assertions.assertEquals(1, json.getJsonArray("projects").size());
-        Assertions.assertEquals("Acme Example", json.getJsonArray("projects").getJsonObject(0).getString("name"));
-        Assertions.assertEquals(project.getUuid().toString(), json.getJsonArray("projects").getJsonObject(0).getString("uuid"));
+        Assertions.assertEquals(
+                "Acme Example", json.getJsonArray("projects").getJsonObject(0).getString("name"));
+        Assertions.assertEquals(
+                project.getUuid().toString(),
+                json.getJsonArray("projects").getJsonObject(0).getString("uuid"));
     }
 
     @Test
     void addProjectToRuleInvalidRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
         Project project = qm.createProject("Acme Example", null, null, null, null, null, null, false);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + UUID.randomUUID() + "/project/" + project.getUuid()).request()
+        Response response = jersey.target(
+                        V1_NOTIFICATION_RULE + "/" + UUID.randomUUID() + "/project/" + project.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assertions.assertEquals(404, response.getStatus(), 0);
@@ -318,21 +353,26 @@ class NotificationRuleResourceTest extends ResourceTest {
     void addProjectToRuleInvalidScopeTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
         Project project = qm.createProject("Acme Example", null, null, null, null, null, null, false);
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.SYSTEM, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid()).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.SYSTEM, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assertions.assertEquals(406, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assertions.assertEquals("Project limitations are only possible on notification rules with PORTFOLIO scope.", body);
+        Assertions.assertEquals(
+                "Project limitations are only possible on notification rules with PORTFOLIO scope.", body);
     }
 
     @Test
     void addProjectToRuleInvalidProjectTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + UUID.randomUUID()).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + UUID.randomUUID())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assertions.assertEquals(404, response.getStatus(), 0);
@@ -345,12 +385,14 @@ class NotificationRuleResourceTest extends ResourceTest {
     void addProjectToRuleDuplicateProjectTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
         Project project = qm.createProject("Acme Example", null, null, null, null, null, null, false);
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         List<Project> projects = new ArrayList<>();
         projects.add(project);
         rule.setProjects(projects);
         qm.persist(rule);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid()).request()
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assertions.assertEquals(304, response.getStatus(), 0);
@@ -369,10 +411,11 @@ class NotificationRuleResourceTest extends ResourceTest {
         final NotificationRule rule = qm.createNotificationRule(
                 "rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid()).request()
-                .header(X_API_KEY, apiKey)
-                .post(Entity.json(""));
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid())
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .post(Entity.json(""));
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -394,12 +437,14 @@ class NotificationRuleResourceTest extends ResourceTest {
     void removeProjectFromRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
         Project project = qm.createProject("Acme Example", null, null, null, null, null, null, false);
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         List<Project> projects = new ArrayList<>();
         projects.add(project);
         rule.setProjects(projects);
         qm.persist(rule);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid()).request()
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assertions.assertEquals(200, response.getStatus(), 0);
@@ -410,7 +455,9 @@ class NotificationRuleResourceTest extends ResourceTest {
     void removeProjectFromRuleInvalidRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
         Project project = qm.createProject("Acme Example", null, null, null, null, null, null, false);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + UUID.randomUUID() + "/project/" + project.getUuid()).request()
+        Response response = jersey.target(
+                        V1_NOTIFICATION_RULE + "/" + UUID.randomUUID() + "/project/" + project.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assertions.assertEquals(404, response.getStatus(), 0);
@@ -423,21 +470,26 @@ class NotificationRuleResourceTest extends ResourceTest {
     void removeProjectFromRuleInvalidScopeTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
         Project project = qm.createProject("Acme Example", null, null, null, null, null, null, false);
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.SYSTEM, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid()).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.SYSTEM, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assertions.assertEquals(406, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assertions.assertEquals("Project limitations are only possible on notification rules with PORTFOLIO scope.", body);
+        Assertions.assertEquals(
+                "Project limitations are only possible on notification rules with PORTFOLIO scope.", body);
     }
 
     @Test
     void removeProjectFromRuleInvalidProjectTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + UUID.randomUUID()).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + UUID.randomUUID())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assertions.assertEquals(404, response.getStatus(), 0);
@@ -450,8 +502,10 @@ class NotificationRuleResourceTest extends ResourceTest {
     void removeProjectFromRuleDuplicateProjectTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
         Project project = qm.createProject("Acme Example", null, null, null, null, null, null, false);
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid()).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assertions.assertEquals(304, response.getStatus(), 0);
@@ -471,10 +525,11 @@ class NotificationRuleResourceTest extends ResourceTest {
                 "rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         rule.setProjects(List.of(project));
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid()).request()
-                .header(X_API_KEY, apiKey)
-                .delete();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + project.getUuid())
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .delete();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -511,7 +566,8 @@ class NotificationRuleResourceTest extends ResourceTest {
         rule.setProjects(List.of(accessibleProject, inaccessibleProject));
         qm.persist(rule);
 
-        final Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
@@ -541,8 +597,8 @@ class NotificationRuleResourceTest extends ResourceTest {
         rule.setProjects(List.of(inaccessibleProject));
         qm.persist(rule);
 
-        final Response response = jersey
-                .target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + accessibleProject.getUuid())
+        final Response response = jersey.target(
+                        V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + accessibleProject.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -574,7 +630,8 @@ class NotificationRuleResourceTest extends ResourceTest {
         rule.setPublisherConfig("{\"destinationUrl\":\"https://slack.example.com\"}");
         qm.persist(rule);
 
-        final Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
                         {
@@ -619,8 +676,8 @@ class NotificationRuleResourceTest extends ResourceTest {
 
         final Team newTeam = qm.createTeam("notify-team");
 
-        final Response response = jersey
-                .target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + newTeam.getUuid())
+        final Response response = jersey.target(
+                        V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + newTeam.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -654,8 +711,8 @@ class NotificationRuleResourceTest extends ResourceTest {
         rule.setTeams(Set.of(existingTeam));
         qm.persist(rule);
 
-        final Response response = jersey
-                .target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + existingTeam.getUuid())
+        final Response response = jersey.target(
+                        V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + existingTeam.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -686,8 +743,8 @@ class NotificationRuleResourceTest extends ResourceTest {
         rule.setProjects(List.of(inaccessibleProject, accessibleProject));
         qm.persist(rule);
 
-        final Response response = jersey
-                .target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + accessibleProject.getUuid())
+        final Response response = jersey.target(
+                        V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + accessibleProject.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -703,8 +760,10 @@ class NotificationRuleResourceTest extends ResourceTest {
     void addTeamToRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
         Team team = qm.createTeam("Team Example");
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + team.getUuid()).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + team.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assertions.assertEquals(200, response.getStatus(), 0);
@@ -712,15 +771,19 @@ class NotificationRuleResourceTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("Example Rule", json.getString("name"));
         Assertions.assertEquals(1, json.getJsonArray("teams").size());
-        Assertions.assertEquals("Team Example", json.getJsonArray("teams").getJsonObject(0).getString("name"));
-        Assertions.assertEquals(team.getUuid().toString(), json.getJsonArray("teams").getJsonObject(0).getString("uuid"));
+        Assertions.assertEquals(
+                "Team Example", json.getJsonArray("teams").getJsonObject(0).getString("name"));
+        Assertions.assertEquals(
+                team.getUuid().toString(),
+                json.getJsonArray("teams").getJsonObject(0).getString("uuid"));
     }
 
     @Test
     void addTeamToRuleInvalidRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
         Team team = qm.createTeam("Team Example");
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + UUID.randomUUID() + "/team/" + team.getUuid()).request()
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + UUID.randomUUID() + "/team/" + team.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assertions.assertEquals(404, response.getStatus(), 0);
@@ -732,8 +795,10 @@ class NotificationRuleResourceTest extends ResourceTest {
     @Test
     void addTeamToRuleInvalidTeamTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + UUID.randomUUID()).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + UUID.randomUUID())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assertions.assertEquals(404, response.getStatus(), 0);
@@ -746,12 +811,14 @@ class NotificationRuleResourceTest extends ResourceTest {
     void addTeamToRuleDuplicateTeamTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
         Team team = qm.createTeam("Team Example");
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         Set<Team> teams = new HashSet<>();
         teams.add(team);
         rule.setTeams(teams);
         qm.persist(rule);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + team.getUuid()).request()
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + team.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assertions.assertEquals(304, response.getStatus(), 0);
@@ -762,8 +829,10 @@ class NotificationRuleResourceTest extends ResourceTest {
     void addTeamToRuleWithCustomEmailPublisherTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
         final Team team = qm.createTeam("Team Example");
-        final NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        final Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + team.getUuid()).request()
+        final NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        final Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + team.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         assertThat(response.getStatus()).isEqualTo(200);
@@ -807,12 +876,15 @@ class NotificationRuleResourceTest extends ResourceTest {
     void removeTeamFromRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
         Team team = qm.createTeam("Team Example");
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         Set<Team> teams = new HashSet<>();
         teams.add(team);
         rule.setTeams(teams);
         qm.persist(rule);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/"
+                        + rule.getUuid().toString() + "/team/" + team.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assertions.assertEquals(200, response.getStatus(), 0);
@@ -823,7 +895,10 @@ class NotificationRuleResourceTest extends ResourceTest {
     void removeTeamFromRuleInvalidRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
         Team team = qm.createTeam("Team Example");
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/team/" + team.getUuid().toString()).request()
+        Response response = jersey.target(
+                        V1_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/team/"
+                                + team.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assertions.assertEquals(404, response.getStatus(), 0);
@@ -835,8 +910,12 @@ class NotificationRuleResourceTest extends ResourceTest {
     @Test
     void removeTeamFromRuleInvalidTeamTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + UUID.randomUUID().toString()).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(
+                        V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/"
+                                + UUID.randomUUID().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assertions.assertEquals(404, response.getStatus(), 0);
@@ -849,8 +928,11 @@ class NotificationRuleResourceTest extends ResourceTest {
     void removeTeamFromRuleDuplicateTeamTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
         Team team = qm.createTeam("Team Example");
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = jersey.target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+        NotificationRule rule = qm.createNotificationRule(
+                "Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = jersey.target(V1_NOTIFICATION_RULE + "/"
+                        + rule.getUuid().toString() + "/team/" + team.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assertions.assertEquals(304, response.getStatus(), 0);
@@ -860,7 +942,8 @@ class NotificationRuleResourceTest extends ResourceTest {
     @Test
     void updateNotificationRuleWithTagsTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE, Permissions.SYSTEM_CONFIGURATION_UPDATE);
-        Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+        Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -876,11 +959,14 @@ class NotificationRuleResourceTest extends ResourceTest {
 
         // Tag the rule with "foo" and "bar".
         JsonObjectBuilder ruleJson = Json.createObjectBuilder(parseJsonObject(response));
-        ruleJson.add("tags", Json.createArrayBuilder()
-                .add(Json.createObjectBuilder().add("name", "foo"))
-                .add(Json.createObjectBuilder().add("name", "bar")));
+        ruleJson.add(
+                "tags",
+                Json.createArrayBuilder()
+                        .add(Json.createObjectBuilder().add("name", "foo"))
+                        .add(Json.createObjectBuilder().add("name", "bar")));
 
-        response = jersey.target(V1_NOTIFICATION_RULE).request()
+        response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(ruleJson.build().toString()));
         assertThat(response.getStatus()).isEqualTo(200);
@@ -922,10 +1008,11 @@ class NotificationRuleResourceTest extends ResourceTest {
 
         // Replace the previous tags with only "baz".
         ruleJson = Json.createObjectBuilder(responseJson);
-        ruleJson.add("tags", Json.createArrayBuilder()
-                .add(Json.createObjectBuilder().add("name", "baz")));
+        ruleJson.add(
+                "tags", Json.createArrayBuilder().add(Json.createObjectBuilder().add("name", "baz")));
 
-        response = jersey.target(V1_NOTIFICATION_RULE).request()
+        response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(ruleJson.build().toString()));
         assertThat(response.getStatus()).isEqualTo(200);
@@ -962,12 +1049,9 @@ class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     void shouldUpdateNotificationRuleWithValidFilterExpression() {
-        initializeWithPermissions(
-                Permissions.SYSTEM_CONFIGURATION_CREATE,
-                Permissions.SYSTEM_CONFIGURATION_UPDATE);
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE, Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        Response response = jersey
-                .target(V1_NOTIFICATION_RULE)
+        Response response = jersey.target(V1_NOTIFICATION_RULE)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -985,8 +1069,7 @@ class NotificationRuleResourceTest extends ResourceTest {
         final JsonObjectBuilder ruleJson = Json.createObjectBuilder(parseJsonObject(response));
         ruleJson.add("filterExpression", "group == 1");
 
-        response = jersey
-                .target(V1_NOTIFICATION_RULE)
+        response = jersey.target(V1_NOTIFICATION_RULE)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(ruleJson.build().toString()));
@@ -1021,12 +1104,9 @@ class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     void shouldReturnBadRequestWhenFilterExpressionIsInvalid() {
-        initializeWithPermissions(
-                Permissions.SYSTEM_CONFIGURATION_CREATE,
-                Permissions.SYSTEM_CONFIGURATION_UPDATE);
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE, Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        Response response = jersey
-                .target(V1_NOTIFICATION_RULE)
+        Response response = jersey.target(V1_NOTIFICATION_RULE)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -1044,8 +1124,7 @@ class NotificationRuleResourceTest extends ResourceTest {
         final JsonObjectBuilder ruleJson = Json.createObjectBuilder(parseJsonObject(response));
         ruleJson.add("filterExpression", "invalid %%% expression");
 
-        response = jersey
-                .target(V1_NOTIFICATION_RULE)
+        response = jersey.target(V1_NOTIFICATION_RULE)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(ruleJson.build().toString()));
@@ -1073,12 +1152,9 @@ class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     void shouldUpdateNotificationRuleWithNullFilterExpression() {
-        initializeWithPermissions(
-                Permissions.SYSTEM_CONFIGURATION_CREATE,
-                Permissions.SYSTEM_CONFIGURATION_UPDATE);
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE, Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        Response response = jersey
-                .target(V1_NOTIFICATION_RULE)
+        Response response = jersey.target(V1_NOTIFICATION_RULE)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -1096,8 +1172,7 @@ class NotificationRuleResourceTest extends ResourceTest {
         final JsonObjectBuilder ruleJson = Json.createObjectBuilder(parseJsonObject(response));
         ruleJson.addNull("filterExpression");
 
-        response = jersey
-                .target(V1_NOTIFICATION_RULE)
+        response = jersey.target(V1_NOTIFICATION_RULE)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(ruleJson.build().toString()));
@@ -1128,5 +1203,4 @@ class NotificationRuleResourceTest extends ResourceTest {
                 }
                 """);
     }
-
 }

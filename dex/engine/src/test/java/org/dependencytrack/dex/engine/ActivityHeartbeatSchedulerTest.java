@@ -226,11 +226,10 @@ class ActivityHeartbeatSchedulerTest {
         assertThat(lockRenewer.calls.get()).isZero();
     }
 
-    private void register(
-            AtomicReference<TaskLock> lock,
-            CompletableFuture<?> activityFuture) {
+    private void register(AtomicReference<TaskLock> lock, CompletableFuture<?> activityFuture) {
         final var taskId = new ActivityTaskId("queue", UUID.randomUUID(), 1);
-        scheduler.register("activityName", taskId, "test-execution", LOCK_TIMEOUT, lock::get, lock::set, activityFuture);
+        scheduler.register(
+                "activityName", taskId, "test-execution", LOCK_TIMEOUT, lock::get, lock::set, activityFuture);
     }
 
     private TaskLock lockExpiringIn(Duration remaining) {
@@ -253,13 +252,10 @@ class ActivityHeartbeatSchedulerTest {
 
         @Override
         public CompletableFuture<TaskLock> tryRenew(
-                @NonNull ActivityTaskId taskId,
-                @NonNull TaskLock currentLock,
-                @NonNull Duration lockTimeout) {
+                @NonNull ActivityTaskId taskId, @NonNull TaskLock currentLock, @NonNull Duration lockTimeout) {
             calls.incrementAndGet();
             return response.get();
         }
-
     }
 
     private static final class MutableClock extends Clock {
@@ -288,7 +284,5 @@ class ActivityHeartbeatSchedulerTest {
         public Clock withZone(ZoneId zone) {
             return this;
         }
-
     }
-
 }

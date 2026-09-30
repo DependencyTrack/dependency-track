@@ -27,5 +27,4 @@ record StaticTokenProvider(String token) implements GitHubTokenProvider {
     public String currentToken() {
         return token;
     }
-
 }

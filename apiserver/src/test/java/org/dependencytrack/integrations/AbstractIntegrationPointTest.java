@@ -27,12 +27,10 @@ public class AbstractIntegrationPointTest extends PersistenceCapableTest {
 
     @Test
     public void testAbstractMethods() {
-        AbstractIntegrationPoint extension = Mockito.mock(
-                AbstractIntegrationPoint.class,
-                Mockito.CALLS_REAL_METHODS
-        );
+        AbstractIntegrationPoint extension = Mockito.mock(AbstractIntegrationPoint.class, Mockito.CALLS_REAL_METHODS);
         extension.setQueryManager(qm);
         extension.handleException(LoggerFactory.getLogger(this.getClass()), new Exception());
-        extension.handleUnexpectedHttpResponse(LoggerFactory.getLogger(this.getClass()), "http://localhost", 400, "very very bad");
+        extension.handleUnexpectedHttpResponse(
+                LoggerFactory.getLogger(this.getClass()), "http://localhost", 400, "very very bad");
     }
 }

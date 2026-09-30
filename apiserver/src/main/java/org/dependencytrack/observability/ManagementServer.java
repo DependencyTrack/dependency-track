@@ -60,18 +60,15 @@ public final class ManagementServer implements Closeable {
         this.port = port;
         this.healthCheckRegistry = requireNonNull(healthCheckRegistry, "healthCheckRegistry must not be null");
         this.meterRegistry = requireNonNull(meterRegistry, "meterRegistry must not be null");
-        this.metricsEnabled = config
-                .getOptionalValue(ConfigKeys.METRICS_ENABLED, boolean.class)
+        this.metricsEnabled = config.getOptionalValue(ConfigKeys.METRICS_ENABLED, boolean.class)
                 .orElse(false);
-        this.basicAuthUsername = config
-                .getOptionalValue(ConfigKeys.METRICS_AUTH_USERNAME, String.class)
+        this.basicAuthUsername = config.getOptionalValue(ConfigKeys.METRICS_AUTH_USERNAME, String.class)
                 .orElse(null);
-        this.basicAuthPassword = config
-                .getOptionalValue(ConfigKeys.METRICS_AUTH_PASSWORD, String.class)
+        this.basicAuthPassword = config.getOptionalValue(ConfigKeys.METRICS_AUTH_PASSWORD, String.class)
                 .orElse(null);
     }
 
-    public void start() throws IOException {
+    public void start() throws IOException, InterruptedException {
         if (!started.compareAndSet(false, true)) {
             throw new IllegalStateException("Already started");
         }
@@ -85,7 +82,10 @@ public final class ManagementServer implements Closeable {
             server.createContext("/metrics", new MetricsHandler(meterRegistry, basicAuthUsername, basicAuthPassword));
         }
 
-        server.start();
+        final var starterThread = new Thread(server::start, "ManagementServerStarter");
+        starterThread.setDaemon(true);
+        starterThread.start();
+        starterThread.join();
     }
 
     int getPort() {
@@ -109,5 +109,4 @@ public final class ManagementServer implements Closeable {
             executor.close();
         }
     }
-
 }

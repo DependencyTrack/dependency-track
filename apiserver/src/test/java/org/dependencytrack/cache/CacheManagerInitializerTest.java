@@ -19,11 +19,12 @@
 package org.dependencytrack.cache;
 
 import io.smallrye.config.SmallRyeConfigBuilder;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletContextEvent;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.cache.api.CacheManager;
 import org.junit.jupiter.api.Test;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
 
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -78,5 +79,4 @@ class CacheManagerInitializerTest extends PersistenceCapableTest {
                 .isThrownBy(() -> initializer.contextInitialized(null))
                 .withMessage("No cache provider found for name: does-not-exist");
     }
-
 }

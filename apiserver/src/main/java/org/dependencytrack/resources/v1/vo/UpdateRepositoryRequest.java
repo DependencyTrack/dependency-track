@@ -22,10 +22,11 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
@@ -34,22 +35,34 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record UpdateRepositoryRequest(
         @NotNull
-        @Schema(description = "UUID of the repository to update", requiredMode = Schema.RequiredMode.REQUIRED, format = "uuid")
+        @Schema(
+                description = "UUID of the repository to update",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                format = "uuid")
         UUID uuid,
+
         @NotBlank
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "URL of the repository", requiredMode = Schema.RequiredMode.REQUIRED)
         String url,
+
         @Schema(description = "Whether the repository is enabled", requiredMode = Schema.RequiredMode.REQUIRED)
         boolean enabled,
-        @Schema(description = "Whether the repository is internal to the organization")
-        @Nullable Boolean internal,
-        @Schema(description = "Whether the repository requires authentication", requiredMode = Schema.RequiredMode.REQUIRED)
+
+        @Schema(description = "Whether the repository is internal to the organization") @Nullable
+        Boolean internal,
+
+        @Schema(
+                description = "Whether the repository requires authentication",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         boolean authenticationRequired,
+
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Username to authenticate with")
-        @Nullable String username,
+        @Nullable
+        String username,
+
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Name of the secret holding the password or token")
-        @Nullable String password) {
-}
+        @Nullable
+        String password) {}

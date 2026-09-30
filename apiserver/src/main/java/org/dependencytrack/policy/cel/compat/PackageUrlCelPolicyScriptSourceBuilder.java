@@ -38,5 +38,4 @@ public class PackageUrlCelPolicyScriptSourceBuilder implements CelPolicyScriptSo
 
         return null;
     }
-
 }

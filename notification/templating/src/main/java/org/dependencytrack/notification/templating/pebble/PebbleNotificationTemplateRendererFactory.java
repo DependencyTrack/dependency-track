@@ -51,25 +51,22 @@ public final class PebbleNotificationTemplateRendererFactory {
     }
 
     public PebbleNotificationTemplateRendererFactory(
-            Map<String, Supplier<Object>> contextVariableSuppliers,
-            boolean strictVariables) {
+            Map<String, Supplier<Object>> contextVariableSuppliers, boolean strictVariables) {
         this.pebbleEngine = new PebbleEngine.Builder()
-                .registerExtensionCustomizer(
-                        new DisallowExtensionCustomizerBuilder()
-                                .disallowedTokenParserTags(List.of("include"))
-                                .build())
+                .registerExtensionCustomizer(new DisallowExtensionCustomizerBuilder()
+                        .disallowedTokenParserTags(List.of("include"))
+                        .build())
                 .extension(new PebbleExtension())
                 .defaultEscapingStrategy("json")
                 .strictVariables(strictVariables)
                 .newLineTrimming(false)
                 .templateCache(new CaffeineTemplateCache())
                 .build();
-        this.contextVariableSuppliers = unmodifiableMap(requireNonNull(
-                contextVariableSuppliers, "contextVariableSuppliers must not be null"));
+        this.contextVariableSuppliers =
+                unmodifiableMap(requireNonNull(contextVariableSuppliers, "contextVariableSuppliers must not be null"));
     }
 
     public NotificationTemplateRenderer createRenderer(@Nullable NotificationTemplate template) {
         return new PebbleNotificationTemplateRenderer(pebbleEngine, template, contextVariableSuppliers);
     }
-
 }

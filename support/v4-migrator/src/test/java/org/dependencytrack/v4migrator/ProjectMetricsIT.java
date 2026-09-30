@@ -87,8 +87,8 @@ class ProjectMetricsIT {
         runPipeline();
 
         // The COLLECTION_LOGIC* columns must not be present on v5 PROJECTMETRICS.
-        final List<String> columns = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<String> columns = target.jdbi()
+                .withHandle(h -> h.createQuery("""
                     SELECT column_name
                       FROM information_schema.columns
                      WHERE table_name = 'PROJECTMETRICS'
@@ -96,21 +96,23 @@ class ProjectMetricsIT {
                     """).mapTo(String.class).list());
         assertThat(columns).doesNotContain("COLLECTION_LOGIC", "COLLECTION_LOGIC_CHANGED");
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "PROJECT_ID", "COMPONENTS", "VULNERABILITIES", "VULNERABLECOMPONENTS"
                       FROM "PROJECTMETRICS"
                     """).mapToMap().list());
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0))
-            .containsEntry("project_id", 1L)
-            .containsEntry("components", 3)
-            .containsEntry("vulnerabilities", 3)
-            .containsEntry("vulnerablecomponents", 2);
+                .containsEntry("project_id", 1L)
+                .containsEntry("components", 3)
+                .containsEntry("vulnerabilities", 3)
+                .containsEntry("vulnerablecomponents", 2);
 
         // Smoke: the post-load REFRESH MATERIALIZED VIEW completed; the view is queryable.
-        final Long viewRows = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT count(*) FROM \"PORTFOLIOMETRICS_GLOBAL\"").mapTo(Long.class).one());
+        final Long viewRows = target.jdbi()
+                .withHandle(h -> h.createQuery("SELECT count(*) FROM \"PORTFOLIOMETRICS_GLOBAL\"")
+                        .mapTo(Long.class)
+                        .one());
         assertThat(viewRows).isNotNull();
     }
 

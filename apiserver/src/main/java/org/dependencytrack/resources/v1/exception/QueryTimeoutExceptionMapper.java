@@ -18,12 +18,13 @@
  */
 package org.dependencytrack.resources.v1.exception;
 
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.ExceptionMapper;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v2.exception.ProblemType;
 import org.dependencytrack.support.jdbi.exception.QueryTimeoutException;
+
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 import java.net.URI;
 
@@ -33,15 +34,11 @@ public final class QueryTimeoutExceptionMapper implements ExceptionMapper<QueryT
 
     @Override
     public Response toResponse(QueryTimeoutException exception) {
-        final var problemDetails = new ProblemDetails(
-                ProblemType.TIMEOUT.status(),
-                ProblemType.TIMEOUT.title(),
-                """
+        final var problemDetails = new ProblemDetails(ProblemType.TIMEOUT.status(), ProblemType.TIMEOUT.title(), """
                         The request was aborted because it took too long to complete. \
                         If an exact total count was requested, retry with a bounded one \
                         (totalCount=BOUNDED) where the endpoint supports it.""");
         problemDetails.setType(URI.create(ProblemType.TIMEOUT.type()));
         return problemDetails.toResponse();
     }
-
 }

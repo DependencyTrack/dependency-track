@@ -32,7 +32,5 @@ public final class JdbiAttributes {
     static final String ATTRIBUTE_API_PROJECT_ACL_CONDITION = "apiProjectAclCondition";
     public static final String ATTRIBUTE_QUERY_NAME = "queryName";
 
-    private JdbiAttributes() {
-    }
-
+    private JdbiAttributes() {}
 }

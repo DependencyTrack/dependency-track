@@ -19,6 +19,7 @@
 package org.dependencytrack.model;
 
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -34,5 +35,4 @@ class PackageMetadataTest {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new PackageMetadata(purl, "2.0.0", null, Instant.now(), null, null));
     }
-
 }

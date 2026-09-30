@@ -19,9 +19,7 @@
 package org.dependencytrack.dex.engine.api;
 
 public enum TaskType {
-
     ACTIVITY,
 
     WORKFLOW
-
 }

@@ -85,5 +85,4 @@ class RetryPolicyTest {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> RetryPolicy.ofDefault().withMaxAttempts(maxAttempts));
     }
-
 }

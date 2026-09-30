@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.util;
 
+import jakarta.xml.bind.DatatypeConverter;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -26,8 +28,7 @@ import java.util.TimeZone;
 
 public final class DateUtil {
 
-    private DateUtil() {
-    }
+    private DateUtil() {}
 
     /**
      * Convenience method that parses a date in yyyyMMdd format as UTC midnight
@@ -54,7 +55,8 @@ public final class DateUtil {
      */
     public static String toISO8601(final Date date) {
         final TimeZone tz = TimeZone.getTimeZone("UTC");
-        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+        final DateFormat df =
+                new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
         df.setTimeZone(tz);
         return df.format(date);
     }
@@ -63,6 +65,6 @@ public final class DateUtil {
         if (dateString == null) {
             return null;
         }
-        return jakarta.xml.bind.DatatypeConverter.parseDateTime(dateString).getTime();
+        return DatatypeConverter.parseDateTime(dateString).getTime();
     }
 }

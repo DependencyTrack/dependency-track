@@ -63,17 +63,12 @@ class JdbcNotificationEmitter implements NotificationEmitter {
     private final Timer emitLatencyTimer;
     private final MeterProvider<DistributionSummary> emittedDistribution;
 
-    JdbcNotificationEmitter(
-            @Nullable Connection connection,
-            MeterRegistry meterRegistry) {
+    JdbcNotificationEmitter(@Nullable Connection connection, MeterRegistry meterRegistry) {
         this.connection = connection;
         requireNonNull(meterRegistry, "meterRegistry must not be null");
-        this.emitLatencyTimer = Timer
-                .builder("dt.notifications.emit.latency")
-                .register(meterRegistry);
-        this.emittedDistribution = DistributionSummary
-                .builder("dt.notifications.emitted")
-                .withRegistry(meterRegistry);
+        this.emitLatencyTimer = Timer.builder("dt.notifications.emit.latency").register(meterRegistry);
+        this.emittedDistribution =
+                DistributionSummary.builder("dt.notifications.emitted").withRegistry(meterRegistry);
     }
 
     @Override
@@ -178,25 +173,20 @@ class JdbcNotificationEmitter implements NotificationEmitter {
 
         final long emitLatencyNanos = emitLatencySample.stop(emitLatencyTimer);
         logger.debug(
-                "Emitted {} notifications in {}ms",
-                emittedIds.size(),
-                TimeUnit.NANOSECONDS.toMillis(emitLatencyNanos));
+                "Emitted {} notifications in {}ms", emittedIds.size(), TimeUnit.NANOSECONDS.toMillis(emitLatencyNanos));
     }
 
     private static void validateRequiredFields(Notification notification) {
         if (notification.getId().isEmpty()) {
             throw new IllegalArgumentException("Missing ID");
         }
-        if (notification.getScope() == SCOPE_UNSPECIFIED
-                || notification.getScope() == Scope.UNRECOGNIZED) {
+        if (notification.getScope() == SCOPE_UNSPECIFIED || notification.getScope() == Scope.UNRECOGNIZED) {
             throw new IllegalArgumentException("Invalid scope: " + notification.getScope());
         }
-        if (notification.getGroup() == GROUP_UNSPECIFIED
-                || notification.getGroup() == Group.UNRECOGNIZED) {
+        if (notification.getGroup() == GROUP_UNSPECIFIED || notification.getGroup() == Group.UNRECOGNIZED) {
             throw new IllegalArgumentException("Invalid group: " + notification.getGroup());
         }
-        if (notification.getLevel() == LEVEL_UNSPECIFIED
-                || notification.getLevel() == Level.UNRECOGNIZED) {
+        if (notification.getLevel() == LEVEL_UNSPECIFIED || notification.getLevel() == Level.UNRECOGNIZED) {
             throw new IllegalArgumentException("Invalid level: " + notification.getLevel());
         }
         if (!notification.hasTimestamp()) {
@@ -209,5 +199,4 @@ class JdbcNotificationEmitter implements NotificationEmitter {
             throw new IllegalArgumentException("Missing content");
         }
     }
-
 }

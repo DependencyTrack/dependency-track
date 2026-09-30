@@ -22,5 +22,4 @@ import org.dependencytrack.dex.engine.ActivityTask;
 
 import java.time.Instant;
 
-public record ScheduleActivityTaskRetryCommand(ActivityTask task, Instant retryAt) {
-}
+public record ScheduleActivityTaskRetryCommand(ActivityTask task, Instant retryAt) {}

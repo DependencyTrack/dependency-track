@@ -25,9 +25,7 @@ import org.jspecify.annotations.Nullable;
  */
 public class TerminalApplicationFailureException extends ApplicationFailureException {
 
-    public TerminalApplicationFailureException(
-            @Nullable String message,
-            @Nullable Throwable cause) {
+    public TerminalApplicationFailureException(@Nullable String message, @Nullable Throwable cause) {
         super(message, cause, /* isTerminal */ true);
     }
 
@@ -38,5 +36,4 @@ public class TerminalApplicationFailureException extends ApplicationFailureExcep
     public TerminalApplicationFailureException(@Nullable Throwable cause) {
         this(null, cause);
     }
-
 }

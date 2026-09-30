@@ -80,14 +80,13 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
             Map<String, Supplier<@Nullable Object>> contextVariableSuppliers) {
         this.pebbleEngine = requireNonNull(pebbleEngine, "pebbleEngine must not be null");
         this.template = template;
-        this.contextVariableSuppliers = requireNonNull(
-                contextVariableSuppliers, "contextVariableSuppliers must not be null");
+        this.contextVariableSuppliers =
+                requireNonNull(contextVariableSuppliers, "contextVariableSuppliers must not be null");
     }
 
     @Override
     public @Nullable RenderedNotificationTemplate render(
-            Notification notification,
-            @Nullable Map<String, @Nullable Object> additionalContext) {
+            Notification notification, @Nullable Map<String, @Nullable Object> additionalContext) {
         requireNonNull(notification, "notification must not be null");
         if (template == null) {
             return null;
@@ -99,8 +98,11 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
         if (additionalContext != null) {
             templateCtx.putAll(additionalContext);
         }
-        templateCtx.put(BASE_URL, normalizeBaseUrl(
-                contextVariableSuppliers.getOrDefault(BASE_URL, NULL_SUPPLIER).get()));
+        templateCtx.put(
+                BASE_URL,
+                normalizeBaseUrl(contextVariableSuppliers
+                        .getOrDefault(BASE_URL, NULL_SUPPLIER)
+                        .get()));
         templateCtx.put(TIMESTAMP_EPOCH_SECONDS, Timestamps.toSeconds(notification.getTimestamp()));
         templateCtx.put(TIMESTAMP, format(notification.getTimestamp()));
         templateCtx.put(NOTIFICATION, notification);
@@ -130,11 +132,10 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
         }
     }
 
-    private static final DateTimeFormatter TIMESTAMP_FORMATTER =
-            new DateTimeFormatterBuilder()
-                    .parseCaseInsensitive()
-                    .appendInstant(3)
-                    .toFormatter();
+    private static final DateTimeFormatter TIMESTAMP_FORMATTER = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .appendInstant(3)
+            .toFormatter();
 
     private static String format(Timestamp protoTimestamp) {
         return TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(Timestamps.toMillis(protoTimestamp)));
@@ -197,5 +198,4 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
 
         return null;
     }
-
 }

@@ -18,13 +18,12 @@
  */
 package alpine.server.auth;
 
-import alpine.persistence.AlpineQueryManager;
+import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jspecify.annotations.NullMarked;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.datastore.JDOConnection;
+import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -33,10 +32,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @since 5.0.0
@@ -47,43 +46,42 @@ public final class SessionTokenService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final int TOKEN_BYTES = 32;
 
-    private final long sessionTimeoutMillis;
+    private final Duration sessionTimeout;
+    private final DataSource dataSource;
 
     public SessionTokenService() {
         this(ConfigProvider.getConfig());
     }
 
     SessionTokenService(Config config) {
-        this.sessionTimeoutMillis = config
-                .getOptionalValue("dt.auth.session-timeout-ms", long.class)
-                .orElse(TimeUnit.HOURS.toMillis(8));
+        this.sessionTimeout = Duration.ofMillis(config.getOptionalValue("dt.auth.session-timeout-ms", long.class)
+                .orElse(Duration.ofHours(8).toMillis()));
+        this.dataSource = DataSourceRegistry.getInstance().getDefault();
     }
 
     public String createSession(long userId) {
+        try (final Connection connection = dataSource.getConnection()) {
+            return createSession(connection, userId, sessionTimeout);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to create session", e);
+        }
+    }
+
+    public String createSession(Connection connection, long userId, Duration lifetime) {
         final byte[] tokenBytes = new byte[TOKEN_BYTES];
         SECURE_RANDOM.nextBytes(tokenBytes);
         final String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
-        final String tokenHash = sha256Hex(rawToken);
 
         final var now = Instant.now();
-        final Instant expiresAt = now.plusMillis(sessionTimeoutMillis);
-        try (final var qm = new AlpineQueryManager()) {
-            final PersistenceManager pm = qm.getPersistenceManager();
-            final JDOConnection jdoConnection = pm.getDataStoreConnection();
-            final var connection = (Connection) jdoConnection.getNativeConnection();
-
-            try (final PreparedStatement ps = connection.prepareStatement("""
-                    INSERT INTO "USER_SESSION" ("TOKEN_HASH", "USER_ID", "CREATED_AT", "EXPIRES_AT")
-                    VALUES (?, ?, ?, ?)
-                    """)) {
-                ps.setString(1, tokenHash);
-                ps.setLong(2, userId);
-                ps.setTimestamp(3, Timestamp.from(now));
-                ps.setTimestamp(4, Timestamp.from(expiresAt));
-                ps.executeUpdate();
-            } finally {
-                jdoConnection.close();
-            }
+        try (final PreparedStatement ps = connection.prepareStatement("""
+            INSERT INTO "USER_SESSION" ("TOKEN_HASH", "USER_ID", "CREATED_AT", "EXPIRES_AT")
+            VALUES (?, ?, ?, ?)
+            """)) {
+            ps.setString(1, sha256Hex(rawToken));
+            ps.setLong(2, userId);
+            ps.setTimestamp(3, Timestamp.from(now));
+            ps.setTimestamp(4, Timestamp.from(now.plus(lifetime)));
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to create session", e);
         }
@@ -92,45 +90,29 @@ public final class SessionTokenService {
     }
 
     public boolean deleteSession(String rawToken, long userId) {
-        final String tokenHash = sha256Hex(rawToken);
-
-        try (var qm = new AlpineQueryManager()) {
-            final PersistenceManager pm = qm.getPersistenceManager();
-            final JDOConnection jdoConnection = pm.getDataStoreConnection();
-            final var connection = (Connection) jdoConnection.getNativeConnection();
-
-            try (var ps = connection.prepareStatement("""
+        try (final Connection connection = dataSource.getConnection();
+                final PreparedStatement ps = connection.prepareStatement("""
                     DELETE
                       FROM "USER_SESSION"
                      WHERE "TOKEN_HASH" = ?
                        AND "USER_ID" = ?
                     """)) {
-                ps.setString(1, tokenHash);
-                ps.setLong(2, userId);
-                return ps.executeUpdate() > 0;
-            } finally {
-                jdoConnection.close();
-            }
+            ps.setString(1, sha256Hex(rawToken));
+            ps.setLong(2, userId);
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to revoke session", e);
         }
     }
 
     public int deleteExpiredSessions() {
-        try (var qm = new AlpineQueryManager()) {
-            final PersistenceManager pm = qm.getPersistenceManager();
-            final JDOConnection jdoConnection = pm.getDataStoreConnection();
-            final var connection = (Connection) jdoConnection.getNativeConnection();
-
-            try (final PreparedStatement ps = connection.prepareStatement("""
+        try (final Connection connection = dataSource.getConnection();
+                final PreparedStatement ps = connection.prepareStatement("""
                     DELETE
                       FROM "USER_SESSION"
                      WHERE "EXPIRES_AT" < NOW()
                     """)) {
-                return ps.executeUpdate();
-            } finally {
-                jdoConnection.close();
-            }
+            return ps.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to delete expired sessions", e);
         }
@@ -145,5 +127,4 @@ public final class SessionTokenService {
             throw new IllegalStateException(e);
         }
     }
-
 }

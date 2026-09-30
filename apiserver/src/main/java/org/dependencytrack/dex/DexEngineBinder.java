@@ -18,12 +18,13 @@
  */
 package org.dependencytrack.dex;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import jakarta.servlet.ServletContext;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.ServletContext;
 
 import static java.util.Objects.requireNonNull;
 
@@ -34,9 +35,7 @@ public final class DexEngineBinder extends AbstractBinder {
 
     @Override
     protected void configure() {
-        bindFactory(DexEngineFactory.class)
-                .to(DexEngine.class)
-                .in(Singleton.class);
+        bindFactory(DexEngineFactory.class).to(DexEngine.class).in(Singleton.class);
     }
 
     private static final class DexEngineFactory implements Factory<DexEngine> {
@@ -58,7 +57,5 @@ public final class DexEngineBinder extends AbstractBinder {
         public void dispose(DexEngine dexEngine) {
             // Lifecycle is managed by DexEngineInitializer.
         }
-
     }
-
 }

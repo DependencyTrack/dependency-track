@@ -40,12 +40,11 @@ import static org.dependencytrack.policy.cel.CelPolicyLibrary.Function.SPDX_EXPR
  */
 final class CelPolicySpdxExpressionValidator {
 
-    static final Set<String> RELEVANT_FUNCTIONS = Set.of(
-            SPDX_EXPR_ALLOWS.functionName(),
-            SPDX_EXPR_REQUIRES_ANY.functionName());
+    static final Set<String> RELEVANT_FUNCTIONS =
+            Set.of(SPDX_EXPR_ALLOWS.functionName(), SPDX_EXPR_REQUIRES_ANY.functionName());
 
-    record SpdxExpressionValidationError(String message, @Nullable Integer position) {
-    }
+    record SpdxExpressionValidationError(
+            String message, @Nullable Integer position) {}
 
     private final CelAbstractSyntaxTree ast;
     private final Map<Long, Integer> positions;
@@ -64,11 +63,14 @@ final class CelPolicySpdxExpressionValidator {
             return;
         }
 
-        CelNavigableAst.fromAst(ast).getRoot().allNodes()
+        CelNavigableAst.fromAst(ast)
+                .getRoot()
+                .allNodes()
                 .filter(node -> node.getKind() == CelExpr.ExprKind.Kind.CALL)
                 .forEach(node -> {
                     final CelExpr.CelCall callExpr = node.expr().call();
-                    if (RELEVANT_FUNCTIONS.contains(callExpr.function()) && !callExpr.args().isEmpty()) {
+                    if (RELEVANT_FUNCTIONS.contains(callExpr.function())
+                            && !callExpr.args().isEmpty()) {
                         maybeValidateSpdxExpression(callExpr.args().getFirst());
                     }
                 });
@@ -88,15 +90,12 @@ final class CelPolicySpdxExpressionValidator {
         try {
             SpdxExpressionParser.getInstance().parse(value);
         } catch (SpdxExpressionParseException e) {
-            errors.add(
-                    new SpdxExpressionValidationError(
-                            "Invalid SPDX expression: " + e.getMessage(),
-                            positions.get(expr.id())));
+            errors.add(new SpdxExpressionValidationError(
+                    "Invalid SPDX expression: " + e.getMessage(), positions.get(expr.id())));
         }
     }
 
     List<SpdxExpressionValidationError> getErrors() {
         return Collections.unmodifiableList(errors);
     }
-
 }

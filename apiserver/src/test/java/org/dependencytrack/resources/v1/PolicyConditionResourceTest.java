@@ -20,9 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -33,6 +30,10 @@ import org.dependencytrack.model.PolicyCondition;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import javax.jdo.JDOObjectNotFoundException;
 import java.util.UUID;
@@ -45,10 +46,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 public class PolicyConditionResourceTest extends ResourceTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(PolicyConditionResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(PolicyConditionResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class));
 
     @Test
     public void testCreateCondition() {
@@ -86,7 +86,8 @@ public class PolicyConditionResourceTest extends ResourceTest {
     public void testCreateConditionWhenPolicyDoesNotExist() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
 
-        final Response response = jersey.target("%s/cec42e01-62a7-4c86-9b8f-cd6650be2888/condition".formatted(V1_POLICY))
+        final Response response = jersey.target(
+                        "%s/cec42e01-62a7-4c86-9b8f-cd6650be2888/condition".formatted(V1_POLICY))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -102,7 +103,8 @@ public class PolicyConditionResourceTest extends ResourceTest {
 
     @Test
     public void testCreateConditionWhenUnauthorized() {
-        final Response response = jersey.target("%s/cec42e01-62a7-4c86-9b8f-cd6650be2888/condition".formatted(V1_POLICY))
+        final Response response = jersey.target(
+                        "%s/cec42e01-62a7-4c86-9b8f-cd6650be2888/condition".formatted(V1_POLICY))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -132,8 +134,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
                         }
                         """, MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(201);
-        assertThatJson(getPlainTextBody(response))
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                         {
                           "uuid": "${json-unit.any-string}",
                           "subject": "EXPRESSION",
@@ -162,8 +163,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
                         """, MediaType.APPLICATION_JSON));
 
         assertThat(response.getStatus()).isEqualTo(400);
-        assertThatJson(getPlainTextBody(response))
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                         {
                           "celErrors": [
                             {
@@ -258,13 +258,14 @@ public class PolicyConditionResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
 
         final Policy policy = qm.createPolicy("policy", Operator.ANY, ViolationState.FAIL);
-        final PolicyCondition condition = qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.VULNERABILITY_ID, PolicyCondition.Operator.IS, "foobar");
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.VULNERABILITY_ID, PolicyCondition.Operator.IS, "foobar");
 
         final Response response = jersey.target("%s/condition".formatted(V1_POLICY))
                 .request()
                 .header(X_API_KEY, apiKey)
-                .post(Entity.entity(/* language=JSON */ """
+                .post(Entity.entity(
+                        /* language=JSON */ """
                         {
                           "uuid": "%s",
                           "subject": "EXPRESSION",
@@ -274,8 +275,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
                         """.formatted(condition.getUuid()), MediaType.APPLICATION_JSON));
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                         {
                           "uuid": "${json-unit.any-string}",
                           "subject": "EXPRESSION",
@@ -291,13 +291,14 @@ public class PolicyConditionResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
 
         final Policy policy = qm.createPolicy("policy", Operator.ANY, ViolationState.FAIL);
-        final PolicyCondition condition = qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.VULNERABILITY_ID, PolicyCondition.Operator.IS, "foobar");
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.VULNERABILITY_ID, PolicyCondition.Operator.IS, "foobar");
 
         final Response response = jersey.target("%s/condition".formatted(V1_POLICY))
                 .request()
                 .header(X_API_KEY, apiKey)
-                .post(Entity.entity(/* language=JSON */ """
+                .post(Entity.entity(
+                        /* language=JSON */ """
                         {
                           "uuid": "%s",
                           "subject": "EXPRESSION",
@@ -307,8 +308,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
                         """.formatted(condition.getUuid()), MediaType.APPLICATION_JSON));
 
         assertThat(response.getStatus()).isEqualTo(400);
-        assertThatJson(getPlainTextBody(response))
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                         {
                           "celErrors": [
                             {
@@ -370,5 +370,4 @@ public class PolicyConditionResourceTest extends ResourceTest {
                 .delete();
         assertThat(response.getStatus()).isEqualTo(403);
     }
-
 }

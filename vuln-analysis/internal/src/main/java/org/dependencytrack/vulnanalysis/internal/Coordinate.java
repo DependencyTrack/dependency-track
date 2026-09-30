@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 import us.springett.parsers.cpe.Cpe;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
@@ -39,7 +40,6 @@ sealed interface Coordinate {
             requireNonNull(vendor, "vendor must not be null");
             requireNonNull(product, "product must not be null");
         }
-
     }
 
     record PurlCoordinate(String type, @Nullable String namespace, String name) implements Coordinate {
@@ -48,7 +48,6 @@ sealed interface Coordinate {
             requireNonNull(type, "type must not be null");
             requireNonNull(name, "name must not be null");
         }
-
     }
 
     static Set<Coordinate> of(CandidateComponent component) {
@@ -58,19 +57,15 @@ sealed interface Coordinate {
         if (cpe != null) {
             coordinates.add(new Coordinate.CpeCoordinate(
                     cpe.getPart().getAbbreviation(),
-                    cpe.getVendor().toLowerCase(),
-                    cpe.getProduct().toLowerCase()));
+                    cpe.getVendor().toLowerCase(Locale.ROOT),
+                    cpe.getProduct().toLowerCase(Locale.ROOT)));
         }
 
         final PackageURL purl = component.parsedPurl();
         if (purl != null) {
-            coordinates.add(new Coordinate.PurlCoordinate(
-                    purl.getType(),
-                    purl.getNamespace(),
-                    purl.getName()));
+            coordinates.add(new Coordinate.PurlCoordinate(purl.getType(), purl.getNamespace(), purl.getName()));
         }
 
         return coordinates;
     }
-
 }

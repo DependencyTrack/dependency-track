@@ -29,5 +29,4 @@ import javax.sql.DataSource;
  * @param dataSource A {@link DataSource} which may be used for database interactions.
  * @since 5.0.0
  */
-public record InitTaskContext(Config config, DataSource dataSource) {
-}
+public record InitTaskContext(Config config, DataSource dataSource) {}

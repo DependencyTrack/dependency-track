@@ -19,12 +19,13 @@
 package org.dependencytrack.filestorage;
 
 import io.smallrye.config.SmallRyeConfigBuilder;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletContextEvent;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.eclipse.microprofile.config.Config;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
 
 import java.util.Map;
 
@@ -48,9 +49,7 @@ class FileStorageInitializerTest {
         final var initializer = new FileStorageInitializer(config);
         initializer.contextInitialized(new ServletContextEvent(servletContextMock));
 
-        verify(servletContextMock).setAttribute(
-                eq(FileStorage.class.getName()),
-                attributeValueCaptor.capture());
+        verify(servletContextMock).setAttribute(eq(FileStorage.class.getName()), attributeValueCaptor.capture());
 
         final FileStorage fileStorage = attributeValueCaptor.getValue();
         assertThat(fileStorage).isNotNull();
@@ -72,5 +71,4 @@ class FileStorageInitializerTest {
                 .isThrownBy(() -> initializer.contextInitialized(new ServletContextEvent(servletContextMock)))
                 .withMessage("No file storage provider found for name: nonexistent");
     }
-
 }

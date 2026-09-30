@@ -59,12 +59,14 @@ final class MetricsHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         try (exchange) {
             if (isAuthenticationEnabled() && !isAuthenticated(exchange)) {
-                final String remoteAddress = exchange.getRemoteAddress().getAddress().getHostAddress();
+                final String remoteAddress =
+                        exchange.getRemoteAddress().getAddress().getHostAddress();
                 final String userAgent = exchange.getRequestHeaders().getFirst("User-Agent");
                 LOGGER.warn(
                         SecurityMarkers.SECURITY_AUDIT,
                         "Unauthorized access attempt (IP address: {} / User-Agent: {})",
-                        remoteAddress, userAgent);
+                        remoteAddress,
+                        userAgent);
                 exchange.getResponseHeaders().set("WWW-Authenticate", "Basic realm=\"metrics\"");
                 exchange.sendResponseHeaders(401, -1);
                 return;
@@ -107,5 +109,4 @@ final class MetricsHandler implements HttpHandler {
         return Objects.equals(basicAuthUsername, credentialsParts[0])
                 && Objects.equals(basicAuthPassword, credentialsParts[1]);
     }
-
 }

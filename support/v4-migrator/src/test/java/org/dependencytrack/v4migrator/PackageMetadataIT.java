@@ -149,8 +149,8 @@ class PackageMetadataIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "PURL", "LATEST_VERSION", "RESOLVED_AT",
                            "RESOLVED_BY", "RESOLVED_FROM", "LATEST_VERSION_PUBLISHED_AT"
                       FROM "PACKAGE_METADATA"
@@ -159,11 +159,11 @@ class PackageMetadataIT {
 
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0))
-            .containsEntry("purl", "pkg:maven/com.example/foo")
-            .containsEntry("latest_version", "1.3.0")
-            .containsEntry("resolved_by", null)
-            .containsEntry("resolved_from", null)
-            .containsEntry("latest_version_published_at", null);
+                .containsEntry("purl", "pkg:maven/com.example/foo")
+                .containsEntry("latest_version", "1.3.0")
+                .containsEntry("resolved_by", null)
+                .containsEntry("resolved_from", null)
+                .containsEntry("latest_version_published_at", null);
         assertThat(rows.get(0).get("resolved_at")).isNotNull();
     }
 

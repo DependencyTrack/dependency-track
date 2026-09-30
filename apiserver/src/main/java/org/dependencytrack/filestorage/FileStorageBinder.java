@@ -18,11 +18,12 @@
  */
 package org.dependencytrack.filestorage;
 
+import org.dependencytrack.filestorage.api.FileStorage;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContext;
-import org.dependencytrack.filestorage.api.FileStorage;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import static java.util.Objects.requireNonNull;
 
@@ -33,9 +34,7 @@ public final class FileStorageBinder extends AbstractBinder {
 
     @Override
     protected void configure() {
-        bindFactory(Factory.class)
-                .to(FileStorage.class)
-                .in(Singleton.class);
+        bindFactory(Factory.class).to(FileStorage.class).in(Singleton.class);
     }
 
     private static final class Factory implements org.glassfish.hk2.api.Factory<FileStorage> {
@@ -57,7 +56,5 @@ public final class FileStorageBinder extends AbstractBinder {
         public void dispose(FileStorage instance) {
             // Lifecycle is managed by FileStorageInitializer.
         }
-
     }
-
 }

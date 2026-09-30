@@ -38,9 +38,7 @@ final class ProtobufPayloadConverter<T extends Message> implements PayloadConver
             return null;
         }
 
-        return Payload.newBuilder()
-                .setProtoContent(Any.pack(value))
-                .build();
+        return Payload.newBuilder().setProtoContent(Any.pack(value)).build();
     }
 
     @Override
@@ -55,9 +53,8 @@ final class ProtobufPayloadConverter<T extends Message> implements PayloadConver
         }
 
         if (!payload.getProtoContent().is(clazz)) {
-            throw new PayloadConversionException(
-                    "Expected Protobuf payload to be of type %s, but was %s".formatted(
-                            clazz.getName(), payload.getProtoContent().getTypeUrl()));
+            throw new PayloadConversionException("Expected Protobuf payload to be of type %s, but was %s"
+                    .formatted(clazz.getName(), payload.getProtoContent().getTypeUrl()));
         }
 
         try {
@@ -66,5 +63,4 @@ final class ProtobufPayloadConverter<T extends Message> implements PayloadConver
             throw new PayloadConversionException("Failed to convert Protobuf payload", e);
         }
     }
-
 }

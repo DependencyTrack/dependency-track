@@ -25,25 +25,19 @@ import java.time.Instant;
 
 sealed interface TaskEvent {
 
-    record ActivityTaskAbandonedEvent(
-            ActivityTask task,
-            Instant timestamp) implements TaskEvent {
+    record ActivityTaskAbandonedEvent(ActivityTask task, Instant timestamp) implements TaskEvent {
 
         ActivityTaskAbandonedEvent(ActivityTask task) {
             this(task, Instant.now());
         }
-
     }
 
     record ActivityTaskCompletedEvent(
-            ActivityTask task,
-            @Nullable Payload result,
-            Instant timestamp) implements TaskEvent {
+            ActivityTask task, @Nullable Payload result, Instant timestamp) implements TaskEvent {
 
         ActivityTaskCompletedEvent(ActivityTask task, @Nullable Payload result) {
             this(task, result, Instant.now());
         }
-
     }
 
     record ActivityTaskFailedEvent(
@@ -55,15 +49,9 @@ sealed interface TaskEvent {
         ActivityTaskFailedEvent(ActivityTask task, Throwable exception, @Nullable Instant retryAt) {
             this(task, exception, retryAt, Instant.now());
         }
-
     }
 
-    record WorkflowTaskAbandonedEvent(WorkflowTask task) implements TaskEvent {
-    }
+    record WorkflowTaskAbandonedEvent(WorkflowTask task) implements TaskEvent {}
 
-    record WorkflowTaskCompletedEvent(
-            WorkflowTask task,
-            WorkflowRunState workflowRunState) implements TaskEvent {
-    }
-
+    record WorkflowTaskCompletedEvent(WorkflowTask task, WorkflowRunState workflowRunState) implements TaskEvent {}
 }

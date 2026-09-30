@@ -20,11 +20,12 @@ package org.dependencytrack.resources.v1.vo;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.dependencytrack.notification.NotificationLevel;
+import org.dependencytrack.notification.NotificationScope;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.dependencytrack.notification.NotificationLevel;
-import org.dependencytrack.notification.NotificationScope;
 
 import java.util.UUID;
 
@@ -38,7 +39,5 @@ public record CreateNotificationRuleRequest(
         @JsonAlias("notificationLevel") @NotNull NotificationLevel level,
         @NotNull @Valid Publisher publisher) {
 
-    public record Publisher(@NotNull UUID uuid) {
-    }
-
+    public record Publisher(@NotNull UUID uuid) {}
 }

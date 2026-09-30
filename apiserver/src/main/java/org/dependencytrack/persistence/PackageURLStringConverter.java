@@ -41,6 +41,7 @@ public class PackageURLStringConverter implements AttributeConverter<PackageURL,
     /**
      * {@inheritDoc}
      */
+    @Override
     public PackageURL convertToAttribute(final String str) {
         if (str == null) {
             return null;
@@ -49,7 +50,9 @@ public class PackageURLStringConverter implements AttributeConverter<PackageURL,
         try {
             return new PackageURL(str.trim());
         } catch (MalformedPackageURLException e) {
-            LOGGER.warn("A persisted object with a PackageURL string in the datastore failed validation and is not valid. Returning null for: {}", str);
+            LOGGER.warn(
+                    "A persisted object with a PackageURL string in the datastore failed validation and is not valid. Returning null for: {}",
+                    str);
         }
         return null;
     }
@@ -57,6 +60,7 @@ public class PackageURLStringConverter implements AttributeConverter<PackageURL,
     /**
      * {@inheritDoc}
      */
+    @Override
     public String convertToDatastore(final PackageURL url) {
         return url != null ? url.canonicalize() : null;
     }

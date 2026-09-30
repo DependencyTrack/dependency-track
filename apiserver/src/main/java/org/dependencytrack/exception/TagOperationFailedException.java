@@ -33,12 +33,12 @@ public class TagOperationFailedException extends IllegalStateException {
     }
 
     public static TagOperationFailedException forDeletion(final Map<String, String> errorByTagName) {
-        return new TagOperationFailedException("The tag(s) %s could not be deleted"
-                .formatted(String.join(",", errorByTagName.keySet())), errorByTagName);
+        return new TagOperationFailedException(
+                "The tag(s) %s could not be deleted".formatted(String.join(",", errorByTagName.keySet())),
+                errorByTagName);
     }
 
     public Map<String, String> getErrorByTagName() {
         return errorByTagName;
     }
-
 }

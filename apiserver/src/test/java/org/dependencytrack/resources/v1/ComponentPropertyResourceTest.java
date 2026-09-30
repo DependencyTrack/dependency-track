@@ -21,9 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -35,6 +32,10 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -49,16 +50,15 @@ public class ComponentPropertyResourceTest extends ResourceTest {
     private static final SecretManager secretManager = mock(SecretManager.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(ComponentPropertyResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class)
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(secretManager).to(SecretManager.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(ComponentPropertyResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class)
+            .register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bind(secretManager).to(SecretManager.class);
+                }
+            }));
 
     @Test
     public void getPropertiesTest() {
@@ -91,7 +91,8 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         propertyB.setDescription("qux-b");
         qm.persist(propertyB);
 
-        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid()))
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
@@ -126,7 +127,8 @@ public class ComponentPropertyResourceTest extends ResourceTest {
     public void getPropertiesInvalidTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
-        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, UUID.randomUUID())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, UUID.randomUUID()))
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
 
@@ -149,10 +151,11 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid()))
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -183,7 +186,8 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid()))
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -222,7 +226,8 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid()))
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -267,7 +272,8 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         property.setPropertyType(PropertyType.STRING);
         qm.persist(property);
 
-        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid()))
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -298,7 +304,8 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, UUID.randomUUID())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, UUID.randomUUID()))
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -329,10 +336,11 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
-                .header(X_API_KEY, apiKey)
-                .put(Entity.json(/* language=JSON */ """
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid()))
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .put(Entity.json(/* language=JSON */ """
                         {
                           "groupName": "foo",
                           "propertyName": "bar",
@@ -379,7 +387,9 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         property.setPropertyType(PropertyType.STRING);
         qm.persist(property);
 
-        final Response response = jersey.target("%s/%s/property/%s".formatted(V1_COMPONENT, component.getUuid(), property.getUuid())).request()
+        final Response response = jersey.target(
+                        "%s/%s/property/%s".formatted(V1_COMPONENT, component.getUuid(), property.getUuid()))
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
 
@@ -409,8 +419,9 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         property.setPropertyType(PropertyType.STRING);
         qm.persist(property);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target("%s/%s/property/%s".formatted(V1_COMPONENT, component.getUuid(), property.getUuid())).request()
+        final Supplier<Response> responseSupplier = () -> jersey.target(
+                        "%s/%s/property/%s".formatted(V1_COMPONENT, component.getUuid(), property.getUuid()))
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
 
@@ -429,5 +440,4 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(204);
     }
-
 }

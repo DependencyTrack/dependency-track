@@ -34,5 +34,4 @@ public interface Activity<A extends @Nullable Object, R extends @Nullable Object
      */
     @Nullable
     R execute(ActivityContext ctx, @Nullable A argument) throws Exception;
-
 }

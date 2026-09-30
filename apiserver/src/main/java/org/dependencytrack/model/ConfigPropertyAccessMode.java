@@ -19,9 +19,7 @@
 package org.dependencytrack.model;
 
 public enum ConfigPropertyAccessMode {
-
     READ_ONLY,
 
     READ_WRITE
-
 }

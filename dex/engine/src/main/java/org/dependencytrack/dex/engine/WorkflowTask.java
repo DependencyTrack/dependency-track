@@ -39,7 +39,8 @@ public record WorkflowTask(
         List<WorkflowEvent> history,
         List<WorkflowEvent> inbox,
         List<Long> inboxMessageIds,
-        TaskLock lock) implements Task {
+        TaskLock lock)
+        implements Task {
 
     static WorkflowTask of(
             final PolledWorkflowTask polledTask,
@@ -59,10 +60,6 @@ public record WorkflowTask(
                 history,
                 inbox,
                 inboxMessageIds,
-                new TaskLock(
-                        polledTask.lockedUntil(),
-                        polledTask.lockVersion())
-        );
+                new TaskLock(polledTask.lockedUntil(), polledTask.lockVersion()));
     }
-
 }

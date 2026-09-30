@@ -41,11 +41,11 @@ public interface PackageMetadataResolverFactory extends ExtensionFactory<Package
      * @return A normalized PURL with only relevant qualifiers retained if this
      * resolver supports the given PURL, or {@code null} if not supported.
      */
-    @Nullable PackageURL normalize(PackageURL purl);
+    @Nullable
+    PackageURL normalize(PackageURL purl);
 
     /**
      * @return {@code true} if this resolver requires a repository.
      */
     boolean requiresRepository();
-
 }

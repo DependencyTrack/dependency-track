@@ -32,10 +32,12 @@ public enum Scope {
     EXCLUDED;
 
     public static Scope getMappedScope(org.cyclonedx.model.Component.Scope scope) {
-        return scope == null ? null : switch (scope) {
-            case REQUIRED -> Scope.REQUIRED;
-            case EXCLUDED -> Scope.EXCLUDED;
-            case OPTIONAL -> Scope.OPTIONAL;
-        };
+        return scope == null
+                ? null
+                : switch (scope) {
+                    case REQUIRED -> Scope.REQUIRED;
+                    case EXCLUDED -> Scope.EXCLUDED;
+                    case OPTIONAL -> Scope.OPTIONAL;
+                };
     }
 }

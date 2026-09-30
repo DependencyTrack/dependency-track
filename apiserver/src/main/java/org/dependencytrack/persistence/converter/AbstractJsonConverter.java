@@ -34,9 +34,8 @@ import java.io.IOException;
  */
 abstract class AbstractJsonConverter<T> implements AttributeConverter<T, String> {
 
-    private static final JsonMapper JSON_MAPPER = JsonMapper.builder()
-            .disable(MapperFeature.DEFAULT_VIEW_INCLUSION)
-            .build();
+    private static final JsonMapper JSON_MAPPER =
+            JsonMapper.builder().disable(MapperFeature.DEFAULT_VIEW_INCLUSION).build();
 
     private final TypeReference<T> typeReference;
     private final Class<?> jsonView;
@@ -83,12 +82,10 @@ abstract class AbstractJsonConverter<T> implements AttributeConverter<T, String>
             objectReader = JSON_MAPPER.readerWithView(jsonView);
         }
 
-        try {
-            final JsonParser jsonParser = objectReader.createParser(datastoreValue);
+        try (final JsonParser jsonParser = objectReader.createParser(datastoreValue)) {
             return objectReader.readValue(jsonParser, typeReference);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-
 }

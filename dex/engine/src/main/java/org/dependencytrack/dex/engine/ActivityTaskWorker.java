@@ -78,10 +78,9 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
         this.pollCommands = metadataRegistry.getAllActivityMetadata().stream()
                 .map(metadata -> new PollActivityTaskCommand(metadata.name(), metadata.lockTimeout()))
                 .toList();
-        this.executionExecutor = Executors.newThreadPerTaskExecutor(
-                Thread.ofVirtual()
-                        .name("%s-%s-ActivityExecutor".formatted(getClass().getSimpleName(), name), 0)
-                        .factory());
+        this.executionExecutor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+                .name("%s-%s-ActivityExecutor".formatted(getClass().getSimpleName(), name), 0)
+                .factory());
     }
 
     @Override
@@ -92,10 +91,11 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
     void process(final ActivityTask task) {
-        try (var _ = MDC.putCloseable(MDC_WORKFLOW_RUN_ID, task.id().workflowRunId().toString());
-             var _ = MDC.putCloseable(MDC_ACTIVITY_NAME, task.activityName());
-             var _ = MDC.putCloseable(MDC_ACTIVITY_TASK_ATTEMPT, String.valueOf(task.attempt()));
-             var _ = MDC.putCloseable(MDC_ACTIVITY_TASK_EXECUTION_ID, task.executionId())) {
+        try (var _ = MDC.putCloseable(
+                        MDC_WORKFLOW_RUN_ID, task.id().workflowRunId().toString());
+                var _ = MDC.putCloseable(MDC_ACTIVITY_NAME, task.activityName());
+                var _ = MDC.putCloseable(MDC_ACTIVITY_TASK_ATTEMPT, String.valueOf(task.attempt()));
+                var _ = MDC.putCloseable(MDC_ACTIVITY_TASK_EXECUTION_ID, task.executionId())) {
             final ActivityMetadata activityMetadata;
             try {
                 activityMetadata = metadataRegistry.getActivityMetadata(task.activityName());
@@ -132,10 +132,7 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
 
             final Duration executionTimeout = activityMetadata.executionTimeout();
             final ActivityHeartbeatRegistration heartbeatRegistration =
-                    engine.registerActivityHeartbeat(
-                            task,
-                            activityMetadata.lockTimeout(),
-                            executionFuture);
+                    engine.registerActivityHeartbeat(task, activityMetadata.lockTimeout(), executionFuture);
             final Object activityResult;
 
             try (heartbeatRegistration) {
@@ -228,41 +225,36 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
         } else {
             logger.warn(
                     "{}; Next retry due at {} (attempt {}/{})",
-                    message, retryAt, task.attempt() + 1, task.retryPolicy().maxAttempts(), cause);
+                    message,
+                    retryAt,
+                    task.attempt() + 1,
+                    task.retryPolicy().maxAttempts(),
+                    cause);
         }
         engine.onTaskEvent(new ActivityTaskFailedEvent(task, cause, retryAt));
     }
 
     private static @Nullable Instant computeRetryAt(ActivityTask task, Throwable cause) {
         final RetryPolicy retryPolicy = task.retryPolicy();
-        final boolean isTerminal =
-                cause instanceof ApplicationFailureException afe
-                        && afe.isTerminal();
+        final boolean isTerminal = cause instanceof ApplicationFailureException afe && afe.isTerminal();
         if (isTerminal || retryPolicy.maxAttempts() <= task.attempt()) {
             return null;
         }
 
-        final Duration retryAfter =
-                cause instanceof ApplicationFailureException afe
-                        ? afe.retryAfter()
-                        : null;
+        final Duration retryAfter = cause instanceof ApplicationFailureException afe ? afe.retryAfter() : null;
 
         final Duration retryDelay;
         if (retryAfter != null) {
-            retryDelay = retryAfter.compareTo(retryPolicy.maxDelay()) > 0
-                    ? retryPolicy.maxDelay()
-                    : retryAfter;
+            retryDelay = retryAfter.compareTo(retryPolicy.maxDelay()) > 0 ? retryPolicy.maxDelay() : retryAfter;
         } else {
-            final var intervalFunc =
-                    IntervalFunction.ofExponentialRandomBackoff(
-                            retryPolicy.initialDelay(),
-                            retryPolicy.delayMultiplier(),
-                            retryPolicy.delayRandomizationFactor(),
-                            retryPolicy.maxDelay());
+            final var intervalFunc = IntervalFunction.ofExponentialRandomBackoff(
+                    retryPolicy.initialDelay(),
+                    retryPolicy.delayMultiplier(),
+                    retryPolicy.delayRandomizationFactor(),
+                    retryPolicy.maxDelay());
             retryDelay = Duration.ofMillis(intervalFunc.apply(task.attempt() + 1));
         }
 
         return Instant.now().plus(retryDelay);
     }
-
 }

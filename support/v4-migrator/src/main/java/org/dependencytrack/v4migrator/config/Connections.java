@@ -36,8 +36,7 @@ public final class Connections {
      */
     private static final int LOGIN_TIMEOUT_SECONDS = 30;
 
-    private Connections() {
-    }
+    private Connections() {}
 
     public static Jdbi targetJdbi(final GlobalOptions opts) {
         return Jdbi.create(buildTargetDataSource(opts));

@@ -39,5 +39,4 @@ public interface NotificationPublisher extends ExtensionPoint {
      * @throws RetryablePublishException When publishing failed with a retryable cause.
      */
     void publish(NotificationPublishContext ctx, Notification notification) throws IOException;
-
 }

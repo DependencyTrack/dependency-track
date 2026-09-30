@@ -28,10 +28,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 record VulnCheckKevEntry(
         @Nullable List<String> cve,
-        @JsonProperty("date_added")
-        @Nullable Instant dateAdded,
+        @JsonProperty("date_added") @Nullable Instant dateAdded,
         @Nullable String shortDescription,
-        @JsonProperty("required_action")
-        @Nullable String requiredAction,
-        @Nullable String knownRansomwareCampaignUse) {
-}
+        @JsonProperty("required_action") @Nullable String requiredAction,
+        @Nullable String knownRansomwareCampaignUse) {}

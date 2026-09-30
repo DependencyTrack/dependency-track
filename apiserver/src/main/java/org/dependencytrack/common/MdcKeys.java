@@ -51,7 +51,5 @@ public final class MdcKeys {
     public static final String MDC_VULN_POLICY_NAME = "vulnPolicyName";
     public static final String MDC_VULN_SOURCE = "vulnSource";
 
-    private MdcKeys() {
-    }
-
+    private MdcKeys() {}
 }

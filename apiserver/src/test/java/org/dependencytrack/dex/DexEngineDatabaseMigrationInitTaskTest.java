@@ -43,6 +43,7 @@ class DexEngineDatabaseMigrationInitTaskTest {
     @Container
     private final PostgreSQLContainer postgresContainer =
             new PostgreSQLContainer(DockerImageName.parse("postgres:14-alpine"));
+
     private DataSourceRegistry dataSourceRegistry;
 
     @AfterEach
@@ -64,8 +65,7 @@ class DexEngineDatabaseMigrationInitTaskTest {
 
         dataSourceRegistry = new DataSourceRegistry(config);
 
-        new DexEngineDatabaseMigrationInitTask(dataSourceRegistry)
-                .execute(new InitTaskContext(config, null));
+        new DexEngineDatabaseMigrationInitTask(dataSourceRegistry).execute(new InitTaskContext(config, null));
 
         assertMigrationExecuted(true);
     }
@@ -82,8 +82,7 @@ class DexEngineDatabaseMigrationInitTaskTest {
 
         dataSourceRegistry = new DataSourceRegistry(config);
 
-        new DexEngineDatabaseMigrationInitTask(dataSourceRegistry)
-                .execute(new InitTaskContext(config, null));
+        new DexEngineDatabaseMigrationInitTask(dataSourceRegistry).execute(new InitTaskContext(config, null));
 
         assertMigrationExecuted(true);
     }
@@ -105,7 +104,7 @@ class DexEngineDatabaseMigrationInitTaskTest {
 
     private void assertMigrationExecuted(final boolean expectExecuted) throws SQLException {
         try (final Connection connection = postgresContainer.createConnection("");
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      SELECT "table_name"
                        FROM "information_schema"."tables"
                       WHERE "table_schema" NOT IN ('pg_catalog', 'information_schema')
@@ -115,5 +114,4 @@ class DexEngineDatabaseMigrationInitTaskTest {
             assertThat(rs.next()).isEqualTo(expectExecuted);
         }
     }
-
 }

@@ -29,9 +29,7 @@ import static java.util.Objects.requireNonNull;
  * @since 5.0.0
  */
 public record ExtensionTestCheck(
-        String name,
-        Status status,
-        @Nullable String message) {
+        String name, Status status, @Nullable String message) {
 
     public enum Status {
 
@@ -49,12 +47,10 @@ public record ExtensionTestCheck(
          * The check was not performed.
          */
         SKIPPED
-
     }
 
     public ExtensionTestCheck {
         requireNonNull(name, "name must not be null");
         requireNonNull(status, "status must not be null");
     }
-
 }

@@ -51,29 +51,27 @@ class GitHubVulnDataSourceTest {
         advisoryClientMock = mock(GitHubSecurityAdvisoryClient.class);
         watermarkManagerMock = mock(WatermarkManager.class);
         vulnDataSource = new GitHubVulnDataSource(watermarkManagerMock, advisoryClientMock, true);
-        objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule());
+        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Test
     void test() throws Exception {
-        final var advisory = objectMapper.readValue(
-                getClass().getResourceAsStream("/advisory.json"), SecurityAdvisory.class);
+        final var advisory =
+                objectMapper.readValue(getClass().getResourceAsStream("/advisory.json"), SecurityAdvisory.class);
 
-        when(advisoryClientMock.hasNext())
-                .thenReturn(true)
-                .thenReturn(false);
-        when(advisoryClientMock.next())
-                .thenReturn(List.of(advisory));
+        when(advisoryClientMock.hasNext()).thenReturn(true).thenReturn(false);
+        when(advisoryClientMock.next()).thenReturn(List.of(advisory));
 
         assertThat(vulnDataSource).hasNext();
         final Bom bov = vulnDataSource.next();
 
         assertThatJson(JsonFormat.printer().print(bov))
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
-                .withMatcher("vuln-description", Matchers.allOf(
-                        Matchers.startsWith("In Bootstrap 4 before 4.3.1 and Bootstrap 3 before 3.4.1,"),
-                        Matchers.hasLength(219)))
+                .withMatcher(
+                        "vuln-description",
+                        Matchers.allOf(
+                                Matchers.startsWith("In Bootstrap 4 before 4.3.1 and Bootstrap 3 before 3.4.1,"),
+                                Matchers.hasLength(219)))
                 .isEqualTo(/* language=JSON */ """
                         {
                           "components": [
@@ -150,5 +148,4 @@ class GitHubVulnDataSourceTest {
         verify(watermarkManagerMock).maybeAdvance(eq(Instant.parse("2021-12-03T14:54:43Z")));
         verify(watermarkManagerMock).maybeCommit(eq(false));
     }
-
 }

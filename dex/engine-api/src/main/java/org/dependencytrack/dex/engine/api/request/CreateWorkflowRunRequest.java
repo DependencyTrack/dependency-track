@@ -20,6 +20,7 @@ package org.dependencytrack.dex.engine.api.request;
 
 import org.dependencytrack.dex.api.Workflow;
 import org.dependencytrack.dex.api.WorkflowSpec;
+import org.dependencytrack.dex.api.WorkflowSpecs;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -67,7 +68,8 @@ public record CreateWorkflowRunRequest<A>(
     }
 
     public CreateWorkflowRunRequest(Class<? extends Workflow<A, ?>> executorClass) {
-        this(getWorkflowName(executorClass), getWorkflowVersion(executorClass));
+        final WorkflowSpec spec = WorkflowSpecs.of(executorClass);
+        this(spec.name(), spec.version());
     }
 
     public CreateWorkflowRunRequest<A> withWorkflowInstanceId(@Nullable String workflowInstanceId) {
@@ -147,25 +149,4 @@ public record CreateWorkflowRunRequest<A>(
                 this.labels,
                 argument);
     }
-
-    private static String getWorkflowName(Class<? extends Workflow<?, ?>> executorClass) {
-        final WorkflowSpec annotation = executorClass.getAnnotation(WorkflowSpec.class);
-        if (annotation == null) {
-            throw new IllegalArgumentException("Class %s is not annotated with @%s".formatted(
-                    executorClass.getName(), WorkflowSpec.class.getName()));
-        }
-
-        return annotation.name();
-    }
-
-    private static int getWorkflowVersion(final Class<? extends Workflow<?, ?>> executorClass) {
-        final WorkflowSpec annotation = executorClass.getAnnotation(WorkflowSpec.class);
-        if (annotation == null) {
-            throw new IllegalArgumentException("Class %s is not annotated with @%s".formatted(
-                    executorClass.getName(), WorkflowSpec.class.getName()));
-        }
-
-        return annotation.version();
-    }
-
 }

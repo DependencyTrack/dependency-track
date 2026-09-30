@@ -18,12 +18,6 @@
  */
 package org.dependencytrack.notification.publishing.email;
 
-import jakarta.mail.Message;
-import jakarta.mail.MessagingException;
-import jakarta.mail.Session;
-import jakarta.mail.Transport;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
 import org.dependencytrack.notification.api.publishing.NotificationPublishContext;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationRuleContact;
@@ -32,6 +26,13 @@ import org.dependencytrack.notification.api.templating.RenderedNotificationTempl
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.eclipse.angus.mail.smtp.SMTPSendFailedException;
 import org.eclipse.angus.mail.util.MailConnectException;
+
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
@@ -59,7 +60,8 @@ final class EmailNotificationPublisher implements NotificationPublisher {
     public void publish(NotificationPublishContext ctx, Notification notification) {
         final var ruleConfig = ctx.ruleConfig(EmailNotificationPublisherRuleConfigV1.class);
 
-        final RenderedNotificationTemplate renderedTemplate = ctx.templateRenderer().render(notification);
+        final RenderedNotificationTemplate renderedTemplate =
+                ctx.templateRenderer().render(notification);
         if (renderedTemplate == null) {
             throw new IllegalStateException("No template configured");
         }
@@ -76,11 +78,11 @@ final class EmailNotificationPublisher implements NotificationPublisher {
             throw new IllegalStateException("No recipients configured");
         }
 
-        final String messageSubject = "%s %s".formatted(
-                ruleConfig.getSubjectPrefix() != null
-                        ? ruleConfig.getSubjectPrefix()
-                        : "",
-                notification.getTitle()).trim();
+        final String messageSubject = "%s %s"
+                .formatted(
+                        ruleConfig.getSubjectPrefix() != null ? ruleConfig.getSubjectPrefix() : "",
+                        notification.getTitle())
+                .trim();
 
         try {
             final var message = new MimeMessage(session);
@@ -112,5 +114,4 @@ final class EmailNotificationPublisher implements NotificationPublisher {
 
         return false;
     }
-
 }

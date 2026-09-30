@@ -25,5 +25,4 @@ public interface FindingUploader extends IntegrationPoint {
     void setQueryManager(QueryManager qm);
 
     boolean isEnabled();
-
 }

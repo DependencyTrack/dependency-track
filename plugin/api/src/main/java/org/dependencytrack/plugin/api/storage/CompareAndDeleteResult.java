@@ -44,19 +44,15 @@ public sealed interface CompareAndDeleteResult {
              * </ul>
              */
             VERSION_MISMATCH
-
         }
 
         public Failure {
             requireNonNull(reason, "reason must not be null");
         }
-
     }
 
     /**
      * Indicates that the operation completed successfully.
      */
-    record Success() implements CompareAndDeleteResult {
-    }
-
+    record Success() implements CompareAndDeleteResult {}
 }

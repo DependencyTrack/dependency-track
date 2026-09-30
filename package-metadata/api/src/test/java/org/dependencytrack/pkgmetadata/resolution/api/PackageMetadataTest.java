@@ -30,5 +30,4 @@ class PackageMetadataTest {
                 .isThrownBy(() -> new PackageMetadata("1.2.3", null, /* resolvedAt */ null, null))
                 .withMessage("resolvedAt must not be null");
     }
-
 }

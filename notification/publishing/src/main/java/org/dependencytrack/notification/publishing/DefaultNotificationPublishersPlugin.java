@@ -52,5 +52,4 @@ public final class DefaultNotificationPublishersPlugin implements Plugin {
                 new WebexNotificationPublisherFactory(),
                 new WebhookNotificationPublisherFactory());
     }
-
 }

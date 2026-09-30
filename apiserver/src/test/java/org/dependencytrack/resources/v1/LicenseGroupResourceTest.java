@@ -20,8 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -30,6 +28,9 @@ import org.dependencytrack.model.LicenseGroup;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,17 +42,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LicenseGroupResourceTest extends ResourceTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(LicenseGroupResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(LicenseGroupResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class));
 
     @Test
     void shouldReturnEmptyListWhenNoGroups() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_READ);
 
-        final Response response = jersey
-                .target(V1_LICENSE_GROUP)
+        final Response response = jersey.target(V1_LICENSE_GROUP)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -67,8 +66,7 @@ class LicenseGroupResourceTest extends ResourceTest {
 
         final LicenseGroup group = qm.createLicenseGroup("Copyleft");
 
-        final Response response = jersey
-                .target(V1_LICENSE_GROUP)
+        final Response response = jersey.target(V1_LICENSE_GROUP)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -96,14 +94,14 @@ class LicenseGroupResourceTest extends ResourceTest {
         group.setLicenses(List.of(license));
         qm.persist(group);
 
-        final Response response = jersey
-                .target(V1_LICENSE_GROUP)
+        final Response response = jersey.target(V1_LICENSE_GROUP)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
                 [
                   {
                     "name": "Copyleft",
@@ -131,8 +129,7 @@ class LicenseGroupResourceTest extends ResourceTest {
 
         final LicenseGroup group = qm.createLicenseGroup("Copyleft");
 
-        final Response response = jersey
-                .target("%s/%s".formatted(V1_LICENSE_GROUP, group.getUuid()))
+        final Response response = jersey.target("%s/%s".formatted(V1_LICENSE_GROUP, group.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -152,8 +149,7 @@ class LicenseGroupResourceTest extends ResourceTest {
     void shouldReturn404WhenGroupNotFound() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_READ);
 
-        final Response response = jersey
-                .target("%s/%s".formatted(V1_LICENSE_GROUP, UUID.randomUUID()))
+        final Response response = jersey.target("%s/%s".formatted(V1_LICENSE_GROUP, UUID.randomUUID()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -166,8 +162,7 @@ class LicenseGroupResourceTest extends ResourceTest {
     void shouldCreateGroup() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_CREATE);
 
-        final Response response = jersey
-                .target(V1_LICENSE_GROUP)
+        final Response response = jersey.target(V1_LICENSE_GROUP)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -193,8 +188,7 @@ class LicenseGroupResourceTest extends ResourceTest {
 
         qm.createLicenseGroup("Copyleft");
 
-        final Response response = jersey
-                .target(V1_LICENSE_GROUP)
+        final Response response = jersey.target(V1_LICENSE_GROUP)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -211,8 +205,7 @@ class LicenseGroupResourceTest extends ResourceTest {
     void shouldReturn400WhenNameBlankOnCreate() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_CREATE);
 
-        final Response response = jersey
-                .target(V1_LICENSE_GROUP)
+        final Response response = jersey.target(V1_LICENSE_GROUP)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -230,8 +223,7 @@ class LicenseGroupResourceTest extends ResourceTest {
 
         final LicenseGroup group = qm.createLicenseGroup("Copyleft");
 
-        final Response response = jersey
-                .target(V1_LICENSE_GROUP)
+        final Response response = jersey.target(V1_LICENSE_GROUP)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -256,8 +248,7 @@ class LicenseGroupResourceTest extends ResourceTest {
     void shouldReturn404OnUpdateUnknownGroup() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
 
-        final Response response = jersey
-                .target(V1_LICENSE_GROUP)
+        final Response response = jersey.target(V1_LICENSE_GROUP)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(/* language=JSON */ """
@@ -277,8 +268,7 @@ class LicenseGroupResourceTest extends ResourceTest {
 
         final LicenseGroup group = qm.createLicenseGroup("Copyleft");
 
-        final Response response = jersey
-                .target("%s/%s".formatted(V1_LICENSE_GROUP, group.getUuid()))
+        final Response response = jersey.target("%s/%s".formatted(V1_LICENSE_GROUP, group.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -291,8 +281,7 @@ class LicenseGroupResourceTest extends ResourceTest {
     void shouldReturn404OnDeleteUnknown() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_DELETE);
 
-        final Response response = jersey
-                .target("%s/%s".formatted(V1_LICENSE_GROUP, UUID.randomUUID()))
+        final Response response = jersey.target("%s/%s".formatted(V1_LICENSE_GROUP, UUID.randomUUID()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -310,14 +299,15 @@ class LicenseGroupResourceTest extends ResourceTest {
         group.setLicenses(new ArrayList<>());
         qm.persist(group);
 
-        final Response response = jersey
-                .target("%s/%s/license/%s".formatted(V1_LICENSE_GROUP, group.getUuid(), license.getUuid()))
+        final Response response = jersey.target(
+                        "%s/%s/license/%s".formatted(V1_LICENSE_GROUP, group.getUuid(), license.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
                 {
                   "name": "Copyleft",
                   "licenses": [
@@ -346,8 +336,8 @@ class LicenseGroupResourceTest extends ResourceTest {
         group.setLicenses(new ArrayList<>(List.of(license)));
         qm.persist(group);
 
-        final Response response = jersey
-                .target("%s/%s/license/%s".formatted(V1_LICENSE_GROUP, group.getUuid(), license.getUuid()))
+        final Response response = jersey.target(
+                        "%s/%s/license/%s".formatted(V1_LICENSE_GROUP, group.getUuid(), license.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -361,8 +351,8 @@ class LicenseGroupResourceTest extends ResourceTest {
 
         final License license = createLicense();
 
-        final Response response = jersey
-                .target("%s/%s/license/%s".formatted(V1_LICENSE_GROUP, UUID.randomUUID(), license.getUuid()))
+        final Response response = jersey.target(
+                        "%s/%s/license/%s".formatted(V1_LICENSE_GROUP, UUID.randomUUID(), license.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -377,8 +367,8 @@ class LicenseGroupResourceTest extends ResourceTest {
 
         final LicenseGroup group = qm.createLicenseGroup("Copyleft");
 
-        final Response response = jersey
-                .target("%s/%s/license/%s".formatted(V1_LICENSE_GROUP, group.getUuid(), UUID.randomUUID()))
+        final Response response = jersey.target(
+                        "%s/%s/license/%s".formatted(V1_LICENSE_GROUP, group.getUuid(), UUID.randomUUID()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -396,8 +386,8 @@ class LicenseGroupResourceTest extends ResourceTest {
         group.setLicenses(List.of(license));
         qm.persist(group);
 
-        final Response response = jersey
-                .target("%s/%s/license/%s".formatted(V1_LICENSE_GROUP, group.getUuid(), license.getUuid()))
+        final Response response = jersey.target(
+                        "%s/%s/license/%s".formatted(V1_LICENSE_GROUP, group.getUuid(), license.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -422,8 +412,8 @@ class LicenseGroupResourceTest extends ResourceTest {
         group.setLicenses(new ArrayList<>());
         qm.persist(group);
 
-        final Response response = jersey
-                .target("%s/%s/license/%s".formatted(V1_LICENSE_GROUP, group.getUuid(), license.getUuid()))
+        final Response response = jersey.target(
+                        "%s/%s/license/%s".formatted(V1_LICENSE_GROUP, group.getUuid(), license.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -433,8 +423,7 @@ class LicenseGroupResourceTest extends ResourceTest {
 
     @Test
     void shouldReturn403WhenListingUnauthorized() {
-        final Response response = jersey
-                .target(V1_LICENSE_GROUP)
+        final Response response = jersey.target(V1_LICENSE_GROUP)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -444,8 +433,7 @@ class LicenseGroupResourceTest extends ResourceTest {
 
     @Test
     void shouldReturn403WhenCreatingUnauthorized() {
-        final Response response = jersey
-                .target(V1_LICENSE_GROUP)
+        final Response response = jersey.target(V1_LICENSE_GROUP)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
@@ -472,5 +460,4 @@ class LicenseGroupResourceTest extends ResourceTest {
         license.setSeeAlso("https://example.org/apache-2.0");
         return qm.persist(license);
     }
-
 }

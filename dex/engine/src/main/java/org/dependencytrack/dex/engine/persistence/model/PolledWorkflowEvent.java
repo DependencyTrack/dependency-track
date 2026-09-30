@@ -23,15 +23,10 @@ import org.dependencytrack.dex.proto.event.v1.WorkflowEvent;
 import java.util.UUID;
 
 public record PolledWorkflowEvent(
-        EventType eventType,
-        UUID workflowRunId,
-        WorkflowEvent event,
-        int historySequenceNumber,
-        long inboxMessageId) {
+        EventType eventType, UUID workflowRunId, WorkflowEvent event, int historySequenceNumber, long inboxMessageId) {
 
     public enum EventType {
         HISTORY,
         INBOX
     }
-
 }

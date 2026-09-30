@@ -41,8 +41,7 @@ public final class HttpNotificationResponses {
     static final int WARN_BODY_SNIPPET_LENGTH = 100;
     static final int DEBUG_BODY_SNIPPET_LENGTH = 1000;
 
-    private HttpNotificationResponses() {
-    }
+    private HttpNotificationResponses() {}
 
     public static void ensureSuccessful2xxResponse(final HttpResponse<InputStream> response) throws IOException {
         try (InputStream body = response.body()) {
@@ -66,9 +65,8 @@ public final class HttpNotificationResponses {
     }
 
     public static void ensureStatusCode(
-            final HttpResponse<InputStream> response,
-            final int expectedStatusCode,
-            final String failureMessagePrefix) throws IOException {
+            final HttpResponse<InputStream> response, final int expectedStatusCode, final String failureMessagePrefix)
+            throws IOException {
         if (response.statusCode() == expectedStatusCode) {
             try (InputStream body = response.body()) {
                 discardRemainder(body);
@@ -94,7 +92,8 @@ public final class HttpNotificationResponses {
         return value.substring(0, maxLength);
     }
 
-    private static String readSnippetAndDiscardRemainder(final InputStream body, final int maxChars) throws IOException {
+    private static String readSnippetAndDiscardRemainder(final InputStream body, final int maxChars)
+            throws IOException {
         if (body == null) {
             return "";
         }
@@ -103,7 +102,8 @@ public final class HttpNotificationResponses {
             final var snippetBuffer = new char[maxChars];
             int snippetLength = 0;
             int read;
-            while (snippetLength < maxChars && (read = reader.read(snippetBuffer, snippetLength, maxChars - snippetLength)) != -1) {
+            while (snippetLength < maxChars
+                    && (read = reader.read(snippetBuffer, snippetLength, maxChars - snippetLength)) != -1) {
                 snippetLength += read;
             }
 
@@ -134,5 +134,4 @@ public final class HttpNotificationResponses {
             LOGGER.debug("Response body: {}", truncate(responseBody, DEBUG_BODY_SNIPPET_LENGTH));
         }
     }
-
 }

@@ -74,11 +74,7 @@ final class VulnCheckKevDataSource implements KevDataSource {
     private @Nullable ZipFile archive;
     private @Nullable Iterator<KevAssertion> delegate;
 
-    VulnCheckKevDataSource(
-            HttpClient httpClient,
-            ObjectMapper objectMapper,
-            URI apiUrl,
-            String apiToken) {
+    VulnCheckKevDataSource(HttpClient httpClient, ObjectMapper objectMapper, URI apiUrl, String apiToken) {
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
         this.apiUrl = apiUrl;
@@ -138,8 +134,7 @@ final class VulnCheckKevDataSource implements KevDataSource {
     }
 
     private Backup resolveBackup() {
-        final URI requestUri = URI.create(
-                apiUrl.toString().replaceAll("/+$", "") + "/v3/backup/vulncheck-kev");
+        final URI requestUri = URI.create(apiUrl.toString().replaceAll("/+$", "") + "/v3/backup/vulncheck-kev");
         LOGGER.debug("Resolving KEV backup via {}", requestUri);
 
         final HttpResponse<InputStream> response;
@@ -164,8 +159,7 @@ final class VulnCheckKevDataSource implements KevDataSource {
             if (response.statusCode() != 200) {
                 body.transferTo(OutputStream.nullOutputStream());
                 throw new IllegalStateException(
-                        "Requesting KEV backup failed with unexpected response code: "
-                                + response.statusCode());
+                        "Requesting KEV backup failed with unexpected response code: " + response.statusCode());
             }
 
             backupResponse = objectMapper.readValue(body, VulnCheckBackupResponse.class);
@@ -187,8 +181,7 @@ final class VulnCheckKevDataSource implements KevDataSource {
             throw new IllegalStateException("VulnCheck backup does not have a download URL");
         }
         if (!isAcceptableDownloadUrl(downloadUrl)) {
-            throw new IllegalStateException(
-                    "Refusing to download KEV backup from an insecure URL");
+            throw new IllegalStateException("Refusing to download KEV backup from an insecure URL");
         }
 
         final String sha256 = backup.sha256();
@@ -208,8 +201,7 @@ final class VulnCheckKevDataSource implements KevDataSource {
         final String actualSha256 = download(downloadUrl, downloadedPath);
         if (!actualSha256.equalsIgnoreCase(sha256)) {
             throw new IllegalStateException(
-                    "KEV archive checksum mismatch: expected %s but got %s".formatted(
-                            sha256, actualSha256));
+                    "KEV archive checksum mismatch: expected %s but got %s".formatted(sha256, actualSha256));
         }
 
         return downloadedPath;
@@ -221,8 +213,7 @@ final class VulnCheckKevDataSource implements KevDataSource {
             return true;
         }
 
-        return "http".equalsIgnoreCase(scheme)
-                && !"https".equalsIgnoreCase(apiUrl.getScheme());
+        return "http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(apiUrl.getScheme());
     }
 
     private String download(URI downloadUrl, Path targetPath) {
@@ -255,8 +246,7 @@ final class VulnCheckKevDataSource implements KevDataSource {
             if (response.statusCode() != 200) {
                 body.transferTo(OutputStream.nullOutputStream());
                 throw new IllegalStateException(
-                        "Downloading KEV archive failed with unexpected response code: "
-                                + response.statusCode());
+                        "Downloading KEV archive failed with unexpected response code: " + response.statusCode());
             }
 
             Files.copy(body, targetPath, StandardCopyOption.REPLACE_EXISTING);
@@ -272,7 +262,8 @@ final class VulnCheckKevDataSource implements KevDataSource {
         try {
             entryNodesIter = objectMapper
                     .readerFor(ObjectNode.class)
-                    .readValues(requireNonNull(archive, "archive must not be null").getInputStream(entry));
+                    .readValues(
+                            requireNonNull(archive, "archive must not be null").getInputStream(entry));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read archive member " + entry.getName(), e);
         }
@@ -285,8 +276,7 @@ final class VulnCheckKevDataSource implements KevDataSource {
                     try {
                         entryNodesIter.close();
                     } catch (IOException e) {
-                        throw new UncheckedIOException(
-                                "Failed to close archive member " + entry.getName(), e);
+                        throw new UncheckedIOException("Failed to close archive member " + entry.getName(), e);
                     }
                 });
     }
@@ -306,10 +296,7 @@ final class VulnCheckKevDataSource implements KevDataSource {
             return Stream.empty();
         }
 
-        final Boolean knownRansomware =
-                "known".equalsIgnoreCase(entry.knownRansomwareCampaignUse())
-                        ? true
-                        : null;
+        final Boolean knownRansomware = "known".equalsIgnoreCase(entry.knownRansomwareCampaignUse()) ? true : null;
 
         return cveIds.stream()
                 .filter(not(String::isBlank))
@@ -322,5 +309,4 @@ final class VulnCheckKevDataSource implements KevDataSource {
                         entry.shortDescription(),
                         entryNode));
     }
-
 }

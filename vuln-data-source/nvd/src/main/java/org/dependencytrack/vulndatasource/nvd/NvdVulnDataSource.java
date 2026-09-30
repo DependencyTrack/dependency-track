@@ -43,6 +43,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.zip.GZIPInputStream;
@@ -53,6 +54,8 @@ import static java.util.Objects.requireNonNull;
  * @since 5.0.0
  */
 final class NvdVulnDataSource implements VulnDataSource {
+
+    private record ConsumedFeed(String name, String sha256, long totalCvesConsumed) {}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NvdVulnDataSource.class);
     private static final Duration FEED_REQUEST_TIMEOUT = Duration.ofMinutes(10);
@@ -66,13 +69,16 @@ final class NvdVulnDataSource implements VulnDataSource {
     private @Nullable NvdDataFeed currentFeed;
     private @Nullable String currentFeedSha256;
     private int currentFeedIndex = 0;
-    private int currentFeedCvesProcessed = 0;
+    private int currentFeedCvesConsumed = 0;
     private int currentFeedCvesSkipped = 0;
     private @Nullable InputStream currentFileInputStream;
     private @Nullable JsonParser currentJsonParser;
     private boolean hasNextCalled = false;
     private boolean completedSuccessfully = false;
     private @Nullable Bom nextItem;
+    private final List<ConsumedFeed> consumedFeeds = new ArrayList<>();
+    private long cvesConsumed = 0;
+    private long cvesProcessed = 0;
 
     NvdVulnDataSource(
             final WatermarkManager watermarkManager,
@@ -95,31 +101,23 @@ final class NvdVulnDataSource implements VulnDataSource {
 
         hasNextCalled = true;
 
-        if (currentJsonParser != null) {
+        // Feeds can yield no items at all, for example when none of its CVEs were modified since the watermark.
+        // Keep iterating until an item is found, or no feeds are left.
+        while (currentJsonParser != null || currentFeedIndex < feeds.size()) {
+            if (currentJsonParser == null && !openNextFeed()) {
+                currentFeedIndex++;
+                continue;
+            }
+
             final Bom item = readNextItem();
             if (item != null) {
                 nextItem = item;
                 return true;
             }
 
-            recordCurrentFeedDigest();
+            markCurrentFeedConsumed();
             logCurrentFeedSummary();
             closeCurrentFeed();
-            currentFeedIndex++;
-        }
-
-        if (currentFeedIndex < feeds.size()) {
-            final boolean nextFeedOpened = openNextFeed();
-            if (nextFeedOpened) {
-                final Bom item = readNextItem();
-                if (item != null) {
-                    nextItem = item;
-                    return true;
-                }
-                recordCurrentFeedDigest();
-                logCurrentFeedSummary();
-                closeCurrentFeed();
-            }
             currentFeedIndex++;
         }
 
@@ -145,20 +143,22 @@ final class NvdVulnDataSource implements VulnDataSource {
         requireNonNull(bov, "bov must not be null");
         if (bov.getVulnerabilitiesCount() != 1) {
             throw new IllegalArgumentException(
-                    "BOV must have exactly one vulnerability, but has "
-                            + bov.getVulnerabilitiesCount());
+                    "BOV must have exactly one vulnerability, but has " + bov.getVulnerabilitiesCount());
         }
 
         final Vulnerability vuln = bov.getVulnerabilities(0);
 
-        final Instant updatedAt = vuln.hasUpdated()
-                ? Instant.ofEpochMilli(Timestamps.toMillis(vuln.getUpdated()))
-                : null;
+        final Instant updatedAt =
+                vuln.hasUpdated() ? Instant.ofEpochMilli(Timestamps.toMillis(vuln.getUpdated())) : null;
         watermarkManager.maybeAdvance(updatedAt);
+
+        cvesProcessed++;
     }
 
     @Override
     public void close() {
+        recordDigestsOfProcessedFeeds();
+
         if (completedSuccessfully) {
             // Feed file contents are not ordered by modification date.
             // Committing the watermark is only safe when *all* feed files
@@ -166,8 +166,7 @@ final class NvdVulnDataSource implements VulnDataSource {
             watermarkManager.maybeCommit();
         }
 
-        // Commit digests for all feeds that were fully iterated,
-        // regardless of whether all feeds completed successfully.
+        // Digests are committed regardless of whether all feeds completed successfully.
         // This enables skipping already-processed feeds on retry.
         watermarkManager.commitFeedDigests();
 
@@ -180,7 +179,7 @@ final class NvdVulnDataSource implements VulnDataSource {
         }
 
         currentFeed = feeds.get(currentFeedIndex);
-        currentFeedCvesProcessed = 0;
+        currentFeedCvesConsumed = 0;
         currentFeedCvesSkipped = 0;
 
         final NvdDataFeedMetadata feedMetadata = retrieveFeedMetadata(currentFeed);
@@ -236,6 +235,8 @@ final class NvdVulnDataSource implements VulnDataSource {
             throw new UncheckedIOException("Failed to open %s".formatted(currentFeed), e);
         }
 
+        LOGGER.warn("Skipping {}: No vulnerabilities array found", currentFeed);
+        closeCurrentFeed();
         return false;
     }
 
@@ -255,10 +256,13 @@ final class NvdVulnDataSource implements VulnDataSource {
                 }
 
                 defCveItem = objectMapper.readValue(currentJsonParser, DefCveItem.class);
-                final Instant cveLastModified = defCveItem.getCve().getLastModified().toInstant();
+                final Instant cveLastModified =
+                        defCveItem.getCve().getLastModified().toInstant();
 
                 if (watermark != null && !watermark.isBefore(cveLastModified)) {
-                    LOGGER.debug("Skipping CVE {}: Below watermark", defCveItem.getCve().getId());
+                    LOGGER.debug(
+                            "Skipping CVE {}: Below watermark",
+                            defCveItem.getCve().getId());
                     currentFeedCvesSkipped++;
                     defCveItem = null;
                 }
@@ -267,7 +271,8 @@ final class NvdVulnDataSource implements VulnDataSource {
             }
         }
 
-        currentFeedCvesProcessed++;
+        currentFeedCvesConsumed++;
+        cvesConsumed++;
         return ModelConverter.convert(defCveItem);
     }
 
@@ -277,13 +282,23 @@ final class NvdVulnDataSource implements VulnDataSource {
         }
 
         LOGGER.info(
-                "Finished {}: processed {} CVE(s), skipped {} below watermark",
-                currentFeed, currentFeedCvesProcessed, currentFeedCvesSkipped);
+                "Finished {}: consumed {} CVE(s), skipped {} below watermark",
+                currentFeed,
+                currentFeedCvesConsumed,
+                currentFeedCvesSkipped);
     }
 
-    private void recordCurrentFeedDigest() {
+    private void markCurrentFeedConsumed() {
         if (currentFeed != null && currentFeedSha256 != null) {
-            watermarkManager.recordFeedDigest(currentFeed.name(), currentFeedSha256);
+            consumedFeeds.add(new ConsumedFeed(currentFeed.name(), currentFeedSha256, cvesConsumed));
+        }
+    }
+
+    private void recordDigestsOfProcessedFeeds() {
+        for (final ConsumedFeed feed : consumedFeeds) {
+            if (feed.totalCvesConsumed() <= cvesProcessed) {
+                watermarkManager.recordFeedDigest(feed.name(), feed.sha256());
+            }
         }
     }
 
@@ -306,8 +321,7 @@ final class NvdVulnDataSource implements VulnDataSource {
     }
 
     private NvdDataFeedMetadata retrieveFeedMetadata(final NvdDataFeed feed) {
-        final var feedMetadataUri = URI.create(
-                "%s/json/cve/2.0/nvdcve-2.0-%s.meta".formatted(feedsUrl, feed.name()));
+        final var feedMetadataUri = URI.create("%s/json/cve/2.0/nvdcve-2.0-%s.meta".formatted(feedsUrl, feed.name()));
 
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(feedMetadataUri)
@@ -317,28 +331,25 @@ final class NvdVulnDataSource implements VulnDataSource {
 
         final HttpResponse<String> response;
         try {
-            response = httpClient.send(
-                    request, HttpResponse.BodyHandlers.ofString());
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
-            throw new IllegalStateException(
-                    "Failed to retrieve feed metadata from " + feedMetadataUri, e);
+            throw new IllegalStateException("Failed to retrieve feed metadata from " + feedMetadataUri, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException(
-                    "Interrupted while retrieving feed metadata from " + feedMetadataUri, e);
+            throw new IllegalStateException("Interrupted while retrieving feed metadata from " + feedMetadataUri, e);
         }
 
         if (response.statusCode() != 200) {
             throw new IllegalStateException(
-                    "Unexpected response code: " + response.statusCode());
+                    "Failed to retrieve metadata for feed %s: GET %s responded with status code %d"
+                            .formatted(feed.name(), feedMetadataUri, response.statusCode()));
         }
 
         return NvdDataFeedMetadata.of(response.body());
     }
 
     private Path downloadFeedFile(final NvdDataFeed feed) {
-        final var feedFileUri = URI.create(
-                "%s/json/cve/2.0/nvdcve-2.0-%s.json.gz".formatted(feedsUrl, feed.name()));
+        final var feedFileUri = URI.create("%s/json/cve/2.0/nvdcve-2.0-%s.json.gz".formatted(feedsUrl, feed.name()));
 
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(feedFileUri)
@@ -356,24 +367,21 @@ final class NvdVulnDataSource implements VulnDataSource {
         LOGGER.info("Downloading feed {} from {}", feed, feedFileUri);
         LOGGER.debug("Download destination: {}", tempFile);
         try {
-            final HttpResponse<Path> response = httpClient.send(
-                    request, HttpResponse.BodyHandlers.ofFile(tempFile));
+            final HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
 
             if (response.statusCode() != 200) {
-                throw new IllegalStateException(
-                        "Unexpected response code: " + response.statusCode());
+                throw new IllegalStateException("Failed to download feed %s: GET %s responded with status code %d"
+                        .formatted(feed.name(), feedFileUri, response.statusCode()));
             }
 
             return response.body();
         } catch (IOException e) {
             tryDelete(tempFile);
-            throw new IllegalStateException(
-                    "Failed to download feed file from " + feedFileUri, e);
+            throw new IllegalStateException("Failed to download feed file from " + feedFileUri, e);
         } catch (InterruptedException e) {
             tryDelete(tempFile);
             Thread.currentThread().interrupt();
-            throw new IllegalStateException(
-                    "Interrupted while downloading feed file from " + feedFileUri, e);
+            throw new IllegalStateException("Interrupted while downloading feed file from " + feedFileUri, e);
         } catch (RuntimeException e) {
             tryDelete(tempFile);
             throw e;
@@ -387,5 +395,4 @@ final class NvdVulnDataSource implements VulnDataSource {
             LOGGER.warn("Failed to delete temp file {}", filePath, e);
         }
     }
-
 }

@@ -53,8 +53,7 @@ class RateLimitGateTest {
         final var gate = new RateLimitGate(clock);
 
         gate.recordRateLimit(URI_A, retryAfter);
-        assertThat(gate.checkRateLimited(URI_A))
-                .isEqualTo(clock.instant().plus(expectedBackoff));
+        assertThat(gate.checkRateLimited(URI_A)).isEqualTo(clock.instant().plus(expectedBackoff));
     }
 
     static Stream<Arguments> shouldGateForBackoffDerivedFromRetryAfter() {
@@ -75,8 +74,7 @@ class RateLimitGateTest {
         assertThat(gate.checkRateLimited(URI_A)).isNull();
 
         gate.recordRateLimit(URI_A, Duration.ofSeconds(10));
-        assertThat(gate.checkRateLimited(URI_A))
-                .isEqualTo(clock.instant().plusSeconds(10));
+        assertThat(gate.checkRateLimited(URI_A)).isEqualTo(clock.instant().plusSeconds(10));
     }
 
     @Test
@@ -100,8 +98,7 @@ class RateLimitGateTest {
         clock.advance(Duration.ofSeconds(10));
         gate.recordRateLimit(URI_A, Duration.ofSeconds(60));
 
-        assertThat(gate.checkRateLimited(URI_A))
-                .isEqualTo(clock.instant().plusSeconds(60));
+        assertThat(gate.checkRateLimited(URI_A)).isEqualTo(clock.instant().plusSeconds(60));
     }
 
     @Test
@@ -147,7 +144,5 @@ class RateLimitGateTest {
         void advance(Duration delta) {
             now.updateAndGet(current -> current.plus(delta));
         }
-
     }
-
 }

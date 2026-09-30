@@ -46,7 +46,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                lg.getUuid().toString());
 
         qm.detach(Policy.class, policy.getId());
         qm.detach(PolicyCondition.class, condition.getId());
@@ -75,7 +79,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                lg.getUuid().toString());
         qm.detach(Policy.class, policy.getId());
         qm.detach(PolicyCondition.class, condition.getId());
 
@@ -99,7 +107,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
         lg = qm.detach(LicenseGroup.class, lg.getId());
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS_NOT, lg.getUuid().toString());
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS_NOT,
+                lg.getUuid().toString());
         qm.detach(Policy.class, policy.getId());
         qm.detach(PolicyCondition.class, condition.getId());
 
@@ -128,7 +140,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg.setLicenses(Collections.singletonList(license));
         lg = qm.persist(lg);
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.MATCHES, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.MATCHES,
+                lg.getUuid().toString());
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -155,7 +171,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                lg.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -183,7 +203,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                lg.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -211,7 +235,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS_NOT, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS_NOT,
+                lg.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -239,7 +267,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
 
         final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                lg.getUuid().toString());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -263,7 +295,11 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         license.setUuid(UUID.randomUUID());
         license = qm.persist(license);
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, UUID.randomUUID().toString());
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS,
+                UUID.randomUUID().toString());
         qm.detach(Policy.class, policy.getId());
         qm.detach(PolicyCondition.class, condition.getId());
         final var project = new Project();

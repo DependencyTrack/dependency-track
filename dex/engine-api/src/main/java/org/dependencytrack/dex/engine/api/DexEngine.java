@@ -26,6 +26,7 @@ import org.dependencytrack.dex.api.WorkflowSpec;
 import org.dependencytrack.dex.api.payload.PayloadConverter;
 import org.dependencytrack.dex.engine.api.event.DexEngineEvent;
 import org.dependencytrack.dex.engine.api.event.DexEngineEventListener;
+import org.dependencytrack.dex.engine.api.request.CountWorkflowRunsRequest;
 import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
@@ -83,9 +84,7 @@ public interface DexEngine extends Closeable {
      * @throws IllegalStateException When the engine was already started.
      */
     default <A, R> void registerActivity(
-            Activity<A, R> executor,
-            PayloadConverter<A> argumentConverter,
-            PayloadConverter<R> resultConverter) {
+            Activity<A, R> executor, PayloadConverter<A> argumentConverter, PayloadConverter<R> resultConverter) {
         registerActivity(executor, argumentConverter, resultConverter, null, null);
     }
 
@@ -201,6 +200,14 @@ public interface DexEngine extends Closeable {
     boolean existsRun(ExistsWorkflowRunRequest request);
 
     /**
+     * Count workflow runs matching the given criteria.
+     *
+     * @param request Filter criteria for the lookup.
+     * @return The number of matching runs, at most {@link CountWorkflowRunsRequest#limit()}.
+     */
+    long countRuns(CountWorkflowRunsRequest request);
+
+    /**
      * Request the cancellation of a workflow run.
      * <p>
      * Note that the cancellation is not instantaneous.
@@ -283,5 +290,4 @@ public interface DexEngine extends Closeable {
      * @return A {@link Page} containing {@link TaskQueue}s.
      */
     Page<TaskQueue> listTaskQueues(ListTaskQueuesRequest request);
-
 }

@@ -41,7 +41,8 @@ public class CweResolverTest extends PersistenceCapableTest {
 
     @Test
     public void testPositiveResolutionByCweIdAndName() {
-        Cwe cwe = CweResolver.getInstance().lookup("CWE-79 Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
+        Cwe cwe = CweResolver.getInstance()
+                .lookup("CWE-79 Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
         Assertions.assertNotNull(cwe);
         Assertions.assertEquals(79, cwe.getCweId());
     }

@@ -20,10 +20,11 @@ package org.dependencytrack.resources.v2;
 
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 
@@ -50,5 +51,4 @@ public class OpenApiResourceTest {
         final List<String> validationMessages = parseResult.getMessages();
         assertThat(validationMessages).isEmpty();
     }
-
 }

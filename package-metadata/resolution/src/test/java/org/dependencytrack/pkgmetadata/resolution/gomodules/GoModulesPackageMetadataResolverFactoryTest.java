@@ -27,20 +27,23 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class GoModulesPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest<PackageMetadataResolver, GoModulesPackageMetadataResolverFactory> {
+class GoModulesPackageMetadataResolverFactoryTest
+        extends AbstractExtensionFactoryTest<PackageMetadataResolver, GoModulesPackageMetadataResolverFactory> {
 
     protected GoModulesPackageMetadataResolverFactoryTest() {
         super(GoModulesPackageMetadataResolverFactory.class);
     }
 
     @ParameterizedTest
-    @CsvSource(nullValues = "", value = {
-            "pkg:golang/foo@1.0, pkg:golang/foo@1.0",
-            "pkg:golang/ns/foo@1.0, pkg:golang/ns/foo@1.0",
-            "pkg:npm/foo@1.0, ",
-            "pkg:golang/foo, ",
-            "pkg:golang/ns/foo@1.0?key=value#sub/path, pkg:golang/ns/foo@1.0",
-    })
+    @CsvSource(
+            nullValues = "",
+            value = {
+                "pkg:golang/foo@1.0, pkg:golang/foo@1.0",
+                "pkg:golang/ns/foo@1.0, pkg:golang/ns/foo@1.0",
+                "pkg:npm/foo@1.0, ",
+                "pkg:golang/foo, ",
+                "pkg:golang/ns/foo@1.0?key=value#sub/path, pkg:golang/ns/foo@1.0",
+            })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))
                 .isEqualTo(expected != null ? new PackageURL(expected) : null);
@@ -50,5 +53,4 @@ class GoModulesPackageMetadataResolverFactoryTest extends AbstractExtensionFacto
     void shouldRequireRepository() {
         assertThat(factory.requiresRepository()).isTrue();
     }
-
 }

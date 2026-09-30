@@ -32,5 +32,4 @@ public interface WorkflowHandle<A extends @Nullable Object, R extends @Nullable 
      * @return An {@link Awaitable} wrapping the workflow's result.
      */
     Awaitable<@Nullable R> call(WorkflowCallOptions<@Nullable A> options);
-
 }

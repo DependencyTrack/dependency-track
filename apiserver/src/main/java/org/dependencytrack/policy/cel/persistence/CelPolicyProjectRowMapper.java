@@ -24,12 +24,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.util.JsonFormat;
 import org.dependencytrack.common.Mappers;
 import org.dependencytrack.model.mapping.PolicyProtoMapper;
+import org.dependencytrack.persistence.jdbi.mapping.OptionalColumnRowMapper;
 import org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil;
 import org.dependencytrack.proto.policy.v1.Project;
 import org.dependencytrack.proto.policy.v1.Tools;
-import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.result.UnableToProduceResultException;
 import org.jdbi.v3.core.statement.StatementContext;
+import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -39,32 +40,34 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
 
-public final class CelPolicyProjectRowMapper implements RowMapper<Project> {
+@NullMarked
+public final class CelPolicyProjectRowMapper implements OptionalColumnRowMapper<Project> {
 
     private static final JsonFormat.Parser PROPERTY_JSON_PARSER =
             JsonFormat.parser().ignoringUnknownFields();
 
     @Override
-    public Project map(final ResultSet rs, final StatementContext ctx) throws SQLException {
+    public Project map(ResultSet rs, StatementContext ctx, Columns columns) throws SQLException {
         final Project.Builder builder = Project.newBuilder();
-        maybeSet(rs, "uuid", ResultSet::getString, builder::setUuid);
-        maybeSet(rs, "group", ResultSet::getString, builder::setGroup);
-        maybeSet(rs, "name", ResultSet::getString, builder::setName);
-        maybeSet(rs, "version", ResultSet::getString, builder::setVersion);
-        maybeSet(rs, "classifier", ResultSet::getString, builder::setClassifier);
-        maybeSet(rs, "cpe", ResultSet::getString, builder::setCpe);
-        maybeSet(rs, "purl", ResultSet::getString, builder::setPurl);
-        maybeSet(rs, "swid_tag_id", ResultSet::getString, builder::setSwidTagId);
-        maybeSet(rs, "last_bom_import", RowMapperUtil::nullableTimestamp, builder::setLastBomImport);
-        maybeSet(rs, "tags", RowMapperUtil::stringArray, builder::addAllTags);
-        maybeSet(rs, "properties", CelPolicyProjectRowMapper::maybeConvertProperties, builder::addAllProperties);
+        columns.maybeSet(rs, "uuid", ResultSet::getString, builder::setUuid);
+        columns.maybeSet(rs, "group", ResultSet::getString, builder::setGroup);
+        columns.maybeSet(rs, "name", ResultSet::getString, builder::setName);
+        columns.maybeSet(rs, "version", ResultSet::getString, builder::setVersion);
+        columns.maybeSet(rs, "classifier", ResultSet::getString, builder::setClassifier);
+        columns.maybeSet(rs, "cpe", ResultSet::getString, builder::setCpe);
+        columns.maybeSet(rs, "purl", ResultSet::getString, builder::setPurl);
+        columns.maybeSet(rs, "swid_tag_id", ResultSet::getString, builder::setSwidTagId);
+        columns.maybeSet(rs, "last_bom_import", RowMapperUtil::nullableTimestamp, builder::setLastBomImport);
+        columns.maybeSet(rs, "tags", RowMapperUtil::stringArray, builder::addAllTags);
+        columns.maybeSet(
+                rs, "properties", CelPolicyProjectRowMapper::maybeConvertProperties, builder::addAllProperties);
 
         final Project.Metadata.Builder metadataBuilder = Project.Metadata.newBuilder();
-        maybeSet(rs, "metadata_tools", CelPolicyProjectRowMapper::convertMetadataTools, metadataBuilder::setTools);
-        maybeSet(rs, "inactive_since", CelPolicyProjectRowMapper::convertInactiveSince, builder::setIsActive);
-        maybeSet(rs, "bom_generated", RowMapperUtil::nullableTimestamp, metadataBuilder::setBomGenerated);
+        columns.maybeSet(
+                rs, "metadata_tools", CelPolicyProjectRowMapper::convertMetadataTools, metadataBuilder::setTools);
+        columns.maybeSet(rs, "inactive_since", CelPolicyProjectRowMapper::convertInactiveSince, builder::setIsActive);
+        columns.maybeSet(rs, "bom_generated", RowMapperUtil::nullableTimestamp, metadataBuilder::setBomGenerated);
         builder.setMetadata(metadataBuilder.build());
 
         return builder.build();
@@ -87,21 +90,16 @@ public final class CelPolicyProjectRowMapper implements RowMapper<Project> {
             throw new UnableToProduceResultException(e);
         }
 
-        if (modelTools == null) {
-            return Tools.getDefaultInstance();
-        }
-
         final var toolsBuilder = Tools.newBuilder();
         if (modelTools.components() != null) {
-            modelTools.components().stream()
-                    .map(PolicyProtoMapper::mapToProto)
-                    .forEach(toolsBuilder::addComponents);
+            modelTools.components().stream().map(PolicyProtoMapper::mapToProto).forEach(toolsBuilder::addComponents);
         }
 
         return toolsBuilder.build();
     }
 
-    private static List<Project.Property> maybeConvertProperties(final ResultSet rs, final String columnName) throws SQLException {
+    private static List<Project.Property> maybeConvertProperties(final ResultSet rs, final String columnName)
+            throws SQLException {
         final String jsonString = rs.getString(columnName);
         if (isBlank(jsonString)) {
             return Collections.emptyList();
@@ -131,5 +129,4 @@ public final class CelPolicyProjectRowMapper implements RowMapper<Project> {
         }
         return properties;
     }
-
 }

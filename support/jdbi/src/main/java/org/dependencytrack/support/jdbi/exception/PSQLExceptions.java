@@ -23,8 +23,7 @@ import org.postgresql.util.PSQLException;
 
 final class PSQLExceptions {
 
-    private PSQLExceptions() {
-    }
+    private PSQLExceptions() {}
 
     static @Nullable PSQLException find(Throwable throwable) {
         Throwable current = throwable;
@@ -39,5 +38,4 @@ final class PSQLExceptions {
 
         return null;
     }
-
 }

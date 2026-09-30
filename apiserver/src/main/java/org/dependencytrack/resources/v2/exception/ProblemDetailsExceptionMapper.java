@@ -26,7 +26,8 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 /**
  * @since 5.0.0
  */
-abstract class ProblemDetailsExceptionMapper<E extends Throwable, P extends ProblemDetails> implements ExceptionMapper<E> {
+abstract class ProblemDetailsExceptionMapper<E extends Throwable, P extends ProblemDetails>
+        implements ExceptionMapper<E> {
 
     abstract P map(E exception);
 
@@ -34,11 +35,9 @@ abstract class ProblemDetailsExceptionMapper<E extends Throwable, P extends Prob
     public Response toResponse(final E exception) {
         final P problemDetails = map(exception);
 
-        return Response
-                .status(problemDetails.getStatus())
+        return Response.status(problemDetails.getStatus())
                 .header("Content-Type", "application/problem+json")
                 .entity(problemDetails)
                 .build();
     }
-
 }

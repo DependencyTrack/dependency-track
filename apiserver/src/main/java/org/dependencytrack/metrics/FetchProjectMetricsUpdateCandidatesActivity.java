@@ -33,15 +33,14 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
  * @since 5.0.0
  */
 @ActivitySpec(name = "fetch-projects-for-metrics-update", defaultTaskQueue = "metrics-updates")
-public final class FetchProjectMetricsUpdateCandidatesActivity implements Activity<Void, FetchProjectMetricsUpdateCandidatesRes> {
+public final class FetchProjectMetricsUpdateCandidatesActivity
+        implements Activity<Void, FetchProjectMetricsUpdateCandidatesRes> {
 
     private static final int BATCH_SIZE = 100;
 
     @Override
     public @Nullable FetchProjectMetricsUpdateCandidatesRes execute(ActivityContext ctx, @Nullable Void argument) {
-        final List<UUID> projectUuids = withJdbiHandle(
-                handle -> handle
-                        .createQuery("""
+        final List<UUID> projectUuids = withJdbiHandle(handle -> handle.createQuery("""
                                 SELECT "UUID"
                                   FROM "PROJECT"
                                  WHERE "INACTIVE_SINCE" IS NULL
@@ -56,9 +55,9 @@ public final class FetchProjectMetricsUpdateCandidatesActivity implements Activi
                                  ORDER BY "ID"
                                  LIMIT :batchSize
                                 """)
-                        .bind("batchSize", BATCH_SIZE)
-                        .mapTo(UUID.class)
-                        .list());
+                .bind("batchSize", BATCH_SIZE)
+                .mapTo(UUID.class)
+                .list());
 
         if (projectUuids.isEmpty()) {
             return null;
@@ -68,5 +67,4 @@ public final class FetchProjectMetricsUpdateCandidatesActivity implements Activi
                 .addAllProjectUuids(projectUuids.stream().map(UUID::toString).toList())
                 .build();
     }
-
 }

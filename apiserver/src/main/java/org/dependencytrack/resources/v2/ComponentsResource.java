@@ -21,14 +21,6 @@ package org.dependencytrack.resources.v2;
 import alpine.server.auth.PermissionRequired;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ClientErrorException;
-import jakarta.ws.rs.NotAuthorizedException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-import jakarta.ws.rs.ext.Provider;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.api.v2.ComponentsApi;
 import org.dependencytrack.api.v2.model.CreateComponentRequest;
@@ -40,19 +32,19 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.exception.ProjectAccessDeniedException;
+import org.dependencytrack.metrics.DependencyMetrics;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.License;
-import org.dependencytrack.model.PackageArtifactMetadata;
-import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
+import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.dependencytrack.util.PurlUtil;
@@ -62,9 +54,19 @@ import org.slf4j.LoggerFactory;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.Provider;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -91,10 +93,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
     private UriInfo uriInfo;
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.PORTFOLIO_MANAGEMENT,
-            Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE
-    })
+    @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE})
     public Response createComponent(final CreateComponentRequest request) {
         final UUID projectUuid = request.getProjectUuid();
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
@@ -106,14 +105,13 @@ public class ComponentsResource extends AbstractApiResource implements Component
                 try {
                     requireAccess(qm, project);
                 } catch (ProjectAccessDeniedException ex) {
-                    throw new NotAuthorizedException(Response.Status.UNAUTHORIZED);
+                    throw new NotAuthorizedException(ex, Response.Status.UNAUTHORIZED);
                 }
                 return mapRequestToComponent(request, qm, project);
             });
 
             LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Component created: {}", request.getName());
-            return Response
-                    .created(uriInfo.getBaseUriBuilder()
+            return Response.created(uriInfo.getBaseUriBuilder()
                             .path("/components")
                             .path(component.getUuid().toString())
                             .build())
@@ -157,40 +155,41 @@ public class ComponentsResource extends AbstractApiResource implements Component
                 try {
                     packageURL = new PackageURL(StringUtils.trimToNull(purlPrefix));
                 } catch (MalformedPackageURLException e) {
-                    throw new BadRequestException("Invalid package URL: %s".formatted(purlPrefix));
+                    throw new BadRequestException("Invalid package URL: %s".formatted(purlPrefix), e);
                 }
             }
             if (cpe != null) {
                 try {
                     CpeParser.parse(StringUtils.trimToNull(cpe));
                 } catch (CpeParsingException e) {
-                    throw new BadRequestException("Invalid CPE: %s".formatted(cpe));
+                    throw new BadRequestException("Invalid CPE: %s".formatted(cpe), e);
                 }
             }
             ListComponentsQuery.HashType hashTypeEnum = null;
             if (hashType != null) {
                 try {
-                    hashTypeEnum = ListComponentsQuery.HashType.valueOf(StringUtils.trimToNull(hashType).toUpperCase());
+                    hashTypeEnum = ListComponentsQuery.HashType.valueOf(
+                            StringUtils.trimToNull(hashType).toUpperCase(Locale.ROOT));
                 } catch (IllegalArgumentException e) {
-                    throw new BadRequestException("Invalid Hash type: %s".formatted(hashType));
+                    throw new BadRequestException("Invalid Hash type: %s".formatted(hashType), e);
                 }
             }
 
-            final ListComponentsQuery.SortBy sortByEnum = switch (sortBy) {
-                case null -> null;
-                case "name" -> ListComponentsQuery.SortBy.NAME;
-                case "group" -> ListComponentsQuery.SortBy.GROUP;
-                case "last_inherited_risk_score" -> ListComponentsQuery.SortBy.LAST_RISKSCORE;
-                default -> throw new InvalidSortFieldException(
-                        sortBy, List.of("name", "group", "last_inherited_risk_score"));
-            };
+            final ListComponentsQuery.SortBy sortByEnum =
+                    switch (sortBy) {
+                        case null -> null;
+                        case "name" -> ListComponentsQuery.SortBy.NAME;
+                        case "group" -> ListComponentsQuery.SortBy.GROUP;
+                        case "last_inherited_risk_score" -> ListComponentsQuery.SortBy.LAST_RISKSCORE;
+                        default ->
+                            throw new InvalidSortFieldException(
+                                    sortBy, List.of("name", "group", "last_inherited_risk_score"));
+                    };
 
             final Page<Component> componentsPage = handle.attach(ComponentDao.class)
                     .listComponents(new ListComponentsQuery(
                             /* projectId */ null,
-                            packageURL != null
-                                    ? packageURL.canonicalize().toLowerCase()
-                                    : null,
+                            packageURL != null ? packageURL.canonicalize().toLowerCase(Locale.ROOT) : null,
                             StringUtils.trimToNull(cpe),
                             StringUtils.trimToNull(swidTagIdContains),
                             StringUtils.trimToNull(groupContains),
@@ -220,56 +219,49 @@ public class ComponentsResource extends AbstractApiResource implements Component
             var pkgArtifactMetaByPurl = Map.<String, PackageArtifactMetadata>of();
             if (!componentsPage.items().isEmpty()) {
                 if (expandMetrics) {
-                    final Set<Long> componentIds =
-                            componentsPage.items().stream()
-                                    .map(Component::getId)
-                                    .collect(Collectors.toSet());
-                    metricsByComponentId = handle.attach(MetricsDao.class)
-                            .getMostRecentDependencyMetrics(componentIds)
-                            .stream()
-                            .collect(Collectors.toMap(
-                                    DependencyMetrics::getComponentId,
-                                    Function.identity()));
+                    final Set<Long> componentIds = componentsPage.items().stream()
+                            .map(Component::getId)
+                            .collect(Collectors.toSet());
+                    metricsByComponentId =
+                            handle.attach(MetricsDao.class).getMostRecentDependencyMetrics(componentIds).stream()
+                                    .collect(Collectors.toMap(DependencyMetrics::getComponentId, Function.identity()));
                 }
                 if (expandPkgMeta) {
                     final Set<String> packagePurls = componentsPage.items().stream()
                             .filter(component -> component.getPurl() != null)
                             .map(component -> PurlUtil.purlPackageOnly(component.getPurl()))
                             .collect(Collectors.toSet());
-                    pkgMetaByPackagePurl =
-                            new PackageMetadataDao(handle).getAll(packagePurls).stream()
-                                    .collect(Collectors.toMap(
-                                            pm -> pm.purl().canonicalize(),
-                                            Function.identity()));
+                    pkgMetaByPackagePurl = new PackageMetadataDao(handle)
+                            .getAll(packagePurls).stream()
+                                    .collect(Collectors.toMap(pm -> pm.purl().canonicalize(), Function.identity()));
                 }
                 if (expandPkgArtifactMeta) {
                     final Set<String> versionedPurls = componentsPage.items().stream()
                             .filter(component -> component.getPurl() != null)
                             .map(component -> component.getPurl().canonicalize())
                             .collect(Collectors.toSet());
-                    pkgArtifactMetaByPurl =
-                            new PackageArtifactMetadataDao(handle).getAll(versionedPurls).stream()
+                    pkgArtifactMetaByPurl = new PackageArtifactMetadataDao(handle)
+                            .getAll(versionedPurls).stream()
                                     .collect(Collectors.toMap(pam -> pam.purl().canonicalize(), Function.identity()));
                 }
             }
 
-            final var responseItems = new ArrayList<ListComponentsResponseItem>(componentsPage.items().size());
+            final var responseItems = new ArrayList<ListComponentsResponseItem>(
+                    componentsPage.items().size());
             for (final Component componentRow : componentsPage.items()) {
-                final String purlStr = componentRow.getPurl() != null
-                        ? componentRow.getPurl().canonicalize()
-                        : null;
-                final String packagePurlStr = componentRow.getPurl() != null
-                        ? PurlUtil.purlPackageOnly(componentRow.getPurl())
-                        : null;
-                final PackageArtifactMetadata pkgArtifactMeta = purlStr != null
-                        ? pkgArtifactMetaByPurl.get(purlStr)
-                        : null;
+                final String purlStr =
+                        componentRow.getPurl() != null ? componentRow.getPurl().canonicalize() : null;
+                final String packagePurlStr =
+                        componentRow.getPurl() != null ? PurlUtil.purlPackageOnly(componentRow.getPurl()) : null;
+                final PackageArtifactMetadata pkgArtifactMeta =
+                        purlStr != null ? pkgArtifactMetaByPurl.get(purlStr) : null;
                 final var item = ListComponentsResponseItem.builder()
                         .name(componentRow.getName())
                         .hashes(mapHashes(componentRow))
-                        .classifier(componentRow.getClassifier() != null
-                                ? componentRow.getClassifier().name()
-                                : null)
+                        .classifier(
+                                componentRow.getClassifier() != null
+                                        ? componentRow.getClassifier().name()
+                                        : null)
                         .scope(mapScope(componentRow.getScope()))
                         .copyright(componentRow.getCopyright())
                         .cpe(componentRow.getCpe())
@@ -285,17 +277,15 @@ public class ComponentsResource extends AbstractApiResource implements Component
                         .uuid(componentRow.getUuid())
                         .version(componentRow.getVersion())
                         .project(mapProject(componentRow.getProject()))
-                        .metrics(expandMetrics
-                                ? mapDependencyMetrics(metricsByComponentId.get(componentRow.getId()))
-                                : null)
+                        .metrics(
+                                expandMetrics
+                                        ? mapDependencyMetrics(metricsByComponentId.get(componentRow.getId()))
+                                        : null)
                         .packageMetadata(
                                 expandPkgMeta && packagePurlStr != null
                                         ? map(pkgMetaByPackagePurl.get(packagePurlStr))
                                         : null)
-                        .packageArtifactMetadata(
-                                expandPkgArtifactMeta
-                                        ? map(pkgArtifactMeta)
-                                        : null)
+                        .packageArtifactMetadata(expandPkgArtifactMeta ? map(pkgArtifactMeta) : null)
                         .build();
                 responseItems.add(item);
             }

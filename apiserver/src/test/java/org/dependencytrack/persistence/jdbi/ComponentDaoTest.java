@@ -19,11 +19,12 @@
 package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.metrics.DependencyMetrics;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -89,14 +90,13 @@ public class ComponentDaoTest extends PersistenceCapableTest {
         vuln.setSource(Vulnerability.Source.INTERNAL);
         qm.persist(vuln);
         qm.addVulnerability(vuln, component, "internal");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vuln)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
-                        .withResponse(AnalysisResponse.WORKAROUND_AVAILABLE)
-                        .withDetails("analysisDetails")
-                        .withSuppress(false)
-                        .withComment("someComment"));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                .withResponse(AnalysisResponse.WORKAROUND_AVAILABLE)
+                .withDetails("analysisDetails")
+                .withSuppress(false)
+                .withComment("someComment"));
 
         // Create a child component to validate that deletion is indeed recursive.
         final var componentChild = new Component();
@@ -124,14 +124,13 @@ public class ComponentDaoTest extends PersistenceCapableTest {
         policyViolation.setType(PolicyViolation.Type.OPERATIONAL);
         policyViolation.setTimestamp(new Date());
         qm.persist(policyViolation);
-        qm.makeViolationAnalysis(
-                new MakeViolationAnalysisCommand(componentChild, policyViolation)
-                        .withState(ViolationAnalysisState.REJECTED)
-                        .withCommenter("someCommenter")
-                        .withComment("someComment"));
+        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentChild, policyViolation)
+                .withState(ViolationAnalysisState.REJECTED)
+                .withCommenter("someCommenter")
+                .withComment("someComment"));
 
         // Create metrics for component.
-        useJdbiHandle(handle ->  {
+        useJdbiHandle(handle -> {
             var dao = handle.attach(MetricsTestDao.class);
             dao.createMetricsPartitionsForDate("DEPENDENCYMETRICS", LocalDate.of(2025, 1, 1));
             var metrics = new DependencyMetrics();
@@ -146,9 +145,12 @@ public class ComponentDaoTest extends PersistenceCapableTest {
 
         // Ensure everything has been deleted as expected.
         assertThat(qm.getAllComponents(project)).isEmpty();
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(Component.class, component.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(Component.class, componentChild.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class).isThrownBy(() -> qm.getObjectById(PolicyViolation.class, policyViolation.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(Component.class, component.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(Component.class, componentChild.getId()));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getObjectById(PolicyViolation.class, policyViolation.getId()));
 
         // Ensure associated objects were NOT deleted.
         assertThatNoException().isThrownBy(() -> qm.getObjectById(Project.class, project.getId()));
@@ -157,8 +159,11 @@ public class ComponentDaoTest extends PersistenceCapableTest {
         assertThatNoException().isThrownBy(() -> qm.getObjectById(Policy.class, policy.getId()));
 
         // Ensure that metrics have been deleted.
-        assertThat(withJdbiHandle(handle ->  handle.attach(MetricsDao.class).getDependencyMetricsSince(
-                component.getId(), DateUtil.parseShortDate("20250101").toInstant())).isEmpty());
+        assertThat(withJdbiHandle(handle -> handle.attach(MetricsDao.class)
+                        .getDependencyMetricsSince(
+                                component.getId(),
+                                DateUtil.parseShortDate("20250101").toInstant()))
+                .isEmpty());
     }
 
     @Test

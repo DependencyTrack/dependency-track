@@ -26,26 +26,29 @@ import picocli.CommandLine.Option;
  */
 public final class SourceOptions {
 
-    @Option(names = "--source-url",
-        description = "JDBC URL of the v4 source database (PostgreSQL or MSSQL).",
-        required = true)
+    @Option(
+            names = "--source-url",
+            description = "JDBC URL of the v4 source database (PostgreSQL or MSSQL).",
+            required = true)
     public String sourceUrl;
 
     @Option(names = "--source-user", description = "Source DB username.")
     @Nullable
     public String sourceUser;
 
-    @Option(names = "--source-pass",
-        description = "Source DB password. Pass without a value to be prompted interactively.",
-        interactive = true,
-        arity = "0..1")
+    @Option(
+            names = "--source-pass",
+            description = "Source DB password. Pass without a value to be prompted interactively.",
+            interactive = true,
+            arity = "0..1")
     @Nullable
     public String sourcePass;
 
-    @Option(names = "--source-schema",
-        description = "Schema name where v4 tables live. Defaults to the flavor's default "
-            + "(public for PostgreSQL, dbo for MSSQL).",
-        converter = SchemaNameConverter.class)
+    @Option(
+            names = "--source-schema",
+            description = "Schema name where v4 tables live. Defaults to the flavor's default "
+                    + "(public for PostgreSQL, dbo for MSSQL).",
+            converter = SchemaNameConverter.class)
     @Nullable
     public String sourceSchema;
 }

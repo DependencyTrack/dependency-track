@@ -57,13 +57,10 @@ final class WorkflowHandleImpl<A, R> implements WorkflowHandle<A, R> {
                 this.workflowName,
                 this.workflowVersion,
                 options.workflowInstanceId(),
-                options.taskQueueName() != null
-                        ? options.taskQueueName()
-                        : defaultTaskQueueName,
+                options.taskQueueName() != null ? options.taskQueueName() : defaultTaskQueueName,
                 options.concurrencyKey(),
                 options.argument(),
                 argumentConverter,
                 resultConverter);
     }
-
 }

@@ -27,6 +27,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
@@ -67,15 +68,23 @@ public class LicenseGroup implements Serializable {
     @Index(name = "LICENSEGROUP_NAME_IDX")
     @NotBlank
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The name may only contain printable characters")
     private String name;
 
     /**
      * A list of zero-to-n licenses that are part of this license group.
      */
     @Persistent(table = "LICENSEGROUP_LICENSE", defaultFetchGroup = "true")
-    @Join(column = "LICENSEGROUP_ID", foreignKey = "LICENSEGROUP_LICENSE_LICENSEGROUP_FK", deleteAction = ForeignKeyAction.CASCADE)
-    @Element(column = "LICENSE_ID", foreignKey = "LICENSEGROUP_LICENSE_LICENSE_FK", deleteAction = ForeignKeyAction.CASCADE)
+    @Join(
+            column = "LICENSEGROUP_ID",
+            foreignKey = "LICENSEGROUP_LICENSE_LICENSEGROUP_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
+    @Element(
+            column = "LICENSE_ID",
+            foreignKey = "LICENSEGROUP_LICENSE_LICENSE_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     private List<License> licenses;
 

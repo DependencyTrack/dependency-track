@@ -22,8 +22,4 @@ import org.dependencytrack.dex.proto.event.v1.WorkflowEvent;
 
 import java.util.UUID;
 
-public record CreateWorkflowRunHistoryEntryCommand(
-        UUID workflowRunId,
-        int sequenceNumber,
-        WorkflowEvent event) {
-}
+public record CreateWorkflowRunHistoryEntryCommand(UUID workflowRunId, int sequenceNumber, WorkflowEvent event) {}

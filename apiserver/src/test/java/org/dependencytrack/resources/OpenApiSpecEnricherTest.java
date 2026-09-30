@@ -18,17 +18,16 @@
  */
 package org.dependencytrack.resources;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class OpenApiSpecEnricherTest {
 
-    private static final String SPEC_YAML =
-            """
+    private static final String SPEC_YAML = """
             openapi: 3.0.1
             info:
               title: OWASP Dependency-Track API
@@ -40,9 +39,9 @@ class OpenApiSpecEnricherTest {
     void shouldAppendServerVersionToTitleAndAddExtensionWithoutChangingApiVersion() throws Exception {
         final String enriched = OpenApiSpecEnricher.enrich(SPEC_YAML, "5.0.1");
 
-        final JsonNode info = new ObjectMapper(new YAMLFactory()).readTree(enriched).get("info");
-        assertThat(info.get("title").asText())
-                .isEqualTo("OWASP Dependency-Track API (Server v5.0.1)");
+        final JsonNode info =
+                new ObjectMapper(new YAMLFactory()).readTree(enriched).get("info");
+        assertThat(info.get("title").asText()).isEqualTo("OWASP Dependency-Track API (Server v5.0.1)");
         assertThat(info.get("x-server-version").asText()).isEqualTo("5.0.1");
         assertThat(info.get("version").asText()).isEqualTo("2.0.0");
     }

@@ -93,8 +93,7 @@ enum PurlType {
             Map.entry("oci", OCI),
             Map.entry("qpkg", QPKG),
             Map.entry("rpm", RPM),
-            Map.entry("swid", SWID)
-    );
+            Map.entry("swid", SWID));
 
     private final String appType;
 
@@ -113,5 +112,4 @@ enum PurlType {
         final PurlType type = BY_PURL_TYPE.get(purlType);
         return type != null ? type.appType : APP_TYPE_UNKNOWN;
     }
-
 }

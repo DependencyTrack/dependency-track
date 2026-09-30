@@ -31,7 +31,5 @@ public interface CapabilityProvider {
 
     Map<String, Object> capabilities();
 
-    default void init(ServiceLocator serviceLocator) {
-    }
-
+    default void init(ServiceLocator serviceLocator) {}
 }

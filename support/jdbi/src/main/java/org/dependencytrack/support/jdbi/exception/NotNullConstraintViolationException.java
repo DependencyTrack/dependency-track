@@ -34,5 +34,4 @@ public final class NotNullConstraintViolationException extends ConstraintViolati
             String sqlState) {
         super(message, cause, constraintName, tableName, columnName, sqlState);
     }
-
 }

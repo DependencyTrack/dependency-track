@@ -18,9 +18,10 @@
  */
 package org.dependencytrack.model.validation;
 
+import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
+
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
 
 public class SpdxExpressionValidator implements ConstraintValidator<ValidSpdxExpression, String> {
 
@@ -33,5 +34,4 @@ public class SpdxExpressionValidator implements ConstraintValidator<ValidSpdxExp
 
         return SpdxExpressionParser.getInstance().tryParse(expressionString) != null;
     }
-
 }

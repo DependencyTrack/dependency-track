@@ -44,33 +44,33 @@ final class GitHubHttpRequestRetryStrategy extends DefaultHttpRequestRetryStrate
 
     private sealed interface RateLimitStrategy {
 
-        record RetryAfter(Duration retryAfter) implements RateLimitStrategy {
-        }
+        record RetryAfter(Duration retryAfter) implements RateLimitStrategy {}
 
-        record LimitReset(
-                long remainingRequests,
-                long requestLimit,
-                Instant requestLimitResetAt) implements RateLimitStrategy {
-        }
+        record LimitReset(long remainingRequests, long requestLimit, Instant requestLimitResetAt)
+                implements RateLimitStrategy {}
 
         static @Nullable RateLimitStrategy of(HttpResponse response) {
             final Header retryAfterHeader = response.getFirstHeader("retry-after");
             if (retryAfterHeader != null) {
-                final long retryAfterSeconds = Long.parseLong(retryAfterHeader.getValue().trim());
+                final long retryAfterSeconds =
+                        Long.parseLong(retryAfterHeader.getValue().trim());
                 return new RetryAfter(Duration.ofSeconds(retryAfterSeconds));
             }
 
             final Header remainingRequestsHeader = response.getFirstHeader("x-ratelimit-remaining");
             if (remainingRequestsHeader != null) {
-                final long remainingRequests = Long.parseLong(remainingRequestsHeader.getValue().trim());
-                final long requestLimit = Long.parseLong(response.getFirstHeader("x-ratelimit-limit").getValue().trim());
-                final long requestLimitResetEpochSeconds = Long.parseLong(response.getFirstHeader("x-ratelimit-reset").getValue().trim());
-                return new LimitReset(remainingRequests, requestLimit, Instant.ofEpochSecond(requestLimitResetEpochSeconds));
+                final long remainingRequests =
+                        Long.parseLong(remainingRequestsHeader.getValue().trim());
+                final long requestLimit = Long.parseLong(
+                        response.getFirstHeader("x-ratelimit-limit").getValue().trim());
+                final long requestLimitResetEpochSeconds = Long.parseLong(
+                        response.getFirstHeader("x-ratelimit-reset").getValue().trim());
+                return new LimitReset(
+                        remainingRequests, requestLimit, Instant.ofEpochSecond(requestLimitResetEpochSeconds));
             }
 
             return null;
         }
-
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GitHubHttpRequestRetryStrategy.class);
@@ -118,16 +118,16 @@ final class GitHubHttpRequestRetryStrategy extends DefaultHttpRequestRetryStrate
                     LOGGER.warn("""
                                     Rate limiting detected; GitHub API indicates retries to be acceptable after {}, \
                                     which exceeds the maximum retry duration of {}. \
-                                    Not performing any further retries.""",
-                            retryAfter, maxRetryDelay);
+                                    Not performing any further retries.""", retryAfter, maxRetryDelay);
                     yield false;
                 }
 
                 yield true;
             }
             case RateLimitStrategy.LimitReset(
-                    long remainingRequests, long requestLimit, Instant requestLimitResetAt
-            ) -> {
+                    long remainingRequests,
+                    long requestLimit,
+                    Instant requestLimitResetAt) -> {
                 if (remainingRequests > 0) {
                     // Still have requests budget remaining. Failure reason is not rate limiting.
                     yield super.retryRequest(response, execCount, context);
@@ -139,8 +139,7 @@ final class GitHubHttpRequestRetryStrategy extends DefaultHttpRequestRetryStrate
                 if (untilResetDuration.compareTo(maxRetryDelay) > 0) {
                     LOGGER.warn("""
                                     Primary rate limit of {} requests exhausted. The rate limit will reset at {} (in {}), \
-                                    which exceeds the maximum retry duration of {}. Not performing any further retries.""",
-                            requestLimit, requestLimitResetAt, untilResetDuration, maxRetryDelay);
+                                    which exceeds the maximum retry duration of {}. Not performing any further retries.""", requestLimit, requestLimitResetAt, untilResetDuration, maxRetryDelay);
                     yield false;
                 }
 
@@ -170,11 +169,9 @@ final class GitHubHttpRequestRetryStrategy extends DefaultHttpRequestRetryStrate
                 final var retryAfter = Duration.between(Instant.now(), requestLimitResetAt);
                 LOGGER.warn("""
                                 Primary rate limit of {} requests exhausted. Limit will reset at {}; \
-                                Will wait for {} and try again.""",
-                        requestLimit, requestLimitResetAt, retryAfter);
+                                Will wait for {} and try again.""", requestLimit, requestLimitResetAt, retryAfter);
                 yield TimeValue.ofMilliseconds(retryAfter.toMillis());
             }
         };
     }
-
 }

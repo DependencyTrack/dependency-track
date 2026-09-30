@@ -158,7 +158,7 @@
         <lib.logback.version>1.6.3</lib.logback.version>
         <lib.micrometer.version>1.17.1</lib.micrometer.version>
         <lib.microprofile-config.version>3.1.2</lib.microprofile-config.version>
-        <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
+        <lib.microprofile-health.version>4.0.2</lib.microprofile-health.version>
         <lib.minio.version>9.0.3</lib.minio.version>
         <lib.mockito.version>5.23.0</lib.mockito.version>
         <lib.nimbus-oauth2-oidc-sdk.version>11.38.2</lib.nimbus-oauth2-oidc-sdk.version>

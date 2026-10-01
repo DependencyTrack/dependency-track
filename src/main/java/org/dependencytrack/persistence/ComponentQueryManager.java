@@ -33,6 +33,7 @@ import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 
 import jakarta.json.Json;
@@ -43,8 +44,10 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -814,6 +817,78 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 pm.deletePersistent(existingProperty);
             }
         }
+    }
+
+    /**
+     * Returns candidate Components that may be affected by the given list of VulnerableSoftware.
+     * Uses tight DB-level filtering (purlType + purlName for PURL, vendor:product for CPE)
+     * so only relevant components are returned. Deduplicates across multiple VS entries.
+     *
+     * @param vsList the VulnerableSoftware entries to find candidates for
+     * @return a deduplicated list of candidate Component objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Component> getCandidateComponentsForVulnerableSoftware(final List<VulnerableSoftware> vsList) {
+        if (vsList == null || vsList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Use a LinkedHashSet to deduplicate while preserving order
+        final LinkedHashSet<Component> candidates = new LinkedHashSet<>();
+
+        for (final VulnerableSoftware vs : vsList) {
+            final Query<Component> query = pm.newQuery(Component.class);
+
+            if (vs.getPurlType() != null && vs.getPurlName() != null) {
+                final String purlPrefix = "pkg:" + vs.getPurlType().toLowerCase() + "/";
+                final String purlName = vs.getPurlName().toLowerCase();
+                if (vs.getPurlNamespace() != null) {
+                    final String purlNamespace = vs.getPurlNamespace().toLowerCase();
+                    query.setFilter("purl != null && purl.toLowerCase().startsWith(:prefix) && purl.toLowerCase().indexOf(:ns) >= 0 && purl.toLowerCase().indexOf(:name) >= 0");
+                    query.setNamedParameters(Map.of("prefix", purlPrefix, "ns", purlNamespace + "/", "name", purlNamespace + "/" + purlName));
+                } else {
+                    query.setFilter("purl != null && purl.toLowerCase().startsWith(:prefix) && purl.toLowerCase().indexOf(:name) >= 0");
+                    query.setNamedParameters(Map.of("prefix", purlPrefix, "name", purlName));
+                }
+            } else if (vs.getVendor() != null && vs.getProduct() != null) {
+                // CPE: filter by vendor:product substring (same as existing logic)
+                final String vendor = vs.getVendor().toLowerCase();
+                final String product = vs.getProduct().toLowerCase();
+                final String vendorProduct = ":" + vendor + ":" + product;
+                final String escapedVendorProduct = ":" + escapeCpeValue(vendor) + ":" + escapeCpeValue(product);
+                if (vendorProduct.equals(escapedVendorProduct)) {
+                    query.setFilter("cpe != null && cpe.toLowerCase().indexOf(:vendorProduct) >= 0");
+                    query.setNamedParameters(Map.of("vendorProduct", vendorProduct));
+                } else {
+                    query.setFilter("cpe != null && (cpe.toLowerCase().indexOf(:vendorProduct) >= 0 || cpe.toLowerCase().indexOf(:escapedVendorProduct) >= 0)");
+                    query.setNamedParameters(Map.of("vendorProduct", vendorProduct, "escapedVendorProduct", escapedVendorProduct));
+                }
+            } else if (vs.getPurl() != null) {
+                // Fallback: PURL exists but no parsed type/name — use broad filter
+                query.setFilter("purl != null");
+            } else if (vs.getCpe23() != null || vs.getCpe22() != null) {
+                query.setFilter("cpe != null");
+            } else {
+                continue; // No identity info — skip this VS entry
+            }
+
+            try {
+                candidates.addAll((List<Component>) query.executeList());
+            } finally {
+                query.closeAll();
+            }
+        }
+
+        return new ArrayList<>(candidates);
+    }
+
+    /**
+     * Escapes CPE 2.3 special characters with backslash.
+     * Per the CPE spec, characters like + ? * must be escaped with \ in the formatted string.
+     */
+    private static String escapeCpeValue(final String value) {
+        if (value == null) return null;
+        return value.replaceAll("([!\"#$%&'()+,/:;<=>@\\[\\]^`{|}~*?])", "\\\\$1");
     }
 
 }

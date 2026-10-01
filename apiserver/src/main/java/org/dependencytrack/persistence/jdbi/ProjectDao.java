@@ -57,6 +57,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -455,11 +456,14 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
     /// Projection of metrics JSON for API v2 [listAllProjects].
     @JsonIgnoreProperties(ignoreUnknown = true)
     record ListAllProjectMetricsRow(
+            int components,
+            int vulnerableComponents,
             int critical,
             int high,
             int medium,
             int low,
             int unassigned,
+            int kev,
             int vulnerabilities,
             int suppressed,
             double inheritedRiskScore,
@@ -482,8 +486,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             int policyViolationsOperationalAudited,
             int policyViolationsOperationalUnaudited) {}
 
-    /// Row projection for API v1 project list endpoints ([getProjects]).
-    record ListProjectsRow(
+    record ListProjectsRowV1(
             UUID uuid,
             @Nullable String group,
             String name,
@@ -515,8 +518,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Nullable String parentVersion,
             boolean hasChildren) {}
 
-    /// Row projection for API v2 [listAllProjects] — separate from v1 [ListProjectsRow].
-    record ListAllProjectsRow(
+    record ListProjectsRowV2(
             long id,
             UUID uuid,
             @Nullable String group,
@@ -642,16 +644,16 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                 @AllowApiOrdering.Column(name = "lastBomImportFormat"),
                 @AllowApiOrdering.Column(name = "lastInheritedRiskScore")
             })
-    @RegisterConstructorMapper(ListProjectsRow.class)
+    @RegisterConstructorMapper(ListProjectsRowV1.class)
     @AllowUnusedBindings
-    List<ListProjectsRow> getProjects(
+    List<ListProjectsRowV1> getProjects(
             @Define ArrayList<String> whereConditions,
             @BindMap Map<String, Object> queryParams,
             @Define boolean includeMetrics,
             @Define String collectionMetricsSubquery,
             @Define String leafMetricsSubquery);
 
-    default Page<ListProjectsRow> getProjects(ListProjectsQuery query) {
+    default Page<ListProjectsRowV1> getProjects(ListProjectsQuery query) {
         final var whereConditions = new ArrayList<String>();
         final var queryParams = new HashMap<String, Object>();
         whereConditions.add("TRUE");
@@ -755,7 +757,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                     /* threshold */ null,
                     "\"PROJECT\".\"ID\"");
 
-            final List<ListProjectsRow> rows = getProjects(
+            final List<ListProjectsRowV1> rows = getProjects(
                     whereConditions,
                     queryParams,
                     query.includeMetrics(),
@@ -767,7 +769,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
         });
     }
 
-    default Page<ListAllProjectsRow> listAllProjects(ListAllProjectsQuery query) {
+    default Page<ListProjectsRowV2> listAllProjects(ListAllProjectsQuery query) {
         if (query.parentUuid() != null && !Boolean.TRUE.equals(isAccessible(query.parentUuid()))) {
             return Page.empty();
         }
@@ -808,13 +810,6 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             }
         }
         if (query.teams() != null && !query.teams().isEmpty()) {
-            final var teamNameConditions = new ArrayList<String>();
-            for (int i = 0; i < query.teams().size(); i++) {
-                final String paramName = "teamFilter" + i;
-                teamNameConditions.add("LOWER(\"TEAM\".\"NAME\") = LOWER(:" + paramName + ")");
-                queryParams.put(paramName, query.teams().get(i));
-            }
-            final String teamOrClause = String.join(" OR ", teamNameConditions);
             whereConditions.add(/* language=SQL */ """
                     EXISTS (
                       SELECT 1
@@ -822,8 +817,13 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                        INNER JOIN "TEAM"
                           ON "TEAM"."ID" = "PROJECT_ACCESS_TEAMS"."TEAM_ID"
                        WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
-                         AND (%s)
-                    )""".formatted(teamOrClause));
+                         AND LOWER("TEAM"."NAME") = ANY(:teams)
+                    )""");
+            queryParams.put(
+                    "teams",
+                    query.teams().stream()
+                            .map(name -> name.toLowerCase(Locale.ROOT))
+                            .toArray(String[]::new));
         }
         if (query.parentUuid() != null) {
             whereConditions.add(/* language=SQL */ """
@@ -880,13 +880,8 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             }
         }
         if (query.classifiers() != null && !query.classifiers().isEmpty()) {
-            final var classifierConditions = new ArrayList<String>();
-            for (int i = 0; i < query.classifiers().size(); i++) {
-                final String paramName = "classifierFilter" + i;
-                classifierConditions.add("\"PROJECT\".\"CLASSIFIER\" = :" + paramName);
-                queryParams.put(paramName, query.classifiers().get(i));
-            }
-            whereConditions.add("(" + String.join(" OR ", classifierConditions) + ")");
+            whereConditions.add("\"PROJECT\".\"CLASSIFIER\" = ANY(:classifiers)");
+            queryParams.put("classifiers", query.classifiers().toArray(String[]::new));
         }
 
         return withJitDisabled(() -> {
@@ -907,9 +902,15 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                             case GROUP -> decodedPageToken.lastGroup();
                             case VERSION -> decodedPageToken.lastVersion();
                             case CLASSIFIER -> decodedPageToken.lastClassifier();
-                            case INACTIVE_SINCE -> decodedPageToken.lastInactiveSince();
+                            case INACTIVE_SINCE ->
+                                decodedPageToken.lastInactiveSince() != null
+                                        ? Instant.ofEpochMilli(decodedPageToken.lastInactiveSince())
+                                        : null;
                             case IS_LATEST -> decodedPageToken.lastIsLatest();
-                            case LAST_BOM_IMPORTED -> decodedPageToken.lastBomImport();
+                            case LAST_BOM_IMPORTED ->
+                                decodedPageToken.lastBomImport() != null
+                                        ? Instant.ofEpochMilli(decodedPageToken.lastBomImport())
+                                        : null;
                             case LAST_RISKSCORE -> decodedPageToken.lastInheritedRiskScore();
                         });
             } else {
@@ -922,7 +923,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                 effectiveSortDirection = query.sortDirection() != null ? query.sortDirection() : SortDirection.ASC;
             }
 
-            final List<ListAllProjectsRow> rows = listAllProjects(
+            final List<ListProjectsRowV2> rows = listAllProjects(
                     whereConditions,
                     queryParams,
                     query.limit() + 1,
@@ -936,12 +937,12 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                     COLLECTION_METRICS_SUBQUERY,
                     LEAF_METRICS_SUBQUERY);
 
-            final List<ListAllProjectsRow> resultRows =
+            final List<ListProjectsRowV2> resultRows =
                     rows.size() > query.limit() ? rows.subList(0, query.limit()) : rows;
 
             final ListAllProjectsQuery.PageToken nextPageToken;
             if (rows.size() > query.limit()) {
-                final ListAllProjectsRow lastRow = resultRows.getLast();
+                final ListProjectsRowV2 lastRow = resultRows.getLast();
                 nextPageToken = new ListAllProjectsQuery.PageToken(
                         lastRow.id(),
                         effectiveSortBy == ListAllProjectsQuery.SortBy.NAME ? lastRow.name() : null,
@@ -953,12 +954,12 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                                         : null
                                 : null,
                         effectiveSortBy == ListAllProjectsQuery.SortBy.INACTIVE_SINCE && lastRow.inactiveSince() != null
-                                ? lastRow.inactiveSince().toInstant()
+                                ? lastRow.inactiveSince().getTime()
                                 : null,
                         effectiveSortBy == ListAllProjectsQuery.SortBy.IS_LATEST ? lastRow.isLatest() : null,
                         effectiveSortBy == ListAllProjectsQuery.SortBy.LAST_BOM_IMPORTED
                                         && lastRow.lastBomImport() != null
-                                ? lastRow.lastBomImport().toInstant()
+                                ? lastRow.lastBomImport().getTime()
                                 : null,
                         effectiveSortBy == ListAllProjectsQuery.SortBy.LAST_RISKSCORE
                                 ? lastRow.lastInheritedRiskScore()
@@ -1092,9 +1093,9 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             </#if>
              LIMIT :limit
             """)
-    @RegisterConstructorMapper(ListAllProjectsRow.class)
+    @RegisterConstructorMapper(ListProjectsRowV2.class)
     @AllowUnusedBindings
-    List<ListAllProjectsRow> listAllProjects(
+    List<ListProjectsRowV2> listAllProjects(
             @Define ArrayList<String> whereConditions,
             @BindMap Map<String, Object> queryParams,
             @Bind int limit,

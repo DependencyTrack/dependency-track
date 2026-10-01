@@ -95,7 +95,7 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
             final UUID ancestorUuid,
             final Boolean onlyRoot,
             final Boolean hasChildren,
-            final ProjectState isActive,
+            final ProjectState state,
             final Boolean isLatest,
             final Long lastBomImportSince,
             final Long lastBomImportBefore,
@@ -138,7 +138,7 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                                             "last_inherited_risk_score"));
                     };
 
-            final Page<ProjectDao.ListAllProjectsRow> projectsPage = handle.attach(ProjectDao.class)
+            final Page<ProjectDao.ListProjectsRowV2> projectsPage = handle.attach(ProjectDao.class)
                     .listAllProjects(new ListAllProjectsQuery(
                             StringUtils.trimToNull(nameContains),
                             StringUtils.trimToNull(versionContains),
@@ -148,7 +148,7 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                             ancestorUuid,
                             onlyRoot,
                             hasChildren,
-                            switch (isActive) {
+                            switch (state) {
                                 case ACTIVE -> Boolean.TRUE;
                                 case INACTIVE -> Boolean.FALSE;
                                 case null -> null;

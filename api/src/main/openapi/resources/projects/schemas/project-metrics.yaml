@@ -16,6 +16,12 @@
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 type: object
 properties:
+  components:
+    type: integer
+    format: int32
+  vulnerable_components:
+    type: integer
+    format: int32
   critical:
     type: integer
     format: int32
@@ -29,6 +35,9 @@ properties:
     type: integer
     format: int32
   unassigned:
+    type: integer
+    format: int32
+  kev:
     type: integer
     format: int32
   vulnerabilities:

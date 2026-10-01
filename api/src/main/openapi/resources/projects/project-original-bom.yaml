@@ -44,8 +44,7 @@ get:
       content:
         application/vnd.cyclonedx+json:
           schema:
-            type: string
-            format: binary
+            type: object
         application/vnd.cyclonedx+xml:
           schema:
             type: string

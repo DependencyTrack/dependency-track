@@ -799,7 +799,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
         if (query.tags() != null && !query.tags().isEmpty()) {
             for (int i = 0; i < query.tags().size(); i++) {
                 final String paramName = "tagFilter" + i;
-                whereConditions.add(/* language=SQL */ """
+                whereConditions.add("""
                         EXISTS (
                           SELECT 1
                             FROM "PROJECTS_TAGS"
@@ -812,7 +812,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             }
         }
         if (query.teams() != null && !query.teams().isEmpty()) {
-            whereConditions.add(/* language=SQL */ """
+            whereConditions.add("""
                     EXISTS (
                       SELECT 1
                         FROM "PROJECT_ACCESS_TEAMS"
@@ -828,7 +828,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                             .toArray(String[]::new));
         }
         if (query.parentUuid() != null) {
-            whereConditions.add(/* language=SQL */ """
+            whereConditions.add("""
                     EXISTS (
                       SELECT 1
                         FROM "PROJECT" AS "PARENT_PROJECT"
@@ -838,7 +838,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             queryParams.put("parentUuid", query.parentUuid());
         }
         if (query.ancestorUuid() != null) {
-            whereConditions.add(/* language=SQL */ """
+            whereConditions.add("""
                     EXISTS (
                       SELECT 1
                         FROM "PROJECT_HIERARCHY"
@@ -854,7 +854,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             whereConditions.add("\"PROJECT\".\"PARENT_PROJECT_ID\" IS NULL");
         }
         if (Boolean.TRUE.equals(query.hasChildren())) {
-            whereConditions.add(/* language=SQL */ """
+            whereConditions.add("""
                     EXISTS (
                       SELECT 1
                         FROM "PROJECT" AS "CHILD_PROJECT"

@@ -571,6 +571,58 @@ public class ProjectsResourceTest extends ResourceTest {
     }
 
     @Test
+    public void listProjectsPaginationByTimestampTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var oldest = new Project();
+        oldest.setName("oldest");
+        oldest.setInactiveSince(new Date(1_600_000_000_000L));
+        oldest.setLastBomImport(new Date(1_600_000_000_000L));
+        qm.persist(oldest);
+
+        final var newest = new Project();
+        newest.setName("newest");
+        newest.setInactiveSince(new Date(1_700_000_000_000L));
+        newest.setLastBomImport(new Date(1_700_000_000_000L));
+        qm.persist(newest);
+
+        final var withoutTimestamp = new Project();
+        withoutTimestamp.setName("without-timestamp");
+        qm.persist(withoutTimestamp);
+
+        for (final String sortBy : List.of("inactive_since", "last_bom_import")) {
+            Response response = jersey.target("/projects")
+                    .queryParam("limit", 1)
+                    .queryParam("sort_by", sortBy)
+                    .request()
+                    .header(X_API_KEY, apiKey)
+                    .get();
+            assertThat(response.getStatus()).isEqualTo(200);
+            final JsonObject firstPage = parseJsonObject(response);
+            assertThatJson(firstPage.toString()).inPath("$.items[*].name").isEqualTo("[\"oldest\"]");
+
+            response = jersey.target("/projects")
+                    .queryParam("limit", 1)
+                    .queryParam("page_token", firstPage.getString("next_page_token"))
+                    .request()
+                    .header(X_API_KEY, apiKey)
+                    .get();
+            assertThat(response.getStatus()).isEqualTo(200);
+            final JsonObject secondPage = parseJsonObject(response);
+            assertThatJson(secondPage.toString()).inPath("$.items[*].name").isEqualTo("[\"newest\"]");
+
+            response = jersey.target("/projects")
+                    .queryParam("limit", 1)
+                    .queryParam("page_token", secondPage.getString("next_page_token"))
+                    .request()
+                    .header(X_API_KEY, apiKey)
+                    .get();
+            assertThat(response.getStatus()).isEqualTo(200);
+            assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name").isEqualTo("[\"without-timestamp\"]");
+        }
+    }
+
+    @Test
     public void listProjectsSortByLastInheritedRiskScoreIncludingCollectionsTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
@@ -714,7 +766,7 @@ public class ProjectsResourceTest extends ResourceTest {
                 .containsExactly("beta-app");
 
         response = jersey.target("/projects")
-                .queryParam("is_active", "INACTIVE")
+                .queryParam("state", "INACTIVE")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -799,7 +851,7 @@ public class ProjectsResourceTest extends ResourceTest {
         qm.persist(otherTeamProject);
 
         response = jersey.target("/projects")
-                .queryParam("teams_any", "Test Users", "Other Team")
+                .queryParam("teams_any", "test users", "OTHER TEAM")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -849,7 +901,7 @@ public class ProjectsResourceTest extends ResourceTest {
                 .contains("stale-app");
 
         response = jersey.target("/projects")
-                .queryParam("is_active", "ACTIVE")
+                .queryParam("state", "ACTIVE")
                 .queryParam("name_contains", "alpha")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -972,6 +1024,19 @@ public class ProjectsResourceTest extends ResourceTest {
         child.setName("child-app");
         child.setParent(parent);
         qm.persist(child);
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            final Instant now = Instant.now();
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", LocalDate.now(ZoneOffset.UTC));
+            final var childMetrics = new ProjectMetrics();
+            childMetrics.setProjectId(child.getId());
+            childMetrics.setComponents(4);
+            childMetrics.setVulnerableComponents(2);
+            childMetrics.setKev(1);
+            childMetrics.setFirstOccurrence(Date.from(now));
+            childMetrics.setLastOccurrence(Date.from(now));
+            testDao.createProjectMetrics(childMetrics);
+        });
 
         Response response = jersey.target("/projects")
                 .queryParam("name_contains", "collection")
@@ -988,6 +1053,11 @@ public class ProjectsResourceTest extends ResourceTest {
         assertThatJson(parentBody).inPath("$.items[0].collection_logic").isEqualTo("AGGREGATE_DIRECT_CHILDREN");
         assertThatJson(parentBody).inPath("$.items[0].teams[0]").isEqualTo("Test Users");
         assertThatJson(parentBody).inPath("$.items[0].metrics").isObject();
+        assertThatJson(parentBody).inPath("$.items[0].metrics.components").isEqualTo(4);
+        assertThatJson(parentBody)
+                .inPath("$.items[0].metrics.vulnerable_components")
+                .isEqualTo(2);
+        assertThatJson(parentBody).inPath("$.items[0].metrics.kev").isEqualTo(1);
         assertThatJson(parentBody).inPath("$.items[0].parent").isAbsent();
 
         response = jersey.target("/projects")
@@ -1000,7 +1070,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
         response = jersey.target("/projects")
                 .queryParam("name_contains", "child")
-                .queryParam("expand", "parent")
+                .queryParam("expand", "parent", "metrics")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1011,6 +1081,11 @@ public class ProjectsResourceTest extends ResourceTest {
                 .inPath("$.items[0].parent.uuid")
                 .isEqualTo(parent.getUuid().toString());
         assertThatJson(childBody).inPath("$.items[0].parent.name").isEqualTo("collection-app");
+        assertThatJson(childBody).inPath("$.items[0].metrics.components").isEqualTo(4);
+        assertThatJson(childBody)
+                .inPath("$.items[0].metrics.vulnerable_components")
+                .isEqualTo(2);
+        assertThatJson(childBody).inPath("$.items[0].metrics.kev").isEqualTo(1);
 
         response = jersey.target("/projects")
                 .queryParam("name_contains", "child")

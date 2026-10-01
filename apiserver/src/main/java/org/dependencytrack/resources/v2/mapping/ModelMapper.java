@@ -34,7 +34,7 @@ import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListAllProjectMetricsRow;
-import org.dependencytrack.persistence.jdbi.ProjectDao.ListAllProjectsRow;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRowV2;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -119,11 +119,14 @@ public class ModelMapper {
             return null;
         }
         return ProjectMetrics.builder()
+                .components(metrics.components())
+                .vulnerableComponents(metrics.vulnerableComponents())
                 .critical(metrics.critical())
                 .high(metrics.high())
                 .medium(metrics.medium())
                 .low(metrics.low())
                 .unassigned(metrics.unassigned())
+                .kev(metrics.kev())
                 .vulnerabilities(metrics.vulnerabilities())
                 .suppressed(metrics.suppressed())
                 .findingsTotal(metrics.findingsTotal())
@@ -149,7 +152,7 @@ public class ModelMapper {
     }
 
     public static ListProjectsResponseItem mapListProjectsResponseItem(
-            ListAllProjectsRow row, boolean includeMetrics, boolean includeParent, boolean includeTeams) {
+            ListProjectsRowV2 row, boolean includeMetrics, boolean includeParent, boolean includeTeams) {
         return ListProjectsResponseItem.builder()
                 .uuid(row.uuid())
                 .name(row.name())

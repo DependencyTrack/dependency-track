@@ -30,7 +30,7 @@ import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.Tag;
-import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRowV1;
 import org.dependencytrack.util.PurlUtil;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -84,11 +84,11 @@ public record ListProjectsResponseItem(
         @Schema(description = "Whether the project has child projects", requiredMode = Schema.RequiredMode.REQUIRED)
         boolean hasChildren) {
 
-    public static List<ListProjectsResponseItem> of(Collection<ListProjectsRow> rows) {
+    public static List<ListProjectsResponseItem> of(Collection<ListProjectsRowV1> rows) {
         return rows.stream().map(ListProjectsResponseItem::of).toList();
     }
 
-    public static ListProjectsResponseItem of(ListProjectsRow row) {
+    public static ListProjectsResponseItem of(ListProjectsRowV1 row) {
         final PackageURL parsedPurl = PurlUtil.silentPurl(row.purl());
         return new ListProjectsResponseItem(
                 row.uuid(),

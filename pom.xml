@@ -160,7 +160,7 @@
         <lib.microprofile-config.version>3.1.2</lib.microprofile-config.version>
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
         <lib.minio.version>9.0.3</lib.minio.version>
-        <lib.mockito.version>5.23.0</lib.mockito.version>
+        <lib.mockito.version>5.24.0</lib.mockito.version>
         <lib.nullaway.version>0.14.1</lib.nullaway.version>
         <lib.okhttp.version>5.5.0</lib.okhttp.version>
         <lib.open-feign.version>13.15</lib.open-feign.version>

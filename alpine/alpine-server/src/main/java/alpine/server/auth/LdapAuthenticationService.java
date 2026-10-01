@@ -72,6 +72,7 @@ public class LdapAuthenticationService implements AuthenticationService<LdapUser
      * @return always will return true
      * @since 1.0.0
      */
+    @Override
     public boolean isSpecified() {
         return true;
     }
@@ -85,6 +86,7 @@ public class LdapAuthenticationService implements AuthenticationService<LdapUser
      * @throws AlpineAuthenticationException when authentication is unsuccessful
      * @since 1.0.0
      */
+    @Override
     public LdapUser authenticate() throws AlpineAuthenticationException {
         LOGGER.debug("Attempting to authenticate user: {}", username);
         if (username != null && ServiceAccount.hasReservedPrefix(username)) {

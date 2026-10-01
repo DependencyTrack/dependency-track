@@ -32,10 +32,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.common.pagination.Page;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
@@ -43,7 +45,6 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRowV1;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
@@ -107,7 +108,7 @@ import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolati
  * @since 3.0.0
  */
 @Path("/v1/project")
-@io.swagger.v3.oas.annotations.tags.Tag(name = "project")
+@Tag(name = "project")
 @SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class ProjectResource extends AbstractApiResource {
 
@@ -345,8 +346,13 @@ public class ProjectResource extends AbstractApiResource {
             }
             requireAccess(qm, project);
 
-            final boolean isParentAccessible =
-                    project.getParent() != null && qm.hasAccess(getPrincipal(), project.getParent());
+            final UUID parentUuid =
+                    project.getParent() != null ? project.getParent().getUuid() : null;
+            final boolean isParentAccessible = parentUuid != null
+                    && withJdbiHandle(
+                            qm,
+                            handle -> Boolean.TRUE.equals(
+                                    handle.attach(ProjectDao.class).isAccessible(parentUuid)));
 
             qm.makeTransient(project);
             if (!isParentAccessible) {

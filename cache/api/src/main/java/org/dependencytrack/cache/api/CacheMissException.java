@@ -31,6 +31,7 @@ package org.dependencytrack.cache.api;
  */
 final class CacheMissException extends RuntimeException {
 
+    @SuppressWarnings("StaticAssignmentOfThrowable")
     static final CacheMissException INSTANCE = new CacheMissException();
 
     private CacheMissException() {

@@ -176,8 +176,8 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
     }
 
     private void defineProjectAclCondition(final StatementContext ctx, final AlpineRequest apiRequest) {
-        if (apiRequest == null
-                || !(apiRequest.getPrincipal() instanceof final Principal principal)
+        final Principal principal = apiRequest != null ? apiRequest.getPrincipal() : null;
+        if (principal == null
                 || ProjectAccess.isUnrestricted()
                 || !apiRequest.isPortfolioAccessControlEnabled()
                 || principal.hasPermission(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)) {

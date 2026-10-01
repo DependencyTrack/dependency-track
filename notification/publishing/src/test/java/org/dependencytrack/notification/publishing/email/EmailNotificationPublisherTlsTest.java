@@ -69,10 +69,7 @@ class EmailNotificationPublisherTlsTest {
         emailGlobalConfig.setSenderAddress("dependencytrack@example.com");
 
         final var configRegistry = new MockConfigRegistry(
-                Map.of("allow-local-connections", "true"),
-                publisherFactory.runtimeConfigSpec(),
-                RuntimeConfigMapper.getInstance(),
-                emailGlobalConfig);
+                Map.of(), publisherFactory.runtimeConfigSpec(), RuntimeConfigMapper.getInstance(), emailGlobalConfig);
 
         publisherFactory.init(
                 new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());

@@ -27,12 +27,12 @@ import alpine.model.auth.UserType;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.Tag;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -428,9 +428,6 @@ final class ProjectQueryManager extends QueryManager {
                     final Tag existingTag = existingTagsIterator.next();
                     if (!tags.contains(existingTag)) {
                         existingTagsIterator.remove();
-                        if (existingTag.getProjects() != null) {
-                            existingTag.getProjects().remove(project);
-                        }
                         modified = true;
                     }
                 }
@@ -438,13 +435,6 @@ final class ProjectQueryManager extends QueryManager {
             for (final Tag tag : tags) {
                 if (!project.getTags().contains(tag)) {
                     project.getTags().add(tag);
-
-                    if (tag.getProjects() == null) {
-                        tag.setProjects(new HashSet<>(Set.of(project)));
-                    } else {
-                        tag.getProjects().add(project);
-                    }
-
                     modified = true;
                 }
             }
@@ -463,47 +453,6 @@ final class ProjectQueryManager extends QueryManager {
     }
 
     @Override
-    public boolean hasAccess(final Principal principal, final Project project) {
-        if (isPortfolioAclBypassed(principal)) {
-            return true;
-        }
-
-        final Query<?> query;
-        switch (principal) {
-            case UserPrincipal user -> {
-                query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                                SELECT EXISTS(
-                                  SELECT 1
-                                    FROM "PROJECT_ACCESS_USERS" AS pau
-                                   INNER JOIN "PROJECT_HIERARCHY" AS ph
-                                      ON ph."PARENT_PROJECT_ID" = pau."PROJECT_ID"
-                                   WHERE ph."CHILD_PROJECT_ID" = ?
-                                     AND pau."USER_ID" = ?
-                                )
-                                """).setParameters(project.getId(), user.id());
-            }
-            case ApiKeyPrincipal apiKey -> {
-                query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                                SELECT EXISTS(
-                                  SELECT 1
-                                    FROM "APIKEYS_TEAMS" AS akt
-                                   INNER JOIN "PROJECT_ACCESS_TEAMS" AS pat
-                                      ON pat."TEAM_ID" = akt."TEAM_ID"
-                                   INNER JOIN "PROJECT_HIERARCHY" AS ph
-                                      ON ph."PARENT_PROJECT_ID" = pat."PROJECT_ID"
-                                   WHERE akt."APIKEY_ID" = ?
-                                     AND ph."CHILD_PROJECT_ID" = ?
-                                )
-                                """).setParameters(apiKey.id(), project.getId());
-            }
-            case null -> {
-                return false;
-            }
-        }
-
-        return executeAndCloseResultUnique(query, Boolean.class);
-    }
-
     void preprocessACLs(final Query<?> query, final String inputFilter, final Map<String, Object> params) {
         if (isPortfolioAclBypassed(principal)) {
             query.setFilter(inputFilter);
@@ -667,6 +616,7 @@ final class ProjectQueryManager extends QueryManager {
         }
     }
 
+    @Override
     public List<ProjectVersion> getProjectVersions(Project project) {
         final Query<Project> query = pm.newQuery(Project.class);
         query.setResult("uuid, version, isLatest, inactiveSince");

@@ -1,0 +1,2 @@
+org.dependencytrack.persistence.jdbi.ComponentDao#getOccurrences uses @RegisterBeanMapper with model class org.dependencytrack.model.ComponentOccurrence
+org.dependencytrack.persistence.jdbi.ConfigPropertyDao#getOptional uses @RegisterBeanMapper with model class alpine.model.ConfigProperty

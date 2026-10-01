@@ -32,6 +32,7 @@ import org.dependencytrack.api.v2.model.ProjectState;
 import org.dependencytrack.api.v2.model.Scope;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListAllProjectMetricsRow;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRowV2;
 import org.jspecify.annotations.Nullable;
@@ -67,7 +68,7 @@ public class ModelMapper {
                 .build();
     }
 
-    public static ComponentProject mapProject(org.dependencytrack.model.Project project) {
+    public static ComponentProject mapProject(Project project) {
         if (project == null) {
             return null;
         }
@@ -78,7 +79,7 @@ public class ModelMapper {
                 .build();
     }
 
-    public static DependencyMetrics mapDependencyMetrics(org.dependencytrack.model.DependencyMetrics metrics) {
+    public static DependencyMetrics mapDependencyMetrics(org.dependencytrack.metrics.DependencyMetrics metrics) {
         if (metrics == null) {
             return null;
         }
@@ -245,7 +246,7 @@ public class ModelMapper {
         };
     }
 
-    public static PackageMetadata map(org.dependencytrack.model.@Nullable PackageMetadata pm) {
+    public static PackageMetadata map(org.dependencytrack.pkgmetadata.@Nullable PackageMetadata pm) {
         if (pm == null) {
             return null;
         }
@@ -260,7 +261,7 @@ public class ModelMapper {
                 .build();
     }
 
-    public static PackageArtifactMetadata map(org.dependencytrack.model.@Nullable PackageArtifactMetadata pam) {
+    public static PackageArtifactMetadata map(org.dependencytrack.pkgmetadata.@Nullable PackageArtifactMetadata pam) {
         if (pam == null) {
             return null;
         }
@@ -273,7 +274,7 @@ public class ModelMapper {
                 .build();
     }
 
-    private static Hashes mapHashes(org.dependencytrack.model.PackageArtifactMetadata pam) {
+    private static Hashes mapHashes(org.dependencytrack.pkgmetadata.PackageArtifactMetadata pam) {
         if (pam.md5() == null && pam.sha1() == null && pam.sha256() == null && pam.sha512() == null) {
             return null;
         }

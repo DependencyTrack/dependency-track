@@ -61,6 +61,7 @@ import javax.jdo.FetchGroup;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
 import java.time.Instant;
@@ -153,7 +154,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
     }
 
     @Override
-    public @Nullable Void execute(ActivityContext ctx, @Nullable ImportBomArg arg) throws Exception {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable ImportBomArg arg)
+            throws IOException, InterruptedException {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -383,7 +385,6 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                         "Processing {} dependency graph entries",
                         bom.dependencyGraph().size());
                 processDependencyGraph(
-                        qm,
                         persistentProject,
                         bom.dependencyGraph(),
                         persistentComponentsByIdentity,
@@ -746,7 +747,6 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
     }
 
     private void processDependencyGraph(
-            final QueryManager qm,
             final Project project,
             final Map<String, Set<String>> dependencyGraph,
             final Map<ComponentIdentity, Component> componentsByIdentity,
@@ -928,6 +928,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         return pm.newQuery(ServiceComponent.class, ":ids.contains(id)").deletePersistentAll(serviceIds);
     }
 
+    // License.UNRESOLVED is a cache sentinel and must be compared by identity.
+    @SuppressWarnings("ReferenceEquality")
     private static void resolveAndApplyLicense(
             final QueryManager qm,
             final Component component,

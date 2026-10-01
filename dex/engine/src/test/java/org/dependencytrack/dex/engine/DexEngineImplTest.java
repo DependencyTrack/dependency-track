@@ -744,6 +744,13 @@ class DexEngineImplTest {
                 .withMessageMatching("Workflow run .+ is already in terminal status");
     }
 
+    @Test
+    void shouldThrowWhenSendingExternalEventWhileNotRunning() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> engine.sendExternalEvent(new ExternalEvent(UUID.randomUUID(), "foo", null)))
+                .withMessage("Engine must be in state any of [RUNNING], but is CREATED");
+    }
+
     @Nested
     class WorkflowInstanceIdTest {
 

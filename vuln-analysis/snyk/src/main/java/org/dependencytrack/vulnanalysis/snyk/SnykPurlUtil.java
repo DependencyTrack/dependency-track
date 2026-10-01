@@ -24,6 +24,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -51,9 +52,9 @@ final class SnykPurlUtil {
      */
     static String toSnykRequestPurl(PackageURL purl, boolean checksumMatchingEnabled) {
         if (requiresChecksumMeta(purl, checksumMatchingEnabled)) {
-            return purl.canonicalize().toLowerCase();
+            return purl.canonicalize().toLowerCase(Locale.ROOT);
         }
-        return purl.getCoordinates().toLowerCase();
+        return purl.getCoordinates().toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -84,10 +85,10 @@ final class SnykPurlUtil {
             return null;
         }
         try {
-            return new PackageURL(purl).canonicalize().toLowerCase();
+            return new PackageURL(purl).canonicalize().toLowerCase(Locale.ROOT);
         } catch (MalformedPackageURLException e) {
             LOGGER.debug("Failed to normalize PURL key '{}'", purl, e);
-            return purl.toLowerCase();
+            return purl.toLowerCase(Locale.ROOT);
         }
     }
 }

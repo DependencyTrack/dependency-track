@@ -115,6 +115,9 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
         final HttpResponse<String> response;
         try {
             response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while obtaining GitHub App installation token", e);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to obtain GitHub App installation token", e);
         }

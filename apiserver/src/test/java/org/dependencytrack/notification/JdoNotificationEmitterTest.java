@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.api.TestNotificationFactory.createBomConsumedTestNotification;
 
 class JdoNotificationEmitterTest extends PersistenceCapableTest {
@@ -49,7 +50,7 @@ class JdoNotificationEmitterTest extends PersistenceCapableTest {
 
         emitter.emit(notification);
 
-        assertThat(qm.getNotificationOutbox()).containsOnly(notification);
+        assertThat(getNotificationOutbox()).containsOnly(notification);
     }
 
     @Test
@@ -64,7 +65,7 @@ class JdoNotificationEmitterTest extends PersistenceCapableTest {
 
         emitter.emitAll(notifications);
 
-        assertThat(qm.getNotificationOutbox()).hasSize(5);
+        assertThat(getNotificationOutbox()).hasSize(5);
     }
 
     @Test

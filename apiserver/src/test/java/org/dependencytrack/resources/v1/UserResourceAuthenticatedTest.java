@@ -58,6 +58,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_CREATED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_DELETED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
@@ -282,7 +283,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("blackbeard", json.getString("username"));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_USER_CREATED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -341,7 +342,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                     """));
         Assertions.assertEquals(204, response.getStatus(), 0);
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_USER_DELETED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -409,7 +410,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertEquals("blackbeard@example.com", json.getString("email"));
         Assertions.assertEquals("blackbeard", json.getString("username"));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_USER_CREATED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -703,7 +704,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                     """));
         Assertions.assertEquals(204, response.getStatus(), 0);
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_USER_DELETED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -730,7 +731,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("blackbeard", json.getString("username"));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_USER_CREATED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);

@@ -411,9 +411,11 @@ public class NotificationPublisherResource extends AbstractApiResource {
             return pluginManager.getFactory(
                     org.dependencytrack.notification.api.publishing.NotificationPublisher.class, extensionName);
         } catch (NoSuchExtensionException e) {
-            throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
-                    .entity("No extension with name '%s' exists".formatted(extensionName))
-                    .build());
+            throw new ClientErrorException(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("No extension with name '%s' exists".formatted(extensionName))
+                            .build(),
+                    e);
         }
     }
 

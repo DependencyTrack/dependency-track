@@ -32,6 +32,7 @@ import org.dependencytrack.resources.v1.vo.CvssScoreResponse;
 import org.metaeffekt.core.security.cvss.CvssVector;
 import us.springett.owasp.riskrating.MissingFactorException;
 import us.springett.owasp.riskrating.OwaspRiskRating;
+import us.springett.owasp.riskrating.Score;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -87,8 +88,7 @@ public class CalculatorResource extends AbstractApiResource {
                 @ApiResponse(
                         responseCode = "200",
                         description = "The calculated scores",
-                        content =
-                                @Content(schema = @Schema(implementation = us.springett.owasp.riskrating.Score.class))),
+                        content = @Content(schema = @Schema(implementation = Score.class))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     public Response getOwaspRRScores(
@@ -96,7 +96,7 @@ public class CalculatorResource extends AbstractApiResource {
                     String vector) {
         try {
             final OwaspRiskRating owaspRiskRating = OwaspRiskRating.fromVector(vector);
-            final us.springett.owasp.riskrating.Score score = owaspRiskRating.calculateScore();
+            final Score score = owaspRiskRating.calculateScore();
             return Response.ok(score).build();
         } catch (IllegalArgumentException | MissingFactorException e) {
             return Response.status(Response.Status.BAD_REQUEST)

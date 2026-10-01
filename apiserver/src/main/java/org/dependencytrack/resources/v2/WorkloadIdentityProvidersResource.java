@@ -65,8 +65,7 @@ public final class WorkloadIdentityProvidersResource extends AbstractApiResource
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorkloadIdentityProvidersResource.class);
 
-    private final WorkloadIdentityKeySetFetcher keySetFetcher =
-            new WorkloadIdentityKeySetFetcher(HttpClient.NO_REDIRECT_INSTANCE);
+    private final WorkloadIdentityKeySetFetcher keySetFetcher = new WorkloadIdentityKeySetFetcher(HttpClient.INSTANCE);
 
     @Override
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_CREATE})

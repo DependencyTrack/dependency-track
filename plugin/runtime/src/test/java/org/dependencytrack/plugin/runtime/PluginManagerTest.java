@@ -23,6 +23,7 @@ import org.dependencytrack.plugin.api.ExtensionFactory;
 import org.dependencytrack.plugin.api.ExtensionPoint;
 import org.dependencytrack.plugin.api.Plugin;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jdbi.v3.core.Jdbi;
@@ -58,6 +59,7 @@ class PluginManagerTest {
                 _ -> null,
                 jdbi,
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(TestExtensionPoint.class));
         pluginManager.loadPlugins(List.of(new DummyPlugin()));
     }

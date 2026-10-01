@@ -111,12 +111,12 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <project.parentBaseDir>.</project.parentBaseDir>
         <!-- Dependency versions -->
-        <lib.ae-security.version>0.157.0</lib.ae-security.version>
+        <lib.ae-security.version>0.157.1</lib.ae-security.version>
         <lib.archunit.version>1.5.0</lib.archunit.version>
         <lib.assertj.version>3.27.7</lib.assertj.version>
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
-        <lib.byte-buddy.version>1.18.13</lib.byte-buddy.version>
-        <lib.caffeine.version>3.2.4</lib.caffeine.version>
+        <lib.byte-buddy.version>1.18.14</lib.byte-buddy.version>
+        <lib.caffeine.version>3.3.0</lib.caffeine.version>
         <lib.cel-java.version>0.14.0</lib.cel-java.version>
         <lib.commons-codec.version>1.22.1</lib.commons-codec.version>
         <lib.commons-lang3.version>3.20.0</lib.commons-lang3.version>
@@ -130,16 +130,16 @@
         <lib.db-scheduler.version>16.12.0</lib.db-scheduler.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.errorprone.version>2.50.0</lib.errorprone.version>
-        <lib.flyway.version>13.5.0</lib.flyway.version>
-        <lib.greenmail.version>2.1.13</lib.greenmail.version>
+        <lib.flyway.version>13.7.0</lib.flyway.version>
+        <lib.greenmail.version>2.1.14</lib.greenmail.version>
         <lib.gson.version>2.14.0</lib.gson.version>
         <lib.guava.version>33.7.1-jre</lib.guava.version>
         <lib.hamcrest.version>3.0</lib.hamcrest.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
         <lib.httpclient5.version>5.6.4</lib.httpclient5.version>
         <lib.httpmime.version>4.5.14</lib.httpmime.version>
-        <lib.jackson2.version>2.22.2</lib.jackson2.version>
-        <lib.jackson3.version>3.2.2</lib.jackson3.version>
+        <lib.jackson2.version>2.22.3</lib.jackson2.version>
+        <lib.jackson3.version>3.2.3</lib.jackson3.version>
         <lib.jakarta-activation.version>2.1.4</lib.jakarta-activation.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
         <lib.jakarta-mail.version>2.1.5</lib.jakarta-mail.version>
@@ -157,7 +157,7 @@
         <lib.kotlin.version>2.4.20</lib.kotlin.version>
         <lib.logback.version>1.6.3</lib.logback.version>
         <lib.micrometer.version>1.17.1</lib.micrometer.version>
-        <lib.microprofile-config.version>3.1.1</lib.microprofile-config.version>
+        <lib.microprofile-config.version>3.1.2</lib.microprofile-config.version>
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
         <lib.minio.version>9.0.3</lib.minio.version>
         <lib.mockito.version>5.23.0</lib.mockito.version>
@@ -165,24 +165,22 @@
         <lib.nullaway.version>0.14.1</lib.nullaway.version>
         <lib.okhttp.version>5.5.0</lib.okhttp.version>
         <lib.open-feign.version>13.15</lib.open-feign.version>
-        <lib.open-vulnerability-clients.version>9.0.6</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>9.0.7</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>4.1.2</lib.pebble.version>
         <lib.postgresql.version>42.7.13</lib.postgresql.version>
-        <lib.prometheus.version>1.8.0</lib.prometheus.version>
-        <lib.protobuf-java.version>4.36.1</lib.protobuf-java.version>
+        <lib.prometheus.version>1.9.0</lib.prometheus.version>
+        <lib.protobuf-java.version>4.36.2</lib.protobuf-java.version>
         <lib.resilience4j.version>2.4.0</lib.resilience4j.version>
-        <lib.s3mock.version>5.2.0</lib.s3mock.version>
-        <lib.slf4j.version>2.0.19</lib.slf4j.version>
-        <lib.smallrye-config.version>3.18.2</lib.smallrye-config.version>
+        <lib.s3mock.version>5.2.3</lib.s3mock.version>
+        <lib.slf4j.version>2.0.20</lib.slf4j.version>
+        <lib.smallrye-config.version>4.0.0</lib.smallrye-config.version>
         <lib.swagger.version>2.2.55</lib.swagger.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
         <lib.tink.version>1.23.0</lib.tink.version>
-        <lib.versatile.version>0.24.0</lib.versatile.version>
+        <lib.versatile.version>0.26.0</lib.versatile.version>
         <lib.wiremock.version>3.13.2</lib.wiremock.version>
-        <lib.zstd-jni.version>1.5.7-16</lib.zstd-jni.version>
-        <!-- Severity of NullAway findings. Set to OFF to disable. -->
-        <nullaway.severity>ERROR</nullaway.severity>
+        <lib.zstd-jni.version>1.5.7-19</lib.zstd-jni.version>
         <!-- Number of JVM processes to use for unit test parallelization -->
         <unitTestForkCount>1</unitTestForkCount>
         <!-- Log level to use for unit tests -->
@@ -640,7 +638,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>3.6.1</version>
+                    <version>3.6.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -655,7 +653,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.4</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -665,7 +663,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.4</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -702,9 +700,34 @@
                             <arg>-XDcompilePolicy=simple</arg>
                             <arg>--should-stop=ifError=FLOW</arg>
                             <arg>-Xplugin:ErrorProne
-                                -XepDisableAllChecks
+                                -XepDisableAllWarnings
                                 -XepExcludedPaths:.*/target/generated-(test-)?sources/.*
-                                -Xep:NullAway:${nullaway.severity}
+                                -Xep:BadInstanceof:ERROR
+                                -Xep:CatchAndPrintStackTrace:ERROR
+                                -Xep:CollectionUndefinedEquality:ERROR
+                                -Xep:DefaultCharset:ERROR
+                                -Xep:DuplicateBranches:ERROR
+                                -Xep:EmptyCatch:ERROR
+                                -Xep:FutureReturnValueIgnored:ERROR
+                                -Xep:InterruptedExceptionSwallowed:ERROR
+                                -Xep:JavaDurationGetSecondsToToSeconds:ERROR
+                                -Xep:JavaPeriodGetDays:ERROR
+                                -Xep:LockNotBeforeTry:ERROR
+                                -Xep:MissingBraces:ERROR
+                                -Xep:MissingCasesInEnumSwitch:ERROR
+                                -Xep:MissingOverride:ERROR
+                                -Xep:NullAway:ERROR
+                                -Xep:ObjectEqualsForPrimitives:ERROR
+                                -Xep:OperatorPrecedence:ERROR
+                                -Xep:ReferenceEquality:ERROR
+                                -Xep:StaticAssignmentOfThrowable:ERROR
+                                -Xep:StringCaseLocaleUsage:ERROR
+                                -Xep:UnnecessarilyFullyQualified:ERROR
+                                -Xep:UnnecessaryParentheses:ERROR
+                                -Xep:UnusedException:ERROR
+                                -Xep:UnusedMethod:ERROR
+                                -Xep:UnusedVariable:ERROR
+                                -XepOpt:BadImport:BadEnclosingTypes=org.cyclonedx.model.vulnerability.Vulnerability,org.cyclonedx.model.vulnerability.Vulnerability.Analysis,org.cyclonedx.model.vulnerability.Vulnerability.Rating,org.dependencytrack.proto.policy.v1.License,org.dependencytrack.proto.policy.v1.Vulnerability
                                 -XepOpt:NullAway:OnlyNullMarked=true
                                 -XepOpt:NullAway:TreatGeneratedAsUnannotated=true</arg>
                         </compilerArgs>
@@ -729,9 +752,8 @@
                     <executions>
                         <execution>
                             <!--
-                              Do not run Error Prone on test sources. Nullness of test code is not
-                              enforced, and running the plugin there roughly doubles the Error Prone
-                              overhead for no benefit.
+                              Do not run Error Prone on test sources. Checks are not enforced for test code,
+                              and running the plugin there roughly doubles the Error Prone overhead for no benefit.
                             -->
                             <id>default-testCompile</id>
                             <configuration>
@@ -785,7 +807,7 @@
                         <dependency>
                             <groupId>org.slf4j</groupId>
                             <artifactId>slf4j-nop</artifactId>
-                            <version>1.7.36</version>
+                            <version>2.0.20</version>
                         </dependency>
                     </dependencies>
                 </plugin>
@@ -823,7 +845,7 @@
                 <plugin>
                     <groupId>io.github.ascopes</groupId>
                     <artifactId>protobuf-maven-plugin</artifactId>
-                    <version>5.1.8</version>
+                    <version>5.1.10</version>
                     <configuration>
                         <protoc>${lib.protobuf-java.version}</protoc>
                         <sourceDirectories>

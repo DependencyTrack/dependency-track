@@ -52,6 +52,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Gatherers;
@@ -413,7 +414,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                 if (byNormalized != null && !byNormalized.isEmpty()) {
                     return byNormalized;
                 }
-                final List<SnykIssue> byLower = issuesByIssuePurl.get(packageUrl.toLowerCase());
+                final List<SnykIssue> byLower = issuesByIssuePurl.get(packageUrl.toLowerCase(Locale.ROOT));
                 if (byLower != null && !byLower.isEmpty()) {
                     return byLower;
                 }
@@ -460,7 +461,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                 continue;
             }
 
-            final String lowerIssuePurl = issuePurl.toLowerCase();
+            final String lowerIssuePurl = issuePurl.toLowerCase(Locale.ROOT);
             issuesByIssuePurl
                     .computeIfAbsent(lowerIssuePurl, _ -> new ArrayList<>())
                     .add(issue);
@@ -480,7 +481,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             return null;
         }
         try {
-            return new PackageURL(purl).getCoordinates().toLowerCase();
+            return new PackageURL(purl).getCoordinates().toLowerCase(Locale.ROOT);
         } catch (MalformedPackageURLException e) {
             return null;
         }

@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.dependencytrack.notification.publishing.http.HttpNotificationResponses.ensureStatusCode;
 
 /**
@@ -70,7 +71,7 @@ final class JiraNotificationPublisher implements NotificationPublisher {
             final var credentials = Base64.getEncoder()
                     .encodeToString("%s:%s"
                             .formatted(globalConfig.getUsername(), globalConfig.getPasswordOrToken())
-                            .getBytes());
+                            .getBytes(UTF_8));
             authHeader = "Basic " + credentials;
         } else {
             authHeader = "Bearer " + globalConfig.getPasswordOrToken();

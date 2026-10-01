@@ -155,7 +155,7 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
 
         Map<HashAlgorithm, String> hashes = Map.of();
         if (entry.cksum() != null && HashAlgorithm.SHA256.isValid(entry.cksum())) {
-            hashes = Map.of(HashAlgorithm.SHA256, entry.cksum().toLowerCase());
+            hashes = Map.of(HashAlgorithm.SHA256, entry.cksum().toLowerCase(Locale.ROOT));
         }
 
         if (publishedAt == null && hashes.isEmpty()) {

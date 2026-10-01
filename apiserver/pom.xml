@@ -282,6 +282,10 @@
             <artifactId>cel</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.metaeffekt.core</groupId>
             <artifactId>ae-security</artifactId>
         </dependency>
@@ -645,7 +649,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.6.3</version>
+                <version>3.6.4</version>
                 <executions>
                     <execution>
                         <id>merge-services-bom</id>
@@ -735,6 +739,9 @@
     <profiles>
         <profile>
             <id>dist</id>
+            <properties>
+                <maven.build.cache.skipSave>true</maven.build.cache.skipSave>
+            </properties>
             <build>
                 <plugins>
                     <plugin>

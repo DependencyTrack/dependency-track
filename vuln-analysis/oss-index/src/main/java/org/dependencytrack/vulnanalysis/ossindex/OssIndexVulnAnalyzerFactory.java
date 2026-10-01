@@ -36,9 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -62,7 +60,6 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
     private @Nullable CacheManager cacheManager;
     private @Nullable HttpClient httpClient;
     private @Nullable ObjectMapper objectMapper;
-    private boolean localConnectionsAllowed;
 
     @Override
     public String extensionName() {
@@ -85,10 +82,6 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
         cacheManager = context.cacheManager();
         httpClient = context.httpClient();
         objectMapper = new ObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES);
-        localConnectionsAllowed = configRegistry
-                .getDeploymentConfig()
-                .getOptionalValue("allow-local-connections", boolean.class)
-                .orElse(false);
     }
 
     @Override
@@ -101,15 +94,6 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
         final var config = configRegistry.getRuntimeConfig(OssIndexVulnAnalyzerConfigV1.class);
         if (!config.isEnabled()) {
             throw new IllegalStateException("Analyzer is disabled");
-        }
-
-        if (!localConnectionsAllowed) {
-            final String host = config.getApiUrl().getHost();
-            if (host != null && isLocalHost(host)) {
-                throw new IllegalStateException("""
-                        API URL '%s' resolves to a local address, \
-                        but local connections are not allowed""".formatted(config.getApiUrl()));
-            }
         }
 
         return new OssIndexVulnAnalyzer(
@@ -176,13 +160,6 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
             return testResult.fail("authentication", "No credentials provided");
         }
 
-        final String host = config.getApiUrl().getHost();
-        if (!localConnectionsAllowed && host != null && isLocalHost(host)) {
-            return testResult.fail("connection", """
-                    API URL '%s' resolves to a local address, \
-                    but local connections are not allowed""".formatted(config.getApiUrl()));
-        }
-
         final String authHeader;
         if (config.getUsername() != null && config.getApiToken() != null) {
             final String basicAuthCredentials = Base64.getEncoder()
@@ -227,17 +204,5 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
         }
 
         return testResult;
-    }
-
-    private boolean isLocalHost(String hostname) {
-        try {
-            final InetAddress hostAddress = InetAddress.getByName(hostname);
-            return hostAddress.isLoopbackAddress()
-                    || hostAddress.isLinkLocalAddress()
-                    || hostAddress.isSiteLocalAddress()
-                    || hostAddress.isAnyLocalAddress();
-        } catch (UnknownHostException e) {
-            return false;
-        }
     }
 }

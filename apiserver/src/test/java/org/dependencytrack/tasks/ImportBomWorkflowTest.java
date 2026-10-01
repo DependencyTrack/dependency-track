@@ -59,6 +59,7 @@ import static org.dependencytrack.dex.api.payload.PayloadConverters.protoConvert
 import static org.dependencytrack.dex.api.payload.PayloadConverters.voidConverter;
 import static org.dependencytrack.model.ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_CONSUMED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSING_FAILED;
@@ -141,7 +142,7 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
 
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED, Duration.ofSeconds(60));
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED))
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
 
@@ -176,7 +177,7 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
 
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED, Duration.ofSeconds(60));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_ERROR);
@@ -211,7 +212,7 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
 
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED, Duration.ofSeconds(60));
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED))
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
 

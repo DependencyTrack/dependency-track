@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.api.v2.ExtensionsApi;
+import org.dependencytrack.api.v2.model.ExtensionTestCheckStatus;
 import org.dependencytrack.api.v2.model.GetExtensionConfigResponse;
 import org.dependencytrack.api.v2.model.ListExtensionPointsResponse;
 import org.dependencytrack.api.v2.model.ListExtensionPointsResponseItem;
@@ -304,9 +305,9 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
                 .name(check.name())
                 .status(
                         switch (check.status()) {
-                            case FAILED -> org.dependencytrack.api.v2.model.ExtensionTestCheckStatus.FAILED;
-                            case PASSED -> org.dependencytrack.api.v2.model.ExtensionTestCheckStatus.PASSED;
-                            case SKIPPED -> org.dependencytrack.api.v2.model.ExtensionTestCheckStatus.SKIPPED;
+                            case FAILED -> ExtensionTestCheckStatus.FAILED;
+                            case PASSED -> ExtensionTestCheckStatus.PASSED;
+                            case SKIPPED -> ExtensionTestCheckStatus.SKIPPED;
                         })
                 .message(check.message())
                 .build();

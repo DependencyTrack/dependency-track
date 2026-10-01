@@ -86,10 +86,7 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
 
     @Override
     protected void customizeApiServerContainer(GenericContainer<?> container) {
-        container
-                .withEnv("DT_NOTIFICATION_PUBLISHER_EMAIL_ALLOW_LOCAL_CONNECTIONS", "true")
-                .withEnv("DT_SECRET_MANAGEMENT_PROVIDER", "env")
-                .withEnv("DT_SECRET_EMAIL_PASSWORD", "fromPass");
+        container.withEnv("DT_SECRET_MANAGEMENT_PROVIDER", "env").withEnv("DT_SECRET_EMAIL_PASSWORD", "fromPass");
     }
 
     @Test

@@ -23,16 +23,16 @@ import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.metrics.DependencyMetrics;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.DependencyMetrics;
-import org.dependencytrack.model.PackageArtifactMetadata;
-import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scope;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
+import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -769,6 +769,27 @@ public class ComponentsResourceTest extends ResourceTest {
                           "resolved_at": 1700000000000
                         }
                         """);
+    }
+
+    @Test
+    public void listComponentsWithMalformedPurlTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("test", null, "1.0", null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("comp");
+        component.setPurl("pkg:pypi/%0@latest");
+        qm.createComponent(component, false);
+
+        final Response response = jersey.target("/components")
+                .queryParam("expand", "package_metadata,package_artifact_metadata")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items[0].purl").isEqualTo("pkg:pypi/%0@latest");
     }
 
     @Test

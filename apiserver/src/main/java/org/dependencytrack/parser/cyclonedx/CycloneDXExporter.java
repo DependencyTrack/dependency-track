@@ -23,6 +23,7 @@ import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
 import org.cyclonedx.generators.BomGeneratorFactory;
 import org.cyclonedx.model.Bom;
+import org.cyclonedx.model.Service;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
@@ -135,12 +136,11 @@ public class CycloneDXExporter {
                                         : ModelConverter::convertIdentity)
                         .collect(Collectors.toList())
                 : null;
-        final List<org.cyclonedx.model.Service> cycloneServices =
-                (variant.hasCapability(Capability.EMITS_SERVICES) && services != null)
-                        ? services.stream()
-                                .map(service -> ModelConverter.convert(qm, service))
-                                .collect(Collectors.toList())
-                        : null;
+        final List<Service> cycloneServices = (variant.hasCapability(Capability.EMITS_SERVICES) && services != null)
+                ? services.stream()
+                        .map(service -> ModelConverter.convert(qm, service))
+                        .collect(Collectors.toList())
+                : null;
         final Bom bom = new Bom();
         bom.setSerialNumber("urn:uuid:" + UUID.randomUUID());
         bom.setVersion(1);

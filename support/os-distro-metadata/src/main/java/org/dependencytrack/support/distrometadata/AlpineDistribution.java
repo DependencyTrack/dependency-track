@@ -20,6 +20,7 @@ package org.dependencytrack.support.distrometadata;
 
 import org.jspecify.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,8 +52,9 @@ public record AlpineDistribution(String version) implements OsDistribution {
             return null;
         }
 
-        final String version =
-                qualifierValue.toLowerCase().startsWith("alpine-") ? qualifierValue.substring(7) : qualifierValue;
+        final String version = qualifierValue.toLowerCase(Locale.ROOT).startsWith("alpine-")
+                ? qualifierValue.substring(7)
+                : qualifierValue;
 
         return ofVersion(version);
     }

@@ -33,6 +33,7 @@ import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.Mappers;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -50,7 +51,6 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.ServiceComponent;
@@ -62,10 +62,10 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.hamcrest.CoreMatchers;
@@ -106,6 +106,7 @@ import java.util.stream.Stream;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_CREATED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
@@ -137,6 +138,21 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(100, json.size());
         Assertions.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
         Assertions.assertEquals("0", json.getJsonObject(0).getString("version"));
+    }
+
+    @Test
+    void getProjectsWithMalformedPurlTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setPurl("pkg:pypi/%0@latest");
+        qm.persist(project);
+
+        Response response =
+                jersey.target(V1_PROJECT).request().header(X_API_KEY, apiKey).get(Response.class);
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonArray json = parseJsonArray(response);
+        Assertions.assertEquals("pkg:pypi/%0@latest", json.getJsonObject(0).getString("purl"));
     }
 
     @Test
@@ -2301,7 +2317,7 @@ class ProjectResourceTest extends ResourceTest {
                 ]
                 """);
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification).isNotNull();
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_CREATED);

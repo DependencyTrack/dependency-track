@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -267,7 +268,7 @@ final class VulnDbModelConverter {
     }
 
     private static Cvss2.AccessVector mapCvssV2AccessVector(String value) {
-        return switch (value.toUpperCase()) {
+        return switch (value.toUpperCase(Locale.ROOT)) {
             case "NETWORK" -> Cvss2.AccessVector.NETWORK;
             case "ADJACENT", "ADJACENT_NETWORK" -> Cvss2.AccessVector.ADJACENT_NETWORK;
             case "LOCAL" -> Cvss2.AccessVector.LOCAL;
@@ -276,7 +277,7 @@ final class VulnDbModelConverter {
     }
 
     private static Cvss2.AccessComplexity mapCvssV2AccessComplexity(String value) {
-        return switch (value.toUpperCase()) {
+        return switch (value.toUpperCase(Locale.ROOT)) {
             case "LOW" -> Cvss2.AccessComplexity.LOW;
             case "MEDIUM" -> Cvss2.AccessComplexity.MEDIUM;
             case "HIGH" -> Cvss2.AccessComplexity.HIGH;
@@ -285,7 +286,7 @@ final class VulnDbModelConverter {
     }
 
     private static Cvss2.Authentication mapCvssV2Authentication(String value) {
-        return switch (value.toUpperCase()) {
+        return switch (value.toUpperCase(Locale.ROOT)) {
             case "NONE" -> Cvss2.Authentication.NONE;
             case "SINGLE", "SINGLE_INSTANCE" -> Cvss2.Authentication.SINGLE;
             case "MULTIPLE", "MULTIPLE_INSTANCES" -> Cvss2.Authentication.MULTIPLE;
@@ -294,7 +295,7 @@ final class VulnDbModelConverter {
     }
 
     private static Cvss2.CIAImpact mapCvssV2Cia(String value) {
-        return switch (value.toUpperCase()) {
+        return switch (value.toUpperCase(Locale.ROOT)) {
             case "NONE" -> Cvss2.CIAImpact.NONE;
             case "PARTIAL" -> Cvss2.CIAImpact.PARTIAL;
             case "COMPLETE" -> Cvss2.CIAImpact.COMPLETE;
@@ -303,7 +304,7 @@ final class VulnDbModelConverter {
     }
 
     private static Cvss3.AttackVector mapCvssV3AttackVector(String value) {
-        return switch (value.toUpperCase()) {
+        return switch (value.toUpperCase(Locale.ROOT)) {
             case "NETWORK" -> Cvss3.AttackVector.NETWORK;
             case "ADJACENT", "ADJACENT_NETWORK" -> Cvss3.AttackVector.ADJACENT_NETWORK;
             case "LOCAL" -> Cvss3.AttackVector.LOCAL;
@@ -313,7 +314,7 @@ final class VulnDbModelConverter {
     }
 
     private static Cvss3.AttackComplexity mapCvssV3AttackComplexity(String value) {
-        return switch (value.toUpperCase()) {
+        return switch (value.toUpperCase(Locale.ROOT)) {
             case "LOW" -> Cvss3.AttackComplexity.LOW;
             case "HIGH" -> Cvss3.AttackComplexity.HIGH;
             default -> throw new IllegalArgumentException("Unknown CVSS v3 attack complexity: " + value);
@@ -321,7 +322,7 @@ final class VulnDbModelConverter {
     }
 
     private static Cvss3.PrivilegesRequired mapCvssV3PrivilegesRequired(String value) {
-        return switch (value.toUpperCase()) {
+        return switch (value.toUpperCase(Locale.ROOT)) {
             case "NONE" -> Cvss3.PrivilegesRequired.NONE;
             case "LOW" -> Cvss3.PrivilegesRequired.LOW;
             case "HIGH" -> Cvss3.PrivilegesRequired.HIGH;
@@ -330,7 +331,7 @@ final class VulnDbModelConverter {
     }
 
     private static Cvss3.UserInteraction mapCvssV3UserInteraction(String value) {
-        return switch (value.toUpperCase()) {
+        return switch (value.toUpperCase(Locale.ROOT)) {
             case "NONE" -> Cvss3.UserInteraction.NONE;
             case "REQUIRED" -> Cvss3.UserInteraction.REQUIRED;
             default -> throw new IllegalArgumentException("Unknown CVSS v3 user interaction: " + value);
@@ -338,7 +339,7 @@ final class VulnDbModelConverter {
     }
 
     private static Cvss3.Scope mapCvssV3Scope(String value) {
-        return switch (value.toUpperCase()) {
+        return switch (value.toUpperCase(Locale.ROOT)) {
             case "UNCHANGED" -> Cvss3.Scope.UNCHANGED;
             case "CHANGED" -> Cvss3.Scope.CHANGED;
             default -> throw new IllegalArgumentException("Unknown CVSS v3 scope: " + value);
@@ -346,7 +347,7 @@ final class VulnDbModelConverter {
     }
 
     private static Cvss3.CIAImpact mapCvssV3Cia(String value) {
-        return switch (value.toUpperCase()) {
+        return switch (value.toUpperCase(Locale.ROOT)) {
             case "NONE" -> Cvss3.CIAImpact.NONE;
             case "LOW" -> Cvss3.CIAImpact.LOW;
             case "HIGH" -> Cvss3.CIAImpact.HIGH;

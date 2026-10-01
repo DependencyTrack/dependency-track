@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
@@ -297,7 +298,7 @@ public class Project implements Serializable {
     @JsonIgnore
     private List<ProjectProperty> properties;
 
-    @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true", mappedBy = "projects")
+    @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true")
     @Join(
             column = "PROJECT_ID",
             primaryKey = "PROJECTS_TAGS_PK",

@@ -63,7 +63,7 @@ class NvdVulnDataSourceFactoryTest
                                     """)));
 
             factory.init(new ExtensionContextBuilder()
-                    .withConfigRegistry(new MockConfigRegistry(Map.of("allow-local-connections", "true")))
+                    .withConfigRegistry(new MockConfigRegistry(Map.of()))
                     .build());
 
             final var runtimeConfig = new NvdVulnDataSourceConfigV1()
@@ -93,7 +93,7 @@ class NvdVulnDataSourceFactoryTest
                     .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
 
             factory.init(new ExtensionContextBuilder()
-                    .withConfigRegistry(new MockConfigRegistry(Map.of("allow-local-connections", "true")))
+                    .withConfigRegistry(new MockConfigRegistry(Map.of()))
                     .build());
 
             final var runtimeConfig = new NvdVulnDataSourceConfigV1()
@@ -118,39 +118,12 @@ class NvdVulnDataSourceFactoryTest
         }
 
         @Test
-        void shouldReportConnectionFailureWhenLocalConnectionsAreDisallowed(WireMockRuntimeInfo wmRuntimeInfo) {
-            factory.init(new ExtensionContextBuilder()
-                    .withConfigRegistry(new MockConfigRegistry(Map.of("allow-local-connections", "false")))
-                    .build());
-
-            final var runtimeConfig = new NvdVulnDataSourceConfigV1()
-                    .withEnabled(true)
-                    .withCveFeedsUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()));
-
-            final ExtensionTestResult testResult = factory.test(runtimeConfig);
-
-            assertThat(testResult.isFailed()).isTrue();
-            assertThat(testResult.checks())
-                    .satisfiesExactly(
-                            check -> {
-                                assertThat(check.name()).isEqualTo("connection");
-                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.FAILED);
-                                assertThat(check.message()).isEqualTo("Connection to local hosts is not allowed");
-                            },
-                            check -> {
-                                assertThat(check.name()).isEqualTo("feed_format");
-                                assertThat(check.status()).isEqualTo(ExtensionTestCheck.Status.SKIPPED);
-                                assertThat(check.message()).isNull();
-                            });
-        }
-
-        @Test
         void shouldReportInvalidFeedFormatFailure(WireMockRuntimeInfo wmRuntimeInfo) {
             stubFor(get(urlPathEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
                     .willReturn(aResponse().withBody("invalid")));
 
             factory.init(new ExtensionContextBuilder()
-                    .withConfigRegistry(new MockConfigRegistry(Map.of("allow-local-connections", "true")))
+                    .withConfigRegistry(new MockConfigRegistry(Map.of()))
                     .build());
 
             final var runtimeConfig = new NvdVulnDataSourceConfigV1()
@@ -178,7 +151,7 @@ class NvdVulnDataSourceFactoryTest
         @Test
         void shouldReportAllChecksSkippedWhenDisabled(WireMockRuntimeInfo wmRuntimeInfo) {
             factory.init(new ExtensionContextBuilder()
-                    .withConfigRegistry(new MockConfigRegistry(Map.of("allow-local-connections", "true")))
+                    .withConfigRegistry(new MockConfigRegistry(Map.of()))
                     .build());
 
             final var runtimeConfig = new NvdVulnDataSourceConfigV1()

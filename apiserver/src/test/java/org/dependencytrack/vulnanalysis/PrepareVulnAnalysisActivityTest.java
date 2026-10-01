@@ -34,6 +34,7 @@ import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.PrepareVulnAnalysisArg;
 import org.dependencytrack.proto.internal.workflow.v1.PrepareVulnAnalysisRes;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzerRequirement;
 import org.junit.jupiter.api.AfterEach;
@@ -373,6 +374,7 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
                 secretName -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(VulnAnalyzer.class));
         pluginManager.loadPlugins(List.of(new MockVulnAnalyzerPlugin(bom -> Bom.getDefaultInstance(), requirements)));
         activity = new PrepareVulnAnalysisActivity(fileStorage, pluginManager);

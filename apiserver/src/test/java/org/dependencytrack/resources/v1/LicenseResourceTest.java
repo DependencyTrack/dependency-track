@@ -125,7 +125,7 @@ public class LicenseResourceTest extends ResourceTest {
         final Response response =
                 jersey.target(V1_LICENSE).request().header(X_API_KEY, apiKey).get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("811");
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("826");
         final String body = getPlainTextBody(response);
         assertThatJson(body).isArray().hasSize(100);
         assertThatJson(body).node("[0]").isEqualTo(/* language=JSON */ """
@@ -154,7 +154,7 @@ public class LicenseResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
         final String body = getPlainTextBody(response);
-        assertThatJson(body).isArray().hasSize(811);
+        assertThatJson(body).isArray().hasSize(826);
         assertThatJson(body).node("[0]").isEqualTo(/* language=JSON */ """
                         {
                           "name": "${json-unit.any-string}",

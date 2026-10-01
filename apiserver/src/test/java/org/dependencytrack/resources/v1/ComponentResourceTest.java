@@ -32,13 +32,13 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.OrganizationalContact;
-import org.dependencytrack.model.PackageArtifactMetadata;
-import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
+import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.dependencytrack.util.PurlUtil;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -1157,6 +1157,32 @@ public class ComponentResourceTest extends ResourceTest {
                 () -> json.get(finalComponent2_1_1_1.getUuid().toString())
                         .asJsonObject()
                         .asJsonObject());
+    }
+
+    @Test
+    public void getDependencyGraphForComponentWithMalformedPurlTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("Component1");
+        component.setPurl("pkg:pypi/%0@latest");
+        component.setPurlCoordinates("pkg:pypi/%0@latest");
+        component = qm.createComponent(component, false);
+
+        project.setDirectDependencies("[{\"uuid\":\"" + component.getUuid() + "\"}]");
+
+        Response response = jersey.target(
+                        V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertEquals(
+                "Component1",
+                json.get(component.getUuid().toString()).asJsonObject().getString("name"));
     }
 
     @Test

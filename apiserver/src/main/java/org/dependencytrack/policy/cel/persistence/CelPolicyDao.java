@@ -22,11 +22,15 @@ import dev.cel.common.types.CelType;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.persistence.jdbi.mapping.OptionalColumnRowMapper;
+import org.dependencytrack.persistence.jdbi.mapping.OptionalColumnRowMapper.Columns;
 import org.dependencytrack.proto.policy.v1.Component;
 import org.dependencytrack.proto.policy.v1.License;
 import org.dependencytrack.proto.policy.v1.Project;
 import org.dependencytrack.proto.policy.v1.Vulnerability;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.statement.StatementContext;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
@@ -43,7 +47,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_COMPONENT;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_PROJECT;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_PROJECT_METADATA;
@@ -92,7 +95,6 @@ public final class CelPolicyDao {
                 || protoFieldNames.contains("package_artifact_sha256")
                 || protoFieldNames.contains("package_artifact_sha512");
 
-        final var componentRowMapper = new CelPolicyComponentRowMapper();
         return jdbiHandle
                 .createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
@@ -114,13 +116,13 @@ public final class CelPolicyDao {
                 .define("shouldJoinPam", shouldJoinPam)
                 .define("shouldJoinPm", shouldJoinPm)
                 .bind("projectId", projectId)
-                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
-                    final long dbId = rs.getLong("db_id");
-                    Long licenseId = needsResolvedLicense ? rs.getLong("resolved_license_id") : null;
-                    if (licenseId != null && rs.wasNull()) {
-                        licenseId = null;
-                    }
-                    accumulator.put(dbId, new ComponentWithLicenseId(componentRowMapper.map(rs, ctx), licenseId));
+                .registerRowMapper(new CelPolicyComponentRowMapper())
+                .reduceRows(new HashMap<>(), (accumulator, row) -> {
+                    final Long licenseId =
+                            needsResolvedLicense ? row.getColumn("resolved_license_id", Long.class) : null;
+                    accumulator.put(
+                            row.getColumn("db_id", Long.class),
+                            new ComponentWithLicenseId(row.getRow(Component.class), licenseId));
                     return accumulator;
                 });
     }
@@ -145,16 +147,19 @@ public final class CelPolicyDao {
                         """)
                 .define("fetchColumns", fetchColumns)
                 .bind("projectId", projectId)
-                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
-                    final long componentId = rs.getLong("component_id");
-                    final Component.Property.Builder builder = Component.Property.newBuilder();
-                    maybeSet(rs, "group", ResultSet::getString, builder::setGroup);
-                    maybeSet(rs, "name", ResultSet::getString, builder::setName);
-                    maybeSet(rs, "value", ResultSet::getString, builder::setValue);
-                    maybeSet(rs, "type", ResultSet::getString, builder::setType);
+                .registerRowMapper(Component.Property.class, (OptionalColumnRowMapper<Component.Property>)
+                        (@NonNull ResultSet rs, @NonNull StatementContext _, @NonNull Columns columns) -> {
+                            final Component.Property.Builder builder = Component.Property.newBuilder();
+                            columns.maybeSet(rs, "group", ResultSet::getString, builder::setGroup);
+                            columns.maybeSet(rs, "name", ResultSet::getString, builder::setName);
+                            columns.maybeSet(rs, "value", ResultSet::getString, builder::setValue);
+                            columns.maybeSet(rs, "type", ResultSet::getString, builder::setType);
+                            return builder.build();
+                        })
+                .reduceRows(new HashMap<>(), (accumulator, row) -> {
                     accumulator
-                            .computeIfAbsent(componentId, k -> new ArrayList<>())
-                            .add(builder.build());
+                            .computeIfAbsent(row.getColumn("component_id", Long.class), k -> new ArrayList<>())
+                            .add(row.getRow(Component.Property.class));
                     return accumulator;
                 });
     }
@@ -203,7 +208,6 @@ public final class CelPolicyDao {
         fetchColumns.addAll(selectColumns(LICENSE_FIELDS, licenseProtoFieldNames));
 
         if (!licenseProtoFieldNames.contains("groups")) {
-            final var licenseRowMapper = new CelPolicyLicenseRowMapper();
             return jdbiHandle
                     .createQuery(/* language=InjectedFreeMarker */ """
                             <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
@@ -215,9 +219,9 @@ public final class CelPolicyDao {
                             """)
                     .define("fetchColumns", fetchColumns)
                     .bind("projectId", projectId)
-                    .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
-                        final long dbId = rs.getLong("db_id");
-                        accumulator.put(dbId, licenseRowMapper.map(rs, ctx));
+                    .registerRowMapper(new CelPolicyLicenseRowMapper())
+                    .reduceRows(new HashMap<>(), (accumulator, row) -> {
+                        accumulator.put(row.getColumn("db_id", Long.class), row.getRow(License.class));
                         return accumulator;
                     });
         }
@@ -249,7 +253,6 @@ public final class CelPolicyDao {
                 ) AS groups_json\
                 """.formatted(String.join(", ", groupObjectColumns)));
 
-        final var licenseRowMapper = new CelPolicyLicenseRowMapper();
         return jdbiHandle
                 .createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
@@ -269,9 +272,9 @@ public final class CelPolicyDao {
                 .define("fetchColumns", fetchColumns)
                 .define("groupByColumns", groupByColumns)
                 .bind("projectId", projectId)
-                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
-                    final long dbId = rs.getLong("db_id");
-                    accumulator.put(dbId, licenseRowMapper.map(rs, ctx));
+                .registerRowMapper(new CelPolicyLicenseRowMapper())
+                .reduceRows(new HashMap<>(), (accumulator, row) -> {
+                    accumulator.put(row.getColumn("db_id", Long.class), row.getRow(License.class));
                     return accumulator;
                 });
     }
@@ -286,7 +289,6 @@ public final class CelPolicyDao {
                 protoFieldNames.contains("epss_score") || protoFieldNames.contains("epss_percentile");
         final boolean shouldFetchIsKev = protoFieldNames.contains("is_kev");
 
-        final var vulnRowMapper = new CelPolicyVulnerabilityRowMapper();
         return jdbiHandle
                 .createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
@@ -335,9 +337,9 @@ public final class CelPolicyDao {
                 .define("shouldFetchEpss", shouldFetchEpss)
                 .define("shouldFetchIsKev", shouldFetchIsKev)
                 .bindArray("vulnDbIds", Long.class, vulnDbIds)
-                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
-                    final long dbId = rs.getLong("db_id");
-                    accumulator.put(dbId, vulnRowMapper.map(rs, ctx));
+                .registerRowMapper(new CelPolicyVulnerabilityRowMapper())
+                .reduceRows(new HashMap<>(), (accumulator, row) -> {
+                    accumulator.put(row.getColumn("db_id", Long.class), row.getRow(Vulnerability.class));
                     return accumulator;
                 });
     }
@@ -671,7 +673,6 @@ public final class CelPolicyDao {
                 || componentRequirements.contains("package_artifact_sha256")
                 || componentRequirements.contains("package_artifact_sha512");
 
-        final var componentRowMapper = new CelPolicyComponentRowMapper();
         return jdbiHandle
                 .createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
@@ -696,9 +697,9 @@ public final class CelPolicyDao {
                 .define("shouldJoinPam", shouldJoinPam)
                 .define("shouldJoinPm", shouldJoinPm)
                 .bindArray("ids", Long.class, componentIds)
-                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
-                    final long dbId = rs.getLong("db_id");
-                    accumulator.put(dbId, componentRowMapper.map(rs, ctx));
+                .registerRowMapper(new CelPolicyComponentRowMapper())
+                .reduceRows(new HashMap<>(), (accumulator, row) -> {
+                    accumulator.put(row.getColumn("db_id", Long.class), row.getRow(Component.class));
                     return accumulator;
                 });
     }
@@ -723,8 +724,6 @@ public final class CelPolicyDao {
         final boolean needsEpss =
                 vulnRequirements.contains("epss_score") || vulnRequirements.contains("epss_percentile");
         final boolean shouldFetchIsKev = vulnRequirements.contains("is_kev");
-
-        final var vulnRowMapper = new CelPolicyVulnerabilityRowMapper();
 
         return jdbiHandle
                 .createQuery(/* language=InjectedFreeMarker */ """
@@ -777,9 +776,9 @@ public final class CelPolicyDao {
                 .define("needsEpss", needsEpss)
                 .define("shouldFetchIsKev", shouldFetchIsKev)
                 .bindArray("ids", Long.class, vulnIds)
-                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
-                    final long dbId = rs.getLong("db_id");
-                    accumulator.put(dbId, vulnRowMapper.map(rs, ctx));
+                .registerRowMapper(new CelPolicyVulnerabilityRowMapper())
+                .reduceRows(new HashMap<>(), (accumulator, row) -> {
+                    accumulator.put(row.getColumn("db_id", Long.class), row.getRow(Vulnerability.class));
                     return accumulator;
                 });
     }

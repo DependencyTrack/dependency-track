@@ -62,50 +62,62 @@ public class ConfigProperty implements IConfigProperty, Serializable {
     @Column(name = "DESCRIPTION")
     private String description;
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }
 
+    @Override
     public String getGroupName() {
         return groupName;
     }
 
+    @Override
     public void setGroupName(String groupName) {
         this.groupName = groupName;
     }
 
+    @Override
     public String getPropertyName() {
         return propertyName;
     }
 
+    @Override
     public void setPropertyName(String propertyName) {
         this.propertyName = propertyName;
     }
 
+    @Override
     public String getPropertyValue() {
         return propertyValue;
     }
 
+    @Override
     public void setPropertyValue(String propertyValue) {
         this.propertyValue = propertyValue;
     }
 
+    @Override
     public PropertyType getPropertyType() {
         return propertyType;
     }
 
+    @Override
     public void setPropertyType(PropertyType propertyType) {
         this.propertyType = propertyType;
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
 
+    @Override
     public void setDescription(String description) {
         this.description = description;
     }

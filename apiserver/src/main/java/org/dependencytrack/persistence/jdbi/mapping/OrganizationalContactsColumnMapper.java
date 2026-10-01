@@ -22,6 +22,7 @@ import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.jdbi.v3.core.mapper.ColumnMapper;
 import org.jdbi.v3.core.statement.StatementContext;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,8 +30,11 @@ import java.util.List;
 
 public final class OrganizationalContactsColumnMapper implements ColumnMapper<List<OrganizationalContact>> {
 
+    private static final OrganizationalContactsJsonConverter CONVERTER = new OrganizationalContactsJsonConverter();
+
     @Override
-    public List<OrganizationalContact> map(ResultSet r, int columnNumber, StatementContext ctx) throws SQLException {
-        return new OrganizationalContactsJsonConverter().convertToAttribute(r.getString(columnNumber));
+    public @Nullable List<OrganizationalContact> map(ResultSet rs, int columnNumber, StatementContext ctx)
+            throws SQLException {
+        return CONVERTER.convertToAttribute(rs.getString(columnNumber));
     }
 }

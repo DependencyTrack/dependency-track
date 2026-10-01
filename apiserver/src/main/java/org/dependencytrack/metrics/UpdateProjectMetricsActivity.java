@@ -22,7 +22,6 @@ import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivityContext;
 import org.dependencytrack.dex.api.ActivitySpec;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.jspecify.annotations.Nullable;
 

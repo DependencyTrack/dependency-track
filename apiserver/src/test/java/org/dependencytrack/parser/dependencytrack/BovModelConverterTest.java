@@ -549,6 +549,17 @@ class BovModelConverterTest {
         }
 
         @Test
+        void shouldNormalizePypiPurlName() {
+            final Bom bov = createBovWithPurlAndVersionRange("pkg:pypi/Zope.Interface", "vers:pypi/<5.0");
+            final List<VulnerableSoftware> vsList = BovModelConverter.extractVulnerableSoftware(bov);
+
+            assertThat(vsList).satisfiesExactly(vs -> {
+                assertThat(vs.getPurlName()).isEqualTo("zope-interface");
+                assertThat(vs.getPurl()).isEqualTo("pkg:pypi/zope.interface");
+            });
+        }
+
+        @Test
         void shouldHandleCpeWithVersionRange() {
             final Bom bov = createBovWithCpeAndVersionRange(
                     "cpe:2.3:a:apache:log4j:*:*:*:*:*:*:*:*", "vers:generic/>=2.0.0|<2.17.0");
@@ -599,9 +610,13 @@ class BovModelConverterTest {
         }
 
         private static Bom createBovWithVersionRange(String versionRange) {
+            return createBovWithPurlAndVersionRange("pkg:npm/test-package@1.0.0", versionRange);
+        }
+
+        private static Bom createBovWithPurlAndVersionRange(String purl, String versionRange) {
             final var component = org.cyclonedx.proto.v1_7.Component.newBuilder()
                     .setBomRef("test-component")
-                    .setPurl("pkg:npm/test-package@1.0.0")
+                    .setPurl(purl)
                     .build();
 
             final var vulnAffects = org.cyclonedx.proto.v1_7.VulnerabilityAffects.newBuilder()

@@ -1411,6 +1411,13 @@ class InternalVulnAnalyzerTest {
                             MATCHES,
                             "pkg:npm/fs@0.0.0-security"),
                     Arguments.of(
+                            "pkg:golang/golang.org/x/net",
+                            withRange()
+                                    .havingStartIncluding("0")
+                                    .havingEndExcluding("0.0.0-20180925071336-cf3bd585ca2a"),
+                            DOES_NOT_MATCH,
+                            "pkg:golang/golang.org/x/net@v0.56.0"),
+                    Arguments.of(
                             "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1",
                             WITHOUT_RANGE,
                             DOES_NOT_MATCH,

@@ -38,6 +38,7 @@ import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
+import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.pagination.SortDirection;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
@@ -68,6 +69,7 @@ import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 import org.dependencytrack.resources.v1.vo.IsTokenBeingProcessedResponse;
 import org.dependencytrack.tasks.ImportBomWorkflow;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -98,6 +100,7 @@ import jakarta.ws.rs.core.Response;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -655,7 +658,14 @@ public class BomResource extends AbstractApiResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The project could not be found")
+                @ApiResponse(responseCode = "404", description = "The project could not be found"),
+                @ApiResponse(
+                        responseCode = "413",
+                        description = "The uploaded document is too large",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON))
             })
     @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
     public Response uploadBom(
@@ -816,7 +826,7 @@ public class BomResource extends AbstractApiResource {
                 });
                 final var byteOrderMarkInputStream =
                         BOMInputStream.builder().setInputStream(encodingStream).get()) {
-            bomBytes = IOUtils.toByteArray(byteOrderMarkInputStream);
+            bomBytes = readUpload(byteOrderMarkInputStream, ConfigKeys.BOM_UPLOAD_MAX_SIZE_BYTES);
         } catch (IOException e) {
             LOGGER.error("An unexpected error occurred while reading BOM from upload", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -893,6 +903,20 @@ public class BomResource extends AbstractApiResource {
         }
 
         return response;
+    }
+
+    static byte[] readUpload(InputStream inputStream, String maxSizeConfigKey) throws IOException {
+        final int maxSizeBytes = ConfigProvider.getConfig().getValue(maxSizeConfigKey, int.class);
+        final byte[] bytes = inputStream.readNBytes(maxSizeBytes);
+        if (inputStream.read() != -1) {
+            throw new WebApplicationException(new ProblemDetails(
+                            413,
+                            "The uploaded document is too large",
+                            "The uploaded document exceeds the maximum size of %d bytes".formatted(maxSizeBytes))
+                    .toResponse());
+        }
+
+        return bytes;
     }
 
     static void validate(byte[] bomBytes, Project project) {

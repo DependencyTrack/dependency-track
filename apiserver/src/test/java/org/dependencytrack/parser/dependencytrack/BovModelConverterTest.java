@@ -560,6 +560,17 @@ class BovModelConverterTest {
         }
 
         @Test
+        void shouldNormalizeNugetPurlName() {
+            final Bom bov = createBovWithPurlAndVersionRange("pkg:nuget/Microsoft.OpenAPI", "vers:nuget/<2.7.5");
+            final List<VulnerableSoftware> vsList = BovModelConverter.extractVulnerableSoftware(bov);
+
+            assertThat(vsList).satisfiesExactly(vs -> {
+                assertThat(vs.getPurlName()).isEqualTo("microsoft.openapi");
+                assertThat(vs.getPurl()).isEqualTo("pkg:nuget/Microsoft.OpenAPI");
+            });
+        }
+
+        @Test
         void shouldHandleCpeWithVersionRange() {
             final Bom bov = createBovWithCpeAndVersionRange(
                     "cpe:2.3:a:apache:log4j:*:*:*:*:*:*:*:*", "vers:generic/>=2.0.0|<2.17.0");

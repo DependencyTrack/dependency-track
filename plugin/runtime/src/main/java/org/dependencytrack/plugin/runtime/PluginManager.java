@@ -342,7 +342,7 @@ public class PluginManager implements Closeable {
                             PRIORITY_LOWEST));
         }
 
-        final @Nullable RuntimeConfigSpec runtimeConfigSpec =
+        final RuntimeConfigSpec runtimeConfigSpec =
                 extensionFactory instanceof final RuntimeConfigurable rc ? rc.runtimeConfigSpec() : null;
 
         final var configRegistry = new ConfigRegistryImpl(

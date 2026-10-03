@@ -712,6 +712,7 @@
                                 -Xep:InterruptedExceptionSwallowed:ERROR
                                 -Xep:JavaDurationGetSecondsToToSeconds:ERROR
                                 -Xep:JavaPeriodGetDays:ERROR
+                                -Xep:JSpecifyUnrecognizedAnnotationLocation:ERROR
                                 -Xep:LockNotBeforeTry:ERROR
                                 -Xep:MissingBraces:ERROR
                                 -Xep:MissingCasesInEnumSwitch:ERROR

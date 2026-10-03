@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.vulnanalysis.internal.Normalizations.normalizedPackageName;
 
 /**
  * @since 5.0.0
@@ -62,7 +63,8 @@ sealed interface Coordinate {
 
         final PackageURL purl = component.parsedPurl();
         if (purl != null) {
-            coordinates.add(new Coordinate.PurlCoordinate(purl.getType(), purl.getNamespace(), purl.getName()));
+            coordinates.add(
+                    new Coordinate.PurlCoordinate(purl.getType(), purl.getNamespace(), normalizedPackageName(purl)));
         }
 
         return coordinates;

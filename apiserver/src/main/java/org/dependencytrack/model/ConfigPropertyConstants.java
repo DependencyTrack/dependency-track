@@ -148,6 +148,13 @@ public enum ConfigPropertyConstants {
             PropertyType.BOOLEAN,
             "Flag to enable/disable the systems ability to accept CycloneDX uploads",
             ConfigPropertyAccessMode.READ_WRITE),
+    BOM_ORIGINAL_RETENTION_ENABLED(
+            "artifact",
+            "bom.original.retention.enabled",
+            "false",
+            PropertyType.BOOLEAN,
+            "Flag to enable/disable original BOM documents retention",
+            ConfigPropertyAccessMode.READ_WRITE),
     BOM_VALIDATION_MODE(
             "artifact",
             "bom.validation.mode",

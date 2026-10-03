@@ -132,10 +132,12 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         private @Nullable String bomSerialNumber;
         private @Nullable Date bomTimestamp;
         private @Nullable Integer bomVersion;
+        private final @Nullable FileMetadata retainedBomFileMetadata;
 
-        private ProcessingContext(UUID token, Project project) {
+        private ProcessingContext(UUID token, Project project, @Nullable FileMetadata retainedBomFileMetadata) {
             this.token = token;
             this.project = project;
+            this.retainedBomFileMetadata = retainedBomFileMetadata;
             this.bomFormat = Bom.Format.CYCLONEDX;
             this.startTimeNs = System.nanoTime();
         }
@@ -166,7 +168,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         project.setName(arg.getProjectName());
         project.setVersion(arg.getProjectVersion().isEmpty() ? null : arg.getProjectVersion());
 
-        final var processCtx = new ProcessingContext(token, project);
+        final var processCtx =
+                new ProcessingContext(token, project, arg.getRetainBomFile() ? arg.getBomFileMetadata() : null);
         try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid());
                 var _ = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
@@ -805,6 +808,9 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         bom.setBomVersion(ctx.bomVersion);
         bom.setImported(bomImportDate);
         bom.setGenerated(ctx.bomTimestamp);
+        if (ctx.retainedBomFileMetadata != null) {
+            bom.setOriginalFileMetadata(ctx.retainedBomFileMetadata.toByteArray());
+        }
         qm.getPersistenceManager().makePersistent(bom);
 
         project.setLastBomImport(bomImportDate);

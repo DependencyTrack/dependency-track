@@ -33,10 +33,14 @@ import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.Mappers;
+import org.dependencytrack.filestorage.api.FileStorage;
+import org.dependencytrack.filestorage.memory.MemoryFileStorage;
+import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -66,6 +70,7 @@ import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.hamcrest.CoreMatchers;
@@ -87,6 +92,9 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.NoSuchFileException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -105,6 +113,7 @@ import java.util.stream.Stream;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
 import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_CREATED;
@@ -117,11 +126,19 @@ import static org.hamcrest.Matchers.not;
 
 class ProjectResourceTest extends ResourceTest {
 
+    private static final FileStorage FILE_STORAGE = new MemoryFileStorage();
+
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(ProjectResource.class)
             .register(ApiFilter.class)
             .register(AuthFeature.class)
-            .register(GlobalExceptionHandler.class));
+            .register(GlobalExceptionHandler.class)
+            .register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bind(FILE_STORAGE).to(FileStorage.class);
+                }
+            }));
 
     @Test
     void getProjectsDefaultRequestTest() {
@@ -2795,6 +2812,58 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void deleteProjectShouldDeleteOriginalBomFiles() throws Exception {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_DELETE);
+
+        final Project parent = qm.createProject("parent", null, "1.0", null, null, null, null, false);
+
+        final var child = new Project();
+        child.setName("child");
+        child.setVersion("1.0");
+        child.setParent(parent);
+        qm.persist(child);
+
+        final Project unrelated = qm.createProject("unrelated", null, "1.0", null, null, null, null, false);
+
+        final FileMetadata parentFileMetadataA = FILE_STORAGE.store(
+                "original-bom/parent-a",
+                "application/vnd.cyclonedx+json",
+                new ByteArrayInputStream("parent-a".getBytes(StandardCharsets.UTF_8)));
+        final FileMetadata parentFileMetadataB = FILE_STORAGE.store(
+                "original-bom/parent-b",
+                "application/vnd.cyclonedx+xml",
+                new ByteArrayInputStream("parent-b".getBytes(StandardCharsets.UTF_8)));
+        final FileMetadata childFileMetadata = FILE_STORAGE.store(
+                "original-bom/child",
+                "application/vnd.cyclonedx+json",
+                new ByteArrayInputStream("child".getBytes(StandardCharsets.UTF_8)));
+        final FileMetadata unrelatedFileMetadata = FILE_STORAGE.store(
+                "original-bom/unrelated",
+                "application/vnd.cyclonedx+json",
+                new ByteArrayInputStream("unrelated".getBytes(StandardCharsets.UTF_8)));
+
+        persistOriginalBom(parent, parentFileMetadataA);
+        persistOriginalBom(parent, parentFileMetadataB);
+        persistOriginalBom(child, childFileMetadata);
+        persistOriginalBom(unrelated, unrelatedFileMetadata);
+
+        final Response response = jersey.target(V1_PROJECT + "/" + parent.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        assertThatThrownBy(() -> FILE_STORAGE.get(parentFileMetadataA)).isInstanceOf(NoSuchFileException.class);
+        assertThatThrownBy(() -> FILE_STORAGE.get(parentFileMetadataB)).isInstanceOf(NoSuchFileException.class);
+        assertThatThrownBy(() -> FILE_STORAGE.get(childFileMetadata)).isInstanceOf(NoSuchFileException.class);
+
+        try (final var inputStream = FILE_STORAGE.get(unrelatedFileMetadata)) {
+            assertThat(inputStream).hasBinaryContent("unrelated".getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    @Test
     void deleteProjectInvalidUuidTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_DELETE);
         qm.createProject("ABC", null, "1.0", null, null, null, null, false);
@@ -2836,7 +2905,7 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    void shouldBatchDeleteExistingAndAccessibleProjects() {
+    void shouldBatchDeleteExistingAndAccessibleProjects() throws Exception {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_DELETE);
         enablePortfolioAccessControl();
 
@@ -2848,6 +2917,18 @@ class ProjectResourceTest extends ResourceTest {
         final var inaccessibleProject = new Project();
         inaccessibleProject.setName("acme-app-b");
         qm.persist(inaccessibleProject);
+
+        final FileMetadata accessibleFileMetadata = FILE_STORAGE.store(
+                "original-bom/batch-accessible",
+                "application/vnd.cyclonedx+json",
+                new ByteArrayInputStream("accessible".getBytes(StandardCharsets.UTF_8)));
+        final FileMetadata inaccessibleFileMetadata = FILE_STORAGE.store(
+                "original-bom/batch-inaccessible",
+                "application/vnd.cyclonedx+json",
+                new ByteArrayInputStream("inaccessible".getBytes(StandardCharsets.UTF_8)));
+
+        persistOriginalBom(accessibleProject, accessibleFileMetadata);
+        persistOriginalBom(inaccessibleProject, inaccessibleFileMetadata);
 
         final Response response = jersey.target(V1_PROJECT + "/batchDelete")
                 .request()
@@ -2863,6 +2944,12 @@ class ProjectResourceTest extends ResourceTest {
 
         assertThat(qm.doesProjectExist("acme-app-a", null)).isFalse();
         assertThat(qm.doesProjectExist("acme-app-b", null)).isTrue();
+
+        assertThatThrownBy(() -> FILE_STORAGE.get(accessibleFileMetadata)).isInstanceOf(NoSuchFileException.class);
+
+        try (final var inputStream = FILE_STORAGE.get(inaccessibleFileMetadata)) {
+            assertThat(inputStream).hasBinaryContent("inaccessible".getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     @Test
@@ -5798,5 +5885,16 @@ class ProjectResourceTest extends ResourceTest {
                 .inPath("$[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("acme-app-c");
+    }
+
+    private void persistOriginalBom(final Project project, final FileMetadata fileMetadata) {
+        final var bom = new Bom();
+        bom.setProject(project);
+        bom.setImported(new Date());
+        bom.setBomFormat(Bom.Format.CYCLONEDX);
+        bom.setSpecVersion("1.6");
+        bom.setBomVersion(1);
+        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
+        qm.persist(bom);
     }
 }

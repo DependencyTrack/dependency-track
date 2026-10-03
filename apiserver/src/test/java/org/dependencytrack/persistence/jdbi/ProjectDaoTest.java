@@ -19,6 +19,7 @@
 package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.metrics.DependencyMetrics;
 import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.metrics.ProjectMetrics;
@@ -60,6 +61,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -520,5 +522,273 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                             assertThat(row.uuid()).isEqualTo(grandChild.getUuid());
                             assertThat(row.ancestorUuid()).isEqualTo(child.getUuid());
                         });
+    }
+
+    @Test
+    public void testDeleteProjectsWithOriginalBomFiles() {
+        final var parent = new Project();
+        parent.setName("acme-app-parent");
+        parent.setVersion("1.0.0");
+        qm.persist(parent);
+
+        final var child = new Project();
+        child.setParent(parent);
+        child.setName("acme-app-child");
+        child.setVersion("1.0.0");
+        qm.persist(child);
+
+        final var unrelated = new Project();
+        unrelated.setName("other-app");
+        unrelated.setVersion("1.0.0");
+        qm.persist(unrelated);
+
+        final FileMetadata parentFileMetadataA = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///parent-original-a")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("parent-a")
+                .build();
+        final FileMetadata parentFileMetadataB = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///parent-original-b")
+                .setMediaType("application/vnd.cyclonedx+xml")
+                .setSha256Digest("parent-b")
+                .build();
+        final FileMetadata childFileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///child-original")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("child")
+                .build();
+        final FileMetadata unrelatedFileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///unrelated-original")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("unrelated")
+                .build();
+
+        persistOriginalBom(parent, parentFileMetadataA);
+        persistOriginalBom(parent, parentFileMetadataB);
+        persistOriginalBom(child, childFileMetadata);
+        persistOriginalBom(unrelated, unrelatedFileMetadata);
+
+        final ProjectDao.ProjectDeletionResult result = inJdbiTransaction(handle ->
+                handle.attach(ProjectDao.class).deleteProjectsWithOriginalBomFiles(List.of(parent.getUuid())));
+
+        assertThat(result.deletedProjects())
+                .satisfiesExactlyInAnyOrder(
+                        deletedProject -> {
+                            assertThat(deletedProject.uuid()).isEqualTo(parent.getUuid());
+                            assertThat(deletedProject.ancestorUuid()).isNull();
+                        },
+                        deletedProject -> {
+                            assertThat(deletedProject.uuid()).isEqualTo(child.getUuid());
+                            assertThat(deletedProject.ancestorUuid()).isEqualTo(parent.getUuid());
+                        });
+
+        assertThat(result.originalBomFiles())
+                .hasSize(3)
+                .anySatisfy(row -> {
+                    assertThat(row.projectUuid()).isEqualTo(parent.getUuid());
+                    assertThat(row.serializedFileMetadata()).containsExactly(parentFileMetadataA.toByteArray());
+                })
+                .anySatisfy(row -> {
+                    assertThat(row.projectUuid()).isEqualTo(parent.getUuid());
+                    assertThat(row.serializedFileMetadata()).containsExactly(parentFileMetadataB.toByteArray());
+                })
+                .anySatisfy(row -> {
+                    assertThat(row.projectUuid()).isEqualTo(child.getUuid());
+                    assertThat(row.serializedFileMetadata()).containsExactly(childFileMetadata.toByteArray());
+                });
+
+        assertThat(result.originalBomFiles())
+                .noneSatisfy(row ->
+                        assertThat(row.serializedFileMetadata()).containsExactly(unrelatedFileMetadata.toByteArray()));
+
+        assertThat(projectDao.getProjectId(parent.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(child.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(unrelated.getUuid())).isEqualTo(unrelated.getId());
+    }
+
+    @Test
+    public void testDeleteInactiveProjectsWithOriginalBomFiles() {
+        final var expiredProject = new Project();
+        expiredProject.setName("expired-project");
+        expiredProject.setVersion("1.0");
+        expiredProject.setInactiveSince(Date.from(Instant.parse("2026-01-01T00:00:00Z")));
+        qm.persist(expiredProject);
+
+        final var childProject = new Project();
+        childProject.setName("child-project");
+        childProject.setVersion("1.0");
+        childProject.setParent(expiredProject);
+        qm.persist(childProject);
+
+        final var retainedProject = new Project();
+        retainedProject.setName("retained-project");
+        retainedProject.setVersion("1.0");
+        retainedProject.setInactiveSince(Date.from(Instant.parse("2026-03-01T00:00:00Z")));
+        qm.persist(retainedProject);
+
+        final FileMetadata expiredFileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///expired-original")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("expired")
+                .build();
+        final FileMetadata childFileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///child-original")
+                .setMediaType("application/vnd.cyclonedx+xml")
+                .setSha256Digest("child")
+                .build();
+        final FileMetadata retainedFileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///retained-original")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("retained")
+                .build();
+
+        persistOriginalBom(expiredProject, expiredFileMetadata);
+        persistOriginalBom(childProject, childFileMetadata);
+        persistOriginalBom(retainedProject, retainedFileMetadata);
+
+        final ProjectDao.MaintenanceProjectDeletionResult result =
+                inJdbiTransaction(handle -> handle.attach(ProjectDao.class)
+                        .deleteInactiveProjectsWithOriginalBomFiles(Instant.parse("2026-02-01T00:00:00Z"), 25));
+
+        assertThat(result.deletedProjects()).singleElement().satisfies(deletedProject -> {
+            assertThat(deletedProject.uuid()).isEqualTo(expiredProject.getUuid());
+            assertThat(deletedProject.name()).isEqualTo("expired-project");
+            assertThat(deletedProject.version()).isEqualTo("1.0");
+        });
+
+        assertThat(result.originalBomFiles())
+                .hasSize(2)
+                .anySatisfy(row -> {
+                    assertThat(row.projectUuid()).isEqualTo(expiredProject.getUuid());
+                    assertThat(row.serializedFileMetadata()).containsExactly(expiredFileMetadata.toByteArray());
+                })
+                .anySatisfy(row -> {
+                    assertThat(row.projectUuid()).isEqualTo(childProject.getUuid());
+                    assertThat(row.serializedFileMetadata()).containsExactly(childFileMetadata.toByteArray());
+                });
+
+        assertThat(result.originalBomFiles())
+                .noneSatisfy(row ->
+                        assertThat(row.serializedFileMetadata()).containsExactly(retainedFileMetadata.toByteArray()));
+
+        assertThat(projectDao.getProjectId(expiredProject.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(childProject.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(retainedProject.getUuid())).isEqualTo(retainedProject.getId());
+    }
+
+    @Test
+    public void testDeleteExcessProjectVersionsWithOriginalBomFiles() {
+        final var oldestProject = new Project();
+        oldestProject.setName("versioned-project");
+        oldestProject.setVersion("1.0");
+        oldestProject.setInactiveSince(Date.from(Instant.parse("2026-01-01T00:00:00Z")));
+        qm.persist(oldestProject);
+
+        final var newerProject = new Project();
+        newerProject.setName("versioned-project");
+        newerProject.setVersion("2.0");
+        newerProject.setInactiveSince(Date.from(Instant.parse("2026-02-01T00:00:00Z")));
+        qm.persist(newerProject);
+
+        final var retainedProject = new Project();
+        retainedProject.setName("versioned-project");
+        retainedProject.setVersion("3.0");
+        retainedProject.setInactiveSince(Date.from(Instant.parse("2026-03-01T00:00:00Z")));
+        qm.persist(retainedProject);
+
+        final FileMetadata oldestFileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///oldest-version-original")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("oldest")
+                .build();
+        final FileMetadata newerFileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///newer-version-original")
+                .setMediaType("application/vnd.cyclonedx+xml")
+                .setSha256Digest("newer")
+                .build();
+        final FileMetadata retainedFileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///retained-version-original")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("retained")
+                .build();
+
+        persistOriginalBom(oldestProject, oldestFileMetadata);
+        persistOriginalBom(newerProject, newerFileMetadata);
+        persistOriginalBom(retainedProject, retainedFileMetadata);
+
+        final ProjectDao.MaintenanceProjectDeletionResult result = inJdbiTransaction(
+                handle -> handle.attach(ProjectDao.class).deleteExcessProjectVersionsWithOriginalBomFiles(1, 25));
+
+        assertThat(result.deletedProjects())
+                .extracting(ProjectDao.DeletedProject::uuid)
+                .containsExactlyInAnyOrder(oldestProject.getUuid(), newerProject.getUuid());
+
+        assertThat(result.originalBomFiles())
+                .hasSize(2)
+                .anySatisfy(row -> {
+                    assertThat(row.projectUuid()).isEqualTo(oldestProject.getUuid());
+                    assertThat(row.serializedFileMetadata()).containsExactly(oldestFileMetadata.toByteArray());
+                })
+                .anySatisfy(row -> {
+                    assertThat(row.projectUuid()).isEqualTo(newerProject.getUuid());
+                    assertThat(row.serializedFileMetadata()).containsExactly(newerFileMetadata.toByteArray());
+                });
+
+        assertThat(result.originalBomFiles())
+                .noneSatisfy(row ->
+                        assertThat(row.serializedFileMetadata()).containsExactly(retainedFileMetadata.toByteArray()));
+
+        assertThat(projectDao.getProjectId(oldestProject.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(newerProject.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(retainedProject.getUuid())).isEqualTo(retainedProject.getId());
+    }
+
+    @Test
+    public void testDeleteExcessProjectVersionsBreaksTimestampTiesById() {
+        final Date inactiveSince = Date.from(Instant.parse("2026-01-01T00:00:00Z"));
+
+        final var lowerIdProject = new Project();
+        lowerIdProject.setName("versioned-project-with-tied-timestamps");
+        lowerIdProject.setVersion("1.0");
+        lowerIdProject.setInactiveSince(inactiveSince);
+        qm.persist(lowerIdProject);
+
+        final var higherIdProject = new Project();
+        higherIdProject.setName("versioned-project-with-tied-timestamps");
+        higherIdProject.setVersion("2.0");
+        higherIdProject.setInactiveSince(inactiveSince);
+        qm.persist(higherIdProject);
+
+        assertThat(higherIdProject.getId()).isGreaterThan(lowerIdProject.getId());
+
+        final ProjectDao.MaintenanceProjectDeletionResult result = inJdbiTransaction(
+                handle -> handle.attach(ProjectDao.class).deleteExcessProjectVersionsWithOriginalBomFiles(1, 25));
+
+        assertThat(result.deletedProjects())
+                .extracting(ProjectDao.DeletedProject::uuid)
+                .containsExactly(lowerIdProject.getUuid());
+        assertThat(projectDao.getProjectId(lowerIdProject.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(higherIdProject.getUuid())).isEqualTo(higherIdProject.getId());
+    }
+
+    private Bom persistOriginalBom(final Project project, final FileMetadata fileMetadata) {
+        final var bom = new Bom();
+        bom.setProject(project);
+        bom.setImported(new Date());
+        bom.setBomFormat(Bom.Format.CYCLONEDX);
+        bom.setSpecVersion("1.6");
+        bom.setBomVersion(1);
+        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
+        return qm.persist(bom);
     }
 }

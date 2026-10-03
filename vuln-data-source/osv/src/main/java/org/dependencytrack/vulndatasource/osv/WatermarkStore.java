@@ -40,15 +40,17 @@ final class WatermarkStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WatermarkStore.class);
 
+    private final String sourceName;
     private final KeyValueStore kvStore;
 
-    WatermarkStore(final KeyValueStore kvStore) {
+    WatermarkStore(final String sourceName, final KeyValueStore kvStore) {
+        this.sourceName = requireNonNull(sourceName, "OSV sourceName must not be null");
         this.kvStore = kvStore;
     }
 
     Map<String, WatermarkRecord> getForEcosystems(final Collection<String> ecosystems) {
         final Map<String, String> ecosystemByKey =
-                ecosystems.stream().collect(Collectors.toMap(WatermarkStore::getKey, Function.identity()));
+                ecosystems.stream().collect(Collectors.toMap(this::getKey, Function.identity()));
 
         final Map<String, KeyValueStore.Entry> kvEntryByKey = kvStore.getMany(ecosystemByKey.keySet());
         if (kvEntryByKey.isEmpty()) {
@@ -92,7 +94,7 @@ final class WatermarkStore {
         };
     }
 
-    private static String getKey(final String ecosystem) {
-        return "watermark/" + ecosystem;
+    private String getKey(final String ecosystem) {
+        return "watermark/" + sourceName + "/" + ecosystem;
     }
 }

@@ -54,10 +54,20 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '25'
-          cache: 'maven'
+
+      - name: Restore Maven repository
+        if: ${{ github.ref_type != 'tag' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-repository-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            maven-repository-
 
       - name: Restore Maven build cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
+        id: restore-maven-build-cache
+        if: ${{ github.ref_type != 'tag' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
         with:
           path: ~/.m2/build-cache
           key: maven-build-cache-build-${{ hashFiles('.mvn/maven-build-cache-config.xml') }}-${{ github.run_id }}
@@ -76,6 +86,13 @@ jobs:
       - name: Build with Maven
         run: |-
           mvn -B -Pquick,dist -Dservices.bom.merge.skip=false package
+
+      - name: Save Maven build cache
+        if: ${{ github.event_name == 'push' && github.ref_type == 'branch' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # tag=v6.1.0
+        with:
+          path: ~/.m2/build-cache
+          key: ${{ steps.restore-maven-build-cache.outputs.cache-primary-key }}
 
       - name: Upload Distribution Archive
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1

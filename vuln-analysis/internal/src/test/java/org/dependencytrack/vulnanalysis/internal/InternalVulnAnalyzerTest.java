@@ -52,6 +52,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.dependencytrack.vulnanalysis.internal.InternalVulnAnalyzerTest.Range.withRange;
+import static org.dependencytrack.vulnanalysis.internal.Normalizations.normalizedPackageName;
 
 class InternalVulnAnalyzerTest {
 
@@ -1462,7 +1463,12 @@ class InternalVulnAnalyzerTest {
                     Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/ChartKit.Core@1.0.0"),
                     Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/chartkit._core@1.0.0"),
                     Arguments.of(
-                            "pkg:pypi/chartkit-core", WITHOUT_RANGE, DOES_NOT_MATCH, "pkg:pypi/chartkitcore@1.0.0"));
+                            "pkg:pypi/chartkit-core", WITHOUT_RANGE, DOES_NOT_MATCH, "pkg:pypi/chartkitcore@1.0.0"),
+                    Arguments.of(
+                            "pkg:nuget/Microsoft.OpenAPI",
+                            withRange().havingStartIncluding("2.0.0-preview11").havingEndExcluding("2.7.5"),
+                            MATCHES,
+                            "pkg:nuget/Microsoft.OpenApi@2.0.0"));
         }
 
         @ParameterizedTest(name = "[{index}] expect={2} src={0} range={1} target={3}")
@@ -2076,7 +2082,7 @@ class InternalVulnAnalyzerTest {
                           :purlStr
                         , :purl.type
                         , :purl.namespace
-                        , :purl.name
+                        , :purlName
                         , :purl.version
                         , :range.startIncluding
                         , :range.startExcluding
@@ -2089,6 +2095,7 @@ class InternalVulnAnalyzerTest {
                         """)
                 .bind("purlStr", purlStr)
                 .bindBean("purl", purl)
+                .bind("purlName", normalizedPackageName(purl))
                 .bindMethods("range", range)
                 .executeAndReturnGeneratedKeys()
                 .mapTo(Long.class)

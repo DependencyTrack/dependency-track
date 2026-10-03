@@ -162,7 +162,7 @@
         <lib.minio.version>9.0.3</lib.minio.version>
         <lib.mockito.version>5.24.0</lib.mockito.version>
         <lib.nimbus-oauth2-oidc-sdk.version>11.38.2</lib.nimbus-oauth2-oidc-sdk.version>
-        <lib.nullaway.version>0.14.1</lib.nullaway.version>
+        <lib.nullaway.version>0.14.2</lib.nullaway.version>
         <lib.okhttp.version>5.5.0</lib.okhttp.version>
         <lib.open-feign.version>13.15</lib.open-feign.version>
         <lib.open-vulnerability-clients.version>9.0.7</lib.open-vulnerability-clients.version>
@@ -712,6 +712,7 @@
                                 -Xep:InterruptedExceptionSwallowed:ERROR
                                 -Xep:JavaDurationGetSecondsToToSeconds:ERROR
                                 -Xep:JavaPeriodGetDays:ERROR
+                                -Xep:JSpecifyUnrecognizedAnnotationLocation:ERROR
                                 -Xep:LockNotBeforeTry:ERROR
                                 -Xep:MissingBraces:ERROR
                                 -Xep:MissingCasesInEnumSwitch:ERROR

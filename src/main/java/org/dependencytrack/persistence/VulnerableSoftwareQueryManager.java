@@ -26,6 +26,7 @@ import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.util.PersistenceUtil;
+import org.dependencytrack.util.PurlUtil;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -356,7 +357,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
 
             if (purl.getName() != null) {
                 purlFilterParts.add("\"PURL_NAME\" = :purlName");
-                queryParams.put("purlName", purl.getName());
+                queryParams.put("purlName", PurlUtil.normalizedName(purl));
             } else {
                 purlFilterParts.add("\"PURL_NAME\" IS NULL");
             }

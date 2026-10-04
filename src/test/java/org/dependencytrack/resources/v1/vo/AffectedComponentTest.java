@@ -309,6 +309,17 @@ public class AffectedComponentTest {
         }
 
         @Test
+        public void shouldNormalizePypiPurlName() {
+            final var affectedComponent = new AffectedComponent();
+            affectedComponent.setIdentityType(AffectedComponent.IdentityType.PURL);
+            affectedComponent.setIdentity("pkg:pypi/Zope.Interface");
+
+            final VulnerableSoftware vs = affectedComponent.toVulnerableSoftware();
+            assertThat(vs.getPurlName()).isEqualTo("zope-interface");
+            assertThat(vs.getPurl()).isEqualTo("pkg:pypi/zope.interface");
+        }
+
+        @Test
         public void shouldReturnNullWhenPurlIsInvalid() {
             final var affectedComponent = new AffectedComponent();
             affectedComponent.setIdentityType(AffectedComponent.IdentityType.PURL);

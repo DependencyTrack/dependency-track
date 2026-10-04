@@ -65,6 +65,15 @@ class SnykParserTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testParseVersionRangesWithPypiPurl() throws IOException {
+        String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
+        final JSONObject jsonObject = new JSONObject(jsonString);
+        JSONArray ranges = jsonObject.optJSONArray("range0");
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, "pkg:pypi/Zope.Interface@1.0.0", ranges, false);
+        assertThat(vulnerableSoftwares).satisfiesExactly(vs -> assertThat(vs.getPurlName()).isEqualTo("zope-interface"));
+    }
+
+    @Test
     void testParseVersionRanges_v3() throws IOException {
 
         String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));

@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.persistence.jdbi.mapping;
 
-import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.PackageArtifactMetadata;
+import org.dependencytrack.support.jdbi.mapping.PurlColumnMapper;
 import org.jdbi.v3.core.config.ConfigRegistry;
 import org.jdbi.v3.core.mapper.ColumnMapper;
 import org.jdbi.v3.core.mapper.ColumnMappers;
@@ -41,19 +41,17 @@ import static java.util.Objects.requireNonNull;
 public final class PackageArtifactMetadataRowMapper implements RowMapper<PackageArtifactMetadata> {
 
     private @Nullable ColumnMapper<Instant> instantColumnMapper;
-    private @Nullable ColumnMapper<PackageURL> purlColumnMapper;
+    private final PurlColumnMapper purlColumnMapper = new PurlColumnMapper();
 
     @Override
     public void init(ConfigRegistry registry) {
         final var columnMappers = registry.get(ColumnMappers.class);
         instantColumnMapper = columnMappers.findFor(Instant.class).orElseThrow();
-        purlColumnMapper = columnMappers.findFor(PackageURL.class).orElseThrow();
     }
 
     @Override
     public PackageArtifactMetadata map(ResultSet rs, StatementContext ctx) throws SQLException {
         requireNonNull(instantColumnMapper);
-        requireNonNull(purlColumnMapper);
 
         return new PackageArtifactMetadata(
                 purlColumnMapper.map(rs, "PURL", ctx),

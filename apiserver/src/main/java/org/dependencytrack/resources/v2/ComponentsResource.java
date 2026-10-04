@@ -248,10 +248,9 @@ public class ComponentsResource extends AbstractApiResource implements Component
             final var responseItems = new ArrayList<ListComponentsResponseItem>(
                     componentsPage.items().size());
             for (final Component componentRow : componentsPage.items()) {
-                final String purlStr =
-                        componentRow.getPurl() != null ? componentRow.getPurl().canonicalize() : null;
-                final String packagePurlStr =
-                        componentRow.getPurl() != null ? PurlUtil.purlPackageOnly(componentRow.getPurl()) : null;
+                final PackageURL purl = componentRow.getPurl();
+                final String purlStr = purl != null ? purl.canonicalize() : null;
+                final String packagePurlStr = purl != null ? PurlUtil.purlPackageOnly(purl) : null;
                 final PackageArtifactMetadata pkgArtifactMeta =
                         purlStr != null ? pkgArtifactMetaByPurl.get(purlStr) : null;
                 final var item = ListComponentsResponseItem.builder()
@@ -271,7 +270,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
                         .licenseExpression(componentRow.getLicenseExpression())
                         .licenseUrl(componentRow.getLicenseUrl())
                         .resolvedLicense(mapLicense(componentRow.getResolvedLicense()))
-                        .purl(purlStr)
+                        .purl(purlStr != null ? purlStr : componentRow.getPurlAsString())
                         .swidTagId(componentRow.getSwidTagId())
                         .uuid(componentRow.getUuid())
                         .version(componentRow.getVersion())

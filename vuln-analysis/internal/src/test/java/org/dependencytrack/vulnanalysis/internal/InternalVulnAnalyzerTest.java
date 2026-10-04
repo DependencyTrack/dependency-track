@@ -1457,7 +1457,12 @@ class InternalVulnAnalyzerTest {
                             "pkg:rpm/redhat/openssl",
                             withRange().havingEndExcluding("1:1.1.1k-7"),
                             DOES_NOT_MATCH,
-                            "pkg:rpm/redhat/openssl@1.1.1k-8?epoch=1"));
+                            "pkg:rpm/redhat/openssl@1.1.1k-8?epoch=1"),
+                    Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/chartkit.core@1.0.0"),
+                    Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/ChartKit.Core@1.0.0"),
+                    Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/chartkit._core@1.0.0"),
+                    Arguments.of(
+                            "pkg:pypi/chartkit-core", WITHOUT_RANGE, DOES_NOT_MATCH, "pkg:pypi/chartkitcore@1.0.0"));
         }
 
         @ParameterizedTest(name = "[{index}] expect={2} src={0} range={1} target={3}")
@@ -1914,10 +1919,10 @@ class InternalVulnAnalyzerTest {
             createPurlVulnerableSoftware(
                     handle, "pkg:maven/com.example/lib", Range.withRange().havingEndExcluding("2.0.0"), vulnDbId);
             handle.createUpdate("""
-                            UPDATE "VULNERABILITY"
-                               SET "REJECTED" = NOW()
-                             WHERE "ID" = :id
-                            """).bind("id", vulnDbId).execute();
+                UPDATE "VULNERABILITY"
+                   SET "REJECTED" = NOW()
+                 WHERE "ID" = :id
+                """).bind("id", vulnDbId).execute();
         });
 
         final var bom = Bom.newBuilder()

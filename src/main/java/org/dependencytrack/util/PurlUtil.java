@@ -23,6 +23,7 @@ import com.github.packageurl.PackageURL;
 import jakarta.json.Json;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
@@ -50,6 +51,12 @@ public class PurlUtil {
         // Note that packageurl-java already lowercases names of PyPI packages.
         if (PackageURL.StandardTypes.PYPI.equals(purl.getType())) {
             return PYPI_NAME_SEPARATORS.matcher(purl.getName()).replaceAll("-");
+        }
+
+        // NuGet (https://learn.microsoft.com/en-us/nuget/reference/nuspec#id):
+        //   "The case-insensitive package identifier [...]"
+        if (PackageURL.StandardTypes.NUGET.equals(purl.getType())) {
+            return purl.getName().toLowerCase(Locale.ROOT);
         }
 
         return purl.getName();

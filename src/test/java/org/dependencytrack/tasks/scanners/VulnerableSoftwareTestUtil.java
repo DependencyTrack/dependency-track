@@ -35,7 +35,7 @@ final class VulnerableSoftwareTestUtil {
         vs.setPurl(purl.canonicalize());
         vs.setPurlType(purl.getType());
         vs.setPurlNamespace(purl.getNamespace());
-        vs.setPurlName(purl.getName());
+        vs.setPurlName(PurlUtil.normalizedName(purl));
         vs.setPurlVersion(purl.getVersion());
         vs.setPurlSubpath(purl.getSubpath());
         vs.setPurlQualifiers(PurlUtil.serializeQualifiers(purl));

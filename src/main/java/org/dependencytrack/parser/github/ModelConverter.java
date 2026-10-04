@@ -36,6 +36,7 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.util.CvssUtil;
+import org.dependencytrack.util.PurlUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
 
 import java.math.BigDecimal;
@@ -215,7 +216,7 @@ public final class ModelConverter {
         final var vs = new VulnerableSoftware();
         vs.setPurlType(purl.getType());
         vs.setPurlNamespace(purl.getNamespace());
-        vs.setPurlName(purl.getName());
+        vs.setPurlName(PurlUtil.normalizedName(purl));
         vs.setPurl(purl.toString());
         vs.setVulnerable(true);
 

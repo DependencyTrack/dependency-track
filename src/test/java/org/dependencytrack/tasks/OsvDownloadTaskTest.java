@@ -31,6 +31,7 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
+import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -682,6 +683,16 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         Assertions.assertNotNull(vulnerability);
         Assertions.assertEquals(22, vulnerability.getVulnerableSoftware().size());
         Assertions.assertEquals(Severity.MEDIUM, vulnerability.getSeverity());
+    }
+
+    @Test
+    void testMapAffectedPackageToVulnerableSoftwareWithPypiPurl() {
+        final var affectedPackage = new OsvAffectedPackage();
+        affectedPackage.setPurl("pkg:pypi/Zope.Interface");
+
+        final VulnerableSoftware vs = new OsvDownloadTask().mapAffectedPackageToVulnerableSoftware(affectedPackage);
+        assertThat(vs.getPurlName()).isEqualTo("zope-interface");
+        assertThat(vs.getPurl()).isEqualTo("pkg:pypi/zope.interface");
     }
 
     @Test

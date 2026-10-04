@@ -40,7 +40,11 @@ public class InternalAnalysisTaskPurlMatchingTest extends PersistenceCapableTest
                 Arguments.of("pkg:composer/typo3/cms-backend", withRange().havingStartIncluding("4.3alpha1").havingEndExcluding("4.3beta2"), MATCHES, "pkg:composer/typo3/cms-backend@4.3beta1"),
                 Arguments.of("pkg:composer/typo3/cms-backend", withRange().havingStartIncluding("4.3alpha1").havingEndExcluding("4.3beta2"), DOES_NOT_MATCH, "pkg:composer/typo3/cms-backend@4.3.0"),
                 Arguments.of("pkg:deb/debian/busybox?arch=source&distro=debian-13", withRange().havingEndExcluding("1:1.37.0-1"), DOES_NOT_MATCH, "pkg:deb/debian/busybox@1.37.0-6%2Bb7?arch=amd64&distro=debian-13.4&epoch=1"),
-                Arguments.of("pkg:rpm/redhat/openssl", withRange().havingEndExcluding("1:1.1.1k-7"), DOES_NOT_MATCH, "pkg:rpm/redhat/openssl@1.1.1k-8?epoch=1")
+                Arguments.of("pkg:rpm/redhat/openssl", withRange().havingEndExcluding("1:1.1.1k-7"), DOES_NOT_MATCH, "pkg:rpm/redhat/openssl@1.1.1k-8?epoch=1"),
+                Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/chartkit.core@1.0.0"),
+                Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/ChartKit.Core@1.0.0"),
+                Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/chartkit._core@1.0.0"),
+                Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, DOES_NOT_MATCH, "pkg:pypi/chartkitcore@1.0.0")
         );
     }
 

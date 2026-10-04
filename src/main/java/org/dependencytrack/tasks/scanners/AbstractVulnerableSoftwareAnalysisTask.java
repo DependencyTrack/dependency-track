@@ -169,7 +169,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
 
         return Objects.equals(vs.getPurlType(), purl.getType())
                 && Objects.equals(vs.getPurlNamespace(), purl.getNamespace())
-                && Objects.equals(vs.getPurlName(), purl.getName());
+                && Objects.equals(vs.getPurlName(), PurlUtil.normalizedName(purl));
     }
 
     private boolean comparePurlVersions(PackageURL componentPurl, VulnerableSoftware vs) {

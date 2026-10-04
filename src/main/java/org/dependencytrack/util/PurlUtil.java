@@ -31,8 +31,29 @@ import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 public class PurlUtil {
 
     private static final Pattern EPOCH_PREFIX_PATTERN = Pattern.compile("^\\d+:");
+    private static final Pattern PYPI_NAME_SEPARATORS = Pattern.compile("[-_.]+");
 
     private PurlUtil() { }
+
+    /**
+     * Applies type-specific normalization rules to the name of a given {@link PackageURL}.
+     *
+     * @param purl The {@link PackageURL} to normalize the name of
+     * @return The normalized name
+     * @since 4.14.5
+     */
+    public static String normalizedName(final PackageURL purl) {
+        // PEP 503 (https://peps.python.org/pep-0503/#normalized-names):
+        //   "The name should be lowercased with all runs of the characters
+        //   `.`, `-`, or `_` replaced with a single `-` character."
+        //
+        // Note that packageurl-java already lowercases names of PyPI packages.
+        if (PackageURL.StandardTypes.PYPI.equals(purl.getType())) {
+            return PYPI_NAME_SEPARATORS.matcher(purl.getName()).replaceAll("-");
+        }
+
+        return purl.getName();
+    }
 
     public static PackageURL purlCoordinatesOnly(final PackageURL original) throws MalformedPackageURLException {
         return aPackageURL()

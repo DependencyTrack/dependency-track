@@ -32,6 +32,7 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.PurlUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -316,13 +317,13 @@ public class SnykParser {
             
             //check for a numeric definite version range
             if ((versionStartIncluding != null && versionEndIncluding != null) || (versionStartIncluding != null && versionEndExcluding != null) || (versionStartExcluding != null && versionEndIncluding != null) || (versionStartExcluding != null && versionEndExcluding != null)) {
-                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), packageURL.getVersion(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), PurlUtil.normalizedName(packageURL), packageURL.getVersion(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
                 if (vs == null) {
                     vs = new VulnerableSoftware();
                     vs.setVulnerable(true);
                     vs.setPurlType(packageURL.getType());
                     vs.setPurlNamespace(packageURL.getNamespace());
-                    vs.setPurlName(packageURL.getName());
+                    vs.setPurlName(PurlUtil.normalizedName(packageURL));
                     vs.setVersion(packageURL.getVersion());
                     vs.setVersionStartIncluding(versionStartIncluding);
                     vs.setVersionStartExcluding(versionStartExcluding);

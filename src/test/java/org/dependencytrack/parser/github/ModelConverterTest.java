@@ -25,12 +25,14 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.jeremylong.openvulnerability.client.ghsa.SecurityAdvisory;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,6 +102,35 @@ class ModelConverterTest {
         assertThat(vuln).isNotNull();
         assertThat(vuln.getEpssScore()).isNull();
         assertThat(vuln.getEpssPercentile()).isNull();
+    }
+
+    @Test
+    void testConvertVulnerabilitiesWithPypiPackage() throws Exception {
+        final var advisory = jsonMapper.readValue(/* language=JSON */ """
+                {
+                  "ghsaId": "GHSA-57j2-w4cx-62h2",
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "pip",
+                            "name": "Zope.Interface"
+                          },
+                          "vulnerableVersionRange": "<5.0"
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
+
+        final List<VulnerableSoftware> vsList = converter.convert(advisory.getVulnerabilities());
+
+        assertThat(vsList).satisfiesExactly(vs -> {
+            assertThat(vs.getPurlName()).isEqualTo("zope-interface");
+            assertThat(vs.getPurl()).isEqualTo("pkg:pypi/zope.interface");
+        });
     }
 
     @Test

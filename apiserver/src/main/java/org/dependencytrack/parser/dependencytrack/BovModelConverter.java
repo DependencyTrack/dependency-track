@@ -281,8 +281,29 @@ public final class BovModelConverter {
                     .toList());
         }
 
-        // EPSS is an additional enrichment that no scanner currently provides.
-        // TODO: Add mapping of EPSS score and percentile when needed.
+        // EPSS is an additional enrichment that no scanner currently provides natively in ratings.
+        // We extract EPSS score and percentile from properties (e.g., epss:score / epss:percentile).
+        if (!cdxVuln.getPropertiesList().isEmpty()) {
+            BigDecimal epssScore = null;
+            BigDecimal epssPercentile = null;
+            for (final org.cyclonedx.proto.v1_7.Property property : cdxVuln.getPropertiesList()) {
+                if (!property.getName().isEmpty() && property.hasValue()) {
+                    final String name = property.getName().toLowerCase();
+                    if ("cyclonedx:epss:score".equals(name) || "epss:score".equals(name)) {
+                        try {
+                            epssScore = new BigDecimal(property.getValue());
+                        } catch (NumberFormatException ignored) { }
+                    } else if ("cyclonedx:epss:percentile".equals(name) || "epss:percentile".equals(name)) {
+                        try {
+                            epssPercentile = new BigDecimal(property.getValue());
+                        } catch (NumberFormatException ignored) { }
+                    }
+                }
+            }
+            if (epssScore != null && epssPercentile != null) {
+                vuln.setEpss(new org.dependencytrack.epss.Epss(vuln.getVulnId(), epssScore, epssPercentile));
+            }
+        }
 
         return vuln;
     }

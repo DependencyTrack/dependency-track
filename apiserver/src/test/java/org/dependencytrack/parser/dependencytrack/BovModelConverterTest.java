@@ -766,4 +766,26 @@ class BovModelConverterTest {
             assertThat(BovModelConverter.extractSource("", source)).isEqualTo(Vulnerability.Source.UNKNOWN);
         }
     }
+
+    @Test
+    void testConvertEpssProperties() {
+        final var cdxVuln = org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
+                .setId("CVE-2023-1234")
+                .addProperties(org.cyclonedx.proto.v1_7.Property.newBuilder()
+                        .setName("cyclonedx:epss:score")
+                        .setValue("0.98")
+                        .build())
+                .addProperties(org.cyclonedx.proto.v1_7.Property.newBuilder()
+                        .setName("cyclonedx:epss:percentile")
+                        .setValue("0.99")
+                        .build())
+                .build();
+
+        final var bov = Bom.newBuilder().addVulnerabilities(cdxVuln).build();
+        final Vulnerability vuln = BovModelConverter.convert(bov, cdxVuln, false);
+
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getEpssScore()).isEqualByComparingTo("0.98");
+        assertThat(vuln.getEpssPercentile()).isEqualByComparingTo("0.99");
+    }
 }

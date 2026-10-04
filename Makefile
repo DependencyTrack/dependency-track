@@ -190,7 +190,7 @@ apiserver-dev-remove-containers:
 .PHONY: apiserver-dev-remove-containers
 
 test-e2e: build-image
-	$(MVND) $(MVN_FLAGS) $(MVN_NO_BUILDCACHE) -pl e2e -DskipE2E=false verify
+	$(MVND) $(MVN_FLAGS) $(MVN_NO_BUILDCACHE) -pl e2e -am -DskipE2E=false verify
 .PHONY: test-e2e
 
 clean:

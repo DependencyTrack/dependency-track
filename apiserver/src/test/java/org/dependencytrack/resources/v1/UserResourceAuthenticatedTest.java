@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.model.User;
 import alpine.server.auth.SessionTokenService;
@@ -57,6 +58,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_CREATED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_DELETED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
@@ -281,7 +283,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("blackbeard", json.getString("username"));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_USER_CREATED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -340,7 +342,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                     """));
         Assertions.assertEquals(204, response.getStatus(), 0);
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_USER_DELETED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -367,6 +369,24 @@ class UserResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
+    void createManagedUserShouldRejectReservedUsernamePrefix() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
+
+        final var user = new ManagedUser();
+        user.setFullname("Captain BlackBeard");
+        user.setEmail("blackbeard@example.com");
+        user.setUsername("SVC:blackbeard");
+        user.setNewPassword("password");
+        user.setConfirmPassword("password");
+        final Response response = jersey.target(V1_USER + "/managed")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .put(Entity.entity(user, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("The username prefix svc: is reserved for service accounts.");
+    }
+
+    @Test
     void createManagedUserTest() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
 
@@ -390,7 +410,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertEquals("blackbeard@example.com", json.getString("email"));
         Assertions.assertEquals("blackbeard", json.getString("username"));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_USER_CREATED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -684,7 +704,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                     """));
         Assertions.assertEquals(204, response.getStatus(), 0);
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_USER_DELETED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -711,7 +731,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("blackbeard", json.getString("username"));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_USER_CREATED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -801,6 +821,31 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertFalse(json.getBoolean("forcePasswordChange"));
         Assertions.assertFalse(json.getBoolean("nonExpiryPassword"));
         Assertions.assertFalse(json.getBoolean("suspended"));
+    }
+
+    @Test
+    void addTeamToUserShouldSupportServiceAccounts() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_UPDATE);
+
+        final Team team = qm.createTeam("Pirates");
+        final var serviceAccount = new ServiceAccount();
+        serviceAccount.setUsername("svc:ci");
+        serviceAccount.setSuspended(false);
+        qm.persist(serviceAccount);
+
+        final var ido = new IdentifiableObject();
+        ido.setUuid(team.getUuid().toString());
+
+        final Response response = jersey.target(V1_USER + "/svc:ci/membership")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(ido, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json.getString("username")).isEqualTo("svc:ci");
+        assertThat(json.getJsonArray("teams").getJsonObject(0).getString("name"))
+                .isEqualTo("Pirates");
     }
 
     @Test

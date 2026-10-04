@@ -22,5 +22,6 @@ package alpine.model.auth;
 public enum UserType {
     MANAGED,
     LDAP,
-    OIDC
+    OIDC,
+    SERVICE
 }

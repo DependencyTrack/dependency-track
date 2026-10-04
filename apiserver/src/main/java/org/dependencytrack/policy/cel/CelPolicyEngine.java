@@ -20,16 +20,16 @@ package org.dependencytrack.policy.cel;
 
 import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
-import dev.cel.common.CelValidationException;
 import dev.cel.common.types.CelType;
 import dev.cel.runtime.CelEvaluationException;
+import org.dependencytrack.cel.InvalidCelExpressionException;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyCondition.Subject;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.notification.JdbiNotificationEmitter;
 import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.persistence.jdbi.NotificationSubjectDao;
+import org.dependencytrack.notification.NotificationSubjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.policy.cel.CelPolicyCompiler.CacheMode;
 import org.dependencytrack.policy.cel.compat.CelPolicyScriptSourceBuilder;
@@ -353,7 +353,7 @@ public final class CelPolicyEngine {
 
         try {
             return scriptHost.compile(scriptSrc, CacheMode.CACHE);
-        } catch (CelValidationException e) {
+        } catch (InvalidCelExpressionException e) {
             LOGGER.warn(
                     "Failed to compile script for condition {}; Condition will be skipped",
                     policyCondition.getUuid(),

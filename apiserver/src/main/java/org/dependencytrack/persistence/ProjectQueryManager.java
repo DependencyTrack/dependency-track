@@ -23,15 +23,16 @@ import alpine.model.auth.ApiKeyPrincipal;
 import alpine.model.auth.Principal;
 import alpine.model.auth.TeamRef;
 import alpine.model.auth.UserPrincipal;
+import alpine.model.auth.UserType;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.Tag;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,8 +88,8 @@ final class ProjectQueryManager extends QueryManager {
         final Project project = getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
         if (project != null) {
             // set Metrics to minimize the number of round trips a client needs to make
-            project.setMetrics(withJdbiHandle(
-                    handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
+            project.setMetrics(
+                    withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project)));
             // set ProjectVersions to minimize the number of round trips a client needs to make
             project.setVersions(getProjectVersions(project));
         }
@@ -251,6 +252,32 @@ final class ProjectQueryManager extends QueryManager {
     public Project updateProject(Project transientProject, boolean commitIndex) {
         return callInTransaction(() -> {
             final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
+
+            // NB: Resolve the parent BEFORE setting any field below, for the same reason the
+            // collection tag is resolved before collectionLogic further down: getObjectByUuid
+            // triggers a query, which flushes dirty state. Doing that after e.g. setClassifier
+            // has run, but before setCollectionLogic clears it, can flush a row that violates
+            // PROJECT_COLLECTION_CLASSIFIER_check (see #7241).
+            if (transientProject.getParent() != null
+                    && transientProject.getParent().getUuid() != null) {
+                if (project.getUuid().equals(transientProject.getParent().getUuid())) {
+                    throw new IllegalArgumentException("A project cannot select itself as a parent");
+                }
+                Project parent = getObjectByUuid(
+                        Project.class, transientProject.getParent().getUuid());
+                if (parent.getInactiveSince() != null) {
+                    throw new IllegalArgumentException("An inactive project cannot be selected as a parent");
+                } else if (isChildOf(parent, transientProject.getUuid())) {
+                    throw new IllegalArgumentException(
+                            "The new parent project cannot be a child of the current project.");
+                } else {
+                    project.setParent(parent);
+                }
+                project.setParent(parent);
+            } else {
+                project.setParent(null);
+            }
+
             project.setAuthors(transientProject.getAuthors());
             project.setPublisher(transientProject.getPublisher());
             project.setManufacturer(transientProject.getManufacturer());
@@ -282,26 +309,6 @@ final class ProjectQueryManager extends QueryManager {
                 }
             }
             project.setIsLatest(transientProject.isLatest());
-
-            if (transientProject.getParent() != null
-                    && transientProject.getParent().getUuid() != null) {
-                if (project.getUuid().equals(transientProject.getParent().getUuid())) {
-                    throw new IllegalArgumentException("A project cannot select itself as a parent");
-                }
-                Project parent = getObjectByUuid(
-                        Project.class, transientProject.getParent().getUuid());
-                if (parent.getInactiveSince() != null) {
-                    throw new IllegalArgumentException("An inactive project cannot be selected as a parent");
-                } else if (isChildOf(parent, transientProject.getUuid())) {
-                    throw new IllegalArgumentException(
-                            "The new parent project cannot be a child of the current project.");
-                } else {
-                    project.setParent(parent);
-                }
-                project.setParent(parent);
-            } else {
-                project.setParent(null);
-            }
 
             // Prevent illegal states of collection projects (must not contain components or services).
             final ProjectCollectionLogic newCollectionLogic = transientProject.getCollectionLogic();
@@ -421,9 +428,6 @@ final class ProjectQueryManager extends QueryManager {
                     final Tag existingTag = existingTagsIterator.next();
                     if (!tags.contains(existingTag)) {
                         existingTagsIterator.remove();
-                        if (existingTag.getProjects() != null) {
-                            existingTag.getProjects().remove(project);
-                        }
                         modified = true;
                     }
                 }
@@ -431,13 +435,6 @@ final class ProjectQueryManager extends QueryManager {
             for (final Tag tag : tags) {
                 if (!project.getTags().contains(tag)) {
                     project.getTags().add(tag);
-
-                    if (tag.getProjects() == null) {
-                        tag.setProjects(new HashSet<>(Set.of(project)));
-                    } else {
-                        tag.getProjects().add(project);
-                    }
-
                     modified = true;
                 }
             }
@@ -456,47 +453,6 @@ final class ProjectQueryManager extends QueryManager {
     }
 
     @Override
-    public boolean hasAccess(final Principal principal, final Project project) {
-        if (isPortfolioAclBypassed(principal)) {
-            return true;
-        }
-
-        final Query<?> query;
-        switch (principal) {
-            case UserPrincipal user -> {
-                query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                                SELECT EXISTS(
-                                  SELECT 1
-                                    FROM "PROJECT_ACCESS_USERS" AS pau
-                                   INNER JOIN "PROJECT_HIERARCHY" AS ph
-                                      ON ph."PARENT_PROJECT_ID" = pau."PROJECT_ID"
-                                   WHERE ph."CHILD_PROJECT_ID" = ?
-                                     AND pau."USER_ID" = ?
-                                )
-                                """).setParameters(project.getId(), user.id());
-            }
-            case ApiKeyPrincipal apiKey -> {
-                query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                                SELECT EXISTS(
-                                  SELECT 1
-                                    FROM "APIKEYS_TEAMS" AS akt
-                                   INNER JOIN "PROJECT_ACCESS_TEAMS" AS pat
-                                      ON pat."TEAM_ID" = akt."TEAM_ID"
-                                   INNER JOIN "PROJECT_HIERARCHY" AS ph
-                                      ON ph."PARENT_PROJECT_ID" = pat."PROJECT_ID"
-                                   WHERE akt."APIKEY_ID" = ?
-                                     AND ph."CHILD_PROJECT_ID" = ?
-                                )
-                                """).setParameters(apiKey.id(), project.getId());
-            }
-            case null -> {
-                return false;
-            }
-        }
-
-        return executeAndCloseResultUnique(query, Boolean.class);
-    }
-
     void preprocessACLs(final Query<?> query, final String inputFilter, final Map<String, Object> params) {
         if (isPortfolioAclBypassed(principal)) {
             query.setFilter(inputFilter);
@@ -562,9 +518,9 @@ final class ProjectQueryManager extends QueryManager {
     }
 
     /**
-     * Updates a Project ACL to add the principals Team to the AccessTeams
-     * This only happens if Portfolio Access Control is enabled and the @param principal is an ApyKey
-     * For a User we don't know which Team(s) to add to the ACL,
+     * Updates a Project ACL to add the principal's first team to the AccessTeams.
+     * This only happens if Portfolio Access Control is enabled, and only for machine principals,
+     * i.e. API keys and service accounts. For a human user we don't know which Team(s) to add,
      * See https://github.com/DependencyTrack/dependency-track/issues/1435
      *
      * @param project
@@ -573,20 +529,26 @@ final class ProjectQueryManager extends QueryManager {
      */
     @Override
     public boolean updateNewProjectACL(Project project, Principal principal) {
-        if (principal instanceof final ApiKeyPrincipal apiKey
-                && (request != null && request.isPortfolioAccessControlEnabled())) {
-            final var apiTeam = apiKey.teams().stream().findFirst();
-            if (apiTeam.isPresent()) {
-                LOGGER.debug("adding Team to ACL of newly created project");
-                final Team team = getObjectByUuid(Team.class, apiTeam.get().uuid());
-                project.addAccessTeam(team);
-                persist(project);
-                return true;
-            } else {
-                LOGGER.warn("API Key without a Team, unable to assign team ACL to project.");
-            }
+        if (principal == null || request == null || !request.isPortfolioAccessControlEnabled()) {
+            return false;
         }
-        return false;
+
+        final List<TeamRef> teams =
+                switch (principal) {
+                    case ApiKeyPrincipal apiKey -> apiKey.teams();
+                    case UserPrincipal user when user.type() == UserType.SERVICE -> user.teams();
+                    case UserPrincipal _ -> List.of();
+                };
+        if (teams.isEmpty()) {
+            LOGGER.warn("{} has no team, unable to assign team ACL to project.", principal.displayName());
+            return false;
+        }
+
+        LOGGER.debug("adding Team to ACL of newly created project");
+        final Team team = getObjectByUuid(Team.class, teams.getFirst().uuid());
+        project.addAccessTeam(team);
+        persist(project);
+        return true;
     }
 
     /**
@@ -654,6 +616,7 @@ final class ProjectQueryManager extends QueryManager {
         }
     }
 
+    @Override
     public List<ProjectVersion> getProjectVersions(Project project) {
         final Query<Project> query = pm.newQuery(Project.class);
         query.setResult("uuid, version, isLatest, inactiveSince");

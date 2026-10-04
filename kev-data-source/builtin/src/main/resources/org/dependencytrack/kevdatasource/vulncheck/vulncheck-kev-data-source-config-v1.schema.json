@@ -23,7 +23,7 @@
     "apiToken": {
       "type": "string",
       "title": "API Token",
-      "description": "Token to authenticate with the VulnCheck API.  \nCreate one at [vulncheck.com](https://vulncheck.com/token/newtoken).",
+      "description": "Token to authenticate with the VulnCheck API.  \nCreate one at [vulncheck.com](https://console.vulncheck.com/settings/tokens).",
       "minLength": 1,
       "x-secret-ref": true
     }

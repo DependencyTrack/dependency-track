@@ -53,9 +53,9 @@ public interface ExtensionFactory<T extends ExtensionPoint> extends Closeable {
     /**
      * Initialize the factory. This method is called <em>once</em> during application startup.
      *
-     * @param serviceRegistry The {@link ServiceRegistry} providing platform services to the extension.
+     * @param context The {@link ExtensionContext} providing platform services to the extension.
      */
-    void init(ServiceRegistry serviceRegistry);
+    void init(ExtensionContext context);
 
     /**
      * Creates a new extension instance.

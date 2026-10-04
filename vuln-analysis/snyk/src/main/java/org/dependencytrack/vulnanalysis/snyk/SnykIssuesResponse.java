@@ -22,4 +22,15 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
-record SnykIssuesResponse(@Nullable List<SnykIssue> data) {}
+/**
+ * Response envelope for Snyk's packages/issues APIs.
+ *
+ * @since 5.0.0
+ */
+record SnykIssuesResponse(
+        @Nullable List<SnykIssue> data, @Nullable SnykIssuesMeta meta) {
+
+    SnykIssuesResponse(@Nullable List<SnykIssue> data) {
+        this(data, null);
+    }
+}

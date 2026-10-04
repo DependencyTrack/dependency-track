@@ -32,13 +32,13 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.OrganizationalContact;
-import org.dependencytrack.model.PackageArtifactMetadata;
-import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
+import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.dependencytrack.util.PurlUtil;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -1157,6 +1157,112 @@ public class ComponentResourceTest extends ResourceTest {
                 () -> json.get(finalComponent2_1_1_1.getUuid().toString())
                         .asJsonObject()
                         .asJsonObject());
+    }
+
+    @Test
+    public void getDependencyGraphForComponentWithMalformedPurlTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("Component1");
+        component.setPurl("pkg:pypi/%0@latest");
+        component.setPurlCoordinates("pkg:pypi/%0@latest");
+        component = qm.createComponent(component, false);
+
+        project.setDirectDependencies("[{\"uuid\":\"" + component.getUuid() + "\"}]");
+
+        Response response = jersey.target(
+                        V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertEquals(
+                "Component1",
+                json.get(component.getUuid().toString()).asJsonObject().getString("name"));
+    }
+
+    @Test
+    public void getDependencyGraphForComponentWithMultiplePathsTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+
+        Component componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("ComponentA");
+        componentA = qm.createComponent(componentA, false);
+
+        Component componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("ComponentB");
+        componentB = qm.createComponent(componentB, false);
+
+        Component componentC = new Component();
+        componentC.setProject(project);
+        componentC.setName("ComponentC");
+        componentC = qm.createComponent(componentC, false);
+
+        Component componentD = new Component();
+        componentD.setProject(project);
+        componentD.setName("ComponentD");
+        componentD = qm.createComponent(componentD, false);
+
+        //  /-> A --\
+        // *         > C -> D
+        //  \-> B --/
+        project.setDirectDependencies(
+                "[{\"uuid\":\"" + componentA.getUuid() + "\"}, {\"uuid\":\"" + componentB.getUuid() + "\"}]");
+        componentA.setDirectDependencies("[{\"uuid\":\"" + componentC.getUuid() + "\"}]");
+        componentB.setDirectDependencies("[{\"uuid\":\"" + componentC.getUuid() + "\"}]");
+        componentC.setDirectDependencies("[{\"uuid\":\"" + componentD.getUuid() + "\"}]");
+
+        final Response response = jersey.target(
+                        V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + componentD.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                // NB: Custom matchers don't work with object keys so have to use String formatting here.
+                .isEqualTo(
+                        /* language=JSON */ """
+                            {
+                              "%1$s": {
+                                "expandDependencyGraph": false,
+                                "isInternal": false,
+                                "name": "ComponentD",
+                                "uuid": "%1$s"
+                              },
+                              "%2$s": {
+                                "dependencyGraph": [ "%1$s" ],
+                                "expandDependencyGraph": true,
+                                "isInternal": false,
+                                "name": "ComponentC",
+                                "uuid": "%2$s"
+                              },
+                              "%3$s": {
+                                "dependencyGraph": [ "%2$s" ],
+                                "expandDependencyGraph": true,
+                                "isInternal": false,
+                                "name": "ComponentA",
+                                "uuid": "%3$s"
+                              },
+                              "%4$s": {
+                                "dependencyGraph": [ "%2$s" ],
+                                "expandDependencyGraph": true,
+                                "isInternal": false,
+                                "name": "ComponentB",
+                                "uuid": "%4$s"
+                              }
+                            }
+                            """.formatted(
+                                        componentD.getUuid(),
+                                        componentC.getUuid(),
+                                        componentA.getUuid(),
+                                        componentB.getUuid()));
     }
 
     @Test

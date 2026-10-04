@@ -37,7 +37,7 @@ public class CompositeEncoder implements Encoder {
     @SuppressWarnings("unchecked")
     public void encode(final Object object, final Type bodyType, final RequestTemplate template)
             throws EncodeException {
-        if (bodyType == Encoder.MAP_STRING_WILDCARD) {
+        if (Encoder.MAP_STRING_WILDCARD.equals(bodyType)) {
             final Map<String, ?> body = (Map<String, ?>) object;
             template.body(body.entrySet().stream()
                     .map(entry -> "%s=%s"

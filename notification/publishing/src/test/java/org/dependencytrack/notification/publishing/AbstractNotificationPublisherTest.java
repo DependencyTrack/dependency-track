@@ -31,12 +31,11 @@ import org.dependencytrack.notification.proto.v1.Level;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.Scope;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.config.RuntimeConfigMapper;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +43,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -87,9 +85,8 @@ public abstract class AbstractNotificationPublisherTest {
         final var configRegistry = new MockConfigRegistry(
                 deploymentConfig, globalConfigSpec, RuntimeConfigMapper.getInstance(), globalConfig);
 
-        publisherFactory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(HttpClient.class, HttpClient.newHttpClient()));
+        publisherFactory.init(
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
         publisher = publisherFactory.create();
 
         final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(

@@ -67,6 +67,7 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
@@ -294,14 +295,14 @@ public class TeamResource extends AbstractApiResource {
         final boolean isAllTeams = super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
                 || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
         if (!isAllTeams) {
-            List<TeamRef> visibleTeams =
-                    getPrincipal() instanceof final Principal principal ? principal.teams() : List.of();
+            final Principal principal = getPrincipal();
+            List<TeamRef> visibleTeams = principal != null ? principal.teams() : List.of();
 
             final String filter = getAlpineRequest().getFilter();
             if (filter != null && !filter.isBlank()) {
-                final String needle = filter.toLowerCase();
+                final String needle = filter.toLowerCase(Locale.ROOT);
                 visibleTeams = visibleTeams.stream()
-                        .filter(team -> team.name().toLowerCase().contains(needle))
+                        .filter(team -> team.name().toLowerCase(Locale.ROOT).contains(needle))
                         .toList();
             }
 
@@ -356,6 +357,10 @@ public class TeamResource extends AbstractApiResource {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
                 final ApiKey apiKey = qm.createApiKey(team);
+                super.logSecurityEvent(
+                        LOGGER,
+                        SecurityMarkers.SECURITY_AUDIT,
+                        "API key created: %s (team: %s)".formatted(apiKey.getPublicId(), team.getName()));
                 return Response.status(Response.Status.CREATED).entity(apiKey).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -390,17 +395,11 @@ public class TeamResource extends AbstractApiResource {
                     @PathParam("publicIdOrKey")
                     String publicIdOrKey) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
-            if (apiKey == null) {
-                try {
-                    final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
-                    apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
-                } catch (InvalidApiKeyFormatException e) {
-                    LOGGER.debug("Failed to decode value as API key", e);
-                }
-            }
+            ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
             if (apiKey != null) {
                 apiKey = qm.regenerateApiKey(apiKey);
+                super.logSecurityEvent(
+                        LOGGER, SecurityMarkers.SECURITY_AUDIT, "API key regenerated: " + apiKey.getPublicId());
                 return Response.ok(apiKey).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -439,15 +438,7 @@ public class TeamResource extends AbstractApiResource {
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
 
             return qm.callInTransaction(() -> {
-                ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
-                if (apiKey == null) {
-                    try {
-                        final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
-                        apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
-                    } catch (InvalidApiKeyFormatException e) {
-                        LOGGER.debug("Failed to decode value as API key", e);
-                    }
-                }
+                final ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
                 if (apiKey == null) {
                     return Response.status(Response.Status.NOT_FOUND)
                             .entity("The API key could not be found.")
@@ -480,17 +471,11 @@ public class TeamResource extends AbstractApiResource {
                     String publicIdOrKey) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
-                if (apiKey == null) {
-                    try {
-                        final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
-                        apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
-                    } catch (InvalidApiKeyFormatException e) {
-                        LOGGER.debug("Failed to decode value as API key", e);
-                    }
-                }
+                final ApiKey apiKey = getTeamApiKey(qm, publicIdOrKey);
                 if (apiKey != null) {
+                    final String publicId = apiKey.getPublicId();
                     qm.delete(apiKey);
+                    super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "API key deleted: " + publicId);
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND)
@@ -533,5 +518,19 @@ public class TeamResource extends AbstractApiResource {
                         .build();
             }
         }
+    }
+
+    private static ApiKey getTeamApiKey(QueryManager qm, String publicIdOrKey) {
+        ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+        if (apiKey == null) {
+            try {
+                final ApiKey decodedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
+                apiKey = qm.getApiKeyByPublicId(decodedApiKey.getPublicId());
+            } catch (InvalidApiKeyFormatException e) {
+                LOGGER.debug("Failed to decode value as API key", e);
+            }
+        }
+
+        return apiKey != null && apiKey.getUser() == null ? apiKey : null;
     }
 }

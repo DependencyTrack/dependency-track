@@ -1,0 +1,85 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+post:
+  operationId: createOAuthToken
+  summary: Create a Dependency-Track access token
+  description: |-
+    Creates an access token for the requested grant.
+
+    The access token is an opaque session token. Send it in the `Authorization` header,
+    as `Bearer <access_token>`. `scope` is not supported.
+
+    The only grant supported is RFC 8693 token exchange, which requires `subject_token` and `subject_token_type`.
+    Exchanges for a session of a service account also require `workload_identity_provider` and `service_account`,
+    and succeed when a binding of the requested service account matches the subject token.
+    The resulting session has all permissions of the service account.
+  tags:
+    - OAuth
+  security: []
+  requestBody:
+    required: true
+    content:
+      application/x-www-form-urlencoded:
+        schema:
+          $ref: "./schemas/create-oauth-token-request.yaml"
+  responses:
+    "200":
+      description: The access token
+      headers:
+        Cache-Control:
+          description: Always `no-store`
+          schema:
+            type: string
+            maxLength: 32
+        Pragma:
+          description: Always `no-cache`
+          schema:
+            type: string
+            maxLength: 32
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/create-oauth-token-response.yaml"
+    "400":
+      description: >-
+        The request was refused. An unsupported grant yields `unsupported_grant_type`,
+        every other refusal yields `invalid_request`.
+      headers:
+        Cache-Control:
+          description: Always `no-store`
+          schema:
+            type: string
+            maxLength: 32
+        Pragma:
+          description: Always `no-cache`
+          schema:
+            type: string
+            maxLength: 32
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/oauth-token-error.yaml"
+    "503":
+      description: >-
+        The grant cannot be processed because a dependency is unavailable,
+        such as the keys to verify a subject token. Retrying later may succeed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../shared/schemas/problem-details.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"

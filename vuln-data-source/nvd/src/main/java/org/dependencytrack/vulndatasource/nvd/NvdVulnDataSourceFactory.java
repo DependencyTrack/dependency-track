@@ -22,9 +22,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionTestResult;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.Testable;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
@@ -38,9 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -87,10 +85,10 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-        this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        this.kvStore = serviceRegistry.require(KeyValueStore.class);
-        this.httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(ExtensionContext context) {
+        this.configRegistry = context.configRegistry();
+        this.kvStore = context.keyValueStore();
+        this.httpClient = context.httpClient();
         this.objectMapper = new ObjectMapper()
                 .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true)
                 .configure(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature(), true)
@@ -151,7 +149,6 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
 
     @Override
     public ExtensionTestResult test(@Nullable RuntimeConfig runtimeConfig) {
-        requireNonNull(configRegistry, "configRegistry has not been initialized");
         requireNonNull(httpClient, "httpClient has not been initialized");
         requireNonNull(runtimeConfig, "runtimeConfig must not be null");
 
@@ -167,23 +164,6 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
                 ? URI.create(nvdConfig.getCveFeedsUrl().toString() + "/")
                 : nvdConfig.getCveFeedsUrl();
         final URI metadataUri = feedsUrl.resolve("json/cve/2.0/nvdcve-2.0-modified.meta");
-
-        if (!configRegistry
-                .getDeploymentConfig()
-                .getOptionalValue("allow-local-connections", boolean.class)
-                .orElse(false)) {
-            try {
-                final var hostAddress = InetAddress.getByName(feedsUrl.getHost());
-                if (hostAddress.isLoopbackAddress()
-                        || hostAddress.isLinkLocalAddress()
-                        || hostAddress.isSiteLocalAddress()
-                        || hostAddress.isAnyLocalAddress()) {
-                    return testResult.fail("connection", "Connection to local hosts is not allowed");
-                }
-            } catch (UnknownHostException e) {
-                return testResult.fail("connection", "Unknown host");
-            }
-        }
 
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(metadataUri)

@@ -19,6 +19,7 @@
 package alpine.model;
 
 import alpine.config.AlpineConfigKeys;
+import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 import java.io.Serializable;
@@ -35,7 +36,7 @@ public class About implements Serializable {
 
     private static final long serialVersionUID = -7573425245706188307L;
 
-    private static final org.eclipse.microprofile.config.Config CONFIG = ConfigProvider.getConfig();
+    private static final Config CONFIG = ConfigProvider.getConfig();
 
     private static final String APPLICATION = CONFIG.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_NAME, String.class);
     private static final String VERSION = CONFIG.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class);

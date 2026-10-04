@@ -69,7 +69,7 @@ final class ConcurrencyKeyMaintenanceWorker implements Closeable {
     void start() {
         executor = Executors.newSingleThreadScheduledExecutor(
                 Thread.ofPlatform().name(getClass().getSimpleName()).factory());
-        executor.scheduleAtFixedRate(
+        var _ = executor.scheduleAtFixedRate(
                 this::maybeRepair, /* initialDelay */ 0, repairIntervalMillis, TimeUnit.MILLISECONDS);
     }
 

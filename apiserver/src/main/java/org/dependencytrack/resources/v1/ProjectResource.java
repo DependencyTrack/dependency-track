@@ -32,10 +32,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.common.pagination.Page;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
@@ -43,7 +45,6 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
@@ -107,7 +108,7 @@ import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolati
  * @since 3.0.0
  */
 @Path("/v1/project")
-@io.swagger.v3.oas.annotations.tags.Tag(name = "project")
+@Tag(name = "project")
 @SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class ProjectResource extends AbstractApiResource {
 
@@ -345,8 +346,13 @@ public class ProjectResource extends AbstractApiResource {
             }
             requireAccess(qm, project);
 
-            final boolean isParentAccessible =
-                    project.getParent() != null && qm.hasAccess(getPrincipal(), project.getParent());
+            final UUID parentUuid =
+                    project.getParent() != null ? project.getParent().getUuid() : null;
+            final boolean isParentAccessible = parentUuid != null
+                    && withJdbiHandle(
+                            qm,
+                            handle -> Boolean.TRUE.equals(
+                                    handle.attach(ProjectDao.class).isAccessible(parentUuid)));
 
             qm.makeTransient(project);
             if (!isParentAccessible) {
@@ -388,8 +394,8 @@ public class ProjectResource extends AbstractApiResource {
             final Project project = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(name));
             if (project != null) {
                 requireAccess(qm, project);
-                project.setMetrics(withJdbiHandle(
-                        handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
+                project.setMetrics(
+                        withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project)));
                 project.setVersions(qm.getProjectVersions(project));
                 return Response.ok(project).build();
             } else {
@@ -433,8 +439,8 @@ public class ProjectResource extends AbstractApiResource {
             final Project project = ProjectAccess.unrestricted(() -> qm.getProject(name, version));
             if (project != null) {
                 requireAccess(qm, project);
-                project.setMetrics(withJdbiHandle(
-                        handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
+                project.setMetrics(
+                        withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project)));
                 project.setVersions(qm.getProjectVersions(project));
                 return Response.ok(project).build();
             } else {
@@ -734,7 +740,7 @@ public class ProjectResource extends AbstractApiResource {
                     <p>
                       To re-parent the project, set <code>parent</code> to an object containing
                       the new parent's <code>uuid</code>. Omit <code>parent</code> (or set it to
-                      <code>null</code>) to leave the parent unchanged. Providing <code>parent</code>
+                      <code>null</code>) to remove the parent. Providing <code>parent</code>
                       without a non-null <code>uuid</code> is rejected with 400.
                     </p>
                     <p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>""")

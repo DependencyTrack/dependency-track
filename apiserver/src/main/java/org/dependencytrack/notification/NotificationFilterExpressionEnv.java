@@ -32,6 +32,7 @@ import dev.cel.runtime.CelEvaluationException;
 import dev.cel.runtime.CelRuntime;
 import dev.cel.runtime.CelRuntimeFactory;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.dependencytrack.cel.InvalidCelExpressionException;
 import org.dependencytrack.notification.proto.v1.BomConsumedOrProcessedSubject;
 import org.dependencytrack.notification.proto.v1.BomProcessingFailedSubject;
 import org.dependencytrack.notification.proto.v1.BomValidationFailedSubject;
@@ -49,6 +50,7 @@ import org.dependencytrack.notification.proto.v1.VulnerabilityRetractedSubject;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.requireNonNullElse;
@@ -130,15 +132,18 @@ public final class NotificationFilterExpressionEnv {
             try {
                 ast = compiler.compile(normalizedSrc).getAst();
             } catch (CelValidationException e) {
-                throw new InvalidNotificationFilterExpressionException("Failed to compile expression", e.getErrors());
+                throw new InvalidCelExpressionException("Filter expression is invalid", e);
             }
 
             try {
                 return runtime.createProgram(ast);
             } catch (CelEvaluationException e) {
-                throw new InvalidNotificationFilterExpressionException(
-                        "Failed to create program",
-                        requireNonNullElse(e.getMessage(), e.getClass().getName()));
+                throw new InvalidCelExpressionException(
+                        "Filter expression is invalid",
+                        List.of(new InvalidCelExpressionException.Error(
+                                1,
+                                0,
+                                requireNonNullElse(e.getMessage(), e.getClass().getName()))));
             }
         });
     }

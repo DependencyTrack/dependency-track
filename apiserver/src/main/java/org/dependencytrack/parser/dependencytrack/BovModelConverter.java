@@ -29,10 +29,13 @@ import io.github.nscuro.versatile.spi.Version;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
+import org.cyclonedx.proto.v1_7.OrganizationalContact;
+import org.cyclonedx.proto.v1_7.OrganizationalEntity;
 import org.cyclonedx.proto.v1_7.ScoreMethod;
 import org.cyclonedx.proto.v1_7.Source;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffectedVersions;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
+import org.cyclonedx.proto.v1_7.VulnerabilityCredits;
 import org.cyclonedx.proto.v1_7.VulnerabilityRating;
 import org.cyclonedx.proto.v1_7.VulnerabilityReference;
 import org.dependencytrack.model.Severity;
@@ -49,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import us.springett.owasp.riskrating.MissingFactorException;
 import us.springett.owasp.riskrating.OwaspRiskRating;
+import us.springett.owasp.riskrating.Score;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
@@ -68,6 +72,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_GENERIC;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
@@ -124,7 +129,15 @@ public final class BovModelConverter {
             vuln.setRejected(new Date(Timestamps.toMillis(cdxVuln.getRejected())));
         }
         if (cdxVuln.hasCredits()) {
-            vuln.setCredits(String.join(", ", cdxVuln.getCredits().toString()));
+            final VulnerabilityCredits credits = cdxVuln.getCredits();
+            final Stream<String> individualNames = credits.getIndividualsList().stream()
+                    .filter(OrganizationalContact::hasName)
+                    .map(OrganizationalContact::getName);
+            final Stream<String> organizationNames = credits.getOrganizationsList().stream()
+                    .filter(OrganizationalEntity::hasName)
+                    .map(OrganizationalEntity::getName);
+            vuln.setCredits(
+                    trimToNull(Stream.concat(individualNames, organizationNames).collect(Collectors.joining(", "))));
         }
 
         // External links: collect from both BOM-level external references and the
@@ -158,7 +171,7 @@ public final class BovModelConverter {
             }
 
             if (!appliedMethods.contains(SCORE_METHOD_CVSSV4)
-                    && (rating.getMethod().equals(SCORE_METHOD_CVSSV4))) {
+                    && rating.getMethod().equals(SCORE_METHOD_CVSSV4)) {
                 vuln.setCvssV4Vector(trimToNull(rating.getVector()));
                 vuln.setCvssV4Score(BigDecimal.valueOf(rating.getScore()));
                 if (rating.hasVector()) {
@@ -166,7 +179,7 @@ public final class BovModelConverter {
                     if (cvss != null && cvss.isBaseFullyDefined()) {
                         if (rating.getScore() == 0.0) {
                             vuln.setCvssV4Score(
-                                    BigDecimal.valueOf(cvss.getBakedScores().getBaseScore()));
+                                    BigDecimal.valueOf(cvss.getBakedScores().getOverallScore()));
                         }
                     } else {
                         LOGGER.debug(
@@ -223,7 +236,7 @@ public final class BovModelConverter {
                     && rating.getMethod().equals(ScoreMethod.SCORE_METHOD_OWASP)) {
                 try {
                     final OwaspRiskRating orr = OwaspRiskRating.fromVector(rating.getVector());
-                    final us.springett.owasp.riskrating.Score orrScore = orr.calculateScore();
+                    final Score orrScore = orr.calculateScore();
                     vuln.setOwaspRRVector(trimToNull(rating.getVector()));
                     vuln.setOwaspRRLikelihoodScore(BigDecimal.valueOf(orrScore.getLikelihoodScore()));
                     vuln.setOwaspRRBusinessImpactScore(BigDecimal.valueOf(orrScore.getBusinessImpactScore()));
@@ -620,7 +633,7 @@ public final class BovModelConverter {
                 final var vs = new VulnerableSoftware();
                 vs.setPurlType(purl.getType());
                 vs.setPurlNamespace(purl.getNamespace());
-                vs.setPurlName(purl.getName());
+                vs.setPurlName(PurlUtil.normalizedName(purl));
                 vs.setPurlVersion(purl.getVersion());
                 vs.setPurlQualifiers(PurlUtil.serializeQualifiers(purl));
                 vs.setPurlSubpath(purl.getSubpath());

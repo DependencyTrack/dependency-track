@@ -28,16 +28,20 @@ import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.kevdatasource.api.KevDataSourceFactory;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorKevDataSourceArg;
+import org.dependencytrack.support.net.OutboundConnectionDeniedException;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -99,6 +103,26 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldFailTerminallyWhenOutboundConnectionDenied() {
+        final var activity = new MirrorKevDataSourceActivity(createPluginManager("cisa", () -> new KevDataSource() {
+            @Override
+            public boolean hasNext() {
+                throw new UncheckedIOException(
+                        new OutboundConnectionDeniedException("Connections to cisa.invalid are not allowed"));
+            }
+
+            @Override
+            public KevAssertion next() {
+                throw new NoSuchElementException();
+            }
+        }));
+
+        assertThatExceptionOfType(TerminalApplicationFailureException.class)
+                .isThrownBy(() -> activity.execute(ctx, activityArgForKevDataSource("cisa")))
+                .withRootCauseInstanceOf(OutboundConnectionDeniedException.class);
+    }
+
+    @Test
     void shouldFailTerminallyWhenSourceDisabled() {
         final var activity =
                 new MirrorKevDataSourceActivity(createPluginManager(List.of(new DisabledKevDataSourceFactory("cisa"))));
@@ -126,6 +150,7 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
                 _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(KevDataSource.class));
         pluginManager.loadPlugins(List.of(() -> List.copyOf(factories)));
         return pluginManager;
@@ -213,7 +238,7 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public @NonNull KevDataSource create() {
@@ -255,7 +280,7 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public @NonNull KevDataSource create() {

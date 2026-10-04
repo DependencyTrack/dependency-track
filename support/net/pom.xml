@@ -47,4 +47,19 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine}
+                        -Xmx512m
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                        -Djdk.net.hosts.file=${project.basedir}/src/test/resources/hosts</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

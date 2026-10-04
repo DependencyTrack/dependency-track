@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -112,7 +113,7 @@ public class OpenApiResource {
         try (final InputStream inputStream =
                 OpenApiResource.class.getResourceAsStream("/org/dependencytrack/api/v1/openapi.yaml")) {
             requireNonNull(inputStream, "OpenAPI spec not found on classpath");
-            return OpenApiSpecEnricher.enrich(new String(inputStream.readAllBytes()), new About().getVersion());
+            return OpenApiSpecEnricher.enrich(new String(inputStream.readAllBytes(), UTF_8), new About().getVersion());
         }
     }
 }

@@ -21,15 +21,15 @@ package org.dependencytrack.vulnanalysis.ossindex;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.smallrye.config.SmallRyeConfigBuilder;
-import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.memory.MemoryCacheProvider;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionTestCheck.Status;
 import org.dependencytrack.plugin.api.ExtensionTestResult;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.junit.jupiter.api.Nested;
@@ -38,10 +38,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -157,9 +155,8 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
         @Test
         void shouldFailConnectionOnConnectionError() {
             final var factory = new OssIndexVulnAnalyzerFactory();
-            final var configRegistry = new MockConfigRegistry(
-                    Map.of("allow-local-connections", "true"), factory.runtimeConfigSpec(), null, null);
-            factory.init(createServiceRegistry(configRegistry));
+            final var configRegistry = new MockConfigRegistry(Map.of(), factory.runtimeConfigSpec(), null, null);
+            factory.init(createExtensionContext(configRegistry));
 
             final var config = new OssIndexVulnAnalyzerConfigV1()
                     .withEnabled(true)
@@ -221,52 +218,20 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
                     .withHeader("Authorization", equalTo("Bearer sonatype_pat_test")));
         }
 
-        @Test
-        void shouldFailConnectionForLocalAddress() {
-            final var factory = new OssIndexVulnAnalyzerFactory();
-            final var configRegistry =
-                    new MockConfigRegistry(Collections.emptyMap(), factory.runtimeConfigSpec(), null, null);
-            factory.init(createServiceRegistry(configRegistry));
-
-            final var config = new OssIndexVulnAnalyzerConfigV1()
-                    .withEnabled(true)
-                    .withApiUrl(URI.create("http://127.0.0.1"))
-                    .withUsername("foo@example.com")
-                    .withApiToken("test-token");
-
-            final ExtensionTestResult result = factory.test(config);
-
-            assertThat(result.isFailed()).isTrue();
-            assertThat(result.checks())
-                    .satisfiesExactly(
-                            check -> {
-                                assertThat(check.name()).isEqualTo("connection");
-                                assertThat(check.status()).isEqualTo(Status.FAILED);
-                                assertThat(check.message()).contains("local address");
-                            },
-                            check -> {
-                                assertThat(check.name()).isEqualTo("authentication");
-                                assertThat(check.status()).isEqualTo(Status.SKIPPED);
-                            });
-        }
-
         private OssIndexVulnAnalyzerFactory createFactory() {
             final var factory = new OssIndexVulnAnalyzerFactory();
 
-            final var effectiveDeploymentConfigs = Map.of("allow-local-connections", "true");
-
-            final var configRegistry =
-                    new MockConfigRegistry(effectiveDeploymentConfigs, factory.runtimeConfigSpec(), null, null);
-            factory.init(createServiceRegistry(configRegistry));
+            final var configRegistry = new MockConfigRegistry(Map.of(), factory.runtimeConfigSpec(), null, null);
+            factory.init(createExtensionContext(configRegistry));
             return factory;
         }
 
-        private MutableServiceRegistry createServiceRegistry(ConfigRegistry configRegistry) {
+        private ExtensionContext createExtensionContext(ConfigRegistry configRegistry) {
             final var cacheProvider = new MemoryCacheProvider(new SmallRyeConfigBuilder().build());
-            return new MutableServiceRegistry()
-                    .register(ConfigRegistry.class, configRegistry)
-                    .register(CacheManager.class, cacheProvider.create())
-                    .register(HttpClient.class, HttpClient.newHttpClient());
+            return new ExtensionContextBuilder()
+                    .withConfigRegistry(configRegistry)
+                    .withCacheManager(cacheProvider.create())
+                    .build();
         }
 
         private OssIndexVulnAnalyzerConfigV1 createConfig(WireMockRuntimeInfo wmRuntimeInfo) {

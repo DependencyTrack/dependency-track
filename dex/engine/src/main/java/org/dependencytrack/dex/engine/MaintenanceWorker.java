@@ -65,7 +65,7 @@ final class MaintenanceWorker implements Closeable {
         executor = Executors.newSingleThreadScheduledExecutor(Thread.ofPlatform()
                 .name(MaintenanceWorker.class.getSimpleName())
                 .factory());
-        executor.scheduleAtFixedRate(
+        var _ = executor.scheduleAtFixedRate(
                 () -> {
                     try {
                         enforceRunRetention();

@@ -20,19 +20,18 @@ package org.dependencytrack.resources.v1.vo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
-import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
+import org.dependencytrack.util.PurlUtil;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -55,8 +54,7 @@ public record ListProjectsResponseItem(
         @Nullable String description,
         @Nullable String publisher,
 
-        @Schema(type = "string") @Nullable @JsonSerialize(using = CustomPackageURLSerializer.class)
-        PackageURL purl,
+        @Nullable String purl,
 
         @Nullable String swidTagId,
         @Nullable String cpe,
@@ -91,6 +89,7 @@ public record ListProjectsResponseItem(
     }
 
     public static ListProjectsResponseItem of(ListProjectsRow row) {
+        final PackageURL parsedPurl = PurlUtil.silentPurl(row.purl());
         return new ListProjectsResponseItem(
                 row.uuid(),
                 row.group(),
@@ -99,7 +98,7 @@ public record ListProjectsResponseItem(
                 row.classifier(),
                 row.description(),
                 row.publisher(),
-                row.purl(),
+                parsedPurl != null ? parsedPurl.canonicalize() : row.purl(),
                 row.swidTagId(),
                 row.cpe(),
                 row.directDependencies(),

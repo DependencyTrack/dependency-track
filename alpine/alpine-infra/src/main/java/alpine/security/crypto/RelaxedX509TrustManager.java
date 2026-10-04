@@ -29,11 +29,14 @@ import java.security.cert.X509Certificate;
  */
 public class RelaxedX509TrustManager implements X509TrustManager {
 
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
         return null;
     }
 
+    @Override
     public void checkClientTrusted(final X509Certificate[] arg0, final String arg1) throws CertificateException { }
 
+    @Override
     public void checkServerTrusted(final X509Certificate[] arg0, final String arg1) throws CertificateException { }
 }

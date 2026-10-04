@@ -47,7 +47,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # tag=v4.37.8
+        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # tag=v4.38.1
         with:
           languages: java-kotlin
           build-mode: none
@@ -56,4 +56,4 @@ jobs:
               - '**/src/test/**'
               - 'e2e/**'
       - name: Analyze
-        uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # tag=v4.37.8
+        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # tag=v4.38.1

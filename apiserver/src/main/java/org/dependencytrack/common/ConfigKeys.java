@@ -23,6 +23,10 @@ package org.dependencytrack.common;
  */
 public final class ConfigKeys {
 
+    public static final String API_KEY_MAX_LIFETIME_DAYS = "dt.api-key.max-lifetime-days";
+
+    public static final String BOM_UPLOAD_MAX_SIZE_BYTES = "dt.bom-upload.max-size-bytes";
+
     public static final String DEV_SERVICES_ENABLED = "dt.dev-services.enabled";
     public static final String DEV_SERVICES_CONTAINER_REUSE_ENABLED = "dt.dev-services.container-reuse.enabled";
     public static final String DEV_SERVICES_FRONTEND_IMAGE = "dt.dev-services.frontend-image";
@@ -41,6 +45,8 @@ public final class ConfigKeys {
     public static final String METRICS_ENABLED = "dt.metrics.enabled";
     public static final String METRICS_AUTH_USERNAME = "dt.metrics.auth.username";
     public static final String METRICS_AUTH_PASSWORD = "dt.metrics.auth.password";
+
+    public static final String OUTBOUND_ALLOWED_DESTINATIONS = "dt.outbound.allowed-destinations";
 
     public static final String TASK_SCHEDULER_ENABLED = "dt.task-scheduler.enabled";
     public static final String TASK_SCHEDULER_THREADS = "dt.task-scheduler.threads";
@@ -73,6 +79,8 @@ public final class ConfigKeys {
     public static final String TASK_SCHEDULED_NOTIFICATION_DISPATCH_CRON =
             "dt.task.scheduled-notification-dispatch.cron";
     public static final String TASK_TELEMETRY_SUBMISSION_CRON = "dt.task.telemetry-submission.cron";
+
+    public static final String VEX_UPLOAD_MAX_SIZE_BYTES = "dt.vex-upload.max-size-bytes";
 
     public static final String VULN_POLICY_BUNDLE_URL = "dt.vuln-policy-bundle.url";
     public static final String VULN_POLICY_BUNDLE_AUTH_USERNAME = "dt.vuln-policy-bundle.auth.username";

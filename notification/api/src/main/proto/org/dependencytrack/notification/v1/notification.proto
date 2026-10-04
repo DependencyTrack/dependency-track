@@ -124,6 +124,9 @@ message NewVulnerabilitySubject {
 
   // The trigger of the analysis that identified the vulnerability.
   AnalysisTrigger analysis_trigger = 7;
+
+  // Name of the analyzer that identified the vulnerability first.
+  string analyzer_identity = 8;
 }
 
 message NewVulnerableDependencySubject {

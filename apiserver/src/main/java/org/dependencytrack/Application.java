@@ -99,12 +99,15 @@ public final class Application {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws Exception {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
 
         final Config config = ConfigProvider.getConfig();
         new LoggingConfiguration(config).apply((LoggerContext) LoggerFactory.getILoggerFactory());
+
+        Thread.setDefaultUncaughtExceptionHandler(
+                (thread, throwable) -> LOGGER.error("Unhandled exception in thread {}", thread.getName(), throwable));
 
         LOGGER.info(
                 "Starting {} {} (built {})",
@@ -147,41 +150,28 @@ public final class Application {
                 config.getOptionalValue(ConfigKeys.MANAGEMENT_PORT, int.class).orElse(9000);
         final var managementServer = new ManagementServer(
                 managementHost, managementPort, healthCheckRegistry, prometheusMeterRegistry, config);
-        try {
-            managementServer.start();
-        } catch (Exception e) {
-            LOGGER.error("Failed to start management server", e);
-            System.exit(-1);
-        }
+        managementServer.start();
 
         // Execute init tasks.
-        // Failures must exit the JVM explicitly: the management server started above
-        // keeps the JVM alive with its non-daemon threads, so an exception escaping
-        // the main thread would leave the process running but forever unready.
         final var dataSourceRegistry = DataSourceRegistry.getInstance();
         if (config.getValue(ConfigKeys.INIT_TASKS_ENABLED, boolean.class)) {
-            try {
-                final String dataSourceName = config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_NAME, String.class);
-                final var initTaskExecutor =
-                        new InitTaskExecutor(config, dataSourceRegistry.get(dataSourceName), initTasksHealthCheck);
+            final String dataSourceName = config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_NAME, String.class);
+            final var initTaskExecutor =
+                    new InitTaskExecutor(config, dataSourceRegistry.get(dataSourceName), initTasksHealthCheck);
 
-                // NB: Init tasks include schema migrations, whose statements legitimately
-                // run longer than the default query timeout allows. Bypass the timeout for them.
-                QueryTimeout.bypassing(() -> {
-                    initTaskExecutor.execute();
-                    return null;
-                });
+            // NB: Init tasks include schema migrations, whose statements legitimately
+            // run longer than the default query timeout allows. Bypass the timeout for them.
+            QueryTimeout.bypassing(() -> {
+                initTaskExecutor.execute();
+                return null;
+            });
 
-                if (config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION, boolean.class)) {
-                    dataSourceRegistry.close(dataSourceName);
-                }
-                if (config.getValue(ConfigKeys.INIT_TASKS_EXIT_AFTER_COMPLETION, boolean.class)) {
-                    LOGGER.info("Exiting because dt.init-tasks.exit-after-completion is enabled");
-                    System.exit(0);
-                }
-            } catch (Exception e) {
-                LOGGER.error("Failed to execute init tasks", e);
-                System.exit(-1);
+            if (config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION, boolean.class)) {
+                dataSourceRegistry.close(dataSourceName);
+            }
+            if (config.getValue(ConfigKeys.INIT_TASKS_EXIT_AFTER_COMPLETION, boolean.class)) {
+                LOGGER.info("Exiting because dt.init-tasks.exit-after-completion is enabled");
+                System.exit(0);
             }
         }
         initTasksHealthCheck.markInitialized();
@@ -214,12 +204,7 @@ public final class Application {
 
         final URL staticUrl = Application.class.getResource("/static");
         if (staticUrl != null) {
-            try {
-                context.setBaseResource(ResourceFactory.of(context).newResource(staticUrl.toURI()));
-            } catch (Exception e) {
-                LOGGER.error("Failed to set base resource", e);
-                System.exit(-1);
-            }
+            context.setBaseResource(ResourceFactory.of(context).newResource(staticUrl.toURI()));
         }
 
         context.addEventListener(new CacheManagerInitializer());
@@ -269,13 +254,7 @@ public final class Application {
         compressionHandler.putCompression(gzipCompression);
         compressionHandler.setHandler(context);
         server.setHandler(compressionHandler);
-
-        try {
-            server.start();
-        } catch (Exception e) {
-            LOGGER.error("Failed to start server", e);
-            System.exit(-1);
-        }
+        server.start();
 
         for (final var handler : server.getContainedBeans(ServletHandler.class)) {
             handler.setDecodeAmbiguousURIs(true);

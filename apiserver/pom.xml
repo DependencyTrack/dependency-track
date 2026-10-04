@@ -35,7 +35,7 @@
         <lib.javacron.version>1.4.0</lib.javacron.version>
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.swagger-parser.version>2.1.47</lib.swagger-parser.version>
+        <lib.swagger-parser.version>2.1.48</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.woodstox.version>7.2.2</lib.woodstox.version>
         <!-- CycloneDX CLI -->
@@ -282,8 +282,16 @@
             <artifactId>cel</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.metaeffekt.core</groupId>
             <artifactId>ae-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>oauth2-oidc-sdk</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.kagkarlsson</groupId>
@@ -641,7 +649,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.6.3</version>
+                <version>3.6.4</version>
                 <executions>
                     <execution>
                         <id>merge-services-bom</id>
@@ -731,6 +739,9 @@
     <profiles>
         <profile>
             <id>dist</id>
+            <properties>
+                <maven.build.cache.skipSave>true</maven.build.cache.skipSave>
+            </properties>
             <build>
                 <plugins>
                     <plugin>

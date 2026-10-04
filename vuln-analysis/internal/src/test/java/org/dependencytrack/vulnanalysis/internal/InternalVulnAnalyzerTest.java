@@ -24,8 +24,7 @@ import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
@@ -53,6 +52,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.dependencytrack.vulnanalysis.internal.InternalVulnAnalyzerTest.Range.withRange;
+import static org.dependencytrack.vulnanalysis.internal.Normalizations.normalizedPackageName;
 
 class InternalVulnAnalyzerTest {
 
@@ -85,7 +85,8 @@ class InternalVulnAnalyzerTest {
         final var configRegistry = new MockConfigRegistry(Map.of("datasource.name", "default"));
 
         analyzerFactory = new InternalVulnAnalyzerFactory(dataSourceRegistry);
-        analyzerFactory.init(new MutableServiceRegistry().register(ConfigRegistry.class, configRegistry));
+        analyzerFactory.init(
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
 
         analyzer = analyzerFactory.create();
     }
@@ -1105,6 +1106,11 @@ class InternalVulnAnalyzerTest {
                             MATCHES,
                             "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"),
                     Arguments.of(
+                            "cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*",
+                            withRange().havingStartIncluding("0"),
+                            MATCHES,
+                            "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"),
+                    Arguments.of(
                             "cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other",
                             withRange().havingStartExcluding("0.9.9"),
                             MATCHES,
@@ -1391,6 +1397,27 @@ class InternalVulnAnalyzerTest {
                             MATCHES,
                             "pkg:npm/foobar@12.3.1"),
                     Arguments.of(
+                            "pkg:npm/fs", withRange().havingStartIncluding("0"), MATCHES, "pkg:npm/fs@0.0.1-security"),
+                    Arguments.of(
+                            "pkg:npm/fs", withRange().havingStartIncluding("0"), MATCHES, "pkg:npm/fs@0.0.0-security"),
+                    Arguments.of(
+                            "pkg:npm/fs",
+                            withRange().havingStartIncluding("0.0"),
+                            MATCHES,
+                            "pkg:npm/fs@0.0.1-security"),
+                    Arguments.of(
+                            "pkg:npm/fs",
+                            withRange().havingStartIncluding("0.0.0"),
+                            MATCHES,
+                            "pkg:npm/fs@0.0.0-security"),
+                    Arguments.of(
+                            "pkg:golang/golang.org/x/net",
+                            withRange()
+                                    .havingStartIncluding("0")
+                                    .havingEndExcluding("0.0.0-20180925071336-cf3bd585ca2a"),
+                            DOES_NOT_MATCH,
+                            "pkg:golang/golang.org/x/net@v0.56.0"),
+                    Arguments.of(
                             "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1",
                             WITHOUT_RANGE,
                             DOES_NOT_MATCH,
@@ -1438,7 +1465,17 @@ class InternalVulnAnalyzerTest {
                             "pkg:rpm/redhat/openssl",
                             withRange().havingEndExcluding("1:1.1.1k-7"),
                             DOES_NOT_MATCH,
-                            "pkg:rpm/redhat/openssl@1.1.1k-8?epoch=1"));
+                            "pkg:rpm/redhat/openssl@1.1.1k-8?epoch=1"),
+                    Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/chartkit.core@1.0.0"),
+                    Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/ChartKit.Core@1.0.0"),
+                    Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/chartkit._core@1.0.0"),
+                    Arguments.of(
+                            "pkg:pypi/chartkit-core", WITHOUT_RANGE, DOES_NOT_MATCH, "pkg:pypi/chartkitcore@1.0.0"),
+                    Arguments.of(
+                            "pkg:nuget/Microsoft.OpenAPI",
+                            withRange().havingStartIncluding("2.0.0-preview11").havingEndExcluding("2.7.5"),
+                            MATCHES,
+                            "pkg:nuget/Microsoft.OpenApi@2.0.0"));
         }
 
         @ParameterizedTest(name = "[{index}] expect={2} src={0} range={1} target={3}")
@@ -1895,10 +1932,10 @@ class InternalVulnAnalyzerTest {
             createPurlVulnerableSoftware(
                     handle, "pkg:maven/com.example/lib", Range.withRange().havingEndExcluding("2.0.0"), vulnDbId);
             handle.createUpdate("""
-                            UPDATE "VULNERABILITY"
-                               SET "REJECTED" = NOW()
-                             WHERE "ID" = :id
-                            """).bind("id", vulnDbId).execute();
+                UPDATE "VULNERABILITY"
+                   SET "REJECTED" = NOW()
+                 WHERE "ID" = :id
+                """).bind("id", vulnDbId).execute();
         });
 
         final var bom = Bom.newBuilder()
@@ -2052,7 +2089,7 @@ class InternalVulnAnalyzerTest {
                           :purlStr
                         , :purl.type
                         , :purl.namespace
-                        , :purl.name
+                        , :purlName
                         , :purl.version
                         , :range.startIncluding
                         , :range.startExcluding
@@ -2065,6 +2102,7 @@ class InternalVulnAnalyzerTest {
                         """)
                 .bind("purlStr", purlStr)
                 .bindBean("purl", purl)
+                .bind("purlName", normalizedPackageName(purl))
                 .bindMethods("range", range)
                 .executeAndReturnGeneratedKeys()
                 .mapTo(Long.class)

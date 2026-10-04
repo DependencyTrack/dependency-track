@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.model.ManagedUser;
+import alpine.model.ServiceAccount;
 import alpine.model.Team;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
@@ -32,6 +33,7 @@ import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.Mappers;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -49,7 +51,6 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.ServiceComponent;
@@ -61,10 +62,10 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
 import org.dependencytrack.resources.v1.vo.ComponentVulnerabilityView;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -75,6 +76,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -82,9 +84,11 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -103,6 +107,7 @@ import java.util.stream.Stream;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_CREATED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
@@ -134,6 +139,21 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(100, json.size());
         Assertions.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
         Assertions.assertEquals("0", json.getJsonObject(0).getString("version"));
+    }
+
+    @Test
+    void getProjectsWithMalformedPurlTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setPurl("pkg:pypi/%0@latest");
+        qm.persist(project);
+
+        Response response =
+                jersey.target(V1_PROJECT).request().header(X_API_KEY, apiKey).get(Response.class);
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonArray json = parseJsonArray(response);
+        Assertions.assertEquals("pkg:pypi/%0@latest", json.getJsonObject(0).getString("purl"));
     }
 
     @Test
@@ -2093,6 +2113,52 @@ class ProjectResourceTest extends ResourceTest {
                         """);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"uuid", "lookup", "latest"})
+    void shouldReturnAggregatedChildMetricsWhenGettingCollectionProject(String endpoint) {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var collectionProject = new Project();
+        collectionProject.setName("acme-collection");
+        collectionProject.setVersion("1.0.0");
+        collectionProject.setIsLatest(true);
+        collectionProject.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.persist(collectionProject);
+
+        final var childProject = new Project();
+        childProject.setName("acme-app");
+        childProject.setParent(collectionProject);
+        qm.persist(childProject);
+
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", LocalDate.now(ZoneOffset.UTC));
+            final var now = Instant.now();
+
+            final var childMetrics = new ProjectMetrics();
+            childMetrics.setProjectId(childProject.getId());
+            childMetrics.setMedium(2);
+            childMetrics.setFirstOccurrence(Date.from(now));
+            childMetrics.setLastOccurrence(Date.from(now));
+            testDao.createProjectMetrics(childMetrics);
+        });
+
+        final WebTarget target =
+                switch (endpoint) {
+                    case "uuid" -> jersey.target(V1_PROJECT + "/" + collectionProject.getUuid());
+                    case "lookup" ->
+                        jersey.target(V1_PROJECT + "/lookup")
+                                .queryParam("name", "acme-collection")
+                                .queryParam("version", "1.0.0");
+                    case "latest" -> jersey.target(V1_PROJECT + "/latest/acme-collection");
+                    default -> throw new IllegalArgumentException(endpoint);
+                };
+
+        final Response response = target.request().header(X_API_KEY, apiKey).get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.metrics.medium").isEqualTo(2);
+    }
+
     @Test
     void getProjectByUuidNotPermittedTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
@@ -2252,7 +2318,7 @@ class ProjectResourceTest extends ResourceTest {
                 ]
                 """);
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification).isNotNull();
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_CREATED);
@@ -2694,6 +2760,28 @@ class ProjectResourceTest extends ResourceTest {
                         """.formatted(project.getUuid())));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(getPlainTextBody(response)).isEqualTo("parent.uuid must be provided when parent is set");
+    }
+
+    @Test
+    void shouldRemoveParentWhenUpdatingProjectWithoutParent() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+
+        final Project parent = qm.createProject("acme-app-parent", null, null, null, null, null, null, false);
+        final Project project = qm.createProject("acme-app", null, null, null, parent, null, null, false);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "acme-app"
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getParent()).isNull();
     }
 
     @Test
@@ -4653,6 +4741,36 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldAutoAssignServiceAccountTeamWhenCreatingProjectWithAclEnabled() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+        enablePortfolioAccessControl();
+
+        final var serviceAccount = new ServiceAccount();
+        serviceAccount.setUsername("svc:ci");
+        serviceAccount.setSuspended(false);
+        qm.persist(serviceAccount);
+        qm.addUserToTeam(serviceAccount, team);
+        final String serviceAccountKey = qm.createApiKey(
+                        serviceAccount, null, Date.from(Instant.now().plus(Duration.ofDays(30))))
+                .getKey();
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, serviceAccountKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        assertThat(qm.getProject("acme-app", null))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
+    }
+
+    @Test
     void shouldNotAssignApiKeyTeamWhenCreatingProjectWithAclDisabled() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
@@ -5301,6 +5419,45 @@ class ProjectResourceTest extends ResourceTest {
         final JsonObject json = parseJsonObject(response);
         assertThat(json.getString("collectionLogic")).isEqualTo("AGGREGATE_DIRECT_CHILDREN");
         assertThat(json.containsKey("classifier")).isFalse();
+    }
+
+    /**
+     * https://github.com/DependencyTrack/dependency-track/issues/7241
+     */
+    @Test
+    void shouldConvertCollectionProjectBackToRegularWithParent() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+
+        final var parentProject = new Project();
+        parentProject.setName("acme-app-parent");
+        qm.persist(parentProject);
+
+        final var project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        project.setClassifier(null);
+        project.setParent(parentProject);
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "acme-app",
+                          "version": "1.0",
+                          "classifier": "LIBRARY",
+                          "parent": {
+                            "uuid": "%s"
+                          }
+                        }
+                        """.formatted(project.getUuid(), parentProject.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(200);
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json.getString("classifier")).isEqualTo("LIBRARY");
+        assertThat(json.containsKey("collectionLogic")).isFalse();
+        assertThat(json.getJsonObject("parent").getString("uuid"))
+                .isEqualTo(parentProject.getUuid().toString());
     }
 
     @Test

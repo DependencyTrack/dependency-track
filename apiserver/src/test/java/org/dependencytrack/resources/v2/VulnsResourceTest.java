@@ -33,10 +33,11 @@ import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
-import org.dependencytrack.plugin.api.ServiceRegistry;
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
+import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
@@ -83,6 +84,7 @@ class VulnsResourceTest extends ResourceTest {
                 secretManager::getSecretValue,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
                 List.of(KevDataSource.class));
     }
 
@@ -264,7 +266,7 @@ class VulnsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {}
+        public void init(@NonNull ExtensionContext context) {}
 
         @Override
         public boolean isEnabled() {

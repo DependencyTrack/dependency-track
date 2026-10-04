@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -64,6 +65,7 @@ import java.util.stream.Gatherers;
 
 import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_GENERIC;
 import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.vulnanalysis.internal.Normalizations.normalizedPackageName;
 
 /**
  * @since 5.0.0
@@ -72,6 +74,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalVulnAnalyzer.class);
     private static final Pattern EPOCH_PREFIX_PATTERN = Pattern.compile("^\\d+:");
+    private static final Pattern EFFECTIVELY_ZERO_PATTERN = Pattern.compile("^0(\\.0)*$");
     private static final String INTERNAL_VULN_ID_PROPERTY = "dependencytrack:internal:vulnerability-id";
     private static final int QUERY_BATCH_SIZE = 25;
 
@@ -448,7 +451,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
     private static boolean matchesPurl(PackageURL componentPurl, MatchingCriteria criteria) {
         return Objects.equals(criteria.purlType(), componentPurl.getType())
                 && Objects.equals(criteria.purlNamespace(), componentPurl.getNamespace())
-                && Objects.equals(criteria.purlName(), componentPurl.getName());
+                && Objects.equals(criteria.purlName(), normalizedPackageName(componentPurl));
     }
 
     private boolean compareWithVers(MatchingCriteria criteria, String targetVersion, String versioningScheme) {
@@ -487,7 +490,10 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         final var versBuilder = Vers.builder(versioningScheme);
 
         if (criteria.versionStartIncluding() != null
-                && !criteria.versionStartIncluding().isEmpty()) {
+                && !criteria.versionStartIncluding().isEmpty()
+                && !EFFECTIVELY_ZERO_PATTERN
+                        .matcher(criteria.versionStartIncluding())
+                        .matches()) {
             versBuilder.withConstraint(Comparator.GREATER_THAN_OR_EQUAL, criteria.versionStartIncluding());
         }
         if (criteria.versionStartExcluding() != null
@@ -503,7 +509,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
             versBuilder.withConstraint(Comparator.LESS_THAN_OR_EQUAL, criteria.versionEndIncluding());
         }
 
-        if (criteria.version() == null && !versBuilder.hasConstraints()) {
+        if (!versBuilder.hasConstraints() && (criteria.version() == null || "*".equals(criteria.version()))) {
             versBuilder.withConstraint(Comparator.WILDCARD, null);
         } else if (criteria.version() != null && !"*".equals(criteria.version()) && !"-".equals(criteria.version())) {
             versBuilder.withConstraint(Comparator.EQUAL, criteria.version());
@@ -516,10 +522,10 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         final List<Relation> relations = List.of(
                 Cpe.compareAttribute(
                         criteria.cpePart(),
-                        targetCpe.getPart().getAbbreviation().toLowerCase()),
-                Cpe.compareAttribute(criteria.cpeVendor(), targetCpe.getVendor().toLowerCase()),
+                        targetCpe.getPart().getAbbreviation().toLowerCase(Locale.ROOT)),
+                Cpe.compareAttribute(criteria.cpeVendor(), targetCpe.getVendor().toLowerCase(Locale.ROOT)),
                 Cpe.compareAttribute(
-                        criteria.cpeProduct(), targetCpe.getProduct().toLowerCase()),
+                        criteria.cpeProduct(), targetCpe.getProduct().toLowerCase(Locale.ROOT)),
                 Cpe.compareAttribute(criteria.version(), targetCpe.getVersion()),
                 Cpe.compareAttribute(criteria.cpeUpdate(), targetCpe.getUpdate()),
                 Cpe.compareAttribute(criteria.cpeEdition(), targetCpe.getEdition()),

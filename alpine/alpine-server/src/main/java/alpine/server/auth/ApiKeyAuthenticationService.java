@@ -20,12 +20,16 @@ package alpine.server.auth;
 
 import alpine.model.ApiKey;
 import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
+import alpine.model.auth.UserPrincipal;
+import alpine.model.auth.UserType;
 import alpine.security.ApiKeyDecoder;
 import alpine.security.InvalidApiKeyFormatException;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +41,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 
 /**
  * Authentication service that validates API keys.
@@ -45,7 +51,7 @@ import java.sql.SQLException;
  * @since 1.0.0
  */
 @NullMarked
-public final class ApiKeyAuthenticationService implements AuthenticationService<ApiKeyPrincipal> {
+public final class ApiKeyAuthenticationService implements AuthenticationService<Principal> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiKeyAuthenticationService.class);
     private static final String LOOKUP_QUERY = /* language=SQL */ """
@@ -53,12 +59,19 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
           SELECT "ID"
                , "PUBLIC_ID"
                , "SECRET_HASH"
+               , "USER_ID"
+               , "EXPIRES_AT"
             FROM "APIKEY"
            WHERE "PUBLIC_ID" = ?
         )
         SELECT api_key."ID" AS id
              , api_key."PUBLIC_ID" AS public_id
              , api_key."SECRET_HASH" AS secret_hash
+             , api_key."EXPIRES_AT" AS expires_at
+             , usr."ID" AS user_id
+             , usr."USERNAME" AS username
+             , usr."TYPE" AS user_type
+             , COALESCE(usr."SUSPENDED", FALSE) AS suspended
              , (
                  SELECT EXISTS (
                    SELECT 1
@@ -73,27 +86,48 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
              , teams.uuids AS team_uuids
              , (
                  SELECT ARRAY_AGG(DISTINCT p."NAME")
-                   FROM "APIKEYS_TEAMS" AS akt
-                  INNER JOIN "TEAMS_PERMISSIONS" AS tp
-                     ON tp."TEAM_ID" = akt."TEAM_ID"
-                  INNER JOIN "PERMISSION" AS p
-                     ON p."ID" = tp."PERMISSION_ID"
-                  WHERE akt."APIKEY_ID" = api_key."ID"
+                   FROM "PERMISSION" AS p
+                  WHERE p."ID" IN (
+                    SELECT tp."PERMISSION_ID"
+                      FROM "APIKEYS_TEAMS" AS akt
+                     INNER JOIN "TEAMS_PERMISSIONS" AS tp
+                        ON tp."TEAM_ID" = akt."TEAM_ID"
+                     WHERE akt."APIKEY_ID" = api_key."ID"
+                     UNION
+                    SELECT up."PERMISSION_ID"
+                      FROM "USERS_PERMISSIONS" AS up
+                     WHERE up."USER_ID" = api_key."USER_ID"
+                     UNION
+                    SELECT tp."PERMISSION_ID"
+                      FROM "USERS_TEAMS" AS ut
+                     INNER JOIN "TEAMS_PERMISSIONS" AS tp
+                        ON tp."TEAM_ID" = ut."TEAM_ID"
+                     WHERE ut."USER_ID" = api_key."USER_ID"
+                  )
                ) AS permissions
           FROM api_key
+          LEFT JOIN "USER" AS usr
+            ON usr."ID" = api_key."USER_ID"
           LEFT JOIN LATERAL (
             SELECT ARRAY_AGG(t."ID" ORDER BY t."NAME") AS ids
                  , ARRAY_AGG(t."NAME" ORDER BY t."NAME") AS names
                  , ARRAY_AGG(t."UUID" ORDER BY t."NAME") AS uuids
-              FROM "APIKEYS_TEAMS" AS akt
-             INNER JOIN "TEAM" AS t
-                ON t."ID" = akt."TEAM_ID"
-             WHERE akt."APIKEY_ID" = api_key."ID"
+              FROM "TEAM" AS t
+             WHERE t."ID" IN (
+               SELECT akt."TEAM_ID"
+                 FROM "APIKEYS_TEAMS" AS akt
+                WHERE akt."APIKEY_ID" = api_key."ID"
+                UNION
+               SELECT ut."TEAM_ID"
+                 FROM "USERS_TEAMS" AS ut
+                WHERE ut."USER_ID" = api_key."USER_ID"
+             )
           ) AS teams ON TRUE
         """;
 
     private final DataSource dataSource;
     private final @Nullable String assertedApiKey;
+    private @Nullable Long apiKeyId;
     private @Nullable Boolean portfolioAccessControlEnabled;
 
     /**
@@ -111,6 +145,14 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
         this.assertedApiKey = request.getHeaderString("X-Api-Key");
     }
 
+    public long getApiKeyId() {
+        if (apiKeyId == null) {
+            throw new IllegalStateException("Authentication not attempted yet");
+        }
+
+        return apiKeyId;
+    }
+
     public boolean isPortfolioAccessControlEnabled() {
         if (portfolioAccessControlEnabled == null) {
             throw new IllegalStateException("Authentication not attempted yet");
@@ -124,6 +166,7 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
      * @return true if API key was specified, false if not
      * @since 1.0.0
      */
+    @Override
     public boolean isSpecified() {
         return assertedApiKey != null;
     }
@@ -132,11 +175,12 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
      * Authenticates the API key (if it was specified in the X-Api-Key header)
      * and returns a Principal if authentication is successful.
      * Otherwise, throws an AuthenticationException.
-     * @return the authenticated {@link ApiKeyPrincipal}
+     * @return the authenticated {@link Principal}
      * @throws AuthenticationException upon an authentication failure
      * @since 1.0.0
      */
-    public ApiKeyPrincipal authenticate() throws AuthenticationException {
+    @Override
+    public Principal authenticate() throws AuthenticationException {
         final ApiKey decodedApiKey;
         try {
             decodedApiKey = ApiKeyDecoder.decode(assertedApiKey);
@@ -158,12 +202,34 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
             throw new AuthenticationException();
         }
 
+        final Instant expiresAt = lookupResult.expiresAt();
+        if (expiresAt != null && !expiresAt.isAfter(Instant.now())) {
+            LOGGER.info(
+                    SecurityMarkers.SECURITY_FAILURE,
+                    "API key {} expired at {}",
+                    decodedApiKey.getPublicId(),
+                    expiresAt);
+            throw new AuthenticationException();
+        }
+
+        if (lookupResult.ownerSuspended()) {
+            LOGGER.debug("The principal owning API key {} is suspended", decodedApiKey.getPublicId());
+            throw new AuthenticationException();
+        }
+
+        this.apiKeyId = lookupResult.apiKeyId();
         this.portfolioAccessControlEnabled = lookupResult.portfolioAccessControlEnabled();
 
         return lookupResult.principal();
     }
 
-    private record LookupResult(ApiKeyPrincipal principal, String secretHash, boolean portfolioAccessControlEnabled) {
+    private record LookupResult(
+            long apiKeyId,
+            Principal principal,
+            String secretHash,
+            @Nullable Instant expiresAt,
+            boolean ownerSuspended,
+            boolean portfolioAccessControlEnabled) {
 
         private static final RowMapper ROW_MAPPER = new RowMapper();
 
@@ -174,13 +240,31 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
 
             @Override
             public LookupResult map(ResultSet rs) throws SQLException {
-                final var principal = new ApiKeyPrincipal(
-                        rs.getLong("id"),
-                        rs.getString("public_id"),
-                        TEAMS_ROW_MAPPER.map(rs),
-                        PERMISSIONS_ROW_MAPPER.map(rs));
+                final long apiKeyId = rs.getLong("id");
+                final var expiresAt = rs.getObject("expires_at", OffsetDateTime.class);
+                final long ownerId = rs.getLong("user_id");
+                final boolean isOwnedByUser = !rs.wasNull();
 
-                return new LookupResult(principal, rs.getString("secret_hash"), rs.getBoolean("acl_enabled"));
+                final Principal principal = isOwnedByUser
+                        ? new UserPrincipal(
+                                ownerId,
+                                rs.getString("username"),
+                                UserType.valueOf(rs.getString("user_type")),
+                                TEAMS_ROW_MAPPER.map(rs),
+                                PERMISSIONS_ROW_MAPPER.map(rs))
+                        : new ApiKeyPrincipal(
+                                apiKeyId,
+                                rs.getString("public_id"),
+                                TEAMS_ROW_MAPPER.map(rs),
+                                PERMISSIONS_ROW_MAPPER.map(rs));
+
+                return new LookupResult(
+                        apiKeyId,
+                        principal,
+                        rs.getString("secret_hash"),
+                        expiresAt != null ? expiresAt.toInstant() : null,
+                        rs.getBoolean("suspended"),
+                        rs.getBoolean("acl_enabled"));
             }
         }
     }

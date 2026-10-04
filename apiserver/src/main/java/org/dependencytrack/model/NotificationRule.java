@@ -21,6 +21,7 @@ package org.dependencytrack.model;
 import alpine.common.validation.RegexSequence;
 import alpine.model.Team;
 import alpine.server.json.TrimmedStringDeserializer;
+import com.asahaf.javacron.InvalidExpressionException;
 import com.asahaf.javacron.Schedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -140,7 +141,7 @@ public class NotificationRule implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC, version ASC"))
     private List<Project> projects;
 
-    @Persistent(table = "NOTIFICATIONRULE_TAGS", defaultFetchGroup = "true", mappedBy = "notificationRules")
+    @Persistent(table = "NOTIFICATIONRULE_TAGS", defaultFetchGroup = "true")
     @Join(
             column = "NOTIFICATIONRULE_ID",
             primaryKey = "NOTIFICATIONRULE_TAGS_PK",
@@ -449,7 +450,7 @@ public class NotificationRule implements Serializable {
                     ? scheduleLastTriggeredAt
                     : now;
             this.scheduleNextTriggerAt = schedule.next(baseDate);
-        } catch (com.asahaf.javacron.InvalidExpressionException e) {
+        } catch (InvalidExpressionException e) {
             throw new IllegalArgumentException("Invalid cron expression: " + scheduleCron, e);
         }
     }

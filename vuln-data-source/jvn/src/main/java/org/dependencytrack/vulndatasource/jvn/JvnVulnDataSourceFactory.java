@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.vulndatasource.jvn;
 
+import org.dependencytrack.plugin.api.ExtensionContext;
 import org.dependencytrack.plugin.api.ExtensionTestResult;
 import org.dependencytrack.plugin.api.RuntimeConfigurable;
-import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.api.Testable;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
@@ -34,9 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -86,10 +84,10 @@ final class JvnVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
-    public void init(final ServiceRegistry serviceRegistry) {
-        this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
-        this.kvStore = serviceRegistry.require(KeyValueStore.class);
-        this.httpClient = serviceRegistry.require(HttpClient.class);
+    public void init(final ExtensionContext context) {
+        this.configRegistry = context.configRegistry();
+        this.kvStore = context.keyValueStore();
+        this.httpClient = context.httpClient();
     }
 
     @Override
@@ -145,7 +143,6 @@ final class JvnVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
 
     @Override
     public ExtensionTestResult test(final @Nullable RuntimeConfig runtimeConfig) {
-        requireNonNull(configRegistry, "configRegistry has not been initialized");
         requireNonNull(httpClient, "httpClient has not been initialized");
         requireNonNull(runtimeConfig, "runtimeConfig must not be null");
 
@@ -156,25 +153,6 @@ final class JvnVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         }
 
         final String feedBaseUrl = feedBaseUrlOf(jvnConfig);
-        final URI baseUri = URI.create(feedBaseUrl);
-
-        if (!configRegistry
-                .getDeploymentConfig()
-                .getOptionalValue("allow-local-connections", boolean.class)
-                .orElse(false)) {
-            try {
-                final var hostAddress = InetAddress.getByName(baseUri.getHost());
-                if (hostAddress.isLoopbackAddress()
-                        || hostAddress.isLinkLocalAddress()
-                        || hostAddress.isSiteLocalAddress()
-                        || hostAddress.isAnyLocalAddress()) {
-                    return testResult.fail("connection", "Connection to local hosts is not allowed");
-                }
-            } catch (UnknownHostException e) {
-                return testResult.fail("connection", "Unknown host");
-            }
-        }
-
         final int year = Year.now(ZoneOffset.UTC).getValue();
         final URI probeUri = URI.create(feedBaseUrl + "/detail/" + JvnClient.detailFeedFilename(year));
         final HttpRequest request = HttpRequest.newBuilder()

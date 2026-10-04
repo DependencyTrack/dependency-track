@@ -68,7 +68,7 @@ public final class ManagementServer implements Closeable {
                 .orElse(null);
     }
 
-    public void start() throws IOException {
+    public void start() throws IOException, InterruptedException {
         if (!started.compareAndSet(false, true)) {
             throw new IllegalStateException("Already started");
         }
@@ -82,7 +82,10 @@ public final class ManagementServer implements Closeable {
             server.createContext("/metrics", new MetricsHandler(meterRegistry, basicAuthUsername, basicAuthPassword));
         }
 
-        server.start();
+        final var starterThread = new Thread(server::start, "ManagementServerStarter");
+        starterThread.setDaemon(true);
+        starterThread.start();
+        starterThread.join();
     }
 
     int getPort() {

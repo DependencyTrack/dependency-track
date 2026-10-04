@@ -21,7 +21,7 @@ package org.dependencytrack.model.mapping;
 import com.google.protobuf.util.JsonFormat;
 import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Epss;
+import org.dependencytrack.epss.Epss;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
@@ -46,10 +46,7 @@ public class PolicyProtoMapperTest extends PersistenceCapableTest {
         vulnAlias.setGhsaId("GHSA-100");
         vulnAlias.setSnykId("SNYK-100");
 
-        final var epss = new Epss();
-        epss.setCve("CVE-100");
-        epss.setScore(BigDecimal.valueOf(0.6));
-        epss.setPercentile(BigDecimal.valueOf(0.7));
+        final var epss = new Epss("CVE-100", BigDecimal.valueOf(0.6), BigDecimal.valueOf(0.7));
 
         final var vuln = new Vulnerability();
         vuln.setUuid(UUID.fromString("4702f182-3b24-426a-a469-118dbe61bab7"));

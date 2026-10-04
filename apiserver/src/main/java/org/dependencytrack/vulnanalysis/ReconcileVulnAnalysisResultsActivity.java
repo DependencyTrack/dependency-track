@@ -28,22 +28,19 @@ import org.dependencytrack.dex.api.ActivitySpec;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.FindingAttributionKey;
 import org.dependencytrack.model.FindingKey;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
+import org.dependencytrack.notification.GetProjectAuditChangeNotificationSubjectQuery;
 import org.dependencytrack.notification.JdbiNotificationEmitter;
 import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationSubjectDao;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject;
 import org.dependencytrack.parser.dependencytrack.BovModelConverter;
-import org.dependencytrack.persistence.jdbi.AnalysisDao;
-import org.dependencytrack.persistence.jdbi.AnalysisDao.Analysis;
-import org.dependencytrack.persistence.jdbi.AnalysisDao.MakeAnalysisCommand;
-import org.dependencytrack.persistence.jdbi.NotificationSubjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
-import org.dependencytrack.persistence.jdbi.query.GetProjectAuditChangeNotificationSubjectQuery;
+import org.dependencytrack.persistence.jdbi.VulnerabilitySyncDao;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyEvaluator;
@@ -53,12 +50,15 @@ import org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg.AnalyzerResult;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowContext;
+import org.dependencytrack.vulnanalysis.AnalysisDao.Analysis;
+import org.dependencytrack.vulnanalysis.AnalysisDao.MakeAnalysisCommand;
 import org.jdbi.v3.core.Handle;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
@@ -111,7 +111,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
     }
 
     @Override
-    public @Nullable Void execute(ActivityContext ctx, @Nullable ReconcileVulnAnalysisResultsArg arg) throws Exception {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable ReconcileVulnAnalysisResultsArg arg)
+            throws IOException, InterruptedException {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -359,7 +360,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
         LOGGER.debug("Synchronizing batch of {} vulnerabilities", vulns.size());
 
-        return inJdbiTransaction(handle -> new VulnerabilityDao(handle).syncAll(vulns, canUpdatePredicate));
+        return inJdbiTransaction(handle -> new VulnerabilitySyncDao(handle).syncAll(vulns, canUpdatePredicate));
     }
 
     private void syncVulnAliasAssertions(
@@ -447,6 +448,11 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         // Determine which attributions are no longer applicable, and should be deleted.
         final var attributionIdsToDelete = new HashSet<Long>();
         for (final FindingDao.FindingAttribution existingAttribution : existingAttributions) {
+            // Manually assigned findings are not reported by analyzers.
+            if ("none".equals(existingAttribution.analyzerName())) {
+                continue;
+            }
+
             final var attributionKey = new FindingAttributionKey(
                     new FindingKey(existingAttribution.componentId(), existingAttribution.vulnDbId()),
                     existingAttribution.analyzerName());
@@ -827,12 +833,13 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             vulnDbIds.add(findingKey.vulnDbId());
         });
 
-        return dao.getForNewVulnerabilities(componentIds, vulnDbIds).stream()
+        return dao.getForNewVulnerabilities(componentIds, vulnDbIds, false).stream()
                 .map(subject -> createNewVulnerabilityNotification(
                         subject.getProject(),
                         subject.getComponent(),
                         subject.getVulnerability(),
-                        convertAnalysisTrigger(analysisTrigger)))
+                        convertAnalysisTrigger(analysisTrigger),
+                        subject.getAnalyzerIdentity()))
                 .toList();
     }
 
@@ -850,7 +857,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             vulnDbIds.add(findingKey.vulnDbId());
         });
 
-        return dao.getForNewVulnerabilities(componentIds, vulnDbIds).stream()
+        return dao.getForNewVulnerabilities(componentIds, vulnDbIds, true).stream()
                 .map(subject -> createVulnerabilityRetractedNotification(
                         subject.getProject(), subject.getComponent(), subject.getVulnerability()))
                 .toList();

@@ -19,7 +19,6 @@
 package org.dependencytrack.support.datanucleus;
 
 import org.datanucleus.PropertyNames;
-import org.dependencytrack.support.datanucleus.method.JsonbContainsMethod;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -77,7 +76,7 @@ public abstract class AbstractTest {
     }
 
     private static PersistenceManagerFactory createPmf(final PostgreSQLContainer postgresContainer) {
-        final URL schemaUrl = JsonbContainsMethod.class.getResource("/schema.sql");
+        final URL schemaUrl = AbstractTest.class.getResource("/schema.sql");
         assertThat(schemaUrl).isNotNull();
 
         return JDOHelper.getPersistenceManagerFactory(

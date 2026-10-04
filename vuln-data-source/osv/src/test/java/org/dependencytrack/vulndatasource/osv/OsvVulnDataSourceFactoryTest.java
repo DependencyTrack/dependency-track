@@ -18,19 +18,14 @@
  */
 package org.dependencytrack.vulndatasource.osv;
 
-import org.dependencytrack.plugin.api.MutableServiceRegistry;
-import org.dependencytrack.plugin.api.config.ConfigRegistry;
-import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
-import org.dependencytrack.plugin.testing.MockKeyValueStore;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import java.net.http.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -64,10 +59,9 @@ class OsvVulnDataSourceFactoryTest
                 (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
         config.setEnabled(isEnabled);
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                .register(HttpClient.class, HttpClient.newHttpClient())
-                .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .build());
         assertThat(factory.isDataSourceEnabled()).isEqualTo(isEnabled);
     }
 
@@ -79,10 +73,8 @@ class OsvVulnDataSourceFactoryTest
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(HttpClient.class, HttpClient.newHttpClient())
-                .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
@@ -95,10 +87,8 @@ class OsvVulnDataSourceFactoryTest
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(HttpClient.class, HttpClient.newHttpClient())
-                .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
 
         final VulnDataSource dataSource = factory.create();
         assertThat(dataSource).isNotNull();
@@ -114,10 +104,8 @@ class OsvVulnDataSourceFactoryTest
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(HttpClient.class, HttpClient.newHttpClient())
-                .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
 
         try (VulnDataSource dataSource = factory.create()) {
             assertThat(dataSource).isNotNull();
@@ -134,10 +122,8 @@ class OsvVulnDataSourceFactoryTest
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
-        factory.init(new MutableServiceRegistry()
-                .register(ConfigRegistry.class, configRegistry)
-                .register(HttpClient.class, HttpClient.newHttpClient())
-                .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(
+                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
 
         try (VulnDataSource dataSource = factory.create()) {
             assertThat(dataSource).isNotNull();

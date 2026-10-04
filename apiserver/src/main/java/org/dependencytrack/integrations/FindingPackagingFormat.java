@@ -19,7 +19,6 @@
 package org.dependencytrack.integrations;
 
 import alpine.model.About;
-import alpine.model.ConfigProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -28,6 +27,7 @@ import org.dependencytrack.common.Mappers;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.util.DateUtil;
 
 import java.io.UncheckedIOException;
@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class FindingPackagingFormat {
 
@@ -76,8 +77,9 @@ public class FindingPackagingFormat {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final About about = new About();
-            final ConfigProperty baseUrl =
-                    qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
+            final String baseUrl = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                    .getOptionalValue(GENERAL_BASE_URL)
+                    .orElse(null));
 
             /*
                Create a generic meta object containing basic Dependency-Track information
@@ -88,8 +90,8 @@ public class FindingPackagingFormat {
             meta.put(FIELD_APPLICATION, about.getApplication());
             meta.put(FIELD_VERSION, about.getVersion());
             meta.put(FIELD_TIMESTAMP, DateUtil.toISO8601(new Date()));
-            if (baseUrl != null && baseUrl.getPropertyValue() != null) {
-                meta.put(FIELD_BASE_URL, baseUrl.getPropertyValue());
+            if (baseUrl != null) {
+                meta.put(FIELD_BASE_URL, baseUrl);
             }
 
             /*

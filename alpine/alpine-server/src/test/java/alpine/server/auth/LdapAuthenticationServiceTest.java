@@ -198,6 +198,18 @@ class LdapAuthenticationServiceTest {
                         .isEqualTo(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT));
     }
 
+    @Test
+    void shouldThrowUnmappedAccountWhenUsernameHasReservedServiceAccountPrefix() {
+        // NB: The prefix is rejected before the directory is contacted,
+        // so the user does not have to exist in it.
+        final var authService = new LdapAuthenticationService(defaultConfig(), "SVC:" + ADMIN_USERNAME, ADMIN_PASSWORD);
+
+        assertThatExceptionOfType(AlpineAuthenticationException.class)
+                .isThrownBy(authService::authenticate)
+                .satisfies(e -> assertThat(e.getCauseType())
+                        .isEqualTo(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT));
+    }
+
     private static Config configWith(Map<String, String> overrides) {
         final var values = new HashMap<String, String>();
         values.put(AlpineConfigKeys.LDAP_ENABLED, "true");
@@ -208,9 +220,7 @@ class LdapAuthenticationServiceTest {
         values.put(AlpineConfigKeys.LDAP_NAME_ATTRIBUTE, "uid");
         values.put(AlpineConfigKeys.LDAP_MAIL_ATTRIBUTE, "mail");
         values.put(AlpineConfigKeys.LDAP_USER_GROUPS_FILTER, "(member={USER_DN})");
-        values.put(AlpineConfigKeys.LDAP_GROUP_FILTER, "(objectClass=groupOfUniqueNames)");
         values.put(AlpineConfigKeys.LDAP_GROUP_SEARCH_FILTER, "(&(objectClass=groupOfUniqueNames)(cn=*{SEARCH_TERM}*))");
-        values.put(AlpineConfigKeys.LDAP_USER_SEARCH_FILTER, "(&(objectClass=inetOrgPerson)(cn=*{SEARCH_TERM}*))");
         values.put(AlpineConfigKeys.LDAP_USER_PROVISIONING, "true");
         values.put(AlpineConfigKeys.LDAP_TEAM_SYNCHRONIZATION, "false");
         values.putAll(overrides);

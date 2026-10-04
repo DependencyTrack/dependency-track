@@ -311,12 +311,14 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
             try {
                 requested = VersionFactory.forScheme(SCHEME_COMPOSER, requestedVersion);
             } catch (InvalidVersionException _) {
+                // Unparseable versions cannot be matched against entries.
             }
         }
         if (latestVersion != null) {
             try {
                 requestedLatest = VersionFactory.forScheme(SCHEME_COMPOSER, latestVersion);
             } catch (InvalidVersionException _) {
+                // Unparseable versions cannot be matched against entries.
             }
         }
 
@@ -335,6 +337,7 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
                     latestVersionPublishedAt = extractPublishedAt(entry);
                 }
             } catch (InvalidVersionException _) {
+                // Entries with unparseable versions cannot match.
             }
 
             try {
@@ -345,6 +348,7 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
                     }
                 }
             } catch (InvalidVersionException _) {
+                // Entries with unparseable versions cannot match.
             }
         }
 

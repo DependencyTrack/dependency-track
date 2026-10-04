@@ -105,9 +105,9 @@ the predicate degrades to `false`. For an unknown principal type, it is `false`.
 
 ### JDO per-row checks
 
-`QueryManager.hasAccess(principal, project)` tests access to a single project. Resource code uses it through
-`AbstractApiResource.requireAccess(qm, project, ...)`, which throws `ProjectAccessDeniedException` when access is
-denied and writes a security log event on failure:
+For a project loaded through JDO, resource code calls `AbstractApiResource.requireAccess(qm, project, ...)`.
+It runs `ProjectDao.isAccessible` on the connection of `qm`, throws `ProjectAccessDeniedException` when access is
+denied, and writes a security log event on failure:
 
 ```java
 final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -137,6 +137,8 @@ if the project ID lives on a different column or alias. Use `getBoundedTotalCoun
 The no-argument overloads (`JdbiFactory.withJdbiHandle(handle -> ...)` etc.) resolve the condition to `TRUE` so
 that background tasks can run without a principal. Calling them from a REST endpoint that uses
 `${apiProjectAclCondition}` silently disables PAC. Always pass `getAlpineRequest()` in resource code.
+Handles that join a JDO transaction via `withJdbiHandle(qm, handle -> ...)` use the request of `qm`,
+so create it with `new QueryManager(getAlpineRequest())`.
 
 ### Single-object REST endpoints
 

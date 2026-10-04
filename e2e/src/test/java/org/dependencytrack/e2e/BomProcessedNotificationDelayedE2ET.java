@@ -71,7 +71,7 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
 
     @Test
     void test() throws Exception {
-        final List<NotificationPublisher> publishers = apiClient.getAllNotificationPublishers();
+        final List<NotificationPublisher> publishers = apiV1Client.getAllNotificationPublishers();
 
         // Find the webhook notification publisher.
         final NotificationPublisher webhookPublisher = publishers.stream()
@@ -80,12 +80,12 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
                 .orElseThrow(() -> new AssertionError("Unable to find webhook notification publisher"));
 
         // Create a webhook alert for NEW_VULNERABILITY notifications and point it to WireMock.
-        final NotificationRule webhookRule = apiClient.createNotificationRule(new CreateNotificationRuleRequest(
+        final NotificationRule webhookRule = apiV1Client.createNotificationRule(new CreateNotificationRuleRequest(
                 "foo",
                 "PORTFOLIO",
                 "INFORMATIONAL",
                 new CreateNotificationRuleRequest.Publisher(webhookPublisher.uuid())));
-        apiClient.updateNotificationRule(new UpdateNotificationRuleRequest(
+        apiV1Client.updateNotificationRule(new UpdateNotificationRuleRequest(
                 webhookRule.uuid(),
                 webhookRule.name(),
                 true,
@@ -102,7 +102,7 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
                 post(urlPathEqualTo("/notification")).willReturn(aResponse().withStatus(201)));
 
         // Create a new internal vulnerability for jackson-databind.
-        apiClient.createVulnerability(new CreateVulnerabilityRequest(
+        apiV1Client.createVulnerability(new CreateVulnerabilityRequest(
                 "INT-123",
                 "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
                 List.of(917, 502),
@@ -116,7 +116,7 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
         final String bomBase64 = Base64.getEncoder().encodeToString(bomBytes);
 
         // Upload the BOM
-        final EventTokenResponse response = apiClient.uploadBom(new BomUploadRequest("foo", "bar", true, bomBase64));
+        final EventTokenResponse response = apiV1Client.uploadBom(new BomUploadRequest("foo", "bar", true, bomBase64));
         assertThat(response.token()).isNotEmpty();
 
         // Wait up to 15sec for the BOM processing to complete.

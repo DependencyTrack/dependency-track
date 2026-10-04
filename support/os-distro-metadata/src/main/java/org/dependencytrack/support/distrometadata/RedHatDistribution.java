@@ -23,6 +23,7 @@ import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,7 +73,7 @@ public record RedHatDistribution(String majorVersion) implements OsDistribution 
 
         // NB: Some generators emit "rhel-<version>" (e.g. Syft),
         // others "redhat-<version>" (e.g. Trivy).
-        final String qualifierValueLower = qualifierValue.toLowerCase();
+        final String qualifierValueLower = qualifierValue.toLowerCase(Locale.ROOT);
         final String version;
         if (qualifierValueLower.startsWith("rhel-")) {
             version = qualifierValue.substring("rhel-".length());

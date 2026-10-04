@@ -62,7 +62,7 @@ public class DevServices implements AutoCloseable {
             // except when running via the dev-services Maven profile.
             Class.forName("org.testcontainers.Testcontainers");
         } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Dev services are not available for production builds");
+            throw new IllegalStateException("Dev services are not available for production builds", e);
         }
 
         // Infer database port and name from the JDBC URL of the primary data source.

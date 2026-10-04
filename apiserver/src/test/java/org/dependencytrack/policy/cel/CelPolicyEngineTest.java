@@ -21,17 +21,16 @@ package org.dependencytrack.policy.cel;
 import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.epss.Epss;
+import org.dependencytrack.epss.EpssDao;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.Epss;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
-import org.dependencytrack.model.PackageArtifactMetadata;
-import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -45,13 +44,15 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
-import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
+import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -2087,6 +2088,123 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         assertThat(qm.getAllPolicyViolations(componentSpringBeans)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSpringExpression)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSpringCore)).hasSize(1);
+    }
+
+    @Test
+    @Timeout(60)
+    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithChainedDiamonds() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        //          /-> node-1 -\           /-> node-4 -\
+        // * -> node-0            > node-3 -             > node-6 -> ...
+        //          \-> node-2 -/           \-> node-5 -/
+        final int diamondCount = 20;
+        final var nodes = new ArrayList<Component>();
+        for (int i = 0; i <= diamondCount * 3; i++) {
+            final var component = new Component();
+            component.setProject(project);
+            component.setName("node-" + i);
+            qm.persist(component);
+            nodes.add(component);
+        }
+
+        project.setDirectDependencies("[%s]".formatted(new ComponentIdentity(nodes.getFirst()).toJSON()));
+        qm.persist(project);
+        for (int i = 0; i < diamondCount; i++) {
+            final Component top = nodes.get(i * 3);
+            final Component left = nodes.get(i * 3 + 1);
+            final Component right = nodes.get(i * 3 + 2);
+            final Component bottom = nodes.get(i * 3 + 3);
+            top.setDirectDependencies(
+                    "[%s, %s]".formatted(new ComponentIdentity(left).toJSON(), new ComponentIdentity(right).toJSON()));
+            left.setDirectDependencies("[%s]".formatted(new ComponentIdentity(bottom).toJSON()));
+            right.setDirectDependencies("[%s]".formatted(new ComponentIdentity(bottom).toJSON()));
+            qm.persist(top);
+            qm.persist(left);
+            qm.persist(right);
+        }
+
+        final Component lastNode = nodes.getLast();
+
+        final var policyEngine = new CelPolicyEngine();
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+
+        // Every path from the last node to the project root passes through the first node.
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                        component.is_exclusive_dependency_of(v1.Component{name: "node-0"})
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
+        policyEngine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(lastNode)).hasSize(1);
+
+        // Only one side of the first diamond leads through node-1.
+        condition.setValue("""
+                component.is_exclusive_dependency_of(v1.Component{name: "node-1"})
+                """);
+        policyEngine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(lastNode)).isEmpty();
+    }
+
+    @Test
+    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithUnreachableParent() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("acme-lib-a");
+        qm.persist(componentA);
+
+        final var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("acme-lib-b");
+        qm.persist(componentB);
+
+        final var componentC = new Component();
+        componentC.setProject(project);
+        componentC.setName("acme-lib-c");
+        qm.persist(componentC);
+
+        // C depends on A, but nothing depends on C, making it unreachable from the project.
+        //
+        // * -> A -> B
+        //      ^
+        //      C
+        project.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentA).toJSON()));
+        componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentB).toJSON()));
+        componentC.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentA).toJSON()));
+        qm.persist(project);
+        qm.persist(componentA);
+        qm.persist(componentC);
+
+        final var policyEngine = new CelPolicyEngine();
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+
+        // B is introduced exclusively through A.
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                        component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
+        policyEngine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
+
+        // B is not introduced through C at all.
+        condition.setValue("""
+                component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-c"})
+                """);
+        policyEngine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
     }
 
     @Test

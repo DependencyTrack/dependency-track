@@ -37,12 +37,7 @@ class v4145UpdaterTest extends PersistenceCapableTest {
         final VulnerableSoftware normalized = createVulnerableSoftware("pypi", "chartkit-core");
         final VulnerableSoftware nonPypi = createVulnerableSoftware("npm", "foo.bar");
 
-        final JDOConnection jdoConnection = qm.getPersistenceManager().getDataStoreConnection();
-        try {
-            new v4145Updater().executeUpgrade(qm, (Connection) jdoConnection.getNativeConnection());
-        } finally {
-            jdoConnection.close();
-        }
+        executeUpgrade();
 
         qm.getPersistenceManager().refreshAll(dotted, underscored, repeated, normalized, nonPypi);
         assertThat(dotted.getPurlName()).isEqualTo("zope-interface");
@@ -50,6 +45,29 @@ class v4145UpdaterTest extends PersistenceCapableTest {
         assertThat(repeated.getPurlName()).isEqualTo("chartkit-core");
         assertThat(normalized.getPurlName()).isEqualTo("chartkit-core");
         assertThat(nonPypi.getPurlName()).isEqualTo("foo.bar");
+    }
+
+    @Test
+    void shouldNormalizeNugetPurlNames() throws Exception {
+        final VulnerableSoftware mixedCase = createVulnerableSoftware("nuget", "Microsoft.OpenAPI");
+        final VulnerableSoftware lowerCase = createVulnerableSoftware("nuget", "bootstrap.less");
+        final VulnerableSoftware nonNuget = createVulnerableSoftware("npm", "JSONStream");
+
+        executeUpgrade();
+
+        qm.getPersistenceManager().refreshAll(mixedCase, lowerCase, nonNuget);
+        assertThat(mixedCase.getPurlName()).isEqualTo("microsoft.openapi");
+        assertThat(lowerCase.getPurlName()).isEqualTo("bootstrap.less");
+        assertThat(nonNuget.getPurlName()).isEqualTo("JSONStream");
+    }
+
+    private void executeUpgrade() throws Exception {
+        final JDOConnection jdoConnection = qm.getPersistenceManager().getDataStoreConnection();
+        try {
+            new v4145Updater().executeUpgrade(qm, (Connection) jdoConnection.getNativeConnection());
+        } finally {
+            jdoConnection.close();
+        }
     }
 
     private VulnerableSoftware createVulnerableSoftware(final String purlType, final String purlName) {

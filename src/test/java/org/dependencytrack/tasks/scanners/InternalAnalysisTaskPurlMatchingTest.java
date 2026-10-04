@@ -44,7 +44,8 @@ public class InternalAnalysisTaskPurlMatchingTest extends PersistenceCapableTest
                 Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/chartkit.core@1.0.0"),
                 Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/ChartKit.Core@1.0.0"),
                 Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/chartkit._core@1.0.0"),
-                Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, DOES_NOT_MATCH, "pkg:pypi/chartkitcore@1.0.0")
+                Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, DOES_NOT_MATCH, "pkg:pypi/chartkitcore@1.0.0"),
+                Arguments.of("pkg:nuget/Microsoft.OpenAPI", withRange().havingStartIncluding("2.0.0-preview11").havingEndExcluding("2.7.5"), MATCHES, "pkg:nuget/Microsoft.OpenApi@2.0.0")
         );
     }
 

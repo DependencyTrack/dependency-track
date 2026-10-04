@@ -27,6 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class v4145Updater extends AbstractUpgradeItem {
@@ -42,6 +43,7 @@ public class v4145Updater extends AbstractUpgradeItem {
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
         normalizePypiPurlNames(connection);
+        normalizeNugetPurlNames(connection);
     }
 
     private void normalizePypiPurlNames(final Connection connection) throws SQLException {
@@ -63,6 +65,32 @@ public class v4145Updater extends AbstractUpgradeItem {
                 updateStatement.setString(1, PYPI_NAME_SEPARATORS.matcher(rs.getString(2)).replaceAll("-"));
                 updateStatement.setLong(2, rs.getLong(1));
                 updateStatement.addBatch();
+            }
+            updateStatement.executeBatch();
+        }
+    }
+
+    private void normalizeNugetPurlNames(final Connection connection) throws SQLException {
+        LOGGER.info("Normalizing \"VULNERABLESOFTWARE\" NuGet package names");
+        try (final Statement selectStatement = connection.createStatement();
+             final PreparedStatement updateStatement = connection.prepareStatement(/* language=SQL */ """
+                     UPDATE "VULNERABLESOFTWARE" SET "PURL_NAME" = ? WHERE "ID" = ?
+                     """)) {
+            final ResultSet rs = selectStatement.executeQuery(/* language=SQL */ """
+                    SELECT "ID", "PURL_NAME"
+                      FROM "VULNERABLESOFTWARE"
+                     WHERE "PURL_TYPE" = 'nuget'
+                       AND "PURL_NAMESPACE" IS NULL
+                    """);
+            while (rs.next()) {
+                // Compared in Java: "PURL_NAME" <> LOWER("PURL_NAME") excludes every row under case-insensitive collations.
+                final String purlName = rs.getString(2);
+                final String normalizedPurlName = purlName.toLowerCase(Locale.ROOT);
+                if (!normalizedPurlName.equals(purlName)) {
+                    updateStatement.setString(1, normalizedPurlName);
+                    updateStatement.setLong(2, rs.getLong(1));
+                    updateStatement.addBatch();
+                }
             }
             updateStatement.executeBatch();
         }

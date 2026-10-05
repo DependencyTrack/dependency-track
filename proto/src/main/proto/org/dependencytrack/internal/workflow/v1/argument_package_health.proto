@@ -46,6 +46,7 @@ message ResolvePackageHealthMetadataActivityArg {
 }
 
 message ResolvePackageHealthMetadataActivityRes {
+  repeated string changed_purls = 1;
   // Packages that were not fetched because the deps.dev rate limit was reached.
   repeated string unresolved_purls = 2;
   // When the earliest rate limit of unresolved_purls and pending_github_fetches resets.
@@ -61,4 +62,8 @@ message PackageHealthGitHubFetch {
   string purl = 1;
   // Repository as returned by deps.dev, for example github.com/owner/repo.
   string repository = 2;
+}
+
+message ScheduleHealthPolicyEvaluationsArg {
+  repeated string purls = 1;
 }

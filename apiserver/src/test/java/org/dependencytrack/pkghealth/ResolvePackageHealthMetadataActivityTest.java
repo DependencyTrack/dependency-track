@@ -122,10 +122,15 @@ class ResolvePackageHealthMetadataActivityTest extends PersistenceCapableTest {
                 .addPurls(purl.toString())
                 .build();
 
-        activity.execute(mock(ActivityContext.class), arg);
+        final var firstResult = activity.execute(mock(ActivityContext.class), arg);
+        assertThat(firstResult.getChangedPurlsList()).containsExactly(packagePurl.canonicalize());
+
+        final var secondResult = activity.execute(mock(ActivityContext.class), arg);
+        assertThat(secondResult.getChangedPurlsList()).isEmpty();
 
         model.setStars(101L);
-        activity.execute(mock(ActivityContext.class), arg);
+        final var thirdResult = activity.execute(mock(ActivityContext.class), arg);
+        assertThat(thirdResult.getChangedPurlsList()).containsExactly(packagePurl.canonicalize());
 
         final var persisted = withJdbiHandle(handle -> new PackageHealthMetadataDao(handle).get(packagePurl));
 
@@ -242,6 +247,7 @@ class ResolvePackageHealthMetadataActivityTest extends PersistenceCapableTest {
                         .addPurls(fetchedPurl.toString())
                         .build());
 
+        assertThat(result.getChangedPurlsList()).containsExactly(fetchedPackagePurl.canonicalize());
         assertThat(result.getUnresolvedPurlsList()).isEmpty();
         // Recorded with a fetch time, so that the next hourly run does not select it again.
         final var failed = withJdbiHandle(handle -> new PackageHealthMetadataDao(handle).get(failedPackagePurl));
@@ -272,13 +278,14 @@ class ResolvePackageHealthMetadataActivityTest extends PersistenceCapableTest {
                 .thenThrow(new PackageHealthAnalyzer.AnalysisException(
                         "Analysis failed", new IOException("deps.dev unavailable")));
 
-        activity.execute(
+        final var result = activity.execute(
                 mock(ActivityContext.class),
                 ResolvePackageHealthMetadataActivityArg.newBuilder()
                         .addPurls(purl.toString())
                         .build());
 
-        // A failure must not clear stored values.
+        // A failure must not clear values that policies act on, nor start policy evaluation.
+        assertThat(result.getChangedPurlsList()).isEmpty();
         final var persisted = withJdbiHandle(handle -> new PackageHealthMetadataDao(handle).get(packagePurl));
         assertThat(persisted).isNotNull();
         assertThat(persisted.status()).isEqualTo(PackageHealthMetadataStatus.PROCESSED);
@@ -310,6 +317,7 @@ class ResolvePackageHealthMetadataActivityTest extends PersistenceCapableTest {
                         .addPurls(laterPurl.toString())
                         .build());
 
+        assertThat(result.getChangedPurlsList()).containsExactly(fetchedPackagePurl.canonicalize());
         assertThat(result.getUnresolvedPurlsList()).containsExactly(limitedPurl.toString(), laterPurl.toString());
         assertThat(Timestamps.toMillis(result.getRateLimitResetAt())).isEqualTo(resetAt.toEpochMilli());
         final var stored = withJdbiHandle(handle -> new PackageHealthMetadataDao(handle).get(fetchedPackagePurl));
@@ -422,7 +430,7 @@ class ResolvePackageHealthMetadataActivityTest extends PersistenceCapableTest {
         gitHubPart.setRepositoryArchived(true);
         when(analyzer.analyzeGitHubRepository(packagePurl, repository)).thenReturn(Optional.of(gitHubPart));
 
-        activity.execute(
+        final var result = activity.execute(
                 mock(ActivityContext.class),
                 ResolvePackageHealthMetadataActivityArg.newBuilder()
                         .addGithubFetches(PackageHealthGitHubFetch.newBuilder()
@@ -431,6 +439,7 @@ class ResolvePackageHealthMetadataActivityTest extends PersistenceCapableTest {
                         .build());
 
         verify(analyzer, never()).analyze(any());
+        assertThat(result.getChangedPurlsList()).containsExactly(packagePurl.canonicalize());
         final var persisted = withJdbiHandle(handle -> new PackageHealthMetadataDao(handle).get(packagePurl));
         assertThat(persisted).isNotNull();
         assertThat(persisted.stars()).isEqualTo(100L);
@@ -458,6 +467,7 @@ class ResolvePackageHealthMetadataActivityTest extends PersistenceCapableTest {
                         .addPurls("pkg:npm/example@1.0.0")
                         .build());
 
+        assertThat(result.getChangedPurlsList()).isEmpty();
         assertThat(result.getUnresolvedPurlsList()).isEmpty();
         verifyNoInteractions(analyzer);
     }

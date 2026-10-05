@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
@@ -158,9 +158,10 @@ public final class ResolvePackageHealthMetadataActivity
             throw new InterruptedException("Interrupted before package health metadata was stored");
         }
 
-        persist(batch, clock.instant());
+        final List<String> changedPurls = persist(batch, clock.instant());
 
         final var result = ResolvePackageHealthMetadataActivityRes.newBuilder()
+                .addAllChangedPurls(changedPurls)
                 .addAllUnresolvedPurls(batch.unresolvedPurls)
                 .addAllPendingGithubFetches(batch.pendingGitHubFetches);
         final Instant rateLimitResetAt = earliest(batch.depsDevRateLimitResetAt, batch.gitHubRateLimitResetAt);
@@ -213,12 +214,12 @@ public final class ResolvePackageHealthMetadataActivity
         private static final GitHubPart NOT_FETCHED = new GitHubPart(false, null);
     }
 
-    private static void persist(final Batch batch, final Instant fetchedAt) {
+    private static List<String> persist(final Batch batch, final Instant fetchedAt) {
         if (batch.metadataToPersist.isEmpty() && batch.gitHubUpdates.isEmpty() && batch.failedPurls.isEmpty()) {
-            return;
+            return List.of();
         }
 
-        useJdbiTransaction(handle -> {
+        return inJdbiTransaction(handle -> {
             final var dao = new PackageHealthMetadataDao(handle);
             dao.recordFailedFetches(batch.failedPurls, fetchedAt);
 
@@ -226,7 +227,7 @@ public final class ResolvePackageHealthMetadataActivity
             batch.metadataToPersist.forEach(metadata -> purls.add(metadata.purl()));
             batch.gitHubUpdates.forEach(metadata -> purls.add(metadata.purl()));
             if (purls.isEmpty()) {
-                return;
+                return List.of();
             }
             final Map<String, PackageHealthMetadata> previousByPurl = dao.getAll(purls);
 
@@ -249,6 +250,15 @@ public final class ResolvePackageHealthMetadataActivity
                 }
             }
             dao.upsertAll(toUpsert);
+
+            final var changed = new ArrayList<String>(toUpsert.size());
+            for (final PackageHealthMetadata metadata : toUpsert) {
+                final String packagePurl = metadata.purl().canonicalize();
+                if (PackageHealthPolicyDelta.changed(previousByPurl.get(packagePurl), metadata)) {
+                    changed.add(packagePurl);
+                }
+            }
+            return changed;
         });
     }
 

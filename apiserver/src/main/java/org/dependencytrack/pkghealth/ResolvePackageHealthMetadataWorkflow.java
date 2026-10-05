@@ -32,6 +32,7 @@ import org.dependencytrack.proto.internal.workflow.v1.PackageHealthGitHubFetch;
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageHealthMetadataActivityArg;
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageHealthMetadataActivityRes;
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageHealthMetadataWorkflowArg;
+import org.dependencytrack.proto.internal.workflow.v1.ScheduleHealthPolicyEvaluationsArg;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
@@ -108,6 +109,14 @@ public final class ResolvePackageHealthMetadataWorkflow
 
             if (resolveResult == null) {
                 break;
+            }
+
+            if (resolveResult.getChangedPurlsCount() > 0) {
+                ctx.activity(ScheduleHealthPolicyEvaluationsActivity.class)
+                        .call(ScheduleHealthPolicyEvaluationsArg.newBuilder()
+                                .addAllPurls(resolveResult.getChangedPurlsList())
+                                .build())
+                        .await();
             }
 
             final int remaining =

@@ -372,7 +372,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                 }
 
                 final String purl = trivyVuln.getPkgIdentifier().getPurl();
-                final Set<String> bomRefs = bomRefsByPurl.get(purl);
+                final Set<String> bomRefs = bomRefsByPurl.get(normalizePurl(purl));
                 if (bomRefs == null) {
                     LOGGER.warn(
                             "Vulnerability {} reported for PURL {}, but no matching component; Skipping",
@@ -400,6 +400,19 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                         .map(Vulnerability.Builder::build)
                         .toList())
                 .build();
+    }
+
+    /**
+     * Trivy may percent-encode PURLs differently than packageurl-java
+     * (e.g. leaving {@code :} unencoded in qualifier values), so re-serialize
+     * them for lookups to match the keys we produced.
+     */
+    private static String normalizePurl(String purl) {
+        try {
+            return new PackageURL(purl).toString();
+        } catch (MalformedPackageURLException e) {
+            return purl;
+        }
     }
 
     private static boolean isInternalComponent(Component component) {

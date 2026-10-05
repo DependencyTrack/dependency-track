@@ -27,6 +27,7 @@ import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Classification;
 import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
+import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -350,6 +351,46 @@ class TrivyVulnAnalyzerTest {
         final Bom vdr = ignoreUnfixedAnalyzer.analyze(bom);
         assertThat(vdr.getVulnerabilitiesList()).hasSize(1);
         assertThat(vdr.getVulnerabilities(0).getId()).isEqualTo("CVE-2022-11111");
+    }
+
+    @Test
+    void testAnalyzeMatchesPurlWithDifferentlyEncodedQualifier() throws Exception {
+        // Trivy re-serializes PURLs without percent-encoding colons in qualifier values,
+        // whereas packageurl-java encodes them as %3A.
+        final ScanResponse scanResponse = ScanResponse.newBuilder()
+                .addResults(Result.newBuilder()
+                        .setClass_("lang-pkgs")
+                        .setTarget("python")
+                        .setType("python-pkg")
+                        .addVulnerabilities(trivy.proto.common.Vulnerability.newBuilder()
+                                .setVulnerabilityId("CVE-2022-11111")
+                                .setPkgIdentifier(
+                                        PkgIdentifier.newBuilder()
+                                                .setPurl(
+                                                        "pkg:pypi/urllib3@2.7.0?repository_url=https:%2F%2Fexample.com%2Fsimple"))
+                                .setSeverity(trivy.proto.common.Severity.HIGH)
+                                .build())
+                        .build())
+                .build();
+
+        stubTrivyEndpoints(scanResponse);
+
+        final Bom bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("urllib3")
+                        .setPurl("pkg:pypi/urllib3@2.7.0?repository_url=https://example.com/simple")
+                        .setType(CLASSIFICATION_LIBRARY)
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr.getVulnerabilitiesList()).satisfiesExactly(vuln -> {
+            assertThat(vuln.getId()).isEqualTo("CVE-2022-11111");
+            assertThat(vuln.getAffectsList())
+                    .extracting(VulnerabilityAffects::getRef)
+                    .containsExactly("1");
+        });
     }
 
     @Test

@@ -394,6 +394,36 @@ class TrivyVulnAnalyzerTest {
     }
 
     @Test
+    void testAnalyzeSkipsVulnerabilityWithUnmatchedPurl() throws Exception {
+        final ScanResponse scanResponse = ScanResponse.newBuilder()
+                .addResults(Result.newBuilder()
+                        .setClass_("lang-pkgs")
+                        .setTarget("python")
+                        .setType("python-pkg")
+                        .addVulnerabilities(trivy.proto.common.Vulnerability.newBuilder()
+                                .setVulnerabilityId("CVE-2022-11111")
+                                .setPkgIdentifier(PkgIdentifier.newBuilder().setPurl("not-a-purl"))
+                                .setSeverity(trivy.proto.common.Severity.HIGH)
+                                .build())
+                        .build())
+                .build();
+
+        stubTrivyEndpoints(scanResponse);
+
+        final Bom bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("urllib3")
+                        .setPurl("pkg:pypi/urllib3@2.7.0")
+                        .setType(CLASSIFICATION_LIBRARY)
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr.getVulnerabilitiesList()).isEmpty();
+    }
+
+    @Test
     void testAnalyzeOsPackageWithProperties() throws Exception {
         // Simulate Trivy returning a vulnerability for an OS package.
         final ScanResponse scanResponse = ScanResponse.newBuilder()

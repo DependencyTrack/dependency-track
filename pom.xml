@@ -119,7 +119,7 @@
         <lib.caffeine.version>3.3.0</lib.caffeine.version>
         <lib.cel-java.version>0.14.0</lib.cel-java.version>
         <lib.commons-codec.version>1.22.1</lib.commons-codec.version>
-        <lib.commons-lang3.version>3.20.0</lib.commons-lang3.version>
+        <lib.commons-lang3.version>3.21.0</lib.commons-lang3.version>
         <lib.commons-logging.version>1.4.0</lib.commons-logging.version>
         <lib.cpe-parser.version>3.0.1</lib.cpe-parser.version>
         <lib.cyclonedx-java.version>13.2.0</lib.cyclonedx-java.version>

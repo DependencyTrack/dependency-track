@@ -5,9 +5,10 @@ CREATE OR REPLACE PROCEDURE "UPDATE_PROJECT_METRICS"(
 AS
 $$
 DECLARE
-  v_project_id   BIGINT; -- ID of the project to update metrics for
-  v_today        TIMESTAMPTZ := DATE_TRUNC('day', NOW() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
-  v_project      RECORD; -- Aggregated project-level metrics
+  v_project_id    BIGINT; -- ID of the project to update metrics for
+  v_today         TIMESTAMPTZ := DATE_TRUNC('day', NOW() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
+  v_project       RECORD; -- Aggregated project-level metrics
+  v_today_metrics RECORD; -- Today's existing PROJECTMETRICS row, if any
 BEGIN
   SELECT "ID"
     INTO v_project_id
@@ -204,47 +205,46 @@ BEGIN
     FROM computed
     INTO v_project;
 
-  IF NOT EXISTS (
-    SELECT 1
-      FROM (
-        SELECT *
-          FROM "PROJECTMETRICS"
-         WHERE "PROJECT_ID" = v_project_id
-           AND "LAST_OCCURRENCE" >= v_today
-         ORDER BY "LAST_OCCURRENCE" DESC
-         LIMIT 1
-      ) AS pm
-     WHERE (
-             pm."COMPONENTS"
-           , pm."VULNERABLECOMPONENTS"
-           , pm."VULNERABILITIES"
-           , pm."CRITICAL"
-           , pm."HIGH"
-           , pm."MEDIUM"
-           , pm."LOW"
-           , pm."UNASSIGNED_SEVERITY"
-           , pm."KEV"
-           , pm."RISKSCORE"
-           , pm."FINDINGS_TOTAL"
-           , pm."FINDINGS_AUDITED"
-           , pm."FINDINGS_UNAUDITED"
-           , pm."SUPPRESSED"
-           , pm."POLICYVIOLATIONS_TOTAL"
-           , pm."POLICYVIOLATIONS_FAIL"
-           , pm."POLICYVIOLATIONS_WARN"
-           , pm."POLICYVIOLATIONS_INFO"
-           , pm."POLICYVIOLATIONS_AUDITED"
-           , pm."POLICYVIOLATIONS_UNAUDITED"
-           , pm."POLICYVIOLATIONS_LICENSE_TOTAL"
-           , pm."POLICYVIOLATIONS_LICENSE_AUDITED"
-           , pm."POLICYVIOLATIONS_LICENSE_UNAUDITED"
-           , pm."POLICYVIOLATIONS_OPERATIONAL_TOTAL"
-           , pm."POLICYVIOLATIONS_OPERATIONAL_AUDITED"
-           , pm."POLICYVIOLATIONS_OPERATIONAL_UNAUDITED"
-           , pm."POLICYVIOLATIONS_SECURITY_TOTAL"
-           , pm."POLICYVIOLATIONS_SECURITY_AUDITED"
-           , pm."POLICYVIOLATIONS_SECURITY_UNAUDITED"
-           ) IS NOT DISTINCT FROM (
+  SELECT *
+    INTO v_today_metrics
+    FROM "PROJECTMETRICS"
+   WHERE "PROJECT_ID" = v_project_id
+     AND "LAST_OCCURRENCE" >= v_today
+   ORDER BY "LAST_OCCURRENCE" DESC
+   LIMIT 1;
+
+  -- NB: FOUND is automatically set by Postgres: https://www.postgresql.org/docs/current/plpgsql-statements.html#PLPGSQL-STATEMENTS-DIAGNOSTICS
+  IF FOUND
+     AND ( v_today_metrics."COMPONENTS"
+         , v_today_metrics."VULNERABLECOMPONENTS"
+         , v_today_metrics."VULNERABILITIES"
+         , v_today_metrics."CRITICAL"
+         , v_today_metrics."HIGH"
+         , v_today_metrics."MEDIUM"
+         , v_today_metrics."LOW"
+         , v_today_metrics."UNASSIGNED_SEVERITY"
+         , v_today_metrics."KEV"
+         , v_today_metrics."RISKSCORE"
+         , v_today_metrics."FINDINGS_TOTAL"
+         , v_today_metrics."FINDINGS_AUDITED"
+         , v_today_metrics."FINDINGS_UNAUDITED"
+         , v_today_metrics."SUPPRESSED"
+         , v_today_metrics."POLICYVIOLATIONS_TOTAL"
+         , v_today_metrics."POLICYVIOLATIONS_FAIL"
+         , v_today_metrics."POLICYVIOLATIONS_WARN"
+         , v_today_metrics."POLICYVIOLATIONS_INFO"
+         , v_today_metrics."POLICYVIOLATIONS_AUDITED"
+         , v_today_metrics."POLICYVIOLATIONS_UNAUDITED"
+         , v_today_metrics."POLICYVIOLATIONS_LICENSE_TOTAL"
+         , v_today_metrics."POLICYVIOLATIONS_LICENSE_AUDITED"
+         , v_today_metrics."POLICYVIOLATIONS_LICENSE_UNAUDITED"
+         , v_today_metrics."POLICYVIOLATIONS_OPERATIONAL_TOTAL"
+         , v_today_metrics."POLICYVIOLATIONS_OPERATIONAL_AUDITED"
+         , v_today_metrics."POLICYVIOLATIONS_OPERATIONAL_UNAUDITED"
+         , v_today_metrics."POLICYVIOLATIONS_SECURITY_TOTAL"
+         , v_today_metrics."POLICYVIOLATIONS_SECURITY_AUDITED"
+         , v_today_metrics."POLICYVIOLATIONS_SECURITY_UNAUDITED"
+         ) IS NOT DISTINCT FROM (
              v_project.components
            , v_project.vulnerable_components
            , v_project.vulnerabilities
@@ -275,7 +275,16 @@ BEGIN
            , v_project.policy_violations_security_audited
            , v_project.policy_violations_security_unaudited
            )
-  ) THEN
+  THEN
+    -- Nothing has changed since the last computation today. Touch LAST_OCCURRENCE forward
+    -- instead of inserting a duplicate row, so that it keeps meaning "last confirmed as of",
+    -- not just "last changed" - callers polling it to detect that a re-analysis has completed
+    -- would otherwise wait on a write that will never happen.
+    UPDATE "PROJECTMETRICS"
+       SET "LAST_OCCURRENCE" = NOW()
+     WHERE "PROJECT_ID" = v_project_id
+       AND "LAST_OCCURRENCE" >= v_today;
+  ELSE
     INSERT INTO "PROJECTMETRICS" (
       "PROJECT_ID"
     , "COMPONENTS"

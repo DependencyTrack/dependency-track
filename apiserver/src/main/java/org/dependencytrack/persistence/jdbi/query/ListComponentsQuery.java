@@ -47,7 +47,8 @@ public record ListComponentsQuery(
     public enum SortBy {
         NAME,
         GROUP,
-        LAST_RISKSCORE
+        LAST_RISKSCORE,
+        SCORECARD_SCORE
     }
 
     public enum HashType {
@@ -72,6 +73,7 @@ public record ListComponentsQuery(
             @Nullable String lastName,
             @Nullable String lastGroup,
             @Nullable Double lastRiskScore,
+            @Nullable Double lastScorecardScore,
             @Nullable SortBy sortBy,
             @Nullable SortDirection sortDirection,
             Page.TotalCount totalCount)

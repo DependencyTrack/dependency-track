@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
+import com.github.packageurl.PackageURL;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.dependencytrack.common.pagination.PageTokenEncoder;
@@ -29,11 +30,14 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.mapping.OptionalColumnRowMapper.Columns;
 import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
 import org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery;
+import org.dependencytrack.pkghealth.PackageHealthSettings;
+import org.dependencytrack.support.jdbi.mapping.PurlColumnMapper;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.mapper.reflect.BeanMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterColumnMapper;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -109,6 +113,19 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             """)
     Long getComponentId(@Bind UUID componentUuid);
 
+    /// Package PURL of the component, resolved through its package artifact metadata,
+    /// the same way the component lists and component policies resolve it.
+    @SqlQuery("""
+            SELECT "PAM"."PACKAGE_PURL"
+              FROM "COMPONENT" "C"
+             INNER JOIN "PACKAGE_ARTIFACT_METADATA" "PAM"
+                ON "PAM"."PURL" = "C"."PURL"
+             WHERE "C"."UUID" = :componentUuid
+            """)
+    @RegisterColumnMapper(PurlColumnMapper.class)
+    @Nullable
+    PackageURL getPackagePurl(@Bind UUID componentUuid);
+
     /// @since 5.2.0
     @SqlQuery("""
             SELECT "UUID"
@@ -117,7 +134,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             """)
     Set<UUID> getExistingUuids(@Bind Collection<UUID> componentUuids);
 
-    default Page<Component> listProjectComponents(ListProjectComponentsQuery query) {
+    default Page<ListedComponent> listProjectComponents(ListProjectComponentsQuery query) {
         final PageTokenEncoder pageTokenEncoder =
                 getHandle().getConfig(PaginationConfig.class).getPageTokenEncoder();
         final var decodedPageToken =
@@ -172,6 +189,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                             decodedPageToken.lastPublishedAtMicros() != null
                                     ? Instant.EPOCH.plus(decodedPageToken.lastPublishedAtMicros(), ChronoUnit.MICROS)
                                     : null;
+                        case SCORECARD_SCORE -> decodedPageToken.lastScorecardScore();
                     });
         } else {
             totalCount = getBoundedTotalCountWithProjectAcl(
@@ -191,7 +209,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 decodedPageToken != null ? decodedPageToken.lastId() : null,
                 effectiveSortBy,
                 effectiveSortDirection,
-                decodedPageToken != null);
+                decodedPageToken != null,
+                PackageHealthSettings.isEnabled(getHandle()));
 
         final List<ListedComponent> resultRows =
                 rows.size() > 1 ? rows.subList(0, Math.min(rows.size(), query.limit())) : rows;
@@ -211,6 +230,9 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                     effectiveSortBy == ListProjectComponentsQuery.SortBy.PUBLISHED_AT
                             ? lastRow.publishedAtMicros()
                             : null,
+                    effectiveSortBy == ListProjectComponentsQuery.SortBy.SCORECARD_SCORE
+                            ? lastRow.scorecardScore()
+                            : null,
                     effectiveSortBy,
                     effectiveSortDirection,
                     totalCount);
@@ -218,9 +240,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             nextPageToken = null;
         }
 
-        final List<Component> components =
-                resultRows.stream().map(ListedComponent::component).toList();
-        return new Page<>(components, pageTokenEncoder.encode(nextPageToken), totalCount);
+        return new Page<>(resultRows, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
 
     @SqlQuery(/* language=InjectedFreeMarker */ """
@@ -243,6 +263,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                  , "C"."GROUP"
                  , "C"."INTERNAL"
                  , "C"."LAST_RISKSCORE"
+                 , "PHM"."SCORECARD_SCORE" AS "scorecardScore"
                  , "C"."LICENSE" AS "license"
                  , "C"."LICENSE_EXPRESSION" AS "licenseExpression"
                  , "C"."LICENSE_URL" AS "licenseUrl"
@@ -276,16 +297,20 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
               FROM "COMPONENT" "C"
               LEFT JOIN "LICENSE" "L"
                 ON "C"."LICENSE_ID" = "L"."ID"
-            <#if sortByColumn?has_content && sortByColumn == "PUBLISHED_AT">
               LEFT JOIN "PACKAGE_ARTIFACT_METADATA" "PAM"
                 ON "PAM"."PURL" = "C"."PURL"
-            </#if>
+              LEFT JOIN "PACKAGE_HEALTH_METADATA" "PHM"
+                ON "PHM"."PURL" = "PAM"."PACKAGE_PURL"
+               AND "PHM"."STATUS" = 'PROCESSED'
+               AND :packageHealthEnabled
              WHERE ${apiProjectAclCondition}
                AND ${whereConditions?join(" AND ")}
             <#assign castedLastSortValue>
                 <#-- Ensure Postgres can determine the type of lastSortValue even when it's null. -->
                 <#if sortByColumn?has_content && sortByColumn == "PUBLISHED_AT">CAST(:lastSortValue AS TIMESTAMPTZ)
                 <#elseif sortByColumn?has_content && sortByColumn == "LAST_RISKSCORE">CAST(:lastSortValue AS DOUBLE PRECISION)
+                <#-- SCORECARD_SCORE is REAL; comparing it with a DOUBLE PRECISION cursor breaks ties on inexact scores. -->
+                <#elseif sortByColumn?has_content && sortByColumn == "SCORECARD_SCORE">CAST(:lastSortValue AS REAL)
                 <#else>CAST(:lastSortValue AS TEXT)
                 </#if>
             </#assign>
@@ -303,6 +328,21 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                             AND ("PAM"."PUBLISHED_AT" > ${castedLastSortValue}
                                  OR ("PAM"."PUBLISHED_AT" = ${castedLastSortValue} AND "C"."ID" > :lastId)))
                         OR (${castedLastSortValue} IS NOT NULL AND "PAM"."PUBLISHED_AT" IS NULL))
+               </#if>
+            <#elseif hasCursor && sortByColumn?has_content && sortByColumn == "SCORECARD_SCORE">
+               <#-- Missing scores sort as worse than any score: NULLS FIRST on ASC, NULLS LAST on DESC. -->
+               <#if sortDirection == "DESC">
+                   AND ((${castedLastSortValue} IS NULL AND "PHM"."SCORECARD_SCORE" IS NULL AND "C"."ID" > :lastId)
+                        OR (${castedLastSortValue} IS NOT NULL AND "PHM"."SCORECARD_SCORE" IS NOT NULL
+                            AND ("PHM"."SCORECARD_SCORE" < ${castedLastSortValue}
+                                 OR ("PHM"."SCORECARD_SCORE" = ${castedLastSortValue} AND "C"."ID" > :lastId)))
+                        OR (${castedLastSortValue} IS NOT NULL AND "PHM"."SCORECARD_SCORE" IS NULL))
+               <#else>
+                   AND ((${castedLastSortValue} IS NULL AND "PHM"."SCORECARD_SCORE" IS NULL AND "C"."ID" > :lastId)
+                        OR (${castedLastSortValue} IS NULL AND "PHM"."SCORECARD_SCORE" IS NOT NULL)
+                        OR (${castedLastSortValue} IS NOT NULL AND "PHM"."SCORECARD_SCORE" IS NOT NULL
+                            AND ("PHM"."SCORECARD_SCORE" > ${castedLastSortValue}
+                                 OR ("PHM"."SCORECARD_SCORE" = ${castedLastSortValue} AND "C"."ID" > :lastId))))
                </#if>
             <#elseif hasCursor && sortByColumn?has_content>
                <#if sortDirection == "DESC">
@@ -323,6 +363,12 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             </#if>
             <#if sortByColumn?has_content && sortByColumn == "PUBLISHED_AT">
              ORDER BY "PAM"."PUBLISHED_AT" ${sortDirection} NULLS LAST, "C"."ID" ASC
+            <#elseif sortByColumn?has_content && sortByColumn == "SCORECARD_SCORE">
+             <#if sortDirection == "DESC">
+             ORDER BY "PHM"."SCORECARD_SCORE" DESC NULLS LAST, "C"."ID" ASC
+             <#else>
+             ORDER BY "PHM"."SCORECARD_SCORE" ASC NULLS FIRST, "C"."ID" ASC
+             </#if>
             <#elseif sortByColumn?has_content>
              ORDER BY "C"."${sortByColumn}" ${sortDirection}, "C"."ID" ASC
             <#else>
@@ -341,9 +387,10 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             @Bind Long lastId,
             @Define ListProjectComponentsQuery.SortBy sortByColumn,
             @Define SortDirection sortDirection,
-            @Define boolean hasCursor);
+            @Define boolean hasCursor,
+            @Bind boolean packageHealthEnabled);
 
-    default Page<Component> listComponents(ListComponentsQuery query) {
+    default Page<ListedComponent> listComponents(ListComponentsQuery query) {
         final PageTokenEncoder pageTokenEncoder =
                 getHandle().getConfig(PaginationConfig.class).getPageTokenEncoder();
         final var decodedPageToken = pageTokenEncoder.decode(query.pageToken(), ListComponentsQuery.PageToken.class);
@@ -459,6 +506,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                         case NAME -> decodedPageToken.lastName();
                         case GROUP -> decodedPageToken.lastGroup();
                         case LAST_RISKSCORE -> decodedPageToken.lastRiskScore();
+                        case SCORECARD_SCORE -> decodedPageToken.lastScorecardScore();
                     });
         } else {
             totalCount = getListComponentsTotalCount(query, whereConditions, queryParams);
@@ -475,7 +523,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 effectiveSortBy,
                 effectiveSortDirection,
                 decodedPageToken != null,
-                materializeMatches);
+                materializeMatches,
+                PackageHealthSettings.isEnabled(getHandle()));
 
         final List<ListedComponent> resultRows =
                 rows.size() > 1 ? rows.subList(0, Math.min(rows.size(), query.limit())) : rows;
@@ -492,6 +541,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                     effectiveSortBy == ListComponentsQuery.SortBy.LAST_RISKSCORE
                             ? lastComponent.getLastInheritedRiskScore()
                             : null,
+                    effectiveSortBy == ListComponentsQuery.SortBy.SCORECARD_SCORE ? lastRow.scorecardScore() : null,
                     effectiveSortBy,
                     effectiveSortDirection,
                     totalCount);
@@ -499,9 +549,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             nextPageToken = null;
         }
 
-        final List<Component> components =
-                resultRows.stream().map(ListedComponent::component).toList();
-        return new Page<>(components, pageTokenEncoder.encode(nextPageToken), totalCount);
+        return new Page<>(resultRows, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
 
     /// Counts matches up to 10,000. Beyond that, the count is [TotalCount.Type#AT_LEAST].
@@ -536,22 +584,54 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             <#-- @ftlvariable name="hasCursor" type="boolean" -->
             <#-- @ftlvariable name="whereConditions" type="java.util.Collection<String>" -->
             <#-- @ftlvariable name="materializeMatches" type="boolean" -->
+            <#-- @ftlvariable name="packageHealthEnabled" type="boolean" -->
+            <#assign sortByScorecard = sortByColumn?has_content && sortByColumn == "SCORECARD_SCORE">
+            <#if sortByScorecard>
+                <#assign scorecardScore = packageHealthEnabled?then('"PHM"."SCORECARD_SCORE"', 'CAST(NULL AS REAL)')>
+                <#assign scorecardNulls = ((sortDirection!"ASC") == "DESC")?then("LAST", "FIRST")>
+            </#if>
             WITH matches AS <#if materializeMatches>MATERIALIZED<#else>NOT MATERIALIZED</#if> (
                 SELECT "C"."ID",
                        "C"."NAME",
                        "C"."GROUP",
                        "C"."LAST_RISKSCORE"
+                <#if sortByScorecard>
+                     , ${scorecardScore} AS "SCORECARD_SCORE"
+                </#if>
                   FROM "COMPONENT" "C"
                  INNER JOIN "PROJECT" ON "C"."PROJECT_ID" = "PROJECT"."ID"
+                <#-- Join before the limit only when the score is the sort key. -->
+                <#if sortByScorecard && packageHealthEnabled>
+                  LEFT JOIN "PACKAGE_ARTIFACT_METADATA" "PAM" ON "PAM"."PURL" = "C"."PURL"
+                  LEFT JOIN "PACKAGE_HEALTH_METADATA" "PHM"
+                    ON "PHM"."PURL" = "PAM"."PACKAGE_PURL"
+                   AND "PHM"."STATUS" = 'PROCESSED'
+                </#if>
                  WHERE ${apiProjectAclCondition}
                    AND ${whereConditions?join(" AND ")}
                 <#assign castedLastSortValue>
                     <#-- Ensure Postgres can determine the type of lastSortValue even when it's null. -->
                     <#if sortByColumn?has_content && sortByColumn == "LAST_RISKSCORE">CAST(:lastSortValue AS DOUBLE PRECISION)
+                    <#-- Match the column type so inexact scores compare equal to the cursor. -->
+                    <#elseif sortByScorecard>CAST(:lastSortValue AS REAL)
                     <#else>CAST(:lastSortValue AS TEXT)
                     </#if>
                 </#assign>
-                <#if hasCursor && sortByColumn?has_content>
+                <#if hasCursor && sortByScorecard>
+                    <#if scorecardNulls == "LAST">
+                        AND ((${castedLastSortValue} IS NULL AND ${scorecardScore} IS NULL AND "C"."ID" > :lastId)
+                             OR (${castedLastSortValue} IS NOT NULL AND ${scorecardScore} IS NOT NULL
+                                 AND (${scorecardScore} < ${castedLastSortValue}
+                                      OR (${scorecardScore} = ${castedLastSortValue} AND "C"."ID" > :lastId)))
+                             OR (${castedLastSortValue} IS NOT NULL AND ${scorecardScore} IS NULL))
+                    <#else>
+                        AND ((${castedLastSortValue} IS NULL AND ${scorecardScore} IS NULL AND "C"."ID" > :lastId)
+                             OR (${castedLastSortValue} IS NULL AND ${scorecardScore} IS NOT NULL)
+                             OR (${castedLastSortValue} IS NOT NULL AND ${scorecardScore} IS NOT NULL
+                                 AND (${scorecardScore} > ${castedLastSortValue}
+                                      OR (${scorecardScore} = ${castedLastSortValue} AND "C"."ID" > :lastId))))
+                    </#if>
+                <#elseif hasCursor && sortByColumn?has_content>
                     <#if sortDirection == "DESC">
                         AND ((${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NULL AND "C"."ID" > :lastId)
                              OR (${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NOT NULL)
@@ -572,8 +652,13 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             ),
             page AS (
                 SELECT "ID"
+                <#if sortByScorecard>
+                     , "SCORECARD_SCORE"
+                </#if>
                   FROM matches
-                <#if sortByColumn?has_content>
+                <#if sortByScorecard>
+                 ORDER BY "SCORECARD_SCORE" ${sortDirection!"ASC"} NULLS ${scorecardNulls}, "ID" ASC
+                <#elseif sortByColumn?has_content>
                  ORDER BY "${sortByColumn}" ${sortDirection!"ASC"}, "ID" ASC
                 <#else>
                  ORDER BY "NAME" ASC, "ID" ASC
@@ -593,6 +678,11 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                         "C"."GROUP",
                         "C"."INTERNAL",
                         "C"."LAST_RISKSCORE",
+                    <#if sortByScorecard>
+                        page."SCORECARD_SCORE" AS "scorecardScore",
+                    <#elseif packageHealthEnabled>
+                        "PHM"."SCORECARD_SCORE" AS "scorecardScore",
+                    </#if>
                         "C"."LICENSE" AS "license",
                         "C"."LICENSE_EXPRESSION" AS "licenseExpression",
                         "C"."LICENSE_URL" AS "licenseUrl",
@@ -621,7 +711,15 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 INNER JOIN "COMPONENT" "C" ON "C"."ID" = page."ID"
                 INNER JOIN "PROJECT" ON "C"."PROJECT_ID" = "PROJECT"."ID"
                 LEFT OUTER JOIN "LICENSE" "L" ON "C"."LICENSE_ID" = "L"."ID"
-                <#if sortByColumn?has_content>
+                <#if packageHealthEnabled && !sortByScorecard>
+                LEFT JOIN "PACKAGE_ARTIFACT_METADATA" "PAM" ON "PAM"."PURL" = "C"."PURL"
+                LEFT JOIN "PACKAGE_HEALTH_METADATA" "PHM"
+                  ON "PHM"."PURL" = "PAM"."PACKAGE_PURL"
+                 AND "PHM"."STATUS" = 'PROCESSED'
+                </#if>
+                <#if sortByScorecard>
+                    ORDER BY page."SCORECARD_SCORE" ${sortDirection!"ASC"} NULLS ${scorecardNulls}, "C"."ID" ASC
+                <#elseif sortByColumn?has_content>
                     ORDER BY "C"."${sortByColumn}" ${sortDirection!"ASC"}, "C"."ID" ASC
                 <#else>
                     <#-- Default sorting to ensure consistent pagination -->
@@ -639,9 +737,13 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             @Define ListComponentsQuery.SortBy sortByColumn,
             @Define SortDirection sortDirection,
             @Define boolean hasCursor,
-            @Define boolean materializeMatches);
+            @Define boolean materializeMatches,
+            @Define boolean packageHealthEnabled);
 
-    record ListedComponent(Component component, Long publishedAtMicros) {}
+    record ListedComponent(
+            Component component,
+            @Nullable Long publishedAtMicros,
+            @Nullable Double scorecardScore) {}
 
     class ComponentListRowMapper implements RowMapper<ListedComponent> {
 
@@ -674,6 +776,13 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             if (rs.getString("LAST_RISKSCORE") != null) {
                 columns.maybeSet(rs, "LAST_RISKSCORE", ResultSet::getDouble, component::setLastInheritedRiskScore);
             }
+            Double scorecardScore = null;
+            if (columns.contains("scorecardScore")) {
+                final double value = rs.getDouble("scorecardScore");
+                if (!rs.wasNull()) {
+                    scorecardScore = value;
+                }
+            }
             if (columns.contains("licenseUuid") && rs.getString("licenseUuid") != null) {
                 final var license = new License();
                 license.setUuid(UUID.fromString(rs.getString("licenseUuid")));
@@ -692,7 +801,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                     publishedAtMicros = value;
                 }
             }
-            return new ListedComponent(component, publishedAtMicros);
+            return new ListedComponent(component, publishedAtMicros, scorecardScore);
         }
     }
 }

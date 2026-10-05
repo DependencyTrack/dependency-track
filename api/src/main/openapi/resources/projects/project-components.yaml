@@ -27,7 +27,11 @@ get:
     * `name`
     * `group`
     * `last_inherited_risk_score`
+    * `scorecard_score`
     * `package_artifact_metadata.published_at`
+
+    Components without a scorecard score are treated as worse than any scored component:
+    they come first when sorting by `scorecard_score` ascending, and last when sorting descending.
 
     Components without resolved artifact metadata, or whose upstream registry did not
     report a publication date, are placed at the end of the result for both sort

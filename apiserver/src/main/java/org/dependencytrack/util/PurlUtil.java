@@ -100,6 +100,17 @@ public class PurlUtil {
     }
 
     /**
+     * @throws IllegalArgumentException When the PURL has a version, qualifiers, or a subpath
+     */
+    public static void requirePackageOnly(final PackageURL purl) {
+        if (purl.getVersion() != null
+                || (purl.getQualifiers() != null && !purl.getQualifiers().isEmpty())
+                || purl.getSubpath() != null) {
+            throw new IllegalArgumentException("purl must not contain version, qualifiers, or subpath: " + purl);
+        }
+    }
+
+    /**
      * Serialize the qualifiers of a {@link PackageURL} to a JSON string suitable for storage
      * on {@code VulnerableSoftware.purlQualifiers}. Returns {@code null} when the PURL has no
      * qualifiers, so equality lookups in JDOQL line up with rows that omit qualifiers entirely.

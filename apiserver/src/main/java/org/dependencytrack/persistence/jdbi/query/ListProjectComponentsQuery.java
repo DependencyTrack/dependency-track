@@ -38,7 +38,8 @@ public record ListProjectComponentsQuery(
         NAME,
         GROUP,
         LAST_RISKSCORE,
-        PUBLISHED_AT
+        PUBLISHED_AT,
+        SCORECARD_SCORE
     }
 
     public record PageToken(
@@ -47,6 +48,7 @@ public record ListProjectComponentsQuery(
             @Nullable String lastGroup,
             @Nullable Double lastRiskScore,
             @Nullable Long lastPublishedAtMicros,
+            @Nullable Double lastScorecardScore,
             @Nullable SortBy sortBy,
             @Nullable SortDirection sortDirection,
             Page.TotalCount totalCount)

@@ -220,6 +220,8 @@ tags:
 paths:
   /components:
     $ref: "./resources/components/components.yaml"
+  /components/{uuid}/health:
+    $ref: "./resources/components/component-health.yaml"
   /extension-points:
     $ref: "./resources/extensions/extension-points.yaml"
   /extension-points/{extension_point_name}/extensions:

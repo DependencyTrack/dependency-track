@@ -37,10 +37,14 @@ import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
+import org.dependencytrack.model.PackageHealthMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentDao.ListedComponent;
+import org.dependencytrack.persistence.jdbi.PackageHealthMetadataDao;
 import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
+import org.dependencytrack.pkghealth.PackageHealthSettings;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
@@ -126,6 +130,30 @@ public class ComponentsResource extends AbstractApiResource implements Component
 
     @Override
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getComponentHealth(final UUID uuid) {
+        return withJdbiHandle(getAlpineRequest(), handle -> {
+            requireComponentAccess(handle, uuid);
+
+            if (!PackageHealthSettings.isEnabled(handle)) {
+                throw new NotFoundException("Package health is disabled");
+            }
+
+            final PackageURL packagePurl = handle.attach(ComponentDao.class).getPackagePurl(uuid);
+            if (packagePurl == null) {
+                throw new NotFoundException("Package artifact metadata of the component could not be found");
+            }
+
+            final PackageHealthMetadata metadata = new PackageHealthMetadataDao(handle).get(packagePurl);
+            if (metadata == null) {
+                throw new NotFoundException("Package health metadata could not be found");
+            }
+
+            return Response.ok(map(metadata)).build();
+        });
+    }
+
+    @Override
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response listComponents(
             String groupContains,
             String nameContains,
@@ -181,12 +209,13 @@ public class ComponentsResource extends AbstractApiResource implements Component
                         case "name" -> ListComponentsQuery.SortBy.NAME;
                         case "group" -> ListComponentsQuery.SortBy.GROUP;
                         case "last_inherited_risk_score" -> ListComponentsQuery.SortBy.LAST_RISKSCORE;
+                        case "scorecard_score" -> ListComponentsQuery.SortBy.SCORECARD_SCORE;
                         default ->
                             throw new InvalidSortFieldException(
-                                    sortBy, List.of("name", "group", "last_inherited_risk_score"));
+                                    sortBy, List.of("name", "group", "last_inherited_risk_score", "scorecard_score"));
                     };
 
-            final Page<Component> componentsPage = handle.attach(ComponentDao.class)
+            final Page<ListedComponent> componentsPage = handle.attach(ComponentDao.class)
                     .listComponents(new ListComponentsQuery(
                             /* projectId */ null,
                             packageURL != null ? packageURL.canonicalize().toLowerCase(Locale.ROOT) : null,
@@ -214,20 +243,23 @@ public class ComponentsResource extends AbstractApiResource implements Component
                             sortByEnum,
                             mapSortDirection(sortDirection)));
 
+            final List<Component> components = componentsPage.items().stream()
+                    .map(ListedComponent::component)
+                    .toList();
+
             var metricsByComponentId = Map.<Long, DependencyMetrics>of();
             var pkgMetaByPackagePurl = Map.<String, PackageMetadata>of();
             var pkgArtifactMetaByPurl = Map.<String, PackageArtifactMetadata>of();
-            if (!componentsPage.items().isEmpty()) {
+            if (!components.isEmpty()) {
                 if (expandMetrics) {
-                    final Set<Long> componentIds = componentsPage.items().stream()
-                            .map(Component::getId)
-                            .collect(Collectors.toSet());
+                    final Set<Long> componentIds =
+                            components.stream().map(Component::getId).collect(Collectors.toSet());
                     metricsByComponentId =
                             handle.attach(MetricsDao.class).getMostRecentDependencyMetrics(componentIds).stream()
                                     .collect(Collectors.toMap(DependencyMetrics::getComponentId, Function.identity()));
                 }
                 if (expandPkgMeta) {
-                    final Set<String> packagePurls = componentsPage.items().stream()
+                    final Set<String> packagePurls = components.stream()
                             .filter(component -> component.getPurl() != null)
                             .map(component -> PurlUtil.purlPackageOnly(component.getPurl()))
                             .collect(Collectors.toSet());
@@ -236,7 +268,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
                                     .collect(Collectors.toMap(pm -> pm.purl().canonicalize(), Function.identity()));
                 }
                 if (expandPkgArtifactMeta) {
-                    final Set<String> versionedPurls = componentsPage.items().stream()
+                    final Set<String> versionedPurls = components.stream()
                             .filter(component -> component.getPurl() != null)
                             .map(component -> component.getPurl().canonicalize())
                             .collect(Collectors.toSet());
@@ -248,7 +280,8 @@ public class ComponentsResource extends AbstractApiResource implements Component
 
             final var responseItems = new ArrayList<ListComponentsResponseItem>(
                     componentsPage.items().size());
-            for (final Component componentRow : componentsPage.items()) {
+            for (final ListedComponent listedComponent : componentsPage.items()) {
+                final Component componentRow = listedComponent.component();
                 final PackageURL purl = componentRow.getPurl();
                 final String purlStr = purl != null ? purl.canonicalize() : null;
                 final String packagePurlStr = purl != null ? PurlUtil.purlPackageOnly(purl) : null;
@@ -267,6 +300,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
                         .group(componentRow.getGroup())
                         .internal(componentRow.isInternal())
                         .lastInheritedRiskScore(componentRow.getLastInheritedRiskScore())
+                        .scorecardScore(listedComponent.scorecardScore())
                         .license(componentRow.getLicense())
                         .licenseExpression(componentRow.getLicenseExpression())
                         .licenseUrl(componentRow.getLicenseUrl())

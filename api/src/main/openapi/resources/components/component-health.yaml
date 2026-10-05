@@ -1,0 +1,33 @@
+get:
+  operationId: getComponentHealth
+  summary: Get health metadata for a component
+  description: |-
+    Returns stored package health metadata for the component.
+    Metadata is resolved asynchronously and may not yet be available.
+
+    Requires permission `VIEW_PORTFOLIO`.
+  tags:
+    - Components
+  parameters:
+    - name: uuid
+      in: path
+      description: UUID of the component
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "200":
+      description: Package health metadata
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/component-health.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    "404":
+      $ref: "../../shared/responses/generic-not-found-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"

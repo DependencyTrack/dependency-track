@@ -20,6 +20,12 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    ignore:
+      # We commit to the latest LTS release of the JDK,
+      # non-LTS releases should not be suggested.
+      - dependency-name: "eclipse-temurin"
+        update-types:
+          - version-update:semver-major
   - package-ecosystem: github-actions
     commit-message:
       prefix: ""

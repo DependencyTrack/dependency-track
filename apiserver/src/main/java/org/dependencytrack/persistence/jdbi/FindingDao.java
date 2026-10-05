@@ -22,11 +22,14 @@ import com.google.errorprone.annotations.CompileTimeConstant;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.AppliedPolicyAnnotation;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.persistence.jdbi.mapping.PolicyAnnotationsColumnMapper;
 import org.jdbi.v3.json.Json;
+import org.jdbi.v3.sqlobject.config.RegisterColumnMapper;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -49,6 +52,7 @@ import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_PAGINATE;
 import static org.dependencytrack.resources.v1.FindingResource.mapComponentLatestVersion;
 
+@RegisterColumnMapper(PolicyAnnotationsColumnMapper.class)
 public interface FindingDao extends PaginationSupport {
 
     record FindingRow(
@@ -95,6 +99,7 @@ public interface FindingDao extends PaginationSupport {
             AnalysisState analysisState,
             boolean suppressed,
             @Nullable String analysisDetail,
+            @Nullable List<AppliedPolicyAnnotation> policyAnnotationsJson,
             @Nullable Long totalCount) {}
 
     record GroupedFindingRow(
@@ -210,6 +215,7 @@ public interface FindingDao extends PaginationSupport {
                  , a."STATE" AS "analysisState"
                  , a."SUPPRESSED"
                  , a."DETAILS" AS "analysisDetail"
+                 , a."POLICY_ANNOTATIONS" AS "policyAnnotationsJson"
                  , <#if emitTotalCount>COUNT(*) OVER()<#else>CAST(NULL AS BIGINT)</#if> AS "totalCount"
               FROM "COMPONENT" AS c
              INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
@@ -697,6 +703,7 @@ public interface FindingDao extends PaginationSupport {
                  , a."STATE" AS "analysisState"
                  , a."SUPPRESSED"
                  , a."DETAILS" AS "analysisDetail"
+                 , a."POLICY_ANNOTATIONS" AS "policyAnnotationsJson"
                  , page."totalCount"
               FROM page
              INNER JOIN "COMPONENT" AS c

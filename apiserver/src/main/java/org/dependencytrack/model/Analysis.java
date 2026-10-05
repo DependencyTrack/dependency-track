@@ -21,10 +21,12 @@ package org.dependencytrack.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.dependencytrack.persistence.converter.PolicyAnnotationsJsonConverter;
 
 import jakarta.validation.constraints.NotNull;
 
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Convert;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.Extensions;
 import javax.jdo.annotations.ForeignKey;
@@ -172,6 +174,17 @@ public class Analysis implements Serializable {
     @Column(name = "VULNERABILITY_POLICY_ID", allowsNull = "true")
     @JsonIgnore
     private Long vulnerabilityPolicyId;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "POLICY_ANNOTATIONS", jdbcType = "CLOB")
+    @Extensions(
+            value = {
+                @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS JSONB)"),
+                @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS JSONB)")
+            })
+    @Convert(PolicyAnnotationsJsonConverter.class)
+    @JsonProperty(value = "policyAnnotations")
+    private List<AppliedPolicyAnnotation> policyAnnotations;
 
     public long getId() {
         return id;
@@ -328,5 +341,13 @@ public class Analysis implements Serializable {
 
     public void setVulnerabilityPolicyId(Long vulnerabilityPolicyId) {
         this.vulnerabilityPolicyId = vulnerabilityPolicyId;
+    }
+
+    public List<AppliedPolicyAnnotation> getPolicyAnnotations() {
+        return policyAnnotations != null ? policyAnnotations : List.of();
+    }
+
+    public void setPolicyAnnotations(final List<AppliedPolicyAnnotation> policyAnnotations) {
+        this.policyAnnotations = policyAnnotations;
     }
 }

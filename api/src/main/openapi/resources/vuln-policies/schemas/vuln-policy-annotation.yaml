@@ -16,42 +16,9 @@
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 type: object
 properties:
-  state:
+  key:
     type: string
-    enum:
-    - EXPLOITABLE
-    - IN_TRIAGE
-    - FALSE_POSITIVE
-    - NOT_AFFECTED
-    - RESOLVED
-  justification:
+  value:
     type: string
-    enum:
-    - CODE_NOT_PRESENT
-    - CODE_NOT_REACHABLE
-    - REQUIRES_CONFIGURATION
-    - REQUIRES_DEPENDENCY
-    - REQUIRES_ENVIRONMENT
-    - PROTECTED_BY_COMPILER
-    - PROTECTED_AT_RUNTIME
-    - PROTECTED_AT_PERIMETER
-    - PROTECTED_BY_MITIGATING_CONTROL
-  vendor_response:
-    type: string
-    enum:
-    - CAN_NOT_FIX
-    - WILL_NOT_FIX
-    - UPDATE
-    - ROLLBACK
-    - WORKAROUND_AVAILABLE
-  details:
-    type: string
-  suppress:
-    type: boolean
-    default: false
-  annotations:
-    type: array
-    items:
-      $ref: "./vuln-policy-annotation.yaml"
 required:
-- state
+- key

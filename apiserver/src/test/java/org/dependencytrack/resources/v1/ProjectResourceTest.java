@@ -66,6 +66,7 @@ import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
+import org.dependencytrack.resources.v1.vo.ComponentVulnerabilityView;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.hamcrest.CoreMatchers;
@@ -3760,8 +3761,10 @@ class ProjectResourceTest extends ResourceTest {
                             });
 
                             assertThat(qm.getVulnerabilities(clonedComponent, false)
-                                            .getList(Vulnerability.class))
-                                    .satisfiesExactly(v -> assertThat(v.getId()).isEqualTo(vuln.getId()));
+                                            .getList(ComponentVulnerabilityView.class))
+                                    .satisfiesExactly(view -> assertThat(
+                                                    view.getVulnerability().getId())
+                                            .isEqualTo(vuln.getId()));
 
                             assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
                                 assertThat(clonedAnalysis.getId()).isNotEqualTo(analysisId);

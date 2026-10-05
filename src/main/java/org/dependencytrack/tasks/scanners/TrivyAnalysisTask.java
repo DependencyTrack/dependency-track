@@ -25,6 +25,7 @@ import alpine.common.util.UrlUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
+import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import com.google.protobuf.Message;
 import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
@@ -349,7 +350,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                 var vulnerability = result.getVulnerabilities(idx);
                 var key = vulnerability.getPkgIdentifier().getPurl();
                 if (!shouldIgnoreUnfixed || vulnerability.getStatus() == 3) {
-                    final Component component = componentByPurl.get(key);
+                    final Component component = componentByPurl.get(normalizePurl(key));
                     if (component == null) {
                         LOGGER.warn("""
                                 Vulnerability %s reported for PURL %s, but no component that was \
@@ -367,6 +368,19 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
             final Component component = entry.getKey();
             final List<trivy.proto.common.Vulnerability> vulns = entry.getValue();
             handle(component, vulns);
+        }
+    }
+
+    /**
+     * Trivy may percent-encode PURLs differently than packageurl-java
+     * (e.g. leaving {@code :} unencoded in qualifier values), so re-serialize
+     * them for lookups to match the keys we produced.
+     */
+    private static String normalizePurl(String purl) {
+        try {
+            return new PackageURL(purl).toString();
+        } catch (MalformedPackageURLException e) {
+            return purl;
         }
     }
 

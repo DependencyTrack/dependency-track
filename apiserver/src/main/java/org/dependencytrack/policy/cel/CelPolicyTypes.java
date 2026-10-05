@@ -22,6 +22,7 @@ import dev.cel.common.types.CelType;
 import dev.cel.common.types.ListType;
 import dev.cel.common.types.StructTypeReference;
 import org.dependencytrack.proto.policy.v1.Component;
+import org.dependencytrack.proto.policy.v1.HealthMeta;
 import org.dependencytrack.proto.policy.v1.License;
 import org.dependencytrack.proto.policy.v1.Project;
 import org.dependencytrack.proto.policy.v1.Tools;
@@ -53,6 +54,8 @@ public final class CelPolicyTypes {
             StructTypeReference.create(Vulnerability.Alias.getDescriptor().getFullName());
     public static final CelType TYPE_VERSION_DISTANCE =
             StructTypeReference.create(VersionDistance.getDescriptor().getFullName());
+    public static final CelType TYPE_HEALTH =
+            StructTypeReference.create(HealthMeta.getDescriptor().getFullName());
 
     private CelPolicyTypes() {}
 }

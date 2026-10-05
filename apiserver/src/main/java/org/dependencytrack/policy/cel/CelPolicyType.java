@@ -29,6 +29,7 @@ import dev.cel.parser.CelStandardMacro;
 import dev.cel.runtime.CelRuntime;
 import dev.cel.runtime.CelRuntimeFactory;
 import org.dependencytrack.proto.policy.v1.Component;
+import org.dependencytrack.proto.policy.v1.HealthMeta;
 import org.dependencytrack.proto.policy.v1.License;
 import org.dependencytrack.proto.policy.v1.Project;
 import org.dependencytrack.proto.policy.v1.Tools;
@@ -45,7 +46,8 @@ public enum CelPolicyType {
             CelPolicyVariable.COMPONENT,
             CelPolicyVariable.PROJECT,
             CelPolicyVariable.VULNS,
-            CelPolicyVariable.NOW),
+            CelPolicyVariable.NOW,
+            CelPolicyVariable.HEALTH),
     /// Vulnerability policy conditions must return a boolean. A match usually
     /// applies a suppression, so a string result is rejected to prevent
     /// accidental matches.
@@ -97,6 +99,8 @@ public enum CelPolicyType {
             Vulnerability.getDescriptor(),
             Vulnerability.Alias.getDescriptor(),
             VersionDistance.getDescriptor(),
+            HealthMeta.getDescriptor(),
+            HealthMeta.ScorecardCheck.getDescriptor(),
         };
     }
 

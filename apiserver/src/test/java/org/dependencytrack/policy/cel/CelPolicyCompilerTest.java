@@ -21,6 +21,7 @@ package org.dependencytrack.policy.cel;
 import dev.cel.common.types.CelType;
 import org.dependencytrack.cel.InvalidCelExpressionException;
 import org.dependencytrack.policy.cel.CelPolicyCompiler.CacheMode;
+import org.dependencytrack.proto.policy.v1.HealthMeta;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_COMPONENT;
+import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_HEALTH;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_LICENSE;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_LICENSE_GROUP;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_PROJECT;
@@ -206,5 +208,51 @@ class CelPolicyCompilerTest {
                 spdx_expr_allows(component.license_expression, ["MIT", "Apache-2.0"])
                     && spdx_expr_requires_any(component.license_expression, ["GPL-3.0-only"])
                 """, CacheMode.NO_CACHE));
+    }
+
+    @Test
+    void shouldCompileAndEvaluateHealthScorecardPolicy() throws Exception {
+        final CelPolicyProgram program = new CelPolicyCompiler(CelPolicyType.COMPONENT)
+                .compile("has(health.scorecard_score) && health.scorecard_score < 5.0", CacheMode.NO_CACHE);
+
+        assertThat(program.getRequirements()).containsOnlyKeys(TYPE_HEALTH);
+        assertThat(program.getRequirements().get(TYPE_HEALTH)).containsOnly("scorecard_score");
+
+        assertThat(program.execute(Map.of(
+                        "health",
+                        HealthMeta.newBuilder().setScorecardScore(4.0f).build())))
+                .isTrue();
+        assertThat(program.execute(Map.of("health", HealthMeta.getDefaultInstance())))
+                .isFalse();
+    }
+
+    @Test
+    void shouldCompileHealthPolicyFields() throws Exception {
+        final var compiler = new CelPolicyCompiler(CelPolicyType.COMPONENT);
+        Set<String> healthData = Set.of(
+                "avg_issue_age_days",
+                "commit_frequency_weekly",
+                "last_commit",
+                "dependents",
+                "bus_factor",
+                "stars",
+                "forks",
+                "is_repo_archived");
+        for (final String field : healthData) {
+            final CelPolicyProgram program = compiler.compile("has(health." + field + ")", CacheMode.NO_CACHE);
+            assertThat(program.getRequirements().get(TYPE_HEALTH)).contains(field);
+        }
+
+        final CelPolicyProgram checks = compiler.compile(
+                "health.scorecard_checks.exists(c, c.name == \"Maintained\" && c.score <= 3.0)", CacheMode.NO_CACHE);
+        assertThat(checks.getRequirements().get(TYPE_HEALTH)).contains("scorecard_checks");
+        assertThat(checks.execute(Map.of(
+                        "health",
+                        HealthMeta.newBuilder()
+                                .addScorecardChecks(HealthMeta.ScorecardCheck.newBuilder()
+                                        .setName("Maintained")
+                                        .setScore(3.0f))
+                                .build())))
+                .isTrue();
     }
 }

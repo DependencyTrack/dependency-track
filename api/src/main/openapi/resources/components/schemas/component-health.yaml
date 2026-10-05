@@ -1,0 +1,122 @@
+type: object
+description: >
+  Stored health metadata for the package identified by the component's PURL.
+  Health data is resolved asynchronously and shared by components of the same package.
+properties:
+  purl:
+    type: string
+    maxLength: 1024
+    description: Package URL without version, qualifiers, or subpath.
+  status:
+    type: string
+    enum:
+      - PROCESSED
+      - NOT_AVAILABLE
+  last_fetch:
+    description: Time of the most recent fetch attempt.
+    allOf:
+      - $ref: "../../../shared/schemas/timestamp.yaml"
+  dependents:
+    type: integer
+    format: int64
+    minimum: 0
+    description: Number of packages that depend on this package.
+  stars:
+    type: integer
+    format: int64
+    minimum: 0
+    description: GitHub repository stars.
+  forks:
+    type: integer
+    format: int64
+    minimum: 0
+    description: GitHub repository forks.
+  contributors:
+    type: integer
+    format: int64
+    minimum: 0
+    description: Number of repository contributors.
+  open_issues:
+    type: integer
+    format: int64
+    minimum: 0
+    description: Number of open repository issues.
+  open_prs:
+    type: integer
+    format: int64
+    minimum: 0
+    description: Number of open repository pull requests.
+  commit_frequency_weekly:
+    type: number
+    format: float
+    minimum: 0
+    description: Average number of commits per week.
+  last_commit:
+    description: Time of the most recent repository commit.
+    allOf:
+      - $ref: "../../../shared/schemas/timestamp.yaml"
+  bus_factor:
+    type: integer
+    format: int32
+    minimum: 0
+    description: Estimated number of contributors whose loss would affect the repository.
+  avg_issue_age_days:
+    type: number
+    format: float
+    minimum: 0
+    description: Average age of open issues in days.
+  files:
+    type: integer
+    format: int64
+    minimum: 0
+    description: Number of files in the repository.
+  has_readme:
+    type: boolean
+    description: Whether the repository contains a README.
+  has_code_of_conduct:
+    type: boolean
+    description: Whether the repository contains a code of conduct.
+  has_security_policy:
+    type: boolean
+    description: Whether the repository contains a security policy.
+  is_repo_archived:
+    type: boolean
+    description: Whether the repository is archived.
+  scorecard_score:
+    type: number
+    format: float
+    minimum: 0
+    maximum: 10
+    description: Overall OpenSSF Scorecard score.
+  scorecard_reference_version:
+    type: string
+    description: Reference version used for the Scorecard evaluation.
+  scorecard_timestamp:
+    description: Time of the Scorecard evaluation.
+    allOf:
+      - $ref: "../../../shared/schemas/timestamp.yaml"
+  project_metadata_observed_at:
+    description: >
+      Time deps.dev last observed the GitHub project metadata used for stars and forks.
+      Absent when deps.dev did not report an observation time.
+    allOf:
+      - $ref: "../../../shared/schemas/timestamp.yaml"
+  deps_dev_url:
+    type: string
+    format: uri
+    description: deps.dev page for this package.
+  github_url:
+    type: string
+    format: uri
+    description: >
+      GitHub repository page for this package.
+      Absent when the source repository is not on GitHub.
+  scorecard_checks:
+    type: array
+    description: Individual OpenSSF Scorecard checks.
+    items:
+      $ref: "./package-health-scorecard-check.yaml"
+required:
+  - purl
+  - status
+  - scorecard_checks

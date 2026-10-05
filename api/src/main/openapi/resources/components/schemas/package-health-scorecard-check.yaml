@@ -1,0 +1,22 @@
+type: object
+properties:
+  name:
+    type: string
+    description: Name of the OpenSSF Scorecard check.
+  description:
+    type: string
+  score:
+    type: number
+    format: float
+  reason:
+    type: string
+  details:
+    type: array
+    items:
+      type: string
+  documentation_url:
+    type: string
+    format: uri
+required:
+  - name
+  - details

@@ -60,6 +60,12 @@ properties:
   last_inherited_risk_score:
     type: number
     format: double
+  scorecard_score:
+    type: number
+    format: double
+    description: >-
+      OpenSSF Scorecard score for the component package, when processed package
+      health metadata is available.
   uuid:
     type: string
     format: uuid

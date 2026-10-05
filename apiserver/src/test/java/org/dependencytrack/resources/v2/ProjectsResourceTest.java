@@ -27,10 +27,13 @@ import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.License;
+import org.dependencytrack.model.PackageHealthMetadata;
+import org.dependencytrack.model.PackageHealthMetadataStatus;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scope;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.persistence.jdbi.PackageHealthMetadataDao;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
@@ -45,10 +48,12 @@ import jakarta.ws.rs.core.Response;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.model.ConfigPropertyConstants.PACKAGE_HEALTH_RESOLUTION_ENABLED;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
@@ -509,6 +514,195 @@ public class ProjectsResourceTest extends ResourceTest {
     }
 
     @Test
+    public void listProjectComponentsSortByScorecardScoreShouldPageOverTiesAndMissingScores() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
+
+        final var low = new Component();
+        low.setProject(project);
+        low.setName("low");
+        low.setPurl(new PackageURL("maven", "test", "low", "1.0", null, null));
+        qm.createComponent(low, false);
+
+        final var high = new Component();
+        high.setProject(project);
+        high.setName("high");
+        high.setPurl(new PackageURL("maven", "test", "high", "1.0", null, null));
+        qm.createComponent(high, false);
+
+        final var none = new Component();
+        none.setProject(project);
+        none.setName("none");
+        none.setPurl(new PackageURL("maven", "test", "none", "1.0", null, null));
+        qm.createComponent(none, false);
+
+        final var tied = new Component();
+        tied.setProject(project);
+        tied.setName("tied");
+        tied.setPurl(new PackageURL("maven", "test", "tied", "1.0", null, null));
+        qm.createComponent(tied, false);
+
+        final Instant fetchedAt = Instant.parse("2026-01-12T12:00:00Z");
+        useJdbiHandle(handle -> {
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(
+                            new PackageMetadata(
+                                    new PackageURL("maven", "test", "low", null, null, null),
+                                    null,
+                                    null,
+                                    fetchedAt,
+                                    null,
+                                    null),
+                            new PackageMetadata(
+                                    new PackageURL("maven", "test", "high", null, null, null),
+                                    null,
+                                    null,
+                                    fetchedAt,
+                                    null,
+                                    null),
+                            new PackageMetadata(
+                                    new PackageURL("maven", "test", "tied", null, null, null),
+                                    null,
+                                    null,
+                                    fetchedAt,
+                                    null,
+                                    null)));
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(
+                            artifactMetadata("low", fetchedAt),
+                            artifactMetadata("high", fetchedAt),
+                            artifactMetadata("tied", fetchedAt)));
+            final var healthDao = new PackageHealthMetadataDao(handle);
+            healthDao.upsertAll(List.of(scorecardMetadata("pkg:maven/test/low", 2.5f)));
+            // 7.3 is not exactly representable as a float, so ties at that score
+            // must still page correctly when the cursor round-trips through a double.
+            healthDao.upsertAll(List.of(scorecardMetadata("pkg:maven/test/high", 7.3f)));
+            healthDao.upsertAll(List.of(scorecardMetadata("pkg:maven/test/tied", 7.3f)));
+        });
+
+        assertThat(collectScorecardSort(project, "ASC")).containsExactly("none", "low", "high", "tied");
+        assertThat(collectScorecardSort(project, "DESC")).containsExactly("high", "tied", "low", "none");
+    }
+
+    @Test
+    public void listProjectComponentsShouldOmitScorecardScoreWhenPackageHealthIsDisabled() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("low");
+        component.setPurl(new PackageURL("maven", "test", "low", "1.0", null, null));
+        qm.createComponent(component, false);
+
+        final Instant fetchedAt = Instant.parse("2026-01-12T12:00:00Z");
+        useJdbiHandle(handle -> {
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
+                            new PackageURL("maven", "test", "low", null, null, null),
+                            null,
+                            null,
+                            fetchedAt,
+                            null,
+                            null)));
+            new PackageArtifactMetadataDao(handle).upsertAll(List.of(artifactMetadata("low", fetchedAt)));
+            new PackageHealthMetadataDao(handle).upsertAll(List.of(scorecardMetadata("pkg:maven/test/low", 2.5f)));
+        });
+
+        final Response enabledResponse = jersey.target("/projects/" + project.getUuid() + "/components")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(enabledResponse.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(enabledResponse))
+                .inPath("$.items[0].scorecard_score")
+                .isEqualTo(2.5);
+
+        qm.createConfigProperty(
+                PACKAGE_HEALTH_RESOLUTION_ENABLED.getGroupName(),
+                PACKAGE_HEALTH_RESOLUTION_ENABLED.getPropertyName(),
+                "false",
+                PACKAGE_HEALTH_RESOLUTION_ENABLED.getPropertyType(),
+                PACKAGE_HEALTH_RESOLUTION_ENABLED.getDescription());
+
+        final Response disabledResponse = jersey.target("/projects/" + project.getUuid() + "/components")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(disabledResponse.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(disabledResponse))
+                .inPath("$.items[0]")
+                .isObject()
+                .doesNotContainKey("scorecard_score");
+    }
+
+    private java.util.List<String> collectScorecardSort(final Project project, final String direction) {
+        final java.util.ArrayList<String> collected = new java.util.ArrayList<>();
+        String pageToken = null;
+        do {
+            var target = jersey.target("/projects/" + project.getUuid() + "/components")
+                    .queryParam("sort_by", "scorecard_score")
+                    .queryParam("sort_direction", direction)
+                    .queryParam("limit", 1);
+            if (pageToken != null) {
+                target = target.queryParam("page_token", pageToken);
+            }
+            final Response response = target.request().header(X_API_KEY, apiKey).get();
+            assertThat(response.getStatus()).isEqualTo(200);
+            final JsonObject body = parseJsonObject(response);
+            body.getJsonArray("items")
+                    .forEach(v -> collected.add(v.asJsonObject().getString("name")));
+            pageToken = body.containsKey("next_page_token") ? body.getString("next_page_token") : null;
+        } while (pageToken != null && collected.size() <= 10);
+        return collected;
+    }
+
+    private static PackageArtifactMetadata artifactMetadata(final String name, final Instant resolvedAt)
+            throws Exception {
+        return new PackageArtifactMetadata(
+                new PackageURL("maven", "test", name, "1.0", null, null),
+                new PackageURL("maven", "test", name, null, null, null),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "central",
+                resolvedAt);
+    }
+
+    private static PackageHealthMetadata scorecardMetadata(final String purl, final float score) throws Exception {
+        return new PackageHealthMetadata(
+                new PackageURL(purl),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                score,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                Instant.parse("2026-01-12T12:00:00Z"),
+                PackageHealthMetadataStatus.PROCESSED,
+                List.of());
+    }
+
+    @Test
     public void shouldReturn400WhenSortByFieldIsNotSupportedForListProjectComponents() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
@@ -528,7 +722,7 @@ public class ProjectsResourceTest extends ResourceTest {
                   "title": "Invalid sort field",
                   "detail": "Sorting by field 'invalid_field' is not supported",
                   "invalid_field": "invalid_field",
-                  "supported_fields": ["name", "group", "last_inherited_risk_score", "package_artifact_metadata.published_at"]
+                  "supported_fields": ["name", "group", "last_inherited_risk_score", "scorecard_score", "package_artifact_metadata.published_at"]
                 }
                 """);
     }

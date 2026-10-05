@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.util;
 
+import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
@@ -79,6 +80,20 @@ public class InternalComponentIdentifier {
         }
 
         return matchesGroup || matchesName;
+    }
+
+    /**
+     * Applies the same rules as {@link #isInternal(Component)}, with the PURL namespace as group.
+     */
+    public boolean isInternal(final PackageURL purl) {
+        if (!hasPatterns()) {
+            return false;
+        }
+
+        final var component = new Component();
+        component.setGroup(purl.getNamespace());
+        component.setName(purl.getName());
+        return isInternal(component);
     }
 
     public boolean hasPatterns() {

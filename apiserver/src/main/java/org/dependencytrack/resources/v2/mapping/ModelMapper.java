@@ -18,19 +18,23 @@
  */
 package org.dependencytrack.resources.v2.mapping;
 
+import org.dependencytrack.api.v2.model.ComponentHealth;
 import org.dependencytrack.api.v2.model.ComponentProject;
 import org.dependencytrack.api.v2.model.DependencyMetrics;
 import org.dependencytrack.api.v2.model.Hashes;
 import org.dependencytrack.api.v2.model.License;
 import org.dependencytrack.api.v2.model.OrganizationalContact;
 import org.dependencytrack.api.v2.model.PackageArtifactMetadata;
+import org.dependencytrack.api.v2.model.PackageHealthScorecardCheck;
 import org.dependencytrack.api.v2.model.PackageMetadata;
 import org.dependencytrack.api.v2.model.Scope;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.PackageHealthMetadata;
 import org.dependencytrack.model.Project;
 import org.jspecify.annotations.Nullable;
 
+import java.net.URI;
 import java.util.List;
 
 public class ModelMapper {
@@ -105,6 +109,56 @@ public class ModelMapper {
                 .policyViolationsOperationalTotal(metrics.getPolicyViolationsOperationalTotal())
                 .policyViolationsOperationalAudited(metrics.getPolicyViolationsOperationalAudited())
                 .policyViolationsOperationalUnaudited(metrics.getPolicyViolationsOperationalUnaudited())
+                .build();
+    }
+
+    public static PackageHealthScorecardCheck map(org.dependencytrack.model.PackageHealthScorecardCheck check) {
+        return PackageHealthScorecardCheck.builder()
+                .name(check.name())
+                .description(check.description())
+                .score(check.score())
+                .reason(check.reason())
+                .details(check.details())
+                .documentationUrl(check.documentationUrl() != null ? URI.create(check.documentationUrl()) : null)
+                .build();
+    }
+
+    public static ComponentHealth map(PackageHealthMetadata metadata) {
+        return ComponentHealth.builder()
+                .purl(metadata.purl().canonicalize())
+                .status(ComponentHealth.StatusEnum.valueOf(metadata.status().name()))
+                .lastFetch(metadata.lastFetch() != null ? metadata.lastFetch().toEpochMilli() : null)
+                .scorecardChecks(metadata.scorecardChecks().stream()
+                        .map(ModelMapper::map)
+                        .toList())
+                .stars(metadata.stars())
+                .forks(metadata.forks())
+                .contributors(metadata.contributors())
+                .openIssues(metadata.openIssues())
+                .openPrs(metadata.openPullRequests())
+                .dependents(metadata.dependents())
+                .files(metadata.files())
+                .commitFrequencyWeekly(metadata.commitFrequencyWeekly())
+                .lastCommit(
+                        metadata.lastCommit() != null ? metadata.lastCommit().toEpochMilli() : null)
+                .busFactor(metadata.busFactor())
+                .avgIssueAgeDays(metadata.averageIssueAgeDays())
+                .hasReadme(metadata.hasReadme())
+                .hasCodeOfConduct(metadata.hasCodeOfConduct())
+                .hasSecurityPolicy(metadata.hasSecurityPolicy())
+                .isRepoArchived(metadata.repositoryArchived())
+                .scorecardScore(metadata.scorecardScore())
+                .scorecardReferenceVersion(metadata.scorecardReferenceVersion())
+                .scorecardTimestamp(
+                        metadata.scorecardTimestamp() != null
+                                ? metadata.scorecardTimestamp().toEpochMilli()
+                                : null)
+                .projectMetadataObservedAt(
+                        metadata.projectMetadataObservedAt() != null
+                                ? metadata.projectMetadataObservedAt().toEpochMilli()
+                                : null)
+                .depsDevUrl(metadata.depsDevUrl() != null ? URI.create(metadata.depsDevUrl()) : null)
+                .githubUrl(metadata.githubUrl() != null ? URI.create(metadata.githubUrl()) : null)
                 .build();
     }
 

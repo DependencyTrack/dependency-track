@@ -66,6 +66,7 @@ class TaskSchedulerInitializerTest {
                         "Metrics Maintenance",
                         "NVD Mirror",
                         "OSV Mirror",
+                        "Package Health Metadata Resolution",
                         "Package Metadata Maintenance",
                         "Package Metadata Resolution",
                         "Portfolio Metrics Update",

@@ -687,10 +687,6 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilities();
     }
 
-    public PaginatedResult getVulnerabilities(Component component, boolean includeSuppressed) {
-        return getVulnerabilityQueryManager().getVulnerabilities(component, includeSuppressed);
-    }
-
     public List<Component> getAllVulnerableComponents(Project project, Vulnerability vulnerability) {
         return getVulnerabilityQueryManager().getAllVulnerableComponents(project, vulnerability);
     }

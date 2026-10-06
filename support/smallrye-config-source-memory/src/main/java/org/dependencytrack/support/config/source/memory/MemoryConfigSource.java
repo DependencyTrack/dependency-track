@@ -41,6 +41,10 @@ public final class MemoryConfigSource implements ConfigSource {
         PROPERTIES.put(key, value);
     }
 
+    public static void removeProperty(final String key) {
+        PROPERTIES.remove(key);
+    }
+
     public static void clear() {
         PROPERTIES.clear();
     }

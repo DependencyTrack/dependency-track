@@ -447,6 +447,11 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         // Determine which attributions are no longer applicable, and should be deleted.
         final var attributionIdsToDelete = new HashSet<Long>();
         for (final FindingDao.FindingAttribution existingAttribution : existingAttributions) {
+            // Manually assigned findings are not reported by analyzers.
+            if ("none".equals(existingAttribution.analyzerName())) {
+                continue;
+            }
+
             final var attributionKey = new FindingAttributionKey(
                     new FindingKey(existingAttribution.componentId(), existingAttribution.vulnDbId()),
                     existingAttribution.analyzerName());

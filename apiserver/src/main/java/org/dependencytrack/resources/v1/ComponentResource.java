@@ -72,6 +72,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -763,10 +764,13 @@ public class ComponentResource extends AbstractApiResource {
             //
             // We currently pay for the cost regardless of whether clients even want this information.
             // A future API version should make this optional.
-            final Map<UUID, String> packagePurlByComponentUuid = graph.values().stream()
-                    .filter(graphComponent -> graphComponent.purl() != null)
-                    .collect(Collectors.toMap(
-                            GraphComponent::uuid, graphComponent -> PurlUtil.purlPackageOnly(graphComponent.purl())));
+            final Map<UUID, String> packagePurlByComponentUuid = new HashMap<>();
+            for (final GraphComponent graphComponent : graph.values()) {
+                final PackageURL parsedPurl = PurlUtil.silentPurl(graphComponent.purl());
+                if (parsedPurl != null) {
+                    packagePurlByComponentUuid.put(graphComponent.uuid(), PurlUtil.purlPackageOnly(parsedPurl));
+                }
+            }
             final Map<String, String> latestVersionByPackagePurl = new PackageMetadataDao(handle)
                     .getAll(new HashSet<>(packagePurlByComponentUuid.values())).stream()
                             .filter(pkgMetadata -> pkgMetadata.latestVersion() != null)

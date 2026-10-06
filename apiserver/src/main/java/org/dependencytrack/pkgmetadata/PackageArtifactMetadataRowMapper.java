@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.pkgmetadata;
 
-import com.github.packageurl.PackageURL;
+import org.dependencytrack.support.jdbi.mapping.PurlColumnMapper;
 import org.jdbi.v3.core.mapper.ColumnMapper;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -34,8 +34,7 @@ public final class PackageArtifactMetadataRowMapper implements RowMapper<Package
 
     @Override
     public RowMapper<PackageArtifactMetadata> specialize(ResultSet rs, StatementContext ctx) {
-        final ColumnMapper<PackageURL> purlColumnMapper =
-                ctx.findColumnMapperFor(PackageURL.class).orElseThrow();
+        final var purlColumnMapper = new PurlColumnMapper();
         final ColumnMapper<Instant> instantColumnMapper =
                 ctx.findColumnMapperFor(Instant.class).orElseThrow();
 

@@ -33,7 +33,6 @@ import org.dependencytrack.pkgmetadata.PackageArtifactMetadataRowMapper;
 import org.dependencytrack.pkgmetadata.PackageMetadataRowMapper;
 import org.dependencytrack.support.jdbi.exception.ExceptionTranslationPlugin;
 import org.dependencytrack.support.jdbi.mapping.DateColumnMapper;
-import org.dependencytrack.support.jdbi.mapping.PurlColumnMapper;
 import org.jdbi.v3.core.ConnectionFactory;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleCallback;
@@ -218,7 +217,9 @@ public class JdbiFactory {
                 .registerColumnMapper(new ExternalReferencesColumnMapper())
                 .registerColumnMapper(new OrganizationalContactsColumnMapper())
                 .registerColumnMapper(new OrganizationalEntityColumnMapper())
-                .registerColumnMapper(new PurlColumnMapper())
+                // NB: Do **NOT** register PurlColumnMapper here!
+                // Some PURLs in the DB may not be parseable, causing entire queries to fail.
+                // Register it ad-hoc on handles or queries where data quality is ensured.
                 .registerRowMapper(new PackageMetadataRowMapper())
                 .registerRowMapper(new PackageArtifactMetadataRowMapper());
 

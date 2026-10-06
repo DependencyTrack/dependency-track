@@ -24,13 +24,39 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.common.Mappers;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 
 public class PurlUtil {
 
+    private static final Pattern PYPI_NAME_SEPARATORS = Pattern.compile("[-_.]+");
+
     private PurlUtil() {}
+
+    /// Applies type-specific normalization rules to the name of a given [PackageURL].
+    ///
+    /// @since 5.2.0
+    public static String normalizedName(PackageURL purl) {
+        // PEP 503 (https://peps.python.org/pep-0503/#normalized-names):
+        //   "The name should be lowercased with all runs of the characters
+        //   `.`, `-`, or `_` replaced with a single `-` character."
+        //
+        // Note that packageurl-java already lowercases names of PyPI packages.
+        if (PackageURL.StandardTypes.PYPI.equals(purl.getType())) {
+            return PYPI_NAME_SEPARATORS.matcher(purl.getName()).replaceAll("-");
+        }
+
+        // NuGet (https://learn.microsoft.com/en-us/nuget/reference/nuspec#id):
+        //   "The case-insensitive package identifier [...]"
+        if (PackageURL.StandardTypes.NUGET.equals(purl.getType())) {
+            return purl.getName().toLowerCase(Locale.ROOT);
+        }
+
+        return purl.getName();
+    }
 
     public static PackageURL purlCoordinatesOnly(final PackageURL original) throws MalformedPackageURLException {
         return aPackageURL()

@@ -38,6 +38,7 @@ import org.cyclonedx.parsers.XmlParser;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
@@ -69,6 +70,7 @@ import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
+import org.dependencytrack.support.config.source.memory.MemoryConfigSource;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
@@ -80,6 +82,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -3080,5 +3083,53 @@ class BomResourceTest extends ResourceTest {
 
         assertThat(workflowArg.getBomFileMetadata().getMediaType())
                 .isEqualTo(CycloneDxMediaType.APPLICATION_CYCLONEDX_XML);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"-1, 413", "0, 200"})
+    void uploadBomEnforcesMaxSizeAfterDecompressionTest(int maxSizeOffset, int expectedStatus) throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.createProject(project, List.of(), false);
+
+        final byte[] bomBytes = resourceToByteArray("/unit/bom-1.xml");
+        final var encodedBomStream = new ByteArrayOutputStream();
+        try (final var encoder = new ZstdOutputStream(encodedBomStream)) {
+            encoder.write(bomBytes);
+        }
+
+        MemoryConfigSource.setProperty(
+                ConfigKeys.BOM_UPLOAD_MAX_SIZE_BYTES, String.valueOf(bomBytes.length + maxSizeOffset));
+
+        final var multiPart = new FormDataMultiPart()
+                .field("project", project.getUuid().toString())
+                .field("bom", encodedBomStream.toByteArray(), new MediaType("application", "zstd"));
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response;
+        try {
+            response = client.target(jersey.target(V1_BOM).getUri())
+                    .request()
+                    .header(X_API_KEY, apiKey)
+                    .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        } finally {
+            MemoryConfigSource.removeProperty(ConfigKeys.BOM_UPLOAD_MAX_SIZE_BYTES);
+        }
+
+        assertThat(response.getStatus()).isEqualTo(expectedStatus);
+        if (expectedStatus == 413) {
+            assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+            assertThatJson(getPlainTextBody(response))
+                    .isEqualTo(/* language=JSON */ """
+                    {
+                      "status": 413,
+                      "title": "The uploaded document is too large",
+                      "detail": "The uploaded document exceeds the maximum size of %d bytes"
+                    }
+                    """.formatted(bomBytes.length - 1));
+        }
     }
 }

@@ -40,12 +40,12 @@ public class FortifySscClient {
 
     private final HttpClient httpClient;
     private final FortifySscUploader uploader;
-    private final URL baseURL;
+    private final String baseURL;
 
     FortifySscClient(HttpClient httpClient, FortifySscUploader uploader, URL baseURL) {
         this.httpClient = httpClient;
         this.uploader = uploader;
-        this.baseURL = baseURL;
+        this.baseURL = baseURL.toString().replaceAll("/+$", "");
     }
 
     public String generateOneTimeUploadToken(final String citoken) {

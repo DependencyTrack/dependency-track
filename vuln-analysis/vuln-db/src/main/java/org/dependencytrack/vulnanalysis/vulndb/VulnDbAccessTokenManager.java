@@ -57,7 +57,7 @@ final class VulnDbAccessTokenManager {
 
     String getAccessToken(URI apiBaseUrl, String clientId, String clientSecret)
             throws IOException, InterruptedException {
-        final URI tokenEndpoint = apiBaseUrl.resolve("/oauth/token");
+        final URI tokenEndpoint = URI.create(apiBaseUrl.toString().replaceAll("/+$", "") + "/oauth/token");
 
         lock.lockInterruptibly();
         try {

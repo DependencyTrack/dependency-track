@@ -85,7 +85,8 @@ final class CheckmarxAccessTokenManager {
                     + "&refresh_token=" + URLEncoder.encode(tokenRequest.apiKey(), StandardCharsets.UTF_8);
 
             final var request = HttpRequest.newBuilder()
-                    .uri(authApiBaseUrl.resolve("/auth/realms/" + orgId + "/protocol/openid-connect/token"))
+                    .uri(URI.create(authApiBaseUrl.toString().replaceAll("/+$", "") + "/auth/realms/" + orgId
+                            + "/protocol/openid-connect/token"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .header("Accept", "application/json")
                     .timeout(Duration.ofSeconds(10))

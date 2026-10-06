@@ -210,6 +210,8 @@ final class JvnVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     private static String feedBaseUrlOf(final JvnVulnDataSourceConfigV1 config) {
-        return config.getFeedBaseUrl() != null ? config.getFeedBaseUrl().toString() : JvnClient.DEFAULT_FEED_BASE_URL;
+        return config.getFeedBaseUrl() != null
+                ? config.getFeedBaseUrl().toString().replaceAll("/+$", "")
+                : JvnClient.DEFAULT_FEED_BASE_URL;
     }
 }

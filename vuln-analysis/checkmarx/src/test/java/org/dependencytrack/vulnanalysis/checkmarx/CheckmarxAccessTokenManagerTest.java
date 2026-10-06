@@ -65,6 +65,21 @@ class CheckmarxAccessTokenManagerTest {
     }
 
     @Test
+    void shouldPreserveApiBaseUrlPath(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(post(urlPathEqualTo("/proxy/auth/realms/org-id/protocol/openid-connect/token"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(/* language=JSON */ """
+                                {"access_token": "tok-123", "token_type": "Bearer", "expires_in": 3600}
+                                """)));
+
+        final String token = tokenManager.getAccessToken(
+                URI.create(wmRuntimeInfo.getHttpBaseUrl() + "/proxy/"), "org-id", "api-key");
+        assertThat(token).isEqualTo("tok-123");
+    }
+
+    @Test
     void shouldCacheToken() throws Exception {
         stubFor(post(urlPathEqualTo("/auth/realms/org-id/protocol/openid-connect/token"))
                 .willReturn(aResponse()

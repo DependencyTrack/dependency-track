@@ -83,7 +83,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
             boolean scanLibrary,
             boolean scanOs) {
         this.httpClient = httpClient;
-        this.apiBaseUrl = apiBaseUrl;
+        this.apiBaseUrl = apiBaseUrl.replaceAll("/+$", "");
         this.apiToken = apiToken;
         this.ignoreUnfixed = ignoreUnfixed;
         this.scanLibrary = scanLibrary;

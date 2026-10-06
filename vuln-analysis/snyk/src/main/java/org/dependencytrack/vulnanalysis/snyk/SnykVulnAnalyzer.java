@@ -84,7 +84,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     private final Cache resultsCache;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final URI apiBaseUrl;
+    private final String apiBaseUrl;
     private final String orgId;
     private final String apiToken;
     private final String apiVersion;
@@ -106,7 +106,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         this.resultsCache = resultsCache;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
-        this.apiBaseUrl = apiBaseUrl;
+        this.apiBaseUrl = apiBaseUrl.toString().replaceAll("/+$", "");
         this.orgId = orgId;
         this.apiToken = apiToken;
         this.apiVersion = apiVersion;

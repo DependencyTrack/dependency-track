@@ -174,6 +174,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  LIMIT 1
               ) pm ON TRUE
              WHERE cd."COLLECTION_LOGIC" IS NULL
+            HAVING COUNT(pm."PROJECT_ID") > 0
             """;
 
     /// Selects the most recent `PROJECTMETRICS` row for a single non-collection project.

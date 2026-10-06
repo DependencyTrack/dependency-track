@@ -1,6 +1,6 @@
 | Status   | Date       | Author(s)                                  |
 |:---------|:-----------|:-------------------------------------------|
-| Proposed | 2026-09-15 | [@fffinkel](https://github.com/fffinkel)   |
+| Accepted | 2026-09-15 | [@fffinkel](https://github.com/fffinkel)   |
 
 ## Context
 

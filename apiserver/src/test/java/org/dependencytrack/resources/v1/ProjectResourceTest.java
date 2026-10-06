@@ -5132,6 +5132,16 @@ class ProjectResourceTest extends ResourceTest {
         childProject.setParent(collectionProject);
         qm.persist(childProject);
 
+        final var collectionWithoutChildMetrics = new Project();
+        collectionWithoutChildMetrics.setName("acme-collection-without-child-metrics");
+        collectionWithoutChildMetrics.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(collectionWithoutChildMetrics, List.of(), false);
+
+        final var childWithoutMetrics = new Project();
+        childWithoutMetrics.setName("acme-child-without-metrics");
+        childWithoutMetrics.setParent(collectionWithoutChildMetrics);
+        qm.persist(childWithoutMetrics);
+
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
             final LocalDate today = LocalDate.now(ZoneOffset.UTC);
@@ -5162,10 +5172,10 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
 
         final JsonArray jsonArray = parseJsonArray(response);
-        assertThat(jsonArray).hasSize(3);
+        assertThat(jsonArray).hasSize(5);
 
         final JsonObject collectionObj = jsonArray.stream()
                 .map(JsonObject.class::cast)
@@ -5195,6 +5205,38 @@ class ProjectResourceTest extends ResourceTest {
                           "components": 2
                         }
                         """);
+
+        final JsonObject collectionWithoutChildMetricsObj = jsonArray.stream()
+                .map(JsonObject.class::cast)
+                .filter(o -> "acme-collection-without-child-metrics".equals(o.getString("name")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(collectionWithoutChildMetricsObj.containsKey("metrics")).isFalse();
+    }
+
+    @Test
+    void shouldOmitCollectionProjectMetricsInLookupWhenNoChildHasMetrics() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var collectionProject = new Project();
+        collectionProject.setName("acme-collection");
+        collectionProject.setVersion("1.0");
+        collectionProject.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(collectionProject, List.of(), false);
+
+        final var childProject = new Project();
+        childProject.setName("acme-child");
+        childProject.setParent(collectionProject);
+        qm.persist(childProject);
+
+        final Response response = jersey.target(V1_PROJECT + "/lookup")
+                .queryParam("name", "acme-collection")
+                .queryParam("version", "1.0")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.metrics").isAbsent();
     }
 
     @Test

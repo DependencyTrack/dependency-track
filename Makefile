@@ -30,10 +30,11 @@ ifeq ($(MVND),)
 endif
 MVN_NO_BUILDCACHE := -Dmaven.build.cache.enabled=false
 
+# https://github.com/apache/maven-mvnd/issues/1439
+MVN_FLAGS := -Dmvnd.builder=turbo
+
 ifdef CI
-	MVN_FLAGS := -B
-else
-	MVN_FLAGS :=
+	MVN_FLAGS += -B
 endif
 
 ifdef AGENT

@@ -679,6 +679,14 @@ final class CelPolicyFunctions {
                     sqlFilters.add("(\"INTERNAL\" IS NULL OR \"INTERNAL\" = FALSE)");
                 }
             }
+            if (component.hasScope()) {
+                if (component.getScope().equals("NULL")) {
+                    sqlFilters.add("\"SCOPE\" IS NULL");
+                } else {
+                    sqlFilters.add("\"SCOPE\" = :scope");
+                    sqlFilterParams.put("scope", component.getScope());
+                }
+            }
 
             return new CompositeDependencyNodeFilter(sqlFilters, sqlFilterParams, sqlSelectColumns, inMemoryFilters);
         }

@@ -36,6 +36,7 @@ import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetadata;
+import org.dependencytrack.model.Scope;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Tools;
@@ -1541,6 +1542,88 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var componentB = new Component();
         componentB.setProject(project);
         componentB.setName("acme-lib-b");
+        qm.persist(componentB);
+
+        project.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentA).toJSON()));
+        componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentB).toJSON()));
+        qm.persist(project);
+        qm.persist(componentA);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
+        assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
+    }
+
+    @Test
+    void testEvaluateProjectWithFuncComponentIsDependencyOfComponentWithScope() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+            policy,
+            PolicyCondition.Subject.EXPRESSION,
+            PolicyCondition.Operator.MATCHES,
+            """
+            component.is_dependency_of(v1.Component{
+              scope: "REQUIRED"
+            })
+            """,
+            PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("acme-lib-a");
+        componentA.setScope(Scope.REQUIRED);
+        qm.persist(componentA);
+
+        final var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("acme-lib-b");
+        componentB.setScope(Scope.OPTIONAL);
+        qm.persist(componentB);
+
+        project.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentA).toJSON()));
+        componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentB).toJSON()));
+        qm.persist(project);
+        qm.persist(componentA);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
+        assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
+    }
+
+    @Test
+    void testEvaluateProjectWithFuncComponentIsDependencyOfComponentWithNullScope() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+            policy,
+            PolicyCondition.Subject.EXPRESSION,
+            PolicyCondition.Operator.MATCHES,
+            """
+            component.is_dependency_of(v1.Component{
+              scope: "NULL"
+            })
+            """,
+            PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("acme-lib-a");
+        componentA.setScope(null);
+        qm.persist(componentA);
+
+        final var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("acme-lib-b");
+        componentB.setScope(Scope.EXCLUDED);
         qm.persist(componentB);
 
         project.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentA).toJSON()));

@@ -83,8 +83,8 @@ final class CheckmarxApiClient {
 
         LOGGER.debug("Fetching Checkmarx vulnerabilities for {} PURLs", purls.size());
 
-        final URI requestUrl = apiBaseUrl.resolve("/api/v1/Packages/risks" + "?IncludeRiskDetails=true"
-                + "&IncludeVersionDetails=true" + "&IncludeVersionRemediation=true");
+        final URI requestUrl = URI.create(apiBaseUrl.toString().replaceAll("/+$", "") + "/api/v1/Packages/risks"
+                + "?IncludeRiskDetails=true" + "&IncludeVersionDetails=true" + "&IncludeVersionRemediation=true");
 
         // Ensure valid access token (will be cached if still valid)
         final String accessToken = tokenManager.getAccessToken(authApiBaseUrl, orgId, apiKey);

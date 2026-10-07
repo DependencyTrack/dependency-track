@@ -111,6 +111,25 @@ class NvdVulnDataSourceTest {
     }
 
     @Test
+    void shouldHandleFeedsUrlWithTrailingSlash(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                                lastModifiedDate:2024-01-01T00:00:00.000Z
+                                sha256:0000000000000000000000000000000000000000000000000000000000000000
+                                """)));
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/gzip")
+                        .withBody(gzip("{\"vulnerabilities\": []}"))));
+
+        dataSource = createDataSource(wmRuntimeInfo.getHttpBaseUrl() + "/");
+
+        assertThat(dataSource.hasNext()).isFalse();
+        verify(getRequestedFor(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz")));
+    }
+
+    @Test
     void markProcessedShouldThrowWhenBovHasUnexpectedVulnCount(WireMockRuntimeInfo wmRuntimeInfo) {
         dataSource = createDataSource(wmRuntimeInfo.getHttpBaseUrl());
 

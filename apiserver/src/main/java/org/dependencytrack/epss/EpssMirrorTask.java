@@ -87,7 +87,7 @@ public final class EpssMirrorTask implements Runnable {
         final Path tempFile = Files.createTempFile(null, null);
 
         final var request = HttpRequest.newBuilder()
-                .uri(URI.create("%s/epss_scores-current.csv.gz".formatted(baseUrl)))
+                .uri(URI.create(baseUrl.replaceAll("/+$", "") + "/epss_scores-current.csv.gz"))
                 .GET()
                 .build();
         try {

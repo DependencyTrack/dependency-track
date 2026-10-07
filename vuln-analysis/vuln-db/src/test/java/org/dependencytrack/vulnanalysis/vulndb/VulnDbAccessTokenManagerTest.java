@@ -64,6 +64,21 @@ class VulnDbAccessTokenManagerTest {
     }
 
     @Test
+    void shouldPreserveApiBaseUrlPath(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(post(urlPathEqualTo("/proxy/oauth/token"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(/* language=JSON */ """
+                                {"access_token": "tok-123", "token_type": "Bearer", "expires_in": 3600}
+                                """)));
+
+        final String token = tokenManager.getAccessToken(
+                URI.create(wmRuntimeInfo.getHttpBaseUrl() + "/proxy/"), "client-id", "client-secret");
+        assertThat(token).isEqualTo("tok-123");
+    }
+
+    @Test
     void shouldCacheToken() throws Exception {
         stubFor(post(urlPathEqualTo("/oauth/token"))
                 .willReturn(aResponse()

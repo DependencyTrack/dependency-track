@@ -87,7 +87,7 @@ final class OsvVulnDataSource implements VulnDataSource {
             final boolean isAliasSyncEnabled) {
         this.watermarkManager = watermarkManager;
         this.objectMapper = objectMapper;
-        this.dataUrl = dataUrl;
+        this.dataUrl = dataUrl.replaceAll("/+$", "");
         this.ecosystems = List.copyOf(ecosystems);
         this.isAliasSyncEnabled = isAliasSyncEnabled;
         this.successfullyCompletedEcosystems = new HashSet<>();

@@ -65,10 +65,11 @@ class OssIndexVulnAnalyzerTest {
 
     @BeforeEach
     void beforeEach(WireMockRuntimeInfo wmRuntimeInfo) {
-        analyzer = createAnalyzer(wmRuntimeInfo, "foo@example.com", "710bcaff-790b-494d-872a-eb97cdc676ef");
+        analyzer = createAnalyzer(
+                wmRuntimeInfo.getHttpBaseUrl(), "foo@example.com", "710bcaff-790b-494d-872a-eb97cdc676ef");
     }
 
-    private VulnAnalyzer createAnalyzer(WireMockRuntimeInfo wmRuntimeInfo, String username, String apiToken) {
+    private VulnAnalyzer createAnalyzer(String apiUrl, String username, String apiToken) {
         final var cacheProvider = new MemoryCacheProvider(new SmallRyeConfigBuilder().build());
         cacheManager = cacheProvider.create();
 
@@ -77,7 +78,7 @@ class OssIndexVulnAnalyzerTest {
         final var config = new OssIndexVulnAnalyzerConfigV1()
                 .withEnabled(true)
                 .withAliasSyncEnabled(true)
-                .withApiUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
+                .withApiUrl(URI.create(apiUrl))
                 .withApiToken(apiToken);
         if (username != null) {
             config.withUsername(username);
@@ -407,7 +408,7 @@ class OssIndexVulnAnalyzerTest {
     void shouldUseBearerAuthHeaderWhenUsernameIsAbsent(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         analyzerFactory.close();
         cacheManager.close();
-        analyzer = createAnalyzer(wmRuntimeInfo, null, "sonatype_pat_test");
+        analyzer = createAnalyzer(wmRuntimeInfo.getHttpBaseUrl(), null, "sonatype_pat_test");
 
         stubFor(post(urlPathEqualTo("/api/v3/component-report"))
                 .willReturn(aResponse().withStatus(200).withBody("[]")));
@@ -425,5 +426,26 @@ class OssIndexVulnAnalyzerTest {
 
         verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
                 .withHeader("Authorization", equalTo("Bearer sonatype_pat_test")));
+    }
+
+    @Test
+    void shouldHandleApiUrlWithTrailingSlash(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        analyzerFactory.close();
+        cacheManager.close();
+        analyzer = createAnalyzer(wmRuntimeInfo.getHttpBaseUrl() + "/", null, "sonatype_pat_test");
+
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+                .willReturn(aResponse().withStatus(200).withBody("[]")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
     }
 }

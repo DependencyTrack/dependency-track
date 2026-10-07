@@ -89,7 +89,7 @@ final class NvdVulnDataSource implements VulnDataSource {
         this.watermarkManager = watermarkManager;
         this.objectMapper = objectMapper;
         this.httpClient = httpClient;
-        this.feedsUrl = feedsUrl;
+        this.feedsUrl = feedsUrl.replaceAll("/+$", "");
         this.feeds = feeds;
     }
 

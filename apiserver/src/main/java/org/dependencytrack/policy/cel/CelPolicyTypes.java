@@ -51,6 +51,8 @@ public final class CelPolicyTypes {
     public static final CelType TYPE_VULNERABILITIES = ListType.create(TYPE_VULNERABILITY);
     public static final CelType TYPE_VULNERABILITY_ALIAS =
             StructTypeReference.create(Vulnerability.Alias.getDescriptor().getFullName());
+    public static final CelType TYPE_VULNERABILITY_ANALYSIS =
+            StructTypeReference.create(Vulnerability.Analysis.getDescriptor().getFullName());
     public static final CelType TYPE_VERSION_DISTANCE =
             StructTypeReference.create(VersionDistance.getDescriptor().getFullName());
 

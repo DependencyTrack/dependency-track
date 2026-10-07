@@ -95,6 +95,12 @@ public final class CelPolicyFieldMappingRegistry {
             new FieldMapping("epss_score", "ep.\"SCORE\""),
             new FieldMapping("epss_percentile", "ep.\"PERCENTILE\""));
 
+    static final List<FieldMapping> VULNERABILITY_ANALYSIS_FIELDS = List.of(
+            new FieldMapping("state", "a.\"STATE\""),
+            new FieldMapping("justification", "a.\"JUSTIFICATION\""),
+            new FieldMapping("response", "a.\"RESPONSE\""),
+            new FieldMapping("details", "a.\"DETAILS\""));
+
     static final List<FieldMapping> LICENSE_FIELDS = List.of(
             new FieldMapping("uuid", "l.\"UUID\""),
             new FieldMapping("id", "l.\"LICENSEID\""),

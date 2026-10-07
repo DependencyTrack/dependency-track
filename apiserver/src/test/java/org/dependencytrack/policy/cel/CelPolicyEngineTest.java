@@ -1559,15 +1559,15 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     void testEvaluateProjectWithFuncComponentIsDependencyOfComponentWithScope() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(
-            policy,
-            PolicyCondition.Subject.EXPRESSION,
-            PolicyCondition.Operator.MATCHES,
-            """
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
             component.is_dependency_of(v1.Component{
               scope: "REQUIRED"
             })
             """,
-            PolicyViolation.Type.OPERATIONAL);
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1600,15 +1600,15 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     void testEvaluateProjectWithFuncComponentIsDependencyOfComponentWithNullScope() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(
-            policy,
-            PolicyCondition.Subject.EXPRESSION,
-            PolicyCondition.Operator.MATCHES,
-            """
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
             component.is_dependency_of(v1.Component{
               scope: "NULL"
             })
             """,
-            PolicyViolation.Type.OPERATIONAL);
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");

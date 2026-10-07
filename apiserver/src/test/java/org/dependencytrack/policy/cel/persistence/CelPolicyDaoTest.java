@@ -221,7 +221,7 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                         "LICENSE",
                         "LICENSE_EXPRESSION",
                         "ORDINALITY",
-                        "CONCLUDED"
+                        "ACKNOWLEDGEMENT"
                         )
                 VALUES (
                         :componentId,
@@ -229,7 +229,7 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                         :license,
                         :licenseExpression,
                         1,
-                        false
+                        'DECLARED'
                         )""")
                 .bind("componentId", component.getId())
                 .bind("licenseId", license.getId())

@@ -739,9 +739,9 @@ public class PolicyViolationResourceTest extends ResourceTest {
                 "COMPONENTID",
                 "LICENSE",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :license, 1, false)
+            VALUES (:componentId, :license, 1, 'DECLARED')
         """)
                 .bind("componentId", componentAId)
                 .bind("license", "License A")
@@ -760,9 +760,9 @@ public class PolicyViolationResourceTest extends ResourceTest {
                 "COMPONENTID",
                 "LICENSE",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :license, 1, false)
+            VALUES (:componentId, :license, 1, 'DECLARED')
         """)
                 .bind("componentId", componentBId)
                 .bind("license", "License B")
@@ -781,9 +781,9 @@ public class PolicyViolationResourceTest extends ResourceTest {
                 "COMPONENTID",
                 "LICENSE",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :license, 1, false)
+            VALUES (:componentId, :license, 1, 'DECLARED')
             """)
                 .bind("componentId", componentCId)
                 .bind("license", "License C")
@@ -802,9 +802,9 @@ public class PolicyViolationResourceTest extends ResourceTest {
                 "COMPONENTID",
                 "LICENSE",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :license, 1, false)
+            VALUES (:componentId, :license, 1, 'DECLARED')
         """)
                 .bind("componentId", componentDId)
                 .bind("license", "License D")

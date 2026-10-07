@@ -204,9 +204,9 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 "LICENSE_EXPRESSION",
                 "LICENSE_URL",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :licenseId, :license, :licenseExpression, :licenseUrl, 1, false)
+            VALUES (:componentId, :licenseId, :license, :licenseExpression, :licenseUrl, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("licenseId", license.getId())
@@ -2880,9 +2880,9 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE_ID",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :licenseId, 1, false)
+            VALUES (:componentId, :licenseId, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("licenseId", license.getId())
@@ -2950,9 +2950,9 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE_EXPRESSION",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :licenseExpression, 1, false)
+            VALUES (:componentId, :licenseExpression, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("licenseExpression", component.getLicenseExpression())
@@ -3000,9 +3000,9 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE_ID",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :licenseId, 1, false)
+            VALUES (:componentId, :licenseId, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("licenseId", license.getId())

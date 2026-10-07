@@ -272,7 +272,7 @@ BEGIN
       "LICENSE_EXPRESSION",
       "LICENSE_URL",
       "ORDINALITY",
-      "CONCLUDED"
+      "ACKNOWLEDGEMENT"
     )
     SELECT
         tmp_component_mapping."target_id",
@@ -281,7 +281,7 @@ BEGIN
         cl."LICENSE_EXPRESSION",
         cl."LICENSE_URL",
         cl."ORDINALITY",
-        cl."CONCLUDED"
+        cl."ACKNOWLEDGEMENT"
     FROM tmp_component_mapping
     JOIN "COMPONENTLICENSES" AS cl
       ON cl."COMPONENTID" = tmp_component_mapping."source_id";

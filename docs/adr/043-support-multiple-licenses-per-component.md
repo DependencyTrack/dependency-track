@@ -18,9 +18,9 @@ There is already precedence for doing so with vulnerabilities (see: the `COMPONE
 table). The `COMPONENTS` table will lose its license related columns as well as its foreign key
 constraint to the `LICENSE` table, shifting them all to a table called `COMPONENTLICENSES`.
 
-The `COMPONENTLICENSES` will house all of that old data with the addition of two columns: `CONCLUDED`
-and `ORDINALITY`. The `CONCLUDED` column will allow for future implementation of users accepting
-licenses as concluded, but presently will populate by default with a value of `false`. The `ORDINALITY`
+The `COMPONENTLICENSES` will house all of that old data with the addition of two columns: `ACKNOWLEDGEMENT`
+and `ORDINALITY`. The `ACKNOWLEDGEMENT` column will allow for future implementation of users accepting
+licenses as 'CONCLUDED', but presently will populate by default with a value of 'DECLARED'. The `ORDINALITY`
 column will preserve the current functionality of assuming the licenses coming from the BOM are ordered.
 
 In the future, a new API endpoint will be added to pull all licenses for a given component, and the 

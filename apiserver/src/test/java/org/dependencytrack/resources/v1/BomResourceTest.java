@@ -640,9 +640,9 @@ class BomResourceTest extends ResourceTest {
                 "COMPONENTID",
                 "LICENSE_ID",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :licenseId, 1, false)
+            VALUES (:componentId, :licenseId, 1, 'DECLARED')
             """)
                 .bind("componentId", c.getId())
                 .bind("licenseId", license.getId())

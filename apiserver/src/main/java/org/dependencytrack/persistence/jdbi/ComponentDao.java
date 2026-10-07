@@ -665,7 +665,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             String licenseExpression,
             String licenseUrl,
             long ordinality,
-            boolean concluded) {}
+            String acknowledgement) {}
 
     default void replaceComponentLicenses(List<Long> componentIds, List<ComponentLicenseRow> updates) {
 
@@ -696,7 +696,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 "LICENSE_EXPRESSION",
                 "LICENSE_URL",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
             VALUES (
                 :componentId,
@@ -705,7 +705,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 :licenseExpression,
                 :licenseUrl,
                 :ordinality,
-                :concluded
+                :acknowledgement
             )
             """);
 
@@ -716,7 +716,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                     .bind("licenseExpression", update.licenseExpression())
                     .bind("licenseUrl", update.licenseUrl())
                     .bind("ordinality", update.ordinality())
-                    .bind("concluded", update.concluded())
+                    .bind("acknowledgement", update.acknowledgement())
                     .add();
         }
 
@@ -737,7 +737,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 cl."LICENSE_EXPRESSION",
                 cl."LICENSE_URL",
                 cl."ORDINALITY",
-                cl."CONCLUDED"
+                cl."ACKNOWLEDGEMENT"
             FROM "COMPONENTLICENSES" AS cl
             WHERE cl."COMPONENTID" = ANY(:componentIds)
             ORDER BY cl."COMPONENTID",
@@ -760,7 +760,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                                     rs.getString("LICENSE_EXPRESSION"),
                                     rs.getString("LICENSE_URL"),
                                     rs.getLong("ORDINALITY"),
-                                    rs.getBoolean("CONCLUDED")));
+                                    rs.getString("ACKNOWLEDGEMENT")));
 
                     return result;
                 });

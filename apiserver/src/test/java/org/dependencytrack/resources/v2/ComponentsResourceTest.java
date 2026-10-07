@@ -1013,9 +1013,9 @@ public class ComponentsResourceTest extends ResourceTest {
                 "COMPONENTID",
                 "LICENSE",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :license, 1, false)
+            VALUES (:componentId, :license, 1, 'DECLARED')
             """)
                 .bind("componentId", componentC.getId())
                 .bind("license", "Public Domain")

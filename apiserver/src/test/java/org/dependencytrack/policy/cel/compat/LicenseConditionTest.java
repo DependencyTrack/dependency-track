@@ -63,9 +63,9 @@ public class LicenseConditionTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE_ID",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :licenseId, 1, false)
+            VALUES (:componentId, :licenseId, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("licenseId", licenseId)
@@ -160,9 +160,9 @@ public class LicenseConditionTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE_EXPRESSION",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :expression, 1, false)
+            VALUES (:componentId, :expression, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("expression", "MIT")
@@ -202,9 +202,9 @@ public class LicenseConditionTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :license, 1, false)
+            VALUES (:componentId, :license, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("license", license.getLicenseId())
@@ -244,9 +244,9 @@ public class LicenseConditionTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE_EXPRESSION",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :expression, 1, false)
+            VALUES (:componentId, :expression, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("expression", "MIT OR Apache-2.0")
@@ -286,9 +286,9 @@ public class LicenseConditionTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE_EXPRESSION",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :expression, 1, false)
+            VALUES (:componentId, :expression, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("expression", "MIT AND GPL-2.0")
@@ -319,9 +319,9 @@ public class LicenseConditionTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE_EXPRESSION",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :expression, 1, false)
+            VALUES (:componentId, :expression, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("expression", "MIT")
@@ -360,9 +360,9 @@ public class LicenseConditionTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE_ID",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :licenseId, 1, false)
+            VALUES (:componentId, :licenseId, 1, 'DECLARED')
             """)
                 .bind("componentId", component.getId())
                 .bind("licenseId", custom.getId())
@@ -408,9 +408,9 @@ public class LicenseConditionTest extends PersistenceCapableTest {
                 "COMPONENTID",
                 "LICENSE_ID",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :licenseId, 1, false)
+            VALUES (:componentId, :licenseId, 1, 'DECLARED')
             """)
                 .bind("componentId", componentWithLicense.getId())
                 .bind("licenseId", licenseId)

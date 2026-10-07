@@ -762,13 +762,13 @@ public class ProjectsResourceTest extends ResourceTest {
             "COMPONENTID",
             "LICENSE_ID",
             "ORDINALITY",
-            "CONCLUDED"
+            "ACKNOWLEDGEMENT"
         )
         VALUES (
             :componentId,
             :licenseId,
             1,
-            false
+            'DECLARED'
         )""")
                 .bind("componentId", persistedComponent.getId())
                 .bind("licenseId", persistedLicense.getId())
@@ -788,9 +788,9 @@ public class ProjectsResourceTest extends ResourceTest {
                 "COMPONENTID",
                 "LICENSE",
                 "ORDINALITY",
-                "CONCLUDED"
+                "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :license, 1, false)
+            VALUES (:componentId, :license, 1, 'DECLARED')
             """)
                 .bind("componentId", persistedComponent2.getId())
                 .bind("license", "Public Domain")

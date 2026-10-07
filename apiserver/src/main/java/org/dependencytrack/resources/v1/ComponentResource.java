@@ -83,6 +83,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_TRIGGERED_BY;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
@@ -507,10 +508,10 @@ public class ComponentResource extends AbstractApiResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Updates a component",
-            description =
-                    "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>")
+    @Operation(summary = "Updates a component. ", description = """
+                        <p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>
+                        <p>Updating a component will wipe away all previous licenses in favor of what is provided in the update.</p>
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -558,9 +559,9 @@ public class ComponentResource extends AbstractApiResource {
                 validator.validateProperty(jsonComponent, "blake3"),
                 validator.validateProperty(jsonComponent, "streebog_256"),
                 validator.validateProperty(jsonComponent, "streebog_512"));
-        Component updatedComponent;
+
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            updatedComponent = qm.callInTransaction(() -> {
+            return qm.callInTransaction(() -> {
                 final Component component = qm.getObjectByUuid(Component.class, jsonComponent.getUuid());
                 if (component != null) {
                     requireAccess(qm, component.getProject());
@@ -623,41 +624,39 @@ public class ComponentResource extends AbstractApiResource {
                     component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
                     qm.updateComponent(component, true);
+
+                    final List<ComponentDao.ComponentLicenseRow> licenseRows;
+                    if (component.getResolvedLicense() == null
+                            && component.getLicense() == null
+                            && component.getLicenseExpression() == null
+                            && component.getLicenseUrl() == null) {
+                        licenseRows = List.of();
+                    } else {
+                        licenseRows = List.of(new ComponentDao.ComponentLicenseRow(
+                                component.getId(),
+                                component.getResolvedLicense() != null
+                                        ? component.getResolvedLicense().getId()
+                                        : null,
+                                component.getLicense(),
+                                component.getLicenseExpression(),
+                                component.getLicenseUrl(),
+                                1,
+                                "DECLARED"));
+                    }
+
+                    useJdbiHandle(
+                            qm,
+                            handle -> handle.attach(ComponentDao.class)
+                                    .replaceComponentLicenses(List.of(component.getId()), licenseRows));
+
+                    return Response.ok(component).build();
+                } else {
+                    return Response.status(Response.Status.NOT_FOUND)
+                            .entity("The UUID of the component could not be found.")
+                            .build();
                 }
-                return component;
             });
         }
-
-        if (updatedComponent == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity("The UUID of the component could not be found.")
-                    .build();
-        }
-
-        final List<ComponentDao.ComponentLicenseRow> licenseRows;
-
-        if (updatedComponent.getResolvedLicense() == null
-                && updatedComponent.getLicense() == null
-                && updatedComponent.getLicenseExpression() == null
-                && updatedComponent.getLicenseUrl() == null) {
-            licenseRows = List.of();
-        } else {
-            licenseRows = List.of(new ComponentDao.ComponentLicenseRow(
-                    updatedComponent.getId(),
-                    updatedComponent.getResolvedLicense() != null
-                            ? updatedComponent.getResolvedLicense().getId()
-                            : null,
-                    updatedComponent.getLicense(),
-                    updatedComponent.getLicenseExpression(),
-                    updatedComponent.getLicenseUrl(),
-                    1,
-                    false));
-        }
-
-        useJdbiTransaction(handle -> handle.attach(ComponentDao.class)
-                .replaceComponentLicenses(List.of(updatedComponent.getId()), licenseRows));
-
-        return Response.ok(updatedComponent).build();
     }
 
     @DELETE

@@ -774,6 +774,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         violation.setComponent(component);
         violation.setPolicyCondition(condition);
         violation.setTimestamp(new Date());
+        violation.setText("violationMessage");
         qm.persist(violation);
 
         final List<PolicyViolationSubject> subjects = withJdbiHandle(handle ->
@@ -818,6 +819,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                     "uuid": "${json-unit.matches:violationUuid}",
                                     "type": "OPERATIONAL",
                                     "timestamp": "${json-unit.any-string}",
+                                    "message": "violationMessage",
                                     "condition": {
                                       "uuid": "${json-unit.matches:conditionUuid}",
                                       "subject": "VERSION",

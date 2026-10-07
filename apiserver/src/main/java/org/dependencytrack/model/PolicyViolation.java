@@ -105,8 +105,8 @@ public class PolicyViolation implements Serializable {
     private Date timestamp;
 
     @Persistent
-    @Column(name = "TEXT")
-    @Size(min = 1, max = 255)
+    @Column(name = "TEXT", jdbcType = "CLOB")
+    @Size(min = 1, max = 1024)
     @Pattern(
             regexp = RegexSequence.Definition.PRINTABLE_CHARS,
             message = "The text may only contain printable characters")

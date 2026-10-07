@@ -146,6 +146,56 @@ public class PolicyConditionResourceTest extends ResourceTest {
     }
 
     @Test
+    public void testCreateConditionWithExpressionReturningString() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
+
+        final Policy policy = qm.createPolicy("policy", Operator.ANY, ViolationState.FAIL);
+
+        final Response response = jersey.target("%s/%s/condition".formatted(V1_POLICY, policy.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(/* language=JSON */ """
+                        {
+                          "subject": "EXPRESSION",
+                          "value": "component.name == \\"foo\\" ? \\"foo is not allowed\\" : \\"\\"",
+                          "violationType": "SECURITY"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(201);
+    }
+
+    @Test
+    public void testCreateConditionWithExpressionReturningInvalidType() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
+
+        final Policy policy = qm.createPolicy("policy", Operator.ANY, ViolationState.FAIL);
+
+        final Response response = jersey.target("%s/%s/condition".formatted(V1_POLICY, policy.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(/* language=JSON */ """
+                        {
+                          "subject": "EXPRESSION",
+                          "value": "size(vulns)",
+                          "violationType": "SECURITY"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                        {
+                          "celErrors": [
+                            {
+                              "line": 1,
+                              "column": 0,
+                              "message": "Expression must return bool or string, but returns int"
+                            }
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
     public void testCreateConditionWithInvalidExpression() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
 

@@ -397,7 +397,14 @@
 		  "text": "{{ subject.project.toString | escape(strategy="json") }}"
 		}
 	  ]
-	}{% if baseUrl is not empty %},
+	}{% if subject.policyViolation.message is not empty %},
+	{
+	  "type": "section",
+	  "text": {
+	    "type": "mrkdwn",
+		"text": "*Message*\n{{ subject.policyViolation.message | escape(strategy="json") }}"
+	  }
+	}{% endif %}{% if baseUrl is not empty %},
 	{
 	  "type": "actions",
 	  "elements": [

@@ -32,8 +32,12 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
@@ -41,6 +45,8 @@ import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
 import org.dependencytrack.pkgmetadata.PackageMetadataDao;
+import org.dependencytrack.proto.policy.v1.HealthMeta;
+import org.dependencytrack.util.PurlUtil;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -51,7 +57,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+import static java.util.Objects.requireNonNull;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -379,5 +387,275 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                           "epssPercentile": 0.2
                         }
                         """);
+    }
+
+    @Test
+    public void testFetchAllPackageHealthMetadata() throws Exception {
+        final String packagePurl = "pkg:maven/com.acme/acme-lib";
+        final String missingPurl = "pkg:maven/com.acme/unknown";
+
+        useJdbiTransaction(handle -> {
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
+                            new PackageURL(packagePurl), "1.0.0", null, Instant.now(), null, null)));
+
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_METADATA" (
+                          "PURL", "SCORECARD_SCORE", "STARS", "FORKS", "DEPENDENTS", "BUS_FACTOR",
+                          "COMMIT_FREQUENCY_WEEKLY", "AVG_ISSUE_AGE_DAYS", "IS_REPO_ARCHIVED",
+                          "LAST_COMMIT", "STATUS"
+                        )
+                        VALUES (
+                          :purl, :score, 10, 2, 600, 1,
+                          0.25, 400, true,
+                          TIMESTAMPTZ '2020-01-01T00:00:00Z', 'PROCESSED'
+                        )
+                        """)
+                    .bind("purl", packagePurl)
+                    .bind("score", 2.5f)
+                    .execute();
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_SCORECARD_CHECK" ("PURL", "CHECK_NAME", "SCORE")
+                        VALUES (:purl, 'Maintained', 1.0)
+                        """).bind("purl", packagePurl).execute();
+
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
+                            new PackageURL(missingPurl), "1.0.0", null, Instant.now(), null, null)));
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_METADATA" ("PURL", "SCORECARD_SCORE", "STATUS")
+                        VALUES (:purl, 1.0, 'NOT_AVAILABLE')
+                        """).bind("purl", missingPurl).execute();
+        });
+
+        final Map<String, HealthMeta> result = withJdbiHandle(handle -> new CelPolicyDao(handle)
+                .fetchAllPackageHealthMetadata(
+                        List.of(packagePurl, missingPurl),
+                        Set.of(
+                                "scorecard_score",
+                                "stars",
+                                "forks",
+                                "dependents",
+                                "bus_factor",
+                                "commit_frequency_weekly",
+                                "avg_issue_age_days",
+                                "is_repo_archived",
+                                "last_commit",
+                                "scorecard_checks")));
+
+        assertThat(result).containsOnlyKeys(packagePurl);
+        assertThat(result.get(packagePurl).getScorecardScore()).isEqualTo(2.5f);
+        assertThat(result.get(packagePurl).getStars()).isEqualTo(10L);
+        assertThat(result.get(packagePurl).getForks()).isEqualTo(2L);
+        assertThat(result.get(packagePurl).getDependents()).isEqualTo(600L);
+        assertThat(result.get(packagePurl).getBusFactor()).isEqualTo(1);
+        assertThat(result.get(packagePurl).getIsRepoArchived()).isTrue();
+        assertThat(result.get(packagePurl).getCommitFrequencyWeekly()).isEqualTo(0.25f);
+        assertThat(result.get(packagePurl).getAvgIssueAgeDays()).isEqualTo(400f);
+        assertThat(result.get(packagePurl).getLastCommit().getSeconds()).isEqualTo(1577836800L);
+        assertThat(result.get(packagePurl).getScorecardChecksList())
+                .containsExactly(HealthMeta.ScorecardCheck.newBuilder()
+                        .setName("Maintained")
+                        .setScore(1.0f)
+                        .build());
+    }
+
+    @Test
+    public void testFetchPackageHealthScorecardChecksWithoutScalars() throws Exception {
+        final String packagePurl = "pkg:npm/react";
+
+        useJdbiTransaction(handle -> {
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
+                            new PackageURL(packagePurl), "18.3.1", null, Instant.now(), null, null)));
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_METADATA" ("PURL", "SCORECARD_SCORE", "STATUS")
+                        VALUES (:purl, 9.0, 'PROCESSED')
+                        """).bind("purl", packagePurl).execute();
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_SCORECARD_CHECK" ("PURL", "CHECK_NAME", "SCORE")
+                        VALUES (:purl, 'Maintained', NULL)
+                        """).bind("purl", packagePurl).execute();
+        });
+
+        final Map<String, HealthMeta> result = withJdbiHandle(handle -> new CelPolicyDao(handle)
+                .fetchAllPackageHealthMetadata(List.of(packagePurl), Set.of("scorecard_checks")));
+
+        assertThat(result.get(packagePurl).hasScorecardScore()).isFalse();
+        assertThat(result.get(packagePurl).getScorecardChecksList())
+                .containsExactly(HealthMeta.ScorecardCheck.newBuilder()
+                        .setName("Maintained")
+                        .build());
+    }
+
+    @Test
+    public void testFindProjectUuidsReturnsEmptyForNoPurls() {
+        final List<UUID> projectUuids =
+                withJdbiHandle(handle -> new CelPolicyDao(handle).findProjectUuidsForPackageHealthPolicies(List.of()));
+
+        assertThat(projectUuids).isEmpty();
+    }
+
+    @Test
+    public void testFindProjectUuidsForGlobalHealthPolicy() {
+        createHealthPolicy(null, false, null, false);
+        final Project matching = persistProjectWithPackage("acme-app", "pkg:npm/react@18.3.1");
+        persistProjectWithPackage("other-app", "pkg:npm/left-pad@1.0.0");
+
+        assertThat(findProjects("pkg:npm/react")).containsExactly(matching.getUuid());
+    }
+
+    @Test
+    public void testFindProjectUuidsIgnoresConditionsThatDoNotReadHealth() {
+        final var policy = qm.createPolicy("name-policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "component.name == \"react\"",
+                PolicyViolation.Type.OPERATIONAL);
+        persistProjectWithPackage("acme-app", "pkg:npm/react@18.3.1");
+
+        assertThat(findProjects("pkg:npm/react")).isEmpty();
+    }
+
+    @Test
+    public void testFindProjectUuidsForPolicyAssignedToProject() {
+        final Project matching = persistProjectWithPackage("acme-app", "pkg:npm/react@18.3.1");
+        persistProjectWithPackage("other-app", "pkg:npm/react@18.3.1");
+        createHealthPolicy(List.of(matching), false, null, false);
+
+        assertThat(findProjects("pkg:npm/react")).containsExactly(matching.getUuid());
+    }
+
+    @Test
+    public void testFindProjectUuidsForPolicyAssignedToParent() {
+        final var parent = new Project();
+        parent.setName("parent");
+        qm.persist(parent);
+        final Project child = persistChildProject("child", parent, "pkg:npm/react@18.3.1");
+        persistProjectWithPackage("unrelated", "pkg:npm/react@18.3.1");
+        createHealthPolicy(List.of(parent), true, null, false);
+
+        final var parentWithoutChildren = new Project();
+        parentWithoutChildren.setName("parent-without-children");
+        qm.persist(parentWithoutChildren);
+        persistChildProject("excluded-child", parentWithoutChildren, "pkg:npm/react@18.3.1");
+        createHealthPolicy(List.of(parentWithoutChildren), false, null, false);
+
+        assertThat(findProjects("pkg:npm/react")).containsExactly(child.getUuid());
+    }
+
+    @Test
+    public void testFindProjectUuidsForSharedTag() {
+        final Tag tag = qm.createTag("team");
+        final Project matching = persistProjectWithPackage("acme-app", "pkg:npm/react@18.3.1");
+        qm.bind(matching, List.of(tag));
+        persistProjectWithPackage("other-app", "pkg:npm/react@18.3.1");
+        createHealthPolicy(null, false, List.of(tag), false);
+
+        assertThat(findProjects("pkg:npm/react")).containsExactly(matching.getUuid());
+    }
+
+    @Test
+    public void testFindProjectUuidsForInvertedTag() {
+        final Tag tag = qm.createTag("exclude");
+        final Project tagged = persistProjectWithPackage("tagged", "pkg:npm/react@18.3.1");
+        qm.bind(tagged, List.of(tag));
+        final Project untagged = persistProjectWithPackage("untagged", "pkg:npm/react@18.3.1");
+        createHealthPolicy(null, false, List.of(tag), true);
+
+        assertThat(findProjects("pkg:npm/react")).containsExactly(untagged.getUuid());
+    }
+
+    @Test
+    public void testFindProjectUuidsForComponentWithQualifiersButNoVersion() throws Exception {
+        createHealthPolicy(null, false, null, false);
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("react");
+        component.setPurl(new PackageURL("pkg:npm/react?repository_url=https://registry.example.com"));
+        qm.persist(component);
+        persistArtifactMetadata(component.getPurl().canonicalize());
+
+        assertThat(findProjects("pkg:npm/react")).containsExactly(project.getUuid());
+    }
+
+    private List<UUID> findProjects(final String packagePurl) {
+        return withJdbiHandle(
+                handle -> new CelPolicyDao(handle).findProjectUuidsForPackageHealthPolicies(List.of(packagePurl)));
+    }
+
+    private Project persistChildProject(final String name, final Project parent, final String purl) {
+        final var project = new Project();
+        project.setName(name);
+        project.setParent(parent);
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName(name);
+        component.setPurl(purl);
+        component.setPurlCoordinates(purl);
+        qm.persist(component);
+        persistArtifactMetadata(purl);
+        return project;
+    }
+
+    private Project persistProjectWithPackage(final String name, final String purl) {
+        final var project = new Project();
+        project.setName(name);
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName(name);
+        component.setPurl(purl);
+        component.setPurlCoordinates(purl);
+        qm.persist(component);
+        persistArtifactMetadata(purl);
+        return project;
+    }
+
+    private void createHealthPolicy(
+            final List<Project> projects,
+            final boolean includeChildren,
+            final List<Tag> tags,
+            final boolean invertTagMatch) {
+        final var policy = qm.createPolicy("health-policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "has(health.stars) && health.stars < 5",
+                PolicyViolation.Type.OPERATIONAL);
+        if (projects != null) {
+            policy.setProjects(projects);
+        }
+        policy.setIncludeChildren(includeChildren);
+        policy.setInvertTagMatch(invertTagMatch);
+        qm.persist(policy);
+        if (tags != null) {
+            qm.bind(policy, tags);
+        }
+    }
+
+    /**
+     * Package health is matched to components through their package artifact metadata.
+     */
+    private static void persistArtifactMetadata(final String purl) {
+        final PackageURL artifactPurl = requireNonNull(PurlUtil.silentPurl(purl));
+        final PackageURL packagePurl = requireNonNull(PurlUtil.silentPurlPackageOnly(artifactPurl));
+        useJdbiHandle(handle -> {
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(packagePurl, null, null, Instant.now(), null, null)));
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
+                            artifactPurl, packagePurl, null, null, null, null, null, null, "test", Instant.now())));
+        });
     }
 }

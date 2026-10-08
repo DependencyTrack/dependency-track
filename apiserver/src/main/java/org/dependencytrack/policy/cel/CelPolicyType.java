@@ -27,6 +27,7 @@ import dev.cel.parser.CelStandardMacro;
 import dev.cel.runtime.CelRuntime;
 import dev.cel.runtime.CelRuntimeFactory;
 import org.dependencytrack.proto.policy.v1.Component;
+import org.dependencytrack.proto.policy.v1.HealthMeta;
 import org.dependencytrack.proto.policy.v1.License;
 import org.dependencytrack.proto.policy.v1.Project;
 import org.dependencytrack.proto.policy.v1.Tools;
@@ -34,7 +35,12 @@ import org.dependencytrack.proto.policy.v1.VersionDistance;
 import org.dependencytrack.proto.policy.v1.Vulnerability;
 
 public enum CelPolicyType {
-    COMPONENT(CelPolicyVariable.COMPONENT, CelPolicyVariable.PROJECT, CelPolicyVariable.VULNS, CelPolicyVariable.NOW),
+    COMPONENT(
+            CelPolicyVariable.COMPONENT,
+            CelPolicyVariable.PROJECT,
+            CelPolicyVariable.VULNS,
+            CelPolicyVariable.NOW,
+            CelPolicyVariable.HEALTH),
     VULNERABILITY(
             CelPolicyVariable.COMPONENT, CelPolicyVariable.PROJECT, CelPolicyVariable.VULN, CelPolicyVariable.NOW);
 
@@ -76,6 +82,8 @@ public enum CelPolicyType {
             Vulnerability.getDescriptor(),
             Vulnerability.Alias.getDescriptor(),
             VersionDistance.getDescriptor(),
+            HealthMeta.getDescriptor(),
+            HealthMeta.ScorecardCheck.getDescriptor(),
         };
     }
 

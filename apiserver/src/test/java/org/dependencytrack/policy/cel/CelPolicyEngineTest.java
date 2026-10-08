@@ -50,6 +50,7 @@ import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
 import org.dependencytrack.pkgmetadata.PackageMetadataDao;
+import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -70,8 +71,10 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.dependencytrack.model.ConfigPropertyConstants.PACKAGE_HEALTH_RESOLUTION_ENABLED;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class CelPolicyEngineTest extends PersistenceCapableTest {
 
@@ -2375,6 +2378,328 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testEvaluateProjectWithPoorScorecardScore() throws Exception {
+        final var policy = qm.createPolicy("poor-scorecard", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "has(health.scorecard_score) && health.scorecard_score <= 3.0",
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setPurl(new PackageURL("pkg:maven/com.acme/acme-lib@1.0.0"));
+        qm.persist(component);
+
+        final var engine = new CelPolicyEngine();
+        engine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).isEmpty();
+
+        final String packagePurl = "pkg:maven/com.acme/acme-lib";
+        useJdbiTransaction(handle -> {
+            upsertPackageMetadata(handle, packagePurl, "pkg:maven/com.acme/acme-lib@1.0.0");
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_METADATA"
+                            ("PURL", "SCORECARD_SCORE", "STATUS")
+                        VALUES (:purl, 3.0, 'PROCESSED')
+                        """).bind("purl", packagePurl).execute();
+        });
+
+        engine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+    }
+
+    @Test
+    void testEvaluateProjectIgnoresHealthOfComponentWithoutArtifactMetadata() throws Exception {
+        final var policy = qm.createPolicy("poor-scorecard", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "has(health.scorecard_score) && health.scorecard_score <= 3.0",
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        // Health is only re-evaluated for projects whose components have artifact metadata,
+        // so components without it must not be matched against health either.
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setPurl(new PackageURL("pkg:maven/com.acme/acme-lib@2.0.0"));
+        qm.persist(component);
+
+        final String packagePurl = "pkg:maven/com.acme/acme-lib";
+        useJdbiTransaction(handle -> {
+            upsertPackageMetadata(handle, packagePurl, "pkg:maven/com.acme/acme-lib@1.0.0");
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_METADATA"
+                            ("PURL", "SCORECARD_SCORE", "STATUS")
+                        VALUES (:purl, 3.0, 'PROCESSED')
+                        """).bind("purl", packagePurl).execute();
+        });
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).isEmpty();
+    }
+
+    @Test
+    void testEvaluateProjectClearsHealthViolationsWhenPackageHealthIsDisabled() throws Exception {
+        final var policy = qm.createPolicy("poor-scorecard", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "health.scorecard_score <= 3.0",
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setPurl(new PackageURL("pkg:maven/com.acme/acme-lib@1.0.0"));
+        qm.persist(component);
+
+        final String packagePurl = "pkg:maven/com.acme/acme-lib";
+        useJdbiTransaction(handle -> {
+            upsertPackageMetadata(handle, packagePurl, "pkg:maven/com.acme/acme-lib@1.0.0");
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_METADATA"
+                            ("PURL", "SCORECARD_SCORE", "STATUS")
+                        VALUES (:purl, 3.0, 'PROCESSED')
+                        """).bind("purl", packagePurl).execute();
+        });
+
+        final var engine = new CelPolicyEngine();
+        engine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+
+        qm.createConfigProperty(
+                PACKAGE_HEALTH_RESOLUTION_ENABLED.getGroupName(),
+                PACKAGE_HEALTH_RESOLUTION_ENABLED.getPropertyName(),
+                "false",
+                PACKAGE_HEALTH_RESOLUTION_ENABLED.getPropertyType(),
+                PACKAGE_HEALTH_RESOLUTION_ENABLED.getDescription());
+
+        engine.evaluateProject(project.getUuid());
+        final long violationCount = withJdbiHandle(handle -> handle.createQuery("""
+                SELECT COUNT(*)
+                  FROM "POLICYVIOLATION"
+                 WHERE "COMPONENT_ID" = :componentId
+                """)
+                .bind("componentId", component.getId())
+                .mapTo(Long.class)
+                .one());
+        assertThat(violationCount).isZero();
+    }
+
+    @Test
+    void testEvaluateProjectWithArchivedRepository() throws Exception {
+        final var policy = qm.createPolicy("archived-repo", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "has(health.is_repo_archived) && health.is_repo_archived",
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setPurl(new PackageURL("pkg:maven/com.acme/acme-lib@1.0.0"));
+        qm.persist(component);
+
+        final String packagePurl = "pkg:maven/com.acme/acme-lib";
+        useJdbiTransaction(handle -> {
+            upsertPackageMetadata(handle, packagePurl, "pkg:maven/com.acme/acme-lib@1.0.0");
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_METADATA"
+                            ("PURL", "IS_REPO_ARCHIVED", "STATUS")
+                        VALUES (:purl, true, 'PROCESSED')
+                        """).bind("purl", packagePurl).execute();
+        });
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+    }
+
+    @Test
+    void testEvaluateProjectWithHealthScorecardScore() throws Exception {
+        final var policy = qm.createPolicy("health-policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "health.scorecard_score < 5.0",
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setPurl(new PackageURL("pkg:maven/com.acme/acme-lib@1.0.0"));
+        qm.persist(component);
+
+        final var engine = new CelPolicyEngine();
+        engine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).isEmpty();
+
+        final String packagePurl = "pkg:maven/com.acme/acme-lib";
+        useJdbiTransaction(handle -> {
+            upsertPackageMetadata(handle, packagePurl, "pkg:maven/com.acme/acme-lib@1.0.0");
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_METADATA"
+                            ("PURL", "SCORECARD_SCORE", "STATUS")
+                        VALUES (:purl, 4.0, 'PROCESSED')
+                        """).bind("purl", packagePurl).execute();
+        });
+
+        engine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+
+        useJdbiTransaction(
+                handle -> handle.createUpdate("""
+                UPDATE "PACKAGE_HEALTH_METADATA"
+                   SET "SCORECARD_SCORE" = NULL
+                 WHERE "PURL" = :purl
+                """).bind("purl", packagePurl).execute());
+
+        engine.evaluateProject(project.getUuid());
+        final long violationCount = withJdbiHandle(handle -> handle.createQuery("""
+                SELECT COUNT(*)
+                  FROM "POLICYVIOLATION"
+                 WHERE "COMPONENT_ID" = :componentId
+                """)
+                .bind("componentId", component.getId())
+                .mapTo(Long.class)
+                .one());
+
+        assertThat(violationCount).isEqualTo(1L);
+
+        useJdbiTransaction(
+                handle -> handle.createUpdate("""
+                UPDATE "PACKAGE_HEALTH_METADATA"
+                   SET "SCORECARD_SCORE" = 6.0
+                 WHERE "PURL" = :purl
+                """).bind("purl", packagePurl).execute());
+
+        engine.evaluateProject(project.getUuid());
+
+        final long remainingViolations = withJdbiHandle(handle -> handle.createQuery("""
+                SELECT COUNT(*)
+                  FROM "POLICYVIOLATION"
+                 WHERE "COMPONENT_ID" = :componentId
+                """)
+                .bind("componentId", component.getId())
+                .mapTo(Long.class)
+                .one());
+
+        assertThat(remainingViolations).isZero();
+    }
+
+    @Test
+    void testEvaluateProjectWithAllConditionsAndMissingHealthScore() throws Exception {
+        final var policy = qm.createPolicy("health-all-policy", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "health.scorecard_score < 5.0",
+                PolicyViolation.Type.OPERATIONAL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "component.name == \"acme-lib\"",
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setPurl(new PackageURL("pkg:maven/com.acme/acme-lib@1.0.0"));
+        qm.persist(component);
+
+        final var engine = new CelPolicyEngine();
+        engine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).isEmpty();
+
+        final String packagePurl = "pkg:maven/com.acme/acme-lib";
+        useJdbiTransaction(handle -> {
+            upsertPackageMetadata(handle, packagePurl, "pkg:maven/com.acme/acme-lib@1.0.0");
+            handle.createUpdate("""
+                        INSERT INTO "PACKAGE_HEALTH_METADATA"
+                            ("PURL", "SCORECARD_SCORE", "STATUS")
+                        VALUES (:purl, 4.0, 'PROCESSED')
+                        """).bind("purl", packagePurl).execute();
+        });
+
+        engine.evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(2);
+
+        useJdbiTransaction(
+                handle -> handle.createUpdate("""
+                    UPDATE "PACKAGE_HEALTH_METADATA"
+                       SET "SCORECARD_SCORE" = NULL
+                     WHERE "PURL" = :purl
+                    """).bind("purl", packagePurl).execute());
+
+        engine.evaluateProject(project.getUuid());
+
+        final long violationCount = withJdbiHandle(handle -> handle.createQuery("""
+                    SELECT COUNT(*)
+                      FROM "POLICYVIOLATION"
+                     WHERE "COMPONENT_ID" = :componentId
+                    """)
+                .bind("componentId", component.getId())
+                .mapTo(Long.class)
+                .one());
+
+        assertThat(violationCount).isEqualTo(2L);
+
+        useJdbiTransaction(handle ->
+                handle.createUpdate("""
+                UPDATE "COMPONENT"
+                   SET "NAME" = 'other-lib'
+                 WHERE "ID" = :componentId
+                """).bind("componentId", component.getId()).execute());
+
+        engine.evaluateProject(project.getUuid());
+
+        final long remainingViolations = withJdbiHandle(handle -> handle.createQuery("""
+                SELECT COUNT(*)
+                  FROM "POLICYVIOLATION"
+                 WHERE "COMPONENT_ID" = :componentId
+                """)
+                .bind("componentId", component.getId())
+                .mapTo(Long.class)
+                .one());
+
+        assertThat(remainingViolations).isZero();
+    }
+
+    @Test
     void issue1924() throws Exception {
         Policy policy = qm.createPolicy("Policy 1924", Policy.Operator.ALL, Policy.ViolationState.INFO);
         qm.createPolicyCondition(
@@ -3040,5 +3365,24 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         assertThat(qm.getAllPolicyViolations(projectUntagged)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(projectTagged)).isEmpty();
+    }
+
+    private static void upsertPackageMetadata(final Handle handle, final String packagePurl, final String componentPurl)
+            throws Exception {
+        new PackageMetadataDao(handle)
+                .upsertAll(List.of(
+                        new PackageMetadata(new PackageURL(packagePurl), "1.0.0", null, Instant.now(), null, null)));
+        new PackageArtifactMetadataDao(handle)
+                .upsertAll(List.of(new PackageArtifactMetadata(
+                        new PackageURL(componentPurl),
+                        new PackageURL(packagePurl),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        Instant.now())));
     }
 }

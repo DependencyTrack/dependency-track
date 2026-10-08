@@ -146,6 +146,55 @@ public class PolicyConditionResourceTest extends ResourceTest {
     }
 
     @Test
+    public void testCreateHealthPolicyExpressions() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
+
+        final Policy policy = qm.createPolicy("health-policy", Operator.ANY, ViolationState.FAIL);
+
+        final Response scoreResponse = jersey.target("%s/%s/condition".formatted(V1_POLICY, policy.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(/* language=JSON */ """
+                        {
+                          "subject": "EXPRESSION",
+                          "value": "has(health.scorecard_score) && health.scorecard_score <= 3.0",
+                          "violationType": "OPERATIONAL"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+        assertThat(scoreResponse.getStatus()).isEqualTo(201);
+        assertThatJson(getPlainTextBody(scoreResponse)).isEqualTo(/* language=JSON */ """
+                {
+                  "uuid": "${json-unit.any-string}",
+                  "subject": "EXPRESSION",
+                  "operator": "MATCHES",
+                  "value": "has(health.scorecard_score) && health.scorecard_score <= 3.0",
+                  "violationType": "OPERATIONAL"
+                }
+                """);
+
+        final Response maintainedResponse = jersey.target("%s/%s/condition".formatted(V1_POLICY, policy.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(/* language=JSON */ """
+                        {
+                          "subject": "EXPRESSION",
+                          "value": "health.scorecard_checks.exists(c, c.name == \\"Maintained\\" && c.score <= 3.0)",
+                          "violationType": "OPERATIONAL"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+        assertThat(maintainedResponse.getStatus()).isEqualTo(201);
+        assertThatJson(getPlainTextBody(maintainedResponse)).isEqualTo(/* language=JSON */ """
+                {
+                  "uuid": "${json-unit.any-string}",
+                  "subject": "EXPRESSION",
+                  "operator": "MATCHES",
+                  "value": "health.scorecard_checks.exists(c, c.name == \\"Maintained\\" && c.score <= 3.0)",
+                  "violationType": "OPERATIONAL"
+                }
+                """);
+    }
+
+    @Test
     public void testCreateConditionWithInvalidExpression() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
 

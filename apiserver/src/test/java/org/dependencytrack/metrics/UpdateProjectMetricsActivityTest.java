@@ -122,14 +122,13 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         // Run the task a second time, without any metric being changed
         executeActivity(project);
 
-        // No new row must have been created, and the existing row's timestamp must remain untouched
+        // No new row must have been created, but the existing row's LAST_OCCURRENCE must be
+        // touched forward to reflect that metrics were reconfirmed - not left frozen, which
+        // would make it indistinguishable from analysis never having rerun at all.
         final List<ProjectMetrics> projectMetrics = withJdbiHandle(
                 handle -> handle.attach(MetricsDao.class).getProjectMetricsSince(project.getId(), Instant.EPOCH));
-        assertThat(projectMetrics)
-                .hasSize(1)
-                .first()
-                .extracting(ProjectMetrics::getLastOccurrence)
-                .isEqualTo(initialProjectMetrics.getLastOccurrence());
+        assertThat(projectMetrics).hasSize(1);
+        assertThat(projectMetrics.getFirst().getLastOccurrence()).isAfter(initialProjectMetrics.getLastOccurrence());
 
         final List<DependencyMetrics> componentMetrics = withJdbiHandle(
                 handle -> handle.attach(MetricsDao.class).getDependencyMetricsSince(component.getId(), Instant.EPOCH));

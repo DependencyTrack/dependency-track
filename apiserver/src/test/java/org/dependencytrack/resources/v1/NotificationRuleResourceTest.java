@@ -204,6 +204,303 @@ class NotificationRuleResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldCreateNotificationRuleWithAllOptionalFields() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
+
+        // Use non-default values for every optional field.
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "Example Rule",
+                          "notificationLevel": "WARNING",
+                          "scope": "PORTFOLIO",
+                          "publisher": {
+                            "uuid": "%s"
+                          },
+                          "enabled": false,
+                          "notifyChildren": false,
+                          "logSuccessfulPublish": true,
+                          "notifyOn": ["NEW_VULNERABILITY", "POLICY_VIOLATION"],
+                          "publisherConfig": "{\\"destinationUrl\\":\\"https://hooks.example.com/custom\\"}",
+                          "filterExpression": "group == 1"
+                        }
+                        """.formatted(publisher.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThatJson(responseJson.toString())
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "name": "Example Rule",
+                          "enabled": false,
+                          "notifyChildren": false,
+                          "logSuccessfulPublish": true,
+                          "scope": "PORTFOLIO",
+                          "notificationLevel": "WARNING",
+                          "projects": [],
+                          "tags": [],
+                          "teams": [],
+                          "notifyOn": [
+                            "NEW_VULNERABILITY",
+                            "POLICY_VIOLATION"
+                          ],
+                          "publisher": {
+                            "name": "Slack",
+                            "description": "description",
+                            "extensionName": "slack",
+                            "templateMimeType": "templateMimeType",
+                            "defaultPublisher": true,
+                            "uuid": "${json-unit.any-string}"
+                          },
+                          "publisherConfig": "{\\"destinationUrl\\":\\"https://hooks.example.com/custom\\"}",
+                          "triggerType": "EVENT",
+                          "filterExpression": "group == 1",
+                          "uuid": "${json-unit.any-string}"
+                        }
+                        """);
+
+        // Verify what was actually persisted, not just the response.
+        qm.getPersistenceManager().evictAll();
+        final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, responseJson.getString("uuid"));
+        assertThat(rule).isNotNull();
+        assertThat(rule.isEnabled()).isFalse();
+        assertThat(rule.isNotifyChildren()).isFalse();
+        assertThat(rule.isLogSuccessfulPublish()).isTrue();
+        assertThat(rule.getNotifyOn())
+                .containsExactlyInAnyOrder(NotificationGroup.NEW_VULNERABILITY, NotificationGroup.POLICY_VIOLATION);
+        assertThat(rule.getFilterExpression()).isEqualTo("group == 1");
+        assertThatJson(rule.getPublisherConfig()).isEqualTo(/* language=JSON */ """
+                {
+                  "destinationUrl": "https://hooks.example.com/custom"
+                }
+                """);
+    }
+
+    @Test
+    void shouldCreateNotificationRuleWithTags() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
+
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "Example Rule",
+                          "notificationLevel": "INFORMATIONAL",
+                          "scope": "PORTFOLIO",
+                          "publisher": {
+                            "uuid": "%s"
+                          },
+                          "notifyOn": ["NEW_VULNERABILITY"],
+                          "tags": [
+                            {"name": "foo"},
+                            {"name": "bar"}
+                          ]
+                        }
+                        """.formatted(publisher.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThatJson(responseJson.toString())
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .inPath("tags")
+                .isEqualTo(/* language=JSON */ """
+                        [
+                          {"name": "foo"},
+                          {"name": "bar"}
+                        ]
+                        """);
+
+        qm.getPersistenceManager().evictAll();
+        final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, responseJson.getString("uuid"));
+        assertThat(rule).isNotNull();
+        assertThat(rule.getTags()).extracting("name").containsExactlyInAnyOrder("foo", "bar");
+    }
+
+    @Test
+    void shouldUseDefaultPublisherConfigWhenNotProvidedOnCreate() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
+
+        // Unlike updates, a missing publisherConfig is fine on create: the publisher's default config is applied.
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "Example Rule",
+                          "notificationLevel": "INFORMATIONAL",
+                          "scope": "PORTFOLIO",
+                          "publisher": {
+                            "uuid": "%s"
+                          },
+                          "notifyOn": ["NEW_VULNERABILITY"]
+                        }
+                        """.formatted(publisher.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        // Omitted optional fields must keep their create defaults.
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "name": "Example Rule",
+                  "enabled": true,
+                  "notifyChildren": true,
+                  "logSuccessfulPublish": false,
+                  "scope": "PORTFOLIO",
+                  "notificationLevel": "INFORMATIONAL",
+                  "projects": [],
+                  "tags": [],
+                  "teams": [],
+                  "notifyOn": [
+                    "NEW_VULNERABILITY"
+                  ],
+                  "publisher": {
+                    "name": "Slack",
+                    "description": "description",
+                    "extensionName": "slack",
+                    "templateMimeType": "templateMimeType",
+                    "defaultPublisher": true,
+                    "uuid": "${json-unit.any-string}"
+                  },
+                  "publisherConfig": "{\\"destinationUrl\\":\\"https://slack.example.com\\"}",
+                  "triggerType": "EVENT",
+                  "uuid": "${json-unit.any-string}"
+                }
+                """);
+    }
+
+    @Test
+    void shouldReturnBadRequestAndNotCreateRuleWhenPublisherConfigIsInvalid() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
+
+        // destinationUrl violates the schema's minLength.
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "Example Rule",
+                          "notificationLevel": "INFORMATIONAL",
+                          "scope": "PORTFOLIO",
+                          "publisher": {
+                            "uuid": "%s"
+                          },
+                          "notifyOn": ["NEW_VULNERABILITY"],
+                          "publisherConfig": "{\\"destinationUrl\\":\\"\\"}"
+                        }
+                        """.formatted(publisher.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).startsWith("Invalid publisher configuration:");
+
+        assertNoNotificationRulesExist();
+    }
+
+    @Test
+    void shouldReturnBadRequestAndNotCreateRuleWhenFilterExpressionIsInvalid() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
+
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "Example Rule",
+                          "notificationLevel": "INFORMATIONAL",
+                          "scope": "PORTFOLIO",
+                          "publisher": {
+                            "uuid": "%s"
+                          },
+                          "notifyOn": ["NEW_VULNERABILITY"],
+                          "filterExpression": "%s"
+                        }
+                        """.formatted(publisher.getUuid(), "invalid %%% expression")));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 400,
+                  "title": "Bad Request",
+                  "detail": "Filter expression is invalid",
+                  "errors": [
+                    {
+                      "line": 1,
+                      "column": 9,
+                      "message": "${json-unit.any-string}"
+                    },
+                    {
+                      "line": 1,
+                      "column": 10,
+                      "message": "${json-unit.any-string}"
+                    }
+                  ]
+                }
+                """);
+
+        assertNoNotificationRulesExist();
+    }
+
+    @Test
+    void shouldReturnBadRequestAndNotCreateRuleWhenNotifyOnContainsScheduledGroup() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
+
+        // Summary groups are only valid for scheduled rules.
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "Example Rule",
+                          "notificationLevel": "INFORMATIONAL",
+                          "scope": "PORTFOLIO",
+                          "publisher": {
+                            "uuid": "%s"
+                          },
+                          "notifyOn": ["NEW_VULNERABILITIES_SUMMARY"]
+                        }
+                        """.formatted(publisher.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response))
+                .isEqualTo("Groups [NEW_VULNERABILITIES_SUMMARY] are not supported for trigger type EVENT");
+
+        assertNoNotificationRulesExist();
+    }
+
+    @Test
+    void shouldReturnBadRequestAndNotCreateRuleWhenPublisherDoesNotSupportConfig() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
+
+        // The console publisher has no rule config spec.
+        final NotificationPublisher consolePublisher = qm.createNotificationPublisher(
+                "Console", "description", "console", "templateContent", "text/plain", true);
+
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "Example Rule",
+                          "notificationLevel": "INFORMATIONAL",
+                          "scope": "PORTFOLIO",
+                          "publisher": {
+                            "uuid": "%s"
+                          },
+                          "notifyOn": ["NEW_VULNERABILITY"],
+                          "publisherConfig": "{\\"foo\\":\\"bar\\"}"
+                        }
+                        """.formatted(consolePublisher.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("The publisher does not support configuration.");
+
+        assertNoNotificationRulesExist();
+    }
+
+    private void assertNoNotificationRulesExist() {
+        assertThat(qm.getCount(qm.getPersistenceManager().newQuery(NotificationRule.class)))
+                .isZero();
+    }
+
+    @Test
     void updateNotificationRuleTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE, Permissions.SYSTEM_CONFIGURATION_UPDATE);
         Response response = jersey.target(V1_NOTIFICATION_RULE)

@@ -36,6 +36,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
+import org.cyclonedx.exception.ParseException;
+import org.cyclonedx.parsers.BomParserFactory;
+import org.cyclonedx.parsers.JsonParser;
+import org.cyclonedx.parsers.XmlParser;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.common.ConfigKeys;
@@ -123,6 +127,7 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_BOM_UPLOAD_TOKEN;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
@@ -855,6 +860,13 @@ public class BomResource extends AbstractApiResource {
 
         final UUID bomUploadToken = Generators.timeBasedEpochRandomGenerator().generate();
 
+        final boolean retainBomFile = withJdbiHandle(
+                getAlpineRequest(),
+                handle -> handle.attach(ConfigPropertyDao.class)
+                        .getOptionalValue(BOM_ORIGINAL_RETENTION_ENABLED, Boolean.class)
+                        .orElseGet(
+                                () -> Boolean.parseBoolean(BOM_ORIGINAL_RETENTION_ENABLED.getDefaultPropertyValue())));
+
         final FileMetadata bomFileMetadata;
         try {
             // TODO: Provide mediaType to FileStorage#store. Should be any of:
@@ -862,8 +874,10 @@ public class BomResource extends AbstractApiResource {
             //   * application/vnd.cyclonedx+xml
             //  Consider also attaching the detected version, i.e. application/vnd.cyclonedx+xml; version=1.6
             //  See https://cyclonedx.org/specification/overview/ -> Media Types.
-            bomFileMetadata =
-                    fileStorage.store("bom-upload/%s".formatted(bomUploadToken), new ByteArrayInputStream(bomBytes));
+            bomFileMetadata = fileStorage.store(
+                    "bom-upload/%s".formatted(bomUploadToken),
+                    determineBomMediaType(bomBytes),
+                    new ByteArrayInputStream(bomBytes));
         } catch (IOException e) {
             LOGGER.error("Failed to store BOM for project: {}", project.uuid(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -884,6 +898,7 @@ public class BomResource extends AbstractApiResource {
                             .setProjectVersion(project.version() != null ? project.version() : "")
                             .setBomUploadToken(bomUploadToken.toString())
                             .setBomFileMetadata(bomFileMetadata)
+                            .setRetainBomFile(retainBomFile)
                             .build()));
 
             try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.uuid().toString());
@@ -905,6 +920,20 @@ public class BomResource extends AbstractApiResource {
         return response;
     }
 
+    private static String determineBomMediaType(byte[] bomBytes) {
+        try {
+            final var parser = BomParserFactory.createParser(bomBytes);
+            if (parser instanceof JsonParser) {
+                return CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON;
+            }
+            if (parser instanceof XmlParser) {
+                return CycloneDxMediaType.APPLICATION_CYCLONEDX_XML;
+            }
+        } catch (ParseException _) {
+            // Fall back to the generic binary media type for unparseable BOMs
+        }
+
+        return MediaType.APPLICATION_OCTET_STREAM;
     static byte[] readUpload(InputStream inputStream, String maxSizeConfigKey) throws IOException {
         final int maxSizeBytes = ConfigProvider.getConfig().getValue(maxSizeConfigKey, int.class);
         final byte[] bytes = inputStream.readNBytes(maxSizeBytes);

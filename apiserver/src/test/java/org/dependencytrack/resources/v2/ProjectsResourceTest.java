@@ -22,6 +22,7 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.Component;
@@ -35,6 +36,7 @@ import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
 import org.dependencytrack.pkgmetadata.PackageMetadataDao;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -51,11 +53,19 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
+import static org.mockito.Mockito.mock;
 
 public class ProjectsResourceTest extends ResourceTest {
 
+    private static final FileStorage FILE_STORAGE_MOCK = mock(FileStorage.class);
+
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig());
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(new AbstractBinder() {
+        @Override
+        protected void configure() {
+            bind(FILE_STORAGE_MOCK).to(FileStorage.class);
+        }
+    }));
 
     @Test
     public void listProjectComponents() {

@@ -28,6 +28,7 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -39,7 +40,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
@@ -73,17 +77,61 @@ public class NotificationQueryManager extends QueryManager {
     @Override
     public NotificationRule createNotificationRule(
             String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
+        final var rule = new NotificationRule();
+        rule.setTriggerType(NotificationTriggerType.EVENT);
+        rule.setName(name);
+        rule.setScope(scope);
+        rule.setNotificationLevel(level);
+        rule.setPublisher(publisher);
+        rule.setEnabled(true);
+        rule.setNotifyChildren(true);
+        rule.setLogSuccessfulPublish(false);
+        return createNotificationRule(rule);
+    }
+
+    /**
+     * Creates a new {@link NotificationRule} from a transient rule.
+     * The trigger type decides which groups are allowed and whether schedule fields apply.
+     *
+     * @throws IllegalArgumentException if {@code notifyOn} has groups not supported for the trigger type
+     * @since 5.3.0
+     */
+    @Override
+    public NotificationRule createNotificationRule(final NotificationRule transientRule) {
+        final NotificationTriggerType triggerType =
+                requireNonNull(transientRule.getTriggerType(), "triggerType must not be null");
+
         return callInTransaction(() -> {
-            final NotificationRule rule = new NotificationRule();
-            rule.setName(name);
-            rule.setScope(scope);
-            rule.setNotificationLevel(level);
-            rule.setPublisher(publisher);
-            rule.setTriggerType(NotificationTriggerType.EVENT);
-            rule.setEnabled(true);
-            rule.setNotifyChildren(true);
-            rule.setLogSuccessfulPublish(false);
-            return persist(rule);
+            final Set<NotificationGroup> notifyOn = validateNotifyOn(triggerType, transientRule.getNotifyOn());
+
+            final var rule = new NotificationRule();
+            rule.setTriggerType(triggerType);
+            rule.setName(transientRule.getName());
+            rule.setScope(transientRule.getScope());
+            rule.setNotificationLevel(transientRule.getNotificationLevel());
+            rule.setPublisher(transientRule.getPublisher());
+            rule.setEnabled(transientRule.isEnabled());
+            rule.setNotifyChildren(transientRule.isNotifyChildren());
+            rule.setLogSuccessfulPublish(transientRule.isLogSuccessfulPublish());
+            rule.setNotifyOn(notifyOn);
+            rule.setPublisherConfig(transientRule.getPublisherConfig());
+            rule.setFilterExpression(transientRule.getFilterExpression());
+
+            if (triggerType == NotificationTriggerType.SCHEDULE) {
+                rule.setScheduleCron(transientRule.getScheduleCron());
+                rule.setScheduleSkipUnchanged(transientRule.isScheduleSkipUnchanged());
+                rule.setScheduleLastTriggeredAt(new Date());
+                rule.updateScheduleNextTriggerAt();
+            }
+
+            final NotificationRule persistedRule = persist(rule);
+
+            // Tags can only be bound once the rule is persisted.
+            if (transientRule.getTags() != null && !transientRule.getTags().isEmpty()) {
+                bind(persistedRule, resolveTags(transientRule.getTags()));
+            }
+
+            return persistedRule;
         });
     }
 
@@ -93,21 +141,17 @@ public class NotificationQueryManager extends QueryManager {
     @Override
     public NotificationRule createScheduledNotificationRule(
             String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
-        return callInTransaction(() -> {
-            final var rule = new NotificationRule();
-            rule.setName(name);
-            rule.setScope(scope);
-            rule.setNotificationLevel(level);
-            rule.setPublisher(publisher);
-            rule.setTriggerType(NotificationTriggerType.SCHEDULE);
-            rule.setEnabled(false);
-            rule.setLogSuccessfulPublish(false);
-            rule.setScheduleCron("0 * * * *");
-            rule.setScheduleLastTriggeredAt(new Date());
-            rule.setScheduleSkipUnchanged(false);
-            rule.updateScheduleNextTriggerAt();
-            return persist(rule);
-        });
+        final var rule = new NotificationRule();
+        rule.setTriggerType(NotificationTriggerType.SCHEDULE);
+        rule.setName(name);
+        rule.setScope(scope);
+        rule.setNotificationLevel(level);
+        rule.setPublisher(publisher);
+        rule.setEnabled(false);
+        rule.setLogSuccessfulPublish(false);
+        rule.setScheduleCron("0 * * * *");
+        rule.setScheduleSkipUnchanged(false);
+        return createNotificationRule(rule);
     }
 
     /**
@@ -123,26 +167,13 @@ public class NotificationQueryManager extends QueryManager {
                 throw new IllegalArgumentException("Trigger type can not be changed");
             }
 
-            if (rule.getTriggerType() == NotificationTriggerType.SCHEDULE) {
-                final List<NotificationGroup> invalidGroups = transientRule.getNotifyOn().stream()
-                        .filter(group -> group.getSupportedTriggerType() != NotificationTriggerType.SCHEDULE)
-                        .toList();
-                if (!invalidGroups.isEmpty()) {
-                    throw new IllegalArgumentException("Groups %s are not supported for trigger type %s"
-                            .formatted(invalidGroups, rule.getTriggerType()));
-                }
+            final Set<NotificationGroup> notifyOn =
+                    validateNotifyOn(rule.getTriggerType(), transientRule.getNotifyOn());
 
+            if (rule.getTriggerType() == NotificationTriggerType.SCHEDULE) {
                 rule.setScheduleCron(transientRule.getScheduleCron());
                 rule.setScheduleSkipUnchanged(transientRule.isScheduleSkipUnchanged());
                 rule.updateScheduleNextTriggerAt();
-            } else if (rule.getTriggerType() == NotificationTriggerType.EVENT) {
-                final List<NotificationGroup> invalidGroups = transientRule.getNotifyOn().stream()
-                        .filter(group -> group.getSupportedTriggerType() != NotificationTriggerType.EVENT)
-                        .toList();
-                if (!invalidGroups.isEmpty()) {
-                    throw new IllegalArgumentException("Groups %s are not supported for trigger type %s"
-                            .formatted(invalidGroups, rule.getTriggerType()));
-                }
             }
 
             rule.setName(transientRule.getName());
@@ -152,7 +183,7 @@ public class NotificationQueryManager extends QueryManager {
             rule.setNotificationLevel(transientRule.getNotificationLevel());
             rule.setPublisherConfig(transientRule.getPublisherConfig());
             rule.setFilterExpression(transientRule.getFilterExpression());
-            rule.setNotifyOn(transientRule.getNotifyOn());
+            rule.setNotifyOn(notifyOn);
             bind(rule, resolveTags(transientRule.getTags()));
             return rule;
         });
@@ -280,5 +311,23 @@ public class NotificationQueryManager extends QueryManager {
     @Override
     public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
         return bind(notificationRule, tags, /* keepExisting */ false);
+    }
+
+    /**
+     * @return {@code notifyOn}, or an empty set if {@code null}
+     * @throws IllegalArgumentException if a group is not supported for {@code triggerType}
+     */
+    private static Set<NotificationGroup> validateNotifyOn(
+            final NotificationTriggerType triggerType, final @Nullable Set<NotificationGroup> notifyOn) {
+        final Set<NotificationGroup> groups = requireNonNullElse(notifyOn, Set.of());
+        final List<NotificationGroup> invalidGroups = groups.stream()
+                .filter(group -> group.getSupportedTriggerType() != triggerType)
+                .toList();
+        if (!invalidGroups.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Groups %s are not supported for trigger type %s".formatted(invalidGroups, triggerType));
+        }
+
+        return groups;
     }
 }

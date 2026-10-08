@@ -296,4 +296,28 @@ public class MetricsDaoTest extends PersistenceCapableTest {
                 metricsDao.getProjectMetricsSince(projectId, Instant.now().minus(Duration.ofDays(1)));
         assertThat(surviving).hasSize(1);
     }
+
+    @Test
+    public void shouldTouchLastOccurrenceForwardWhenRecomputedMetricsAreUnchanged() throws Exception {
+        final var project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+        metricsDao.createMetricsPartitions();
+
+        metricsDao.updateProjectMetrics(project.getUuid());
+        final ProjectMetrics firstMetrics = metricsDao.getMostRecentProjectMetrics(project.getId());
+        assertThat(firstMetrics).isNotNull();
+
+        // The project has no components, so both calls compute the exact same (all-zero)
+        // aggregate - nothing has changed between them. Sleep briefly to guarantee NOW() in the
+        // second call is measurably later than in the first, regardless of DB clock resolution.
+        Thread.sleep(50);
+
+        metricsDao.updateProjectMetrics(project.getUuid());
+        final ProjectMetrics secondMetrics = metricsDao.getMostRecentProjectMetrics(project.getId());
+        assertThat(secondMetrics).isNotNull();
+
+        // Touched forward in place, not replaced by a new row: FIRST_OCCURRENCE - which a fresh
+        // INSERT would also set to NOW() - is unchanged, while LAST_OCCURRENCE has advanced.
+        assertThat(secondMetrics.getFirstOccurrence()).isEqualTo(firstMetrics.getFirstOccurrence());
+        assertThat(secondMetrics.getLastOccurrence()).isAfter(firstMetrics.getLastOccurrence());
+    }
 }

@@ -46,6 +46,7 @@ import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
@@ -110,6 +111,7 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertSe
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProject;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProjectMetadata;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
@@ -400,12 +402,40 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
                 qm.seedPackageMetadataResolution(persistentProject);
 
+                final Collection<Component> components = persistentComponentsByIdentity.values();
+                final List<Long> componentIds =
+                        components.stream().map(Component::getId).toList();
+                final List<ComponentDao.ComponentLicenseRow> updates = buildComponentLicenseRows(components);
+
+                useJdbiHandle(
+                        qm,
+                        handle -> handle.attach(ComponentDao.class).replaceComponentLicenses(componentIds, updates));
+
                 return new ProcessedBom(
                         persistentProject,
                         persistentComponentsByIdentity.values(),
                         persistentServicesByIdentity.values());
             });
         }
+    }
+
+    private static List<ComponentDao.ComponentLicenseRow> buildComponentLicenseRows(Collection<Component> components) {
+        return components.stream()
+                .filter(component -> component.getResolvedLicense() != null
+                        || component.getLicense() != null
+                        || component.getLicenseExpression() != null
+                        || component.getLicenseUrl() != null)
+                .map(component -> new ComponentDao.ComponentLicenseRow(
+                        component.getId(),
+                        component.getResolvedLicense() != null
+                                ? component.getResolvedLicense().getId()
+                                : null,
+                        component.getLicense(),
+                        component.getLicenseExpression(),
+                        component.getLicenseUrl(),
+                        1,
+                        "DECLARED"))
+                .toList();
     }
 
     private static Project processProject(

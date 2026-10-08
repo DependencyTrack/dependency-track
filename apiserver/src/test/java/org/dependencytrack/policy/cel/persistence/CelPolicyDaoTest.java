@@ -214,6 +214,29 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
         component.setResolvedLicense(license);
         qm.persist(component);
 
+        useJdbiHandle(handle -> handle.createUpdate("""
+                INSERT INTO "COMPONENTLICENSES" (
+                        "COMPONENTID",
+                        "LICENSE_ID",
+                        "LICENSE",
+                        "LICENSE_EXPRESSION",
+                        "ORDINALITY",
+                        "ACKNOWLEDGEMENT"
+                        )
+                VALUES (
+                        :componentId,
+                        :licenseId,
+                        :license,
+                        :licenseExpression,
+                        1,
+                        'DECLARED'
+                        )""")
+                .bind("componentId", component.getId())
+                .bind("licenseId", license.getId())
+                .bind("license", "componentLicenseName")
+                .bind("licenseExpression", "componentLicenseExpression")
+                .execute());
+
         useJdbiHandle(handle -> new PackageMetadataDao(handle)
                 .upsertAll(List.of(new PackageMetadata(
                         new PackageURL("pkg:maven/componentGroup/componentName"),

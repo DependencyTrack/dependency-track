@@ -402,7 +402,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
                 qm.seedPackageMetadataResolution(persistentProject);
 
-                final Collection<Component> components = bom.components();
+                final Collection<Component> components = persistentComponentsByIdentity.values();
                 final List<Long> componentIds =
                         components.stream().map(Component::getId).toList();
                 final List<ComponentDao.ComponentLicenseRow> updates = buildComponentLicenseRows(components);

@@ -146,7 +146,7 @@
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
         <lib.jboss-logging.version>3.6.3.Final</lib.jboss-logging.version>
         <lib.jdbi.version>3.55.0</lib.jdbi.version>
-        <lib.jersey.version>4.0.2</lib.jersey.version>
+        <lib.jersey.version>4.0.3</lib.jersey.version>
         <lib.jetty.version>12.1.13</lib.jetty.version>
         <lib.jimfs.version>1.3.2</lib.jimfs.version>
         <lib.json-schema-validator.version>2.0.7</lib.json-schema-validator.version>

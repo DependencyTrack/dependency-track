@@ -37,7 +37,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
-import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRowV1;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
@@ -120,7 +120,7 @@ public class AccessControlResource extends AbstractApiResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
-                final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+                final Page<ListProjectsRowV1> projectsPage = withJdbiHandle(
                         getAlpineRequest(),
                         handle -> handle.attach(ProjectDao.class)
                                 .getProjects(new ListProjectsQuery()

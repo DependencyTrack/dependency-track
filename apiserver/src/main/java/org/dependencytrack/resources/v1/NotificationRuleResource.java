@@ -43,6 +43,7 @@ import org.dependencytrack.notification.NotificationFilterExpressionEnv;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.command.CreateNotificationRuleCommand;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
@@ -176,6 +177,17 @@ public class NotificationRuleResource extends AbstractApiResource {
                         responseCode = "201",
                         description = "The created notification rule",
                         content = @Content(schema = @Schema(implementation = NotificationRule.class))),
+                @ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid filter expression, publisher configuration, or notification groups",
+                        content =
+                                @Content(
+                                        schema =
+                                                @Schema(
+                                                        implementation =
+                                                                InvalidNotificationFilterExpressionProblemDetails
+                                                                        .class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(
                         responseCode = "404",
@@ -183,6 +195,10 @@ public class NotificationRuleResource extends AbstractApiResource {
             })
     @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_CREATE})
     public Response createNotificationRule(@Valid CreateNotificationRuleRequest request) {
+        if (request.filterExpression() != null && !request.filterExpression().isBlank()) {
+            NotificationFilterExpressionEnv.getInstance().compile(request.filterExpression());
+        }
+
         final NotificationRule createdRule;
         try (final var qm = new QueryManager(getAlpineRequest())) {
             createdRule = qm.callInTransaction(() -> {
@@ -201,17 +217,26 @@ public class NotificationRuleResource extends AbstractApiResource {
                         org.dependencytrack.notification.api.publishing.NotificationPublisher.class,
                         publisher.getExtensionName());
 
-                final NotificationRule rule =
-                        qm.createNotificationRule(request.name(), request.scope(), request.level(), publisher);
+                final String publisherConfig =
+                        resolvePublisherConfigForCreate(request.publisherConfig(), extensionFactory.ruleConfigSpec());
 
-                final RuntimeConfigSpec ruleConfigSpec = extensionFactory.ruleConfigSpec();
-                if (ruleConfigSpec != null) {
-                    final String defaultRuleConfigJson =
-                            RuntimeConfigMapper.getInstance().serialize(ruleConfigSpec.defaultConfig());
-                    rule.setPublisherConfig(defaultRuleConfigJson);
+                final var command = new CreateNotificationRuleCommand(
+                                request.name(), request.scope(), request.level(), publisher)
+                        .withEnabled(request.enabled())
+                        .withNotifyChildren(request.notifyChildren())
+                        .withLogSuccessfulPublish(request.logSuccessfulPublish())
+                        .withNotifyOn(request.notifyOn())
+                        .withPublisherConfig(publisherConfig)
+                        .withFilterExpression(request.filterExpression())
+                        .withTags(request.tags());
+
+                try {
+                    return qm.createNotificationRule(command);
+                } catch (IllegalArgumentException e) {
+                    throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                            .entity(e.getMessage())
+                            .build());
                 }
-
-                return rule;
             });
         }
 
@@ -339,19 +364,7 @@ public class NotificationRuleResource extends AbstractApiResource {
                                 .build());
                     }
 
-                    try {
-                        final JsonNode ruleConfigNode =
-                                configMapper.validateJson(request.publisherConfig(), ruleConfigSpec);
-                        final RuntimeConfig ruleConfig =
-                                configMapper.convert(ruleConfigNode, ruleConfigSpec.configClass());
-                        if (ruleConfigSpec.validator() != null) {
-                            ruleConfigSpec.validator().validate(ruleConfig);
-                        }
-                    } catch (InvalidRuntimeConfigException e) {
-                        throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
-                                .entity("Invalid publisher configuration: " + e.getMessage())
-                                .build());
-                    }
+                    validatePublisherConfig(request.publisherConfig(), ruleConfigSpec);
                 }
 
                 final var transientRule = new NotificationRule();
@@ -706,6 +719,44 @@ public class NotificationRuleResource extends AbstractApiResource {
             qm.makeTransient(updatedRule);
             updatedRule.setProjects(filterAccessibleProjects(updatedRule.getProjects()));
             return Response.ok(updatedRule).build();
+        }
+    }
+
+    /**
+     * Unlike updates, creating a rule does not require a publisher config:
+     * the publisher's default config is used when none is provided.
+     */
+    private String resolvePublisherConfigForCreate(
+            final String publisherConfig, final RuntimeConfigSpec ruleConfigSpec) {
+        if (ruleConfigSpec == null) {
+            if (publisherConfig != null) {
+                throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                        .entity("The publisher does not support configuration.")
+                        .build());
+            }
+
+            return null;
+        }
+
+        if (publisherConfig == null) {
+            return configMapper.serialize(ruleConfigSpec.defaultConfig());
+        }
+
+        validatePublisherConfig(publisherConfig, ruleConfigSpec);
+        return publisherConfig;
+    }
+
+    private void validatePublisherConfig(final String publisherConfig, final RuntimeConfigSpec ruleConfigSpec) {
+        try {
+            final JsonNode ruleConfigNode = configMapper.validateJson(publisherConfig, ruleConfigSpec);
+            final RuntimeConfig ruleConfig = configMapper.convert(ruleConfigNode, ruleConfigSpec.configClass());
+            if (ruleConfigSpec.validator() != null) {
+                ruleConfigSpec.validator().validate(ruleConfig);
+            }
+        } catch (InvalidRuntimeConfigException e) {
+            throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Invalid publisher configuration: " + e.getMessage())
+                    .build());
         }
     }
 }

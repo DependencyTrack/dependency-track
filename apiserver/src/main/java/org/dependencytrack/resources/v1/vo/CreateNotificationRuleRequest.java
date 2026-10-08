@@ -20,13 +20,18 @@ package org.dependencytrack.resources.v1.vo;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.dependencytrack.model.Tag;
+import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
+import org.jspecify.annotations.Nullable;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -37,7 +42,15 @@ public record CreateNotificationRuleRequest(
         @NotBlank String name,
         @NotNull NotificationScope scope,
         @JsonAlias("notificationLevel") @NotNull NotificationLevel level,
-        @NotNull @Valid Publisher publisher) {
+        @NotNull @Valid Publisher publisher,
+        // Wrappers rather than primitives, so that omitted fields fall back to create defaults.
+        @Nullable Boolean enabled,
+        @Nullable Boolean notifyChildren,
+        @Nullable Boolean logSuccessfulPublish,
+        @Nullable Set<@NotNull NotificationGroup> notifyOn,
+        @Nullable String publisherConfig,
+        @Nullable @Size(max = 2048) String filterExpression,
+        @Nullable Set<Tag> tags) {
 
     public record Publisher(@NotNull UUID uuid) {}
 }

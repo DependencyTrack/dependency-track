@@ -26,6 +26,11 @@ updates:
       - dependency-name: "eclipse-temurin"
         update-types:
           - version-update:semver-major
+      # cyclonedx-core-java still requires version 2.x,
+      # we can't upgrade to 3.x until the CycloneDX lib moves.
+      - dependency-name: "com.networknt:json-schema-validator"
+        update-types:
+          - version-update:semver-major
   - package-ecosystem: github-actions
     commit-message:
       prefix: ""

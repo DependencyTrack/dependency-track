@@ -1,4 +1,4 @@
-CREATE TABLE "PACKAGE_HEALTH_METADATA" (
+CREATE TABLE IF NOT EXISTS "PACKAGE_HEALTH_METADATA" (
     "PURL" text NOT NULL,
 
     "STARS" bigint,
@@ -8,7 +8,7 @@ CREATE TABLE "PACKAGE_HEALTH_METADATA" (
     "OPEN_ISSUES" bigint,
     "OPEN_PRS" bigint,
     "LAST_COMMIT" timestamp with time zone,
-    "BUS_FACTOR" integer,
+    "BUS_FACTOR" integer, -- squawk-ignore prefer-bigint-over-int
 
     "HAS_README" boolean,
     "HAS_CODE_OF_CONDUCT" boolean,
@@ -81,7 +81,7 @@ CREATE TABLE "PACKAGE_HEALTH_METADATA" (
            )
 );
 
-CREATE TABLE "PACKAGE_HEALTH_SCORECARD_CHECK" (
+CREATE TABLE IF NOT EXISTS "PACKAGE_HEALTH_SCORECARD_CHECK" (
     "PURL" text NOT NULL,
     "CHECK_NAME" text NOT NULL,
     "DESCRIPTION" text,

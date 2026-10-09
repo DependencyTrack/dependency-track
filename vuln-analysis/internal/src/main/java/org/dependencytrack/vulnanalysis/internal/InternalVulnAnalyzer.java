@@ -626,6 +626,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
             return null;
         }
     }
+
     private static boolean matchesDistro(PackageURL componentPurl, MatchingCriteria criteria) {
         final PackageURL criteriaPurl = criteria.purl();
         final String componentDistroQualifier = distroQualifierOf(componentPurl);
@@ -657,6 +658,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         // are still not widely used across BOM generators and vuln DBs.
         return true;
     }
+
     private static final Set<String> ARCH_AGNOSTIC = Set.of("source", "src", "all", "any", "noarch");
 
     private static boolean matchesArch(PackageURL componentPurl, MatchingCriteria criteria) {
@@ -680,6 +682,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
 
         return normalizedComponentArch.equals(normalizedCriteriaArch);
     }
+
     private static @Nullable OsDistribution resolveOsDistro(
             @Nullable PackageURL purl, @Nullable MatchingCriteria matchingCriteria) {
         if (purl == null) {

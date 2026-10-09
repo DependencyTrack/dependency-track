@@ -70,6 +70,13 @@ import static org.dependencytrack.vulnanalysis.internal.Normalizations.normalize
 /**
  * @since 5.0.0
  */
+   private static String normalizeArch(final String arch) {
+       return switch (arch.toLowerCase()) {
+           case "amd64", "x86-64", "x64" -> "x86_64";
+           case "arm64" -> "aarch64";
+           default -> arch.toLowerCase();
+       };
+   }
 final class InternalVulnAnalyzer implements VulnAnalyzer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalVulnAnalyzer.class);

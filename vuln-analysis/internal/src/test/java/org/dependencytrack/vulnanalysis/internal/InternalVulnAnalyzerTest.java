@@ -1774,7 +1774,124 @@ class InternalVulnAnalyzerTest {
             }
         }
     }
+    @Nested
+    class ArchMatchingTest {
 
+        private static final Range RANGE = Range.withRange().havingEndExcluding("2.0.0");
+
+        private static Collection<Arguments> parameters() {
+            return Arrays.asList(
+                // Scenario: Same arch
+                Arguments.of(
+                    "pkg:apk/wolfi/glibc?arch=x86_64",
+                    RANGE,
+                    MATCHES,
+                    "pkg:apk/wolfi/glibc@1.0.0?arch=x86_64"),
+                // Scenario: Different arch
+                Arguments.of(
+                    "pkg:apk/wolfi/glibc?arch=aarch64",
+                    RANGE,
+                    DOES_NOT_MATCH,
+                    "pkg:apk/wolfi/glibc@1.0.0?arch=x86_64"),
+                // Scenario: Arch is compared case-insensitively
+                Arguments.of(
+                    "pkg:apk/wolfi/glibc?arch=X86_64",
+                    RANGE,
+                    MATCHES,
+                    "pkg:apk/wolfi/glibc@1.0.0?arch=x86_64"),
+                // Scenario: Aliases of the same arch
+                Arguments.of(
+                    "pkg:apk/wolfi/glibc?arch=x86_64",
+                    RANGE,
+                    MATCHES,
+                    "pkg:apk/wolfi/glibc@1.0.0?arch=amd64"),
+                Arguments.of(
+                    "pkg:apk/wolfi/glibc?arch=aarch64",
+                    RANGE,
+                    MATCHES,
+                    "pkg:apk/wolfi/glibc@1.0.0?arch=arm64"),
+                // Scenario: Alias of a different arch
+                Arguments.of(
+                    "pkg:apk/wolfi/glibc?arch=aarch64",
+                    RANGE,
+                    DOES_NOT_MATCH,
+                    "pkg:apk/wolfi/glibc@1.0.0?arch=amd64"),
+                // Scenario: VS has arch, component does not
+                Arguments.of("pkg:apk/wolfi/glibc?arch=x86_64", RANGE, MATCHES, "pkg:apk/wolfi/glibc@1.0.0"),
+                // Scenario: Component has arch, VS does not
+                Arguments.of("pkg:apk/wolfi/glibc", RANGE, MATCHES, "pkg:apk/wolfi/glibc@1.0.0?arch=x86_64"),
+                // Scenario: Neither has arch
+                Arguments.of("pkg:apk/wolfi/glibc", RANGE, MATCHES, "pkg:apk/wolfi/glibc@1.0.0"),
+                // Scenario: Source advisory applies to binary packages of any arch
+                Arguments.of(
+                    "pkg:deb/debian/busybox?arch=source&distro=debian-13",
+                    Range.withRange().havingEndExcluding("1:1.37.0-1"),
+                    MATCHES,
+                    "pkg:deb/debian/busybox@1.36.0-1?arch=amd64&distro=debian-13&epoch=1"),
+                // Scenario: Arch matches but version out of range
+                Arguments.of(
+                    "pkg:apk/wolfi/glibc?arch=x86_64",
+                    Range.withRange().havingEndExcluding("1.0.0"),
+                    DOES_NOT_MATCH,
+                    "pkg:apk/wolfi/glibc@1.9.5?arch=x86_64"));
+        }
+
+        @ParameterizedTest(name = "[{index}] expect={2} src={0} target={3}")
+        @MethodSource("parameters")
+        void shouldMatchArchQualifier(
+            String sourcePurlString, Range sourceRange, boolean expectMatch, String targetPurlString)
+            throws Exception {
+            jdbi.useTransaction(handle -> {
+                final long vulnDbId = createVulnerability(handle);
+                createPurlVulnerableSoftware(handle, sourcePurlString, sourceRange, vulnDbId);
+            });
+
+            final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                    .setBomRef("1")
+                    .setName("acme-lib")
+                    .setPurl(targetPurlString)
+                    .build())
+                .build();
+
+            final Bom vdr = analyzer.analyze(bom);
+
+            if (expectMatch) {
+                assertThat(vdr.getVulnerabilitiesList()).hasSize(1);
+            } else {
+                assertThat(vdr.getVulnerabilitiesList()).isEmpty();
+            }
+        }
+    }
+    @Test
+    void shouldOnlyReportAdvisoryOfMatchingArch() throws Exception {
+        jdbi.useTransaction(handle -> {
+            final long x86VulnDbId = createVulnerability(handle, "CGA-fjmw-f657-w678", "OSV");
+            createPurlVulnerableSoftware(
+                handle, "pkg:apk/wolfi/glibc-2.44?arch=x86_64", WITHOUT_RANGE, x86VulnDbId);
+
+            final long aarch64VulnDbId = createVulnerability(handle, "CGA-jm93-f4m9-rgvp", "OSV");
+            createPurlVulnerableSoftware(
+                handle,
+                "pkg:apk/wolfi/glibc-2.44?arch=aarch64",
+                Range.withRange().havingEndExcluding("2.44-r8"),
+                aarch64VulnDbId);
+        });
+
+        final var bom = Bom.newBuilder()
+            .addComponents(Component.newBuilder()
+                .setBomRef("1")
+                .setName("glibc-2.44")
+                .setPurl("pkg:apk/wolfi/glibc-2.44@2.44-r7?arch=x86_64&distro=wolfi")
+                .build())
+            .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+
+        assertThat(vdr.getVulnerabilitiesList())
+            .extracting(Vulnerability::getId)
+            .containsExactly("CGA-fjmw-f657-w678");
+    }
     @Test
     void shouldNotSkipPurlAnalysisWhenCpeIsInvalid() throws Exception {
         jdbi.useTransaction(handle -> {

@@ -387,6 +387,9 @@ public final class ProcessScheduledNotificationRuleActivity
             if (violation.analysisState() != null) {
                 entryBuilder.setAnalysisState(violation.analysisState());
             }
+            if (violation.message() != null) {
+                entryBuilder.setMessage(violation.message());
+            }
 
             violationsByProjectId
                     .computeIfAbsent(violation.projectId(), k -> new ArrayList<>())

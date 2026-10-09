@@ -184,12 +184,15 @@ public final class NotificationModelConverter {
     }
 
     public static PolicyViolation convert(org.dependencytrack.model.PolicyViolation violation) {
-        return PolicyViolation.newBuilder()
+        final PolicyViolation.Builder builder = PolicyViolation.newBuilder()
                 .setUuid(violation.getUuid().toString())
                 .setCondition(convert(violation.getPolicyCondition()))
                 .setType(violation.getType().name())
-                .setTimestamp(Timestamps.fromDate(violation.getTimestamp()))
-                .build();
+                .setTimestamp(Timestamps.fromDate(violation.getTimestamp()));
+        if (violation.getText() != null) {
+            builder.setMessage(violation.getText());
+        }
+        return builder.build();
     }
 
     public static PolicyViolationAnalysis convert(ViolationAnalysis analysis) {

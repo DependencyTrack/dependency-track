@@ -103,6 +103,7 @@ public final class CelPolicyCompiler {
         LOGGER.debug("Compiling expression: %s".formatted(normalizedSrc));
         final CelAbstractSyntaxTree ast =
                 policyType.compiler().compile(normalizedSrc).getAst();
+        validateResultType(ast);
 
         final CelRuntime.Program celProgram;
         try {
@@ -122,6 +123,23 @@ public final class CelPolicyCompiler {
         }
 
         return program;
+    }
+
+    private void validateResultType(CelAbstractSyntaxTree ast) throws CelValidationException {
+        final Set<CelType> allowedTypes = policyType.resultTypes();
+        if (allowedTypes.isEmpty() || allowedTypes.contains(ast.getResultType())) {
+            return;
+        }
+
+        final String allowedTypeNames =
+                allowedTypes.stream().map(CelType::name).sorted().collect(Collectors.joining(" or "));
+        throw new CelValidationException(
+                ast.getSource(),
+                List.of(CelIssue.formatError(
+                        1,
+                        0,
+                        "Expression must return %s, but returns %s"
+                                .formatted(allowedTypeNames, ast.getResultType().name()))));
     }
 
     private record AnalysisResult(Map<CelType, Set<String>> requirements, Set<String> usedFunctions) {}

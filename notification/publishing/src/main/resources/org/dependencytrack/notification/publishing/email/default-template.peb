@@ -108,6 +108,9 @@ Component Version: {{ subject.component.version }}
 Component URL:     {{ baseUrl }}/components/{{ subject.component.uuid }}
 
 Violated Policy:   {{ subject.policyViolation.condition.policy.name }}
+{% if subject.policyViolation.message is not empty -%}
+Message:           {{ subject.policyViolation.message }}
+{% endif -%}
 {% elseif notification.group == "GROUP_NEW_VULNERABILITIES_SUMMARY" %}
 Overview:
 - New Vulnerabilities: {{ subject.overview.totalNewVulnerabilitiesCount }} (Suppressed: {{ subject.overview.suppressedNewVulnerabilitiesCount }})
@@ -190,6 +193,9 @@ Violation Details:
     Timestamp:             {{ violation.timestamp | formatTimestamp }}
     Analysis State:        {{ violation.analysisState | default("-") }}
     Suppressed:            {{ violation.suppressed }}
+{% if violation.message is not empty -%}
+    Message:               {{ violation.message }}
+{% endif -%}
 {% endfor -%}
 {% endfor -%}
 {% endif %}

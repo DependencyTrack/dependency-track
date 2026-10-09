@@ -64,6 +64,50 @@ class CelPolicyCompilerTest {
     }
 
     @Test
+    void shouldAcceptStringResultType() {
+        final var compiler = new CelPolicyCompiler(CelPolicyType.COMPONENT);
+
+        assertDoesNotThrow(() -> compiler.compile("""
+                component.name == "foo" ? "Component foo is not allowed" : ""
+                """, CacheMode.NO_CACHE));
+    }
+
+    @Test
+    void shouldRejectResultTypeOtherThanBoolOrString() {
+        final var compiler = new CelPolicyCompiler(CelPolicyType.COMPONENT);
+
+        final var exception = assertThrows(
+                InvalidCelExpressionException.class, () -> compiler.compile("size(vulns)", CacheMode.NO_CACHE));
+        assertThat(exception.getErrors())
+                .satisfiesExactly(error -> assertThat(error.message())
+                        .isEqualTo("Expression must return bool or string, but returns int"));
+    }
+
+    @Test
+    void shouldNotCheckResultTypeForVulnerabilityPolicies() {
+        final var compiler = new CelPolicyCompiler(CelPolicyType.VULNERABILITY);
+
+        assertDoesNotThrow(() -> compiler.compile("vuln.id", CacheMode.NO_CACHE));
+    }
+
+    @Test
+    void testRequirementsAnalysisWithBinding() {
+        final var compiler = new CelPolicyCompiler(CelPolicyType.COMPONENT);
+
+        final CelPolicyProgram program = compiler.compile("""
+                cel.bind(
+                  matched,
+                  vulns.filter(vuln, has(vuln.epss_score) && vuln.epss_score >= 0.5),
+                  size(matched) > 0
+                    ? "EPSS >= 0.5 matched by: " + matched.map(vuln, vuln.id).join(", ")
+                    : ""
+                )
+                """, CacheMode.NO_CACHE);
+
+        assertThat(program.getRequirements()).containsEntry(TYPE_VULNERABILITY, Set.of("epss_score", "id"));
+    }
+
+    @Test
     void shouldReturnDeeplyImmutableRequirements() throws Exception {
         final CelPolicyProgram compiledProgram =
                 CelPolicyCompiler.getInstance(CelPolicyType.COMPONENT).compile("""

@@ -189,6 +189,8 @@ message PolicyViolation {
   string type = 2;
   google.protobuf.Timestamp timestamp = 3;
   PolicyCondition condition = 4;
+  // Message produced by the policy condition expression, if any.
+  optional string message = 5;
 }
 
 message PolicyCondition {
@@ -362,5 +364,7 @@ message NewPolicyViolationsSummarySubject {
     google.protobuf.Timestamp timestamp = 5;
     optional string analysis_state = 6;
     bool suppressed = 7;
+    // Message produced by the policy condition expression, if any.
+    optional string message = 8;
   }
 }

@@ -44,6 +44,7 @@ import java.util.UUID;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -164,6 +165,63 @@ class EventResourceTest extends ResourceTest {
                 {
                   "processing": false,
                   "status": "FAILED"
+                }
+                """);
+    }
+
+    @Test
+    void isTokenBeingProcessedIgnoresCompletedChildWorkflowRunTest() {
+        final var parentRunId = UUID.randomUUID();
+        final var parentRunMetadata = new WorkflowRunMetadata(
+                parentRunId,
+                null,
+                "analyze-project",
+                1,
+                null,
+                "default",
+                WorkflowRunStatus.RUNNING,
+                null,
+                0,
+                null,
+                null,
+                Instant.now(),
+                Instant.now(),
+                null,
+                null);
+        final var childRunMetadata = new WorkflowRunMetadata(
+                UUID.randomUUID(),
+                parentRunId,
+                "vuln-analysis",
+                1,
+                null,
+                "default",
+                WorkflowRunStatus.COMPLETED,
+                null,
+                0,
+                null,
+                null,
+                Instant.now(),
+                Instant.now(),
+                null,
+                Instant.now());
+
+        doReturn(new Page<>(List.of(parentRunMetadata)))
+                .when(DEX_ENGINE_MOCK)
+                .listRuns(argThat(req -> req != null && req.onlyRootRuns()));
+        doReturn(new Page<>(List.of(childRunMetadata)))
+                .when(DEX_ENGINE_MOCK)
+                .listRuns(argThat(req -> req != null && !req.onlyRootRuns()));
+
+        final Response response = jersey.target(V1_EVENT + "/token/2ff20ad6-587c-4db6-8788-cca7a9b0dc1b")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "processing": true,
+                  "status": "RUNNING"
                 }
                 """);
     }

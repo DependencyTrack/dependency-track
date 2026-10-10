@@ -115,6 +115,7 @@ public class EventResource extends AbstractApiResource {
     private WorkflowRunMetadata resolveRunByToken(final UUID token) {
         final var page = dexEngine.listRuns(new ListWorkflowRunsRequest()
                 .withLabels(Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, token.toString()))
+                .withOnlyRootRuns(true)
                 .withSortBy(ListWorkflowRunsRequest.SortBy.CREATED_AT)
                 .withSortDirection(SortDirection.DESC)
                 .withLimit(1));

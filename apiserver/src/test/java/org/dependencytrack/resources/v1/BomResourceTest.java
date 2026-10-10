@@ -131,6 +131,7 @@ import static org.dependencytrack.parser.cyclonedx.CycloneDxBomAssert.assertThat
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -2687,6 +2688,64 @@ class BomResourceTest extends ResourceTest {
         doReturn(runMetadata).when(DEX_ENGINE_MOCK).getRunMetadataById(runId);
 
         final Response response = jersey.target(V1_BOM + "/token/" + runId)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "processing": true,
+                  "status": "RUNNING"
+                }
+                """);
+    }
+
+    @Test
+    void shouldReportTokenBeingProcessedWhenChildWorkflowRunCompletesBeforeParent() {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        final var parentRunId = UUID.randomUUID();
+        final var parentRunMetadata = new WorkflowRunMetadata(
+                parentRunId,
+                null,
+                "analyze-project",
+                1,
+                null,
+                "default",
+                WorkflowRunStatus.RUNNING,
+                null,
+                0,
+                null,
+                null,
+                java.time.Instant.now(),
+                java.time.Instant.now(),
+                null,
+                null);
+        final var childRunMetadata = new WorkflowRunMetadata(
+                UUID.randomUUID(),
+                parentRunId,
+                "vuln-analysis",
+                1,
+                null,
+                "default",
+                WorkflowRunStatus.COMPLETED,
+                null,
+                0,
+                null,
+                null,
+                java.time.Instant.now(),
+                java.time.Instant.now(),
+                null,
+                java.time.Instant.now());
+
+        doReturn(new Page<>(List.of(parentRunMetadata)))
+                .when(DEX_ENGINE_MOCK)
+                .listRuns(argThat(req -> req != null && req.onlyRootRuns()));
+        doReturn(new Page<>(List.of(childRunMetadata)))
+                .when(DEX_ENGINE_MOCK)
+                .listRuns(argThat(req -> req != null && !req.onlyRootRuns()));
+
+        final Response response = jersey.target(V1_BOM + "/token/2ff20ad6-587c-4db6-8788-cca7a9b0dc1b")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);

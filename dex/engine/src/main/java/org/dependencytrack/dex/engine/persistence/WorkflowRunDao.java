@@ -178,6 +178,9 @@ public final class WorkflowRunDao extends AbstractDao {
             whereConditions.add("labels @> cast(:labels as jsonb)");
             queryParams.put("labels", labelsJson);
         }
+        if (request.onlyRootRuns()) {
+            whereConditions.add("parent_id is null");
+        }
         if (request.createdSince() != null) {
             whereConditions.add("created_at >= :createdSince");
             queryParams.put("createdSince", request.createdSince());

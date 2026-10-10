@@ -2367,6 +2367,35 @@ class DexEngineImplTest {
                 .isEmpty();
     }
 
+    @Test
+    void shouldListRunsExcludingChildRunsWhenOnlyRootRunsRequested() {
+        registerWorkflow("root-wf", (ctx, _) -> {
+            ctx.callChildWorkflow(
+                            "child-wf", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter())
+                    .await();
+            return null;
+        });
+        registerWorkflow("child-wf", (_, _) -> null);
+        registerWorkflowWorker("workflow-worker", 2);
+        engine.start();
+
+        final UUID runId = engine.createRun(
+                new CreateWorkflowRunRequest<>("root-wf", 1).withLabels(Map.of("token", "shared-token")));
+
+        awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        assertThat(engine.listRuns(new ListWorkflowRunsRequest().withLabels(Map.of("token", "shared-token")))
+                        .items())
+                .hasSize(2);
+
+        final Page<WorkflowRunMetadata> rootRunsPage = engine.listRuns(new ListWorkflowRunsRequest()
+                .withLabels(Map.of("token", "shared-token"))
+                .withOnlyRootRuns(true));
+        assertThat(rootRunsPage.items()).hasSize(1);
+        assertThat(rootRunsPage.items().getFirst().id()).isEqualTo(runId);
+        assertThat(rootRunsPage.items().getFirst().parentId()).isNull();
+    }
+
     @Nested
     class ExistsRunTest {
 

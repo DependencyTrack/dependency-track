@@ -32,6 +32,9 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -55,6 +58,7 @@ import java.util.Set;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -379,5 +383,69 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                           "epssPercentile": 0.2
                         }
                         """);
+    }
+
+    @Test
+    public void testReconcileViolationsWithMessage() {
+        final var project = new Project();
+        project.setName("projectName");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("componentName");
+        qm.persist(component);
+
+        final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "\"message-a\"",
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var violation = new PolicyViolation();
+        violation.setType(PolicyViolation.Type.OPERATIONAL);
+        violation.setPolicyCondition(condition);
+        violation.setTimestamp(new Date());
+        violation.setText("message-a");
+
+        final Map<Long, List<PolicyViolation>> violationsByComponentId = Map.of(component.getId(), List.of(violation));
+
+        // First reconciliation creates the violation and reports it as new.
+        final Set<Long> createdIds = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolations(project.getId(), violationsByComponentId));
+        assertThat(createdIds).hasSize(1);
+        final long violationId = createdIds.iterator().next();
+        assertThat(getViolationText(violationId)).isEqualTo("message-a");
+
+        // Unchanged message: nothing is reported as new.
+        final Set<Long> unchangedIds = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolations(project.getId(), violationsByComponentId));
+        assertThat(unchangedIds).isEmpty();
+        assertThat(getViolationText(violationId)).isEqualTo("message-a");
+
+        // Changed message: the existing violation is updated, but not reported as new.
+        violation.setText("message-b");
+        final Set<Long> changedIds = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolations(project.getId(), violationsByComponentId));
+        assertThat(changedIds).isEmpty();
+        assertThat(getViolationText(violationId)).isEqualTo("message-b");
+
+        // Message removed: the existing violation is updated, but not reported as new.
+        violation.setText(null);
+        final Set<Long> clearedIds = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolations(project.getId(), violationsByComponentId));
+        assertThat(clearedIds).isEmpty();
+        assertThat(getViolationText(violationId)).isNull();
+    }
+
+    private static String getViolationText(long violationId) {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT "TEXT" FROM "POLICYVIOLATION" WHERE "ID" = :id
+                        """)
+                .bind("id", violationId)
+                .mapTo(String.class)
+                .one());
     }
 }

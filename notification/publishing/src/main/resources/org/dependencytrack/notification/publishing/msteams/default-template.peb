@@ -113,7 +113,11 @@
         {
           "name": "Project",
           "value": "{{ subject.project | summarize | escape(strategy="json") }}"
-        }
+        }{% if subject.policyViolation.message is not empty %},
+        {
+          "name": "Message",
+          "value": "{{ subject.policyViolation.message | escape(strategy="json") }}"
+        }{% endif %}
       ],
       {% elseif notification.group == "GROUP_BOM_PROCESSING_FAILED" %}
       "facts": [

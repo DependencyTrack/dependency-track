@@ -20,6 +20,8 @@ package org.dependencytrack.policy.cel;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import dev.cel.common.CelVarDecl;
+import dev.cel.common.types.CelType;
+import dev.cel.common.types.SimpleType;
 import dev.cel.compiler.CelCompiler;
 import dev.cel.compiler.CelCompilerFactory;
 import dev.cel.extensions.CelExtensions;
@@ -33,15 +35,33 @@ import org.dependencytrack.proto.policy.v1.Tools;
 import org.dependencytrack.proto.policy.v1.VersionDistance;
 import org.dependencytrack.proto.policy.v1.Vulnerability;
 
-public enum CelPolicyType {
-    COMPONENT(CelPolicyVariable.COMPONENT, CelPolicyVariable.PROJECT, CelPolicyVariable.VULNS, CelPolicyVariable.NOW),
-    VULNERABILITY(
-            CelPolicyVariable.COMPONENT, CelPolicyVariable.PROJECT, CelPolicyVariable.VULN, CelPolicyVariable.NOW);
+import java.util.Set;
 
+public enum CelPolicyType {
+    /// Component policy conditions may return a boolean, or a string
+    /// that doubles as violation message. See ADR 043.
+    COMPONENT(
+            Set.of(SimpleType.BOOL, SimpleType.STRING),
+            CelPolicyVariable.COMPONENT,
+            CelPolicyVariable.PROJECT,
+            CelPolicyVariable.VULNS,
+            CelPolicyVariable.NOW),
+    /// Vulnerability policy conditions must return a boolean. A match usually
+    /// applies a suppression, so a string result is rejected to prevent
+    /// accidental matches.
+    VULNERABILITY(
+            Set.of(SimpleType.BOOL),
+            CelPolicyVariable.COMPONENT,
+            CelPolicyVariable.PROJECT,
+            CelPolicyVariable.VULN,
+            CelPolicyVariable.NOW);
+
+    private final Set<CelType> resultTypes;
     private final CelCompiler compiler;
     private final CelRuntime runtime;
 
-    CelPolicyType(CelPolicyVariable... variables) {
+    CelPolicyType(Set<CelType> resultTypes, CelPolicyVariable... variables) {
+        this.resultTypes = resultTypes;
         final var library = new CelPolicyLibrary();
 
         // NB: Message types must be registered directly on the builders,
@@ -49,7 +69,7 @@ public enum CelPolicyType {
         // creates the descriptor pool before invoking library callbacks.
         final var compilerBuilder = CelCompilerFactory.standardCelCompilerBuilder()
                 .setStandardMacros(CelStandardMacro.STANDARD_MACROS)
-                .addLibraries(CelExtensions.strings(), library)
+                .addLibraries(CelExtensions.strings(), CelExtensions.bindings(), library)
                 .addMessageTypes(messageTypes());
         for (final CelPolicyVariable variable : variables) {
             compilerBuilder.addVarDeclarations(
@@ -57,6 +77,7 @@ public enum CelPolicyType {
         }
         this.compiler = compilerBuilder.build();
 
+        // NB: The bindings extension is a compile-time macro and has no runtime part.
         this.runtime = CelRuntimeFactory.standardCelRuntimeBuilder()
                 .addLibraries(CelExtensions.strings(), library)
                 .addMessageTypes(messageTypes())
@@ -77,6 +98,11 @@ public enum CelPolicyType {
             Vulnerability.Alias.getDescriptor(),
             VersionDistance.getDescriptor(),
         };
+    }
+
+    /// Result types an expression of this type may have.
+    Set<CelType> resultTypes() {
+        return resultTypes;
     }
 
     CelCompiler compiler() {

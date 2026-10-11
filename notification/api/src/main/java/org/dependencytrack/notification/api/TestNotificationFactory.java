@@ -319,6 +319,7 @@ public final class TestNotificationFactory {
                 .setTimestamp(Timestamps.fromSeconds(66666))
                 .setAnalysisState("APPROVED")
                 .setSuppressed(false)
+                .setMessage("Component is 666 days old")
                 .build();
 
         final var sinceTimestamp = Timestamps.fromMillis(66666);
@@ -394,6 +395,7 @@ public final class TestNotificationFactory {
                 .setCondition(condition)
                 .setType("OPERATIONAL")
                 .setTimestamp(Timestamps.now())
+                .setMessage("Package URL pkg:maven/foo/bar@1.2.3 is not allowed")
                 .build();
     }
 

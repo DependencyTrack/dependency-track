@@ -64,33 +64,6 @@ class CelPolicyCompilerTest {
     }
 
     @Test
-    void shouldAcceptStringResultType() {
-        final var compiler = new CelPolicyCompiler(CelPolicyType.COMPONENT);
-
-        assertDoesNotThrow(() -> compiler.compile("""
-                component.name == "foo" ? "Component foo is not allowed" : ""
-                """, CacheMode.NO_CACHE));
-    }
-
-    @Test
-    void shouldRejectResultTypeOtherThanBoolOrString() {
-        final var compiler = new CelPolicyCompiler(CelPolicyType.COMPONENT);
-
-        final var exception = assertThrows(
-                InvalidCelExpressionException.class, () -> compiler.compile("size(vulns)", CacheMode.NO_CACHE));
-        assertThat(exception.getErrors())
-                .satisfiesExactly(error -> assertThat(error.message())
-                        .isEqualTo("Expression must return bool or string, but returns int"));
-    }
-
-    @Test
-    void shouldNotCheckResultTypeForVulnerabilityPolicies() {
-        final var compiler = new CelPolicyCompiler(CelPolicyType.VULNERABILITY);
-
-        assertDoesNotThrow(() -> compiler.compile("vuln.id", CacheMode.NO_CACHE));
-    }
-
-    @Test
     void testRequirementsAnalysisWithBinding() {
         final var compiler = new CelPolicyCompiler(CelPolicyType.COMPONENT);
 

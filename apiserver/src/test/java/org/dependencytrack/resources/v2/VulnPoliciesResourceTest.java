@@ -557,6 +557,42 @@ class VulnPoliciesResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldReturnCelErrorsWhenCreateConditionDoesNotReturnBool() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_CREATE);
+
+        final Response response = jersey.target("/vuln-policies")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "test-policy",
+                          "condition": "vuln.id",
+                          "analysis": {
+                            "state": "NOT_AFFECTED",
+                            "suppress": true
+                          }
+                        }
+                        """));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "type": "about:blank",
+                  "status": 400,
+                  "title": "Bad Request",
+                  "detail": "Condition is invalid.",
+                  "errors": [
+                    {
+                      "line": 1,
+                      "column": 0,
+                      "message": "Expression must return bool, but returns string"
+                    }
+                  ]
+                }
+                """);
+    }
+
+    @Test
     void shouldReturnCelErrorsWhenUpdateConditionIsInvalid() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT, Permissions.POLICY_MANAGEMENT_UPDATE);
 

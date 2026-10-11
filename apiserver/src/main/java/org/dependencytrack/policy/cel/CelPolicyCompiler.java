@@ -127,7 +127,7 @@ public final class CelPolicyCompiler {
 
     private void validateResultType(CelAbstractSyntaxTree ast) throws CelValidationException {
         final Set<CelType> allowedTypes = policyType.resultTypes();
-        if (allowedTypes.isEmpty() || allowedTypes.contains(ast.getResultType())) {
+        if (allowedTypes.contains(ast.getResultType())) {
             return;
         }
 

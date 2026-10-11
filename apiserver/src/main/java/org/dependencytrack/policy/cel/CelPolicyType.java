@@ -46,9 +46,11 @@ public enum CelPolicyType {
             CelPolicyVariable.PROJECT,
             CelPolicyVariable.VULNS,
             CelPolicyVariable.NOW),
-    /// Vulnerability policies are not result type checked at compile time.
+    /// Vulnerability policy conditions must return a boolean. A match usually
+    /// applies a suppression, so a string result is rejected to prevent
+    /// accidental matches.
     VULNERABILITY(
-            Set.of(),
+            Set.of(SimpleType.BOOL),
             CelPolicyVariable.COMPONENT,
             CelPolicyVariable.PROJECT,
             CelPolicyVariable.VULN,
@@ -99,7 +101,6 @@ public enum CelPolicyType {
     }
 
     /// Result types an expression of this type may have.
-    /// An empty set means the result type is not checked.
     Set<CelType> resultTypes() {
         return resultTypes;
     }

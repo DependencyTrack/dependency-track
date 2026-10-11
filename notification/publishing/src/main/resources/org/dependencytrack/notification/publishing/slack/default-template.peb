@@ -400,16 +400,10 @@
 	}{% if subject.policyViolation.message is not empty %},
 	{
 	  "type": "section",
-	  "fields": [
-	    {
-		  "type": "mrkdwn",
-		  "text": "*Message*"
-		},
-		{
-		  "type": "plain_text",
-		  "text": "{{ subject.policyViolation.message | escape(strategy="json") }}"
-		}
-	  ]
+	  "text": {
+	    "type": "plain_text",
+		"text": "{{ subject.policyViolation.message | escape(strategy="json") }}"
+	  }
 	}{% endif %}{% if baseUrl is not empty %},
 	{
 	  "type": "actions",

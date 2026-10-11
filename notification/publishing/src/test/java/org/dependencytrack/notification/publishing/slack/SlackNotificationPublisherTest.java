@@ -154,10 +154,16 @@ class SlackNotificationPublisherTest extends AbstractNotificationPublisherTest {
                             },
                             {
                               "type": "section",
-                              "text": {
-                                "type": "mrkdwn",
-                                "text": "*Message*\\nPackage URL pkg:maven/foo/bar@1.2.3 is not allowed"
-                              }
+                              "fields": [
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Message*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "Package URL pkg:maven/foo/bar@1.2.3 is not allowed"
+                                }
+                              ]
                             },
                             {
                               "type": "actions",

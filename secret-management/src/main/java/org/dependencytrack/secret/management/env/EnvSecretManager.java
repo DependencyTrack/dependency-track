@@ -27,6 +27,7 @@ import org.dependencytrack.secret.management.SecretMetadata;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -89,10 +90,10 @@ final class EnvSecretManager implements SecretManager {
         final var pageTokenValue = pageTokenEncoder.decode(request.pageToken(), ListSecretsPageToken.class);
 
         final String searchText =
-                request.searchText() != null ? request.searchText().toLowerCase() : null;
+                request.searchText() != null ? request.searchText().toLowerCase(Locale.ROOT) : null;
 
-        final Predicate<String> filterPredicate =
-                secretName -> searchText == null || secretName.toLowerCase().startsWith(searchText);
+        final Predicate<String> filterPredicate = secretName ->
+                searchText == null || secretName.toLowerCase(Locale.ROOT).startsWith(searchText);
 
         final long totalCount =
                 secretValueByName.keySet().stream().filter(filterPredicate).count();

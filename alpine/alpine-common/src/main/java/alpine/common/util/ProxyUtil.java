@@ -30,6 +30,7 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -127,7 +128,7 @@ public final class ProxyUtil {
 
         if (proxyCfg != null) {
             for (Map.Entry<String, String> entry : env.entrySet()) {
-                if ("no_proxy".equalsIgnoreCase(entry.getKey().toUpperCase())) {
+                if ("no_proxy".equalsIgnoreCase(entry.getKey().toUpperCase(Locale.ROOT))) {
                     proxyCfg.setNoProxy(Set.of(entry.getValue().split(",")));
                     break;
                 }
@@ -157,7 +158,7 @@ public final class ProxyUtil {
 
         String proxy = null;
         for (Map.Entry<String, String> entry : env.entrySet()) {
-            if (variable.equalsIgnoreCase(entry.getKey().toUpperCase())) {
+            if (variable.equalsIgnoreCase(entry.getKey().toUpperCase(Locale.ROOT))) {
                 proxy = entry.getValue();
                 break;
             }

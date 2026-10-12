@@ -20,6 +20,7 @@ package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Date;

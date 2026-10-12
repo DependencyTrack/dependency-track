@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.cyclonedx.model.Service;
 import org.dependencytrack.common.Mappers;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 import org.dependencytrack.util.PurlUtil;
@@ -122,7 +123,7 @@ public class ComponentIdentity {
         }
     }
 
-    public ComponentIdentity(final org.cyclonedx.model.Service service) {
+    public ComponentIdentity(final Service service) {
         this.group = service.getGroup();
         this.name = service.getName();
         this.version = service.getVersion();
@@ -173,8 +174,12 @@ public class ComponentIdentity {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ComponentIdentity that = (ComponentIdentity) o;
         return objectType == that.objectType
                 && Objects.equals(purl, that.purl)

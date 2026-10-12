@@ -32,6 +32,7 @@ import java.io.Closeable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -99,7 +100,7 @@ final class DexEngineMetricsCollector implements Closeable {
 
         executor = Executors.newSingleThreadScheduledExecutor(
                 Thread.ofPlatform().name(getClass().getSimpleName()).factory());
-        executor.scheduleAtFixedRate(
+        var _ = executor.scheduleAtFixedRate(
                 () -> {
                     try {
                         collectMetrics();
@@ -164,7 +165,7 @@ final class DexEngineMetricsCollector implements Closeable {
                 .map((rs, _) -> MultiGauge.Row.of(
                         Tags.of(
                                 Tag.of("workflowName", rs.getString(1)),
-                                Tag.of("status", rs.getString(2).toLowerCase())),
+                                Tag.of("status", rs.getString(2).toLowerCase(Locale.ROOT))),
                         rs.getLong(3)))
                 .list());
         runCountGauge.register(runStatusRows, /* overwrite */ true);

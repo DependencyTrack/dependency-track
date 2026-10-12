@@ -41,7 +41,6 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.License;
-import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.validation.ValidUuid;
@@ -49,14 +48,14 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao.GraphComponent;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
+import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.tasks.IdentifyInternalComponentsWorkflow;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.dependencytrack.util.PurlUtil;
-import org.jdbi.v3.core.Handle;
 
 import jakarta.inject.Inject;
 import jakarta.validation.Validator;
@@ -73,6 +72,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -84,7 +84,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_TRIGGERED_BY;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
@@ -652,7 +652,13 @@ public class ComponentResource extends AbstractApiResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The UUID of the component could not be found")
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The UUID of the component could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON))
             })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE})
     public Response deleteComponent(
@@ -663,23 +669,12 @@ public class ComponentResource extends AbstractApiResource {
                     @PathParam("uuid")
                     @ValidUuid
                     String uuid) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final Component component = qm.getObjectByUuid(Component.class, uuid, Component.FetchGroup.ALL.name());
-                if (component != null) {
-                    requireAccess(qm, component.getProject());
-                    try (final Handle jdbiHandle = openJdbiHandle()) {
-                        final var componentDao = jdbiHandle.attach(ComponentDao.class);
-                        componentDao.deleteComponent(component.getUuid());
-                    }
-                    return Response.status(Response.Status.NO_CONTENT).build();
-                } else {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The UUID of the component could not be found.")
-                            .build();
-                }
-            });
-        }
+        final UUID componentUuid = UUID.fromString(uuid);
+        useJdbiTransaction(getAlpineRequest(), handle -> {
+            requireComponentAccess(handle, componentUuid);
+            handle.attach(ComponentDao.class).deleteComponent(componentUuid);
+        });
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @GET
@@ -769,10 +764,13 @@ public class ComponentResource extends AbstractApiResource {
             //
             // We currently pay for the cost regardless of whether clients even want this information.
             // A future API version should make this optional.
-            final Map<UUID, String> packagePurlByComponentUuid = graph.values().stream()
-                    .filter(graphComponent -> graphComponent.purl() != null)
-                    .collect(Collectors.toMap(
-                            GraphComponent::uuid, graphComponent -> PurlUtil.purlPackageOnly(graphComponent.purl())));
+            final Map<UUID, String> packagePurlByComponentUuid = new HashMap<>();
+            for (final GraphComponent graphComponent : graph.values()) {
+                final PackageURL parsedPurl = PurlUtil.silentPurl(graphComponent.purl());
+                if (parsedPurl != null) {
+                    packagePurlByComponentUuid.put(graphComponent.uuid(), PurlUtil.purlPackageOnly(parsedPurl));
+                }
+            }
             final Map<String, String> latestVersionByPackagePurl = new PackageMetadataDao(handle)
                     .getAll(new HashSet<>(packagePurlByComponentUuid.values())).stream()
                             .filter(pkgMetadata -> pkgMetadata.latestVersion() != null)

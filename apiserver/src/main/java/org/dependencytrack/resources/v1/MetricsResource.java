@@ -32,15 +32,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.metrics.DependencyMetrics;
+import org.dependencytrack.metrics.MetricsDao;
+import org.dependencytrack.metrics.PortfolioMetrics;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.metrics.UpdatePortfolioMetricsWorkflow;
-import org.dependencytrack.model.DependencyMetrics;
-import org.dependencytrack.model.PortfolioMetrics;
-import org.dependencytrack.model.ProjectMetrics;
-import org.dependencytrack.model.VulnerabilityMetrics;
+import org.dependencytrack.metrics.VulnerabilityMetrics;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ProjectInfoRow;
 import org.dependencytrack.resources.AbstractApiResource;
@@ -60,6 +60,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -172,12 +173,12 @@ public class MetricsResource extends AbstractApiResource {
                     .orElseGet(() -> Integer.parseInt(MAINTENANCE_METRICS_RETENTION_DAYS.getDefaultPropertyValue()));
 
             // NB: Calculate days between the given date and *tomorrow*,
-            // because LocalDate#until's end date is exclusive,
+            // because ChronoUnit#between treats the end date as exclusive,
             // and we want to include data for *today*.
-            final var sincePeriod = since.until(LocalDate.now(ZoneOffset.UTC).plusDays(1));
-            final int sinceDays = sincePeriod.getDays();
+            final long sinceDays =
+                    ChronoUnit.DAYS.between(since, LocalDate.now(ZoneOffset.UTC).plusDays(1));
 
-            return handle.attach(MetricsDao.class).getPortfolioMetricsForDays(Math.min(retentionDays, sinceDays));
+            return handle.attach(MetricsDao.class).getPortfolioMetricsForDays((int) Math.min(retentionDays, sinceDays));
         });
         return Response.ok(metrics).build();
     }

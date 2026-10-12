@@ -188,7 +188,7 @@ public final class VerifyPhase {
                      ORDER BY table_name
                     """.formatted(options.stagingSchema)).mapToMap().list());
         for (final Map<String, Object> r : rows) {
-            out.printf("  %-24s %d malformed UUID(s) dropped%n", r.get("table_name"), r.get("n"));
+            out.printf("  %-24s %s malformed UUID(s) dropped%n", r.get("table_name"), r.get("n"));
         }
         return !rows.isEmpty();
     }
@@ -202,7 +202,7 @@ public final class VerifyPhase {
                      ORDER BY table_name, reason
                     """.formatted(options.stagingSchema)).mapToMap().list());
         for (final Map<String, Object> r : rows) {
-            out.printf("  %-24s %d user(s) skipped (%s)%n", r.get("table_name"), r.get("n"), r.get("reason"));
+            out.printf("  %-24s %s user(s) skipped (%s)%n", r.get("table_name"), r.get("n"), r.get("reason"));
         }
         return !rows.isEmpty();
     }
@@ -217,7 +217,7 @@ public final class VerifyPhase {
                     """.formatted(options.stagingSchema)).mapToMap().list());
         for (final Map<String, Object> r : rows) {
             out.printf(
-                    "  %-24s %d case-collision(s) on column %s%n",
+                    "  %-24s %s case-collision(s) on column %s%n",
                     r.get("table_name"), r.get("n"), r.get("column_name"));
         }
         return !rows.isEmpty();

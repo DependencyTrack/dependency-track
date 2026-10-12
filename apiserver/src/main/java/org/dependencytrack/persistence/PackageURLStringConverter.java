@@ -41,6 +41,7 @@ public class PackageURLStringConverter implements AttributeConverter<PackageURL,
     /**
      * {@inheritDoc}
      */
+    @Override
     public PackageURL convertToAttribute(final String str) {
         if (str == null) {
             return null;
@@ -59,6 +60,7 @@ public class PackageURLStringConverter implements AttributeConverter<PackageURL,
     /**
      * {@inheritDoc}
      */
+    @Override
     public String convertToDatastore(final PackageURL url) {
         return url != null ? url.canonicalize() : null;
     }

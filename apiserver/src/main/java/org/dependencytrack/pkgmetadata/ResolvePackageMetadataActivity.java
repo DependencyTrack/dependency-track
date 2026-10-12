@@ -26,12 +26,8 @@ import org.dependencytrack.dex.api.ActivitySpec;
 import org.dependencytrack.dex.api.failure.ApplicationFailureException;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.PackageMetadataResolutionStatus;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataResolutionDao;
 import org.dependencytrack.pkgmetadata.resolution.api.HashAlgorithm;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
@@ -87,7 +83,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
 
     @Override
     public @Nullable Void execute(ActivityContext ctx, @Nullable ResolvePackageMetadataActivityArg arg)
-            throws Exception {
+            throws InterruptedException {
         if (arg == null || arg.getPurlsList().isEmpty()) {
             return null;
         }
@@ -115,7 +111,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             // Resolvers that can short-circuit on it (e.g. Maven for stable versions) will
             // skip the corresponding HTTP fetches. The per-repository match is enforced
             // before resolvers are called.
-            final Map<String, org.dependencytrack.model.PackageArtifactMetadata> priorArtifactMetadataByPurl =
+            final Map<String, org.dependencytrack.pkgmetadata.PackageArtifactMetadata> priorArtifactMetadataByPurl =
                     withJdbiHandle(handle -> new PackageArtifactMetadataDao(handle)
                             .getAll(purlStrings).stream()
                                     .collect(Collectors.toMap(
@@ -186,9 +182,9 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             Map<String, List<Repository>> repoByPurlType,
             Map<String, Optional<String>> passwordByRepoTypeAndName,
             Function<PackageURL, Boolean> isInternalFunc,
-            Map<String, org.dependencytrack.model.PackageArtifactMetadata> priorArtifactMetadataByPurl,
+            Map<String, org.dependencytrack.pkgmetadata.PackageArtifactMetadata> priorArtifactMetadataByPurl,
             ResultBuffer buffer)
-            throws Exception {
+            throws InterruptedException {
         final PackageURL purl;
         try {
             purl = new PackageURL(purlStr);
@@ -210,7 +206,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
         // and NOT the normalized one. Resolvers that inject qualifiers during normalization
         // (e.g. Maven's type=jar) would otherwise miss prior rows persisted under the unqualified
         // component PURL.
-        final org.dependencytrack.model.PackageArtifactMetadata priorArtifactMetadata =
+        final org.dependencytrack.pkgmetadata.PackageArtifactMetadata priorArtifactMetadata =
                 priorArtifactMetadataByPurl.get(purl.canonicalize());
 
         final ResolutionResult result = resolve(
@@ -238,8 +234,8 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             Map<String, List<Repository>> repoByPurlType,
             Map<String, Optional<String>> passwordByRepoTypeAndName,
             Function<PackageURL, Boolean> isInternalFunc,
-            org.dependencytrack.model.@Nullable PackageArtifactMetadata priorArtifactMetadata)
-            throws Exception {
+            org.dependencytrack.pkgmetadata.@Nullable PackageArtifactMetadata priorArtifactMetadata)
+            throws InterruptedException {
         if (resolverFactory.requiresRepository()) {
             final List<Repository> repos =
                     repoByPurlType.computeIfAbsent(normalizedPurl.getType(), this::getRepositoriesByPurlType);
@@ -313,7 +309,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
         return null;
     }
 
-    private static PackageArtifactMetadata convert(org.dependencytrack.model.PackageArtifactMetadata internal) {
+    private static PackageArtifactMetadata convert(org.dependencytrack.pkgmetadata.PackageArtifactMetadata internal) {
         final var hashes = new EnumMap<HashAlgorithm, String>(HashAlgorithm.class);
         if (internal.md5() != null) {
             hashes.put(HashAlgorithm.MD5, internal.md5());
@@ -337,7 +333,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             return pluginManager.getFactory(PackageMetadataResolver.class, resolverName);
         } catch (NoSuchExtensionPointException | NoSuchExtensionException e) {
             throw new TerminalApplicationFailureException(
-                    "No resolver factory found for name: %s".formatted(resolverName));
+                    "No resolver factory found for name: %s".formatted(resolverName), e);
         }
     }
 
@@ -373,10 +369,10 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
 
     private static final class ResultBuffer {
 
-        private final LinkedHashMap<String, org.dependencytrack.model.PackageMetadata> pkgMetadataByPurl =
+        private final LinkedHashMap<String, org.dependencytrack.pkgmetadata.PackageMetadata> pkgMetadataByPurl =
                 new LinkedHashMap<>();
-        private final LinkedHashMap<String, org.dependencytrack.model.PackageArtifactMetadata> artifactMetadataByPurl =
-                new LinkedHashMap<>();
+        private final LinkedHashMap<String, org.dependencytrack.pkgmetadata.PackageArtifactMetadata>
+                artifactMetadataByPurl = new LinkedHashMap<>();
         private final LinkedHashMap<String, PackageMetadataResolutionStatus> resolutionStatusByPurl =
                 new LinkedHashMap<>();
 
@@ -389,7 +385,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             final Instant resolvedAt = resolvedMetadata.resolvedAt();
 
             final PackageURL packagePurl = PurlUtil.silentPurlPackageOnly(purl);
-            final var packageMetadata = new org.dependencytrack.model.PackageMetadata(
+            final var packageMetadata = new org.dependencytrack.pkgmetadata.PackageMetadata(
                     packagePurl,
                     resolvedMetadata.latestVersion(),
                     resolvedMetadata.latestVersionPublishedAt(),
@@ -405,7 +401,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             if (resolvedArtifactMetadata != null) {
                 artifactMetadataByPurl.put(
                         purl.canonicalize(),
-                        new org.dependencytrack.model.PackageArtifactMetadata(
+                        new org.dependencytrack.pkgmetadata.PackageArtifactMetadata(
                                 purl,
                                 packagePurl,
                                 resolvedArtifactMetadata.hashes().get(HashAlgorithm.MD5),
@@ -419,7 +415,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             } else {
                 artifactMetadataByPurl.putIfAbsent(
                         purl.canonicalize(),
-                        new org.dependencytrack.model.PackageArtifactMetadata(
+                        new org.dependencytrack.pkgmetadata.PackageArtifactMetadata(
                                 purl,
                                 packagePurl,
                                 null,

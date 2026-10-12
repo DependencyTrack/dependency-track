@@ -20,7 +20,7 @@ package org.dependencytrack.resources.v1.misc;
 
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import org.dependencytrack.model.ProjectMetrics;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;

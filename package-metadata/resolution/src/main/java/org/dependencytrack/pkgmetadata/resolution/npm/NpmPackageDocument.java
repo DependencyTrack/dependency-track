@@ -118,6 +118,7 @@ record NpmPackageDocument(@Nullable String latestVersion, Map<String, VersionInf
                 try {
                     timestamps.put(version, Instant.parse(parser.getText()));
                 } catch (DateTimeParseException _) {
+                    // Publish timestamps are optional, so malformed ones are ignored.
                 }
             }
         }

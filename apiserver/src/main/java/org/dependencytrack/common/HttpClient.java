@@ -277,7 +277,7 @@ public final class HttpClient extends java.net.http.HttpClient {
                 ? delegate.sendAsync(withUserAgent(request), hopBodyHandler)
                 : delegate.sendAsync(withUserAgent(request), hopBodyHandler, pushPromiseHandler);
         result.start(hop);
-        hop.whenComplete((response, throwable) -> {
+        var _ = hop.whenComplete((response, throwable) -> {
             if (throwable != null) {
                 result.completeExceptionally(throwable);
                 return;

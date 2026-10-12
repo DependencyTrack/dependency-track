@@ -153,8 +153,6 @@ final class JvnVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         }
 
         final String feedBaseUrl = feedBaseUrlOf(jvnConfig);
-        final URI baseUri = URI.create(feedBaseUrl);
-
         final int year = Year.now(ZoneOffset.UTC).getValue();
         final URI probeUri = URI.create(feedBaseUrl + "/detail/" + JvnClient.detailFeedFilename(year));
         final HttpRequest request = HttpRequest.newBuilder()
@@ -212,6 +210,8 @@ final class JvnVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     private static String feedBaseUrlOf(final JvnVulnDataSourceConfigV1 config) {
-        return config.getFeedBaseUrl() != null ? config.getFeedBaseUrl().toString() : JvnClient.DEFAULT_FEED_BASE_URL;
+        return config.getFeedBaseUrl() != null
+                ? config.getFeedBaseUrl().toString().replaceAll("/+$", "")
+                : JvnClient.DEFAULT_FEED_BASE_URL;
     }
 }

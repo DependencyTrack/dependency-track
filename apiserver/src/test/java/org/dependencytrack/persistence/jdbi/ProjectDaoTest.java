@@ -19,12 +19,14 @@
 package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.metrics.DependencyMetrics;
+import org.dependencytrack.metrics.MetricsDao;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.OrganizationalContact;
@@ -33,7 +35,6 @@ import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Vex;
 import org.dependencytrack.model.ViolationAnalysisState;
@@ -169,8 +170,11 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         });
 
         // Create a BOM.
-        final Bom bom = qm.createBom(
-                project, new Date(), Bom.Format.CYCLONEDX, "1.4", 1, "serialNumber", UUID.randomUUID(), null);
+        final var bom = new Bom();
+        bom.setProject(project);
+        bom.setImported(new Date());
+        bom.setBomFormat(Bom.Format.CYCLONEDX);
+        qm.persist(bom);
 
         // Create a child project with an accompanying component.
         final var projectChild = new Project();

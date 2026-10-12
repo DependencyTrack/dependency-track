@@ -86,16 +86,16 @@ class SnykVulnAnalyzerTest {
         analyzer = analyzerFactory.create();
     }
 
-    private void useAnalyzerWithBatchRequestsDisabled(WireMockRuntimeInfo wmRuntimeInfo) {
+    private void useAnalyzer(String apiBaseUrl, boolean batchRequestsEnabled) {
         final var configRegistry = new MockConfigRegistry(
                 analyzerFactory.runtimeConfigSpec(),
                 new SnykVulnAnalyzerConfigV1()
                         .withEnabled(true)
                         .withAliasSyncEnabled(true)
-                        .withApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
+                        .withApiBaseUrl(URI.create(apiBaseUrl))
                         .withOrgId("test-org-id")
                         .withApiToken("test-api-token")
-                        .withBatchRequestsEnabled(false));
+                        .withBatchRequestsEnabled(batchRequestsEnabled));
 
         analyzerFactory.init(new ExtensionContextBuilder()
                 .withConfigRegistry(configRegistry)
@@ -131,6 +131,28 @@ class SnykVulnAnalyzerTest {
         assertThatExceptionOfType(RetryableVulnAnalysisException.class)
                 .isThrownBy(() -> analyzer.analyze(bom))
                 .satisfies(e -> assertThat(e.retryAfter()).isNull());
+    }
+
+    @Test
+    void shouldHandleApiBaseUrlWithTrailingSlash(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        useAnalyzer(wmRuntimeInfo.getHttpBaseUrl() + "/", true);
+
+        stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.api+json")
+                        .withBodyFile("snyk-no-issues-response.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
     }
 
     @Test
@@ -463,7 +485,7 @@ class SnykVulnAnalyzerTest {
 
     @Test
     void shouldUsePerPackageEndpointWhenBatchRequestsAreDisabled(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        useAnalyzerWithBatchRequestsDisabled(wmRuntimeInfo);
+        useAnalyzer(wmRuntimeInfo.getHttpBaseUrl(), false);
         // The per-package response need not repeat the package coordinates, since the
         // package is implied by the request URL. Issues must still be attributed to it.
         stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))
@@ -509,7 +531,7 @@ class SnykVulnAnalyzerTest {
 
     @Test
     void shouldTreatUnknownPackageAsHavingNoIssues(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        useAnalyzerWithBatchRequestsDisabled(wmRuntimeInfo);
+        useAnalyzer(wmRuntimeInfo.getHttpBaseUrl(), false);
         // Snyk answers 404 for packages it does not know. The batch endpoint just omits
         // them, so one unknown package must not fail the whole analysis.
         stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))

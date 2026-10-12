@@ -80,7 +80,11 @@ public abstract class AbstractApiResource extends AlpineResource {
         //  the same project. If we can avoid this overhead for even a few of those
         //  requests, that would already help under high traffic conditions.
 
-        if (!qm.hasAccess(super.getPrincipal(), project)) {
+        final UUID projectUuid = project.getUuid();
+        final boolean isAccessible = withJdbiHandle(
+                qm,
+                handle -> Boolean.TRUE.equals(handle.attach(ProjectDao.class).isAccessible(projectUuid)));
+        if (!isAccessible) {
             try (var _ = new MdcScope(Map.ofEntries(
                     Map.entry(MDC_PROJECT_UUID, project.getUuid().toString()),
                     Map.entry(MDC_PROJECT_NAME, project.getName()),

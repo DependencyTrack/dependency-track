@@ -166,6 +166,7 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
      * @return true if API key was specified, false if not
      * @since 1.0.0
      */
+    @Override
     public boolean isSpecified() {
         return assertedApiKey != null;
     }
@@ -178,6 +179,7 @@ public final class ApiKeyAuthenticationService implements AuthenticationService<
      * @throws AuthenticationException upon an authentication failure
      * @since 1.0.0
      */
+    @Override
     public Principal authenticate() throws AuthenticationException {
         final ApiKey decodedApiKey;
         try {

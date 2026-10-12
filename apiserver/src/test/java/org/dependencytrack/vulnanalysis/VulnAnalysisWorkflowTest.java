@@ -54,11 +54,11 @@ import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.FindingDao;
 import org.dependencytrack.persistence.jdbi.FindingDao.FindingRow;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.cel.CelVulnerabilityPolicyEvaluator;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyOperation;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyRating;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
@@ -101,6 +101,8 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.protoConverter;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.voidConverter;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
+import static org.dependencytrack.notification.NotificationTestUtil.truncateNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABILITY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABLE_DEPENDENCY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
@@ -236,7 +238,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         final List<Vulnerability> vulns = qm.getVulnerabilities(project, true);
         assertThat(vulns).hasSize(1);
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getGroup()).isEqualTo(GROUP_NEW_VULNERABILITY);
         });
 
@@ -290,7 +292,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactlyInAnyOrder(GROUP_NEW_VULNERABILITY, GROUP_NEW_VULNERABLE_DEPENDENCY);
     }
@@ -343,9 +345,54 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         findings = findingsSupplier.get();
         assertThat(findings).isEmpty();
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactly(GROUP_VULNERABILITY_RETRACTED);
+    }
+
+    @Test
+    void shouldNotDeactivateManuallyCreatedFindings() {
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INT-123");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln = qm.persist(vuln);
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.persist(project);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component = qm.persist(component);
+
+        qm.addVulnerability(vuln, component, "none");
+
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+                        .withArgument(VulnAnalysisWorkflowArg.newBuilder()
+                                .setProjectUuid(project.getUuid().toString())
+                                .build()));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        final long projectId = project.getId();
+        final List<FindingRow> findings = withJdbiHandle(handle -> handle.attach(FindingDao.class)
+                .selectFindingsByProject(
+                        projectId,
+                        /* includeInactive */ false,
+                        /* includeSuppressed */ false,
+                        /* searchText */ null,
+                        /* hasAnalysis */ null,
+                        /* source */ null,
+                        /* epssFrom */ null,
+                        /* epssTo */ null,
+                        /* isKev */ null,
+                        /* emitTotalCount */ false,
+                        /* paginate */ false));
+        assertThat(findings).hasSize(1);
+
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test
@@ -387,10 +434,10 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactly(GROUP_NEW_VULNERABILITY);
-        qm.truncateNotificationOutbox();
+        truncateNotificationOutbox();
 
         // Remove vulnerable software so the internal analyzer no longer reports the finding.
         qm.delete(vs);
@@ -403,12 +450,12 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactly(GROUP_VULNERABILITY_RETRACTED);
 
         final org.dependencytrack.notification.proto.v1.Notification notification =
-                qm.getNotificationOutbox().getFirst();
+                getNotificationOutbox().getFirst();
         final var subject = notification
                 .getSubject()
                 .unpack(org.dependencytrack.notification.proto.v1.VulnerabilityRetractedSubject.class);
@@ -448,10 +495,10 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactly(GROUP_VULNERABILITY_RETRACTED);
-        qm.truncateNotificationOutbox();
+        truncateNotificationOutbox();
 
         // Add vulnerable software so the internal analyzer can match the component.
         final var vs = new VulnerableSoftware();
@@ -473,12 +520,12 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactly(GROUP_NEW_VULNERABILITY);
 
         final org.dependencytrack.notification.proto.v1.Notification notification =
-                qm.getNotificationOutbox().getFirst();
+                getNotificationOutbox().getFirst();
         final var subject = notification
                 .getSubject()
                 .unpack(org.dependencytrack.notification.proto.v1.NewVulnerabilitySubject.class);
@@ -566,7 +613,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                             "CVSSv3 Score: (None) → 3.7");
         });
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactlyInAnyOrder(GROUP_NEW_VULNERABILITY, GROUP_PROJECT_AUDIT_CHANGE);
     }
@@ -643,7 +690,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
 
         // Suppressed finding should NOT generate a NEW_VULNERABILITY notification,
         // but should still generate a PROJECT_AUDIT_CHANGE notification.
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE));
     }
@@ -740,7 +787,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
 
         // Existing finding should not trigger NEW_VULNERABILITY notification,
         // but state and suppression changed, so PROJECT_AUDIT_CHANGE should be emitted.
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE));
     }
@@ -933,7 +980,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         });
 
         // No state or suppression change, so no NEW_VULNERABILITY or PROJECT_AUDIT_CHANGE.
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test

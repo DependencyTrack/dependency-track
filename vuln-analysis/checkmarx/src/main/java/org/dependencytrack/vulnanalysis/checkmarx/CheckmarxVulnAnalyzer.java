@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Gatherers;
@@ -173,7 +174,7 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
                     continue;
                 }
 
-                final String vulnPurlLower = vulnPurl.toLowerCase();
+                final String vulnPurlLower = vulnPurl.toLowerCase(Locale.ROOT);
                 if (!bomRefsByPurl.containsKey(vulnPurlLower)) {
                     LOGGER.warn(
                             "Received vulnerability data for PURL '{}', but no component with this PURL was submitted",
@@ -228,7 +229,7 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
 
                 // Lowercase PURL coordinates for consistent cache keys
                 bomRefsByPurl
-                        .computeIfAbsent(purl.getCoordinates().toLowerCase(), _ -> new HashSet<>())
+                        .computeIfAbsent(purl.getCoordinates().toLowerCase(Locale.ROOT), _ -> new HashSet<>())
                         .add(component.getBomRef());
             } catch (MalformedPackageURLException e) {
                 LOGGER.warn("Failed to parse PURL '{}'; Skipping", component.getPurl(), e);

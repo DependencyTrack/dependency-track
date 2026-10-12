@@ -21,6 +21,7 @@ package alpine.server.auth;
 
 import alpine.common.util.ProxyConfig;
 import alpine.common.util.ProxyUtil;
+import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.openid.connect.sdk.UserInfoRequest;
@@ -57,7 +58,7 @@ class OidcUserInfoAuthenticator {
         } catch (IOException e) {
             LOGGER.error("UserInfo request failed", e);
             throw new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.OTHER);
-        } catch (com.nimbusds.oauth2.sdk.ParseException e) {
+        } catch (ParseException e) {
             LOGGER.error("Parsing UserInfo response failed", e);
             throw new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.OTHER);
         }

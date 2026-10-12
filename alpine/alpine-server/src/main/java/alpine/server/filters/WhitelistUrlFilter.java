@@ -80,6 +80,7 @@ public final class WhitelistUrlFilter implements Filter {
      * @param filterConfig A filter configuration object used by a servlet container
      *                     to pass information to a filter during initialization.
      */
+    @Override
     public void init(final FilterConfig filterConfig) {
 
         final String allowParam = filterConfig.getInitParameter("allowUrls");
@@ -108,6 +109,7 @@ public final class WhitelistUrlFilter implements Filter {
      * @throws IOException a IOException
      * @throws ServletException a ServletException
      */
+    @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
 
@@ -130,7 +132,7 @@ public final class WhitelistUrlFilter implements Filter {
                 final String requestUrlExcludingContext = requestUri.substring(req.getContextPath().length());
                 for (final String url: allowUrls) {
                     if (requestUrlExcludingContext.equals("/")) {
-                        if (url.trim().equals("/") || (url.trim().equals("/index.jsp")) || (url.trim().equals("/index.html"))) {
+                        if (url.trim().equals("/") || url.trim().equals("/index.jsp") || url.trim().equals("/index.html")) {
                             allowed = true;
                         }
                     } else if (requestUrlExcludingContext.startsWith(url.trim())) {
@@ -165,14 +167,10 @@ public final class WhitelistUrlFilter implements Filter {
         chain.doFilter(request, response);
     }
 
-    private boolean isExcludedForwardPath(String url) {
-        return Arrays.stream(forwardExcludes).anyMatch(url::equals);
-    }
-
-
     /**
      * {@inheritDoc}
      */
+    @Override
     public void destroy() {
     }
 

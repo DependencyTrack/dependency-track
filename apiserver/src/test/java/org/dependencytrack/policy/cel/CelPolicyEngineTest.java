@@ -21,17 +21,16 @@ package org.dependencytrack.policy.cel;
 import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.epss.Epss;
+import org.dependencytrack.epss.EpssDao;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.Epss;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
-import org.dependencytrack.model.PackageArtifactMetadata;
-import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -45,11 +44,12 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
-import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
+import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
+import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -1359,6 +1359,130 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         assertThat(qm.getAllPolicyViolations(component))
                 .satisfiesExactly(
                         violation -> assertThat(violation.getPolicyCondition()).isEqualTo(validCondition));
+    }
+
+    @Test
+    void testEvaluateProjectWithStringResult() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                cel.bind(
+                  name,
+                  component.name,
+                  name == "acme-lib" ? "  Component " + name + " is not allowed  " : ""
+                )
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(component)).satisfiesExactly(violation -> {
+            assertThat(violation.getPolicyCondition()).isEqualTo(condition);
+            assertThat(violation.getText()).isEqualTo("Component acme-lib is not allowed");
+        });
+    }
+
+    @Test
+    void testEvaluateProjectWithBlankStringResult() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                component.name == "acme-lib" ? "   " : "Component is not acme-lib"
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(component)).isEmpty();
+    }
+
+    @Test
+    void testEvaluateProjectWithLongStringResult() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "\"%s\"".formatted("a".repeat(2000)),
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(component))
+                .satisfiesExactly(violation -> assertThat(violation.getText()).hasSize(1024));
+    }
+
+    @Test
+    void testEvaluateProjectUpdatesMessageOfExistingViolation() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                "Component version is " + component.version
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        final PolicyViolation initialViolation =
+                qm.getAllPolicyViolations(component).getFirst();
+        assertThat(initialViolation.getText()).isEqualTo("Component version is 1.0.0");
+
+        component.setVersion("2.0.0");
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        qm.getPersistenceManager().evictAll();
+
+        assertThat(qm.getAllPolicyViolations(component)).satisfiesExactly(violation -> {
+            assertThat(violation.getUuid()).isEqualTo(initialViolation.getUuid());
+            assertThat(violation.getText()).isEqualTo("Component version is 2.0.0");
+        });
     }
 
     @Test

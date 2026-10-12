@@ -21,14 +21,34 @@ set -euxo pipefail
 
 SCRIPT_DIR="$(cd -P -- "$(dirname "$0")" && pwd -P)"
 LICENSE_LIST_DATA_DIR="$(cd -P -- "${SCRIPT_DIR}/../../apiserver/src/main/resources/license-list-data" && pwd -P)"
-TMP_DOWNLOAD_FILE="$(mktemp)"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TMP_DIR}"' EXIT
 
 gh -R spdx/license-list-data release download "v$1" \
-  --archive tar.gz --clobber --output "${TMP_DOWNLOAD_FILE}"
+  --archive tar.gz --clobber --output "${TMP_DIR}/license-list-data.tar.gz"
 
-rm -rf "${LICENSE_LIST_DATA_DIR}/json"
-
-tar -xvzf "${TMP_DOWNLOAD_FILE}" \
+tar -xzf "${TMP_DIR}/license-list-data.tar.gz" \
   --strip-components "1" \
-  --directory "${LICENSE_LIST_DATA_DIR}" \
+  --directory "${TMP_DIR}" \
   "license-list-data-$1/json"
+
+# Keep only the fields mapped by org.dependencytrack.model.License.
+FIELDS='[
+  "licenseId",
+  "licenseExceptionId",
+  "name",
+  "licenseText",
+  "licenseExceptionText",
+  "standardLicenseTemplate",
+  "standardLicenseHeader",
+  "licenseComments",
+  "isOsiApproved",
+  "isFsfLibre",
+  "isDeprecatedLicenseId",
+  "seeAlso"
+]'
+
+jq --compact-output --sort-keys --slurp --argjson fields "${FIELDS}" \
+  'sort_by(.licenseId // .licenseExceptionId)[] | with_entries(select(.key | IN($fields[])))' \
+  "${TMP_DIR}"/json/details/*.json "${TMP_DIR}"/json/exceptions/*.json \
+  > "${LICENSE_LIST_DATA_DIR}/licenses.jsonl"

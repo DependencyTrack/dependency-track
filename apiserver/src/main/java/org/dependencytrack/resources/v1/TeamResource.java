@@ -67,6 +67,7 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
@@ -294,14 +295,14 @@ public class TeamResource extends AbstractApiResource {
         final boolean isAllTeams = super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
                 || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
         if (!isAllTeams) {
-            List<TeamRef> visibleTeams =
-                    getPrincipal() instanceof final Principal principal ? principal.teams() : List.of();
+            final Principal principal = getPrincipal();
+            List<TeamRef> visibleTeams = principal != null ? principal.teams() : List.of();
 
             final String filter = getAlpineRequest().getFilter();
             if (filter != null && !filter.isBlank()) {
-                final String needle = filter.toLowerCase();
+                final String needle = filter.toLowerCase(Locale.ROOT);
                 visibleTeams = visibleTeams.stream()
-                        .filter(team -> team.name().toLowerCase().contains(needle))
+                        .filter(team -> team.name().toLowerCase(Locale.ROOT).contains(needle))
                         .toList();
             }
 

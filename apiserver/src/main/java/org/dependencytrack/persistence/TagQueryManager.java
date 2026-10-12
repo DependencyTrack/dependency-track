@@ -43,6 +43,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -124,7 +125,7 @@ public class TagQueryManager extends QueryManager {
 
         if (filter != null) {
             sqlQuery += " WHERE \"NAME\" LIKE :nameFilter";
-            params.put("nameFilter", "%" + filter.toLowerCase() + "%");
+            params.put("nameFilter", "%" + filter.toLowerCase(Locale.ROOT) + "%");
         }
 
         if (orderBy == null) {
@@ -189,7 +190,7 @@ public class TagQueryManager extends QueryManager {
 
             int paramIndex = 0;
             for (final String tagName : tagNames) {
-                final var paramName = "tagName" + (++paramIndex);
+                final var paramName = "tagName" + ++paramIndex;
                 tagNameFilters.add("\"NAME\" = :" + paramName);
                 params.put(paramName, tagName);
             }
@@ -594,7 +595,7 @@ public class TagQueryManager extends QueryManager {
                 .sorted(Comparator.comparingLong((Tag tag) -> projectCountByTagId.getOrDefault(tag.getId(), 0L))
                         .reversed())
                 .toList();
-        return (new PaginatedResult()).objects(tags).total(tags.size());
+        return new PaginatedResult().objects(tags).total(tags.size());
     }
 
     private record TagProjectCountRow(long tagId, long projectCount) {}
@@ -629,6 +630,7 @@ public class TagQueryManager extends QueryManager {
      * @param tags a List of Tags to resolve
      * @return List of resolved Tags
      */
+    @Override
     public synchronized Set<Tag> resolveTags(final Collection<Tag> tags) {
         if (tags == null) {
             return new HashSet<>();
@@ -637,6 +639,7 @@ public class TagQueryManager extends QueryManager {
         return resolveTagsByName(tagNames);
     }
 
+    @Override
     public synchronized Set<Tag> resolveTagsByName(final Collection<String> tags) {
         if (tags == null) {
             return new HashSet<>();

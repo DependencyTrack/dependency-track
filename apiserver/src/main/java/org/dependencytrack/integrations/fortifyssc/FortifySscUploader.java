@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.integrations.fortifyssc;
 
-import alpine.model.ConfigProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.FindingPackagingFormat;
@@ -67,9 +66,7 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public boolean isEnabled() {
-        final ConfigProperty enabled =
-                qm.getConfigProperty(FORTIFY_SSC_ENABLED.getGroupName(), FORTIFY_SSC_ENABLED.getPropertyName());
-        return enabled != null && Boolean.valueOf(enabled.getPropertyValue());
+        return isConfigEnabled(FORTIFY_SSC_ENABLED);
     }
 
     @Override
@@ -87,24 +84,22 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public void upload(final Project project, final InputStream payload) {
-        final ConfigProperty sscUrl =
-                qm.getConfigProperty(FORTIFY_SSC_URL.getGroupName(), FORTIFY_SSC_URL.getPropertyName());
-        final ConfigProperty citoken =
-                qm.getConfigProperty(FORTIFY_SSC_TOKEN.getGroupName(), FORTIFY_SSC_TOKEN.getPropertyName());
+        final String sscUrl = getConfigValue(FORTIFY_SSC_URL);
+        final String citoken = getConfigValue(FORTIFY_SSC_TOKEN);
         final ProjectProperty applicationId =
                 qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
         if (citoken == null) {
             LOGGER.warn("Fortify SSC token not specified. Aborting");
             return;
         }
-        final String tokenSecretName = StringUtils.trimToNull(citoken.getPropertyValue());
+        final String tokenSecretName = StringUtils.trimToNull(citoken);
         if (tokenSecretName == null) {
             LOGGER.warn("Fortify SSC token not specified. Aborting");
             return;
         }
         try {
-            final FortifySscClient client = new FortifySscClient(
-                    httpClient, this, URI.create(sscUrl.getPropertyValue()).toURL());
+            final var client =
+                    new FortifySscClient(httpClient, this, URI.create(sscUrl).toURL());
             final String tokenValue = secretManager.getSecretValue(tokenSecretName);
             if (tokenValue == null) {
                 LOGGER.warn("Fortify SSC secret '%s' could not be resolved. Aborting".formatted(tokenSecretName));

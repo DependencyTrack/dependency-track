@@ -23,9 +23,12 @@ import org.dependencytrack.v4migrator.TableRegistry;
 import org.dependencytrack.v4migrator.config.GlobalOptions;
 import org.dependencytrack.v4migrator.config.SourceOptions;
 import org.dependencytrack.v4migrator.state.StagingSchema;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Pipeline §3.
@@ -98,15 +101,15 @@ public final class ExtractPhase {
                     .formatted(options.stagingSchema));
             dropTablesMatching(h, "tgt\\_%", true);
             dropTablesMatching(h, "%\\_canonical_id_map", false);
-            for (final String probe : org.dependencytrack.v4migrator.state.StagingSchema.PROBE_TABLES) {
+            for (final String probe : StagingSchema.PROBE_TABLES) {
                 h.execute("TRUNCATE \"%s\".\"%s\"".formatted(options.stagingSchema, probe));
             }
         });
     }
 
-    private void dropTablesMatching(final org.jdbi.v3.core.Handle h, final String pattern, final boolean escape) {
+    private void dropTablesMatching(final Handle h, final String pattern, final boolean escape) {
         final String escapeClause = escape ? " ESCAPE '\\'" : "";
-        final java.util.List<String> tables = h.createQuery("""
+        final List<String> tables = h.createQuery("""
                 SELECT table_name FROM information_schema.tables
                  WHERE table_schema = :s
                    AND table_name LIKE :p

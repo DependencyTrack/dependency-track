@@ -19,17 +19,17 @@
 package org.dependencytrack.persistence.jdbi;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.github.packageurl.PackageURL;
+import com.google.errorprone.annotations.CompileTimeConstant;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.dependencytrack.exception.AlreadyExistsException;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsConciseQuery;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
@@ -174,6 +174,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  LIMIT 1
               ) pm ON TRUE
              WHERE cd."COLLECTION_LOGIC" IS NULL
+            HAVING COUNT(pm."PROJECT_ID") > 0
             """;
 
     /// Selects the most recent `PROJECTMETRICS` row for a single non-collection project.
@@ -306,8 +307,8 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Define ArrayList<String> whereConditions,
             @BindMap Map<String, Object> queryParams,
             @Define boolean includeMetrics,
-            @Define String collectionMetricsSubquery,
-            @Define String leafMetricsSubquery);
+            @Define @CompileTimeConstant String collectionMetricsSubquery,
+            @Define @CompileTimeConstant String leafMetricsSubquery);
 
     default Page<ConciseProjectListRow> getPageConcise(ListProjectsConciseQuery query) {
         if (query.parentUuidFilter() != null && !Boolean.TRUE.equals(isAccessible(query.parentUuidFilter()))) {
@@ -457,7 +458,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Nullable Classifier classifier,
             @Nullable String description,
             @Nullable String publisher,
-            @Nullable PackageURL purl,
+            @Nullable String purl,
             @Nullable String swidTagId,
             @Nullable String cpe,
             @Nullable String directDependencies,
@@ -591,8 +592,8 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Define ArrayList<String> whereConditions,
             @BindMap Map<String, Object> queryParams,
             @Define boolean includeMetrics,
-            @Define String collectionMetricsSubquery,
-            @Define String leafMetricsSubquery);
+            @Define @CompileTimeConstant String collectionMetricsSubquery,
+            @Define @CompileTimeConstant String leafMetricsSubquery);
 
     default Page<ListProjectsRow> getProjects(ListProjectsQuery query) {
         final var whereConditions = new ArrayList<String>();

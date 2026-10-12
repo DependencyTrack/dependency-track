@@ -168,6 +168,7 @@ public class LdapConnectionWrapper {
      * @throws NamingException if an exception is thrown
      * @since 1.4.0
      */
+    @SuppressWarnings("BanJNDI")
     public List<String> getGroups(final DirContext dirContext, final LdapUser ldapUser) throws NamingException {
         LOGGER.debug("Retrieving groups for: {}", ldapUser.getDN());
         final List<String> groupDns = new ArrayList<>();
@@ -208,6 +209,7 @@ public class LdapConnectionWrapper {
      * @throws NamingException if an exception if thrown
      * @since 1.5.0
      */
+    @SuppressWarnings("BanJNDI")
     public List<String> search(final DirContext dirContext, final String filter, final String searchTerm) throws NamingException {
         LOGGER.debug("Searching / filter: {} searchTerm: {}", filter, searchTerm);
         final List<String> entityDns = new ArrayList<>();
@@ -235,6 +237,7 @@ public class LdapConnectionWrapper {
      * @throws NamingException if an exception is thrown
      * @since 1.4.0
      */
+    @SuppressWarnings("BanJNDI")
     public List<SearchResult> searchForUsername(final DirContext ctx, final String username) throws NamingException {
         LOGGER.debug("Performing a directory search for: {}", username);
         final SearchControls sc = new SearchControls();
@@ -277,6 +280,7 @@ public class LdapConnectionWrapper {
      * @throws NamingException if an exception is thrown
      * @since 1.4.0
      */
+    @SuppressWarnings("BanJNDI")
     public String getAttribute(final DirContext ctx, final String dn, final String attributeName) throws NamingException {
         final Attributes attributes = ctx.getAttributes(dn);
         return getAttribute(attributes, attributeName);

@@ -495,9 +495,9 @@ final class CelPolicyFunctions {
                     Unable to resolve, returning false""".formatted(VERSION_DISTANCE.functionName(), comparator));
             return false;
         }
-        final org.dependencytrack.model.VersionDistance versionDistance;
+        final org.dependencytrack.policy.cel.VersionDistance versionDistance;
         try {
-            versionDistance = org.dependencytrack.model.VersionDistance.getVersionDistance(
+            versionDistance = org.dependencytrack.policy.cel.VersionDistance.getVersionDistance(
                     component.getVersion(), component.getLatestVersion());
         } catch (RuntimeException e) {
             LOGGER.warn(
@@ -516,7 +516,7 @@ final class CelPolicyFunctions {
         final boolean isDirectDependency =
                 withJdbiHandle(handle -> new CelPolicyDao(handle).isDirectDependency(component));
         return isDirectDependency
-                && org.dependencytrack.model.VersionDistance.evaluate(value, comparatorComputed, versionDistance);
+                && org.dependencytrack.policy.cel.VersionDistance.evaluate(value, comparatorComputed, versionDistance);
     }
 
     static boolean isComponentOld(Component component, String comparator, String age) {

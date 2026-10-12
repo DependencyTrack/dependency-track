@@ -20,8 +20,11 @@ package org.dependencytrack.notification;
 
 import alpine.model.User;
 import com.google.protobuf.util.Timestamps;
+import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vex;
+import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.notification.proto.v1.Bom;
 import org.dependencytrack.notification.proto.v1.Component;
 import org.dependencytrack.notification.proto.v1.Group;
@@ -181,15 +184,18 @@ public final class NotificationModelConverter {
     }
 
     public static PolicyViolation convert(org.dependencytrack.model.PolicyViolation violation) {
-        return PolicyViolation.newBuilder()
+        final PolicyViolation.Builder builder = PolicyViolation.newBuilder()
                 .setUuid(violation.getUuid().toString())
                 .setCondition(convert(violation.getPolicyCondition()))
                 .setType(violation.getType().name())
-                .setTimestamp(Timestamps.fromDate(violation.getTimestamp()))
-                .build();
+                .setTimestamp(Timestamps.fromDate(violation.getTimestamp()));
+        if (violation.getText() != null) {
+            builder.setMessage(violation.getText());
+        }
+        return builder.build();
     }
 
-    public static PolicyViolationAnalysis convert(org.dependencytrack.model.ViolationAnalysis analysis) {
+    public static PolicyViolationAnalysis convert(ViolationAnalysis analysis) {
         return PolicyViolationAnalysis.newBuilder()
                 .setProject(convert(analysis.getProject()))
                 .setComponent(convert(analysis.getComponent()))
@@ -231,7 +237,7 @@ public final class NotificationModelConverter {
         return builder.build();
     }
 
-    public static Bom convert(final org.dependencytrack.model.Vex vex) {
+    public static Bom convert(final Vex vex) {
         final var builder = Bom.newBuilder().setContent("(Omitted)");
         if (vex.getVexFormat() != null) {
             builder.setFormat(vex.getVexFormat());
@@ -323,7 +329,7 @@ public final class NotificationModelConverter {
         return builder.build();
     }
 
-    public static VulnerabilityAnalysis convert(org.dependencytrack.model.Analysis analysis) {
+    public static VulnerabilityAnalysis convert(Analysis analysis) {
         return VulnerabilityAnalysis.newBuilder()
                 .setProject(convert(analysis.getProject()))
                 .setComponent(convert(analysis.getComponent()))

@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.vulnanalysis.snyk;
 
+import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
 import org.cyclonedx.proto.v1_7.Advisory;
 import org.cyclonedx.proto.v1_7.Property;
@@ -311,7 +312,7 @@ final class SnykModelConverter {
         };
     }
 
-    private static Optional<com.google.protobuf.Timestamp> convertTimestamp(@Nullable String isoTimestamp) {
+    private static Optional<Timestamp> convertTimestamp(@Nullable String isoTimestamp) {
         if (isoTimestamp == null || isoTimestamp.isBlank()) {
             return Optional.empty();
         }

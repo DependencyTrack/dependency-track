@@ -70,7 +70,9 @@ public class ApiKeyUsageTracker implements ApplicationEventListener {
     @Override
     public void onEvent(final ApplicationEvent event) {
         switch (event.getType()) {
-            case INITIALIZATION_FINISHED -> flushExecutor.scheduleAtFixedRate(this::flush, 5, 30, TimeUnit.SECONDS);
+            case INITIALIZATION_FINISHED -> {
+                var _ = flushExecutor.scheduleAtFixedRate(this::flush, 5, 30, TimeUnit.SECONDS);
+            }
             case DESTROY_FINISHED -> {
                 flushExecutor.shutdown();
                 try {
@@ -87,6 +89,7 @@ public class ApiKeyUsageTracker implements ApplicationEventListener {
 
                 flush();
             }
+            default -> {}
         }
     }
 
@@ -106,8 +109,8 @@ public class ApiKeyUsageTracker implements ApplicationEventListener {
     }
 
     private void flush() {
+        flushLock.lock();
         try {
-            flushLock.lock();
             if (EVENT_QUEUE.isEmpty()) {
                 return;
             }

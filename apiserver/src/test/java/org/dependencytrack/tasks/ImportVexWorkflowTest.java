@@ -56,6 +56,7 @@ import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_VEX_UPLOAD_TOKE
 import static org.dependencytrack.dex.api.payload.PayloadConverters.protoConverter;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.voidConverter;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_VEX_CONSUMED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_VEX_PROCESSED;
 
@@ -108,7 +109,7 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
         final var runId = startWorkflow(project, vexFileMetadata);
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_VEX_CONSUMED))
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_VEX_PROCESSED));
 
@@ -126,7 +127,7 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
         final var runId = startWorkflow(project, vexFileMetadata);
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
         assertThatThrownBy(() -> fileStorage.get(vexFileMetadata)).isInstanceOf(NoSuchFileException.class);
     }
 
@@ -151,7 +152,7 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
         assertThatThrownBy(() -> fileStorage.get(vexFileMetadata)).isInstanceOf(NoSuchFileException.class);
     }
 

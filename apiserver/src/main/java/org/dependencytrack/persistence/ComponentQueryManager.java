@@ -26,18 +26,18 @@ import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.tuple.Pair;
+import org.dependencytrack.metrics.DependencyMetrics;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ComponentProperty;
-import org.dependencytrack.model.DependencyMetrics;
-import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.sqlmapping.ComponentProjection;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
-import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.pkgmetadata.PackageMetadata;
+import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.util.PurlUtil;
 
@@ -48,6 +48,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -80,6 +81,7 @@ final class ComponentQueryManager extends QueryManager {
         super(pm, request);
     }
 
+    @Override
     public boolean hasComponents(Project project) {
         final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
                 SELECT EXISTS(SELECT 1 FROM "COMPONENT" WHERE "PROJECT_ID" = ?)
@@ -95,6 +97,7 @@ final class ComponentQueryManager extends QueryManager {
      * @param project the Project to retrieve dependencies of
      * @return a List of Component objects
      */
+    @Override
     @SuppressWarnings("unchecked")
     public List<Component> getAllComponents(Project project) {
         final Query<Component> query = pm.newQuery(Component.class, "project == :project");
@@ -112,6 +115,7 @@ final class ComponentQueryManager extends QueryManager {
      * @param onlyDirect     Optionally exclude transitive dependencies so only direct dependencies are shown
      * @return a List of Dependency objects
      */
+    @Override
     public PaginatedResult getComponents(
             final Project project, final boolean includeMetrics, final boolean onlyOutdated, final boolean onlyDirect) {
         String queryString = """
@@ -279,7 +283,7 @@ final class ComponentQueryManager extends QueryManager {
             populateMetrics(components);
         }
 
-        return (new PaginatedResult()).objects(components).total(totalCount);
+        return new PaginatedResult().objects(components).total(totalCount);
     }
 
     /**
@@ -288,6 +292,7 @@ final class ComponentQueryManager extends QueryManager {
      * @param hash the hash of the component to retrieve
      * @return a list of components
      */
+    @Override
     public PaginatedResult getComponentByHash(String hash) {
         if (hash == null) {
             return null;
@@ -321,6 +326,7 @@ final class ComponentQueryManager extends QueryManager {
      * @param onlyLatestProjectVersions when {@code true}, return only components from projects flagged as the latest version
      * @return a list of components
      */
+    @Override
     public PaginatedResult getComponents(
             ComponentIdentity identity,
             Project project,
@@ -349,15 +355,15 @@ final class ComponentQueryManager extends QueryManager {
         if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) {
             if (identity.getGroup() != null) {
                 queryFilterElements.add(" group.toLowerCase().matches(:group) ");
-                queryParams.put("group", ".*" + identity.getGroup().toLowerCase() + ".*");
+                queryParams.put("group", ".*" + identity.getGroup().toLowerCase(Locale.ROOT) + ".*");
             }
             if (identity.getName() != null) {
                 queryFilterElements.add(" name.toLowerCase().matches(:name) ");
-                queryParams.put("name", ".*" + identity.getName().toLowerCase() + ".*");
+                queryParams.put("name", ".*" + identity.getName().toLowerCase(Locale.ROOT) + ".*");
             }
             if (identity.getVersion() != null) {
                 queryFilterElements.add(" version.toLowerCase().matches(:version) ");
-                queryParams.put("version", ".*" + identity.getVersion().toLowerCase() + ".*");
+                queryParams.put("version", ".*" + identity.getVersion().toLowerCase(Locale.ROOT) + ".*");
             }
 
             result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
@@ -366,17 +372,17 @@ final class ComponentQueryManager extends QueryManager {
             // given we already require a valid PURL to be provided. There will always
             // be a mandatory prefix such as "pkg:npm/foo".
             queryFilterElements.add("purl.toLowerCase().startsWith(:purl)");
-            queryParams.put("purl", identity.getPurl().canonicalize().toLowerCase());
+            queryParams.put("purl", identity.getPurl().canonicalize().toLowerCase(Locale.ROOT));
 
             result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else if (identity.getCpe() != null) {
             queryFilterElements.add("cpe.toLowerCase().matches(:cpe)");
-            queryParams.put("cpe", ".*" + identity.getCpe().toLowerCase() + ".*");
+            queryParams.put("cpe", ".*" + identity.getCpe().toLowerCase(Locale.ROOT) + ".*");
 
             result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else if (identity.getSwidTagId() != null) {
             queryFilterElements.add("swidTagId.toLowerCase().matches(:swidTagId)");
-            queryParams.put("swidTagId", ".*" + identity.getSwidTagId().toLowerCase() + ".*");
+            queryParams.put("swidTagId", ".*" + identity.getSwidTagId().toLowerCase(Locale.ROOT) + ".*");
 
             result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else {
@@ -417,6 +423,7 @@ final class ComponentQueryManager extends QueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a new Component
      */
+    @Override
     public Component createComponent(Component component, boolean commitIndex) {
         final Component result = persist(component);
         seedPackageMetadataResolution(result);
@@ -430,6 +437,7 @@ final class ComponentQueryManager extends QueryManager {
      * @param commitIndex        specifies if the search index should be committed (an expensive operation)
      * @return a Component
      */
+    @Override
     public Component updateComponent(Component transientComponent, boolean commitIndex) {
         final Component component = getObjectByUuid(Component.class, transientComponent.getUuid());
         component.setName(transientComponent.getName());
@@ -510,6 +518,7 @@ final class ComponentQueryManager extends QueryManager {
      * @param cid     the identity values of the component
      * @return a List of Component objects, or null if not found
      */
+    @Override
     @SuppressWarnings("unchecked")
     public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {
         final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(project, cid);
@@ -596,6 +605,7 @@ final class ComponentQueryManager extends QueryManager {
         return List.copyOf(query.executeResultList(DependencyGraphResponse.class));
     }
 
+    @Override
     public List<Component> getComponentsByPurl(String purl) {
         try (final Query<Component> query = pm.newQuery(Component.class, "purl == :purl")) {
             query.setParameters(purl);
@@ -660,6 +670,7 @@ final class ComponentQueryManager extends QueryManager {
         }
     }
 
+    @Override
     public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {
         assertPersistent(component, "component must be persistent");
 

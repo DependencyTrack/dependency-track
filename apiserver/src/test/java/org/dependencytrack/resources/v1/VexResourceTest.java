@@ -26,6 +26,7 @@ import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
@@ -41,7 +42,11 @@ import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.support.config.source.memory.MemoryConfigSource;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.AfterEach;
@@ -52,9 +57,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
 
+import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -1114,5 +1122,52 @@ public class VexResourceTest extends ResourceTest {
                         """.formatted(encodedVex)));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(getPlainTextBody(response)).isEqualTo("VEX cannot be uploaded to a collection project.");
+    }
+
+    @Test
+    void shouldRejectMultipartVexUploadExceedingMaxSize() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        MemoryConfigSource.setProperty(ConfigKeys.VEX_UPLOAD_MAX_SIZE_BYTES, String.valueOf(vexBytes.length - 1));
+
+        final var multiPart = new FormDataMultiPart()
+                .field("project", project.getUuid().toString())
+                .field("vex", vexBytes, MediaType.APPLICATION_JSON_TYPE);
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response;
+        try {
+            response = client.target(jersey.target(V1_VEX).getUri())
+                    .request()
+                    .header(X_API_KEY, apiKey)
+                    .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        } finally {
+            MemoryConfigSource.removeProperty(ConfigKeys.VEX_UPLOAD_MAX_SIZE_BYTES);
+        }
+
+        assertThat(response.getStatus()).isEqualTo(413);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 413,
+                  "title": "The uploaded document is too large",
+                  "detail": "The uploaded document exceeds the maximum size of %d bytes"
+                }
+                """.formatted(vexBytes.length - 1));
     }
 }

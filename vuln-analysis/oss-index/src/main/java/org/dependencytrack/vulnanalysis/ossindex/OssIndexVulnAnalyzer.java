@@ -88,7 +88,7 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
     private final Cache resultsCache;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final URI apiUrl;
+    private final String apiUrl;
     private final String authHeaderValue;
     private final boolean aliasSyncEnabled;
 
@@ -103,7 +103,7 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
         this.resultsCache = resultsCache;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
-        this.apiUrl = apiUrl;
+        this.apiUrl = apiUrl.toString().replaceAll("/+$", "");
         if (username != null && apiToken != null) {
             final String basicAuthCredentials = Base64.getEncoder()
                     .encodeToString("%s:%s".formatted(username, apiToken).getBytes(StandardCharsets.UTF_8));

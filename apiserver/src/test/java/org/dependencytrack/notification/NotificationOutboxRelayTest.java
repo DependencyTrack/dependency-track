@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -121,7 +122,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
 
         await("Outbox record removal")
                 .atMost(5, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(qm.getNotificationOutbox()).isEmpty());
+                .untilAsserted(() -> assertThat(getNotificationOutbox()).isEmpty());
     }
 
     @Test
@@ -140,7 +141,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
 
         await("Outbox record removal")
                 .atMost(5, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(qm.getNotificationOutbox()).isEmpty());
+                .untilAsserted(() -> assertThat(getNotificationOutbox()).isEmpty());
 
         Mockito.verify(dexEngineMock, never()).createRuns(anyCollection());
     }
@@ -179,7 +180,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
 
         await("Outbox record removal")
                 .atMost(5, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(qm.getNotificationOutbox()).isEmpty());
+                .untilAsserted(() -> assertThat(getNotificationOutbox()).isEmpty());
     }
 
     @Test
@@ -225,7 +226,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
 
         await("Outbox record removal")
                 .atMost(5, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(qm.getNotificationOutbox()).isEmpty());
+                .untilAsserted(() -> assertThat(getNotificationOutbox()).isEmpty());
     }
 
     @Nested

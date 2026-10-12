@@ -71,6 +71,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static io.github.nscuro.versatile.VersUtils.versFromNvdRange;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static org.cyclonedx.proto.v1_7.Classification.CLASSIFICATION_APPLICATION;
 import static org.cyclonedx.proto.v1_7.Classification.CLASSIFICATION_DEVICE;
@@ -218,7 +219,8 @@ final class ModelConverter {
             final Component component = componentByCpe.computeIfAbsent(
                     cpeMatch.getCriteria(),
                     cpeStr -> Component.newBuilder()
-                            .setBomRef(UUID.nameUUIDFromBytes(cpeStr.getBytes()).toString())
+                            .setBomRef(UUID.nameUUIDFromBytes(cpeStr.getBytes(UTF_8))
+                                    .toString())
                             .setType(determineComponentType(cpe))
                             .setPublisher(cpe.getVendor())
                             .setName(cpe.getProduct())

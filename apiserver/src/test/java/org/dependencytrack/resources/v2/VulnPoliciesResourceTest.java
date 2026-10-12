@@ -30,12 +30,12 @@ import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
 import org.dependencytrack.dex.proto.failure.v1.ActivityFailureDetails;
 import org.dependencytrack.dex.proto.failure.v1.Failure;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyBundleRow;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyDetailRow;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao.VulnPolicyBundleRow;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao.VulnPolicyDetailRow;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyOperation;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyRating;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -550,6 +550,42 @@ class VulnPoliciesResourceTest extends ResourceTest {
                       "line": 1,
                       "column": 0,
                       "message": "${json-unit.any-string}"
+                    }
+                  ]
+                }
+                """);
+    }
+
+    @Test
+    void shouldReturnCelErrorsWhenCreateConditionDoesNotReturnBool() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_CREATE);
+
+        final Response response = jersey.target("/vuln-policies")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "test-policy",
+                          "condition": "vuln.id",
+                          "analysis": {
+                            "state": "NOT_AFFECTED",
+                            "suppress": true
+                          }
+                        }
+                        """));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "type": "about:blank",
+                  "status": 400,
+                  "title": "Bad Request",
+                  "detail": "Condition is invalid.",
+                  "errors": [
+                    {
+                      "line": 1,
+                      "column": 0,
+                      "message": "Expression must return bool, but returns string"
                     }
                   ]
                 }

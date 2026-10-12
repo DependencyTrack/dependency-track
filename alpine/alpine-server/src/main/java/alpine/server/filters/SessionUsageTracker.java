@@ -69,7 +69,9 @@ public class SessionUsageTracker implements ApplicationEventListener {
     @Override
     public void onEvent(ApplicationEvent event) {
         switch (event.getType()) {
-            case INITIALIZATION_FINISHED -> flushExecutor.scheduleAtFixedRate(this::flush, 5, 30, TimeUnit.SECONDS);
+            case INITIALIZATION_FINISHED -> {
+                var _ = flushExecutor.scheduleAtFixedRate(this::flush, 5, 30, TimeUnit.SECONDS);
+            }
             case DESTROY_FINISHED -> {
                 flushExecutor.shutdown();
                 try {
@@ -86,6 +88,7 @@ public class SessionUsageTracker implements ApplicationEventListener {
 
                 flush();
             }
+            default -> {}
         }
     }
 
@@ -102,8 +105,8 @@ public class SessionUsageTracker implements ApplicationEventListener {
     }
 
     void flush() {
+        flushLock.lock();
         try {
-            flushLock.lock();
             if (EVENT_QUEUE.isEmpty()) {
                 return;
             }

@@ -59,6 +59,7 @@ final class AwaitableImpl<T> implements Awaitable<T> {
     // This error is thrown very frequently, it is used for control flow,
     // and we don't care about stack traces for them. Having a single shared
     // instance avoids garbage, and overhead of filling stack traces.
+    @SuppressWarnings("StaticAssignmentOfThrowable")
     private static final WorkflowRunBlockedError BLOCKED_ERROR = new WorkflowRunBlockedError();
 
     private final WorkflowContextImpl<?, ?> workflowContext;

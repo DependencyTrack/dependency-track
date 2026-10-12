@@ -52,7 +52,6 @@ import static java.util.Objects.requireNonNull;
 
 abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
 
-    private final String name;
     private final long minPollIntervalMillis;
     private final IntervalFunction pollBackoffFunction;
     private final int maxConcurrency;
@@ -79,7 +78,6 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
             final int maxConcurrency,
             final MeterRegistry meterRegistry,
             final BooleanSupplier downstreamAcceptsWork) {
-        this.name = name;
         this.minPollIntervalMillis = requireNonNull(minPollInterval, "minPollInterval must not be null")
                 .toMillis();
         this.pollBackoffFunction = requireNonNull(pollBackoffFunction, "pollBackoffFunction must not be null");

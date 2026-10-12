@@ -44,6 +44,7 @@ import trivy.proto.scanner.v1.ScanResponse;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -82,7 +83,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
             boolean scanLibrary,
             boolean scanOs) {
         this.httpClient = httpClient;
-        this.apiBaseUrl = apiBaseUrl;
+        this.apiBaseUrl = apiBaseUrl.replaceAll("/+$", "");
         this.apiToken = apiToken;
         this.ignoreUnfixed = ignoreUnfixed;
         this.scanLibrary = scanLibrary;
@@ -281,6 +282,8 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
         } finally {
             try {
                 deleteBlobs(putBlobRequest);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
                 LOGGER.warn("Failed to delete blob {}", diffId, e);
             }
@@ -330,7 +333,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
 
     private byte[] sendProtobufRequest(String url, byte[] body) throws InterruptedException {
         final HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(java.net.URI.create(url))
+                .uri(URI.create(url))
                 .header("Accept", "application/protobuf")
                 .header("Content-Type", "application/protobuf")
                 .timeout(Duration.ofSeconds(30))
@@ -369,7 +372,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                 }
 
                 final String purl = trivyVuln.getPkgIdentifier().getPurl();
-                final Set<String> bomRefs = bomRefsByPurl.get(purl);
+                final Set<String> bomRefs = bomRefsByPurl.get(normalizePurl(purl));
                 if (bomRefs == null) {
                     LOGGER.warn(
                             "Vulnerability {} reported for PURL {}, but no matching component; Skipping",
@@ -397,6 +400,19 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                         .map(Vulnerability.Builder::build)
                         .toList())
                 .build();
+    }
+
+    /**
+     * Trivy may percent-encode PURLs differently than packageurl-java
+     * (e.g. leaving {@code :} unencoded in qualifier values), so re-serialize
+     * them for lookups to match the keys we produced.
+     */
+    private static String normalizePurl(String purl) {
+        try {
+            return new PackageURL(purl).toString();
+        } catch (MalformedPackageURLException e) {
+            return purl;
+        }
     }
 
     private static boolean isInternalComponent(Component component) {

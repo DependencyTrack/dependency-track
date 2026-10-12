@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
+import com.google.errorprone.annotations.CompileTimeConstant;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.dependencytrack.model.AnalysisState;
@@ -39,6 +40,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.LongSupplier;
@@ -1251,7 +1253,11 @@ public interface FindingDao extends PaginationSupport {
     }
 
     private void processArrayFilter(
-            StringBuilder queryFilter, Map<String, Object> params, String paramName, String filter, String column) {
+            StringBuilder queryFilter,
+            Map<String, Object> params,
+            String paramName,
+            String filter,
+            @CompileTimeConstant String column) {
         if (filter != null && !filter.isEmpty()) {
             queryFilter.append(" AND (");
             String[] filters = filter.split(",");
@@ -1260,7 +1266,7 @@ public interface FindingDao extends PaginationSupport {
                 if (paramName.equals("severity")) {
                     queryFilter.append("::SEVERITY");
                 }
-                params.put(paramName + i, filters[i].toUpperCase());
+                params.put(paramName + i, filters[i].toUpperCase(Locale.ROOT));
                 if (filters[i].equals("NOT_SET")
                         && (paramName.equals("analysisStatus") || paramName.equals("vendorResponse"))) {
                     queryFilter.append(" OR ").append(column).append(" IS NULL");
@@ -1278,7 +1284,7 @@ public interface FindingDao extends PaginationSupport {
             Map<String, Object> params,
             String paramName,
             String filter,
-            String column,
+            @CompileTimeConstant String column,
             boolean fromValue,
             boolean isDate,
             boolean isAggregateFilter) {
@@ -1308,7 +1314,7 @@ public interface FindingDao extends PaginationSupport {
             queryFilter.append(" AND (");
             String[] filters = filter.split(",");
             for (int i = 0, length = filters.length; i < length; i++) {
-                switch (filters[i].toUpperCase()) {
+                switch (filters[i].toUpperCase(Locale.ROOT)) {
                     case "VULNERABILITY_ID" -> queryFilter.append("v.\"VULNID\"");
                     case "VULNERABILITY_TITLE" -> queryFilter.append("v.\"TITLE\"");
                     case "COMPONENT_NAME" -> queryFilter.append("c.\"NAME\"");
@@ -1337,6 +1343,6 @@ public interface FindingDao extends PaginationSupport {
     }
 
     private static @Nullable Boolean maybeParseBoolean(@Nullable String value) {
-        return value == null || value.isEmpty() ? null : Boolean.parseBoolean(value);
+        return (value == null || value.isEmpty()) ? null : Boolean.parseBoolean(value);
     }
 }

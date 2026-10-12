@@ -65,6 +65,8 @@ JDO and DataNucleus are being phased out. New persistence code should use [JDBI]
 with raw SQL. Avoid touching JDO entities unless the change genuinely requires it, and do not
 build new features on top of the JDO layer.
 
+See [`docs/PERSISTENCE.md`](./docs/PERSISTENCE.md).
+
 ### Throughput over latency
 
 The system processes large volumes of components, vulnerabilities, and analyses. Optimize
@@ -145,6 +147,18 @@ which IntelliJ offers on first open. Enable it per project under
 *Settings* > *palantir-java-format Settings*. `.idea/codeStyles` sets the import order.
 
 `make format-java` is the source of truth.
+
+### Static Analysis
+
+Static analysis happens for every build using [Error Prone](https://errorprone.info/).
+This covers `make build`, `make test`, and builds from the IDE. It is not part of `make lint-java`.
+We exclusively use `ERROR`-level checks, so findings fail compilation. Test sources are *not* checked.
+
+Fix findings instead of suppressing them. For false positives, suppress the check on the smallest
+possible scope and consider including a comment as to *why* the check is wrong if the reason is not obvious.
+
+Error Prone's [bug patterns](https://errorprone.info/bugpatterns) documentation includes details
+and suppression guidance.
 
 ## Testing
 

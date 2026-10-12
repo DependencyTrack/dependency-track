@@ -18,11 +18,15 @@
  */
 package org.dependencytrack.integrations;
 
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import static org.dependencytrack.notification.api.NotificationFactory.createIntegrationErrorNotification;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public abstract class AbstractIntegrationPoint implements IntegrationPoint {
 
@@ -30,6 +34,17 @@ public abstract class AbstractIntegrationPoint implements IntegrationPoint {
 
     public void setQueryManager(final QueryManager qm) {
         this.qm = qm;
+    }
+
+    protected static @Nullable String getConfigValue(ConfigPropertyConstants property) {
+        return withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getOptionalValue(property)
+                .orElse(null));
+    }
+
+    protected static boolean isConfigEnabled(ConfigPropertyConstants property) {
+        return Boolean.TRUE.equals(
+                withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).isEnabled(property)));
     }
 
     public void handleUnexpectedHttpResponse(

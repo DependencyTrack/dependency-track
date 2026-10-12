@@ -37,6 +37,7 @@ import javax.jdo.annotations.Unique;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -243,106 +244,132 @@ public class VulnerableSoftware implements ICpe, Serializable {
         this.purlSubpath = purlSubpath;
     }
 
+    @Override
     public String getCpe22() {
         return cpe22;
     }
 
+    @Override
     public void setCpe22(String cpe22) {
         this.cpe22 = cpe22;
     }
 
+    @Override
     public String getCpe23() {
         return cpe23;
     }
 
+    @Override
     public void setCpe23(String cpe23) {
         this.cpe23 = cpe23;
     }
 
+    @Override
     public String getPart() {
         return part;
     }
 
+    @Override
     public void setPart(String part) {
-        this.part = part == null ? null : part.toLowerCase();
+        this.part = part == null ? null : part.toLowerCase(Locale.ROOT);
     }
 
+    @Override
     public String getVendor() {
         return vendor;
     }
 
+    @Override
     public void setVendor(String vendor) {
-        this.vendor = vendor == null ? null : vendor.toLowerCase();
+        this.vendor = vendor == null ? null : vendor.toLowerCase(Locale.ROOT);
     }
 
+    @Override
     public String getProduct() {
         return product;
     }
 
+    @Override
     public void setProduct(String product) {
-        this.product = product == null ? null : product.toLowerCase();
+        this.product = product == null ? null : product.toLowerCase(Locale.ROOT);
     }
 
+    @Override
     public String getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(String version) {
         this.version = version;
     }
 
+    @Override
     public String getUpdate() {
         return update;
     }
 
+    @Override
     public void setUpdate(String update) {
         this.update = update;
     }
 
+    @Override
     public String getEdition() {
         return edition;
     }
 
+    @Override
     public void setEdition(String edition) {
         this.edition = edition;
     }
 
+    @Override
     public String getLanguage() {
         return language;
     }
 
+    @Override
     public void setLanguage(String language) {
         this.language = language;
     }
 
+    @Override
     public String getSwEdition() {
         return swEdition;
     }
 
+    @Override
     public void setSwEdition(String swEdition) {
         this.swEdition = swEdition;
     }
 
+    @Override
     public String getTargetSw() {
         return targetSw;
     }
 
+    @Override
     public void setTargetSw(String targetSw) {
         this.targetSw = targetSw;
     }
 
+    @Override
     public String getTargetHw() {
         return targetHw;
     }
 
+    @Override
     public void setTargetHw(String targetHw) {
         this.targetHw = targetHw;
     }
 
+    @Override
     public String getOther() {
         return other;
     }
 
+    @Override
     public void setOther(String other) {
         this.other = other;
     }
@@ -450,7 +477,7 @@ public class VulnerableSoftware implements ICpe, Serializable {
                 && Objects.equals(otherVs.getVersionEndIncluding(), this.getVersionEndIncluding())
                 && Objects.equals(otherVs.getVersionStartExcluding(), this.getVersionStartExcluding())
                 && Objects.equals(otherVs.getVersionStartIncluding(), this.getVersionStartIncluding())
-                && Objects.equals(otherVs.isVulnerable(), this.isVulnerable());
+                && otherVs.isVulnerable() == this.isVulnerable();
     }
 
     /**

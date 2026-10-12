@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -80,7 +81,8 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
     }
 
     @Override
-    public @Nullable Void execute(ActivityContext ctx, @Nullable MirrorVulnDataSourceArg arg) throws Exception {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable MirrorVulnDataSourceArg arg)
+            throws IOException, InterruptedException {
         if (arg == null || arg.getDataSourceName().isEmpty()) {
             throw new TerminalApplicationFailureException("No argument or data source name provided");
         }

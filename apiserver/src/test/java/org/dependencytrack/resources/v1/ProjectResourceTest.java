@@ -33,6 +33,7 @@ import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.Mappers;
+import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -50,7 +51,6 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.ServiceComponent;
@@ -62,10 +62,12 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
-import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
+import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
+import org.dependencytrack.persistence.jdbi.VulnerabilityDao.ComponentVulnerabilityRow;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.hamcrest.CoreMatchers;
@@ -106,6 +108,7 @@ import java.util.stream.Stream;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_CREATED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
@@ -137,6 +140,21 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(100, json.size());
         Assertions.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
         Assertions.assertEquals("0", json.getJsonObject(0).getString("version"));
+    }
+
+    @Test
+    void getProjectsWithMalformedPurlTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setPurl("pkg:pypi/%0@latest");
+        qm.persist(project);
+
+        Response response =
+                jersey.target(V1_PROJECT).request().header(X_API_KEY, apiKey).get(Response.class);
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonArray json = parseJsonArray(response);
+        Assertions.assertEquals("pkg:pypi/%0@latest", json.getJsonObject(0).getString("purl"));
     }
 
     @Test
@@ -2301,7 +2319,7 @@ class ProjectResourceTest extends ResourceTest {
                 ]
                 """);
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification).isNotNull();
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_CREATED);
@@ -3743,9 +3761,13 @@ class ProjectResourceTest extends ResourceTest {
                                 assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
                             });
 
-                            assertThat(qm.getVulnerabilities(clonedComponent, false)
-                                            .getList(Vulnerability.class))
-                                    .satisfiesExactly(v -> assertThat(v.getId()).isEqualTo(vuln.getId()));
+                            final List<ComponentVulnerabilityRow> clonedVulnRows =
+                                    withJdbiHandle(handle -> handle.attach(VulnerabilityDao.class)
+                                            .getVulnerabilitiesByComponent(clonedComponent.getId(), false));
+                            assertThat(clonedVulnRows)
+                                    .satisfiesExactly(row -> assertThat(
+                                                    row.vulnerability().getId())
+                                            .isEqualTo(vuln.getId()));
 
                             assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
                                 assertThat(clonedAnalysis.getId()).isNotEqualTo(analysisId);
@@ -5116,6 +5138,16 @@ class ProjectResourceTest extends ResourceTest {
         childProject.setParent(collectionProject);
         qm.persist(childProject);
 
+        final var collectionWithoutChildMetrics = new Project();
+        collectionWithoutChildMetrics.setName("acme-collection-without-child-metrics");
+        collectionWithoutChildMetrics.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(collectionWithoutChildMetrics, List.of(), false);
+
+        final var childWithoutMetrics = new Project();
+        childWithoutMetrics.setName("acme-child-without-metrics");
+        childWithoutMetrics.setParent(collectionWithoutChildMetrics);
+        qm.persist(childWithoutMetrics);
+
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
             final LocalDate today = LocalDate.now(ZoneOffset.UTC);
@@ -5146,10 +5178,10 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
 
         final JsonArray jsonArray = parseJsonArray(response);
-        assertThat(jsonArray).hasSize(3);
+        assertThat(jsonArray).hasSize(5);
 
         final JsonObject collectionObj = jsonArray.stream()
                 .map(JsonObject.class::cast)
@@ -5179,6 +5211,38 @@ class ProjectResourceTest extends ResourceTest {
                           "components": 2
                         }
                         """);
+
+        final JsonObject collectionWithoutChildMetricsObj = jsonArray.stream()
+                .map(JsonObject.class::cast)
+                .filter(o -> "acme-collection-without-child-metrics".equals(o.getString("name")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(collectionWithoutChildMetricsObj.containsKey("metrics")).isFalse();
+    }
+
+    @Test
+    void shouldOmitCollectionProjectMetricsInLookupWhenNoChildHasMetrics() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var collectionProject = new Project();
+        collectionProject.setName("acme-collection");
+        collectionProject.setVersion("1.0");
+        collectionProject.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(collectionProject, List.of(), false);
+
+        final var childProject = new Project();
+        childProject.setName("acme-child");
+        childProject.setParent(collectionProject);
+        qm.persist(childProject);
+
+        final Response response = jersey.target(V1_PROJECT + "/lookup")
+                .queryParam("name", "acme-collection")
+                .queryParam("version", "1.0")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.metrics").isAbsent();
     }
 
     @Test

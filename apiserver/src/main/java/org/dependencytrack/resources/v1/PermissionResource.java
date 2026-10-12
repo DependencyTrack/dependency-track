@@ -350,10 +350,11 @@ public class PermissionResource extends AbstractApiResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 User user = qm.getUser(request.username());
-                if (user == null)
+                if (user == null) {
                     return Response.status(Response.Status.NOT_FOUND)
                             .entity("The user could not be found.")
                             .build();
+                }
 
                 List<String> permissionNames =
                         request.permissions().stream().map(Permissions::name).toList();
@@ -371,10 +372,11 @@ public class PermissionResource extends AbstractApiResource {
                     query.closeAll();
                 }
 
-                if (user.getPermissions().equals(requestedPermissions))
+                if (user.getPermissions().equals(requestedPermissions)) {
                     return Response.notModified()
                             .entity("User already has selected permission(s).")
                             .build();
+                }
 
                 user.setPermissions(requestedPermissions);
                 user = qm.persist(user);
@@ -414,10 +416,11 @@ public class PermissionResource extends AbstractApiResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 Team team = qm.getObjectByUuid(Team.class, request.team(), Team.FetchGroup.ALL.name());
-                if (team == null)
+                if (team == null) {
                     return Response.status(Response.Status.NOT_FOUND)
                             .entity("The team could not be found.")
                             .build();
+                }
 
                 List<String> permissionNames =
                         request.permissions().stream().map(Permissions::name).toList();
@@ -435,10 +438,11 @@ public class PermissionResource extends AbstractApiResource {
                     query.closeAll();
                 }
 
-                if (team.getPermissions().equals(requestedPermissions))
+                if (team.getPermissions().equals(requestedPermissions)) {
                     return Response.notModified()
                             .entity("Team already has selected permission(s).")
                             .build();
+                }
 
                 team.setPermissions(requestedPermissions);
                 team = qm.persist(team);

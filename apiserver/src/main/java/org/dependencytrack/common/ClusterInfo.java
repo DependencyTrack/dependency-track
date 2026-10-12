@@ -18,17 +18,16 @@
  */
 package org.dependencytrack.common;
 
-import alpine.model.ConfigProperty;
 import io.smallrye.config.SmallRyeConfig;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.eclipse.microprofile.config.ConfigProvider;
 
-import javax.jdo.Query;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public final class ClusterInfo {
 
@@ -61,20 +60,9 @@ public final class ClusterInfo {
     }
 
     private static String loadClusterId() {
-        try (final var qm = new QueryManager()) {
-            final Query<ConfigProperty> query = qm.getPersistenceManager().newQuery(ConfigProperty.class);
-            query.setFilter("groupName == :groupName && propertyName == :propertyName");
-            query.setParameters(
-                    ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getGroupName(),
-                    ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getPropertyName());
-            query.setResult("propertyValue");
-
-            try {
-                final String clusterId = query.executeResultUnique(String.class);
-                return requireNonNull(clusterId, "Cluster ID must not be null");
-            } finally {
-                query.closeAll();
-            }
-        }
+        final String clusterId = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getOptionalValue(ConfigPropertyConstants.INTERNAL_CLUSTER_ID)
+                .orElse(null));
+        return requireNonNull(clusterId, "Cluster ID must not be null");
     }
 }

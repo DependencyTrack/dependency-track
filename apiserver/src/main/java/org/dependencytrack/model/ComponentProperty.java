@@ -113,10 +113,12 @@ public class ComponentProperty implements IConfigProperty, Serializable {
     @NotNull
     private UUID uuid;
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(final long id) {
         this.id = id;
     }
@@ -129,42 +131,52 @@ public class ComponentProperty implements IConfigProperty, Serializable {
         this.component = component;
     }
 
+    @Override
     public String getGroupName() {
         return groupName;
     }
 
+    @Override
     public void setGroupName(final String groupName) {
         this.groupName = groupName;
     }
 
+    @Override
     public String getPropertyName() {
         return propertyName;
     }
 
+    @Override
     public void setPropertyName(final String propertyName) {
         this.propertyName = propertyName;
     }
 
+    @Override
     public String getPropertyValue() {
         return propertyValue;
     }
 
+    @Override
     public void setPropertyValue(final String propertyValue) {
         this.propertyValue = StringUtils.abbreviate(propertyValue, 1024);
     }
 
+    @Override
     public PropertyType getPropertyType() {
         return propertyType;
     }
 
+    @Override
     public void setPropertyType(final PropertyType propertyType) {
         this.propertyType = propertyType;
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
 
+    @Override
     public void setDescription(final String description) {
         this.description = description;
     }

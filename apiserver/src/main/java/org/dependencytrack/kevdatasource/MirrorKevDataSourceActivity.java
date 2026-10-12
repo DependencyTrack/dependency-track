@@ -58,7 +58,8 @@ public final class MirrorKevDataSourceActivity implements Activity<MirrorKevData
     }
 
     @Override
-    public @Nullable Void execute(ActivityContext ctx, @Nullable MirrorKevDataSourceArg arg) throws Exception {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable MirrorKevDataSourceArg arg)
+            throws InterruptedException {
         if (arg == null || arg.getDataSourceName().isEmpty()) {
             throw new TerminalApplicationFailureException("No argument or data source name provided");
         }

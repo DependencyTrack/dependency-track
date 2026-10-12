@@ -43,7 +43,10 @@ import us.springett.parsers.cpe.exceptions.CpeParsingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Converts a parsed {@link JvnAdvisory} into a CycloneDX Bill of Vulnerabilities (BOV).
@@ -119,7 +122,8 @@ final class ModelConverter {
             final Component component = componentByCpe.computeIfAbsent(
                     cpe23,
                     ref -> Component.newBuilder()
-                            .setBomRef(UUID.nameUUIDFromBytes(ref.getBytes()).toString())
+                            .setBomRef(
+                                    UUID.nameUUIDFromBytes(ref.getBytes(UTF_8)).toString())
                             .setType(determineComponentType(cpe))
                             .setPublisher(cpe.getVendor())
                             .setName(cpe.getProduct())
@@ -261,7 +265,7 @@ final class ModelConverter {
         if (severity == null) {
             return Severity.SEVERITY_UNKNOWN;
         }
-        return switch (severity.toUpperCase(java.util.Locale.ROOT)) {
+        return switch (severity.toUpperCase(Locale.ROOT)) {
             case "CRITICAL" -> Severity.SEVERITY_CRITICAL;
             case "HIGH" -> Severity.SEVERITY_HIGH;
             case "MEDIUM", "MODERATE" -> Severity.SEVERITY_MEDIUM;

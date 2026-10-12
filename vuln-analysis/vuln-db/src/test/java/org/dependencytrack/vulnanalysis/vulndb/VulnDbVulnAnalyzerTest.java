@@ -68,6 +68,10 @@ class VulnDbVulnAnalyzerTest {
                                 {"access_token": "test-token", "token_type": "Bearer", "expires_in": 3600}
                                 """)));
 
+        analyzer = createAnalyzer(wmRuntimeInfo.getHttpBaseUrl());
+    }
+
+    private VulnAnalyzer createAnalyzer(String apiUrl) {
         final var cacheProvider = new MemoryCacheProvider(new SmallRyeConfigBuilder().build());
         cacheManager = cacheProvider.create();
 
@@ -78,7 +82,7 @@ class VulnDbVulnAnalyzerTest {
                 new VulnDbVulnAnalyzerConfigV1()
                         .withEnabled(true)
                         .withAliasSyncEnabled(true)
-                        .withApiUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
+                        .withApiUrl(URI.create(apiUrl))
                         .withOauth2ClientId("test-client-id")
                         .withOauth2ClientSecret("test-client-secret"));
 
@@ -87,7 +91,7 @@ class VulnDbVulnAnalyzerTest {
                 .withCacheManager(cacheManager)
                 .build());
 
-        analyzer = analyzerFactory.create();
+        return analyzerFactory.create();
     }
 
     @AfterEach
@@ -116,6 +120,32 @@ class VulnDbVulnAnalyzerTest {
         assertThatExceptionOfType(RetryableVulnAnalysisException.class)
                 .isThrownBy(() -> analyzer.analyze(bom))
                 .satisfies(e -> assertThat(e.retryAfter()).isNull());
+    }
+
+    @Test
+    void shouldHandleApiUrlWithTrailingSlash(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        analyzerFactory.close();
+        cacheManager.close();
+        analyzer = createAnalyzer(wmRuntimeInfo.getHttpBaseUrl() + "/");
+
+        stubFor(get(urlPathEqualTo("/api/v1/vulnerabilities/find_by_cpe"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile("vulndb-response-no-vulns.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("example-lib")
+                        .setCpe("cpe:2.3:a:example:lib:1.0:*:*:*:*:*:*:*")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
+
+        verify(getRequestedFor(urlPathEqualTo("/api/v1/vulnerabilities/find_by_cpe")));
     }
 
     @Test

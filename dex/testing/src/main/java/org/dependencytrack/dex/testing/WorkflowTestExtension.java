@@ -34,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Duration;
 import java.util.ServiceLoader;
 import java.util.UUID;
@@ -149,7 +150,7 @@ public final class WorkflowTestExtension implements BeforeEachCallback, AfterEac
 
     private static void truncateTables(final DataSource dataSource) {
         try (final Connection connection = dataSource.getConnection();
-                final java.sql.Statement statement = connection.createStatement()) {
+                final Statement statement = connection.createStatement()) {
             statement.execute("""
                     DO $$ DECLARE
                         r RECORD;

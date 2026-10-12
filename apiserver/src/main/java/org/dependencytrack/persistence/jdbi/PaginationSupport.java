@@ -20,6 +20,7 @@ package org.dependencytrack.persistence.jdbi;
 
 import alpine.persistence.Pagination;
 import alpine.resources.AlpineRequest;
+import com.google.errorprone.annotations.CompileTimeConstant;
 import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.jdbi.v3.core.statement.Query;
 import org.jdbi.v3.core.statement.SqlStatements;
@@ -46,7 +47,7 @@ public interface PaginationSupport extends SqlObject {
             String fromWhereClause,
             @Nullable Map<String, Object> whereParams,
             @Nullable Integer threshold,
-            String projectIdColumn) {
+            @CompileTimeConstant String projectIdColumn) {
         requireNonNull(projectIdColumn, "projectIdColumn must not be null");
         return getBoundedTotalCount(fromWhereClause, whereParams, threshold, projectIdColumn);
     }
@@ -85,7 +86,7 @@ public interface PaginationSupport extends SqlObject {
             String fromWhereClause,
             @Nullable Map<String, Object> whereParams,
             @Nullable Integer threshold,
-            @Nullable String projectIdColumn) {
+            @CompileTimeConstant @Nullable String projectIdColumn) {
         requireNonNull(fromWhereClause, "fromWhereClause must not be null");
         if (threshold != null && threshold < 1) {
             throw new IllegalArgumentException("threshold must not be less than 1");

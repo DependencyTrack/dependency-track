@@ -100,6 +100,7 @@ final class PypiPackageMetadataResolver implements PackageMetadataResolver {
                                 mostRecentUploadTime = instant;
                             }
                         } catch (DateTimeParseException _) {
+                            // Publish timestamps are optional, so malformed ones are ignored.
                         }
                     }
                 }

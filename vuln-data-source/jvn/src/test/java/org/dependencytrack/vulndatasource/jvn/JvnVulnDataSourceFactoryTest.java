@@ -18,12 +18,52 @@
  */
 package org.dependencytrack.vulndatasource.jvn;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import org.dependencytrack.plugin.api.ExtensionTestCheck;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
+import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
+import org.dependencytrack.plugin.testing.MockConfigRegistry;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import java.net.URI;
+import java.util.Map;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class JvnVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<VulnDataSource, JvnVulnDataSourceFactory> {
 
     protected JvnVulnDataSourceFactoryTest() {
         super(JvnVulnDataSourceFactory.class);
+    }
+
+    @Nested
+    @WireMockTest
+    class TestMethodTest {
+
+        @Test
+        void shouldHandleFeedBaseUrlWithTrailingSlash(WireMockRuntimeInfo wmRuntimeInfo) {
+            stubFor(get(urlPathMatching("/detail/.+")).willReturn(aResponse().withStatus(200)));
+
+            factory.init(new ExtensionContextBuilder()
+                    .withConfigRegistry(new MockConfigRegistry(Map.of()))
+                    .build());
+
+            final var runtimeConfig = new JvnVulnDataSourceConfigV1()
+                    .withEnabled(true)
+                    .withFeedBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl() + "/"));
+
+            assertThat(factory.test(runtimeConfig).checks())
+                    .filteredOn(check -> "connection".equals(check.name()))
+                    .singleElement()
+                    .extracting(ExtensionTestCheck::status)
+                    .isEqualTo(ExtensionTestCheck.Status.PASSED);
+        }
     }
 }

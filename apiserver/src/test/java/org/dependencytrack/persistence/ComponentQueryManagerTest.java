@@ -20,9 +20,9 @@ package org.dependencytrack.persistence;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.PackageMetadataResolutionStatus;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.persistence.jdbi.PackageMetadataResolutionDao;
+import org.dependencytrack.pkgmetadata.PackageMetadataResolutionDao;
+import org.dependencytrack.pkgmetadata.PackageMetadataResolutionStatus;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

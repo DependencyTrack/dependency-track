@@ -310,9 +310,9 @@ public abstract class AlpineResource {
      * @since 1.0.0
      */
     protected void logSecurityEvent(final Logger logger, final Marker marker, final String message) {
-        if (!(SecurityMarkers.SECURITY_AUDIT == marker ||
-              SecurityMarkers.SECURITY_SUCCESS == marker ||
-              SecurityMarkers.SECURITY_FAILURE == marker)) {
+        if (!(SecurityMarkers.SECURITY_AUDIT.equals(marker) ||
+              SecurityMarkers.SECURITY_SUCCESS.equals(marker) ||
+              SecurityMarkers.SECURITY_FAILURE.equals(marker))) {
             return;
         }
         final StringBuilder sb = new StringBuilder();

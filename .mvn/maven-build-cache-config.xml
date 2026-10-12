@@ -28,7 +28,6 @@
     </configuration>
     <input>
         <global>
-            <glob>{*.java,*.properties,*.proto,*.sql,*.xml,*.yaml}</glob>
             <includes>
                 <include>src/</include>
             </includes>

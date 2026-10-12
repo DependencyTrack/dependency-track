@@ -52,6 +52,7 @@ import org.dependencytrack.notification.proto.v1.VulnerabilityRetractedSubject;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Locale;
 
 import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_ANALYZER;
@@ -394,7 +395,7 @@ public final class NotificationFactory {
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_POLICY_VIOLATION, LEVEL_INFORMATIONAL)
                 .setTitle(title)
                 .setContent("A %s policy violation occurred"
-                        .formatted(violation.getType().toLowerCase()))
+                        .formatted(violation.getType().toLowerCase(Locale.ROOT)))
                 .setSubject(Any.pack(PolicyViolationSubject.newBuilder()
                         .setProject(project)
                         .setComponent(component)

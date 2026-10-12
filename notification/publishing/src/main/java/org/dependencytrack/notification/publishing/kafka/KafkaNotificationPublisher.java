@@ -47,9 +47,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @since 5.0.0
@@ -77,7 +80,7 @@ final class KafkaNotificationPublisher implements NotificationPublisher {
             notificationContent = notification.toByteArray();
         } else if (renderedTemplate != null) {
             mimeType = renderedTemplate.mimeType();
-            notificationContent = renderedTemplate.content().getBytes();
+            notificationContent = renderedTemplate.content().getBytes(UTF_8);
         } else {
             throw new IllegalStateException("No template configured");
         }
@@ -94,12 +97,13 @@ final class KafkaNotificationPublisher implements NotificationPublisher {
                 /* partition */ null,
                 recordKey,
                 notificationContent,
-                new RecordHeaders().add("content-type", mimeType.getBytes()));
+                new RecordHeaders().add("content-type", mimeType.getBytes(UTF_8)));
 
         try {
             kafkaProducer.send(producerRecord).get(10, TimeUnit.SECONDS);
         } catch (IllegalStateException e) {
-            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("closed")) {
+            if (e.getMessage() != null
+                    && e.getMessage().toLowerCase(Locale.ROOT).contains("closed")) {
                 throw new RetryablePublishException("Kafka publisher is closed", e);
             }
 

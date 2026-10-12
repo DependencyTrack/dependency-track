@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -123,7 +124,7 @@ public record DebianDistribution(String series, @Nullable String version) implem
             return Optional.empty();
         }
 
-        return Optional.of(new DebianDistribution(series.toLowerCase(), null));
+        return Optional.of(new DebianDistribution(series.toLowerCase(Locale.ROOT), null));
     }
 
     private static Optional<DebianDistribution> ofUnknownVersion(@Nullable String version) {

@@ -50,6 +50,7 @@ public class PersistenceManagerFactory implements IPersistenceManagerFactory, Se
     private static JDOPersistenceManagerFactory pmf;
 
     @Override
+    @SuppressWarnings("BanJNDI")
     public void contextInitialized(ServletContextEvent event) {
         LOGGER.info("Initializing persistence framework");
 
@@ -81,6 +82,7 @@ public class PersistenceManagerFactory implements IPersistenceManagerFactory, Se
         return pmf.getPersistenceManager();
     }
 
+    @Override
     public PersistenceManager getPersistenceManager() {
         return createPersistenceManager();
     }

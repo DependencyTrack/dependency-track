@@ -153,7 +153,7 @@ final class JvnVulnDataSource implements VulnDataSource {
     /** Downloads a single year's detail feed and opens it for streaming, unless its checksum is unchanged. */
     private void openYear(final int year) {
         final String filename = JvnClient.detailFeedFilename(year);
-        final @Nullable String digest = feedDigest(filename);
+        final String digest = feedDigest(filename);
         if (digest != null && digest.equals(watermarkManager.getCommittedFeedDigest(filename))) {
             LOGGER.debug("JVN feed {} unchanged since last run; skipping", filename);
             return;

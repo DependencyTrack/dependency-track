@@ -166,10 +166,6 @@ final class NotificationRouter {
         private boolean isLimitedToTags() {
             return limitToTagNames != null && !limitToTagNames.isEmpty();
         }
-
-        private boolean hasFilterExpression() {
-            return filterExpression != null && !filterExpression.isBlank();
-        }
     }
 
     private Map<Notification, List<RuleQueryResult>> queryRules(Collection<Notification> notifications) {

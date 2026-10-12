@@ -457,6 +457,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
             case TIMER_ELAPSED -> onTimerElapsed(event);
             case SIDE_EFFECT_EXECUTED -> onSideEffectExecuted(event);
             case EXTERNAL_EVENT_RECEIVED -> onExternalEventReceived(event);
+            case WORKFLOW_TASK_COMPLETED, RUN_COMPLETED, SUBJECT_NOT_SET -> {}
         }
     }
 
@@ -548,7 +549,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
                             command.getClass().getSimpleName(),
                             CreateActivityTaskCommand.class.getSimpleName()));
         } else if (!Objects.equals(eventSubject.getName(), concreteCommand.name())
-                || !Objects.equals(eventSubject.getPriority(), concreteCommand.priority())
+                || eventSubject.getPriority() != concreteCommand.priority()
                 || (eventSubject.hasArgument()
                         && !Objects.equals(eventSubject.getArgument(), concreteCommand.argument()))
                 || !Objects.equals(
@@ -641,10 +642,10 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
                             command.getClass().getSimpleName(),
                             CreateChildRunCommand.class.getSimpleName()));
         } else if (!Objects.equals(eventSubject.getWorkflowName(), concreteCommand.workflowName())
-                || !Objects.equals(eventSubject.getWorkflowVersion(), concreteCommand.workflowVersion())
+                || eventSubject.getWorkflowVersion() != concreteCommand.workflowVersion()
                 || (eventSubject.hasWorkflowInstanceId()
                         && !Objects.equals(eventSubject.getWorkflowInstanceId(), concreteCommand.workflowInstanceId()))
-                || !Objects.equals(eventSubject.getPriority(), concreteCommand.priority())
+                || eventSubject.getPriority() != concreteCommand.priority()
                 || (eventSubject.hasConcurrencyKey()
                         && !Objects.equals(eventSubject.getConcurrencyKey(), concreteCommand.concurrencyKey()))
                 || (eventSubject.getLabelsCount() > 0

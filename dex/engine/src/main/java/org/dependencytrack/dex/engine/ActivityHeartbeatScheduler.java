@@ -94,7 +94,7 @@ final class ActivityHeartbeatScheduler implements Closeable {
     }
 
     void start() {
-        scheduler.scheduleWithFixedDelay(
+        var _ = scheduler.scheduleWithFixedDelay(
                 this::processRegistrations, interval.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
@@ -119,6 +119,7 @@ final class ActivityHeartbeatScheduler implements Closeable {
                         new AtomicReference<>()));
     }
 
+    @SuppressWarnings("CollectionUndefinedEquality")
     void unregister(Future<?> activityFuture) {
         final Registration registration = registrationByActivityFuture.get(activityFuture);
         if (registration == null) {
@@ -177,6 +178,7 @@ final class ActivityHeartbeatScheduler implements Closeable {
         }
     }
 
+    @SuppressWarnings("CollectionUndefinedEquality")
     private void process(Registration registration) {
         // NB: We must read the pending renewal before the lock, because the renewal callback
         // publishes the new lock before its future completes, so an absent or completed pending
@@ -263,6 +265,7 @@ final class ActivityHeartbeatScheduler implements Closeable {
         return interval.multipliedBy(LOCK_RENEWAL_MARGIN_DIVISOR * (GIVE_UP_MARGIN_INTERVALS + 1));
     }
 
+    @SuppressWarnings("CollectionUndefinedEquality")
     private void onLockLost(Registration registration, String reason) {
         if (registrationByActivityFuture.remove(registration.activityFuture()) == null) {
             return;

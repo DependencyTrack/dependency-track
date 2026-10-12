@@ -96,8 +96,7 @@ public final class TelemetrySubmissionTask implements Runnable {
         return withJdbiHandle(handle -> {
             final var dao = handle.attach(ConfigPropertyDao.class);
 
-            if (!dao.getOptionalValue(TELEMETRY_SUBMISSION_ENABLED, Boolean.class)
-                    .orElse(true)) {
+            if (!dao.isEnabled(TELEMETRY_SUBMISSION_ENABLED)) {
                 LOGGER.debug("Telemetry submission is disabled");
                 return null;
             }

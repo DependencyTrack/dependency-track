@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Locale;
+
 /**
  * Match quality reported by Snyk's {@code meta.packages[].match.type} for checksum-qualified PURLs.
  *
@@ -34,7 +36,7 @@ enum SnykMatchType {
 
     @JsonValue
     String jsonValue() {
-        return name().toLowerCase();
+        return name().toLowerCase(Locale.ROOT);
     }
 
     @JsonCreator
@@ -42,7 +44,7 @@ enum SnykMatchType {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return switch (value.toLowerCase()) {
+        return switch (value.toLowerCase(Locale.ROOT)) {
             case "full" -> FULL;
             case "partial" -> PARTIAL;
             case "none" -> NONE;

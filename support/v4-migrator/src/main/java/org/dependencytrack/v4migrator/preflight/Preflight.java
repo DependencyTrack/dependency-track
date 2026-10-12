@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Pre-flight checks per pipeline design §9.
@@ -283,7 +284,7 @@ public final class Preflight {
         // e.g. '1GB'. pg_settings.unit gives the underlying unit. For preflight we accept the
         // string form and parse common suffixes.
         try {
-            final String trimmed = raw.trim().toUpperCase();
+            final String trimmed = raw.trim().toUpperCase(Locale.ROOT);
             if (trimmed.endsWith("GB")) {
                 return Long.parseLong(trimmed.substring(0, trimmed.length() - 2).trim()) * 1024L * 1024 * 1024;
             }

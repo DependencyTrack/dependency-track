@@ -166,7 +166,7 @@ public final class WorkloadIdentityKeySetFetcher implements ResourceRetriever {
         try {
             uri = new URI(url);
         } catch (URISyntaxException e) {
-            throw new JWKSetRetrievalException("%s is not a valid URL".formatted(url), null);
+            throw new JWKSetRetrievalException("%s is not a valid URL".formatted(url), e);
         }
 
         if (!relaxedUrlChecks && !"https".equalsIgnoreCase(uri.getScheme())) {

@@ -47,6 +47,7 @@ import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -619,7 +620,7 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         query.getFetchPlan().addGroup(Team.FetchGroup.ALL.name());
         if (filter != null) {
             query.setFilter("name.toLowerCase().matches(:filter)");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            final String filterString = ".*" + filter.toLowerCase(Locale.ROOT) + ".*";
             query.setOrdering("name asc");
             return execute(query, filterString);
         }
@@ -724,8 +725,9 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
     public Permission createPermission(final String name, final String description) {
         return callInTransaction(() -> {
             final Permission existing = getPermission(name);
-            if (existing != null)
+            if (existing != null) {
                 return existing;
+            }
 
             final var permission = new Permission();
             permission.setName(name);

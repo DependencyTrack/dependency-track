@@ -114,6 +114,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -495,7 +496,7 @@ public final class DexEngineInitializer implements ServletContextListener {
             if (created) {
                 LOGGER.info(
                         "Created {} task queue '{}' with capacity {}",
-                        request.type().name().toLowerCase(),
+                        request.type().name().toLowerCase(Locale.ROOT),
                         request.name(),
                         request.capacity());
             }

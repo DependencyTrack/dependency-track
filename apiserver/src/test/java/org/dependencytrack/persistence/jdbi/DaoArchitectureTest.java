@@ -20,7 +20,9 @@ package org.dependencytrack.persistence.jdbi;
 
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.domain.JavaParameterizedType;
 import com.tngtech.archunit.core.domain.JavaType;
 import com.tngtech.archunit.core.importer.ImportOption.DoNotIncludeJars;
@@ -35,6 +37,7 @@ import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
+import javax.jdo.annotations.PersistenceCapable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -42,7 +45,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
 @AnalyzeClasses(
-        packages = "org.dependencytrack.persistence.jdbi",
+        packages = "org.dependencytrack",
         importOptions = {DoNotIncludeTests.class, DoNotIncludeJars.class})
 class DaoArchitectureTest {
 
@@ -62,7 +65,7 @@ class DaoArchitectureTest {
             .haveSimpleNameEndingWith("Dao")
             .and()
             .areDeclaredInClassesThat()
-            .resideInAPackage("org.dependencytrack.persistence.jdbi")
+            .resideInAPackage("org.dependencytrack..")
             .and()
             .areNotAnnotatedWith(SqlUpdate.class)
             .and()
@@ -75,6 +78,8 @@ class DaoArchitectureTest {
                             events.add(SimpleConditionEvent.violated(
                                     method,
                                     "%s returns model class %s".formatted(method.getFullName(), leafType.getName())));
+                        } else {
+                            checkFieldsForModelClasses(method, leafType, new HashSet<>(), events);
                         }
                     }
                 }
@@ -86,7 +91,7 @@ class DaoArchitectureTest {
             .that()
             .haveSimpleNameEndingWith("Dao")
             .and()
-            .resideInAPackage("org.dependencytrack.persistence.jdbi")
+            .resideInAPackage("org.dependencytrack..")
             .should(new ArchCondition<>("not use @RegisterBeanMapper with model classes") {
                 @Override
                 public void check(JavaClass daoClass, ConditionEvents events) {
@@ -105,7 +110,7 @@ class DaoArchitectureTest {
     @SuppressWarnings("unused")
     static final ArchRule rowMappersMustNotTargetJdoModelClasses = FreezingArchRule.freeze(classes()
             .that()
-            .resideInAPackage("org.dependencytrack.persistence.jdbi..")
+            .resideInAPackage("org.dependencytrack..")
             .and()
             .implement(org.jdbi.v3.core.mapper.RowMapper.class)
             .should(new ArchCondition<>("not target model classes") {
@@ -113,7 +118,7 @@ class DaoArchitectureTest {
                 public void check(JavaClass mapperClass, ConditionEvents events) {
                     for (JavaType iface : mapperClass.getInterfaces()) {
                         if (iface instanceof final JavaParameterizedType paramType
-                                && paramType.toErasure().isEquivalentTo(org.jdbi.v3.core.mapper.RowMapper.class)) {
+                                && paramType.toErasure().isAssignableTo(org.jdbi.v3.core.mapper.RowMapper.class)) {
                             for (JavaType arg : paramType.getActualTypeArguments()) {
                                 if (arg instanceof final JavaClass targetClass && isModelClass(targetClass)) {
                                     events.add(SimpleConditionEvent.violated(
@@ -128,13 +133,31 @@ class DaoArchitectureTest {
             }));
 
     private static boolean isModelClass(JavaClass javaClass) {
-        // NB: Records in the model package (FindingKey etc.) are the migration target, not the problem.
-        if (javaClass.isRecord()) {
-            return false;
+        return javaClass.isAnnotatedWith(PersistenceCapable.class);
+    }
+
+    private static void checkFieldsForModelClasses(
+            JavaMethod method, JavaClass javaClass, Set<JavaClass> visited, ConditionEvents events) {
+        if (!javaClass.getPackageName().startsWith("org.dependencytrack") || !visited.add(javaClass)) {
+            return;
         }
 
-        return javaClass.getPackageName().equals("org.dependencytrack.model")
-                || javaClass.getPackageName().equals("alpine.model");
+        for (JavaField field : javaClass.getFields()) {
+            if (field.getModifiers().contains(JavaModifier.STATIC)) {
+                continue;
+            }
+
+            for (JavaClass leafType : extractLeafTypes(field.getType())) {
+                if (isModelClass(leafType)) {
+                    events.add(SimpleConditionEvent.violated(
+                            method,
+                            "%s returns model class %s via %s"
+                                    .formatted(method.getFullName(), leafType.getName(), field.getFullName())));
+                } else {
+                    checkFieldsForModelClasses(method, leafType, visited, events);
+                }
+            }
+        }
     }
 
     private static Set<JavaClass> extractLeafTypes(JavaType type) {

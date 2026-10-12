@@ -53,7 +53,7 @@ final class DatabaseSecretManagerConfig {
         final byte[] kekBytes;
         try {
             kekBytes = Base64.getDecoder().decode(encodedKek);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             // NB: Original exception is intentionally not logged to avoid leaking the key.
             throw new IllegalStateException("The provided %s value is not base64 encoded".formatted(propertyName));
         }

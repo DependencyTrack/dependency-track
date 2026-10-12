@@ -27,9 +27,6 @@ It added noise and increased compilation times for no conceivable benefit.
 
 Enforcement is on by default for every module, so new modules cannot forget to enable it.
 
-Modules with pre-existing violations, such as `dex`, can opt out by setting the `nullaway.severity`
-property to `OFF` in their `pom.xml` until they are cleaned up.
-
 ## Consequences
 
 Nullness violations in `@NullMarked` scopes of opted-in modules fail the build.

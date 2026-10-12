@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.UUID;
@@ -184,7 +185,6 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
         }
         if (orderBy != null && RegexSequence.Pattern.STRING_IDENTIFIER.matcher(orderBy).matches() && orderDirection != OrderDirection.UNSPECIFIED) {
             // Check to see if the specified orderBy field is defined in the class being queried.
-            boolean found = false;
             // NB: Only persistent fields can be used as sorting subject.
             final org.datanucleus.store.query.Query<T> iq = ((JDOQuery<T>) query).getInternalQuery();
             final String candidateField = orderBy.contains(".") ? orderBy.substring(0, orderBy.indexOf('.')) : orderBy;
@@ -205,7 +205,7 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
                 }
             }
             if (foundPersistentMember) {
-                query.setOrdering(orderBy + " " + orderDirection.name().toLowerCase());
+                query.setOrdering(orderBy + " " + orderDirection.name().toLowerCase(Locale.ROOT));
             } else {
                 throw new IllegalArgumentException(
                         "Sorting by field '%s' is not supported".formatted(candidateField));
@@ -463,6 +463,7 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
      * Closes the PersistenceManager instance.
      * @since 1.0.0
      */
+    @Override
     public void close() {
         if (pm != null) {
             pm.close();

@@ -104,6 +104,7 @@ final class HexPackageMetadataResolver implements PackageMetadataResolver {
             try {
                 return Instant.parse(insertedAt);
             } catch (DateTimeParseException _) {
+                // Publish timestamps are optional, so malformed ones are ignored.
             }
         }
         return null;

@@ -27,6 +27,7 @@ import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 final class ServiceComponentQueryManager extends QueryManager {
@@ -48,6 +49,7 @@ final class ServiceComponentQueryManager extends QueryManager {
         super(pm, request);
     }
 
+    @Override
     public boolean hasServiceComponents(Project project) {
         final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
                 SELECT EXISTS(SELECT 1 FROM "SERVICECOMPONENT" WHERE "PROJECT_ID" = ?)
@@ -62,6 +64,7 @@ final class ServiceComponentQueryManager extends QueryManager {
      * @param project the Project to retrieve dependencies of
      * @return a List of ServiceComponent objects
      */
+    @Override
     @SuppressWarnings("unchecked")
     public List<ServiceComponent> getAllServiceComponents(Project project) {
         final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project");
@@ -75,6 +78,7 @@ final class ServiceComponentQueryManager extends QueryManager {
      * @param project the Project to retrieve dependencies of
      * @return a List of ServiceComponent objects
      */
+    @Override
     public PaginatedResult getServiceComponents(final Project project, final boolean includeMetrics) {
         final PaginatedResult result;
         final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project");
@@ -84,7 +88,7 @@ final class ServiceComponentQueryManager extends QueryManager {
         }
         if (filter != null) {
             query.setFilter("project == :project && name.toLowerCase().matches(:name)");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            final String filterString = ".*" + filter.toLowerCase(Locale.ROOT) + ".*";
             result = execute(query, project, filterString);
         } else {
             result = execute(query, project);
@@ -101,6 +105,7 @@ final class ServiceComponentQueryManager extends QueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a Component
      */
+    @Override
     public ServiceComponent updateServiceComponent(ServiceComponent transientServiceComponent, boolean commitIndex) {
         final ServiceComponent service = getObjectByUuid(ServiceComponent.class, transientServiceComponent.getUuid());
         service.setName(transientServiceComponent.getName());

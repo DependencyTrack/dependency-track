@@ -44,6 +44,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
+import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_DATASOURCE_MIRRORING;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
@@ -82,7 +83,7 @@ class DataSourceMirroringNotificationEmitterTest extends PersistenceCapableTest 
         emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(createRunMetadata(
                 "mirror-vuln-data-source", "mirror-vuln-data-source:nvd", WorkflowRunStatus.COMPLETED))));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_DATASOURCE_MIRRORING);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
@@ -97,7 +98,7 @@ class DataSourceMirroringNotificationEmitterTest extends PersistenceCapableTest 
         emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(
                 createRunMetadata("mirror-kev-data-source", "mirror-kev-data-source:cisa", WorkflowRunStatus.FAILED))));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_SYSTEM);
             assertThat(notification.getGroup()).isEqualTo(GROUP_DATASOURCE_MIRRORING);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_ERROR);
@@ -112,7 +113,7 @@ class DataSourceMirroringNotificationEmitterTest extends PersistenceCapableTest 
         emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(createRunMetadata(
                 "mirror-vuln-data-source", "mirror-vuln-data-source:foo", WorkflowRunStatus.COMPLETED))));
 
-        assertThat(qm.getNotificationOutbox())
+        assertThat(getNotificationOutbox())
                 .satisfiesExactly(notification -> assertThat(notification.getContent())
                         .isEqualTo("Mirroring of vulnerability data source \"foo\" completed successfully"));
     }
@@ -122,7 +123,7 @@ class DataSourceMirroringNotificationEmitterTest extends PersistenceCapableTest 
         emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(createRunMetadata(
                 "mirror-vuln-data-source", "mirror-vuln-data-source:nvd", WorkflowRunStatus.CANCELLED))));
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     @Test
@@ -130,7 +131,7 @@ class DataSourceMirroringNotificationEmitterTest extends PersistenceCapableTest 
         emitter.onEvent(new WorkflowRunsCompletedEvent(
                 List.of(createRunMetadata("vuln-analysis", null, WorkflowRunStatus.FAILED))));
 
-        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThat(getNotificationOutbox()).isEmpty();
     }
 
     private static WorkflowRunMetadata createRunMetadata(

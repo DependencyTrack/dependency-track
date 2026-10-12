@@ -20,6 +20,8 @@ package org.dependencytrack.plugin.api.config;
 
 import org.jspecify.annotations.Nullable;
 
+import java.util.Locale;
+
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -87,7 +89,7 @@ public final class RuntimeConfigSpec {
             final String configClassNameKebab = configClass
                     .getSimpleName()
                     .replaceAll("([a-z])([A-Z])", "$1-$2")
-                    .toLowerCase();
+                    .toLowerCase(Locale.ROOT);
 
             final String schemaFileName = configClassNameKebab + ".schema.json";
             schema = new RuntimeConfigSchemaSource.Resource(schemaFileName).getSchema(configClass);

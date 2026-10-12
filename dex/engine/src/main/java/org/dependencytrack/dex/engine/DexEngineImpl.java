@@ -105,6 +105,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1587,7 +1588,7 @@ final class DexEngineImpl implements DexEngine {
         // The buffer may fail an item without ever invoking the batch consumer,
         // e.g. when its circuit breaker is open. Propagate such failures, or the
         // renewal would never settle and the scheduler would wait for it forever.
-        bufferFuture.whenComplete((_, error) -> {
+        var _ = bufferFuture.whenComplete((_, error) -> {
             if (error != null) {
                 future.completeExceptionally(error);
             }
@@ -1837,7 +1838,7 @@ final class DexEngineImpl implements DexEngine {
             }
         }
 
-        throw new IllegalStateException(
-                "Engine must be in state any of %s, but is %s".formatted(expectedStatuses, this.status));
+        throw new IllegalStateException("Engine must be in state any of %s, but is %s"
+                .formatted(Arrays.toString(expectedStatuses), this.status));
     }
 }

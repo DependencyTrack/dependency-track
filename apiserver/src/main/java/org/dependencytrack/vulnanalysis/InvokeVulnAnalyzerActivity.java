@@ -63,7 +63,8 @@ public final class InvokeVulnAnalyzerActivity implements Activity<InvokeVulnAnal
     }
 
     @Override
-    public InvokeVulnAnalyzerRes execute(ActivityContext ctx, @Nullable InvokeVulnAnalyzerArg arg) throws Exception {
+    public InvokeVulnAnalyzerRes execute(ActivityContext ctx, @Nullable InvokeVulnAnalyzerArg arg)
+            throws IOException, InterruptedException {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }

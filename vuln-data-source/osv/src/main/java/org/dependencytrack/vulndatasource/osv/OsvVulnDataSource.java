@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.vulndatasource.osv.CycloneDxPropertyNames.OSV_ECOSYSTEM;
 import static org.dependencytrack.vulndatasource.osv.OsvEcosystems.encodeEcosystem;
@@ -86,7 +87,7 @@ final class OsvVulnDataSource implements VulnDataSource {
             final boolean isAliasSyncEnabled) {
         this.watermarkManager = watermarkManager;
         this.objectMapper = objectMapper;
-        this.dataUrl = dataUrl;
+        this.dataUrl = dataUrl.replaceAll("/+$", "");
         this.ecosystems = List.copyOf(ecosystems);
         this.isAliasSyncEnabled = isAliasSyncEnabled;
         this.successfullyCompletedEcosystems = new HashSet<>();
@@ -342,7 +343,7 @@ final class OsvVulnDataSource implements VulnDataSource {
 
         final var modifiedIds = new HashSet<String>();
         try (final InputStream inputStream = response.body();
-                final var inputStreamReader = new InputStreamReader(inputStream);
+                final var inputStreamReader = new InputStreamReader(inputStream, UTF_8);
                 final var bufferedReader = new BufferedReader(inputStreamReader)) {
             String line;
             while ((line = bufferedReader.readLine()) != null) {

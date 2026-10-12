@@ -91,7 +91,7 @@ public class CoordinatesCelPolicyScriptSourceBuilder implements CelPolicyScriptS
                     """.formatted(escapeQuotes(group), escapeQuotes(name), conditionVers.toString());
         }
 
-        io.github.nscuro.versatile.Comparator versionComparator =
+        Comparator versionComparator =
                 switch (versionOperatorMatcher.group(1)) {
                     case "==" -> Comparator.EQUAL;
                     case "!=" -> Comparator.NOT_EQUAL;

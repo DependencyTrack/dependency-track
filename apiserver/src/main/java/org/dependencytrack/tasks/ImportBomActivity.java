@@ -113,6 +113,7 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertTo
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
@@ -398,18 +399,41 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 // excessive DB round-trips and table bloat.
                 qm.getPersistenceManager().flush();
 
-                recordBomImport(ctx, qm, persistentProject);
+                // Newer JDBI records need to be populated after the flush of DataNucleus ones
+                // so they can access the proper table IDs
+                final Map<String, Long> licenseIds = findLicenseIds(qm, bom.components());
+                final List<Long> componentIds = new ArrayList<>();
+                final List<ComponentDao.ComponentLicenseRow> licenseRows = new ArrayList<>();
 
-                qm.seedPackageMetadataResolution(persistentProject);
+                for (final Component component : bom.components()) {
+                    final ComponentIdentity persistentIdentity =
+                            bom.identitiesByBomRef().get(component.getBomRef());
 
-                final Collection<Component> components = persistentComponentsByIdentity.values();
-                final List<Long> componentIds =
-                        components.stream().map(Component::getId).toList();
-                final List<ComponentDao.ComponentLicenseRow> updates = buildComponentLicenseRows(components);
+                    if (persistentIdentity == null) {
+                        throw new IllegalStateException(
+                                "No persistent identity found for BOM ref %s".formatted(component.getBomRef()));
+                    }
+
+                    final Component persistentComponent = persistentComponentsByIdentity.get(persistentIdentity);
+
+                    if (persistentComponent == null) {
+                        throw new IllegalStateException(
+                                "No persistent component found for BOM ref %s".formatted(component.getBomRef()));
+                    }
+
+                    componentIds.add(persistentComponent.getId());
+
+                    licenseRows.addAll(buildComponentLicenseRows(component, persistentComponent.getId(), licenseIds));
+                }
 
                 useJdbiHandle(
                         qm,
-                        handle -> handle.attach(ComponentDao.class).replaceComponentLicenses(componentIds, updates));
+                        handle ->
+                                handle.attach(ComponentDao.class).replaceComponentLicenses(componentIds, licenseRows));
+
+                recordBomImport(ctx, qm, persistentProject);
+
+                qm.seedPackageMetadataResolution(persistentProject);
 
                 return new ProcessedBom(
                         persistentProject,
@@ -419,23 +443,98 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         }
     }
 
-    private static List<ComponentDao.ComponentLicenseRow> buildComponentLicenseRows(Collection<Component> components) {
-        return components.stream()
-                .filter(component -> component.getResolvedLicense() != null
-                        || component.getLicense() != null
-                        || component.getLicenseExpression() != null
-                        || component.getLicenseUrl() != null)
-                .map(component -> new ComponentDao.ComponentLicenseRow(
-                        component.getId(),
-                        component.getResolvedLicense() != null
-                                ? component.getResolvedLicense().getId()
-                                : null,
-                        component.getLicense(),
-                        component.getLicenseExpression(),
-                        component.getLicenseUrl(),
-                        1,
-                        "DECLARED"))
-                .toList();
+    private static List<ComponentDao.ComponentLicenseRow> buildComponentLicenseRows(
+            final Component component, final long persistedId, final Map<String, Long> licenseIds) {
+        final List<ComponentDao.ComponentLicenseRow> rows = new ArrayList<>();
+
+        final List<org.cyclonedx.model.License> candidates = component.getLicenseCandidates();
+        long ordinality = 1;
+        if (candidates != null && !candidates.isEmpty()) {
+            for (final org.cyclonedx.model.License candidate : candidates) {
+                String trimmedName = trimToNull(candidate.getName());
+                final String identifier = isNotBlank(candidate.getId()) ? candidate.getId() : trimmedName;
+
+                final Long licenseId = identifier != null ? licenseIds.get(identifier) : null;
+
+                final String licenseName = trimmedName != null ? trimmedName : trimToNull(candidate.getId());
+
+                rows.add(new ComponentDao.ComponentLicenseRow(
+                        persistedId,
+                        licenseId,
+                        licenseName,
+                        null,
+                        trimToNull(candidate.getUrl()),
+                        ordinality++,
+                        "DECLARED"));
+            }
+        }
+
+        // Per the CycloneDX protos, expressions are sufficient substitutes for a license model object,
+        // thus stored separately and requiring separate retrieval
+        final String expression = trimToNull(component.getLicenseExpression());
+        if (expression != null
+                && (candidates == null
+                        || candidates.stream()
+                                .noneMatch(candidate -> expression.equals(candidate.getId())
+                                        || expression.equals(candidate.getName())))) {
+            rows.add(new ComponentDao.ComponentLicenseRow(
+                    persistedId, null, null, expression, null, ordinality, "DECLARED"));
+        }
+
+        return rows;
+    }
+
+    private static Map<String, Long> findLicenseIds(final QueryManager qm, final Collection<Component> components) {
+
+        final Set<String> identifiers = new HashSet<>();
+
+        for (final Component component : components) {
+            final List<org.cyclonedx.model.License> candidates = component.getLicenseCandidates();
+            if (candidates == null) {
+                continue;
+            }
+
+            for (final org.cyclonedx.model.License candidate : candidates) {
+                if (isNotBlank(candidate.getId())) {
+                    // Only the resolved license should have an associated ID
+                    // In the model License, this is the LICENSEID column
+                    identifiers.add(candidate.getId());
+                }
+                if (isNotBlank(candidate.getName())) {
+                    // Other licenses will need to be looked up by name
+                    identifiers.add(candidate.getName());
+                }
+            }
+        }
+
+        if (identifiers.isEmpty()) {
+            return Map.of();
+        }
+
+        HashMap<String, Long> licenseInfo = withJdbiHandle(
+                qm,
+                handle -> handle.createQuery("""
+            SELECT "ID", "LICENSEID", "NAME"
+            FROM "LICENSE"
+            WHERE "LICENSEID" = ANY(:identifiers)
+                OR "NAME" = ANY(:identifiers)
+            """)
+                        .bindArray("identifiers", String.class, identifiers)
+                        .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
+                            final long id = rs.getLong("ID");
+                            final String licenseId = rs.getString("LICENSEID");
+                            if (licenseId != null) {
+                                result.putIfAbsent(licenseId, id);
+                            }
+
+                            final String name = rs.getString("NAME");
+                            if (name != null) {
+                                result.putIfAbsent(name, id);
+                            }
+                            return result;
+                        }));
+
+        return licenseInfo;
     }
 
     private static Project processProject(

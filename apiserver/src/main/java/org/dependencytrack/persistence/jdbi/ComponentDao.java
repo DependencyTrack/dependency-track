@@ -766,6 +766,43 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 });
     }
 
+    default Map<Long, List<ComponentLicenseRow>> getLicenseRows(final Collection<Long> componentIds) {
+        if (componentIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getHandle()
+                .createQuery("""
+                SELECT "COMPONENTID",
+                    "LICENSE_ID",
+                    "LICENSE",
+                    "LICENSE_EXPRESSION",
+                    "LICENSE_URL",
+                    "ORDINALITY",
+                    "ACKNOWLEDGEMENT"
+                FROM "COMPONENTLICENSES"
+                WHERE "COMPONENTID" = ANY(:componentIds)
+                ORDER BY "COMPONENTID", "ORDINALITY", "ID"
+                """)
+                .bindArray("componentIds", Long.class, componentIds)
+                .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
+                    final long componentId = rs.getLong("COMPONENTID");
+                    final Long licenseId = rs.getObject("LICENSE_ID", Long.class);
+
+                    result.computeIfAbsent(componentId, ignored -> new ArrayList<>())
+                            .add(new ComponentLicenseRow(
+                                    componentId,
+                                    licenseId,
+                                    rs.getString("LICENSE"),
+                                    rs.getString("LICENSE_EXPRESSION"),
+                                    rs.getString("LICENSE_URL"),
+                                    rs.getLong("ORDINALITY"),
+                                    rs.getString("ACKNOWLEDGEMENT")));
+
+                    return result;
+                });
+    }
+
     public record LicenseRow(
             long id,
             UUID uuid,

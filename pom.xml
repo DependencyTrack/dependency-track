@@ -131,6 +131,7 @@
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.errorprone.version>2.50.0</lib.errorprone.version>
         <lib.flyway.version>13.8.1</lib.flyway.version>
+        <lib.freemarker.version>2.3.35</lib.freemarker.version>
         <lib.greenmail.version>2.1.14</lib.greenmail.version>
         <lib.gson.version>2.14.0</lib.gson.version>
         <lib.guava.version>33.7.2-jre</lib.guava.version>
@@ -301,6 +302,11 @@
                 <groupId>com.google.errorprone</groupId>
                 <artifactId>error_prone_annotations</artifactId>
                 <version>${lib.errorprone.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.freemarker</groupId>
+                <artifactId>freemarker</artifactId>
+                <version>${lib.freemarker.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.icegreen</groupId>

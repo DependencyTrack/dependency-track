@@ -623,6 +623,140 @@ class BomResourceTest extends ResourceTest {
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         Component c = new Component();
+        Component cExp = new Component();
+        c.setProject(project);
+        c.setName("sample-component");
+        c.setVersion("1.0");
+        cExp.setProject(project);
+        cExp.setName("sample-component-expression");
+        cExp.setVersion("1.0");
+        c.setDirectDependencies("[]");
+        cExp.setDirectDependencies("[]");
+        Component component = qm.createComponent(c, false);
+        Component componentExp = qm.createComponent(cExp, false);
+
+        org.dependencytrack.model.License license = new org.dependencytrack.model.License();
+        license.setId(1234);
+        license.setName("CustomName");
+        license.setCustomLicense(true);
+        qm.createCustomLicense(license, false);
+
+        final long componentId = component.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE_ID",
+                "ORDINALITY",
+                "ACKNOWLEDGEMENT"
+            )
+            VALUES (:componentId, :licenseId, 1, 'DECLARED')
+            """)
+                .bind("componentId", component.getId())
+                .bind("licenseId", license.getId())
+                .execute());
+        useJdbiHandle(handle -> handle.createUpdate("""
+                INSERT INTO "COMPONENTLICENSES" (
+                    "COMPONENTID",
+                    "LICENSE_EXPRESSION",
+                    "ORDINALITY",
+                    "ACKNOWLEDGEMENT"
+                )
+                VALUES (:componentId, :licenseExpression, 1, 'DECLARED')
+                """)
+                .bind("componentId", componentExp.getId())
+                .bind("licenseExpression", "Apache-2.0 OR MIT")
+                .execute());
+
+        qm.persist(project);
+        Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
+        assertThatJson(jsonResponse)
+                .withMatcher("component", equalTo(component.getUuid().toString()))
+                .withMatcher(
+                        "expressionComponent", equalTo(componentExp.getUuid().toString()))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo(json("""
+                        {
+                            "bomFormat": "CycloneDX",
+                            "specVersion": "1.5",
+                            "serialNumber": "${json-unit.ignore}",
+                            "version": 1,
+                            "metadata": {
+                                "timestamp": "${json-unit.any-string}",
+                                "tools": {
+                                    "components": [
+                                        {
+                                            "type": "application",
+                                            "supplier": {
+                                              "name": "OWASP"
+                                            },
+                                            "name": "Dependency-Track",
+                                            "version": "${json-unit.any-string}"
+                                        }
+                                    ]
+                                },
+                                "component": {
+                                    "type": "library",
+                                    "bom-ref": "${json-unit.matches:projectUuid}",
+                                    "name": "Acme Example",
+                                    "version": "1.0"
+                                }
+                            },
+                            "components": [
+                                {
+                                    "type": "library",
+                                    "bom-ref": "${json-unit.matches:component}",
+                                    "name": "sample-component",
+                                    "version": "1.0",
+                                    "licenses": [
+                                        {
+                                            "license": {
+                                                "name": "CustomName"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "library",
+                                    "bom-ref": "${json-unit.matches:expressionComponent}",
+                                    "name": "sample-component-expression",
+                                    "version": "1.0",
+                                    "licenses": [
+                                        {
+                                            "expression": "Apache-2.0 OR MIT"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "dependencies": [
+                                {
+                                    "ref": "${json-unit.matches:projectUuid}",
+                                    "dependsOn": []
+                                },
+                                {
+                                    "ref": "${json-unit.matches:component}",
+                                    "dependsOn": []
+                                },
+                                {
+                                    "ref": "${json-unit.matches:expressionComponent}",
+                                    "dependsOn": []
+                                }
+                            ]
+                        }
+                        """));
+    }
+
+    @Test
+    void exportProjectAsCycloneDxMultipleLicensesTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        Component c = new Component();
         c.setProject(project);
         c.setName("sample-component");
         c.setVersion("1.0");
@@ -639,13 +773,22 @@ class BomResourceTest extends ResourceTest {
             INSERT INTO "COMPONENTLICENSES" (
                 "COMPONENTID",
                 "LICENSE_ID",
+                "LICENSE",
+                "LICENSE_URL",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
             )
-            VALUES (:componentId, :licenseId, 1, 'DECLARED')
+            VALUES
+                (:componentId, :licenseId, NULL, :customLicenseUrl, 2, 'DECLARED'),
+                (:componentId, NULL, :firstLicense, :firstLicenseUrl, 1, 'DECLARED'),
+                (:componentId, NULL, :thirdLicense, NULL, 3, 'DECLARED')
             """)
                 .bind("componentId", c.getId())
                 .bind("licenseId", license.getId())
+                .bind("customLicenseUrl", "https://example.com/custom")
+                .bind("firstLicense", "First license")
+                .bind("firstLicenseUrl", "https://example.com/first")
+                .bind("thirdLicense", "Third license")
                 .execute());
         qm.persist(project);
         Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
@@ -692,12 +835,24 @@ class BomResourceTest extends ResourceTest {
                                     "name": "sample-component",
                                     "version": "1.0",
                                     "licenses": [
-                                        {
+                                          {
                                             "license": {
-                                                "name": "CustomName"
+                                              "name": "First license",
+                                              "url": "https://example.com/first"
                                             }
-                                        }
-                                    ]
+                                          },
+                                          {
+                                            "license": {
+                                              "name": "CustomName",
+                                              "url": "https://example.com/custom"
+                                            }
+                                          },
+                                          {
+                                            "license": {
+                                              "name": "Third license"
+                                            }
+                                          }
+                                        ]
                                 }
                             ],
                             "dependencies": [

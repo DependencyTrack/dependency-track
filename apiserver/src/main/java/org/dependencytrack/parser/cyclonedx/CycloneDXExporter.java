@@ -129,7 +129,7 @@ public class CycloneDXExporter {
 
         final Map<Long, List<ComponentDao.ComponentLicenseRow>> licenseRowsByComponentId = new HashMap<>();
         final Map<Long, ComponentDao.LicenseRow> licensesById = new HashMap<>();
-        if (components != null || !components.isEmpty()) {
+        if (components != null && !components.isEmpty()) {
             List<Long> componentIds = components.stream().map(Component::getId).toList();
             useJdbiHandle(handle -> {
                 final ComponentDao componentDao = handle.attach(ComponentDao.class);

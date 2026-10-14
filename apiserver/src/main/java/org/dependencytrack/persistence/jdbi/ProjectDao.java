@@ -58,6 +58,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 
@@ -776,7 +777,14 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
         final List<OriginalBomFileMetadataRow> originalBomFiles = getOriginalBomFileMetadataForProjects(projectUuids);
         final List<DeletedProjectRow> deletedProjects = deleteProjects(projectUuids);
 
-        return new ProjectDeletionResult(deletedProjects, originalBomFiles);
+        final Set<UUID> deletedProjectUuids =
+                deletedProjects.stream().map(DeletedProjectRow::uuid).collect(Collectors.toSet());
+        // Access can change between metadata collection and deletion.
+        final List<OriginalBomFileMetadataRow> filesToDelete = originalBomFiles.stream()
+                .filter(file -> deletedProjectUuids.contains(file.projectUuid()))
+                .toList();
+
+        return new ProjectDeletionResult(deletedProjects, filesToDelete);
     }
 
     @SqlQuery(/* language=InjectedFreeMarker */ """

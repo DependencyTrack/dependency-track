@@ -38,6 +38,5 @@ public interface BomDao {
              LIMIT 1
             """)
     @SingleValue
-    @Nullable
-    byte[] getLatestOriginalFileMetadata(@Bind UUID projectUuid);
+    byte @Nullable [] getLatestOriginalFileMetadata(@Bind UUID projectUuid);
 }

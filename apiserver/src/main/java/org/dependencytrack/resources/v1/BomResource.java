@@ -934,6 +934,8 @@ public class BomResource extends AbstractApiResource {
         }
 
         return MediaType.APPLICATION_OCTET_STREAM;
+    }
+    
     static byte[] readUpload(InputStream inputStream, String maxSizeConfigKey) throws IOException {
         final int maxSizeBytes = ConfigProvider.getConfig().getValue(maxSizeConfigKey, int.class);
         final byte[] bytes = inputStream.readNBytes(maxSizeBytes);

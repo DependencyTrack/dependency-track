@@ -15,8 +15,8 @@ in the uploaded BOM are being discarded, i.e. not stored in the database.
 
 We will extract the license data associated to a component into its own table to solve this data loss.
 There is already precedence for doing so with vulnerabilities (see: the `COMPONENTS_VULNERABILITIES`
-table). The `COMPONENTS` table will lose its license related columns as well as its foreign key
-constraint to the `LICENSE` table, shifting them all to a table called `COMPONENTLICENSES`.
+table). The license data stored in the `COMPONENTS` table will be duplicated into a new table called 
+`COMPONENTLICENSES`. Eventually those columns will be removed from the `COMPONENTS` table.
 
 The `COMPONENTLICENSES` will house all of that old data with the addition of two columns: `ACKNOWLEDGEMENT`
 and `ORDINALITY`. The `ACKNOWLEDGEMENT` column will allow for future implementation of users accepting

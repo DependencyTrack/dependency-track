@@ -54,7 +54,7 @@ class JiraNotificationPublisherTest extends AbstractNotificationPublisherTest {
     protected void customizeGlobalConfig(RuntimeConfig globalConfig) {
         final var jiraGlobalConfig = (JiraNotificationPublisherGlobalConfigV1) globalConfig;
         jiraGlobalConfig.setEnabled(true);
-        jiraGlobalConfig.setApiUrl(URI.create(WIREMOCK.baseUrl()));
+        jiraGlobalConfig.setApiUrl(URI.create(WIREMOCK.baseUrl() + "/"));
         jiraGlobalConfig.setUsername("username");
         jiraGlobalConfig.setPasswordOrToken("password");
     }

@@ -291,6 +291,7 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
 
         pvA_parent.setType(PolicyViolation.Type.OPERATIONAL);
         pvA_parent.setTimestamp(Date.from(afterRuleLastFiredAt));
+        pvA_parent.setText("Version 1.0.0 is not allowed");
         qm.persist(pvA_parent);
         final var pvB_parent = new PolicyViolation();
         pvB_parent.setPolicyCondition(policyConditionB);
@@ -424,7 +425,8 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
                                     "operator": "IS", "subject": "VERSION", "value": "1.0.0", "uuid": "${json-unit.any-string}"
                                   },
                                   "type": "OPERATIONAL",
-                                  "suppressed": false
+                                  "suppressed": false,
+                                  "message": "Version 1.0.0 is not allowed"
                                 },
                                 {
                                   "component": { "name": "acme-lib-parent", "version": "1.0.0", "uuid": "${json-unit.any-string}" },

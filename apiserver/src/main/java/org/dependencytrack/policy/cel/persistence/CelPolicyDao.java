@@ -485,6 +485,7 @@ public final class CelPolicyDao {
         final var projIds = new Long[size];
         final var condIds = new Long[size];
         final var types = new String[size];
+        final var texts = new String[size];
 
         int i = 0;
         for (final var entry : reportedViolationsByComponentId.entrySet()) {
@@ -494,13 +495,14 @@ public final class CelPolicyDao {
                 projIds[i] = projectId;
                 condIds[i] = violation.getPolicyCondition().getId();
                 types[i] = violation.getType().name();
+                texts[i] = violation.getText();
                 i++;
             }
         }
 
         return jdbiHandle
                 .createQuery("""
-                        WITH created AS (
+                        WITH upserted AS (
                           INSERT INTO "POLICYVIOLATION" (
                             "UUID"
                           , "TIMESTAMP"
@@ -508,16 +510,21 @@ public final class CelPolicyDao {
                           , "PROJECT_ID"
                           , "POLICYCONDITION_ID"
                           , "TYPE"
+                          , "TEXT"
                           )
                           SELECT GEN_RANDOM_UUID()
                                , t.*
-                            FROM UNNEST(:timestamps, :componentIds, :projectIds, :policyConditionIds, :types)
-                              AS t("TIMESTAMP", "COMPONENT_ID", "PROJECT_ID", "POLICYCONDITION_ID", "TYPE")
+                            FROM UNNEST(:timestamps, :componentIds, :projectIds, :policyConditionIds, :types, :texts)
+                              AS t("TIMESTAMP", "COMPONENT_ID", "PROJECT_ID", "POLICYCONDITION_ID", "TYPE", "TEXT")
                            ORDER BY t."PROJECT_ID"
                                   , t."COMPONENT_ID"
                                   , t."POLICYCONDITION_ID"
-                          ON CONFLICT DO NOTHING
-                          RETURNING "ID"
+                          ON CONFLICT ("COMPONENT_ID", "PROJECT_ID", "POLICYCONDITION_ID") DO UPDATE
+                          SET "TEXT" = EXCLUDED."TEXT"
+                          WHERE "POLICYVIOLATION"."TEXT" IS DISTINCT FROM EXCLUDED."TEXT"
+                          -- xmax is zero for rows created by this statement,
+                          -- and non-zero for existing rows that were updated.
+                          RETURNING "ID", (xmax = 0) AS "CREATED"
                         ),
                         deleted AS (
                           DELETE FROM "POLICYVIOLATION"
@@ -532,13 +539,14 @@ public final class CelPolicyDao {
                                 FOR UPDATE
                            )
                         )
-                        SELECT "ID" FROM created
+                        SELECT "ID" FROM upserted WHERE "CREATED"
                         """)
                 .bind("timestamps", timestamps)
                 .bind("componentIds", componentIds)
                 .bind("projectIds", projIds)
                 .bind("policyConditionIds", condIds)
                 .bind("types", types)
+                .bind("texts", texts)
                 .bind("projectId", projectId)
                 .mapTo(Long.class)
                 .set();

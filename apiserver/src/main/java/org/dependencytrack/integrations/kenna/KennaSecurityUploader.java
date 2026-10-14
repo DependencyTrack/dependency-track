@@ -149,7 +149,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                     .addFilePart("file", "findings.json", payload, "application/json");
 
             final var request = HttpRequest.newBuilder()
-                    .uri(URI.create("%s/connectors/%s/data_file".formatted(apiUrl, connectorId)))
+                    .uri(URI.create("%s/connectors/%s/data_file".formatted(apiUrl.replaceAll("/+$", ""), connectorId)))
                     .header("X-Risk-Token", tokenValue)
                     .header("Accept", "application/json")
                     .header("Content-Type", multipart.contentType())

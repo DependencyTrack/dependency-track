@@ -67,7 +67,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl() + "/",
                 DEFECTDOJO_URL.getPropertyType(),
                 null);
         qm.createConfigProperty(
@@ -308,7 +308,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl() + "/",
                 DEFECTDOJO_URL.getPropertyType(),
                 null);
         qm.createConfigProperty(

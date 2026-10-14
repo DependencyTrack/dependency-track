@@ -54,6 +54,7 @@ import org.dependencytrack.proto.policy.v1.Component;
 import org.dependencytrack.proto.policy.v1.License;
 import org.dependencytrack.proto.policy.v1.Project;
 import org.dependencytrack.proto.policy.v1.Vulnerability;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -295,6 +296,9 @@ public final class CelPolicyEngine {
 
     record ConditionScript(PolicyCondition condition, CelPolicyProgram script) {}
 
+    private record ViolatedCondition(
+            PolicyCondition condition, @Nullable String message) {}
+
     record PolicyWithScripts(Policy policy, List<ConditionScript> conditionScripts) {}
 
     private List<PolicyWithScripts> compilePoliciesScripts(List<Policy> policies) {
@@ -369,12 +373,13 @@ public final class CelPolicyEngine {
             Map<Long, List<PolicyViolation>> violationsByComponentId) {
         for (final PolicyWithScripts pws : policiesWithScripts) {
             final Policy policy = pws.policy();
-            final var violatedConditions = new ArrayList<PolicyCondition>();
+            final var violatedConditions = new ArrayList<ViolatedCondition>();
 
             for (final ConditionScript cs : pws.conditionScripts()) {
                 try {
-                    if (cs.script().execute(scriptArgs)) {
-                        violatedConditions.add(cs.condition());
+                    final CelPolicyProgram.Result result = cs.script().evaluate(scriptArgs);
+                    if (result.matched()) {
+                        violatedConditions.add(new ViolatedCondition(cs.condition(), result.message()));
                     }
                 } catch (CelEvaluationException e) {
                     LOGGER.warn(
@@ -393,11 +398,12 @@ public final class CelPolicyEngine {
                     };
 
             if (policyViolated) {
-                for (final PolicyCondition condition : violatedConditions) {
+                for (final ViolatedCondition violatedCondition : violatedConditions) {
                     final var violation = new PolicyViolation();
-                    violation.setType(condition.getViolationType());
-                    violation.setPolicyCondition(condition);
+                    violation.setType(violatedCondition.condition().getViolationType());
+                    violation.setPolicyCondition(violatedCondition.condition());
                     violation.setTimestamp(new Date());
+                    violation.setText(violatedCondition.message());
                     violationsByComponentId
                             .computeIfAbsent(componentId, _ -> new ArrayList<>())
                             .add(violation);

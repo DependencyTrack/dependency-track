@@ -106,6 +106,41 @@ class CheckmarxVulnAnalyzerTest {
     }
 
     @Test
+    void shouldPreserveApiBaseUrlPath(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        analyzerFactory.init(new ExtensionContextBuilder()
+                .withConfigRegistry(new MockConfigRegistry(
+                        analyzerFactory.runtimeConfigSpec(),
+                        new CheckmarxVulnAnalyzerConfigV1()
+                                .withEnabled(true)
+                                .withApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl() + "/proxy/"))
+                                .withOrgId("test-org-id")
+                                .withAuthApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
+                                .withApiKey("test-api-key")))
+                .withCacheManager(cacheManager)
+                .build());
+        analyzer = analyzerFactory.create();
+
+        stubFor(post(urlPathEqualTo("/proxy/api/v1/Packages/risks"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile("chx-no-issues-response.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
+
+        verify(postRequestedFor(urlPathEqualTo("/proxy/api/v1/Packages/risks")));
+    }
+
+    @Test
     void shouldAnalyzeAndCacheWithNoVulns() throws Exception {
         stubFor(post(urlPathEqualTo("/api/v1/Packages/risks"))
                 .willReturn(aResponse()

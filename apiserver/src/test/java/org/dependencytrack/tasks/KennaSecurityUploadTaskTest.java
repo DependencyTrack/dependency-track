@@ -60,7 +60,7 @@ class KennaSecurityUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 KENNA_API_URL.getGroupName(),
                 KENNA_API_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl() + "/",
                 KENNA_API_URL.getPropertyType(),
                 KENNA_API_URL.getDescription());
         qm.createConfigProperty(

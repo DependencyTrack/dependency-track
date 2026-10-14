@@ -42,7 +42,9 @@ import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Gatherers;
 
 import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.notification.NotificationModelConverter.convert;
@@ -58,6 +60,7 @@ import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_UNSPECIFIED;
 class JdbcNotificationEmitter implements NotificationEmitter {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    static final int BATCH_SIZE = 1000;
 
     private final @Nullable Connection connection;
     private final Timer emitLatencyTimer;
@@ -86,16 +89,6 @@ class JdbcNotificationEmitter implements NotificationEmitter {
             return;
         }
 
-        final Timer.Sample emitLatencySample = Timer.start();
-
-        final var ids = new String[notifications.size()];
-        final var timestamps = new Timestamp[notifications.size()];
-        final var scopes = new String[notifications.size()];
-        final var groups = new String[notifications.size()];
-        final var levels = new String[notifications.size()];
-        final var payloads = new byte[notifications.size()][];
-
-        int index = 0;
         for (final Notification notification : notifications) {
             requireNonNull(notification, "notification must not be null");
 
@@ -105,7 +98,42 @@ class JdbcNotificationEmitter implements NotificationEmitter {
                 throw new IllegalArgumentException(
                         "Invalid notification: " + DebugFormat.singleLine().toString(notification), ex);
             }
+        }
 
+        final Timer.Sample emitLatencySample = Timer.start();
+
+        final var emittedIds = new HashSet<String>();
+        for (final var batch : (Iterable<List<Notification>>) () ->
+                notifications.stream().gather(Gatherers.windowFixed(BATCH_SIZE)).iterator()) {
+            emittedIds.addAll(emitBatch(connection, batch));
+        }
+
+        for (final Notification notification : notifications) {
+            if (emittedIds.contains(notification.getId())) {
+                emittedDistribution
+                        .withTags(List.of(
+                                Tag.of("level", convert(notification.getLevel()).name()),
+                                Tag.of("scope", convert(notification.getScope()).name()),
+                                Tag.of("group", convert(notification.getGroup()).name())))
+                        .record(1);
+            }
+        }
+
+        final long emitLatencyNanos = emitLatencySample.stop(emitLatencyTimer);
+        logger.debug(
+                "Emitted {} notifications in {}ms", emittedIds.size(), TimeUnit.NANOSECONDS.toMillis(emitLatencyNanos));
+    }
+
+    private static Set<String> emitBatch(Connection connection, List<Notification> notifications) {
+        final var ids = new String[notifications.size()];
+        final var timestamps = new Timestamp[notifications.size()];
+        final var scopes = new String[notifications.size()];
+        final var groups = new String[notifications.size()];
+        final var levels = new String[notifications.size()];
+        final var payloads = new byte[notifications.size()][];
+
+        int index = 0;
+        for (final Notification notification : notifications) {
             ids[index] = notification.getId();
             timestamps[index] = new Timestamp(Timestamps.toMillis(notification.getTimestamp()));
             scopes[index] = convert(notification.getScope()).name();
@@ -160,20 +188,7 @@ class JdbcNotificationEmitter implements NotificationEmitter {
             throw new IllegalStateException("Failed to insert notification records", e);
         }
 
-        for (final Notification notification : notifications) {
-            if (emittedIds.contains(notification.getId())) {
-                emittedDistribution
-                        .withTags(List.of(
-                                Tag.of("level", convert(notification.getLevel()).name()),
-                                Tag.of("scope", convert(notification.getScope()).name()),
-                                Tag.of("group", convert(notification.getGroup()).name())))
-                        .record(1);
-            }
-        }
-
-        final long emitLatencyNanos = emitLatencySample.stop(emitLatencyTimer);
-        logger.debug(
-                "Emitted {} notifications in {}ms", emittedIds.size(), TimeUnit.NANOSECONDS.toMillis(emitLatencyNanos));
+        return emittedIds;
     }
 
     private static void validateRequiredFields(Notification notification) {

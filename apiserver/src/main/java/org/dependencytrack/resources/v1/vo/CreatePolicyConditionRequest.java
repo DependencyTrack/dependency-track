@@ -39,7 +39,11 @@ public record CreatePolicyConditionRequest(
                 requiredMode = Schema.RequiredMode.REQUIRED)
         PolicyCondition.Operator operator,
 
-        @NotBlank @Schema(description = "Value the subject is compared to", requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotBlank @Schema(description = """
+                        Value the subject is compared to. For `EXPRESSION` subjects, a CEL expression \
+                        that returns either a boolean, or a string. A non-blank string means the \
+                        condition matched and the string is used as violation message. A blank string \
+                        means the condition did not match.""", requiredMode = Schema.RequiredMode.REQUIRED)
         String value,
 
         @Schema(description = "Violation type produced when the condition matches. Required for `EXPRESSION` subjects")

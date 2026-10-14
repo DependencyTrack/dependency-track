@@ -306,6 +306,28 @@ class TrivyVulnAnalyzerTest {
     }
 
     @Test
+    void shouldHandleApiUrlWithTrailingSlash(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        final var trailingSlashAnalyzer = new TrivyVulnAnalyzer(
+                HttpClient.newHttpClient(), wmRuntimeInfo.getHttpBaseUrl() + "/", "token", false, true, false);
+        stubTrivyEndpoints(ScanResponse.getDefaultInstance());
+
+        final Bom bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setVersion("1.0.0")
+                        .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .setType(CLASSIFICATION_LIBRARY)
+                        .build())
+                .build();
+
+        final Bom vdr = trailingSlashAnalyzer.analyze(bom);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
+
+        verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));
+    }
+
+    @Test
     void testAnalyzeIgnoresUnfixedWhenConfigured(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         final var ignoreUnfixedAnalyzer = new TrivyVulnAnalyzer(
                 HttpClient.newHttpClient(),

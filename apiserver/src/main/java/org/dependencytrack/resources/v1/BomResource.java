@@ -1034,6 +1034,7 @@ public class BomResource extends AbstractApiResource {
 
         final var page = dexEngine.listRuns(new ListWorkflowRunsRequest()
                 .withLabels(Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, token.toString()))
+                .withOnlyRootRuns(true)
                 .withSortBy(ListWorkflowRunsRequest.SortBy.CREATED_AT)
                 .withSortDirection(SortDirection.DESC)
                 .withLimit(1));

@@ -677,6 +677,7 @@ public interface NotificationSubjectDao extends SqlObject {
                         SELECT pv."UUID" AS "violationUuid"
                              , pv."TYPE" AS "violationType"
                              , pv."TIMESTAMP" AS "violationTimestamp"
+                             , pv."TEXT" AS "violationMessage"
                              , pc."UUID" AS "conditionUuid"
                              , pc."SUBJECT" AS "conditionSubject"
                              , pc."OPERATOR" AS "conditionOperator"
@@ -743,12 +744,16 @@ public interface NotificationSubjectDao extends SqlObject {
                             .setPolicy(policy)
                             .build();
 
-                    final PolicyViolation violation = PolicyViolation.newBuilder()
+                    final PolicyViolation.Builder violationBuilder = PolicyViolation.newBuilder()
                             .setUuid(row.getColumn("violationUuid", String.class))
                             .setType(row.getColumn("violationType", String.class))
                             .setTimestamp(Timestamps.fromDate(row.getColumn("violationTimestamp", Timestamp.class)))
-                            .setCondition(condition)
-                            .build();
+                            .setCondition(condition);
+                    final String violationMessage = row.getColumn("violationMessage", String.class);
+                    if (violationMessage != null) {
+                        violationBuilder.setMessage(violationMessage);
+                    }
+                    final PolicyViolation violation = violationBuilder.build();
 
                     return PolicyViolationSubject.newBuilder()
                             .setProject(project)

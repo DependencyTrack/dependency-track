@@ -22,10 +22,16 @@ import org.dependencytrack.model.FindingKey;
 import org.jdbi.v3.core.Handle;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Gatherers;
+import java.util.stream.Stream;
 
 final class FindingDao {
+
+    static final int BATCH_SIZE = 1000;
 
     private final Handle handle;
 
@@ -52,11 +58,21 @@ final class FindingDao {
                 .list();
     }
 
-    List<FindingKey> createFindings(Collection<FindingKey> findings) {
-        if (findings.isEmpty()) {
-            return List.of();
+    List<FindingKey> createFindings(Collection<FindingKey> findings) throws InterruptedException {
+        final var created = new ArrayList<FindingKey>();
+        for (final List<FindingKey> batch : batched(findings.stream()
+                .sorted(Comparator.comparingLong(FindingKey::componentId).thenComparingLong(FindingKey::vulnDbId)))) {
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Interrupted before all findings could be created");
+            }
+
+            created.addAll(createFindingsBatch(batch));
         }
 
+        return created;
+    }
+
+    private List<FindingKey> createFindingsBatch(List<FindingKey> findings) {
         final var componentIds = new long[findings.size()];
         final var vulnIds = new long[findings.size()];
 
@@ -85,11 +101,23 @@ final class FindingDao {
                 .list();
     }
 
-    int createAttributions(Collection<CreateAttributionCommand> commands) {
-        if (commands.isEmpty()) {
-            return 0;
+    int createAttributions(Collection<CreateAttributionCommand> commands) throws InterruptedException {
+        int created = 0;
+        for (final List<CreateAttributionCommand> batch : batched(commands.stream()
+                .sorted(Comparator.comparingLong(CreateAttributionCommand::vulnDbId)
+                        .thenComparingLong(CreateAttributionCommand::componentId)
+                        .thenComparing(CreateAttributionCommand::analyzerName)))) {
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Interrupted before all attributions could be created");
+            }
+
+            created += createAttributionsBatch(batch);
         }
 
+        return created;
+    }
+
+    private int createAttributionsBatch(List<CreateAttributionCommand> commands) {
         final var vulnIds = new long[commands.size()];
         final var componentIds = new long[commands.size()];
         final var projectIds = new long[commands.size()];
@@ -140,11 +168,20 @@ final class FindingDao {
                 .execute();
     }
 
-    int deleteAttributions(Collection<Long> attributionIds) {
-        if (attributionIds.isEmpty()) {
-            return 0;
+    int deleteAttributions(Collection<Long> attributionIds) throws InterruptedException {
+        int deleted = 0;
+        for (final List<Long> batch : batched(attributionIds.stream())) {
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Interrupted before all attributions could be deleted");
+            }
+
+            deleted += deleteAttributionsBatch(batch);
         }
 
+        return deleted;
+    }
+
+    private int deleteAttributionsBatch(List<Long> attributionIds) {
         return handle.createUpdate("""
                         UPDATE "FINDINGATTRIBUTION"
                            SET "DELETED_AT" = NOW()
@@ -153,6 +190,10 @@ final class FindingDao {
                         """)
                 .bind("ids", attributionIds.toArray(Long[]::new))
                 .execute();
+    }
+
+    private static <T> Iterable<List<T>> batched(Stream<T> items) {
+        return () -> items.gather(Gatherers.windowFixed(BATCH_SIZE)).iterator();
     }
 
     record FindingAttribution(long id, long componentId, long vulnDbId, String analyzerName) {}

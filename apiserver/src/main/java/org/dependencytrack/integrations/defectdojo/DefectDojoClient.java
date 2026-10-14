@@ -44,12 +44,12 @@ public class DefectDojoClient {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private final HttpClient httpClient;
     private final DefectDojoUploader uploader;
-    private final URL baseURL;
+    private final String baseURL;
 
     public DefectDojoClient(HttpClient httpClient, DefectDojoUploader uploader, URL baseURL) {
         this.httpClient = httpClient;
         this.uploader = uploader;
-        this.baseURL = baseURL;
+        this.baseURL = baseURL.toString().replaceAll("/+$", "");
     }
 
     public void uploadDependencyTrackFindings(

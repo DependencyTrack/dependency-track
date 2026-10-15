@@ -137,7 +137,7 @@
         <lib.guava.version>33.7.2-jre</lib.guava.version>
         <lib.hamcrest.version>3.0</lib.hamcrest.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
-        <lib.httpclient5.version>5.6.4</lib.httpclient5.version>
+        <lib.httpclient5.version>5.6.5</lib.httpclient5.version>
         <lib.httpmime.version>4.5.14</lib.httpmime.version>
         <lib.jackson2.version>2.22.3</lib.jackson2.version>
         <lib.jackson3.version>3.2.3</lib.jackson3.version>

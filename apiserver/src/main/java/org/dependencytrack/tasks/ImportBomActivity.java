@@ -448,6 +448,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         final List<ComponentDao.ComponentLicenseRow> rows = new ArrayList<>();
 
         final List<org.cyclonedx.model.License> candidates = component.getLicenseCandidates();
+        final String expression = trimToNull(component.getLicenseExpression());
+
         long ordinality = 1;
         if (candidates != null && !candidates.isEmpty()) {
             for (final org.cyclonedx.model.License candidate : candidates) {
@@ -456,13 +458,18 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
                 final Long licenseId = identifier != null ? licenseIds.get(identifier) : null;
 
-                final String licenseName = trimmedName != null ? trimmedName : trimToNull(candidate.getId());
+                final String licenseName = licenseId == null ? 
+                    trimmedName != null ? 
+                        trimmedName : trimToNull(candidate.getId()) 
+                    : null;
+
+                final boolean isExpression = expression != null && (expression.equals(candidate.getId()) || expression.equals(candidate.getName()));
 
                 rows.add(new ComponentDao.ComponentLicenseRow(
                         persistedId,
                         licenseId,
                         licenseName,
-                        null,
+                        isExpression ? expression : null,
                         trimToNull(candidate.getUrl()),
                         ordinality++,
                         "DECLARED"));
@@ -471,7 +478,6 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
         // Per the CycloneDX protos, expressions are sufficient substitutes for a license model object,
         // thus stored separately and requiring separate retrieval
-        final String expression = trimToNull(component.getLicenseExpression());
         if (expression != null
                 && (candidates == null
                         || candidates.stream()

@@ -458,12 +458,11 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
                 final Long licenseId = identifier != null ? licenseIds.get(identifier) : null;
 
-                final String licenseName = licenseId == null ? 
-                    trimmedName != null ? 
-                        trimmedName : trimToNull(candidate.getId()) 
-                    : null;
+                final String licenseName =
+                        licenseId == null ? trimmedName != null ? trimmedName : trimToNull(candidate.getId()) : null;
 
-                final boolean isExpression = expression != null && (expression.equals(candidate.getId()) || expression.equals(candidate.getName()));
+                final boolean isExpression = expression != null
+                        && (expression.equals(candidate.getId()) || expression.equals(candidate.getName()));
 
                 rows.add(new ComponentDao.ComponentLicenseRow(
                         persistedId,

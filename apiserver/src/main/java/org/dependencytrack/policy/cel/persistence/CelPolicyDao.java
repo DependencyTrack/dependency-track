@@ -53,7 +53,6 @@ import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_PROJECT_METADAT
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_PROJECT_PROPERTY;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_VULNERABILITY;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.COMPONENT_FIELDS;
-import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.COMPONENT_LICENSE_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.COMPONENT_PROPERTY_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.LICENSE_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.LICENSE_GROUP_FIELDS;
@@ -82,10 +81,9 @@ public final class CelPolicyDao {
                 .filter(fieldName -> !"resolved_license".equals(fieldName))
                 .toList();
         fetchColumns.addAll(selectColumns(COMPONENT_FIELDS, fieldNames));
-        fetchColumns.addAll(selectColumns(COMPONENT_LICENSE_FIELDS, fieldNames));
 
         if (needsResolvedLicense) {
-            fetchColumns.add("cl.\"LICENSE_ID\" AS resolved_license_id");
+            fetchColumns.add("c.\"LICENSE_ID\" AS resolved_license_id");
         }
 
         final boolean shouldJoinPm =
@@ -104,15 +102,6 @@ public final class CelPolicyDao {
                         <#-- @ftlvariable name="shouldJoinPm" type="boolean" -->
                         SELECT ${fetchColumns?join(", ")}
                           FROM "COMPONENT" AS c
-                          LEFT JOIN LATERAL (
-                            SELECT *
-                            FROM "COMPONENTLICENSES" AS "cl"
-                            WHERE "cl"."COMPONENTID" = "c"."ID"
-                            ORDER BY
-                              "cl"."ORDINALITY" ASC,
-                              "cl"."ID" ASC
-                            LIMIT 1
-                          ) AS "cl" ON TRUE
                         <#if shouldJoinPam!false>
                           LEFT JOIN "PACKAGE_ARTIFACT_METADATA" AS pam
                             ON pam."PURL" = c."PURL"
@@ -224,18 +213,10 @@ public final class CelPolicyDao {
                             <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
                             SELECT DISTINCT ${fetchColumns?join(", ")}
                               FROM "COMPONENT" AS c
-                              LEFT JOIN LATERAL (
-                                SELECT *
-                                FROM "COMPONENTLICENSES" AS "cl"
-                                WHERE "cl"."COMPONENTID" = "c"."ID"
-                                ORDER BY
-                                  "cl"."ORDINALITY" ASC,
-                                  "cl"."ID" ASC
-                                LIMIT 1
-                              ) AS "cl" ON TRUE
-                              INNER JOIN "LICENSE" AS l
-                                ON cl."LICENSE_ID" = l."ID"
-                              WHERE c."PROJECT_ID" = :projectId
+                              FROM "LICENSE" AS l
+                             INNER JOIN "COMPONENT" AS c
+                                ON c."LICENSE_ID" = l."ID"
+                             WHERE c."PROJECT_ID" = :projectId
                             """)
                     .define("fetchColumns", fetchColumns)
                     .bind("projectId", projectId)
@@ -280,17 +261,9 @@ public final class CelPolicyDao {
                         SELECT DISTINCT
                           ${fetchColumns?join(", ")}
                           FROM "COMPONENT" AS c
-                            LEFT JOIN LATERAL (
-                              SELECT *
-                              FROM "COMPONENTLICENSES" AS "cl"
-                              WHERE "cl"."COMPONENTID" = "c"."ID"
-                              ORDER BY
-                                "cl"."ORDINALITY" ASC,
-                                "cl"."ID" ASC
-                              LIMIT 1
-                            ) AS "cl" ON TRUE
-                            INNER JOIN "LICENSE" AS l
-                              ON cl."LICENSE_ID" = l."ID"
+                            FROM "LICENSE" AS l
+                         INNER JOIN "COMPONENT" AS c
+                            ON c."LICENSE_ID" = l."ID"
                           LEFT JOIN "LICENSEGROUP_LICENSE" AS lgl
                             ON lgl."LICENSE_ID" = l."ID"
                           LEFT JOIN "LICENSEGROUP" AS lg
@@ -692,7 +665,6 @@ public final class CelPolicyDao {
         }
 
         final List<String> fetchColumns = new ArrayList<>(selectColumns(COMPONENT_FIELDS, componentRequirements));
-        fetchColumns.addAll(selectColumns(COMPONENT_LICENSE_FIELDS, componentRequirements));
 
         final boolean shouldJoinPm = componentRequirements.contains("latest_version")
                 || componentRequirements.contains("latest_version_published_at");
@@ -713,15 +685,6 @@ public final class CelPolicyDao {
                              , ${fetchColumns?join(", ")}
                         </#if>
                           FROM "COMPONENT" AS c
-                          LEFT JOIN LATERAL (
-                            SELECT *
-                            FROM "COMPONENTLICENSES" AS "cl"
-                            WHERE "cl"."COMPONENTID" = "c"."ID"
-                            ORDER BY
-                              "cl"."ORDINALITY" ASC,
-                              "cl"."ID" ASC
-                            LIMIT 1
-                          ) AS "cl" ON TRUE
                         <#if shouldJoinPam!false>
                           LEFT JOIN "PACKAGE_ARTIFACT_METADATA" AS pam
                             ON pam."PURL" = c."PURL"

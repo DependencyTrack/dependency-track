@@ -360,7 +360,7 @@ public class Project implements Serializable {
     @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
     private ProjectCollectionLogic collectionLogic;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @ForeignKey(
             name = "PROJECT_COLLECTION_TAG_FK",
             updateAction = ForeignKeyAction.NONE,

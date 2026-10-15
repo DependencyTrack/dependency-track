@@ -809,6 +809,16 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
     @RegisterConstructorMapper(DeletedProject.class)
     List<DeletedProject> deleteExcessProjectVersions(@Bind int versionCountThreshold, @Bind int batchSize);
 
+    /// At most two project UUIDs with this canonical package URL.
+    /// Two rows mean the package URL is ambiguous and must not be used as a match.
+    @SqlQuery("""
+            SELECT "UUID"
+              FROM "PROJECT"
+             WHERE "PURL" = :purl
+             LIMIT 2
+            """)
+    List<UUID> listProjectUuidsByPurl(@Bind String purl);
+
     record ProjectInfoRow(long id, boolean isCollection) {}
 
     @SqlQuery("""

@@ -35,6 +35,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.model.Component;
@@ -50,13 +51,17 @@ import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao.GraphComponent;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
+import org.dependencytrack.resources.v1.vo.MatchedProjectResponse;
 import org.dependencytrack.tasks.IdentifyInternalComponentsWorkflow;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.dependencytrack.util.PurlUtil;
 import org.jdbi.v3.core.Handle;
+import us.springett.parsers.cpe.CpeParser;
+import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
 import jakarta.inject.Inject;
 import jakarta.validation.Validator;
@@ -97,6 +102,8 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 @Tag(name = "component")
 @SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class ComponentResource extends AbstractApiResource {
+
+    static final String MATCHED_PROJECT_FORBIDDEN_DETAIL = "You are not authorized to access this page";
 
     private final DexEngine dexEngine;
 
@@ -820,6 +827,112 @@ public class ComponentResource extends AbstractApiResource {
 
             return Response.ok(responseGraph).build();
         });
+    }
+
+    @GET
+    @Path("/{uuid}/matched-project")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns the project path for a component that matches a project",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+                    + "<p>A project matches when its name and version equal the component's"
+                    + " and both CPEs parse to the same value, or when both package URLs"
+                    + " canonicalize to the same value. CPE 2.2 and 2.3 are compared after"
+                    + " parsing. Identity is compared before access to the matched project"
+                    + " is checked. When the CPE identity and the package URL point at"
+                    + " different projects, the component does not match.</p>")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Path of the matched project",
+                        content = @Content(schema = @Schema(implementation = MatchedProjectResponse.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the owning project or the matched project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The component was not found, or it does not match a project")
+            })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getMatchedProject(
+            @Parameter(description = "The UUID of the component", required = true) @PathParam("uuid") @ValidUuid
+                    String uuid) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Component component = qm.getObjectByUuid(Component.class, uuid);
+            if (component == null || component.getProject() == null) {
+                return matchedProjectNotFound();
+            }
+
+            requireAccess(qm, component.getProject(), MATCHED_PROJECT_FORBIDDEN_DETAIL);
+
+            final Project matchedProject = ProjectAccess.unrestricted(() -> resolveMatchedProject(qm, component));
+            if (matchedProject == null) {
+                return matchedProjectNotFound();
+            }
+
+            requireAccess(qm, matchedProject, MATCHED_PROJECT_FORBIDDEN_DETAIL);
+            return Response.ok(new MatchedProjectResponse("/projects/" + matchedProject.getUuid()))
+                    .build();
+        }
+    }
+
+    private Project resolveMatchedProject(QueryManager qm, Component component) {
+        final Project cpeMatch = matchProjectByCpe(qm, component);
+        final Project purlMatch = matchProjectByPurl(qm, component);
+        if (cpeMatch != null && purlMatch != null && !cpeMatch.getUuid().equals(purlMatch.getUuid())) {
+            return null;
+        }
+        if (purlMatch != null) {
+            return purlMatch;
+        }
+        return cpeMatch;
+    }
+
+    private static Project matchProjectByCpe(QueryManager qm, Component component) {
+        if (StringUtils.isBlank(component.getName()) || StringUtils.isBlank(component.getCpe())) {
+            return null;
+        }
+        final Project project = qm.getProject(component.getName(), component.getVersion());
+        if (project == null
+                || StringUtils.isBlank(project.getCpe())
+                || !cpesMatch(component.getCpe(), project.getCpe())) {
+            return null;
+        }
+        return project;
+    }
+
+    private Project matchProjectByPurl(QueryManager qm, Component component) {
+        final PackageURL purl = component.getPurl();
+        if (purl == null) {
+            return null;
+        }
+        final List<UUID> projectUuids =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).listProjectUuidsByPurl(purl.canonicalize()));
+        if (projectUuids.size() != 1) {
+            return null;
+        }
+        return qm.getObjectByUuid(Project.class, projectUuids.getFirst());
+    }
+
+    private static boolean cpesMatch(String componentCpe, String projectCpe) {
+        try {
+            return CpeParser.parse(componentCpe).equals(CpeParser.parse(projectCpe));
+        } catch (CpeParsingException ignored) {
+            return false;
+        }
+    }
+
+    private static Response matchedProjectNotFound() {
+        return Response.status(Response.Status.NOT_FOUND)
+                .type(MediaType.TEXT_PLAIN)
+                .entity("")
+                .build();
     }
 
     @GET

@@ -119,7 +119,15 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
             final var analyzerName = vulnAnalyzerFactory.extensionName();
 
             try (var _ = MDC.putCloseable(MDC_VULN_ANALYZER_NAME, analyzerName)) {
-                if (vulnAnalyzerFactory.isEnabled()) {
+                final boolean isEnabled;
+                try {
+                    isEnabled = vulnAnalyzerFactory.isEnabled();
+                } catch (RuntimeException e) {
+                    LOGGER.warn("Failed to determine whether analyzer is enabled; Skipping it", e);
+                    continue;
+                }
+
+                if (isEnabled) {
                     LOGGER.debug("Analyzer is enabled");
                     requirementsByAnalyzer
                             .computeIfAbsent(analyzerName, _ -> new HashSet<>())

@@ -78,6 +78,14 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
     private static final String INTERNAL_VULN_ID_PROPERTY = "dependencytrack:internal:vulnerability-id";
     private static final int QUERY_BATCH_SIZE = 25;
 
+    private static String normalizeArch(final String arch) {
+        return switch (arch.toLowerCase(Locale.ROOT)) {
+            case "amd64", "x86-64", "x64" -> "x86_64";
+            case "arm64" -> "aarch64";
+            default -> arch.toLowerCase(Locale.ROOT);
+        };
+    }
+
     private final Jdbi jdbi;
 
     InternalVulnAnalyzer(Jdbi jdbi) {
@@ -441,7 +449,9 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         if (!matchesDistro(componentPurl, criteria)) {
             return false;
         }
-
+        if (!matchesArch(componentPurl, criteria)) {
+            return false;
+        }
         final String versioningScheme =
                 KnownVersioningSchemes.fromPurlType(componentPurl.getType()).orElse(SCHEME_GENERIC);
 
@@ -657,6 +667,30 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         return true;
     }
 
+    private static final Set<String> ARCH_AGNOSTIC = Set.of("source", "src", "all", "any", "noarch");
+
+    private static boolean matchesArch(PackageURL componentPurl, MatchingCriteria criteria) {
+        final String componentArch = qualifierOf(componentPurl, "arch");
+        final String criteriaArch = qualifierOf(criteria.purl(), "arch");
+
+        // At least one side has no arch qualifier.
+        // Treat as match to avoid false negatives, since not all BOM generators
+        // and vuln DBs populate it.
+        if (componentArch == null || criteriaArch == null) {
+            return true;
+        }
+
+        final String normalizedComponentArch = normalizeArch(componentArch);
+        final String normalizedCriteriaArch = normalizeArch(criteriaArch);
+
+        // Source / architecture-independent packages apply to all architectures.
+        if (ARCH_AGNOSTIC.contains(normalizedComponentArch) || ARCH_AGNOSTIC.contains(normalizedCriteriaArch)) {
+            return true;
+        }
+
+        return normalizedComponentArch.equals(normalizedCriteriaArch);
+    }
+
     private static @Nullable OsDistribution resolveOsDistro(
             @Nullable PackageURL purl, @Nullable MatchingCriteria matchingCriteria) {
         if (purl == null) {
@@ -705,13 +739,18 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         return resolveOsDistro(purl, null);
     }
 
-    private static @Nullable String distroQualifierOf(@Nullable PackageURL purl) {
+    private static @Nullable String qualifierOf(@Nullable PackageURL purl, String key) {
         if (purl == null) {
             return null;
         }
 
         final Map<String, String> qualifiers = purl.getQualifiers();
-        return qualifiers != null ? qualifiers.get("distro") : null;
+        final String value = qualifiers != null ? qualifiers.get(key) : null;
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    private static @Nullable String distroQualifierOf(@Nullable PackageURL purl) {
+        return qualifierOf(purl, "distro");
     }
 
     /// Returns the PURL's version with any type-specific transformations applied to make it

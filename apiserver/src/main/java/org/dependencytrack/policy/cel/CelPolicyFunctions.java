@@ -680,7 +680,7 @@ final class CelPolicyFunctions {
                 }
             }
             if (component.hasScope()) {
-                if (component.getScope().equals("NULL")) {
+                if (component.getScope().isEmpty()) {
                     sqlFilters.add("\"SCOPE\" IS NULL");
                 } else {
                     sqlFilters.add("\"SCOPE\" = :scope");

@@ -1605,7 +1605,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 PolicyCondition.Operator.MATCHES,
                 """
             component.is_dependency_of(v1.Component{
-              scope: "NULL"
+              scope: ""
             })
             """,
                 PolicyViolation.Type.OPERATIONAL);

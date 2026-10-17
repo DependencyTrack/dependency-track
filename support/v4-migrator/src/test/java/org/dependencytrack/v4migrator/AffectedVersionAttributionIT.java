@@ -105,6 +105,18 @@ class AffectedVersionAttributionIT {
                     '00000000-0000-0000-0000-000000000abd', 2, 10
                 )
                 """);
+
+            // Unknown / legacy SOURCE in v4: must land as UNKNOWN in v5.
+            h.execute("""
+                INSERT INTO "AFFECTEDVERSIONATTRIBUTION" (
+                    "ID", "FIRST_SEEN", "LAST_SEEN", "SOURCE", "UUID",
+                    "VULNERABILITY", "VULNERABLE_SOFTWARE"
+                )
+                VALUES (
+                    102, '2024-01-01T00:00:00Z', '2024-12-01T00:00:00Z', 'NPM',
+                    '00000000-0000-0000-0000-000000000abe', 1, 10
+                )
+                """);
         });
 
         runPipeline();
@@ -115,10 +127,15 @@ class AffectedVersionAttributionIT {
                       FROM "AFFECTEDVERSIONATTRIBUTION"
                      ORDER BY "ID"
                     """).mapToMap().list());
-        assertThat(rows).hasSize(1);
+        assertThat(rows).hasSize(2);
         assertThat(rows.get(0))
                 .containsEntry("id", 100L)
                 .containsEntry("source", "NVD")
+                .containsEntry("vulnerability", 1L)
+                .containsEntry("vulnerable_software", 10L);
+        assertThat(rows.get(1))
+                .containsEntry("id", 102L)
+                .containsEntry("source", "UNKNOWN")
                 .containsEntry("vulnerability", 1L)
                 .containsEntry("vulnerable_software", 10L);
 

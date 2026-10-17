@@ -44,6 +44,8 @@ import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -57,6 +59,27 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.hamcrest.Matchers.equalTo;
 
 public class NotificationSubjectDaoTest extends PersistenceCapableTest {
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldIncludeLatestStatusInProjectQueries(boolean isLatest) {
+        final var project = new Project();
+        project.setName("projectName");
+        project.setIsLatest(isLatest);
+        qm.persist(project);
+
+        withJdbiHandle(handle -> {
+            final var dao = handle.attach(NotificationSubjectDao.class);
+            assertThat(dao.getProjects(List.of(project.getUuid()))).satisfiesExactly(subject -> {
+                assertThat(subject.hasIsLatest()).isTrue();
+                assertThat(subject.getIsLatest()).isEqualTo(isLatest);
+            });
+            final var subject = dao.getProjectsById(List.of(project.getId())).get(project.getId());
+            assertThat(subject.hasIsLatest()).isTrue();
+            assertThat(subject.getIsLatest()).isEqualTo(isLatest);
+            return null;
+        });
+    }
 
     @Test
     public void testGetSubscribedNotificationGroups() {
@@ -96,6 +119,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         project.setVersion("projectVersion");
         project.setDescription("projectDescription");
         project.setPurl("projectPurl");
+        project.setIsLatest(true);
         qm.persist(project);
         qm.bind(project, List.of(qm.createTag("projectTagA"), qm.createTag("projectTagB")));
 
@@ -172,6 +196,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                       "name": "projectName",
                                       "purl": "projectPurl",
                                       "isActive":true,
+                                      "isLatest": true,
                                       "tags": [
                                         "projecttaga",
                                         "projecttagb"
@@ -196,6 +221,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                     "name": "projectName",
                                     "purl": "projectPurl",
                                     "isActive":true,
+                                    "isLatest": true,
                                     "tags": [
                                       "projecttaga",
                                       "projecttagb"
@@ -298,7 +324,8 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                           "project": {
                             "uuid": "${json-unit.matches:projectUuid}",
                             "name": "projectName",
-                            "isActive":true
+                            "isActive":true,
+                            "isLatest": false
                           },
                           "vulnerability": {
                             "uuid": "${json-unit.matches:vulnUuid}",
@@ -320,7 +347,8 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                             {
                               "uuid": "${json-unit.matches:projectUuid}",
                               "name": "projectName",
-                              "isActive":true
+                              "isActive":true,
+                              "isLatest": false
                             }
                           ]
                         }
@@ -421,6 +449,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                             "description": "projectDescription",
                             "purl": "projectPurl",
                             "isActive":true,
+                            "isLatest": false,
                             "tags": [
                               "projecttaga",
                               "projecttagb"
@@ -522,7 +551,8 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                           "project": {
                             "uuid": "${json-unit.matches:projectUuid}",
                             "name": "projectName",
-                            "isActive":true
+                            "isActive":true,
+                            "isLatest": false
                           },
                           "vulnerabilities": [
                             {
@@ -637,6 +667,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                          "version": "projectVersion",
                                          "description": "projectDescription",
                                          "isActive":true,
+                                         "isLatest": false,
                                          "purl": "projectPurl",
                                          "tags": [
                                              "projecttaga",
@@ -697,6 +728,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                              "description": "projectDescription",
                                              "purl": "projectPurl",
                                              "isActive":true,
+                                             "isLatest": false,
                                              "tags": [
                                                  "projecttaga",
                                                  "projecttagb"
@@ -799,6 +831,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                     "description": "projectDescription",
                                     "purl": "projectPurl",
                                     "isActive": true,
+                                    "isLatest": false,
                                     "tags": [
                                       "projecttaga",
                                       "projecttagb"

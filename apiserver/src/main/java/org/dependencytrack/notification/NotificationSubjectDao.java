@@ -81,6 +81,7 @@ public interface NotificationSubjectDao extends SqlObject {
                  , p."DESCRIPTION" AS "projectDescription"
                  , p."PURL" AS "projectPurl"
                  , (p."INACTIVE_SINCE" IS NULL) AS "isActive"
+                 , p."IS_LATEST" AS "isLatest"
                  , (
                      SELECT ARRAY_AGG(DISTINCT t."NAME")
                        FROM "TAG" AS t
@@ -208,6 +209,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , p."DESCRIPTION" AS "projectDescription"
                              , p."PURL" AS "projectPurl"
                              , (p."INACTIVE_SINCE" IS NULL) AS "isActive"
+                             , p."IS_LATEST" AS "isLatest"
                              , (
                                  SELECT ARRAY_AGG(DISTINCT t."NAME")
                                    FROM "TAG" AS t
@@ -355,6 +357,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , p."DESCRIPTION" AS "projectDescription"
                              , p."PURL" AS "projectPurl"
                              , (p."INACTIVE_SINCE" IS NULL) AS "isActive"
+                             , p."IS_LATEST" AS "isLatest"
                              , (
                                  SELECT ARRAY_AGG(DISTINCT t."NAME")
                                    FROM "TAG" AS t
@@ -455,6 +458,7 @@ public interface NotificationSubjectDao extends SqlObject {
                  , p."DESCRIPTION" AS "projectDescription"
                  , p."PURL" AS "projectPurl"
                  , (p."INACTIVE_SINCE" IS NULL) AS "isActive"
+                 , p."IS_LATEST" AS "isLatest"
                  , (
                      SELECT ARRAY_AGG(DISTINCT t."NAME")
                        FROM "TAG" AS t
@@ -484,6 +488,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , "DESCRIPTION" AS "projectDescription"
                              , "PURL" AS "projectPurl"
                              , ("INACTIVE_SINCE" IS NULL) AS "isActive"
+                             , "IS_LATEST" AS "isLatest"
                              , (
                                  SELECT ARRAY_AGG(DISTINCT t."NAME")
                                    FROM "TAG" AS t
@@ -702,6 +707,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , p."DESCRIPTION" AS "projectDescription"
                              , p."PURL" AS "projectPurl"
                              , (p."INACTIVE_SINCE" IS NULL) AS "isActive"
+                             , p."IS_LATEST" AS "isLatest"
                              , (
                                  SELECT ARRAY_AGG(DISTINCT t."NAME")
                                    FROM "TAG" AS t

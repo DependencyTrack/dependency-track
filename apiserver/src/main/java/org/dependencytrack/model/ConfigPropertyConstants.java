@@ -357,7 +357,14 @@ public enum ConfigPropertyConstants {
             null,
             PropertyType.INTEGER,
             "Timestamp of the last telemetry submission in epoch seconds",
-            ConfigPropertyAccessMode.READ_ONLY);
+            ConfigPropertyAccessMode.READ_ONLY),
+    PACKAGE_HEALTH_RESOLUTION_ENABLED(
+            "package-health",
+            "enabled",
+            "true",
+            PropertyType.BOOLEAN,
+            "Enable package health metadata resolution",
+            ConfigPropertyAccessMode.READ_WRITE);
 
     private final String groupName;
     private final String propertyName;

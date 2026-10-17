@@ -55,6 +55,8 @@ public final class ConfigKeys {
 
     public static final String TASK_PACKAGE_METADATA_MAINTENANCE_CRON = "dt.task.package-metadata-maintenance.cron";
     public static final String TASK_PACKAGE_METADATA_RESOLUTION_CRON = "dt.task.package-metadata-resolution.cron";
+    public static final String TASK_PACKAGE_HEALTH_METADATA_RESOLUTION_CRON =
+            "dt.task.package-health-metadata-resolution.cron";
     public static final String TASK_DEFECT_DOJO_UPLOAD_CRON = "dt.task.defect-dojo-upload.cron";
     public static final String TASK_EPSS_MIRROR_CRON = "dt.task.epss-mirror.cron";
     public static final String TASK_KEV_MIRROR_CRON = "dt.task.kev-mirror.cron";

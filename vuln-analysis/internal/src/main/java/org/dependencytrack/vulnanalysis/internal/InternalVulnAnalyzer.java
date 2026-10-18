@@ -79,10 +79,11 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
     private static final int QUERY_BATCH_SIZE = 25;
 
     private static String normalizeArch(final String arch) {
-        return switch (arch.toLowerCase(Locale.ROOT)) {
-            case "amd64", "x86-64", "x64" -> "x86_64";
-            case "arm64" -> "aarch64";
-            default -> arch.toLowerCase(Locale.ROOT);
+        final String lower = arch.toLowerCase(Locale.ROOT);
+        return switch (lower) {
+            case "x86_64", "x86-64", "x64" -> "amd64";
+            case "aarch64" -> "arm64";
+            default -> lower;
         };
     }
 

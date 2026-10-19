@@ -1266,6 +1266,50 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getDependencyGraphForComponentWithMultipleUuidsTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+
+        Component componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("ComponentA");
+        componentA = qm.createComponent(componentA, false);
+
+        Component componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("ComponentB");
+        componentB = qm.createComponent(componentB, false);
+
+        Component componentC = new Component();
+        componentC.setProject(project);
+        componentC.setName("ComponentC");
+        componentC = qm.createComponent(componentC, false);
+
+        // A -> C <- B
+        project.setDirectDependencies(
+                "[{\"uuid\":\"" + componentA.getUuid() + "\"}, {\"uuid\":\"" + componentB.getUuid() + "\"}]");
+        componentA.setDirectDependencies("[{\"uuid\":\"" + componentC.getUuid() + "\"}]");
+        componentB.setDirectDependencies("[{\"uuid\":\"" + componentC.getUuid() + "\"}]");
+
+        // Regression for #7626: @ValidUuid rejected the pipe-joined path value before the handler ran.
+        final Response response = jersey.target(V1_COMPONENT
+                        + "/project/"
+                        + project.getUuid()
+                        + "/dependencyGraph/"
+                        + componentA.getUuid()
+                        + "|"
+                        + componentB.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json.containsKey(componentA.getUuid().toString())).isTrue();
+        assertThat(json.containsKey(componentB.getUuid().toString())).isTrue();
+        assertThat(json.containsKey(componentC.getUuid().toString())).isTrue();
+    }
+
+    @Test
     public void getDependencyGraphForComponentInvalidProjectUuidTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);

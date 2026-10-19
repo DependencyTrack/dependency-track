@@ -543,6 +543,11 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             Component persistentComponent = persistentComponentByIdentity.get(componentIdentity);
             if (persistentComponent == null) {
                 component.setProject(project);
+                // NB: Setting the risk score to 0 saves a ton of DB writes during the first
+                // project metrics calculation. The majority of components will have no risk,
+                // so I/O is wasted purely on changing NULL to 0 later. Particularly on large
+                // BOMs this makes a big difference.
+                component.setLastInheritedRiskScore(0.0);
                 persistentComponent = qm.getPersistenceManager().makePersistent(component);
                 persistentComponent.setNew(true); // Transient
             } else {

@@ -204,6 +204,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("Apache-2.0");
         assertThat(component.getLicense()).isNull();
         assertThat(component.getLicenseUrl()).isEqualTo("https://www.apache.org/licenses/LICENSE-2.0.txt");
+        assertThat(component.getLastInheritedRiskScore()).isZero();
 
         assertThat(component.getProperties())
                 .satisfiesExactlyInAnyOrder(

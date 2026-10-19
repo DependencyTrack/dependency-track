@@ -62,6 +62,8 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
+import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
+import org.dependencytrack.persistence.jdbi.VulnerabilityDao.ComponentVulnerabilityRow;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
@@ -138,6 +140,21 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(100, json.size());
         Assertions.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
         Assertions.assertEquals("0", json.getJsonObject(0).getString("version"));
+    }
+
+    @Test
+    void getProjectsWithMalformedPurlTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setPurl("pkg:pypi/%0@latest");
+        qm.persist(project);
+
+        Response response =
+                jersey.target(V1_PROJECT).request().header(X_API_KEY, apiKey).get(Response.class);
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonArray json = parseJsonArray(response);
+        Assertions.assertEquals("pkg:pypi/%0@latest", json.getJsonObject(0).getString("purl"));
     }
 
     @Test
@@ -2097,6 +2114,95 @@ class ProjectResourceTest extends ResourceTest {
                         """);
     }
 
+    @Test
+    void getProjectLookupWithCollectionTagTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN_WITH_TAG);
+        project.setCollectionTag(qm.createTag("foo"));
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_PROJECT + "/lookup")
+                .queryParam("name", "acme-app")
+                .queryParam("version", "1.0.0")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "version": "1.0.0",
+                          "uuid": "${json-unit.matches:projectUuid}",
+                          "tags": [],
+                          "isLatest": false,
+                          "active":true,
+                          "collectionLogic": "AGGREGATE_DIRECT_CHILDREN_WITH_TAG",
+                          "collectionTag": {
+                            "name": "foo"
+                          },
+                          "versions": [
+                            {
+                              "uuid": "${json-unit.matches:projectUuid}",
+                              "version": "1.0.0",
+                              "isLatest": false,
+                              "active": true
+                            }
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
+    void getLatestProjectWithCollectionTagTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setIsLatest(true);
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN_WITH_TAG);
+        project.setCollectionTag(qm.createTag("foo"));
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_PROJECT_LATEST + "acme-app")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "version": "1.0.0",
+                          "uuid": "${json-unit.matches:projectUuid}",
+                          "tags": [],
+                          "isLatest": true,
+                          "active":true,
+                          "collectionLogic": "AGGREGATE_DIRECT_CHILDREN_WITH_TAG",
+                          "collectionTag": {
+                            "name": "foo"
+                          },
+                          "versions": [
+                            {
+                              "uuid": "${json-unit.matches:projectUuid}",
+                              "version": "1.0.0",
+                              "isLatest": true,
+                              "active": true
+                            }
+                          ]
+                        }
+                        """);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"uuid", "lookup", "latest"})
     void shouldReturnAggregatedChildMetricsWhenGettingCollectionProject(String endpoint) {
@@ -3744,9 +3850,13 @@ class ProjectResourceTest extends ResourceTest {
                                 assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
                             });
 
-                            assertThat(qm.getVulnerabilities(clonedComponent, false)
-                                            .getList(Vulnerability.class))
-                                    .satisfiesExactly(v -> assertThat(v.getId()).isEqualTo(vuln.getId()));
+                            final List<ComponentVulnerabilityRow> clonedVulnRows =
+                                    withJdbiHandle(handle -> handle.attach(VulnerabilityDao.class)
+                                            .getVulnerabilitiesByComponent(clonedComponent.getId(), false));
+                            assertThat(clonedVulnRows)
+                                    .satisfiesExactly(row -> assertThat(
+                                                    row.vulnerability().getId())
+                                            .isEqualTo(vuln.getId()));
 
                             assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
                                 assertThat(clonedAnalysis.getId()).isNotEqualTo(analysisId);
@@ -5117,6 +5227,16 @@ class ProjectResourceTest extends ResourceTest {
         childProject.setParent(collectionProject);
         qm.persist(childProject);
 
+        final var collectionWithoutChildMetrics = new Project();
+        collectionWithoutChildMetrics.setName("acme-collection-without-child-metrics");
+        collectionWithoutChildMetrics.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(collectionWithoutChildMetrics, List.of(), false);
+
+        final var childWithoutMetrics = new Project();
+        childWithoutMetrics.setName("acme-child-without-metrics");
+        childWithoutMetrics.setParent(collectionWithoutChildMetrics);
+        qm.persist(childWithoutMetrics);
+
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
             final LocalDate today = LocalDate.now(ZoneOffset.UTC);
@@ -5147,10 +5267,10 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
 
         final JsonArray jsonArray = parseJsonArray(response);
-        assertThat(jsonArray).hasSize(3);
+        assertThat(jsonArray).hasSize(5);
 
         final JsonObject collectionObj = jsonArray.stream()
                 .map(JsonObject.class::cast)
@@ -5180,6 +5300,38 @@ class ProjectResourceTest extends ResourceTest {
                           "components": 2
                         }
                         """);
+
+        final JsonObject collectionWithoutChildMetricsObj = jsonArray.stream()
+                .map(JsonObject.class::cast)
+                .filter(o -> "acme-collection-without-child-metrics".equals(o.getString("name")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(collectionWithoutChildMetricsObj.containsKey("metrics")).isFalse();
+    }
+
+    @Test
+    void shouldOmitCollectionProjectMetricsInLookupWhenNoChildHasMetrics() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var collectionProject = new Project();
+        collectionProject.setName("acme-collection");
+        collectionProject.setVersion("1.0");
+        collectionProject.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(collectionProject, List.of(), false);
+
+        final var childProject = new Project();
+        childProject.setName("acme-child");
+        childProject.setParent(collectionProject);
+        qm.persist(childProject);
+
+        final Response response = jersey.target(V1_PROJECT + "/lookup")
+                .queryParam("name", "acme-collection")
+                .queryParam("version", "1.0")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.metrics").isAbsent();
     }
 
     @Test

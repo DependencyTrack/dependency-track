@@ -220,6 +220,29 @@ class OsvVulnDataSourceTest {
     }
 
     @Test
+    void shouldHandleDataUrlWithTrailingSlash(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        final var zipBytes = new ByteArrayOutputStream();
+        new ZipOutputStream(zipBytes).close();
+        stubFor(get(urlEqualTo("/maven/all.zip"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/zip")
+                        .withBody(zipBytes.toByteArray())));
+
+        try (var dataSource = new OsvVulnDataSource(
+                null,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl() + "/",
+                List.of("maven"),
+                HttpClient.newHttpClient(),
+                false)) {
+            assertThat(dataSource.hasNext()).isFalse();
+        }
+
+        verify(getRequestedFor(urlEqualTo("/maven/all.zip")));
+    }
+
+    @Test
     void shouldPercentEncodeSpacesInEcosystemNameForFullArchive(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         final var zipBytes = new ByteArrayOutputStream();
         try (var zos = new ZipOutputStream(zipBytes)) {

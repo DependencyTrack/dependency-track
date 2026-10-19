@@ -29,7 +29,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.CycloneDxMediaType;
@@ -37,6 +36,7 @@ import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
+import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
@@ -310,7 +310,14 @@ public class VexResource extends AbstractApiResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The project could not be found")
+                @ApiResponse(responseCode = "404", description = "The project could not be found"),
+                @ApiResponse(
+                        responseCode = "413",
+                        description = "The uploaded document is too large",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON))
             })
     @PermissionRequired({
         Permissions.Constants.VULNERABILITY_ANALYSIS,
@@ -377,8 +384,8 @@ public class VexResource extends AbstractApiResource {
                             .build();
                 }
                 try (InputStream in = bodyPartEntity.getInputStream()) {
-                    final byte[] content = IOUtils.toByteArray(
-                            BOMInputStream.builder().setInputStream(in).get());
+                    final byte[] content = BomResource.readUpload(
+                            BOMInputStream.builder().setInputStream(in).get(), ConfigKeys.VEX_UPLOAD_MAX_SIZE_BYTES);
                     BomResource.validate(content, project);
                     return startVexImport(project, content);
                 } catch (IOException e) {

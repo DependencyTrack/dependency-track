@@ -64,6 +64,23 @@ class CelPolicyCompilerTest {
     }
 
     @Test
+    void testRequirementsAnalysisWithBinding() {
+        final var compiler = new CelPolicyCompiler(CelPolicyType.COMPONENT);
+
+        final CelPolicyProgram program = compiler.compile("""
+                cel.bind(
+                  matched,
+                  vulns.filter(vuln, has(vuln.epss_score) && vuln.epss_score >= 0.5),
+                  size(matched) > 0
+                    ? "EPSS >= 0.5 matched by: " + matched.map(vuln, vuln.id).join(", ")
+                    : ""
+                )
+                """, CacheMode.NO_CACHE);
+
+        assertThat(program.getRequirements()).containsEntry(TYPE_VULNERABILITY, Set.of("epss_score", "id"));
+    }
+
+    @Test
     void shouldReturnDeeplyImmutableRequirements() throws Exception {
         final CelPolicyProgram compiledProgram =
                 CelPolicyCompiler.getInstance(CelPolicyType.COMPONENT).compile("""

@@ -218,6 +218,21 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
                     .withHeader("Authorization", equalTo("Bearer sonatype_pat_test")));
         }
 
+        @Test
+        void shouldPreserveApiUrlPath(WireMockRuntimeInfo wmRuntimeInfo) {
+            stubFor(post(urlPathEqualTo("/proxy/api/v3/component-report"))
+                    .willReturn(aResponse().withStatus(200).withBody("[]")));
+
+            final OssIndexVulnAnalyzerFactory factory = createFactory();
+            final OssIndexVulnAnalyzerConfigV1 config = new OssIndexVulnAnalyzerConfigV1()
+                    .withEnabled(true)
+                    .withApiUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl() + "/proxy/"))
+                    .withApiToken("sonatype_pat_test");
+
+            final ExtensionTestResult result = factory.test(config);
+            assertThat(result.isFailed()).isFalse();
+        }
+
         private OssIndexVulnAnalyzerFactory createFactory() {
             final var factory = new OssIndexVulnAnalyzerFactory();
 

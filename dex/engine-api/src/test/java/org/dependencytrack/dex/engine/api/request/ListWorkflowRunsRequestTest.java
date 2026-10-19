@@ -36,6 +36,7 @@ class ListWorkflowRunsRequestTest {
                 .withWorkflowVersion(123)
                 .withStatuses(Set.of(WorkflowRunStatus.RUNNING, WorkflowRunStatus.CREATED))
                 .withLabels(Map.of("foo", "bar"))
+                .withOnlyRootRuns(true)
                 .withCreatedSince(Instant.ofEpochSecond(111))
                 .withCreatedBefore(Instant.ofEpochSecond(222))
                 .withCompletedSince(Instant.ofEpochSecond(333))
@@ -47,6 +48,7 @@ class ListWorkflowRunsRequestTest {
         assertThat(request.workflowVersion()).isEqualTo(123);
         assertThat(request.statuses()).containsExactlyInAnyOrder(WorkflowRunStatus.RUNNING, WorkflowRunStatus.CREATED);
         assertThat(request.labels()).containsEntry("foo", "bar");
+        assertThat(request.onlyRootRuns()).isTrue();
         assertThat(request.createdSince()).isEqualTo(Instant.ofEpochSecond(111));
         assertThat(request.createdBefore()).isEqualTo(Instant.ofEpochSecond(222));
         assertThat(request.completedSince()).isEqualTo(Instant.ofEpochSecond(333));

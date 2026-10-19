@@ -10,7 +10,7 @@ description: >-
 allowed-tools: Bash, AskUserQuestion, Read, Edit
 ---
 
-# Backporting a Pull Request
+# Backporting a pull request
 
 Automates the patch-release backport flow from [`RELEASING.md`](../../../RELEASING.md) §Patch Releases. Invoke as:
 
@@ -23,130 +23,87 @@ Requires an authenticated [`gh`](https://cli.github.com/) CLI (`gh auth status`)
 ## Rules (DO NOT VIOLATE)
 
 - **Never** `git push`. Print the push command at the end and let the user run it.
-- **Never** add `Co-Authored-By: Claude ...` to any commit.
-- **Always** cherry-pick with `git cherry-pick -x -s` (records origin SHA, adds signoff, matches existing patch-branch history).
 - **Always** work in `.claude/worktrees/backport-pr-<N>`, never in the primary checkout.
-- Flyway migrations: cherry-pick as-is. DO NOT RENAME OR RE-TIMESTAMP (see `RELEASING.md` §Flyway migrations).
-- If a conflict cannot be resolved unambiguously and does not apply conceptually, ask the user via `AskUserQuestion`. DO NOT IMPROVISE.
-
-## Resolving the canonical remote
-
-`origin` may point at a fork. Resolve the canonical remote once and use `$CANON` everywhere below:
-
-```sh
-CANON=$(git remote -v | awk '/DependencyTrack\/dependency-track.*\(fetch\)/ {print $1; exit}')
-```
-
-If empty, ask the user which remote tracks the canonical repo.
+- Cherry-pick Flyway migrations as-is. DO NOT RENAME OR RE-TIMESTAMP them, see `RELEASING.md` §Flyway migrations.
 
 ## Workflow
 
-### 1. Validate state
+### 1. Run the script
 
-- Confirm CWD is the primary repo (not already a worktree).
-- Resolve `$CANON` per §Resolving the canonical remote, then `git fetch $CANON`.
-- If `target-branch` was omitted, derive it from the PR's backport label:
-
-  ```sh
-  gh pr view <N> --json labels -q '.labels[].name | select(startswith("backport/"))'
-  ```
-
-  If `backport/5.0.5`, the target branch is `5.0.x`. On zero or multiple matches,
-  ask the user via `AskUserQuestion`, offering branches matching `[0-9]+\.[0-9]+\.x`.
-
-### 2. Locate the PR's commits
+From the primary checkout:
 
 ```sh
-gh pr view <N> --json state,baseRefName,mergeCommit
+.claude/skills/backport/backport.sh <N> [target-branch]
 ```
 
-- `state` is not `MERGED`: abort. DO NOT GUESS.
-- `baseRefName` is not `main`: tell the user which branch the PR targeted and ask before continuing.
+The script resolves the canonical remote, fetches it, and reads the PR via `gh`.
+It derives the target branch from the `backport/*` label and sets up the worktree.
+It then cherry-picks every commit not yet on the target in one `git cherry-pick -x -s --empty=drop`.
+It prints one row per commit, the post-backport checks, and the push command.
+Do not redo any of that by hand.
 
-Take `MERGE` from `mergeCommit.oid`, then check how it was merged:
+Act on the exit code:
 
-```sh
-git rev-parse --verify --quiet "${MERGE}^2"
-```
+| Exit | Meaning | Do |
+| --- | --- | --- |
+| 0 | All commits applied, or nothing left to push | Run the printed checks (§3), then summarize (§4). |
+| 1 | Error, e.g. PR not merged, or git too old for `--empty=drop` (needs 2.45) | Report the message and stop. DO NOT GUESS. |
+| 2 | Needs a decision (no/multiple labels, unknown target branch, non-`main` base, dirty worktree, unfinished cherry-pick, branch already has commits, no canonical remote) | Relay the printed options via `AskUserQuestion`, then re-run with the chosen flag or target. Run destructive cleanup it suggests only after the user agrees. |
+| 3 | A cherry-pick stopped | Handle per §2. |
 
-- **Merge commit** (`^2` resolves): the PR's commits are preserved in `main`.
-  ```sh
-  git log --reverse --format=%H "${MERGE}^1..${MERGE}^2"  # oldest first
-  ```
-- **Squash or rebase merge** (`^2` missing): `MERGE` itself is the only commit to pick.
+### 2. Handling a stopped cherry-pick
 
-### 3. Set up the worktree
+On exit 3 the cherry-pick is still in progress in the worktree. The script prints git's output.
+For conflicts it also prints the conflicted files and the source commit's diff of them.
 
-Path: `.claude/worktrees/backport-pr-<N>` (in-tree, git-ignored).
+Run `--continue` as `GIT_EDITOR=true git cherry-pick --continue`. Without it, git opens `$EDITOR` and the command hangs.
+`--continue` and `--skip` go on to the remaining commits, and may stop again. Handle each stop the same way.
+On a later stop, get the authoritative diff with `git show --format= CHERRY_PICK_HEAD -- <conflicted files>`.
 
-- **Reuse** (path exists, worktree registered): `cd` in, verify `git status` is clean (else ask the user), then `git checkout -B backport-pr-<N> $CANON/<target-branch>`.
-- **Fresh**: `git worktree add -b backport-pr-<N> .claude/worktrees/backport-pr-<N> $CANON/<target-branch>`.
-- **Leftover branch** (worktree gone, branch remains, `git worktree add` errors with `a branch named '…' already exists`): glance at `git log backport-pr-<N> ^$CANON/<target-branch>` to confirm nothing valuable, `git branch -D backport-pr-<N>`, retry.
-- If `git worktree add` half-succeeded (partial directory plus a stale branch), delete both and `git worktree prune` before retrying.
+- **Trivial conflict**, such as import order or adjacent non-overlapping edits. Resolve it, `git add`, `--continue`.
+- **Non-trivial conflict, but the change still applies.** Recreate the change in the working tree, `git add`, `--continue`.
+  The commit keeps the original author, message, and `-x` trailer.
+- **The change does not apply**, because the target refactored or removed the code.
+  Ask via `AskUserQuestion` whether to skip, port a reduced version, or port it differently. DO NOT INVENT A RESOLUTION.
+  To skip, run `git cherry-pick --skip`.
+- **The resolution leaves nothing to commit**, because the change is already on the target. `git cherry-pick --skip`, report as `skipped (empty)`.
+- **No conflicts, but the commit failed**, e.g. on signing. Report git's error to the user. NEVER `--skip` past it.
 
-### 4. Apply each commit
-
-For each SHA from step 2, in order.
-
-First, skip what is already there:
-
-```sh
-git log $CANON/<target-branch> --grep="cherry picked from commit <sha>" --format=%H
-```
-
-Non-empty means already backported. Skip it and note that in the summary.
-
-Otherwise `git cherry-pick -x -s <sha>`.
-
-- **Clean**: continue.
-- **Trivial conflict** (import order, non-overlapping adjacent edits): resolve, `git add`, `GIT_EDITOR=true git cherry-pick --continue` (`--continue` opens `$EDITOR` and hangs otherwise).
-- **Non-trivial but conceptually applies**: `git cherry-pick --abort`, recreate manually, commit per §Manual commit format.
-- **Does not apply conceptually** (target refactored/removed): `git cherry-pick --abort`, then `AskUserQuestion` with options (skip / reduced port / port differently). DO NOT INVENT A RESOLUTION.
+Once `git status` shows no cherry-pick in progress, go to §3.
 
 #### Inspecting a conflict before resolving
 
-Conflict markers can include unrelated `main`-only lines that anchored the hunk's context. Naively accepting "incoming" smuggles those into the backport.
+Conflict hunks can include unrelated `main`-only lines that git used as context. Taking the incoming side wholesale copies those lines into the backport.
 
-Before resolving, run `git show <sha> -- <conflicted-file>` to show the authoritative diff. If the `>>>>>>>` side has extra lines `git show` doesn't list, drop them.
+Compare against the authoritative diff. If the `>>>>>>>` side has extra lines that diff doesn't list, drop them.
 
-### 5. Manual commit format
+### 3. Post-backport checks
 
-For manually-recreated commits (not cherry-picked):
-
-- Mirror the original subject + body.
-- Add `Co-Authored-By: <Name> <email>` for the original commit's author. Omit if that email equals `git config user.email`. Never add `Co-Authored-By: Claude ...`.
-- `git commit -s` (adds `Signed-off-by`). Author identity = default git config. Pass the message via HEREDOC.
-
-### 6. Post-backport checks
-
-Run from the worktree. Flyway lints must be pinned to the patch branch. The default `BASE_REF` is `origin/main`,
-which would compare against the wrong history here.
-
-| If any commit touches | Run |
-| --- | --- |
-| `migration/src/main/resources/org/dependencytrack/migration/**` | `make lint-migrations BASE_REF=$CANON/<target-branch> AGENT=1` |
-| `dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration/**` | `make lint-dex-migration BASE_REF=$CANON/<target-branch> AGENT=1` |
-| tests | those tests, via `make test-single` |
-| anything | `make build AGENT=1` |
+Run the `make` commands the script printed, from the worktree.
 
 On failure, report and stop.
 
-### 7. Summary
+### 4. Summary
 
 Print, in this order:
 
 1. The worktree path.
-2. One row per commit from step 2. Every commit gets a row, including skipped ones:
+2. The script's table, with `stopped` and `pending` rows replaced by what happened. Every commit gets a row, including skipped ones:
 
    | Status | Commit | Subject |
    | --- | --- | --- |
-   | `picked` / `manual` / `skipped` / `already` | `<short-sha>` | ... |
+   | `picked` / `resolved` / `skipped (<reason>)` / `already` | `<short-sha>` | ... |
 
-   `<short-sha>` is the source commit on `main`, not the new one. For `skipped`, give the reason.
-3. The push command (DO NOT RUN IT):
-
-   ```sh
-   cd .claude/worktrees/backport-pr-<N> && git push -u origin backport-pr-<N>
-   ```
+   `<short-sha>` is the source commit on `main`, not the new one. `resolved` means a conflict was resolved by hand.
+   The script's `skipped` rows carry the reason: `merge` for merge commits inside the PR, `empty` for commits with no change left to apply.
+   Give commits you skip a reason the same way.
+   `already` only means the target has a commit with a matching `-x` trailer. A later revert on the target goes unnoticed.
+3. The push command the script printed (DO NOT RUN IT). Omit it if the script said there is nothing to push.
 
 If any row is not `picked`, state that on one line above the table.
+
+## Changing the script
+
+Run `.claude/skills/backport/backport-test.sh`. It exercises `backport.sh` against throwaway repos and a fake `gh`.
+
+Then run `shellcheck .claude/skills/backport/*.sh` and fix its findings.

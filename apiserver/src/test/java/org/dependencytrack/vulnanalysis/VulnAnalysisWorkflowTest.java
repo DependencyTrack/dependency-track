@@ -351,6 +351,51 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldNotDeactivateManuallyCreatedFindings() {
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INT-123");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln = qm.persist(vuln);
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.persist(project);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component = qm.persist(component);
+
+        qm.addVulnerability(vuln, component, "none");
+
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+                        .withArgument(VulnAnalysisWorkflowArg.newBuilder()
+                                .setProjectUuid(project.getUuid().toString())
+                                .build()));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        final long projectId = project.getId();
+        final List<FindingRow> findings = withJdbiHandle(handle -> handle.attach(FindingDao.class)
+                .selectFindingsByProject(
+                        projectId,
+                        /* includeInactive */ false,
+                        /* includeSuppressed */ false,
+                        /* searchText */ null,
+                        /* hasAnalysis */ null,
+                        /* source */ null,
+                        /* epssFrom */ null,
+                        /* epssTo */ null,
+                        /* isKev */ null,
+                        /* emitTotalCount */ false,
+                        /* paginate */ false));
+        assertThat(findings).hasSize(1);
+
+        assertThat(getNotificationOutbox()).isEmpty();
+    }
+
+    @Test
     void shouldEmitVulnerabilityRetractedNotificationWhenFindingBecomesInactive() throws Exception {
         var vuln = new Vulnerability();
         vuln.setVulnId("INT-200");

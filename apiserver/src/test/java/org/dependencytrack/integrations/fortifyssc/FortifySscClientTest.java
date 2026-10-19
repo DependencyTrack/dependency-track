@@ -78,7 +78,7 @@ class FortifySscClientTest extends PersistenceCapableTest {
         FortifySscUploader uploader = new FortifySscUploader(httpClient, new TestSecretManager());
         uploader.setQueryManager(qm);
         FortifySscClient client = new FortifySscClient(
-                httpClient, uploader, URI.create(wireMock.baseUrl() + "/ssc").toURL());
+                httpClient, uploader, URI.create(wireMock.baseUrl() + "/ssc/").toURL());
         String token = client.generateOneTimeUploadToken("2d5e4a06-945e-405f-a3c2-112bb3053453");
         Assertions.assertEquals("db975c97-98b1-4988-8d6a-9c3e044dfff3", token);
     }
@@ -97,7 +97,7 @@ class FortifySscClientTest extends PersistenceCapableTest {
         FortifySscUploader uploader = new FortifySscUploader(httpClient, new TestSecretManager());
         uploader.setQueryManager(qm);
         FortifySscClient client = new FortifySscClient(
-                httpClient, uploader, URI.create(wireMock.baseUrl() + "/ssc").toURL());
+                httpClient, uploader, URI.create(wireMock.baseUrl() + "/ssc/").toURL());
         String token = client.generateOneTimeUploadToken("wrong");
         Assertions.assertNull(token);
     }
@@ -117,7 +117,7 @@ class FortifySscClientTest extends PersistenceCapableTest {
         FortifySscUploader uploader = new FortifySscUploader(httpClient, new TestSecretManager());
         uploader.setQueryManager(qm);
         FortifySscClient client = new FortifySscClient(
-                httpClient, uploader, URI.create(wireMock.baseUrl() + "/ssc").toURL());
+                httpClient, uploader, URI.create(wireMock.baseUrl() + "/ssc/").toURL());
         InputStream stream = new ByteArrayInputStream("test input".getBytes());
         client.uploadDependencyTrackFindings(token, applicationVersion, stream);
 
@@ -147,7 +147,7 @@ class FortifySscClientTest extends PersistenceCapableTest {
         FortifySscUploader uploader = new FortifySscUploader(httpClient, new TestSecretManager());
         uploader.setQueryManager(qm);
         FortifySscClient client = new FortifySscClient(
-                httpClient, uploader, URI.create(wireMock.baseUrl() + "/ssc").toURL());
+                httpClient, uploader, URI.create(wireMock.baseUrl() + "/ssc/").toURL());
         InputStream stream = new ByteArrayInputStream("test input".getBytes());
         client.uploadDependencyTrackFindings(token, applicationVersion, stream);
 

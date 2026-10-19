@@ -337,6 +337,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                     Timestamp:             1970-01-01T18:31:06Z
                     Analysis State:        APPROVED
                     Suppressed:            false
+                    Message:               Component is 666 days old
 
                 --------------------------------------------------------------------------------
 

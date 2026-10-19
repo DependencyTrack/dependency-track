@@ -536,6 +536,7 @@ public interface MetricsDao extends SqlObject {
              ) pm ON TRUE
              WHERE cd."COLLECTION_LOGIC" IS NULL
              GROUP BY cd.root_id
+            HAVING COUNT(pm."PROJECT_ID") > 0
             """)
     List<ProjectMetrics> getMostRecentCollectionProjectMetrics(@Bind Collection<Long> projectIds);
 

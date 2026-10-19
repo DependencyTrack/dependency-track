@@ -29,6 +29,7 @@ import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.dependencytrack.notification.JdbcNotificationEmitter.BATCH_SIZE;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
 import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.api.TestNotificationFactory.createBomConsumedTestNotification;
@@ -57,15 +58,15 @@ class JdoNotificationEmitterTest extends PersistenceCapableTest {
     void emitAllShouldEmitNotifications() {
         createCatchAllNotificationRule(qm, NotificationScope.PORTFOLIO);
 
-        final var notifications = new ArrayList<Notification>(5);
+        final var notifications = new ArrayList<Notification>(BATCH_SIZE + 1);
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < BATCH_SIZE + 1; i++) {
             notifications.add(createBomConsumedTestNotification());
         }
 
         emitter.emitAll(notifications);
 
-        assertThat(getNotificationOutbox()).hasSize(5);
+        assertThat(getNotificationOutbox()).hasSize(BATCH_SIZE + 1);
     }
 
     @Test

@@ -74,7 +74,7 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getGroupName(),
                 VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getPropertyName(),
-                wireMock.baseUrl(),
+                wireMock.baseUrl() + "/",
                 VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getPropertyType(),
                 VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getDescription());
 

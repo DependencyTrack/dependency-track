@@ -736,7 +736,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                             assertThat(vs.isVulnerable()).isTrue();
                             assertThat(vs.getPurlType()).isEqualTo("nuget");
                             assertThat(vs.getPurlNamespace()).isNull();
-                            assertThat(vs.getPurlName()).isEqualTo("Bootstrap.Less");
+                            assertThat(vs.getPurlName()).isEqualTo("bootstrap.less");
                             assertThat(vs.getPurlVersion()).isNull();
                             assertThat(vs.getPurlQualifiers()).isNull();
                             assertThat(vs.getPurlSubpath()).isNull();

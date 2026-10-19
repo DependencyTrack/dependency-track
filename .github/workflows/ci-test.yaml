@@ -59,7 +59,6 @@ jobs:
           # https://github.com/actions/checkout/issues/426
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
           # Do not store the GitHub token in .git/config.
-          # Required because we upload the workspace as workflow artifact.
           persist-credentials: false
 
       - name: Set up JDK
@@ -95,7 +94,7 @@ jobs:
 
       - name: Upload test report
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # tag=v7.0.2
         with:
           name: test-report
           path: target/reports/
@@ -112,17 +111,10 @@ jobs:
           language: Java
           coverage-reports: coverage-report/target/site/jacoco-aggregate/jacoco.xml
 
-      - name: Upload PR workspace
+      - name: Upload PR coverage report
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # tag=v7.0.2
         with:
-          name: pr-workspace
-          include-hidden-files: true
-          path: |-
-            ./**/*
-            !./**/target/classes/**/*
-            !./**/*.jar
-            !./**/*.war
-            !./**/bom.json
-            !./apiserver/target/dependency-track-apiserver/**/*
-            !./apiserver/target/war/**/*
+          name: pr-coverage-report
+          path: coverage-report/target/site/jacoco-aggregate/jacoco.xml
+          if-no-files-found: error

@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
@@ -69,17 +70,24 @@ class SpdxLicenseRegistryTest {
 
         registeredIds.addAll(SpdxLicenseRegistry.WITH_COMPOUNDS.keySet());
 
-        final JsonNode root;
+        final List<JsonNode> licenses;
         try (final InputStream is = SpdxLicenseRegistryTest.class
                 .getClassLoader()
-                .getResourceAsStream("license-list-data/json/licenses.json")) {
+                .getResourceAsStream("license-list-data/licenses.jsonl")) {
             assertThat(is).isNotNull();
-            root = Mappers.jsonMapper().readTree(is);
+            licenses = Mappers.jsonMapper()
+                    .readerFor(JsonNode.class)
+                    .<JsonNode>readValues(is)
+                    .readAll();
         }
 
         deprecatedIds = new HashSet<>();
         allIds = new HashSet<>();
-        for (final JsonNode license : root.get("licenses")) {
+        for (final JsonNode license : licenses) {
+            if (!license.has("licenseId")) {
+                continue;
+            }
+
             final String id = license.get("licenseId").asText();
             allIds.add(id);
             if (license.get("isDeprecatedLicenseId").asBoolean()) {

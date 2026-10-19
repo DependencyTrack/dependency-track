@@ -1160,6 +1160,32 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getDependencyGraphForComponentWithMalformedPurlTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("Component1");
+        component.setPurl("pkg:pypi/%0@latest");
+        component.setPurlCoordinates("pkg:pypi/%0@latest");
+        component = qm.createComponent(component, false);
+
+        project.setDirectDependencies("[{\"uuid\":\"" + component.getUuid() + "\"}]");
+
+        Response response = jersey.target(
+                        V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertEquals(
+                "Component1",
+                json.get(component.getUuid().toString()).asJsonObject().getString("name"));
+    }
+
+    @Test
     public void getDependencyGraphForComponentWithMultiplePathsTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);

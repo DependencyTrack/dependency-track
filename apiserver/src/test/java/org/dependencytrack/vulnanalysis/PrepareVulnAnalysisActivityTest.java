@@ -31,17 +31,23 @@ import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
+import org.dependencytrack.plugin.api.ExtensionContext;
+import org.dependencytrack.plugin.api.ExtensionFactory;
+import org.dependencytrack.plugin.api.ExtensionPoint;
+import org.dependencytrack.plugin.api.Plugin;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.PrepareVulnAnalysisArg;
 import org.dependencytrack.proto.internal.workflow.v1.PrepareVulnAnalysisRes;
 import org.dependencytrack.support.net.OutboundConnectionPolicy;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
+import org.dependencytrack.vulnanalysis.api.VulnAnalyzerFactory;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzerRequirement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.http.HttpClient;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -365,6 +371,90 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
                 assertThat(property.getValue()).isEqualTo("true");
             });
         });
+    }
+
+    @Test
+    void shouldSkipAnalyzerWhenIsEnabledThrowsException() throws Exception {
+        class FailingVulnAnalyzer implements VulnAnalyzer {
+            @Override
+            public Bom analyze(Bom bom) {
+                return bom;
+            }
+        }
+
+        final var failingFactory = new VulnAnalyzerFactory() {
+            @Override
+            public String extensionName() {
+                return "failing";
+            }
+
+            @Override
+            public String displayName() {
+                return "Failing";
+            }
+
+            @Override
+            public Class<? extends VulnAnalyzer> extensionClass() {
+                return FailingVulnAnalyzer.class;
+            }
+
+            @Override
+            public void init(ExtensionContext context) {}
+
+            @Override
+            public VulnAnalyzer create() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean isEnabled() {
+                throw new IllegalStateException("Secret does not exist");
+            }
+
+            @Override
+            public EnumSet<VulnAnalyzerRequirement> analyzerRequirements() {
+                return EnumSet.of(VulnAnalyzerRequirement.COMPONENT_PURL);
+            }
+        };
+
+        final var mockPlugin = new MockVulnAnalyzerPlugin(
+                bom -> Bom.getDefaultInstance(), EnumSet.of(VulnAnalyzerRequirement.COMPONENT_PURL));
+        final var failingPlugin = new Plugin() {
+            @Override
+            public Collection<? extends ExtensionFactory<? extends ExtensionPoint>> extensionFactories() {
+                return List.of(failingFactory);
+            }
+        };
+
+        pluginManager = new PluginManager(
+                new SmallRyeConfigBuilder().build(),
+                new NoopCacheManager(),
+                secretName -> null,
+                JdbiFactory.createJdbi(),
+                HttpClient.newHttpClient(),
+                OutboundConnectionPolicy.of(List.of("*")),
+                List.of(VulnAnalyzer.class));
+        pluginManager.loadPlugins(List.of(failingPlugin, mockPlugin));
+        activity = new PrepareVulnAnalysisActivity(fileStorage, pluginManager);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new org.dependencytrack.model.Component();
+        component.setProject(project);
+        component.setName("libraryComponent");
+        component.setVersion("1.0.0");
+        component.setPurl("pkg:maven/com.example/libraryComponent@1.0.0");
+        component.setClassifier(Classifier.LIBRARY);
+        qm.persist(component);
+
+        final PrepareVulnAnalysisRes res = activity.execute(
+                mockActivityContext(),
+                PrepareVulnAnalysisArg.newBuilder()
+                        .setProjectUuid(project.getUuid().toString())
+                        .build());
+        assertThat(res.getAnalyzersList()).containsExactly("mock");
     }
 
     private void setupActivityForAnalyzerRequirements(EnumSet<VulnAnalyzerRequirement> requirements) {

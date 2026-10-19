@@ -36,21 +36,21 @@ jobs:
       github.event.workflow_run.event == 'pull_request'
         && github.event.workflow_run.conclusion == 'success'
     steps:
-    - name: Download PR workspace
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # tag=v8.0.1
-      with:
-        name: pr-workspace
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ github.event.workflow_run.id }}
-    - name: Ensure Git repository is initialized
-      run: git init
-    - name: Report Coverage to Codacy
+    - name: Fetch PR commit tree
       env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
         COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
       run: |-
-        bash <(curl -Ls https://coverage.codacy.com/get.sh) report \
-          --project-token "${CODACY_PROJECT_TOKEN}" \
-          --commit-uuid "${COMMIT_SHA}" \
-          --coverage-reports ./coverage-report/target/site/jacoco-aggregate/jacoco.xml \
-          --language Java
+        git init -q
+        git fetch -q --depth=1 --filter=blob:none "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" "${COMMIT_SHA}"
+    - name: Download PR coverage report
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # tag=v8.0.2
+      with:
+        name: pr-coverage-report
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+    - name: Report Coverage to Codacy
+      uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # tag=v1.3.0
+      with:
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        language: Java
+        coverage-reports: jacoco.xml

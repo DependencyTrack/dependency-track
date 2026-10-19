@@ -230,7 +230,7 @@ public class AffectedComponent {
                 vs.setPurl(purl.canonicalize());
                 vs.setPurlType(purl.getType());
                 vs.setPurlNamespace(purl.getNamespace());
-                vs.setPurlName(purl.getName());
+                vs.setPurlName(PurlUtil.normalizedName(purl));
                 vs.setPurlVersion(purl.getVersion());
                 vs.setVersion(purl.getVersion());
                 vs.setPurlQualifiers(PurlUtil.serializeQualifiers(purl));

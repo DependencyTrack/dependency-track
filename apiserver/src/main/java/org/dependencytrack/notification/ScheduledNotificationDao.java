@@ -183,7 +183,8 @@ public final class ScheduledNotificationDao {
             String violationType,
             Instant timestamp,
             String analysisState,
-            boolean suppressed) {}
+            boolean suppressed,
+            @Nullable String message) {}
 
     public List<NewPolicyViolation> getNewPolicyViolationsSince(
             Collection<Long> projectIds, Instant sinceTimestamp, Instant beforeTimestamp) {
@@ -197,6 +198,7 @@ public final class ScheduledNotificationDao {
                              , pv."TIMESTAMP" AS timestamp
                              , va."STATE" AS analysis_state
                              , COALESCE(va."SUPPRESSED", FALSE) AS suppressed
+                             , pv."TEXT" AS message
                           FROM "POLICYVIOLATION" pv
                           LEFT JOIN "VIOLATIONANALYSIS" va
                             ON va."POLICYVIOLATION_ID" = pv."ID"

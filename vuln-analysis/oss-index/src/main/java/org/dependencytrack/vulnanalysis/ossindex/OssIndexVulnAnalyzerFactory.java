@@ -172,7 +172,7 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
         }
 
         final var request = HttpRequest.newBuilder()
-                .uri(config.getApiUrl().resolve("/api/v3/component-report"))
+                .uri(URI.create(config.getApiUrl().toString().replaceAll("/+$", "") + "/api/v3/component-report"))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
                 .header("Authorization", authHeader)

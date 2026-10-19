@@ -755,6 +755,7 @@ public class ProjectsResourceTest extends ResourceTest {
         component.setVersion("2.0");
         component.setPurl("pkg:maven/foo/bar@2.0");
         component.setScope(Scope.REQUIRED);
+        component.setResolvedLicense(license);
         final Component persistedComponent = qm.createComponent(component, false);
 
         useJdbiHandle(handle -> handle.createUpdate("""

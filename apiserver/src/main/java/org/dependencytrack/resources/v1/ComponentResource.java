@@ -44,6 +44,7 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.validation.ValidUuid;
+import org.dependencytrack.model.validation.ValidUuidList;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao;
@@ -740,7 +741,7 @@ public class ComponentResource extends AbstractApiResource {
                                     "List of UUIDs of the components (separated by |) to get the expanded dependency graph for",
                             required = true)
                     @PathParam("componentUuids")
-                    @ValidUuid
+                    @ValidUuidList
                     String componentUuids) {
         final var parsedProjectUuid = UUID.fromString(projectUuid);
 

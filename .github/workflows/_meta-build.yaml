@@ -95,14 +95,14 @@ jobs:
           key: ${{ steps.restore-maven-build-cache.outputs.cache-primary-key }}
 
       - name: Upload Distribution Archive
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # tag=v7.0.2
         with:
           name: assembled-dist
           path: |-
             apiserver/target/dependency-track-apiserver-dist.tar.gz
 
       - name: Upload Container Image Context
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # tag=v7.0.2
         with:
           name: container-context
           retention-days: 1
@@ -112,14 +112,14 @@ jobs:
             apiserver/target/lib-internal/
 
       - name: Upload BOM
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # tag=v7.0.2
         with:
           name: bom
           path: |-
             apiserver/target/bom.json
 
       - name: Upload v4-migrator JAR
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # tag=v7.0.2
         with:
           name: v4-migrator-jar
           path: |-
@@ -132,7 +132,7 @@ jobs:
           unzip -p apiserver/target/dependency-track-apiserver.jar org/dependencytrack/api/v1/openapi.yaml > openapi-spec/v1/openapi.yaml
 
       - name: Upload OpenAPI Spec
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # tag=v7.0.2
         with:
           name: openapi-spec
           path: openapi-spec/

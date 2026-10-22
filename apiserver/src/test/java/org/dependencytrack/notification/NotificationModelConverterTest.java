@@ -19,11 +19,11 @@
 package org.dependencytrack.notification;
 
 import org.dependencytrack.model.Project;
-import org.dependencytrack.notification.proto.v1.BomConsumedOrProcessedSubject;
-import org.dependencytrack.notification.proto.v1.Notification;
+import org.dependencytrack.model.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,21 +32,30 @@ class NotificationModelConverterTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
-    void shouldIncludeProjectLatestStatus(boolean isLatest) throws Exception {
+    void shouldConvertProject(boolean isLatest) {
+        final var tag = new Tag();
+        tag.setName("projectTag");
+
         final var project = new Project();
         project.setUuid(UUID.randomUUID());
         project.setName("projectName");
+        project.setVersion("projectVersion");
+        project.setDescription("projectDescription");
+        project.setPurl("pkg:generic/project@1.0");
+        project.setTags(Set.of(tag));
+        project.setActive(false);
         project.setIsLatest(isLatest);
 
-        final var converted = NotificationModelConverter.convert(project);
-        assertThat(converted.hasIsLatest()).isTrue();
-        assertThat(converted.getIsLatest()).isEqualTo(isLatest);
-
-        final var expressionEnv = NotificationFilterExpressionEnv.getInstance();
-        final var program = expressionEnv.compile("subject.project.is_latest == true");
-        final var subject =
-                BomConsumedOrProcessedSubject.newBuilder().setProject(converted).build();
-        assertThat(expressionEnv.evaluate(program, Notification.getDefaultInstance(), subject))
-                .isEqualTo(isLatest);
+        assertThat(NotificationModelConverter.convert(project))
+                .isEqualTo(org.dependencytrack.notification.proto.v1.Project.newBuilder()
+                        .setUuid(project.getUuid().toString())
+                        .setName("projectName")
+                        .setVersion("projectVersion")
+                        .setDescription("projectDescription")
+                        .setPurl("pkg:generic/project@1.0")
+                        .addTags("projectTag")
+                        .setIsActive(false)
+                        .setIsLatest(isLatest)
+                        .build());
     }
 }

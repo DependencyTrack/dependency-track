@@ -62,21 +62,34 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
-    void shouldIncludeLatestStatusInProjectQueries(boolean isLatest) {
+    void shouldMapProjectQueries(boolean isLatest) {
         final var project = new Project();
         project.setName("projectName");
+        project.setVersion("projectVersion");
+        project.setDescription("projectDescription");
+        project.setPurl("pkg:generic/project@1.0");
+        project.setActive(false);
         project.setIsLatest(isLatest);
         qm.persist(project);
+        qm.bind(project, List.of(qm.createTag("projectTag")));
+
+        final var expected = org.dependencytrack.notification.proto.v1.Project.newBuilder()
+                .setUuid(project.getUuid().toString())
+                .setName("projectName")
+                .setVersion("projectVersion")
+                .setDescription("projectDescription")
+                .setPurl("pkg:generic/project@1.0")
+                .addTags("projecttag")
+                .setIsActive(false)
+                .setIsLatest(isLatest)
+                .build();
 
         withJdbiHandle(handle -> {
             final var dao = handle.attach(NotificationSubjectDao.class);
-            assertThat(dao.getProjects(List.of(project.getUuid()))).satisfiesExactly(subject -> {
-                assertThat(subject.hasIsLatest()).isTrue();
-                assertThat(subject.getIsLatest()).isEqualTo(isLatest);
-            });
-            final var subject = dao.getProjectsById(List.of(project.getId())).get(project.getId());
-            assertThat(subject.hasIsLatest()).isTrue();
-            assertThat(subject.getIsLatest()).isEqualTo(isLatest);
+            assertThat(dao.getProjects(List.of(project.getUuid()))).containsExactly(expected);
+            assertThat(dao.getProjectsById(List.of(project.getId())))
+                    .containsOnlyKeys(project.getId())
+                    .containsEntry(project.getId(), expected);
             return null;
         });
     }

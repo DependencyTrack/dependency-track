@@ -32,6 +32,7 @@ public record ListWorkflowRunsRequest(
         @Nullable String workflowInstanceId,
         @Nullable Set<WorkflowRunStatus> statuses,
         @Nullable Map<String, String> labels,
+        boolean onlyRootRuns,
         @Nullable Instant createdSince,
         @Nullable Instant createdBefore,
         @Nullable Instant completedSince,
@@ -48,7 +49,7 @@ public record ListWorkflowRunsRequest(
     }
 
     public ListWorkflowRunsRequest() {
-        this(null, null, null, null, null, null, null, null, null, null, null, null, 10);
+        this(null, null, null, null, null, false, null, null, null, null, null, null, null, 10);
     }
 
     public ListWorkflowRunsRequest withWorkflowName(@Nullable String workflowName) {
@@ -58,6 +59,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 this.completedSince,
@@ -75,6 +77,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 this.completedSince,
@@ -92,6 +95,7 @@ public record ListWorkflowRunsRequest(
                 workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 this.completedSince,
@@ -109,6 +113,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 this.completedSince,
@@ -126,6 +131,25 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 labelFilter,
+                this.onlyRootRuns,
+                this.createdSince,
+                this.createdBefore,
+                this.completedSince,
+                this.completedBefore,
+                this.sortBy,
+                this.sortDirection,
+                this.pageToken,
+                this.limit);
+    }
+
+    public ListWorkflowRunsRequest withOnlyRootRuns(boolean onlyRootRuns) {
+        return new ListWorkflowRunsRequest(
+                this.workflowName,
+                this.workflowVersion,
+                this.workflowInstanceId,
+                this.statuses,
+                this.labels,
+                onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 this.completedSince,
@@ -143,6 +167,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 createdSince,
                 this.createdBefore,
                 this.completedSince,
@@ -160,6 +185,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 createdBefore,
                 this.completedSince,
@@ -177,6 +203,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 completedSince,
@@ -194,6 +221,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 this.completedSince,
@@ -211,6 +239,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 this.completedSince,
@@ -228,6 +257,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 this.completedSince,
@@ -245,6 +275,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 this.completedSince,
@@ -262,6 +293,7 @@ public record ListWorkflowRunsRequest(
                 this.workflowInstanceId,
                 this.statuses,
                 this.labels,
+                this.onlyRootRuns,
                 this.createdSince,
                 this.createdBefore,
                 this.completedSince,

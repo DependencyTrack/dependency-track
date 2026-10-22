@@ -304,6 +304,7 @@ public class CycloneDxValidator {
         factory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
         factory.setProperty(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        factory.setProperty(XMLInputFactory.IS_COALESCING, true); // Required for CDATA support.
         return factory;
     }
 }

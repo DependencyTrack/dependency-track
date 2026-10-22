@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
+import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.management.SecretManager;
 import org.dependencytrack.tasks.TaskSchedulerInitializer.TriggerOnFirstRunSchedule;
@@ -51,7 +52,8 @@ class TaskSchedulerInitializerTest {
                 ConfigProvider.getConfig(),
                 mock(DexEngine.class),
                 mock(PluginManager.class),
-                mock(SecretManager.class));
+                mock(SecretManager.class),
+                mock(FileStorage.class));
 
         assertThat(tasks)
                 .extracting(RecurringTask::getName)

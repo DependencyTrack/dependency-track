@@ -17,7 +17,7 @@ allow egress to the endpoints listed in _services.bom.json_.**
 
 | Where to find the authoritative list                                                                                                | What it contains                                    |
 |-------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
-| [`services.bom.json`](https://github.com/DependencyTrack/dependency-track/blob/master/services.bom.json)                            | Source-of-truth JSON maintained in-repo             |
+| [`services.bom.json`](https://github.com/DependencyTrack/dependency-track/blob/4.14.x/src/main/resources/services.bom.json)                            | Source-of-truth JSON maintained in-repo             |
 | Release SBOM (e.g. [`bom.json` for v4.12.0](https://github.com/DependencyTrack/dependency-track/releases/download/4.12.0/bom.json)) | `services.bom.json` merged into the full build SBOM |
 
 #### Dependency Check and Dependency Track Comparison

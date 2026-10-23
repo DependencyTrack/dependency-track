@@ -2220,9 +2220,16 @@ class ProjectResourceTest extends ResourceTest {
         childProject.setParent(collectionProject);
         qm.persist(childProject);
 
+        final var staleChildProject = new Project();
+        staleChildProject.setName("acme-stale-app");
+        staleChildProject.setParent(collectionProject);
+        qm.persist(staleChildProject);
+
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", LocalDate.now(ZoneOffset.UTC));
+            final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(3));
             final var now = Instant.now();
 
             final var childMetrics = new ProjectMetrics();
@@ -2231,6 +2238,13 @@ class ProjectResourceTest extends ResourceTest {
             childMetrics.setFirstOccurrence(Date.from(now));
             childMetrics.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(childMetrics);
+
+            final var staleChildMetrics = new ProjectMetrics();
+            staleChildMetrics.setProjectId(staleChildProject.getId());
+            staleChildMetrics.setMedium(7);
+            staleChildMetrics.setFirstOccurrence(Date.from(now.minus(3, ChronoUnit.DAYS)));
+            staleChildMetrics.setLastOccurrence(Date.from(now.minus(3, ChronoUnit.DAYS)));
+            testDao.createProjectMetrics(staleChildMetrics);
         });
 
         final WebTarget target =
@@ -5227,6 +5241,11 @@ class ProjectResourceTest extends ResourceTest {
         childProject.setParent(collectionProject);
         qm.persist(childProject);
 
+        final var staleChildProject = new Project();
+        staleChildProject.setName("acme-stale-child");
+        staleChildProject.setParent(collectionProject);
+        qm.persist(staleChildProject);
+
         final var collectionWithoutChildMetrics = new Project();
         collectionWithoutChildMetrics.setName("acme-collection-without-child-metrics");
         collectionWithoutChildMetrics.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
@@ -5241,6 +5260,7 @@ class ProjectResourceTest extends ResourceTest {
             final var testDao = handle.attach(MetricsTestDao.class);
             final LocalDate today = LocalDate.now(ZoneOffset.UTC);
             testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(3));
             final Instant now = Instant.now();
 
             final var regularMetrics = new ProjectMetrics();
@@ -5259,6 +5279,13 @@ class ProjectResourceTest extends ResourceTest {
             childMetrics.setFirstOccurrence(Date.from(now));
             childMetrics.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(childMetrics);
+
+            final var staleChildMetrics = new ProjectMetrics();
+            staleChildMetrics.setProjectId(staleChildProject.getId());
+            staleChildMetrics.setCritical(100);
+            staleChildMetrics.setFirstOccurrence(Date.from(now.minus(3, ChronoUnit.DAYS)));
+            staleChildMetrics.setLastOccurrence(Date.from(now.minus(3, ChronoUnit.DAYS)));
+            testDao.createProjectMetrics(staleChildMetrics);
         });
 
         final Response response = jersey.target(V1_PROJECT + "/concise")
@@ -5267,10 +5294,10 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("6");
 
         final JsonArray jsonArray = parseJsonArray(response);
-        assertThat(jsonArray).hasSize(5);
+        assertThat(jsonArray).hasSize(6);
 
         final JsonObject collectionObj = jsonArray.stream()
                 .map(JsonObject.class::cast)

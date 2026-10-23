@@ -1,14 +1,14 @@
 -- Convert legacy OSV config to multi-source config
--- example: {"enabled": true, ...} -> {"sources": [{"name":"default", "enabled": true, ...}]}.
+-- example: {"enabled": true, ...} -> {"feeds": [{"name":"default", "enabled": true, ...}]}.
 UPDATE "EXTENSION_RUNTIME_CONFIG"
     SET "CONFIG" = jsonb_build_object(
-        'sources',
+        'feeds',
         jsonb_build_array( "CONFIG" || jsonb_build_object('name', 'default') )
     ),
     "UPDATED_AT" = now()
 WHERE "EXTENSION_POINT" = 'vuln-data-source'
     AND "EXTENSION" = 'osv'
-    AND NOT ("CONFIG" ? 'sources');
+    AND NOT ("CONFIG" ? 'feeds');
 
 -- Watermarks are namespaced by source name. Move existing watermarks to the default source.
 UPDATE "EXTENSION_KV_STORE"

@@ -1106,6 +1106,19 @@ public class ModelConverter {
             rating.setVector(vulnerability.getOwaspRRVector());
             cdxVulnerability.addRating(rating);
         }
+        if (vulnerability.getEpssScore() != null) {
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var source = new org.cyclonedx.model.vulnerability.Vulnerability.Source();
+            source.setName("FIRST");
+            rating.setSource(source);
+            rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OTHER);
+            rating.setScore(vulnerability.getEpssScore().doubleValue());
+            if (vulnerability.getEpssPercentile() != null) {
+                rating.setVector(
+                        "epss:percentile:" + vulnerability.getEpssPercentile().toPlainString());
+            }
+            cdxVulnerability.addRating(rating);
+        }
         if (vulnerability.getCvssV2BaseScore() == null
                 && vulnerability.getCvssV3BaseScore() == null
                 && vulnerability.getCvssV4Score() == null

@@ -170,6 +170,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                 SELECT *
                   FROM "PROJECTMETRICS"
                  WHERE "PROJECT_ID" = cd.project_id
+                   AND "LAST_OCCURRENCE" >= (CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS date) - INTERVAL '1 day') AT TIME ZONE 'UTC'
                  ORDER BY "LAST_OCCURRENCE" DESC
                  LIMIT 1
               ) pm ON TRUE

@@ -46,6 +46,7 @@ import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
@@ -110,7 +111,9 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertSe
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProject;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProjectMetadata;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
@@ -396,6 +399,38 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 // excessive DB round-trips and table bloat.
                 qm.getPersistenceManager().flush();
 
+                // Newer JDBI records need to be populated after the flush of DataNucleus ones
+                // so they can access the proper table IDs
+                final Map<String, Long> licenseIds = findLicenseIds(qm, bom.components());
+                final List<Long> componentIds = new ArrayList<>();
+                final List<ComponentDao.ComponentLicenseRow> licenseRows = new ArrayList<>();
+
+                for (final Component component : bom.components()) {
+                    final ComponentIdentity persistentIdentity =
+                            bom.identitiesByBomRef().get(component.getBomRef());
+
+                    if (persistentIdentity == null) {
+                        throw new IllegalStateException(
+                                "No persistent identity found for BOM ref %s".formatted(component.getBomRef()));
+                    }
+
+                    final Component persistentComponent = persistentComponentsByIdentity.get(persistentIdentity);
+
+                    if (persistentComponent == null) {
+                        throw new IllegalStateException(
+                                "No persistent component found for BOM ref %s".formatted(component.getBomRef()));
+                    }
+
+                    componentIds.add(persistentComponent.getId());
+
+                    licenseRows.addAll(buildComponentLicenseRows(component, persistentComponent.getId(), licenseIds));
+                }
+
+                useJdbiHandle(
+                        qm,
+                        handle ->
+                                handle.attach(ComponentDao.class).replaceComponentLicenses(componentIds, licenseRows));
+
                 recordBomImport(ctx, qm, persistentProject);
 
                 qm.seedPackageMetadataResolution(persistentProject);
@@ -406,6 +441,105 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                         persistentServicesByIdentity.values());
             });
         }
+    }
+
+    private static List<ComponentDao.ComponentLicenseRow> buildComponentLicenseRows(
+            final Component component, final long persistedId, final Map<String, Long> licenseIds) {
+        final List<ComponentDao.ComponentLicenseRow> rows = new ArrayList<>();
+
+        final List<org.cyclonedx.model.License> candidates = component.getLicenseCandidates();
+        final String expression = trimToNull(component.getLicenseExpression());
+
+        long ordinality = 1;
+        if (candidates != null && !candidates.isEmpty()) {
+            for (final org.cyclonedx.model.License candidate : candidates) {
+                String trimmedName = trimToNull(candidate.getName());
+                final String identifier = isNotBlank(candidate.getId()) ? candidate.getId() : trimmedName;
+
+                final Long licenseId = identifier != null ? licenseIds.get(identifier) : null;
+
+                final String licenseName =
+                        licenseId == null ? trimmedName != null ? trimmedName : trimToNull(candidate.getId()) : null;
+
+                final boolean isExpression = expression != null
+                        && (expression.equals(candidate.getId()) || expression.equals(candidate.getName()));
+
+                rows.add(new ComponentDao.ComponentLicenseRow(
+                        persistedId,
+                        licenseId,
+                        licenseName,
+                        isExpression ? expression : null,
+                        trimToNull(candidate.getUrl()),
+                        ordinality++,
+                        "DECLARED"));
+            }
+        }
+
+        // Per the CycloneDX protos, expressions are sufficient substitutes for a license model object,
+        // thus stored separately and requiring separate retrieval
+        if (expression != null
+                && (candidates == null
+                        || candidates.stream()
+                                .noneMatch(candidate -> expression.equals(candidate.getId())
+                                        || expression.equals(candidate.getName())))) {
+            rows.add(new ComponentDao.ComponentLicenseRow(
+                    persistedId, null, null, expression, null, ordinality, "DECLARED"));
+        }
+
+        return rows;
+    }
+
+    private static Map<String, Long> findLicenseIds(final QueryManager qm, final Collection<Component> components) {
+
+        final Set<String> identifiers = new HashSet<>();
+
+        for (final Component component : components) {
+            final List<org.cyclonedx.model.License> candidates = component.getLicenseCandidates();
+            if (candidates == null) {
+                continue;
+            }
+
+            for (final org.cyclonedx.model.License candidate : candidates) {
+                if (isNotBlank(candidate.getId())) {
+                    // Only the resolved license should have an associated ID
+                    // In the model License, this is the LICENSEID column
+                    identifiers.add(candidate.getId());
+                }
+                if (isNotBlank(candidate.getName())) {
+                    // Other licenses will need to be looked up by name
+                    identifiers.add(candidate.getName());
+                }
+            }
+        }
+
+        if (identifiers.isEmpty()) {
+            return Map.of();
+        }
+
+        HashMap<String, Long> licenseInfo = withJdbiHandle(
+                qm,
+                handle -> handle.createQuery("""
+            SELECT "ID", "LICENSEID", "NAME"
+            FROM "LICENSE"
+            WHERE "LICENSEID" = ANY(:identifiers)
+                OR "NAME" = ANY(:identifiers)
+            """)
+                        .bindArray("identifiers", String.class, identifiers)
+                        .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
+                            final long id = rs.getLong("ID");
+                            final String licenseId = rs.getString("LICENSEID");
+                            if (licenseId != null) {
+                                result.putIfAbsent(licenseId, id);
+                            }
+
+                            final String name = rs.getString("NAME");
+                            if (name != null) {
+                                result.putIfAbsent(name, id);
+                            }
+                            return result;
+                        }));
+
+        return licenseInfo;
     }
 
     private static Project processProject(

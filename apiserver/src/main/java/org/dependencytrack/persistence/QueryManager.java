@@ -61,6 +61,7 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.persistence.command.CreateNotificationRuleCommand;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
@@ -757,6 +758,10 @@ public class QueryManager extends AlpineQueryManager {
     public NotificationRule createNotificationRule(
             String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
         return getNotificationQueryManager().createNotificationRule(name, scope, level, publisher);
+    }
+
+    public NotificationRule createNotificationRule(final CreateNotificationRuleCommand command) {
+        return getNotificationQueryManager().createNotificationRule(command);
     }
 
     public NotificationRule createScheduledNotificationRule(

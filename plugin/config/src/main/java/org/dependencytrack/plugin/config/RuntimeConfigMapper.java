@@ -70,6 +70,7 @@ public final class RuntimeConfigMapper {
         private static final String I18N = "x-i18n";
         private static final String SECRET_REF = "x-secret-ref";
         private static final String UI_HINT = "x-ui-hint";
+        private static final String UNIQUE_ITEM_PROPERTIES = "x-unique-item-properties";
     }
 
     private static final RuntimeConfigMapper INSTANCE = new RuntimeConfigMapper();
@@ -95,7 +96,8 @@ public final class RuntimeConfigMapper {
                 .keywords(List.of(
                         new NonValidationKeyword(CustomAnnotations.I18N),
                         new NonValidationKeyword(CustomAnnotations.SECRET_REF),
-                        new NonValidationKeyword(CustomAnnotations.UI_HINT)))
+                        new NonValidationKeyword(CustomAnnotations.UI_HINT),
+                        new NonValidationKeyword(CustomAnnotations.UNIQUE_ITEM_PROPERTIES)))
                 .build();
         this.schemaRegistry = SchemaRegistry.withDialect(
                 schemaDialect,

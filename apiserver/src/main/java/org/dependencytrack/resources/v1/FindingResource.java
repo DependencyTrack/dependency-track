@@ -355,7 +355,7 @@ public class FindingResource extends AbstractV1ApiResource {
                     @ValidUuid
                     String uuid) {
         final var projectUuid = UUID.fromString(uuid);
-        useJdbiHandle(handle -> requireProjectAccess(handle, projectUuid));
+        useJdbiHandle(getAlpineRequest(), handle -> requireProjectAccess(handle, projectUuid));
 
         final UUID runId = dexEngine.createRun(new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
                 .withWorkflowInstanceId(AnalyzeProjectWorkflow.instanceIdForManual(projectUuid))

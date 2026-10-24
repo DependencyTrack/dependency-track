@@ -99,6 +99,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static wiremock.org.apache.commons.io.IOUtils.resourceToString;
@@ -1229,6 +1230,31 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(createDexRunRequest.labels())
                 .hasEntrySatisfying("triggered_by", value -> assertThat(value).startsWith("odt_"));
         assertThat(createDexRunRequest.priority()).isEqualTo(75);
+    }
+
+    @Test
+    public void analyzeProjectAclTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
+        enablePortfolioAccessControl();
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        Response response = jersey.target("%s/project/%s/analyze".formatted(V1_FINDING, project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json("{}"));
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 403,
+                  "title": "Project access denied",
+                  "detail": "Access to the requested project is forbidden"
+                }
+                """);
+
+        verify(DEX_ENGINE_MOCK, never()).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
     }
 
     @Test

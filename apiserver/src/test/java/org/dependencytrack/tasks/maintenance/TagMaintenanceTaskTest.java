@@ -21,6 +21,7 @@ package org.dependencytrack.tasks.maintenance;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.Vulnerability;
 import org.junit.jupiter.api.Test;
 
@@ -56,6 +57,12 @@ class TagMaintenanceTaskTest extends PersistenceCapableTest {
         vuln.setSource(Vulnerability.Source.NVD);
         qm.persist(vuln);
 
+        final var collectionProject = new Project();
+        collectionProject.setName("acme-collection");
+        collectionProject.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN_WITH_TAG);
+        collectionProject.setCollectionTag(qm.createTag("tag-collection"));
+        qm.persist(collectionProject);
+
         qm.bind(project, List.of(qm.createTag("tag-project")));
         qm.bind(policy, List.of(qm.createTag("tag-policy")));
         qm.bind(vuln, List.of(qm.createTag("tag-vuln")));
@@ -68,7 +75,8 @@ class TagMaintenanceTaskTest extends PersistenceCapableTest {
                 .satisfiesExactlyInAnyOrder(
                         tag -> assertThat(tag.name()).isEqualTo("tag-project"),
                         tag -> assertThat(tag.name()).isEqualTo("tag-policy"),
-                        tag -> assertThat(tag.name()).isEqualTo("tag-vuln"));
+                        tag -> assertThat(tag.name()).isEqualTo("tag-vuln"),
+                        tag -> assertThat(tag.name()).isEqualTo("tag-collection"));
     }
 
     @Test

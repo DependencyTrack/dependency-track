@@ -34,6 +34,11 @@ COPY ./target/dependency-track-apiserver.jar ./
 
 RUN ./create-jre.sh -i ./dependency-track-apiserver.jar -o ./jre
 
+# Distrust compromised eMudhra intermediates until Temurin drops the root,
+# see https://emudhra.we-have-a-problem.com/
+RUN keytool -delete -keystore ./jre/lib/security/cacerts -storepass changeit \
+    -alias 'cn_emsign_ecc_root_ca__g3,o_emudhra_technologies_limited,ou_emsign_pki,c_in [jdk]'
+
 FROM alpine:3.24.2@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
 
 ARG COMMIT_SHA

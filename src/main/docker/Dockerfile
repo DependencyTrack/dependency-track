@@ -25,7 +25,7 @@ ARG UID=1000
 ARG GID=1000
 ARG WAR_FILENAME=dependency-track-apiserver.jar
 
-FROM eclipse-temurin:25.0.4.1_1-jre-jammy@sha256:25777acfabf927084b7ef46d8bc786b6203c8c344f56541054238b8c4fe73db9 AS jre-build
+FROM eclipse-temurin:25.0.4.1_1-jre-jammy@sha256:e0d8c47eccd7ec82d635542dfcd1f2b1293add6bdd7ffbeb650f8ec1b1335425 AS jre-build
 
 # Distrust compromised eMudhra intermediates until Temurin drops the root,
 # see https://emudhra.we-have-a-problem.com/

@@ -77,6 +77,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>io.github.nscuro</groupId>
+            <artifactId>versatile-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.github.package-url</groupId>
             <artifactId>packageurl-java</artifactId>
         </dependency>

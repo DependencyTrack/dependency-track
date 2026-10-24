@@ -775,4 +775,263 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         assertThat(analysis.getOwaspVector()).isNull();
         assertThat(analysis.getOwaspScore()).isNull();
     }
+
+    @Test
+    public void shouldApplyVexWithBomLinkAffectingSpecificComponentOnly() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("acme-lib-a");
+        componentA.setVersion("1.0.0");
+        qm.persist(componentA);
+
+        final var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("acme-lib-b");
+        componentB.setVersion("1.0.0");
+        qm.persist(componentB);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(componentA, componentB));
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, componentA, "none");
+        qm.addVulnerability(vuln, componentB, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "components": [
+                    {
+                      "type": "library",
+                      "bom-ref": "comp-a",
+                      "name": "acme-lib-a",
+                      "version": "1.0.0"
+                    },
+                    {
+                      "type": "library",
+                      "bom-ref": "comp-b",
+                      "name": "acme-lib-b",
+                      "version": "1.0.0"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "INT-001",
+                      "source": { "name": "INTERNAL" },
+                      "analysis": {
+                        "state": "not_affected",
+                        "justification": "code_not_reachable"
+                      },
+                      "affects": [
+                        { "ref": "urn:cdx:3e671687-395b-41f5-a30f-a58921a69b79/1#comp-a" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+
+        vexImporter.applyVex(qm, vex, project);
+
+        assertThat(qm.getAnalysis(componentA, vuln))
+                .extracting(Analysis::getAnalysisState, Analysis::getAnalysisJustification)
+                .containsExactly(AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE);
+        assertThat(qm.getAnalysis(componentB, vuln)).isNull();
+    }
+
+    @Test
+    public void shouldApplyVexWithBomLinkAffectingMetadataComponent() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("acme-lib-a");
+        componentA.setVersion("1.0.0");
+        qm.persist(componentA);
+
+        final var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("acme-lib-b");
+        componentB.setVersion("1.0.0");
+        qm.persist(componentB);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-002");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(componentA, componentB));
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, componentA, "none");
+        qm.addVulnerability(vuln, componentB, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project-ref",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "INT-002",
+                      "source": { "name": "INTERNAL" },
+                      "analysis": {
+                        "state": "false_positive"
+                      },
+                      "affects": [
+                        { "ref": "urn:cdx:3e671687-395b-41f5-a30f-a58921a69b79/1#project-ref" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+
+        vexImporter.applyVex(qm, vex, project);
+
+        assertThat(qm.getAnalysis(componentA, vuln))
+                .extracting(Analysis::getAnalysisState)
+                .isEqualTo(AnalysisState.FALSE_POSITIVE);
+        assertThat(qm.getAnalysis(componentB, vuln))
+                .extracting(Analysis::getAnalysisState)
+                .isEqualTo(AnalysisState.FALSE_POSITIVE);
+    }
+
+    @Test
+    public void shouldApplyVexWithBomLinkWithoutFragment() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib-a");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-003");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(component));
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "INT-003",
+                      "source": { "name": "INTERNAL" },
+                      "analysis": {
+                        "state": "in_triage"
+                      },
+                      "affects": [
+                        { "ref": "urn:cdx:3e671687-395b-41f5-a30f-a58921a69b79/1" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+
+        vexImporter.applyVex(qm, vex, project);
+
+        assertThat(qm.getAnalysis(component, vuln))
+                .extracting(Analysis::getAnalysisState)
+                .isEqualTo(AnalysisState.IN_TRIAGE);
+    }
+
+    @Test
+    public void shouldNotApplyVexWhenBomLinkFragmentIsUnresolvable() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib-a");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-004");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(component));
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "INT-004",
+                      "source": { "name": "INTERNAL" },
+                      "analysis": {
+                        "state": "not_affected"
+                      },
+                      "affects": [
+                        { "ref": "urn:cdx:3e671687-395b-41f5-a30f-a58921a69b79/1#unknown-component" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+
+        vexImporter.applyVex(qm, vex, project);
+
+        assertThat(qm.getAnalysis(component, vuln)).isNull();
+    }
 }

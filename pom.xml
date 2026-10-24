@@ -178,7 +178,7 @@
         <lib.smallrye-config.version>4.0.0</lib.smallrye-config.version>
         <lib.swagger.version>2.2.55</lib.swagger.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
-        <lib.tink.version>1.23.0</lib.tink.version>
+        <lib.tink.version>1.24.0</lib.tink.version>
         <lib.versatile.version>0.26.1</lib.versatile.version>
         <lib.wiremock.version>3.13.2</lib.wiremock.version>
         <lib.zstd-jni.version>1.5.7-23</lib.zstd-jni.version>

@@ -29,6 +29,11 @@ ENV TZ=Etc/UTC \
     JAVA_OPTIONS="" \
     LANG=C.UTF-8
 
+# Distrust compromised eMudhra intermediates until Temurin drops the root,
+# see https://emudhra.we-have-a-problem.com/
+RUN keytool -delete -cacerts -storepass changeit \
+    -alias 'cn_emsign_ecc_root_ca__g3,o_emudhra_technologies_limited,ou_emsign_pki,c_in [jdk]'
+
 WORKDIR ${APP_DIR}
 USER nobody
 

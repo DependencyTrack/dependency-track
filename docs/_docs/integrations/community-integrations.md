@@ -24,6 +24,7 @@ to make custom tools and integrations. Many tools that integrate with Dependency
 | [Github action OWASP Dependency Track Check](https://github.com/marketplace/actions/owasp-dependency-track-check)| [Quobis](https://www.quobis.com/)|
 | [Mixeway Hub](https://github.com/mixeway/mixewayhub) | [Mixeway](https://mixeway.io/) |
 | [SD Elements](https://www.securitycompass.com/sdelements) | [Security Compass](https://www.securitycompass.com/) |
+| [Safeguard](https://docs.safeguard.sh/docs/compliance-connectors/setup/vulnerability-scanning/dependency-track) | [Safeguard](https://safeguard.sh/) |
 | [SecObserve](https://github.com/SecObserve/SecObserve) |  |
 | [ThreadFix](https://threadfix.it/) | [Denim Group](https://www.denimgroup.com/) |
 | [dependency-track-exporter](https://github.com/jetstack/dependency-track-exporter) | [Jetstack](https://jetstack.io) |

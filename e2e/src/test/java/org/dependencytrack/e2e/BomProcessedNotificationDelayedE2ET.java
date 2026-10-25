@@ -127,32 +127,33 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
 
     private void verifyBomProcessedWebhookNotification() {
         wireMock.verify(1, postRequestedFor(urlPathEqualTo("/notification")).withRequestBody(equalToJson("""
-                        {
-                          "notification" : {
-                            "id" : "${json-unit.any-string}",
-                            "level" : "LEVEL_INFORMATIONAL",
-                            "scope" : "SCOPE_PORTFOLIO",
-                            "group" : "GROUP_BOM_PROCESSED",
-                            "timestamp" : "${json-unit.regex}(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\\\.[0-9]{3}Z$)",
-                            "title" : "Bill of Materials Processed",
-                            "content" : "A CycloneDX BOM was processed",
-                            "subject" : {
-                              "token": "${json-unit.any-string}",
-                              "project" : {
-                                "uuid" : "${json-unit.any-string}",
-                                "name" : "foo",
-                                "version" : "bar",
-                                "purl" : "pkg:maven/org.dependencytrack/dependency-track@4.5.0?type=war",
-                                "isActive" : true
-                              },
-                              "bom" : {
-                                "content" : "(Omitted)",
-                                "format" : "CycloneDX",
-                                "specVersion" : "Unknown"
-                              }
-                            }
-                          }
-                        }
-                        """)));
+            {
+              "notification" : {
+                "id" : "${json-unit.any-string}",
+                "level" : "LEVEL_INFORMATIONAL",
+                "scope" : "SCOPE_PORTFOLIO",
+                "group" : "GROUP_BOM_PROCESSED",
+                "timestamp" : "${json-unit.regex}(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\\\.[0-9]{3}Z$)",
+                "title" : "Bill of Materials Processed",
+                "content" : "A CycloneDX BOM was processed",
+                "subject" : {
+                  "token": "${json-unit.any-string}",
+                  "project" : {
+                    "uuid" : "${json-unit.any-string}",
+                    "name" : "foo",
+                    "version" : "bar",
+                    "purl" : "pkg:maven/org.dependencytrack/dependency-track@4.5.0?type=war",
+                    "isActive" : true,                                                                                                                                               \s
+                    "isLatest" : false
+                  },
+                  "bom" : {
+                    "content" : "(Omitted)",
+                    "format" : "CycloneDX",
+                    "specVersion" : "Unknown"
+                  }
+                }
+              }
+            }
+            """)));
     }
 }

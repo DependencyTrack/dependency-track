@@ -61,11 +61,16 @@ final class NvdVulnDataSource implements VulnDataSource {
     private static final Duration FEED_REQUEST_TIMEOUT = Duration.ofMinutes(10);
     private static final Duration META_REQUEST_TIMEOUT = Duration.ofSeconds(30);
 
+    // NVD claims the modified feed covers the last 8 days.
+    // 6 is more conservative in case that ever changes or slips.
+    private static final Duration MODIFIED_FEED_COVERAGE = Duration.ofDays(6);
+
     private final WatermarkManager watermarkManager;
     private final String feedsUrl;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final List<NvdDataFeed> feeds;
+    private final boolean skipYearFeeds;
     private @Nullable NvdDataFeed currentFeed;
     private @Nullable String currentFeedSha256;
     private int currentFeedIndex = 0;
@@ -79,6 +84,7 @@ final class NvdVulnDataSource implements VulnDataSource {
     private final List<ConsumedFeed> consumedFeeds = new ArrayList<>();
     private long cvesConsumed = 0;
     private long cvesProcessed = 0;
+    private @Nullable Instant oldestModifiedFeedCveLastModified;
 
     NvdVulnDataSource(
             final WatermarkManager watermarkManager,
@@ -91,6 +97,8 @@ final class NvdVulnDataSource implements VulnDataSource {
         this.httpClient = httpClient;
         this.feedsUrl = feedsUrl.replaceAll("/+$", "");
         this.feeds = feeds;
+        this.skipYearFeeds = watermarkManager.getWatermark() != null
+                && watermarkManager.getWatermark().isAfter(Instant.now().minus(MODIFIED_FEED_COVERAGE));
     }
 
     @Override
@@ -159,7 +167,7 @@ final class NvdVulnDataSource implements VulnDataSource {
     public void close() {
         recordDigestsOfProcessedFeeds();
 
-        if (completedSuccessfully) {
+        if (completedSuccessfully && !hasModifiedFeedCoverageGap()) {
             // Feed file contents are not ordered by modification date.
             // Committing the watermark is only safe when *all* feed files
             // have been successfully processed.
@@ -181,6 +189,12 @@ final class NvdVulnDataSource implements VulnDataSource {
         currentFeed = feeds.get(currentFeedIndex);
         currentFeedCvesConsumed = 0;
         currentFeedCvesSkipped = 0;
+
+        if (skipYearFeeds && currentFeed instanceof NvdDataFeed.YearDataFeed) {
+            LOGGER.info("Skipping {}: Changes since watermark are covered by modified feed", currentFeed);
+            currentFeedIndex++;
+            return openNextFeed();
+        }
 
         final NvdDataFeedMetadata feedMetadata = retrieveFeedMetadata(currentFeed);
 
@@ -259,6 +273,12 @@ final class NvdVulnDataSource implements VulnDataSource {
                 final Instant cveLastModified =
                         defCveItem.getCve().getLastModified().toInstant();
 
+                if (currentFeed instanceof NvdDataFeed.ModifiedDataFeed
+                        && (oldestModifiedFeedCveLastModified == null
+                                || cveLastModified.isBefore(oldestModifiedFeedCveLastModified))) {
+                    oldestModifiedFeedCveLastModified = cveLastModified;
+                }
+
                 if (watermark != null && !watermark.isBefore(cveLastModified)) {
                     LOGGER.debug(
                             "Skipping CVE {}: Below watermark",
@@ -274,6 +294,25 @@ final class NvdVulnDataSource implements VulnDataSource {
         currentFeedCvesConsumed++;
         cvesConsumed++;
         return ModelConverter.convert(defCveItem);
+    }
+
+    private boolean hasModifiedFeedCoverageGap() {
+        final Instant watermark = watermarkManager.getWatermark();
+        if (!skipYearFeeds
+                || watermark == null
+                || oldestModifiedFeedCveLastModified == null
+                || !oldestModifiedFeedCveLastModified.isAfter(watermark)) {
+            return false;
+        }
+
+        // NB: Committing would advance the watermark past changes that only
+        // the skipped year feeds contain. Leaving it in place lets it age out
+        // of the coverage window, forcing a full mirror later.
+        LOGGER.warn("""
+            Not committing watermark: Year feeds were skipped, but the oldest CVE
+            in the modified feed ({}) is newer than the watermark ({})\
+            """, oldestModifiedFeedCveLastModified, watermark);
+        return true;
     }
 
     private void logCurrentFeedSummary() {

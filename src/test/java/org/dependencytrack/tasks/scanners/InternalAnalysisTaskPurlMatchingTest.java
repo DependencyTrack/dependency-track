@@ -45,7 +45,10 @@ public class InternalAnalysisTaskPurlMatchingTest extends PersistenceCapableTest
                 Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/ChartKit.Core@1.0.0"),
                 Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, MATCHES, "pkg:pypi/chartkit._core@1.0.0"),
                 Arguments.of("pkg:pypi/chartkit-core", WITHOUT_RANGE, DOES_NOT_MATCH, "pkg:pypi/chartkitcore@1.0.0"),
-                Arguments.of("pkg:nuget/Microsoft.OpenAPI", withRange().havingStartIncluding("2.0.0-preview11").havingEndExcluding("2.7.5"), MATCHES, "pkg:nuget/Microsoft.OpenApi@2.0.0")
+                Arguments.of("pkg:nuget/Microsoft.OpenAPI", withRange().havingStartIncluding("2.0.0-preview11").havingEndExcluding("2.7.5"), MATCHES, "pkg:nuget/Microsoft.OpenApi@2.0.0"),
+                // https://github.com/DependencyTrack/dependency-track/issues/7804
+                Arguments.of("pkg:cargo/hickory-net", withRange().havingStartIncluding("0.26.0-alpha.1").havingEndIncluding("0.26.0"), MATCHES, "pkg:cargo/hickory-net@0.26.0-alpha.2"),
+                Arguments.of("pkg:cargo/hickory-net", withRange().havingStartIncluding("0.26.0-alpha.1").havingEndIncluding("0.26.0"), DOES_NOT_MATCH, "pkg:cargo/hickory-net@0.26.3")
         );
     }
 

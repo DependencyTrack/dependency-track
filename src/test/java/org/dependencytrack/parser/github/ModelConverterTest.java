@@ -134,6 +134,36 @@ class ModelConverterTest {
     }
 
     @Test
+    void testConvertRustRangeWithPreReleaseLowerBound() throws Exception {
+        final var advisory = jsonMapper.readValue(/* language=JSON */ """
+                {
+                  "ghsaId": "GHSA-3v94-mw7p-v465",
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "vulnerableVersionRange": ">= 0.26.0-alpha.1, <= 0.26.0",
+                          "package": {
+                            "ecosystem": "RUST",
+                            "name": "hickory-net"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
+
+        final List<VulnerableSoftware> vsList = converter.convert(advisory.getVulnerabilities());
+
+        assertThat(vsList).satisfiesExactly(vs -> {
+            assertThat(vs.getPurl()).isEqualTo("pkg:cargo/hickory-net");
+            assertThat(vs.getVersionStartIncluding()).isEqualTo("0.26.0-alpha.1");
+            assertThat(vs.getVersionEndIncluding()).isEqualTo("0.26.0");
+        });
+    }
+
+    @Test
     void testConvertEpssPartialDataPercentileOnly() throws Exception {
         // Only the rank/percentile field is present — epssScore must remain null.
         final var advisory = jsonMapper.readValue(/* language=JSON */ """

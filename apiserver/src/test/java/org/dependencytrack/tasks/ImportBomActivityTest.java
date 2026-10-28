@@ -36,6 +36,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.proto.v1.BomProcessingFailedSubject;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.persistence.DatabaseSeedingInitTask;
+import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
@@ -2019,6 +2020,66 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                                     assertThat(occurrence.getSymbol()).isNull();
                                     assertThat(occurrence.getCreatedAt()).isNotNull();
                                 }));
+    }
+
+    @Test
+    void shouldDeduplicateLicensesDuringImport() throws Exception {
+        final var license = new License();
+        license.setLicenseId("MIT");
+        license.setName("MIT License");
+        qm.persist(license);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final byte[] bomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "group": "com.acme",
+                      "name": "acme-lib",
+                      "version": "1.0.0",
+                      "licenses": [
+                        {
+                          "license": {
+                            "id": "MIT"
+                          }
+                        },
+                        {
+                          "license": {
+                            "name": "MIT License"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        final Component component = qm.getAllComponents(project).stream()
+                .filter(candidate -> "acme-lib".equals(candidate.getName()))
+                .findFirst()
+                .orElseThrow();
+
+        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                .getLicenseRows(List.of(component.getId()))
+                .get(component.getId()));
+
+        assertThat(rows).hasSize(1);
+
+        final ComponentDao.ComponentLicenseRow row = rows.getFirst();
+
+        assertThat(row.licenseId()).isEqualTo(license.getId());
+        assertThat(row.license()).isNull();
+        assertThat(row.licenseExpression()).isNull();
+        assertThat(row.ordinality()).isEqualTo(1L);
+        assertThat(row.acknowledgement()).isEqualTo("DECLARED");
     }
 
     private void assertBomProcessedNotification() throws Exception {

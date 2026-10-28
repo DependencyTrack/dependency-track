@@ -83,6 +83,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNullElse;
 import static javax.jdo.FetchPlan.FETCH_SIZE_GREEDY;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
@@ -445,33 +446,40 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
     private static List<ComponentDao.ComponentLicenseRow> buildComponentLicenseRows(
             final Component component, final long persistedId, final Map<String, Long> licenseIds) {
-        final List<ComponentDao.ComponentLicenseRow> rows = new ArrayList<>();
 
+        final HashMap<String, ComponentDao.ComponentLicenseRow> rowMap = new HashMap<>();
         final List<org.cyclonedx.model.License> candidates = component.getLicenseCandidates();
         final String expression = trimToNull(component.getLicenseExpression());
 
-        long ordinality = 1;
-        if (candidates != null && !candidates.isEmpty()) {
+        if (candidates != null) {
             for (final org.cyclonedx.model.License candidate : candidates) {
                 String trimmedName = trimToNull(candidate.getName());
-                final String identifier = isNotBlank(candidate.getId()) ? candidate.getId() : trimmedName;
+                String trimmedId = trimToNull(candidate.getId());
 
-                final Long licenseId = identifier != null ? licenseIds.get(identifier) : null;
+                final String identifier = isNotBlank(trimmedId) ? trimmedId : trimmedName;
+                if (isBlank(identifier)) {
+                    continue;
+                }
 
-                final String licenseName =
-                        licenseId == null ? trimmedName != null ? trimmedName : trimToNull(candidate.getId()) : null;
+                final Long licenseId = licenseIds.get(identifier);
 
                 final boolean isExpression = expression != null
                         && (expression.equals(candidate.getId()) || expression.equals(candidate.getName()));
 
-                rows.add(new ComponentDao.ComponentLicenseRow(
-                        persistedId,
-                        licenseId,
-                        licenseName,
-                        isExpression ? expression : null,
-                        trimToNull(candidate.getUrl()),
-                        ordinality++,
-                        "DECLARED"));
+                // De-deuplicate licenseIDs to satisfy COMPONENTLICENSES_ID_UQ constraint
+                String key = licenseId != null ? "resolved:" + licenseId : "unresolved:" + identifier;
+                rowMap.putIfAbsent(
+                        key,
+                        new ComponentDao.ComponentLicenseRow(
+                                persistedId,
+                                licenseId,
+                                licenseId == null
+                                        ? trimmedName != null ? trimmedName : trimToNull(candidate.getId())
+                                        : null,
+                                isExpression ? expression : null,
+                                trimToNull(candidate.getUrl()),
+                                0,
+                                "DECLARED"));
             }
         }
 
@@ -482,11 +490,26 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                         || candidates.stream()
                                 .noneMatch(candidate -> expression.equals(candidate.getId())
                                         || expression.equals(candidate.getName())))) {
-            rows.add(new ComponentDao.ComponentLicenseRow(
-                    persistedId, null, null, expression, null, ordinality, "DECLARED"));
+            rowMap.putIfAbsent(
+                    "expression",
+                    new ComponentDao.ComponentLicenseRow(persistedId, null, null, expression, null, 0, "DECLARED"));
         }
 
-        return rows;
+        // Assign ordinalities now that rows are de-duplicated
+        final List<ComponentDao.ComponentLicenseRow> finalRows = new ArrayList<>(rowMap.size());
+        int ordinality = 1;
+        for (ComponentDao.ComponentLicenseRow currentRow : rowMap.values()) {
+            finalRows.add(new ComponentDao.ComponentLicenseRow(
+                    currentRow.componentId(),
+                    currentRow.licenseId(),
+                    currentRow.license(),
+                    currentRow.licenseExpression(),
+                    currentRow.licenseUrl(),
+                    ordinality++,
+                    currentRow.acknowledgement()));
+        }
+
+        return finalRows;
     }
 
     private static Map<String, Long> findLicenseIds(final QueryManager qm, final Collection<Component> components) {
@@ -501,7 +524,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
             for (final org.cyclonedx.model.License candidate : candidates) {
                 if (isNotBlank(candidate.getId())) {
-                    // Only the resolved license should have an associated ID
+                    // Only the resolved license should have an associated ID.
                     // In the model License, this is the LICENSEID column
                     identifiers.add(candidate.getId());
                 }

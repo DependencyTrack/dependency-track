@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.auth.saml;
 
+import org.dependencytrack.common.ConfigKeys;
 import org.eclipse.microprofile.config.Config;
 import org.jspecify.annotations.Nullable;
 
@@ -46,7 +47,7 @@ public record SamlConfig(
     static final String ENABLED = "dt.saml.enabled";
     static final String SP_ENTITY_ID = "dt.saml.sp.entity-id";
     static final String SP_ACS_URL = "dt.saml.sp.acs-url";
-    static final String FRONTEND_URL = "dt.saml.frontend-url";
+    static final String FRONTEND_URL = ConfigKeys.FRONTEND_URL;
     static final String IDP_METADATA_URL = "dt.saml.idp.metadata-url";
     static final String IDP_METADATA_FILE = "dt.saml.idp.metadata-file";
     static final String USERNAME_ATTRIBUTE = "dt.saml.username-attribute";

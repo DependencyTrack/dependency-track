@@ -125,8 +125,8 @@ SAML groups are stored in their own table, separate from OIDC and LDAP groups, a
 User provisioning, team synchronization, default teams and automatic creation of groups work as for OIDC,
 and are configured separately.
 
-New endpoints to manage SAML users, SAML groups and their mappings are part of REST API v2. Team memberships of SAML users use
-the existing endpoints that work for all user types.
+New endpoints to manage SAML users, SAML groups and their mappings are part of REST API v2, under `/saml`.
+Team memberships of SAML users use the existing endpoints that work for all user types.
 
 ### Out of scope
 
@@ -142,10 +142,12 @@ Organizations with a SAML IdP can use single sign-on, with the same automation a
 We add no dependency, but we maintain code that verifies SAML responses. Changes to it need review with security in mind,
 and the tests for known attacks must stay.
 
-The API server now serves endpoints that browsers reach directly, not only through the frontend. The ACS URL must be
-reachable from users' browsers, and administrators must configure the public URL of the API server and of the frontend.
+For the first time, the API server redirects browsers to the frontend. Administrators must configure the public URL
+of the frontend for that, as a general setting that other features can use as well. They must also configure the
+public URL of the assertion consumer service, because it is part of the configuration at the IdP.
 
-Two small tables hold pending authentication requests and one-time codes. A scheduled task deletes expired rows.
+Two small unlogged tables hold pending authentication requests and one-time codes. Losing them in a database crash
+only aborts logins that are in progress. A scheduled task deletes expired rows.
 
 [pac4j]: https://www.pac4j.org
 [RFC 7636]: https://datatracker.ietf.org/doc/html/rfc7636

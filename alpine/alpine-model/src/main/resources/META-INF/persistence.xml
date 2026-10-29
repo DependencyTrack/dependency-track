@@ -26,6 +26,7 @@
         <class>alpine.model.LdapUser</class>
         <class>alpine.model.ManagedUser</class>
         <class>alpine.model.OidcUser</class>
+        <class>alpine.model.SamlUser</class>
         <class>alpine.model.OidcGroup</class>
         <class>alpine.model.MappedLdapGroup</class>
         <class>alpine.model.MappedOidcGroup</class>

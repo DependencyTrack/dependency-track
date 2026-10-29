@@ -161,6 +161,7 @@ public class TeamResourceTest extends ResourceTest {
                   "permissions" : [ ],
                   "ldapUsers" : [ ],
                   "oidcUsers" : [ ],
+                  "samlUsers" : [ ],
                   "managedUsers" : [ ],
                   "serviceAccounts" : [ ]
                 }, {
@@ -172,6 +173,7 @@ public class TeamResourceTest extends ResourceTest {
                   "permissions" : [ ],
                   "ldapUsers" : [ ],
                   "oidcUsers" : [ ],
+                  "samlUsers" : [ ],
                   "managedUsers" : [ ],
                   "serviceAccounts" : [ ]
                 } ]

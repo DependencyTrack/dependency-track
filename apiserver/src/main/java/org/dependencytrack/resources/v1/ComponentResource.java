@@ -499,6 +499,30 @@ public class ComponentResource extends AbstractApiResource {
 
                 qm.createComponent(component, true);
 
+                final List<ComponentDao.ComponentLicenseRow> licenseRows;
+                if (component.getResolvedLicense() == null
+                        && component.getLicense() == null
+                        && component.getLicenseExpression() == null
+                        && component.getLicenseUrl() == null) {
+                    licenseRows = List.of();
+                } else {
+                    licenseRows = List.of(new ComponentDao.ComponentLicenseRow(
+                            component.getId(),
+                            component.getResolvedLicense() != null
+                                    ? component.getResolvedLicense().getId()
+                                    : null,
+                            component.getLicense(),
+                            component.getLicenseExpression(),
+                            component.getLicenseUrl(),
+                            1,
+                            "DECLARED"));
+                }
+
+                useJdbiHandle(
+                        qm,
+                        handle -> handle.attach(ComponentDao.class)
+                                .replaceComponentLicenses(List.of(component.getId()), licenseRows));
+
                 return Response.status(Response.Status.CREATED)
                         .entity(component)
                         .build();

@@ -28,6 +28,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scope;
+import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
@@ -49,6 +50,7 @@ import java.util.List;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class ComponentsResourceTest extends ResourceTest {
 
@@ -157,6 +159,49 @@ public class ComponentsResourceTest extends ResourceTest {
                         }
                         """.formatted(project.getUuid())));
         assertThat(response.getStatus()).isEqualTo(201);
+    }
+
+    @Test
+    public void createComponentWithLicenseTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+
+        Project project = qm.createProject("acme", null, null, null, null, null, null, false);
+
+        final Response response = jersey.target("/components")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "project_uuid": "%s",
+                          "name": "foo",
+                          "purl": "pkg:maven/org.acme/abc",
+                           "license": "Custom License",
+                           "license_url": "https://example.com/custom-license"
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(201);
+        assertThat(getPlainTextBody(response)).isEmpty();
+
+        qm.getPersistenceManager().evictAll();
+
+        final Component persistedComponent = qm.getAllComponents(project).getFirst();
+        final List<ComponentDao.ComponentLicenseRow> licenseRows =
+                withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                        .getLicenseRows(List.of(persistedComponent.getId()))
+                        .get(persistedComponent.getId()));
+        
+        assertThat(licenseRows)
+                .singleElement()
+                .satisfies(row -> {
+                        assertThat(row.componentId()).isEqualTo(persistedComponent.getId());
+                        assertThat(row.licenseId()).isNull();
+                        assertThat(row.license()).isEqualTo("Custom License");
+                        assertThat(row.licenseExpression()).isNull();
+                        assertThat(row.licenseUrl()).isEqualTo("https://example.com/custom-license");
+                        assertThat(row.ordinality()).isEqualTo(1);
+                        assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+                });
+
     }
 
     @Test

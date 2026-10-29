@@ -73,6 +73,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.map;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapDependencyMetrics;
@@ -355,6 +356,30 @@ public class ComponentsResource extends AbstractApiResource implements Component
         component.setNotes(StringUtils.trimToNull(request.getNotes()));
 
         qm.createComponent(component, true);
+
+        final List<ComponentDao.ComponentLicenseRow> licenseRows;
+        if (component.getResolvedLicense() == null
+                && component.getLicense() == null
+                && component.getLicenseExpression() == null
+                && component.getLicenseUrl() == null) {
+            licenseRows = List.of();
+        } else {
+            licenseRows = List.of(new ComponentDao.ComponentLicenseRow(
+                    component.getId(),
+                    component.getResolvedLicense() != null
+                            ? component.getResolvedLicense().getId()
+                            : null,
+                    component.getLicense(),
+                    component.getLicenseExpression(),
+                    component.getLicenseUrl(),
+                    1,
+                    "DECLARED"));
+        }
+
+        useJdbiHandle(
+                qm,
+                handle -> handle.attach(ComponentDao.class)
+                        .replaceComponentLicenses(List.of(component.getId()), licenseRows));
 
         return component;
     }

@@ -22,6 +22,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import javax.xml.XMLConstants;
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 import javax.xml.crypto.dsig.DigestMethod;
 import javax.xml.crypto.dsig.Reference;
@@ -34,12 +35,10 @@ import javax.xml.crypto.dsig.keyinfo.KeyInfo;
 import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory;
 import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -178,11 +177,10 @@ public final class TestIdentityProvider {
     }
 
     public static Document parse(String xml) {
+        // Same hardened parser as production code: no document type declarations, no external entities.
         try {
-            final var factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            return factory.newDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
-        } catch (Exception e) {
+            return SamlXml.parse(xml.getBytes(StandardCharsets.UTF_8));
+        } catch (SamlException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -237,7 +235,10 @@ public final class TestIdentityProvider {
 
     public static String serialize(Document document) {
         try {
-            final var transformer = TransformerFactory.newInstance().newTransformer();
+            final var transformerFactory = TransformerFactory.newInstance();
+            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+            final var transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             transformer.setOutputProperty(OutputKeys.INDENT, "no");
             final var writer = new StringWriter();

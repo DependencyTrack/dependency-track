@@ -22,7 +22,7 @@ delete:
 
     Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_DELETE` permission.
   tags:
-    - SAML Groups
+    - SAML
   parameters:
     - name: uuid
       in: path

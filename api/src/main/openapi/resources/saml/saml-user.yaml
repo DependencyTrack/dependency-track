@@ -20,7 +20,7 @@ delete:
   description: |-
     Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_DELETE` permission.
   tags:
-    - SAML Users
+    - SAML
   parameters:
     - name: username
       in: path

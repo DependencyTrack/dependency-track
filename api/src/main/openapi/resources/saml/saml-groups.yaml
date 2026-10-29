@@ -22,7 +22,7 @@ get:
 
     Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_READ` permission.
   tags:
-    - SAML Groups
+    - SAML
   parameters:
     - name: team_uuid
       in: query
@@ -56,7 +56,7 @@ post:
 
     Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_CREATE` permission.
   tags:
-    - SAML Groups
+    - SAML
   requestBody:
     required: true
     content:

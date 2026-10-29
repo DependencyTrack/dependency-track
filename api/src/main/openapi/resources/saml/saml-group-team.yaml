@@ -23,7 +23,7 @@ put:
 
     Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_UPDATE` permission.
   tags:
-    - SAML Groups
+    - SAML
   parameters:
     - name: uuid
       in: path
@@ -57,7 +57,7 @@ delete:
   description: |-
     Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_UPDATE` permission.
   tags:
-    - SAML Groups
+    - SAML
   parameters:
     - name: uuid
       in: path

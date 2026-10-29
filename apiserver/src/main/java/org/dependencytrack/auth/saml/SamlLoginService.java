@@ -20,11 +20,11 @@ package org.dependencytrack.auth.saml;
 
 import alpine.model.ServiceAccount;
 import alpine.model.auth.UserType;
-import org.dependencytrack.auth.saml.SamlDao.LoginCode;
-import org.dependencytrack.auth.saml.SamlDao.PendingAuthnRequest;
-import org.dependencytrack.auth.saml.SamlDao.UserRow;
+import org.dependencytrack.auth.saml.SamlLoginDao.LoginCode;
+import org.dependencytrack.auth.saml.SamlLoginDao.PendingAuthnRequest;
 import org.dependencytrack.auth.saml.SamlMessages.AuthnRequest;
 import org.dependencytrack.auth.saml.SamlResponseValidator.ValidatedAssertion;
+import org.dependencytrack.auth.saml.SamlUserDao.UserRow;
 import org.jspecify.annotations.Nullable;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
@@ -141,7 +141,7 @@ public final class SamlLoginService {
         final Instant now = clock.instant();
         final AuthnRequest request = SamlMessages.createAuthnRequest(config, metadataProvider.get(), now);
 
-        useJdbiTransaction(handle -> handle.attach(SamlDao.class)
+        useJdbiTransaction(handle -> handle.attach(SamlLoginDao.class)
                 .createAuthnRequest(
                         request.id(),
                         codeChallenge,
@@ -178,8 +178,8 @@ public final class SamlLoginService {
 
         // Consume the request in its own transaction, so that it is gone even when the login is refused later.
         final Instant now = clock.instant();
-        final PendingAuthnRequest request =
-                inJdbiTransaction(handle -> handle.attach(SamlDao.class).consumeAuthnRequest(assertion.inResponseTo()));
+        final PendingAuthnRequest request = inJdbiTransaction(
+                handle -> handle.attach(SamlLoginDao.class).consumeAuthnRequest(assertion.inResponseTo()));
         if (request == null || !now.isBefore(request.expiresAt())) {
             throw new LoginRefusedException(
                     FailureReason.FAILED,
@@ -188,9 +188,10 @@ public final class SamlLoginService {
         }
 
         inJdbiTransaction(handle -> {
-            final var dao = handle.attach(SamlDao.class);
-            final long userId = provisionUser(dao, username, email, groups);
-            dao.createLoginCode(sha256Hex(code), userId, request.codeChallenge(), now.plus(LOGIN_CODE_LIFETIME));
+            final long userId = provisionUser(
+                    handle.attach(SamlUserDao.class), handle.attach(SamlGroupDao.class), username, email, groups);
+            handle.attach(SamlLoginDao.class)
+                    .createLoginCode(sha256Hex(code), userId, request.codeChallenge(), now.plus(LOGIN_CODE_LIFETIME));
             return userId;
         });
 
@@ -202,7 +203,7 @@ public final class SamlLoginService {
     /// @return The user ID, or `null` when the code is unknown, expired, or the verifier does not match.
     public static @Nullable Long exchangeCode(String code, String codeVerifier, Instant now) {
         final LoginCode loginCode =
-                inJdbiTransaction(handle -> handle.attach(SamlDao.class).consumeLoginCode(sha256Hex(code)));
+                inJdbiTransaction(handle -> handle.attach(SamlLoginDao.class).consumeLoginCode(sha256Hex(code)));
         if (loginCode == null || !now.isBefore(loginCode.expiresAt())) {
             return null;
         }
@@ -220,12 +221,13 @@ public final class SamlLoginService {
 
     public static int deleteExpired() {
         return inJdbiTransaction(handle -> {
-            final var dao = handle.attach(SamlDao.class);
+            final var dao = handle.attach(SamlLoginDao.class);
             return dao.deleteExpiredAuthnRequests() + dao.deleteExpiredLoginCodes();
         });
     }
 
-    private long provisionUser(SamlDao dao, String username, @Nullable String email, List<String> groups)
+    private long provisionUser(
+            SamlUserDao dao, SamlGroupDao groupDao, String username, @Nullable String email, List<String> groups)
             throws LoginRefusedException {
         final UserRow existingUser = dao.getUser(username);
 
@@ -256,7 +258,7 @@ public final class SamlLoginService {
         }
 
         if (config.groupProvisioning()) {
-            for (final String groupName : dao.createGroups(groups)) {
+            for (final String groupName : groupDao.createGroups(groups)) {
                 LOGGER.info(
                         SecurityMarkers.SECURITY_AUDIT,
                         "Created SAML group {} from groups of user {}",

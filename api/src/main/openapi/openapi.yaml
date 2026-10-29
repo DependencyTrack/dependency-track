@@ -200,11 +200,7 @@ tags:
 - name: Projects
   description: Endpoints related to projects
 - name: SAML
-  description: Endpoints related to login via SAML 2.0
-- name: SAML Groups
-  description: Endpoints related to SAML groups and their mappings to teams
-- name: SAML Users
-  description: Endpoints related to SAML users
+  description: Endpoints related to login via SAML 2.0, and to SAML users and groups
 - name: Secrets
   description: Endpoints related to secrets
 - name: Service Accounts
@@ -257,16 +253,16 @@ paths:
     $ref: "./resources/saml/saml-acs.yaml"
   /saml/token:
     $ref: "./resources/saml/saml-token.yaml"
-  /saml-groups:
-    $ref: "./resources/saml-groups/saml-groups.yaml"
-  /saml-groups/{uuid}:
-    $ref: "./resources/saml-groups/saml-group.yaml"
-  /saml-groups/{uuid}/teams/{team_uuid}:
-    $ref: "./resources/saml-groups/saml-group-team.yaml"
-  /saml-users:
-    $ref: "./resources/saml-users/saml-users.yaml"
-  /saml-users/{username}:
-    $ref: "./resources/saml-users/saml-user.yaml"
+  /saml/groups:
+    $ref: "./resources/saml/saml-groups.yaml"
+  /saml/groups/{uuid}:
+    $ref: "./resources/saml/saml-group.yaml"
+  /saml/groups/{uuid}/teams/{team_uuid}:
+    $ref: "./resources/saml/saml-group-team.yaml"
+  /saml/users:
+    $ref: "./resources/saml/saml-users.yaml"
+  /saml/users/{username}:
+    $ref: "./resources/saml/saml-user.yaml"
   /secrets:
     $ref: "./resources/secrets/secrets.yaml"
   /secrets/{name}:

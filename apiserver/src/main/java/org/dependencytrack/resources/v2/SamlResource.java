@@ -19,19 +19,35 @@
 package org.dependencytrack.resources.v2;
 
 import alpine.server.auth.AuthenticationNotRequired;
+import alpine.server.auth.PermissionRequired;
 import alpine.server.auth.SessionTokenService;
 import org.dependencytrack.api.v2.SamlApi;
+import org.dependencytrack.api.v2.model.CreateSamlGroupRequest;
 import org.dependencytrack.api.v2.model.CreateSamlTokenResponse;
+import org.dependencytrack.api.v2.model.CreateSamlUserRequest;
 import org.dependencytrack.api.v2.model.GetSamlAvailabilityResponse;
+import org.dependencytrack.api.v2.model.ListSamlGroupsResponse;
+import org.dependencytrack.api.v2.model.ListSamlUsersResponse;
 import org.dependencytrack.api.v2.model.ProblemDetails;
+import org.dependencytrack.api.v2.model.SamlGroup;
+import org.dependencytrack.api.v2.model.SamlGroupTeam;
+import org.dependencytrack.api.v2.model.SamlUser;
+import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.saml.SamlConfig;
 import org.dependencytrack.auth.saml.SamlException;
+import org.dependencytrack.auth.saml.SamlGroupDao;
+import org.dependencytrack.auth.saml.SamlGroupDao.SamlGroupRow;
 import org.dependencytrack.auth.saml.SamlLoginService;
 import org.dependencytrack.auth.saml.SamlLoginService.CompletedLogin;
 import org.dependencytrack.auth.saml.SamlLoginService.FailureReason;
 import org.dependencytrack.auth.saml.SamlLoginService.LoginRefusedException;
 import org.dependencytrack.auth.saml.SamlLoginServiceHolder;
 import org.dependencytrack.auth.saml.SamlMessages;
+import org.dependencytrack.auth.saml.SamlTeamRef;
+import org.dependencytrack.auth.saml.SamlUserDao;
+import org.dependencytrack.auth.saml.SamlUserDao.SamlUserRow;
+import org.dependencytrack.common.pagination.Page;
+import org.dependencytrack.exception.AlreadyExistsException;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v2.exception.ProblemDetailsException;
 import org.jspecify.annotations.NullMarked;
@@ -50,6 +66,13 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import static org.apache.commons.lang3.StringUtils.trimToNull;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
+import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 /// @since 5.3.0
 @Provider
@@ -148,6 +171,160 @@ public final class SamlResource extends AbstractApiResource implements SamlApi {
                         .build())
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .build();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_READ})
+    public Response listSamlGroups(@Nullable UUID teamUuid, @Nullable String pageToken, Integer limit) {
+        final Page<SamlGroupRow> page = withJdbiHandle(handle -> handle.attach(SamlGroupDao.class)
+                .listGroups(limit, pageToken, teamUuid != null ? teamUuid.toString() : null));
+
+        return Response.ok(ListSamlGroupsResponse.builder()
+                        .items(page.items().stream()
+                                .<SamlGroup>map(row -> SamlGroup.builder()
+                                        .uuid(row.uuid())
+                                        .name(row.name())
+                                        .teams(convert(row.teams()))
+                                        .build())
+                                .toList())
+                        .nextPageToken(page.nextPageToken())
+                        .total(convertTotalCount(page.totalCount()))
+                        .build())
+                .build();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_CREATE})
+    public Response createSamlGroup(CreateSamlGroupRequest request) {
+        final UUID uuid;
+        try {
+            uuid = inJdbiTransaction(handle -> handle.attach(SamlGroupDao.class).createGroup(request.getName()));
+        } catch (RuntimeException e) {
+            if (isUniqueConstraintViolation(e)) {
+                throw new AlreadyExistsException(
+                        "A SAML group with name %s already exists".formatted(request.getName()), e);
+            }
+            throw e;
+        }
+
+        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Created SAML group: {}", request.getName());
+        return Response.created(getUriInfo()
+                        .getBaseUriBuilder()
+                        .path("/saml/groups")
+                        .path(uuid.toString())
+                        .build())
+                .build();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
+    public Response deleteSamlGroup(UUID uuid) {
+        final int deleted =
+                inJdbiTransaction(handle -> handle.attach(SamlGroupDao.class).deleteGroup(uuid));
+        if (deleted == 0) {
+            throw new NotFoundException();
+        }
+
+        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted SAML group: {}", uuid);
+        return Response.noContent().build();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_UPDATE})
+    public Response updateSamlGroupMapping(UUID uuid, UUID teamUuid) {
+        final boolean created = inJdbiTransaction(handle -> {
+            final var dao = handle.attach(SamlGroupDao.class);
+            if (!dao.groupAndTeamExist(uuid, teamUuid.toString())) {
+                throw new NotFoundException();
+            }
+            return dao.createMapping(uuid, teamUuid.toString()) > 0;
+        });
+
+        if (created) {
+            LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Mapped SAML group {} to team {}", uuid, teamUuid);
+        }
+        return Response.noContent().build();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_UPDATE})
+    public Response deleteSamlGroupMapping(UUID uuid, UUID teamUuid) {
+        final int deleted =
+                inJdbiTransaction(handle -> handle.attach(SamlGroupDao.class).deleteMapping(uuid, teamUuid.toString()));
+        if (deleted == 0) {
+            throw new NotFoundException();
+        }
+
+        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Removed mapping of SAML group {} to team {}", uuid, teamUuid);
+        return Response.noContent().build();
+    }
+
+    static List<SamlGroupTeam> convert(List<SamlTeamRef> teams) {
+        return teams.stream()
+                .<SamlGroupTeam>map(team -> SamlGroupTeam.builder()
+                        .uuid(UUID.fromString(team.uuid()))
+                        .name(team.name())
+                        .build())
+                .toList();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_READ})
+    public Response listSamlUsers(@Nullable String q, @Nullable String pageToken, Integer limit) {
+        final Page<SamlUserRow> page =
+                withJdbiHandle(handle -> handle.attach(SamlUserDao.class).listUsers(limit, pageToken, trimToNull(q)));
+
+        return Response.ok(ListSamlUsersResponse.builder()
+                        .items(page.items().stream()
+                                .<SamlUser>map(row -> SamlUser.builder()
+                                        .username(row.username())
+                                        .email(row.email())
+                                        .teams(convert(row.teams()))
+                                        .permissions(row.permissions())
+                                        .build())
+                                .toList())
+                        .nextPageToken(page.nextPageToken())
+                        .total(convertTotalCount(page.totalCount()))
+                        .build())
+                .build();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_CREATE})
+    public Response createSamlUser(CreateSamlUserRequest request) {
+        // The reserved service account prefix is refused by the request schema.
+        final String username = request.getUsername();
+
+        try {
+            inJdbiTransaction(
+                    handle -> handle.attach(SamlUserDao.class).createUser(username, trimToNull(request.getEmail())));
+        } catch (RuntimeException e) {
+            if (isUniqueConstraintViolation(e)) {
+                throw new AlreadyExistsException("A user with username %s already exists".formatted(username), e);
+            }
+            throw e;
+        }
+
+        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Created SAML user: {}", username);
+        return Response.created(getUriInfo()
+                        .getBaseUriBuilder()
+                        .path("/saml/users")
+                        .path(username)
+                        .build())
+                .build();
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
+    public Response deleteSamlUser(String username) {
+        final int deleted =
+                inJdbiTransaction(handle -> handle.attach(SamlUserDao.class).deleteUser(username));
+        if (deleted == 0) {
+            throw new NotFoundException();
+        }
+
+        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted SAML user: {}", username);
+        return Response.noContent().build();
     }
 
     private static SamlLoginService requireService() {

@@ -24,7 +24,7 @@ properties:
     type: array
     description: The teams that the user is a member of, ordered by name
     items:
-      $ref: "../../saml-groups/schemas/saml-group-team.yaml"
+      $ref: "./saml-group-team.yaml"
   permissions:
     type: array
     description: The names of the permissions granted to the user directly, ordered by name

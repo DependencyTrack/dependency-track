@@ -205,7 +205,7 @@ class SamlResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT, Permissions.ACCESS_MANAGEMENT_READ);
         final String teamUuid = qm.createTeam("Admins").getUuid().toString();
 
-        final Response created = jersey.target("/saml-groups")
+        final Response created = jersey.target("/saml/groups")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json("""
@@ -215,7 +215,7 @@ class SamlResourceTest extends ResourceTest {
         final String groupUuid =
                 Path.of(created.getLocation().getPath()).getFileName().toString();
 
-        final Response duplicate = jersey.target("/saml-groups")
+        final Response duplicate = jersey.target("/saml/groups")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json("""
@@ -223,14 +223,14 @@ class SamlResourceTest extends ResourceTest {
                         """));
         assertThat(duplicate.getStatus()).isEqualTo(409);
 
-        assertThat(jersey.target("/saml-groups/%s/teams/%s".formatted(groupUuid, teamUuid))
+        assertThat(jersey.target("/saml/groups/%s/teams/%s".formatted(groupUuid, teamUuid))
                         .request()
                         .header(X_API_KEY, apiKey)
                         .put(Entity.text(""))
                         .getStatus())
                 .isEqualTo(204);
 
-        final Response list = jersey.target("/saml-groups")
+        final Response list = jersey.target("/saml/groups")
                 .queryParam("team_uuid", teamUuid)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -241,19 +241,19 @@ class SamlResourceTest extends ResourceTest {
         assertThat(group.getJsonArray("teams").getJsonObject(0).getString("name"))
                 .isEqualTo("Admins");
 
-        assertThat(jersey.target("/saml-groups/%s/teams/%s".formatted(groupUuid, teamUuid))
+        assertThat(jersey.target("/saml/groups/%s/teams/%s".formatted(groupUuid, teamUuid))
                         .request()
                         .header(X_API_KEY, apiKey)
                         .delete()
                         .getStatus())
                 .isEqualTo(204);
-        assertThat(jersey.target("/saml-groups/" + groupUuid)
+        assertThat(jersey.target("/saml/groups/" + groupUuid)
                         .request()
                         .header(X_API_KEY, apiKey)
                         .delete()
                         .getStatus())
                 .isEqualTo(204);
-        assertThat(jersey.target("/saml-groups/" + groupUuid)
+        assertThat(jersey.target("/saml/groups/" + groupUuid)
                         .request()
                         .header(X_API_KEY, apiKey)
                         .delete()
@@ -266,7 +266,7 @@ class SamlResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT);
         qm.createManagedUser("existing", "not-a-real-hash");
 
-        assertThat(jersey.target("/saml-users")
+        assertThat(jersey.target("/saml/users")
                         .request()
                         .header(X_API_KEY, apiKey)
                         .post(Entity.json("""
@@ -274,7 +274,7 @@ class SamlResourceTest extends ResourceTest {
                                 """))
                         .getStatus())
                 .isEqualTo(201);
-        assertThat(jersey.target("/saml-users")
+        assertThat(jersey.target("/saml/users")
                         .request()
                         .header(X_API_KEY, apiKey)
                         .post(Entity.json("""
@@ -282,7 +282,7 @@ class SamlResourceTest extends ResourceTest {
                                 """))
                         .getStatus())
                 .isEqualTo(409);
-        assertThat(jersey.target("/saml-users")
+        assertThat(jersey.target("/saml/users")
                         .request()
                         .header(X_API_KEY, apiKey)
                         .post(Entity.json("""
@@ -292,20 +292,20 @@ class SamlResourceTest extends ResourceTest {
                 .isEqualTo(400);
 
         final Response list =
-                jersey.target("/saml-users").request().header(X_API_KEY, apiKey).get();
+                jersey.target("/saml/users").request().header(X_API_KEY, apiKey).get();
         assertThat(list.getStatus()).isEqualTo(200);
         final JsonObject user = parseJsonObject(list).getJsonArray("items").getJsonObject(0);
         assertThat(user.getString("username")).isEqualTo("jane");
         assertThat(user.getJsonArray("teams")).isEmpty();
         assertThat(user.getJsonArray("permissions")).isEmpty();
 
-        assertThat(jersey.target("/saml-users/jane")
+        assertThat(jersey.target("/saml/users/jane")
                         .request()
                         .header(X_API_KEY, apiKey)
                         .delete()
                         .getStatus())
                 .isEqualTo(204);
-        assertThat(jersey.target("/saml-users/existing")
+        assertThat(jersey.target("/saml/users/existing")
                         .request()
                         .header(X_API_KEY, apiKey)
                         .delete()

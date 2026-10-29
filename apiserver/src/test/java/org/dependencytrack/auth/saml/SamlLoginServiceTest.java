@@ -189,7 +189,7 @@ class SamlLoginServiceTest extends PersistenceCapableTest {
 
     @Test
     void shouldLoginExistingUserWithoutProvisioning() throws Exception {
-        withJdbiHandle(handle -> handle.attach(SamlDao.class).createUser("jane.doe@example.com", null));
+        withJdbiHandle(handle -> handle.attach(SamlUserDao.class).createUser("jane.doe@example.com", null));
         final SamlLoginService service = createService(false, false, false, List.of());
 
         assertThat(complete(service, start(service)).username()).isEqualTo("jane.doe@example.com");
@@ -241,7 +241,7 @@ class SamlLoginServiceTest extends PersistenceCapableTest {
         final Team auditors = qm.createTeam("Auditors");
         final Team unrelated = qm.createTeam("Unrelated");
         withJdbiHandle(handle -> {
-            final var dao = handle.attach(SamlDao.class);
+            final var dao = handle.attach(SamlGroupDao.class);
             dao.createGroups(List.of("DT-Admins", "DT-Auditors"));
             final var groups = dao.listGroups(10, null, null).items();
             dao.createMapping(groups.get(0).uuid(), admins.getUuid().toString());

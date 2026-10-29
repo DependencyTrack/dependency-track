@@ -22,7 +22,7 @@ get:
 
     Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_READ` permission.
   tags:
-    - SAML Users
+    - SAML
   parameters:
     - name: q
       description: >-
@@ -62,7 +62,7 @@ post:
 
     Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_CREATE` permission.
   tags:
-    - SAML Users
+    - SAML
   requestBody:
     required: true
     content:

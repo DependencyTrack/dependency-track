@@ -1,0 +1,83 @@
+{
+  "realm": "dtrack",
+  "enabled": true,
+  "registrationAllowed": false,
+  "groups": [
+    { "name": "DT-Admins" },
+    { "name": "DT-Auditors" }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "email": "alice@example.com",
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Admin",
+      "credentials": [{ "type": "password", "value": "alice", "temporary": false }],
+      "groups": ["/DT-Admins", "/DT-Auditors"]
+    },
+    {
+      "username": "bob",
+      "enabled": true,
+      "email": "bob@example.com",
+      "emailVerified": true,
+      "firstName": "Bob",
+      "lastName": "Auditor",
+      "credentials": [{ "type": "password", "value": "bob", "temporary": false }],
+      "groups": ["/DT-Auditors"]
+    },
+    {
+      "username": "carol",
+      "enabled": true,
+      "email": "carol@example.com",
+      "emailVerified": true,
+      "firstName": "Carol",
+      "lastName": "Nogroup",
+      "credentials": [{ "type": "password", "value": "carol", "temporary": false }]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "dependency-track",
+      "name": "Dependency-Track",
+      "protocol": "saml",
+      "enabled": true,
+      "frontchannelLogout": false,
+      "redirectUris": ["http://localhost:8080/api/v2/saml/acs"],
+      "attributes": {
+        "saml_assertion_consumer_url_post": "http://localhost:8080/api/v2/saml/acs",
+        "saml.client.signature": "false",
+        "saml.server.signature": "true",
+        "saml.assertion.signature": "true",
+        "saml.signature.algorithm": "RSA_SHA256",
+        "saml_signature_canonicalization_method": "http://www.w3.org/2001/10/xml-exc-c14n#",
+        "saml.encrypt": "false",
+        "saml.authnstatement": "true",
+        "saml_name_id_format": "username",
+        "saml.force.name.id.format": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "saml",
+          "protocolMapper": "saml-group-membership-mapper",
+          "config": {
+            "attribute.name": "groups",
+            "full.path": "false",
+            "single": "true"
+          }
+        },
+        {
+          "name": "email",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "config": {
+            "user.attribute": "email",
+            "attribute.name": "email"
+          }
+        }
+      ]
+    }
+  ]
+}

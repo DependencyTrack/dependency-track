@@ -29,7 +29,8 @@ CREATE INDEX IF NOT EXISTS "SAML_GROUP_MAPPING_TEAM_IDX"
 
 -- Authentication requests sent to the IdP, awaiting a response.
 -- Deleted when the response arrives, which prevents replay.
-CREATE TABLE IF NOT EXISTS "SAML_AUTHN_REQUEST" (
+-- Unlogged, because it only holds short-lived state that may be lost on a crash.
+CREATE UNLOGGED TABLE IF NOT EXISTS "SAML_AUTHN_REQUEST" (
   "ID" TEXT NOT NULL
 , "CODE_CHALLENGE" TEXT NOT NULL
 , "REDIRECT_PATH" TEXT
@@ -38,7 +39,8 @@ CREATE TABLE IF NOT EXISTS "SAML_AUTHN_REQUEST" (
 );
 
 -- One-time codes that the frontend exchanges for a session token.
-CREATE TABLE IF NOT EXISTS "SAML_LOGIN_CODE" (
+-- Unlogged, because it only holds short-lived state that may be lost on a crash.
+CREATE UNLOGGED TABLE IF NOT EXISTS "SAML_LOGIN_CODE" (
   "CODE_HASH" TEXT NOT NULL
 , "USER_ID" BIGINT NOT NULL
 , "CODE_CHALLENGE" TEXT NOT NULL

@@ -21,8 +21,12 @@ package org.dependencytrack.resources.v1.vo;
 import alpine.common.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.validation.ValidCronExpression;
+import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
+import org.jspecify.annotations.Nullable;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -30,6 +34,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.util.Set;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -43,7 +48,17 @@ public record CreateScheduledNotificationRuleRequest(
 
         @NotNull NotificationScope scope,
         @JsonAlias("notificationLevel") @NotNull NotificationLevel level,
-        @NotNull @Valid Publisher publisher) {
+        @NotNull @Valid Publisher publisher,
+        // Use Boolean, not boolean, so that a missing field is null and gets its default value.
+        @Nullable Boolean enabled,
+        @Nullable Boolean notifyChildren,
+        @Nullable Boolean logSuccessfulPublish,
+        @Nullable Set<@NotNull NotificationGroup> notifyOn,
+        @Nullable String publisherConfig,
+        @Nullable @Size(max = 2048) String filterExpression,
+        @Nullable Set<Tag> tags,
+        @Nullable @ValidCronExpression String scheduleCron,
+        @Nullable Boolean scheduleSkipUnchanged) {
 
     public record Publisher(@NotNull UUID uuid) {}
 }

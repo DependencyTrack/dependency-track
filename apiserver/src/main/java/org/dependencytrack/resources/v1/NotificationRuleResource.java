@@ -81,6 +81,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNullElse;
+
 /**
  * JAX-RS resources for processing notification rules.
  *
@@ -176,6 +178,17 @@ public class NotificationRuleResource extends AbstractApiResource {
                         responseCode = "201",
                         description = "The created notification rule",
                         content = @Content(schema = @Schema(implementation = NotificationRule.class))),
+                @ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid filter expression, publisher configuration, or notification groups",
+                        content =
+                                @Content(
+                                        schema =
+                                                @Schema(
+                                                        implementation =
+                                                                InvalidNotificationFilterExpressionProblemDetails
+                                                                        .class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(
                         responseCode = "404",
@@ -183,6 +196,10 @@ public class NotificationRuleResource extends AbstractApiResource {
             })
     @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_CREATE})
     public Response createNotificationRule(@Valid CreateNotificationRuleRequest request) {
+        if (request.filterExpression() != null && !request.filterExpression().isBlank()) {
+            NotificationFilterExpressionEnv.getInstance().compile(request.filterExpression());
+        }
+
         final NotificationRule createdRule;
         try (final var qm = new QueryManager(getAlpineRequest())) {
             createdRule = qm.callInTransaction(() -> {
@@ -201,17 +218,30 @@ public class NotificationRuleResource extends AbstractApiResource {
                         org.dependencytrack.notification.api.publishing.NotificationPublisher.class,
                         publisher.getExtensionName());
 
-                final NotificationRule rule =
-                        qm.createNotificationRule(request.name(), request.scope(), request.level(), publisher);
+                final String publisherConfig =
+                        resolvePublisherConfigForCreate(request.publisherConfig(), extensionFactory.ruleConfigSpec());
 
-                final RuntimeConfigSpec ruleConfigSpec = extensionFactory.ruleConfigSpec();
-                if (ruleConfigSpec != null) {
-                    final String defaultRuleConfigJson =
-                            RuntimeConfigMapper.getInstance().serialize(ruleConfigSpec.defaultConfig());
-                    rule.setPublisherConfig(defaultRuleConfigJson);
+                final var transientRule = new NotificationRule();
+                transientRule.setTriggerType(NotificationTriggerType.EVENT);
+                transientRule.setName(request.name());
+                transientRule.setScope(request.scope());
+                transientRule.setNotificationLevel(request.level());
+                transientRule.setPublisher(publisher);
+                transientRule.setEnabled(requireNonNullElse(request.enabled(), true));
+                transientRule.setNotifyChildren(requireNonNullElse(request.notifyChildren(), true));
+                transientRule.setLogSuccessfulPublish(requireNonNullElse(request.logSuccessfulPublish(), false));
+                transientRule.setNotifyOn(request.notifyOn());
+                transientRule.setPublisherConfig(publisherConfig);
+                transientRule.setFilterExpression(request.filterExpression());
+                transientRule.setTags(request.tags());
+
+                try {
+                    return qm.createNotificationRule(transientRule);
+                } catch (IllegalArgumentException e) {
+                    throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                            .entity(e.getMessage())
+                            .build());
                 }
-
-                return rule;
             });
         }
 
@@ -234,6 +264,18 @@ public class NotificationRuleResource extends AbstractApiResource {
                         responseCode = "201",
                         description = "The created scheduled notification rule",
                         content = @Content(schema = @Schema(implementation = NotificationRule.class))),
+                @ApiResponse(
+                        responseCode = "400",
+                        description =
+                                "Invalid filter expression, publisher configuration, schedule, or notification groups",
+                        content =
+                                @Content(
+                                        schema =
+                                                @Schema(
+                                                        implementation =
+                                                                InvalidNotificationFilterExpressionProblemDetails
+                                                                        .class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(
                         responseCode = "404",
@@ -241,6 +283,10 @@ public class NotificationRuleResource extends AbstractApiResource {
             })
     @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_CREATE})
     public Response createScheduledNotificationRule(@Valid CreateScheduledNotificationRuleRequest request) {
+        if (request.filterExpression() != null && !request.filterExpression().isBlank()) {
+            NotificationFilterExpressionEnv.getInstance().compile(request.filterExpression());
+        }
+
         final NotificationRule createdRule;
         try (final var qm = new QueryManager(getAlpineRequest())) {
             createdRule = qm.callInTransaction(() -> {
@@ -259,17 +305,33 @@ public class NotificationRuleResource extends AbstractApiResource {
                         org.dependencytrack.notification.api.publishing.NotificationPublisher.class,
                         publisher.getExtensionName());
 
-                final NotificationRule rule =
-                        qm.createScheduledNotificationRule(request.name(), request.scope(), request.level(), publisher);
+                final String publisherConfig =
+                        resolvePublisherConfigForCreate(request.publisherConfig(), extensionFactory.ruleConfigSpec());
 
-                final RuntimeConfigSpec ruleConfigSpec = extensionFactory.ruleConfigSpec();
-                if (ruleConfigSpec != null) {
-                    final String defaultRuleConfigJson =
-                            RuntimeConfigMapper.getInstance().serialize(ruleConfigSpec.defaultConfig());
-                    rule.setPublisherConfig(defaultRuleConfigJson);
+                // Must be set first, the schedule setters check it.
+                final var transientRule = new NotificationRule();
+                transientRule.setTriggerType(NotificationTriggerType.SCHEDULE);
+                transientRule.setName(request.name());
+                transientRule.setScope(request.scope());
+                transientRule.setNotificationLevel(request.level());
+                transientRule.setPublisher(publisher);
+                transientRule.setEnabled(requireNonNullElse(request.enabled(), false));
+                transientRule.setNotifyChildren(requireNonNullElse(request.notifyChildren(), false));
+                transientRule.setLogSuccessfulPublish(requireNonNullElse(request.logSuccessfulPublish(), false));
+                transientRule.setNotifyOn(request.notifyOn());
+                transientRule.setPublisherConfig(publisherConfig);
+                transientRule.setFilterExpression(request.filterExpression());
+                transientRule.setTags(request.tags());
+                transientRule.setScheduleCron(requireNonNullElse(request.scheduleCron(), "0 * * * *"));
+                transientRule.setScheduleSkipUnchanged(requireNonNullElse(request.scheduleSkipUnchanged(), false));
+
+                try {
+                    return qm.createNotificationRule(transientRule);
+                } catch (IllegalArgumentException e) {
+                    throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                            .entity(e.getMessage())
+                            .build());
                 }
-
-                return rule;
             });
         }
 
@@ -339,19 +401,7 @@ public class NotificationRuleResource extends AbstractApiResource {
                                 .build());
                     }
 
-                    try {
-                        final JsonNode ruleConfigNode =
-                                configMapper.validateJson(request.publisherConfig(), ruleConfigSpec);
-                        final RuntimeConfig ruleConfig =
-                                configMapper.convert(ruleConfigNode, ruleConfigSpec.configClass());
-                        if (ruleConfigSpec.validator() != null) {
-                            ruleConfigSpec.validator().validate(ruleConfig);
-                        }
-                    } catch (InvalidRuntimeConfigException e) {
-                        throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
-                                .entity("Invalid publisher configuration: " + e.getMessage())
-                                .build());
-                    }
+                    validatePublisherConfig(request.publisherConfig(), ruleConfigSpec);
                 }
 
                 final var transientRule = new NotificationRule();
@@ -706,6 +756,43 @@ public class NotificationRuleResource extends AbstractApiResource {
             qm.makeTransient(updatedRule);
             updatedRule.setProjects(filterAccessibleProjects(updatedRule.getProjects()));
             return Response.ok(updatedRule).build();
+        }
+    }
+
+    /**
+     * Unlike on update, a missing config falls back to the publisher's default.
+     */
+    private String resolvePublisherConfigForCreate(
+            final String publisherConfig, final RuntimeConfigSpec ruleConfigSpec) {
+        if (ruleConfigSpec == null) {
+            if (publisherConfig != null) {
+                throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                        .entity("The publisher does not support configuration.")
+                        .build());
+            }
+
+            return null;
+        }
+
+        if (publisherConfig == null) {
+            return configMapper.serialize(ruleConfigSpec.defaultConfig());
+        }
+
+        validatePublisherConfig(publisherConfig, ruleConfigSpec);
+        return publisherConfig;
+    }
+
+    private void validatePublisherConfig(final String publisherConfig, final RuntimeConfigSpec ruleConfigSpec) {
+        try {
+            final JsonNode ruleConfigNode = configMapper.validateJson(publisherConfig, ruleConfigSpec);
+            final RuntimeConfig ruleConfig = configMapper.convert(ruleConfigNode, ruleConfigSpec.configClass());
+            if (ruleConfigSpec.validator() != null) {
+                ruleConfigSpec.validator().validate(ruleConfig);
+            }
+        } catch (InvalidRuntimeConfigException e) {
+            throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Invalid publisher configuration: " + e.getMessage())
+                    .build());
         }
     }
 }

@@ -759,6 +759,10 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().createNotificationRule(name, scope, level, publisher);
     }
 
+    public NotificationRule createNotificationRule(final NotificationRule transientRule) {
+        return getNotificationQueryManager().createNotificationRule(transientRule);
+    }
+
     public NotificationRule createScheduledNotificationRule(
             String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
         return getNotificationQueryManager().createScheduledNotificationRule(name, scope, level, publisher);

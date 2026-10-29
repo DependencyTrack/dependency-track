@@ -32,12 +32,27 @@ OpenSAML is the reference SAML library for Java.
 * Con: Version 5 is only published to the Shibboleth Maven repository. The build forbids repositories other than Maven Central.
 * Con: It brings many transitive dependencies, among them Guava, Velocity, Apache HttpClient and the Servlet API.
 
-#### B: Keycloak SAML core
+#### B: pac4j
+
+[pac4j] is a security library that offers one interface for many login protocols, among them SAML 2.0 and OIDC.
+It was suggested in the original feature request.
+
+* Pro: Widely used, and covers more of SAML than Dependency-Track needs.
+* Con: Its SAML module builds on OpenSAML, so it has the same repository problem as option A.
+* Con: It brings its own concepts for clients, profiles and sessions, which would have to be integrated with the
+  existing login of Dependency-Track.
+
+#### C: OneLogin java-saml
+
+* Pro: Published to Maven Central, and small.
+* Con: The last release was in 2022. A security-sensitive library without maintenance is a risk.
+
+#### D: Keycloak SAML core
 
 * Pro: Published to Maven Central and maintained.
 * Con: Built as a part of Keycloak, not as a library. It brings JAX-WS, SAAJ and a runtime implementation of them.
 
-#### C: XML signature API of the JDK, with our own SAML checks
+#### E: XML signature API of the JDK, with our own SAML checks
 
 The JDK ships an implementation of XML signatures (JSR 105, module `java.xml.crypto`). It is based on Apache Santuario.
 
@@ -47,7 +62,7 @@ The JDK ships an implementation of XML signatures (JSR 105, module `java.xml.cry
 
 ## Decision
 
-We will implement a SAML 2.0 service provider in `apiserver`, using option C.
+We will implement a SAML 2.0 service provider in `apiserver`, using option E.
 
 ### Login flow
 
@@ -132,4 +147,5 @@ reachable from users' browsers, and administrators must configure the public URL
 
 Two small tables hold pending authentication requests and one-time codes. A scheduled task deletes expired rows.
 
+[pac4j]: https://www.pac4j.org
 [RFC 7636]: https://datatracker.ietf.org/doc/html/rfc7636

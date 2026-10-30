@@ -95,6 +95,45 @@ public final class ScheduledNotificationDao {
     }
 
     public Set<Long> getApplicableProjectIds(long ruleId, boolean notifyChildren) {
+        if (hasTags(ruleId)) {
+            return getProjectIdsMatchingTags(ruleId);
+        }
+
+        return getBoundProjectIds(ruleId, notifyChildren);
+    }
+
+    private boolean hasTags(long ruleId) {
+        return jdbiHandle
+                .createQuery(/* language=SQL */ """
+                        SELECT EXISTS(
+                          SELECT 1
+                            FROM "NOTIFICATIONRULE_TAGS"
+                           WHERE "NOTIFICATIONRULE_ID" = :ruleId
+                        )
+                        """)
+                .bind("ruleId", ruleId)
+                .mapTo(boolean.class)
+                .one();
+    }
+
+    private Set<Long> getProjectIdsMatchingTags(long ruleId) {
+        return jdbiHandle
+                .createQuery(/* language=SQL */ """
+                        SELECT DISTINCT pt."PROJECT_ID"
+                          FROM "NOTIFICATIONRULE_TAGS" rt
+                         INNER JOIN "PROJECTS_TAGS" pt
+                            ON pt."TAG_ID" = rt."TAG_ID"
+                         INNER JOIN "PROJECT" p
+                            ON p."ID" = pt."PROJECT_ID"
+                         WHERE rt."NOTIFICATIONRULE_ID" = :ruleId
+                           AND p."INACTIVE_SINCE" IS NULL
+                        """)
+                .bind("ruleId", ruleId)
+                .mapTo(Long.class)
+                .set();
+    }
+
+    private Set<Long> getBoundProjectIds(long ruleId, boolean notifyChildren) {
         if (notifyChildren) {
             return jdbiHandle
                     .createQuery(/* language=SQL */ """
@@ -213,12 +252,16 @@ public final class ScheduledNotificationDao {
                 .list();
     }
 
-    public boolean hasProjectsConfigured(long ruleId) {
+    public boolean hasScopeConfigured(long ruleId) {
         return jdbiHandle
                 .createQuery(/* language=SQL */ """
                         SELECT EXISTS(
                           SELECT 1
                             FROM "NOTIFICATIONRULE_PROJECTS"
+                           WHERE "NOTIFICATIONRULE_ID" = :ruleId
+                        ) OR EXISTS(
+                          SELECT 1
+                            FROM "NOTIFICATIONRULE_TAGS"
                            WHERE "NOTIFICATIONRULE_ID" = :ruleId
                         )
                         """)

@@ -530,6 +530,251 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         verify(dexEngine, times(2)).createRun(org.mockito.ArgumentMatchers.any());
     }
 
+    @Test
+    void shouldDispatchNotificationForRuleLimitedToTags() throws InvalidProtocolBufferException {
+        final Instant ruleLastFiredAt = Instant.now().minus(10, ChronoUnit.MINUTES);
+        final Instant afterRuleLastFiredAt = ruleLastFiredAt.plus(5, ChronoUnit.MINUTES);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        final var tagA = qm.createTag("tag-a");
+        final var tagB = qm.createTag("tag-b");
+
+        // Tagged with tag A — must be included.
+        final var projectTaggedA = new Project();
+        projectTaggedA.setName("acme-app-tagged-a");
+        qm.persist(projectTaggedA);
+        qm.bind(projectTaggedA, List.of(tagA));
+        final var componentTaggedA = new Component();
+        componentTaggedA.setProject(projectTaggedA);
+        componentTaggedA.setName("acme-lib-tagged-a");
+        qm.persist(componentTaggedA);
+        qm.addVulnerability(vuln, componentTaggedA, "internal", null, null, Date.from(afterRuleLastFiredAt));
+
+        // Tagged with tag B only — must be included, too (OR semantics).
+        final var projectTaggedB = new Project();
+        projectTaggedB.setName("acme-app-tagged-b");
+        qm.persist(projectTaggedB);
+        qm.bind(projectTaggedB, List.of(tagB));
+        final var componentTaggedB = new Component();
+        componentTaggedB.setProject(projectTaggedB);
+        componentTaggedB.setName("acme-lib-tagged-b");
+        qm.persist(componentTaggedB);
+        qm.addVulnerability(vuln, componentTaggedB, "internal", null, null, Date.from(afterRuleLastFiredAt));
+
+        // Untagged — must be excluded.
+        final var untaggedProject = new Project();
+        untaggedProject.setName("acme-app-untagged");
+        qm.persist(untaggedProject);
+        final var untaggedComponent = new Component();
+        untaggedComponent.setProject(untaggedProject);
+        untaggedComponent.setName("acme-lib-untagged");
+        qm.persist(untaggedComponent);
+        qm.addVulnerability(vuln, untaggedComponent, "internal", null, null, Date.from(afterRuleLastFiredAt));
+
+        // Tagged with tag A, but inactive — must be excluded.
+        final var inactiveTaggedProject = new Project();
+        inactiveTaggedProject.setName("acme-app-inactive-tagged");
+        inactiveTaggedProject.setActive(false);
+        qm.persist(inactiveTaggedProject);
+        qm.bind(inactiveTaggedProject, List.of(tagA));
+        final var inactiveTaggedComponent = new Component();
+        inactiveTaggedComponent.setProject(inactiveTaggedProject);
+        inactiveTaggedComponent.setName("acme-lib-inactive-tagged");
+        qm.persist(inactiveTaggedComponent);
+        qm.addVulnerability(vuln, inactiveTaggedComponent, "internal", null, null, Date.from(afterRuleLastFiredAt));
+
+        final var publisher =
+                qm.createNotificationPublisher("foo", null, "webhook", "template", "templateMimeType", false);
+        final NotificationRule rule = qm.createScheduledNotificationRule(
+                "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY));
+        rule.setScheduleCron("* * * * *");
+        rule.setScheduleLastTriggeredAt(Date.from(ruleLastFiredAt));
+        rule.updateScheduleNextTriggerAt();
+        rule.setScheduleSkipUnchanged(true);
+        rule.setEnabled(true);
+        qm.bind(rule, List.of(tagA, tagB));
+
+        final var dexEngine = mock(DexEngine.class);
+        doReturn(UUID.randomUUID()).when(dexEngine).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
+
+        final var activity =
+                new ProcessScheduledNotificationRuleActivity(dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
+        activity.execute(
+                mock(ActivityContext.class),
+                ProcessScheduledNotificationRuleArg.newBuilder()
+                        .setRuleName(rule.getName())
+                        .build());
+
+        @SuppressWarnings("unchecked")
+        final ArgumentCaptor<CreateWorkflowRunRequest<?>> captor =
+                ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(dexEngine).createRun(captor.capture());
+
+        final CreateWorkflowRunRequest<?> request = captor.getValue();
+        final var workflowArg = (PublishNotificationWorkflowArg) request.argument();
+        final Notification notification = workflowArg.getNotification();
+
+        final NewVulnerabilitiesSummarySubject subject =
+                notification.getSubject().unpack(NewVulnerabilitiesSummarySubject.class);
+
+        assertThatJson(JsonFormat.printer().alwaysPrintFieldsWithNoPresence().print(subject))
+                .withOptions(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_ARRAY_ORDER)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "overview": {
+                            "affectedProjectsCount": 2,
+                            "affectedComponentsCount": 2,
+                            "newVulnerabilitiesCount": 2,
+                            "suppressedNewVulnerabilitiesCount": 0,
+                            "totalNewVulnerabilitiesCount": 2
+                          },
+                          "projectSummaries": [
+                            { "project": { "name": "acme-app-tagged-a" } },
+                            { "project": { "name": "acme-app-tagged-b" } }
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
+    void shouldIgnoreProjectBindingsWhenRuleIsLimitedToTags() throws InvalidProtocolBufferException {
+        final Instant ruleLastFiredAt = Instant.now().minus(10, ChronoUnit.MINUTES);
+        final Instant afterRuleLastFiredAt = ruleLastFiredAt.plus(5, ChronoUnit.MINUTES);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        final var tagA = qm.createTag("tag-a");
+
+        // Tagged with tag A — must be included.
+        final var taggedProject = new Project();
+        taggedProject.setName("acme-app-tagged");
+        qm.persist(taggedProject);
+        qm.bind(taggedProject, List.of(tagA));
+        final var taggedComponent = new Component();
+        taggedComponent.setProject(taggedProject);
+        taggedComponent.setName("acme-lib-tagged");
+        qm.persist(taggedComponent);
+        qm.addVulnerability(vuln, taggedComponent, "internal", null, null, Date.from(afterRuleLastFiredAt));
+
+        // Explicitly bound to the rule, but untagged — must be excluded (tags win).
+        final var boundProject = new Project();
+        boundProject.setName("acme-app-bound");
+        qm.persist(boundProject);
+        final var boundComponent = new Component();
+        boundComponent.setProject(boundProject);
+        boundComponent.setName("acme-lib-bound");
+        qm.persist(boundComponent);
+        qm.addVulnerability(vuln, boundComponent, "internal", null, null, Date.from(afterRuleLastFiredAt));
+
+        final var publisher =
+                qm.createNotificationPublisher("foo", null, "webhook", "template", "templateMimeType", false);
+        final NotificationRule rule = qm.createScheduledNotificationRule(
+                "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY));
+        rule.setProjects(List.of(boundProject));
+        rule.setScheduleCron("* * * * *");
+        rule.setScheduleLastTriggeredAt(Date.from(ruleLastFiredAt));
+        rule.updateScheduleNextTriggerAt();
+        rule.setScheduleSkipUnchanged(true);
+        rule.setEnabled(true);
+        qm.bind(rule, List.of(tagA));
+
+        final var dexEngine = mock(DexEngine.class);
+        doReturn(UUID.randomUUID()).when(dexEngine).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
+
+        final var activity =
+                new ProcessScheduledNotificationRuleActivity(dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
+        activity.execute(
+                mock(ActivityContext.class),
+                ProcessScheduledNotificationRuleArg.newBuilder()
+                        .setRuleName(rule.getName())
+                        .build());
+
+        @SuppressWarnings("unchecked")
+        final ArgumentCaptor<CreateWorkflowRunRequest<?>> captor =
+                ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(dexEngine).createRun(captor.capture());
+
+        final CreateWorkflowRunRequest<?> request = captor.getValue();
+        final var workflowArg = (PublishNotificationWorkflowArg) request.argument();
+        final Notification notification = workflowArg.getNotification();
+
+        final NewVulnerabilitiesSummarySubject subject =
+                notification.getSubject().unpack(NewVulnerabilitiesSummarySubject.class);
+
+        assertThatJson(JsonFormat.printer().alwaysPrintFieldsWithNoPresence().print(subject))
+                .withOptions(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_ARRAY_ORDER)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "overview": { "affectedProjectsCount": 1 },
+                          "projectSummaries": [
+                            { "project": { "name": "acme-app-tagged" } }
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
+    void shouldNotDispatchAndAdvanceScheduleWhenRuleHasNoProjectsOrTags() {
+        final Instant ruleLastFiredAt = Instant.now().minus(10, ChronoUnit.MINUTES);
+        final Instant afterRuleLastFiredAt = ruleLastFiredAt.plus(5, ChronoUnit.MINUTES);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+        qm.addVulnerability(vuln, component, "internal", null, null, Date.from(afterRuleLastFiredAt));
+
+        final var publisher =
+                qm.createNotificationPublisher("foo", null, "webhook", "template", "templateMimeType", false);
+        final NotificationRule rule = qm.createScheduledNotificationRule(
+                "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY));
+        rule.setScheduleCron("* * * * *");
+        rule.setScheduleLastTriggeredAt(Date.from(ruleLastFiredAt));
+        rule.updateScheduleNextTriggerAt();
+        rule.setScheduleSkipUnchanged(true);
+        rule.setEnabled(true);
+
+        final var dexEngine = mock(DexEngine.class);
+
+        final var activity =
+                new ProcessScheduledNotificationRuleActivity(dexEngine, mock(FileStorage.class), Integer.MAX_VALUE);
+        activity.execute(
+                mock(ActivityContext.class),
+                ProcessScheduledNotificationRuleArg.newBuilder()
+                        .setRuleName(rule.getName())
+                        .build());
+
+        verifyNoInteractions(dexEngine);
+
+        // Schedule should still be advanced.
+        qm.getPersistenceManager().evictAll();
+        final NotificationRule updatedRule = qm.getObjectByUuid(NotificationRule.class, rule.getUuid());
+        assertThat(updatedRule.getScheduleLastTriggeredAt())
+                .isAfterOrEqualTo(Date.from(ruleLastFiredAt.truncatedTo(ChronoUnit.SECONDS)));
+        assertThat(updatedRule.getScheduleNextTriggerAt()).isAfter(new Date());
+    }
+
     @Nested
     class FilterExpressionTest {
 

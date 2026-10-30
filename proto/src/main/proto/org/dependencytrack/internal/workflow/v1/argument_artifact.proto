@@ -31,6 +31,7 @@ message ImportBomArg {
   string project_version = 3;
   string bom_upload_token = 4;
   org.dependencytrack.filestorage.v1.FileMetadata bom_file_metadata = 5;
+  bool retain_bom_file = 6;
 }
 
 message ImportVexArg {

@@ -35,6 +35,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMap;
 import org.jdbi.v3.sqlobject.customizer.Define;
@@ -53,10 +54,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 
 public interface ComponentDao extends SqlObject, PaginationSupport {
+
+    /// Largest planner-estimated match count for which [#listComponents(ListComponentsQuery)]
+    /// collects all matches before sorting. That path's cost grows linearly with the match count
+    /// (roughly 1 s per 100k matches), so this caps it at about 2 s when the estimate is accurate.
+    /// Above it, matches are dense enough that walking the sort-order index fills a page sooner.
+    long LIST_COMPONENTS_MATERIALIZE_MAX_ESTIMATED_MATCHES = 200_000;
 
     @SqlUpdate("""
             DELETE
@@ -419,6 +428,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             queryParams.put("componentHash", query.hashValue());
         }
 
+        final boolean materializeMatches = shouldMaterializeMatches(whereConditions, queryParams);
+
         final TotalCount totalCount;
         final ListComponentsQuery.SortBy effectiveSortBy;
         final SortDirection effectiveSortDirection;
@@ -459,7 +470,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 decodedPageToken != null ? decodedPageToken.lastId() : null,
                 effectiveSortBy,
                 effectiveSortDirection,
-                decodedPageToken != null);
+                decodedPageToken != null,
+                materializeMatches);
 
         final List<ListedComponent> resultRows =
                 rows.size() > 1 ? rows.subList(0, Math.min(rows.size(), query.limit())) : rows;
@@ -488,12 +500,86 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         return new Page<>(components, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
 
+    /// Postgres plans the sorted, limited query assuming matches are spread evenly across the sort order,
+    /// so few matches that sort late make it walk most of the table.
+    private boolean shouldMaterializeMatches(ArrayList<String> whereConditions, Map<String, Object> queryParams) {
+        final List<String> plan = explainListComponents(whereConditions, queryParams);
+        if (plan.isEmpty()) {
+            return false;
+        }
+
+        final Matcher rowsMatcher = Pattern.compile("rows=(\\d+)").matcher(plan.getFirst());
+        return rowsMatcher.find()
+                && Long.parseLong(rowsMatcher.group(1)) <= LIST_COMPONENTS_MATERIALIZE_MAX_ESTIMATED_MATCHES;
+    }
+
+    @SqlQuery(/* language=InjectedFreeMarker */ """
+            <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
+            <#-- @ftlvariable name="whereConditions" type="java.util.Collection<String>" -->
+            EXPLAIN
+            SELECT 1
+              FROM "COMPONENT" "C"
+             INNER JOIN "PROJECT" ON "C"."PROJECT_ID" = "PROJECT"."ID"
+             WHERE ${apiProjectAclCondition}
+               AND ${whereConditions?join(" AND ")}
+            """)
+    @AllowUnusedBindings
+    @DefineNamedBindings
+    @DefineApiProjectAclCondition(projectIdColumn = "\"C\".\"PROJECT_ID\"")
+    List<String> explainListComponents(
+            @Define ArrayList<String> whereConditions, @BindMap Map<String, Object> queryParams);
+
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
             <#-- @ftlvariable name="sortByColumn" type="org.dependencytrack.persistence.jdbi.query.ListComponentsQuery.SortBy" -->
             <#-- @ftlvariable name="sortDirection" type="org.dependencytrack.common.pagination.SortDirection" -->
             <#-- @ftlvariable name="hasCursor" type="boolean" -->
             <#-- @ftlvariable name="whereConditions" type="java.util.Collection<String>" -->
+            <#-- @ftlvariable name="materializeMatches" type="boolean" -->
+            WITH matches AS <#if materializeMatches>MATERIALIZED<#else>NOT MATERIALIZED</#if> (
+                SELECT "C"."ID",
+                       "C"."NAME",
+                       "C"."GROUP",
+                       "C"."LAST_RISKSCORE"
+                  FROM "COMPONENT" "C"
+                 INNER JOIN "PROJECT" ON "C"."PROJECT_ID" = "PROJECT"."ID"
+                 WHERE ${apiProjectAclCondition}
+                   AND ${whereConditions?join(" AND ")}
+                <#assign castedLastSortValue>
+                    <#-- Ensure Postgres can determine the type of lastSortValue even when it's null. -->
+                    <#if sortByColumn?has_content && sortByColumn == "LAST_RISKSCORE">CAST(:lastSortValue AS DOUBLE PRECISION)
+                    <#else>CAST(:lastSortValue AS TEXT)
+                    </#if>
+                </#assign>
+                <#if hasCursor && sortByColumn?has_content>
+                    <#if sortDirection == "DESC">
+                        AND ((${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NULL AND "C"."ID" > :lastId)
+                             OR (${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NOT NULL)
+                             OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NOT NULL
+                                 AND ("C"."${sortByColumn}" < ${castedLastSortValue}
+                                      OR ("C"."${sortByColumn}" = ${castedLastSortValue} AND "C"."ID" > :lastId))))
+                    <#else>
+                        AND ((${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NULL AND "C"."ID" > :lastId)
+                             OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NOT NULL
+                                 AND ("C"."${sortByColumn}" > ${castedLastSortValue}
+                                      OR ("C"."${sortByColumn}" = ${castedLastSortValue} AND "C"."ID" > :lastId)))
+                             OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NULL))
+                    </#if>
+                <#elseif hasCursor>
+                    AND ("C"."NAME" > ${castedLastSortValue}
+                            OR ("C"."NAME" = ${castedLastSortValue} AND "C"."ID" > :lastId))
+                </#if>
+            ),
+            page AS (
+                SELECT "ID"
+                  FROM matches
+                <#if sortByColumn?has_content>
+                 ORDER BY "${sortByColumn}" ${sortDirection!"ASC"}, "ID" ASC
+                <#else>
+                 ORDER BY "NAME" ASC, "ID" ASC
+                </#if>
+                 LIMIT :limit
+            )
             SELECT "C"."ID",
                         "C"."NAME",
                         "C"."BLAKE2B_256",
@@ -531,42 +617,16 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                         "PROJECT"."NAME" AS "projectName",
                         "PROJECT"."UUID" AS "projectUuid",
                         "PROJECT"."VERSION" AS "projectVersion"
-                FROM "COMPONENT" "C"
+                FROM page
+                INNER JOIN "COMPONENT" "C" ON "C"."ID" = page."ID"
                 INNER JOIN "PROJECT" ON "C"."PROJECT_ID" = "PROJECT"."ID"
                 LEFT OUTER JOIN "LICENSE" "L" ON "C"."LICENSE_ID" = "L"."ID"
-                WHERE ${apiProjectAclCondition}
-                AND ${whereConditions?join(" AND ")}
-                <#assign castedLastSortValue>
-                    <#-- Ensure Postgres can determine the type of lastSortValue even when it's null. -->
-                    <#if sortByColumn?has_content && sortByColumn == "LAST_RISKSCORE">CAST(:lastSortValue AS DOUBLE PRECISION)
-                    <#else>CAST(:lastSortValue AS TEXT)
-                    </#if>
-                </#assign>
-                <#if hasCursor && sortByColumn?has_content>
-                    <#if sortDirection == "DESC">
-                        AND ((${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NULL AND "C"."ID" > :lastId)
-                             OR (${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NOT NULL)
-                             OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NOT NULL
-                                 AND ("C"."${sortByColumn}" < ${castedLastSortValue}
-                                      OR ("C"."${sortByColumn}" = ${castedLastSortValue} AND "C"."ID" > :lastId))))
-                    <#else>
-                        AND ((${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NULL AND "C"."ID" > :lastId)
-                             OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NOT NULL
-                                 AND ("C"."${sortByColumn}" > ${castedLastSortValue}
-                                      OR ("C"."${sortByColumn}" = ${castedLastSortValue} AND "C"."ID" > :lastId)))
-                             OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NULL))
-                    </#if>
-                <#elseif hasCursor>
-                    AND ("C"."NAME" > ${castedLastSortValue}
-                            OR ("C"."NAME" = ${castedLastSortValue} AND "C"."ID" > :lastId))
-                </#if>
                 <#if sortByColumn?has_content>
                     ORDER BY "C"."${sortByColumn}" ${sortDirection!"ASC"}, "C"."ID" ASC
                 <#else>
                     <#-- Default sorting to ensure consistent pagination -->
                     ORDER BY "C"."NAME" ASC, "C"."ID" ASC
                 </#if>
-                LIMIT :limit
             """)
     @DefineNamedBindings
     @RegisterRowMapper(ComponentListRowMapper.class)
@@ -578,7 +638,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             @Bind Long lastId,
             @Define ListComponentsQuery.SortBy sortByColumn,
             @Define SortDirection sortDirection,
-            @Define boolean hasCursor);
+            @Define boolean hasCursor,
+            @Define boolean materializeMatches);
 
     record ListedComponent(Component component, Long publishedAtMicros) {}
 

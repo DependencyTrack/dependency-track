@@ -33,6 +33,8 @@ public final class ConfigKeys {
     public static final String DEV_SERVICES_POSTGRES_IMAGE = "dt.dev-services.postgres-image";
     public static final String DEV_SERVICES_FRONTEND_PORT = "dt.dev-services.frontend-port";
 
+    public static final String FRONTEND_URL = "dt.frontend-url";
+
     public static final String INIT_TASKS_ENABLED = "dt.init-tasks.enabled";
     public static final String INIT_TASKS_DATASOURCE_NAME = "dt.init-tasks.datasource.name";
     public static final String INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION =

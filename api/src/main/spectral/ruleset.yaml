@@ -100,10 +100,12 @@ rules:
 
   # Enforce consistent response structure, depending on the operation's HTTP method.
   # The oauth token endpoint is exempt because RFC 6749 requires 200 and its own error object.
+  # The SAML assertion consumer service is exempt because it must redirect the browser,
+  # and the SAML token endpoint returns 200 like the oauth token endpoint.
   response-conventions-post:
     message: "{{error}}"
     severity: error
-    given: "$.paths[?(!@property.match(/(\\/test|^\\/oauth\\/token)$/))].post.responses"
+    given: "$.paths[?(!@property.match(/(\\/test|^\\/oauth\\/token|^\\/saml\\/(acs|token))$/))].post.responses"
     then:
       function: response-conventions
       functionOptions:
@@ -132,6 +134,19 @@ rules:
       function: response-conventions
       functionOptions:
         method: delete
+
+  # Same rule as in zalando.yaml, but skipping the SAML assertion consumer service,
+  # whose form fields SAMLResponse and RelayState are defined by the SAML HTTP-POST binding.
+  must-use-snake-case-for-property-names:
+    message: Property name has to be ASCII snake_case
+    description: MUST property names must be ASCII snake_case [118]
+    documentationUrl: https://opensource.zalando.com/restful-api-guidelines/#118
+    severity: error
+    given: "$.paths[?(!@property.match(/^\\/saml\\/acs$/))].*[responses,requestBody]..content..schema..properties.*~"
+    then:
+      function: pattern
+      functionOptions:
+        match: ^\$*[a-z_][a-z_0-9]*$
 
   # Same rule as in zalando.yaml, but skipping the oauth token endpoint,
   # whose errors follow RFC 6749 instead of RFC 9457.

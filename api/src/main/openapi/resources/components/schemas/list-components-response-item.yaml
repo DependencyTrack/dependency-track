@@ -64,7 +64,7 @@ properties:
     type: string
     format: uuid
   project:
-    $ref: "./component-project.yaml"
+    $ref: "../../../shared/schemas/component-project.yaml"
   metrics:
     $ref: "./dependency-metrics.yaml"
   package_metadata:

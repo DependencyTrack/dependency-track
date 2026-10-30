@@ -22,7 +22,7 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
-import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRowV1;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
 import org.dependencytrack.util.DateUtil;
 import org.junit.jupiter.api.Test;
@@ -69,7 +69,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
 
-        final Page<ListProjectsRow> projectsPage =
+        final Page<ListProjectsRowV1> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
 
         assertThat(projectsPage.items())
@@ -125,7 +125,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         // Retain all active and last 2 inactive versions of a project and delete rest
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage =
+        final Page<ListProjectsRowV1> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items())
                 .satisfiesExactly(
@@ -182,7 +182,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         // Retain all active and last 2 inactive versions of all projects and delete rest
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage =
+        final Page<ListProjectsRowV1> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items())
                 .satisfiesExactlyInAnyOrder(
@@ -217,7 +217,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage =
+        final Page<ListProjectsRowV1> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items()).isNotEmpty();
     }
@@ -239,7 +239,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage =
+        final Page<ListProjectsRowV1> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items()).isNotEmpty();
     }

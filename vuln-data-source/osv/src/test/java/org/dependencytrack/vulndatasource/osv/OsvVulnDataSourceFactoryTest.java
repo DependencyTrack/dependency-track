@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.vulndatasource.osv;
 
+import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
 import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
@@ -26,6 +27,9 @@ import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.net.URI;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -52,82 +56,116 @@ class OsvVulnDataSourceFactoryTest
         assertThat(factory.priority()).isEqualTo(100);
     }
 
+    @Test
+    void defaultConfigShouldContainSingleDefaultSource() {
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        assertThat(config.getFeeds()).satisfiesExactly(feed -> {
+            assertThat(feed.getName()).isEqualTo("default");
+            assertThat(feed.isEnabled()).isFalse();
+            assertThat(feed.getAliasSyncEnabled()).isFalse();
+            assertThat(feed.isIncrementalMirroringEnabled()).isTrue();
+            assertThat(feed.getDataUrl().toString()).isEqualTo("https://storage.googleapis.com/osv-vulnerabilities");
+            assertThat(feed.getEcosystems()).containsExactlyInAnyOrder("npm", "PyPI", "NuGet", "Maven", "Go");
+        });
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void isDataSourceEnabledShouldReturnTrueWhenEnabledAndFalseOtherwise(final boolean isEnabled) {
-        final var config =
-                (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
-        config.setEnabled(isEnabled);
-
-        factory.init(new ExtensionContextBuilder()
-                .withConfigRegistry(new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                .build());
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        config.getFeeds().forEach(feed -> feed.setEnabled(isEnabled));
+        initFactory(config);
         assertThat(factory.isDataSourceEnabled()).isEqualTo(isEnabled);
     }
 
     @Test
     void createShouldReturnNullWhenDisabled() {
-        final var config =
-                (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
-        config.setEnabled(false);
-
-        final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
-
-        factory.init(
-                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
-
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        config.getFeeds().forEach(feed -> feed.setEnabled(false));
+        initFactory(config);
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
 
     @Test
     void createShouldReturnDataSource() {
-        final var config =
-                (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
-        config.setEnabled(true);
-
-        final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
-
-        factory.init(
-                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
-
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        config.getFeeds().forEach(feed -> feed.setEnabled(true));
+        initFactory(config);
         final VulnDataSource dataSource = factory.create();
         assertThat(dataSource).isNotNull();
+        assertThat(((OsvCompositeVulnDataSource) dataSource).getDataSources()).hasSize(1);
+        dataSource.close();
+    }
+
+    @Test
+    void createShouldReturnDataSourcePerEnabledSource() {
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        config.getFeeds().forEach(feed -> feed.setEnabled(true));
+        config.getFeeds()
+                .add(new OsvSourceConfigV1()
+                        .withName("Chainguard")
+                        .withEnabled(true)
+                        .withIncrementalMirroringEnabled(true)
+                        .withAliasSyncEnabled(false)
+                        .withDataUrl(URI.create("https://chainguard.com/osv-vulnerabilities"))
+                        .withEcosystems(Set.of("Maven")));
+        config.getFeeds()
+                .add(new OsvSourceConfigV1()
+                        .withName("Red Hat")
+                        .withEnabled(false)
+                        .withIncrementalMirroringEnabled(false)
+                        .withAliasSyncEnabled(false)
+                        .withDataUrl(URI.create("https://redhat.com/osv-vulnerabilities"))
+                        .withEcosystems(Set.of("Go")));
+        initFactory(config);
+        final VulnDataSource dataSource = factory.create();
+        assertThat(dataSource).isNotNull();
+        assertThat(((OsvCompositeVulnDataSource) dataSource).getDataSources()).hasSize(2);
         dataSource.close();
     }
 
     @Test
     void createWhenIncrementalMirroringDisabledShouldCreateDataSourceWithNullWatermarkManager() {
-        final var config =
-                (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
-        config.setEnabled(true);
-        config.setIncrementalMirroringEnabled(false);
-
-        final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
-
-        factory.init(
-                new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
-
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        config.getFeeds().forEach(feed -> {
+            feed.setEnabled(true);
+            feed.setIncrementalMirroringEnabled(false);
+        });
+        initFactory(config);
         try (VulnDataSource dataSource = factory.create()) {
-            assertThat(dataSource).isNotNull();
-            assertThat(((OsvVulnDataSource) dataSource).getWatermarkManager()).isNull();
+            assertThat(((OsvCompositeVulnDataSource) dataSource).getDataSources())
+                    .singleElement()
+                    .satisfies(
+                            source -> assertThat(source.getWatermarkManager()).isNull());
         }
     }
 
     @Test
     void createWhenIncrementalMirroringEnabledShouldCreateDataSourceWithWatermarkManager() {
-        final var config =
-                (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
-        config.setEnabled(true);
-        config.setIncrementalMirroringEnabled(true);
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        config.getFeeds().forEach(feed -> {
+            feed.setEnabled(true);
+            feed.setIncrementalMirroringEnabled(true);
+        });
+        initFactory(config);
+        try (VulnDataSource dataSource = factory.create()) {
+            assertThat(((OsvCompositeVulnDataSource) dataSource).getDataSources())
+                    .singleElement()
+                    .satisfies(
+                            source -> assertThat(source.getWatermarkManager()).isNotNull());
+        }
+    }
 
-        final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
+    private OsvVulnDataSourceConfigV1 defaultConfig() {
+        return (OsvVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
+    }
 
+    private void initFactory(final OsvVulnDataSourceConfigV1 config) {
+        initFactory(new MockConfigRegistry(factory.runtimeConfigSpec(), config));
+    }
+
+    private void initFactory(final ConfigRegistry configRegistry) {
         factory.init(
                 new ExtensionContextBuilder().withConfigRegistry(configRegistry).build());
-
-        try (VulnDataSource dataSource = factory.create()) {
-            assertThat(dataSource).isNotNull();
-            assertThat(((OsvVulnDataSource) dataSource).getWatermarkManager()).isNotNull();
-        }
     }
 }

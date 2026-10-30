@@ -96,7 +96,10 @@ final class InternalVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
 
     @Override
     public EnumSet<VulnAnalyzerRequirement> analyzerRequirements() {
-        return EnumSet.of(VulnAnalyzerRequirement.COMPONENT_CPE, VulnAnalyzerRequirement.COMPONENT_PURL);
+        return EnumSet.of(
+                VulnAnalyzerRequirement.COMPONENT_CPE,
+                VulnAnalyzerRequirement.COMPONENT_PURL,
+                VulnAnalyzerRequirement.COMPONENT_PROPERTIES);
     }
 
     @Override

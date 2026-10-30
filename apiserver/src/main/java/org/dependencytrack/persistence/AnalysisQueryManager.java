@@ -21,6 +21,7 @@ package org.dependencytrack.persistence;
 import alpine.model.auth.ApiKeyPrincipal;
 import alpine.model.auth.UserPrincipal;
 import alpine.resources.AlpineRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
@@ -39,6 +40,7 @@ import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import static org.dependencytrack.notification.api.NotificationFactory.createVulnerabilityAnalysisDecisionChangeNotification;
 import static org.dependencytrack.util.AnalysisCommentFormatter.formatComment;
@@ -121,9 +123,13 @@ public class AnalysisQueryManager extends QueryManager {
                         "Vendor Response: %s → %s".formatted(analysis.getAnalysisResponse(), command.response()));
                 analysis.setAnalysisResponse(command.response());
             }
-            if (command.details() != null && !command.details().equals(analysis.getAnalysisDetails())) {
-                auditTrailComments.add("Details: %s".formatted(command.details()));
-                analysis.setAnalysisDetails(command.details());
+            if (command.details() != null) {
+                final String detailsToStore = StringUtils.defaultIfEmpty(command.details(), null);
+                if (!Objects.equals(detailsToStore, analysis.getAnalysisDetails())) {
+                    auditTrailComments.add(
+                            formatComment(AnalysisCommentField.DETAILS, analysis.getAnalysisDetails(), detailsToStore));
+                    analysis.setAnalysisDetails(detailsToStore);
+                }
             }
             if (command.suppress() != null && command.suppress() != analysis.isSuppressed()) {
                 auditTrailComments.add(command.suppress() ? "Suppressed" : "Unsuppressed");

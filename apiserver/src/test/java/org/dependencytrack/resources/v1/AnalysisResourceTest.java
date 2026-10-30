@@ -44,6 +44,8 @@ import org.dependencytrack.resources.v1.vo.AnalysisRequest;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -1170,5 +1172,163 @@ class AnalysisResourceTest extends ResourceTest {
                         """.formatted(project.getUuid(), component.getUuid(), vuln.getUuid()),
                         MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    void updateAnalysisClearDetailsTest(final String details) {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
+
+        final var finding = createFindingWithAnalysisDetails("Analysis details here");
+
+        final var analysisRequest = new AnalysisRequest(
+                finding.project().getUuid().toString(),
+                finding.component().getUuid().toString(),
+                finding.vulnerability().getUuid().toString(),
+                null,
+                null,
+                null,
+                details,
+                null,
+                null);
+
+        final Response response = jersey.target(V1_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThat(responseJson).isNotNull();
+        assertThat(responseJson.getJsonString("analysisDetails")).isNull();
+
+        final JsonArray analysisComments = responseJson.getJsonArray("analysisComments");
+        assertThat(analysisComments).hasSize(1);
+        assertThat(analysisComments.getJsonObject(0))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Details: (None)"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+
+        final Analysis analysis = qm.getAnalysis(finding.component(), finding.vulnerability());
+        qm.getPersistenceManager().refresh(analysis);
+        assertThat(analysis.getAnalysisDetails()).isNull();
+    }
+
+    @Test
+    void updateAnalysisClearDetailsWithoutExistingDetailsTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
+
+        final var finding = createFindingWithAnalysisDetails(null);
+
+        final var analysisRequest = new AnalysisRequest(
+                finding.project().getUuid().toString(),
+                finding.component().getUuid().toString(),
+                finding.vulnerability().getUuid().toString(),
+                null,
+                null,
+                null,
+                "",
+                null,
+                null);
+
+        final Response response = jersey.target(V1_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThat(responseJson).isNotNull();
+        assertThat(responseJson.getJsonString("analysisDetails")).isNull();
+        assertThat(responseJson.getJsonArray("analysisComments")).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {", \"analysisDetails\": null", ""})
+    void updateAnalysisWithNullOrOmittedDetailsTest(final String detailsProperty) {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
+
+        final var finding = createFindingWithAnalysisDetails("Analysis details here");
+
+        final Response response = jersey.target(V1_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(
+                        """
+                        {
+                          "project": "%s",
+                          "component": "%s",
+                          "vulnerability": "%s"%s
+                        }
+                        """.formatted(
+                                        finding.project().getUuid(),
+                                        finding.component().getUuid(),
+                                        finding.vulnerability().getUuid(),
+                                        detailsProperty),
+                        MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThat(responseJson).isNotNull();
+        assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
+        assertThat(responseJson.getJsonArray("analysisComments")).isEmpty();
+    }
+
+    @Test
+    void updateAnalysisTrimsDetailsTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
+
+        final var finding = createFindingWithAnalysisDetails("Analysis details here");
+
+        final var analysisRequest = new AnalysisRequest(
+                finding.project().getUuid().toString(),
+                finding.component().getUuid().toString(),
+                finding.vulnerability().getUuid().toString(),
+                null,
+                null,
+                null,
+                "  New analysis details here  ",
+                null,
+                null);
+
+        final Response response = jersey.target(V1_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThat(responseJson).isNotNull();
+        assertThat(responseJson.getString("analysisDetails")).isEqualTo("New analysis details here");
+
+        final JsonArray analysisComments = responseJson.getJsonArray("analysisComments");
+        assertThat(analysisComments).hasSize(1);
+        assertThat(analysisComments.getJsonObject(0))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Details: New analysis details here"));
+    }
+
+    private record FindingFixture(Project project, Component component, Vulnerability vulnerability) {}
+
+    private FindingFixture createFindingWithAnalysisDetails(final String details) {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("INT-001");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.HIGH);
+        vulnerability.setComponents(List.of(component));
+        vulnerability = qm.createVulnerability(vulnerability);
+
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+                .withDetails(details)
+                .withOptions(EnumSet.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+
+        return new FindingFixture(project, component, vulnerability);
     }
 }

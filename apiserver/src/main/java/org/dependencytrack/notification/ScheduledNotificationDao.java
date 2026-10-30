@@ -94,26 +94,38 @@ public final class ScheduledNotificationDao {
                 .execute();
     }
 
-    public Set<Long> getApplicableProjectIds(long ruleId, boolean notifyChildren) {
-        if (hasTags(ruleId)) {
-            return getProjectIdsMatchingTags(ruleId);
-        }
+    public record RuleScope(boolean isLimitedToProjects, boolean isLimitedToTags) {
 
-        return getBoundProjectIds(ruleId, notifyChildren);
+        public boolean isConfigured() {
+            return isLimitedToProjects || isLimitedToTags;
+        }
     }
 
-    private boolean hasTags(long ruleId) {
+    public RuleScope getRuleScope(long ruleId) {
         return jdbiHandle
                 .createQuery(/* language=SQL */ """
                         SELECT EXISTS(
                           SELECT 1
+                            FROM "NOTIFICATIONRULE_PROJECTS"
+                           WHERE "NOTIFICATIONRULE_ID" = :ruleId
+                        ) AS is_limited_to_projects
+                             , EXISTS(
+                          SELECT 1
                             FROM "NOTIFICATIONRULE_TAGS"
                            WHERE "NOTIFICATIONRULE_ID" = :ruleId
-                        )
+                        ) AS is_limited_to_tags
                         """)
                 .bind("ruleId", ruleId)
-                .mapTo(boolean.class)
+                .map(ConstructorMapper.of(RuleScope.class))
                 .one();
+    }
+
+    public Set<Long> getApplicableProjectIds(long ruleId, RuleScope scope, boolean notifyChildren) {
+        if (scope.isLimitedToTags()) {
+            return getProjectIdsMatchingTags(ruleId);
+        }
+
+        return getBoundProjectIds(ruleId, notifyChildren);
     }
 
     private Set<Long> getProjectIdsMatchingTags(long ruleId) {
@@ -250,23 +262,5 @@ public final class ScheduledNotificationDao {
                 .bindArray("projectIds", Long.class, projectIds)
                 .map(ConstructorMapper.of(NewPolicyViolation.class))
                 .list();
-    }
-
-    public boolean hasScopeConfigured(long ruleId) {
-        return jdbiHandle
-                .createQuery(/* language=SQL */ """
-                        SELECT EXISTS(
-                          SELECT 1
-                            FROM "NOTIFICATIONRULE_PROJECTS"
-                           WHERE "NOTIFICATIONRULE_ID" = :ruleId
-                        ) OR EXISTS(
-                          SELECT 1
-                            FROM "NOTIFICATIONRULE_TAGS"
-                           WHERE "NOTIFICATIONRULE_ID" = :ruleId
-                        )
-                        """)
-                .bind("ruleId", ruleId)
-                .mapTo(boolean.class)
-                .one();
     }
 }

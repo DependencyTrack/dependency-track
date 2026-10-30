@@ -259,7 +259,7 @@ public final class CelPolicyDao {
                         <#-- @ftlvariable name="groupByColumns" type="java.util.Collection<String>" -->
                         SELECT DISTINCT
                           ${fetchColumns?join(", ")}
-                          FROM "LICENSE" AS l
+                            FROM "LICENSE" AS l
                          INNER JOIN "COMPONENT" AS c
                             ON c."LICENSE_ID" = l."ID"
                           LEFT JOIN "LICENSEGROUP_LICENSE" AS lgl

@@ -26,6 +26,8 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.secret.management.SecretManager;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.client.ClientProperties;
@@ -43,6 +45,7 @@ import java.util.function.Supplier;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.Mockito.mock;
 
 public class ProjectPropertyResourceTest extends ResourceTest {
@@ -101,10 +104,15 @@ public class ProjectPropertyResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assertions.assertEquals(404, response.getStatus(), 0);
-        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        String body = getPlainTextBody(response);
-        Assertions.assertEquals("The project could not be found.", body);
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Project could not be found"
+                }
+                """);
     }
 
     @Test
@@ -164,6 +172,37 @@ public class ProjectPropertyResourceTest extends ResourceTest {
                   "description": "Test Property 1"
                 }
                 """);
+
+        final ProjectPropertyRow storedProperty = withJdbiHandle(
+                handle -> handle.attach(ProjectPropertyDao.class).getProperty(project.getUuid(), "mygroup", "prop1"));
+        assertThat(storedProperty).isNotNull();
+        assertThat(storedProperty.propertyValue()).isEqualTo("value1");
+    }
+
+    @Test
+    void createPropertyShouldNotPersistPropertyWithInvalidValue() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final Response response = jersey.target(V1_PROJECT + "/" + project.getUuid() + "/property")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "mygroup",
+                          "propertyName": "prop1",
+                          "propertyValue": "notAnInteger",
+                          "propertyType": "INTEGER"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response))
+                .isEqualTo("The property expected an integer and an integer was not sent.");
+
+        final ProjectPropertyRow storedProperty = withJdbiHandle(
+                handle -> handle.attach(ProjectPropertyDao.class).getProperty(project.getUuid(), "mygroup", "prop1"));
+        assertThat(storedProperty).isNull();
     }
 
     @Test
@@ -207,10 +246,15 @@ public class ProjectPropertyResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(property, MediaType.APPLICATION_JSON));
-        Assertions.assertEquals(404, response.getStatus(), 0);
-        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        String body = getPlainTextBody(response);
-        Assertions.assertEquals("The project could not be found.", body);
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Project could not be found"
+                }
+                """);
     }
 
     @Test
@@ -275,6 +319,37 @@ public class ProjectPropertyResourceTest extends ResourceTest {
                   "propertyType": "STRING"
                 }
                 """);
+
+        final ProjectPropertyRow storedProperty = withJdbiHandle(handle ->
+                handle.attach(ProjectPropertyDao.class).getProperty(UUID.fromString(uuid), "mygroup", "prop1"));
+        assertThat(storedProperty).isNotNull();
+        assertThat(storedProperty.propertyValue()).isEqualTo("updatedValue");
+    }
+
+    @Test
+    void updatePropertyShouldReturnNotFoundWhenPropertyDoesNotExist() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final Response response = jersey.target(V1_PROJECT + "/" + project.getUuid() + "/property")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "mygroup",
+                          "propertyName": "prop1",
+                          "propertyValue": "value1"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Project property could not be found"
+                }
+                """);
     }
 
     @Test
@@ -293,10 +368,15 @@ public class ProjectPropertyResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(property, MediaType.APPLICATION_JSON));
-        Assertions.assertEquals(404, response.getStatus(), 0);
-        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        String body = getPlainTextBody(response);
-        Assertions.assertEquals("The project could not be found.", body);
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Project could not be found"
+                }
+                """);
     }
 
     @Test
@@ -361,6 +441,36 @@ public class ProjectPropertyResourceTest extends ResourceTest {
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(property, MediaType.APPLICATION_JSON)); // HACK
         Assertions.assertEquals(204, response.getStatus(), 0);
+
+        final ProjectPropertyRow storedProperty = withJdbiHandle(handle ->
+                handle.attach(ProjectPropertyDao.class).getProperty(UUID.fromString(uuid), "mygroup", "prop1"));
+        assertThat(storedProperty).isNull();
+    }
+
+    @Test
+    void deletePropertyShouldReturnNotFoundWhenPropertyDoesNotExist() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_DELETE);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final Response response = jersey.target(V1_PROJECT + "/" + project.getUuid() + "/property")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "mygroup",
+                          "propertyName": "prop1"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Project property could not be found"
+                }
+                """);
     }
 
     @Test

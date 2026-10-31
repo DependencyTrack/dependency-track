@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1.vo;
 import alpine.model.IConfigProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao.ConfigPropertyRow;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -43,12 +44,12 @@ public record ConfigPropertyResponse(
         @Schema(description = "Description of the property") @Nullable
         String description) {
 
-    public static ConfigPropertyResponse of(IConfigProperty property) {
+    public static ConfigPropertyResponse of(ConfigPropertyRow property) {
         return new ConfigPropertyResponse(
-                property.getGroupName(),
-                property.getPropertyName(),
-                property.getPropertyValue(),
-                property.getPropertyType(),
-                property.getDescription());
+                property.groupName(),
+                property.propertyName(),
+                property.propertyValue(),
+                property.propertyType(),
+                property.description());
     }
 }

@@ -616,32 +616,6 @@ final class ComponentQueryManager extends QueryManager {
     }
 
     @Override
-    public List<ComponentProperty> getComponentProperties(
-            final Component component, final String groupName, final String propertyName) {
-        final Query<ComponentProperty> query = pm.newQuery(ComponentProperty.class);
-        query.setFilter("component == :component && groupName == :groupName && propertyName == :propertyName");
-        query.setParameters(component, groupName, propertyName);
-        try {
-            return List.copyOf(query.executeList());
-        } finally {
-            query.closeAll();
-        }
-    }
-
-    @Override
-    public List<ComponentProperty> getComponentProperties(final Component component) {
-        final Query<ComponentProperty> query = pm.newQuery(ComponentProperty.class);
-        query.setFilter("component == :component");
-        query.setParameters(component);
-        query.setOrdering("groupName ASC, propertyName ASC, id ASC");
-        try {
-            return List.copyOf(query.executeList());
-        } finally {
-            query.closeAll();
-        }
-    }
-
-    @Override
     public ComponentProperty createComponentProperty(
             final Component component,
             final String groupName,
@@ -657,17 +631,6 @@ final class ComponentQueryManager extends QueryManager {
         property.setPropertyType(propertyType);
         property.setDescription(description);
         return persist(property);
-    }
-
-    @Override
-    public long deleteComponentPropertyByUuid(final Component component, final UUID uuid) {
-        final Query<ComponentProperty> query = pm.newQuery(ComponentProperty.class);
-        query.setFilter("component == :component && uuid == :uuid");
-        try {
-            return query.deletePersistentAll(component, uuid);
-        } finally {
-            query.closeAll();
-        }
     }
 
     @Override

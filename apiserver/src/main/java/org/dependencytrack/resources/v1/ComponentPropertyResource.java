@@ -30,10 +30,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.validation.ValidUuid;
-import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ComponentPropertyDao;
+import org.dependencytrack.persistence.jdbi.ComponentPropertyDao.ComponentPropertyRow;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.ComponentPropertyResponse;
 import org.dependencytrack.resources.v1.vo.CreateComponentPropertyRequest;
@@ -52,7 +51,11 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
+
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
  * @since 4.11.0
@@ -93,7 +96,13 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The project could not be found")
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The component could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON))
             })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProperties(
@@ -104,21 +113,14 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
                     @PathParam("uuid")
                     @ValidUuid
                     String uuid) {
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            final Component component = qm.getObjectByUuid(Component.class, uuid);
-            if (component != null) {
-                requireAccess(qm, component.getProject());
-                final List<ComponentProperty> properties = qm.getComponentProperties(component);
-                return Response.ok(properties.stream()
-                                .map(ComponentPropertyResponse::of)
-                                .toList())
-                        .build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("The component could not be found.")
-                        .build();
-            }
-        }
+        final UUID componentUuid = UUID.fromString(uuid);
+        final List<ComponentPropertyRow> properties = withJdbiHandle(getAlpineRequest(), handle -> {
+            requireComponentAccess(handle, componentUuid);
+            return handle.attach(ComponentPropertyDao.class).getProperties(componentUuid);
+        });
+        return Response.ok(
+                        properties.stream().map(ComponentPropertyResponse::of).toList())
+                .build();
     }
 
     @PUT
@@ -142,7 +144,13 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The component could not be found"),
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The component could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
                 @ApiResponse(
                         responseCode = "409",
                         description = "A property with the specified component/group/name combination already exists")
@@ -163,47 +171,31 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
                 validator.validateProperty(request, "propertyName"),
                 validator.validateProperty(request, "propertyValue"),
                 validator.validateProperty(request, "propertyType"));
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final Component component = qm.getObjectByUuid(Component.class, uuid);
-                if (component == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The component could not be found.")
-                            .build();
-                }
-                requireAccess(qm, component.getProject());
+        final UUID componentUuid = UUID.fromString(uuid);
+        return inJdbiTransaction(getAlpineRequest(), handle -> {
+            requireComponentAccess(handle, componentUuid);
 
-                final List<ComponentProperty> existingProperties =
-                        qm.getComponentProperties(component, request.groupName(), request.propertyName());
-                final var requestedIdentity = new ComponentProperty.Identity(
-                        request.groupName(), request.propertyName(), request.propertyValue());
-                final boolean isDuplicate = existingProperties.stream()
-                        .map(ComponentProperty.Identity::new)
-                        .anyMatch(requestedIdentity::equals);
-                if (!existingProperties.isEmpty() && isDuplicate) {
-                    return Response.status(Response.Status.CONFLICT)
-                            .entity(
-                                    "A property with the specified component/group/name/value combination already exists.")
-                            .build();
-                }
-
-                final ComponentProperty property = qm.createComponentProperty(
-                        component,
-                        request.groupName(),
-                        request.propertyName(),
-                        null, // Set value to null - this will be taken care of by applyPropertyValue below
-                        request.propertyType(),
-                        request.description());
-                final Response error = applyPropertyValue(request.propertyValue(), property);
-                if (error != null) {
-                    return error;
-                }
-
-                return Response.status(Response.Status.CREATED)
-                        .entity(ComponentPropertyResponse.of(property))
+            final var property = new ComponentPropertyRow(
+                    request.groupName(),
+                    request.propertyName(),
+                    normalizePropertyValue(
+                            request.groupName(),
+                            request.propertyName(),
+                            request.propertyType(),
+                            request.propertyValue()),
+                    request.propertyType(),
+                    request.description(),
+                    UUID.randomUUID());
+            if (!handle.attach(ComponentPropertyDao.class).createProperty(componentUuid, property)) {
+                return Response.status(Response.Status.CONFLICT)
+                        .entity("A property with the specified component/group/name/value combination already exists.")
                         .build();
-            });
-        }
+            }
+
+            return Response.status(Response.Status.CREATED)
+                    .entity(ComponentPropertyResponse.of(property))
+                    .build();
+        });
     }
 
     @DELETE
@@ -227,7 +219,11 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
                 @ApiResponse(
                         responseCode = "404",
-                        description = "The component or component property could not be found"),
+                        description = "The component or component property could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
             })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE})
     public Response deleteProperty(
@@ -245,26 +241,17 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
                     @PathParam("propertyUuid")
                     @ValidUuid
                     final String propertyUuid) {
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final Component component = qm.getObjectByUuid(Component.class, componentUuid);
-                if (component != null) {
-                    requireAccess(qm, component.getProject());
-                    final long propertiesDeleted =
-                            qm.deleteComponentPropertyByUuid(component, UUID.fromString(propertyUuid));
-                    if (propertiesDeleted > 0) {
-                        return Response.status(Response.Status.NO_CONTENT).build();
-                    } else {
-                        return Response.status(Response.Status.NOT_FOUND)
-                                .entity("The component property could not be found.")
-                                .build();
-                    }
-                } else {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The component could not be found.")
-                            .build();
-                }
-            });
-        }
+        final UUID parsedComponentUuid = UUID.fromString(componentUuid);
+        return inJdbiTransaction(getAlpineRequest(), handle -> {
+            requireComponentAccess(handle, parsedComponentUuid);
+
+            final boolean deleted = handle.attach(ComponentPropertyDao.class)
+                    .deleteProperty(parsedComponentUuid, UUID.fromString(propertyUuid));
+            if (!deleted) {
+                throw new NoSuchElementException("Component property could not be found");
+            }
+
+            return Response.status(Response.Status.NO_CONTENT).build();
+        });
     }
 }

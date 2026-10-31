@@ -26,6 +26,8 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.ConfigPropertyVisibility;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao.ConfigPropertyRow;
 import org.dependencytrack.secret.management.SecretManager;
 import org.dependencytrack.secret.management.SecretMetadata;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -43,6 +45,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCOR
 import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCORE_LOW;
 import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCORE_MEDIUM;
 import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCORE_UNASSIGNED;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -121,6 +124,11 @@ class ConfigPropertyResourceTest extends ResourceTest {
                   "description": "A string"
                 }
                 """);
+
+        final ConfigPropertyRow storedProperty =
+                withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).getProperty("my.group", "my.string"));
+        assertThat(storedProperty).isNotNull();
+        assertThat(storedProperty.propertyValue()).isEqualTo("DEF");
     }
 
     @Test
@@ -375,6 +383,11 @@ class ConfigPropertyResourceTest extends ResourceTest {
                   }
                 ]
                 """);
+
+        final ConfigPropertyRow storedProperty =
+                withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).getProperty("my.group", "my.string3"));
+        assertThat(storedProperty).isNotNull();
+        assertThat(storedProperty.propertyValue()).isEqualTo("XYZ");
     }
 
     @Test

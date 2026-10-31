@@ -972,15 +972,6 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilities(tag);
     }
 
-    public List<ComponentProperty> getComponentProperties(final Component component) {
-        return getComponentQueryManager().getComponentProperties(component);
-    }
-
-    public List<ComponentProperty> getComponentProperties(
-            final Component component, final String groupName, final String propertyName) {
-        return getComponentQueryManager().getComponentProperties(component, groupName, propertyName);
-    }
-
     public ComponentProperty createComponentProperty(
             final Component component,
             final String groupName,
@@ -990,10 +981,6 @@ public class QueryManager extends AlpineQueryManager {
             final String description) {
         return getComponentQueryManager()
                 .createComponentProperty(component, groupName, propertyName, propertyValue, propertyType, description);
-    }
-
-    public long deleteComponentPropertyByUuid(final Component component, final UUID uuid) {
-        return getComponentQueryManager().deleteComponentPropertyByUuid(component, uuid);
     }
 
     public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {

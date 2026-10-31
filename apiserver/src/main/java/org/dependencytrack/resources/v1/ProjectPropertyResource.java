@@ -30,10 +30,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.validation.ValidUuid;
-import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.CreateProjectPropertyRequest;
 import org.dependencytrack.resources.v1.vo.DeleteProjectPropertyRequest;
@@ -55,6 +54,11 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
  * JAX-RS resources for processing ProjectProperties
@@ -99,7 +103,13 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The project could not be found")
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The project could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON))
             })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_READ})
     public Response getProperties(
@@ -110,21 +120,13 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
                     @PathParam("uuid")
                     @ValidUuid
                     String uuid) {
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            final Project project = qm.getObjectByUuid(Project.class, uuid);
-            if (project != null) {
-                requireAccess(qm, project);
-                final List<ProjectProperty> properties = qm.getProjectProperties(project);
-                return Response.ok(properties.stream()
-                                .map(ProjectPropertyResponse::of)
-                                .toList())
-                        .build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("The project could not be found.")
-                        .build();
-            }
-        }
+        final UUID projectUuid = UUID.fromString(uuid);
+        final List<ProjectPropertyRow> properties = withJdbiHandle(getAlpineRequest(), handle -> {
+            requireProjectAccess(handle, projectUuid);
+            return handle.attach(ProjectPropertyDao.class).getProperties(projectUuid);
+        });
+        return Response.ok(properties.stream().map(ProjectPropertyResponse::of).toList())
+                .build();
     }
 
     @PUT
@@ -148,7 +150,13 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The project could not be found"),
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The project could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
                 @ApiResponse(
                         responseCode = "409",
                         description = "A property with the specified project/group/name combination already exists")
@@ -169,42 +177,30 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
                 validator.validateProperty(request, "propertyName"),
                 validator.validateProperty(request, "propertyValue"),
                 validator.validateProperty(request, "propertyType"));
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final Project project = qm.getObjectByUuid(Project.class, uuid);
-                if (project == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The project could not be found.")
-                            .build();
-                }
-                requireAccess(qm, project);
+        final UUID projectUuid = UUID.fromString(uuid);
+        return inJdbiTransaction(getAlpineRequest(), handle -> {
+            requireProjectAccess(handle, projectUuid);
 
-                final ProjectProperty existing =
-                        qm.getProjectProperty(project, request.groupName(), request.propertyName());
-                if (existing != null) {
-                    return Response.status(Response.Status.CONFLICT)
-                            .entity("A property with the specified project/group/name combination already exists.")
-                            .build();
-                }
-
-                final ProjectProperty property = qm.createProjectProperty(
-                        project,
-                        request.groupName(),
-                        request.propertyName(),
-                        null, // Set value to null - this will be taken care of by applyPropertyValue below
-                        request.propertyType(),
-                        request.description());
-
-                final Response error = applyPropertyValue(request.propertyValue(), property);
-                if (error != null) {
-                    return error;
-                }
-
-                return Response.status(Response.Status.CREATED)
-                        .entity(ProjectPropertyResponse.of(property))
+            final var property = new ProjectPropertyRow(
+                    request.groupName(),
+                    request.propertyName(),
+                    normalizePropertyValue(
+                            request.groupName(),
+                            request.propertyName(),
+                            request.propertyType(),
+                            request.propertyValue()),
+                    request.propertyType(),
+                    request.description());
+            if (!handle.attach(ProjectPropertyDao.class).createProperty(projectUuid, property)) {
+                return Response.status(Response.Status.CONFLICT)
+                        .entity("A property with the specified project/group/name combination already exists.")
                         .build();
-            });
-        }
+            }
+
+            return Response.status(Response.Status.CREATED)
+                    .entity(ProjectPropertyResponse.of(property))
+                    .build();
+        });
     }
 
     @POST
@@ -228,7 +224,13 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The project could not be found"),
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The project or project property could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
             })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE})
     public Response updateProperty(
@@ -245,32 +247,31 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
                 validator.validateProperty(request, "groupName"),
                 validator.validateProperty(request, "propertyName"),
                 validator.validateProperty(request, "propertyValue"));
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final Project project = qm.getObjectByUuid(Project.class, uuid);
-                if (project == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The project could not be found.")
-                            .build();
-                }
-                requireAccess(qm, project);
+        final UUID projectUuid = UUID.fromString(uuid);
+        return inJdbiTransaction(getAlpineRequest(), handle -> {
+            requireProjectAccess(handle, projectUuid);
 
-                final ProjectProperty property =
-                        qm.getProjectProperty(project, request.groupName(), request.propertyName());
-                if (property == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("A property with the specified project/group/name combination could not be found.")
-                            .build();
-                }
+            final var dao = handle.attach(ProjectPropertyDao.class);
+            final ProjectPropertyRow existing =
+                    dao.getProperty(projectUuid, request.groupName(), request.propertyName());
+            if (existing == null) {
+                throw new NoSuchElementException("Project property could not be found");
+            }
 
-                final Response error = applyPropertyValue(request.propertyValue(), property);
-                if (error != null) {
-                    return error;
-                }
+            final var updated = new ProjectPropertyRow(
+                    existing.groupName(),
+                    existing.propertyName(),
+                    normalizePropertyValue(
+                            existing.groupName(),
+                            existing.propertyName(),
+                            existing.propertyType(),
+                            request.propertyValue()),
+                    existing.propertyType(),
+                    existing.description());
+            dao.updatePropertyValue(projectUuid, updated);
 
-                return Response.ok(ProjectPropertyResponse.of(property)).build();
-            });
-        }
+            return Response.ok(ProjectPropertyResponse.of(updated)).build();
+        });
     }
 
     @DELETE
@@ -291,7 +292,13 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The project or project property could not be found"),
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The project or project property could not be found",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
             })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE})
     public Response deleteProperty(
@@ -306,27 +313,17 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(request, "groupName"), validator.validateProperty(request, "propertyName"));
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final Project project = qm.getObjectByUuid(Project.class, uuid);
-                if (project == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The project could not be found.")
-                            .build();
-                }
-                requireAccess(qm, project);
+        final UUID projectUuid = UUID.fromString(uuid);
+        return inJdbiTransaction(getAlpineRequest(), handle -> {
+            requireProjectAccess(handle, projectUuid);
 
-                final ProjectProperty property =
-                        qm.getProjectProperty(project, request.groupName(), request.propertyName());
-                if (property == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The project property could not be found.")
-                            .build();
-                }
+            final boolean deleted = handle.attach(ProjectPropertyDao.class)
+                    .deleteProperty(projectUuid, request.groupName(), request.propertyName());
+            if (!deleted) {
+                throw new NoSuchElementException("Project property could not be found");
+            }
 
-                qm.delete(property);
-                return Response.status(Response.Status.NO_CONTENT).build();
-            });
-        }
+            return Response.status(Response.Status.NO_CONTENT).build();
+        });
     }
 }

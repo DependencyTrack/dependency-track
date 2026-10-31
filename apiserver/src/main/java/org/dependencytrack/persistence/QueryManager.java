@@ -49,7 +49,6 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryType;
@@ -431,26 +430,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public boolean updateNewProjectACL(Project transientProject, Principal principal) {
         return getProjectQueryManager().updateNewProjectACL(transientProject, principal);
-    }
-
-    public ProjectProperty createProjectProperty(
-            final Project project,
-            final String groupName,
-            final String propertyName,
-            final String propertyValue,
-            final ProjectProperty.PropertyType propertyType,
-            final String description) {
-        return getProjectQueryManager()
-                .createProjectProperty(project, groupName, propertyName, propertyValue, propertyType, description);
-    }
-
-    public ProjectProperty getProjectProperty(
-            final Project project, final String groupName, final String propertyName) {
-        return getProjectQueryManager().getProjectProperty(project, groupName, propertyName);
-    }
-
-    public List<ProjectProperty> getProjectProperties(final Project project) {
-        return getProjectQueryManager().getProjectProperties(project);
     }
 
     public PaginatedResult getComponentByHash(String hash) {

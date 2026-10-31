@@ -21,7 +21,6 @@
              version="3.0">
   <persistence-unit name="Alpine">
     <class>alpine.model.ApiKey</class>
-    <class>alpine.model.ConfigProperty</class>
     <class>alpine.model.LdapUser</class>
     <class>alpine.model.ManagedUser</class>
     <class>alpine.model.OidcUser</class>
@@ -49,7 +48,6 @@
     <class>org.dependencytrack.model.PolicyViolation</class>
     <class>org.dependencytrack.model.Project</class>
     <class>org.dependencytrack.model.ProjectMetadata</class>
-    <class>org.dependencytrack.model.ProjectProperty</class>
     <class>org.dependencytrack.model.Repository</class>
     <class>org.dependencytrack.model.ServiceComponent</class>
     <class>org.dependencytrack.model.Tag</class>

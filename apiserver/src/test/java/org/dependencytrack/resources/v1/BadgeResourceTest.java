@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import org.dependencytrack.JerseyTestExtension;
@@ -26,6 +25,7 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +47,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BADGE_ENABLED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class BadgeResourceTest extends ResourceTest {
@@ -59,12 +60,7 @@ public class BadgeResourceTest extends ResourceTest {
     @Override
     public void before() throws Exception {
         super.before();
-        qm.createConfigProperty(
-                GENERAL_BADGE_ENABLED.getGroupName(),
-                GENERAL_BADGE_ENABLED.getPropertyName(),
-                "true",
-                IConfigProperty.PropertyType.BOOLEAN,
-                "Public access to badge enabled");
+        createConfigProperty(GENERAL_BADGE_ENABLED, "true");
     }
 
     @Test
@@ -88,8 +84,7 @@ public class BadgeResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturn403ForVulnBadgeByUuidWhenDisabled() {
-        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName())
-                .setPropertyValue("false");
+        useJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).setValue(GENERAL_BADGE_ENABLED, "false"));
         final Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false);
         final Response response = jersey.target(V1_BADGE + "/vulns/project/" + project.getUuid())
                 .request()
@@ -127,8 +122,7 @@ public class BadgeResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturn403ForVulnBadgeByNameAndVersionWhenDisabled() {
-        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName())
-                .setPropertyValue("false");
+        useJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).setValue(GENERAL_BADGE_ENABLED, "false"));
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false);
         final Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example/1.0.0")
                 .request()
@@ -157,8 +151,7 @@ public class BadgeResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturn403ForViolationsBadgeByUuidWhenDisabled() {
-        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName())
-                .setPropertyValue("false");
+        useJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).setValue(GENERAL_BADGE_ENABLED, "false"));
         final Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false);
         final Response response = jersey.target(V1_BADGE + "/violations/project/" + project.getUuid())
                 .request()
@@ -196,8 +189,7 @@ public class BadgeResourceTest extends ResourceTest {
 
     @Test
     public void shouldReturn403ForViolationsBadgeByNameAndVersionWhenDisabled() {
-        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName())
-                .setPropertyValue("false");
+        useJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).setValue(GENERAL_BADGE_ENABLED, "false"));
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false);
         final Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0")
                 .request()

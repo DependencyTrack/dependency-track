@@ -19,7 +19,6 @@
 package alpine.persistence;
 
 import alpine.model.ApiKey;
-import alpine.model.ConfigProperty;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.MappedLdapGroup;
@@ -863,54 +862,6 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         final Query<MappedOidcGroup> query = pm.newQuery(MappedOidcGroup.class, "group == :group");
         query.setParameters(group);
         return executeAndCloseList(query);
-    }
-
-    /**
-     * Returns a ConfigProperty with the specified groupName and propertyName.
-     * @param groupName the group name of the config property
-     * @param propertyName the name of the property
-     * @return a ConfigProperty object
-     * @since 1.3.0
-     */
-    public ConfigProperty getConfigProperty(final String groupName, final String propertyName) {
-        final Query<ConfigProperty> query = pm.newQuery(ConfigProperty.class, "groupName == :groupName && propertyName == :propertyName");
-        query.setParameters(groupName, propertyName);
-        return executeAndCloseUnique(query);
-    }
-
-    /**
-     * Returns a list of ConfigProperty objects.
-     * @return a List of ConfigProperty objects
-     * @since 1.3.0
-     */
-    public List<ConfigProperty> getConfigProperties() {
-        final Query<ConfigProperty> query = pm.newQuery(ConfigProperty.class);
-        query.setOrdering("groupName asc, propertyName asc");
-        return executeAndCloseList(query);
-    }
-
-    /**
-     * Creates a ConfigProperty object.
-     * @param groupName the group name of the property
-     * @param propertyName the name of the property
-     * @param propertyValue the value of the property
-     * @param propertyType the type of property
-     * @param description a description of the property
-     * @return a ConfigProperty object
-     * @since 1.3.0
-     */
-    public ConfigProperty createConfigProperty(final String groupName, final String propertyName,
-                                               final String propertyValue, final ConfigProperty.PropertyType propertyType,
-                                               final String description) {
-        return callInTransaction(() -> {
-            final ConfigProperty configProperty = new ConfigProperty();
-            configProperty.setGroupName(groupName);
-            configProperty.setPropertyName(propertyName);
-            configProperty.setPropertyValue(propertyValue);
-            configProperty.setPropertyType(propertyType);
-            configProperty.setDescription(description);
-            return pm.makePersistent(configProperty);
-        });
     }
 
 }

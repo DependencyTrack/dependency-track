@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.model.IConfigProperty.PropertyType;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.dex.api.ActivityContext;
 import org.dependencytrack.model.Component;
@@ -31,6 +30,7 @@ import javax.jdo.Query;
 import javax.jdo.Transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.mockito.Mockito.mock;
 
 class IdentifyInternalComponentsActivityTest extends PersistenceCapableTest {
@@ -41,18 +41,8 @@ class IdentifyInternalComponentsActivityTest extends PersistenceCapableTest {
 
         // Configure internal components to be identified by group "org.acme"
         // and names starting with "foobar-".
-        qm.createConfigProperty(
-                ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX.getGroupName(),
-                ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName(),
-                "^org\\.acme$",
-                PropertyType.STRING,
-                null);
-        qm.createConfigProperty(
-                ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName(),
-                ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyName(),
-                "^foobar-.*",
-                PropertyType.STRING,
-                null);
+        createConfigProperty(ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX, "^org\\.acme$");
+        createConfigProperty(ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX, "^foobar-.*");
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
 

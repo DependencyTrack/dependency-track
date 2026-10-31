@@ -30,7 +30,6 @@ import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.Tag;
 import org.slf4j.Logger;
@@ -344,67 +343,6 @@ final class ProjectQueryManager extends QueryManager {
             bind(project, resolvedTags);
             return persist(project);
         });
-    }
-
-    /**
-     * Creates a key/value pair (ProjectProperty) for the specified Project.
-     *
-     * @param project       the Project to create the property for
-     * @param groupName     the group name of the property
-     * @param propertyName  the name of the property
-     * @param propertyValue the value of the property
-     * @param propertyType  the type of property
-     * @param description   a description of the property
-     * @return the created ProjectProperty object
-     */
-    @Override
-    public ProjectProperty createProjectProperty(
-            final Project project,
-            final String groupName,
-            final String propertyName,
-            final String propertyValue,
-            final ProjectProperty.PropertyType propertyType,
-            final String description) {
-        final ProjectProperty property = new ProjectProperty();
-        property.setProject(project);
-        property.setGroupName(groupName);
-        property.setPropertyName(propertyName);
-        property.setPropertyValue(propertyValue);
-        property.setPropertyType(propertyType);
-        property.setDescription(description);
-        return persist(property);
-    }
-
-    /**
-     * Returns a ProjectProperty with the specified groupName and propertyName.
-     *
-     * @param project      the project the property belongs to
-     * @param groupName    the group name of the config property
-     * @param propertyName the name of the property
-     * @return a ProjectProperty object
-     */
-    @Override
-    public ProjectProperty getProjectProperty(
-            final Project project, final String groupName, final String propertyName) {
-        final Query<ProjectProperty> query = this.pm.newQuery(
-                ProjectProperty.class,
-                "project == :project && groupName == :groupName && propertyName == :propertyName");
-        query.setRange(0, 1);
-        return singleResult(query.execute(project, groupName, propertyName));
-    }
-
-    /**
-     * Returns a List of ProjectProperty's for the specified project.
-     *
-     * @param project the project the property belongs to
-     * @return a List ProjectProperty objects
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public List<ProjectProperty> getProjectProperties(final Project project) {
-        final Query<ProjectProperty> query = this.pm.newQuery(ProjectProperty.class, "project == :project");
-        query.setOrdering("groupName asc, propertyName asc");
-        return (List<ProjectProperty>) query.execute(project);
     }
 
     /**

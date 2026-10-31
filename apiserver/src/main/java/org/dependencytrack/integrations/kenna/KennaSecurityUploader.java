@@ -25,7 +25,6 @@ import org.dependencytrack.common.MultipartBodyPublisher;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.PortfolioFindingUploader;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.secret.management.SecretManager;
 import org.slf4j.Logger;
@@ -107,11 +106,11 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                         break;
                     }
 
-                    final ProjectProperty externalId =
-                            qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
-                    if (externalId != null && externalId.getPropertyValue() != null) {
+                    final String externalId =
+                            getProjectPropertyValue(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
+                    if (externalId != null) {
                         LOGGER.debug("Transforming findings to KDI format");
-                        kdi.process(project, externalId.getPropertyValue());
+                        kdi.process(project, externalId);
                     }
                 }
             }

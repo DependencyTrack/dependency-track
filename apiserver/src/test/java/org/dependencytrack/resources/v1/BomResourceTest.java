@@ -57,7 +57,6 @@ import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
@@ -66,6 +65,8 @@ import org.dependencytrack.notification.proto.v1.BomValidationFailedSubject;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.dependencytrack.support.config.source.memory.MemoryConfigSource;
 import org.glassfish.jersey.client.ClientConfig;
@@ -128,6 +129,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_VALIDATI
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
 import static org.dependencytrack.parser.cyclonedx.CycloneDxBomAssert.assertThatBom;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -402,13 +404,10 @@ class BomResourceTest extends ResourceTest {
         project.setAuthors(authors);
         qm.createProject(project, null, false);
 
-        final var projectProperty = new ProjectProperty();
-        projectProperty.setProject(project);
-        projectProperty.setGroupName("foo");
-        projectProperty.setPropertyName("bar");
-        projectProperty.setPropertyValue("baz");
-        projectProperty.setPropertyType(IConfigProperty.PropertyType.STRING);
-        qm.persist(projectProperty);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow("foo", "bar", "baz", IConfigProperty.PropertyType.STRING, null)));
 
         final var bomSupplier = new OrganizationalEntity();
         bomSupplier.setName("bomSupplier");
@@ -1929,12 +1928,7 @@ class BomResourceTest extends ResourceTest {
     void uploadBomWithValidationModeDisabledTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.DISABLED.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.DISABLED.name());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1974,18 +1968,8 @@ class BomResourceTest extends ResourceTest {
     void uploadBomWithValidationModeEnabledForTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.ENABLED_FOR_TAGS.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
-        qm.createConfigProperty(
-                BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
-                "[\"foo\"]",
-                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.ENABLED_FOR_TAGS.name());
+        createConfigProperty(BOM_VALIDATION_TAGS_INCLUSIVE, "[\"foo\"]");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -2041,18 +2025,8 @@ class BomResourceTest extends ResourceTest {
     void uploadBomWithValidationModeDisabledForTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.DISABLED_FOR_TAGS.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
-        qm.createConfigProperty(
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getGroupName(),
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyName(),
-                "[\"foo\"]",
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.DISABLED_FOR_TAGS.name());
+        createConfigProperty(BOM_VALIDATION_TAGS_EXCLUSIVE, "[\"foo\"]");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -2108,18 +2082,8 @@ class BomResourceTest extends ResourceTest {
     void uploadBomWithValidationTagsInvalidTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.ENABLED_FOR_TAGS.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
-        qm.createConfigProperty(
-                BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
-                "invalid",
-                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.ENABLED_FOR_TAGS.name());
+        createConfigProperty(BOM_VALIDATION_TAGS_INCLUSIVE, "invalid");
 
         final var project = new Project();
         project.setName("acme-app");

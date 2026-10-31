@@ -51,7 +51,6 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
@@ -62,6 +61,8 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityDao.ComponentVulnerabilityRow;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
@@ -3624,8 +3625,10 @@ class ProjectResourceTest extends ResourceTest {
         project.setAccessTeams(Set.of(team));
         qm.persist(project);
 
-        final ProjectProperty projectProperty =
-                qm.createProjectProperty(project, "group", "name", "value", PropertyType.STRING, "description");
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow("group", "name", "value", PropertyType.STRING, "description")));
 
         qm.bind(project, List.of(qm.createTag("tag-a"), qm.createTag("tag-b")));
 
@@ -3807,15 +3810,10 @@ class ProjectResourceTest extends ResourceTest {
                         ]
                         """);
 
-        final List<ProjectProperty> clonedProperties = qm.getProjectProperties(clonedProject);
-        assertThat(clonedProperties).satisfiesExactly(clonedProperty -> {
-            assertThat(clonedProperty.getId()).isNotEqualTo(projectProperty.getId());
-            assertThat(clonedProperty.getGroupName()).isEqualTo("group");
-            assertThat(clonedProperty.getPropertyName()).isEqualTo("name");
-            assertThat(clonedProperty.getPropertyValue()).isEqualTo("value");
-            assertThat(clonedProperty.getPropertyType()).isEqualTo(PropertyType.STRING);
-            assertThat(clonedProperty.getDescription()).isEqualTo("description");
-        });
+        final List<ProjectPropertyRow> clonedProperties = withJdbiHandle(
+                handle -> handle.attach(ProjectPropertyDao.class).getProperties(clonedProject.getUuid()));
+        assertThat(clonedProperties)
+                .containsExactly(new ProjectPropertyRow("group", "name", "value", PropertyType.STRING, "description"));
 
         assertThat(clonedProject.getTags()).extracting(Tag::getName).containsOnly("tag-a", "tag-b");
 

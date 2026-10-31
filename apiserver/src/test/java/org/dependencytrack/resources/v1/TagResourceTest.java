@@ -51,6 +51,7 @@ import java.util.stream.IntStream;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 class TagResourceTest extends ResourceTest {
@@ -62,12 +63,7 @@ class TagResourceTest extends ResourceTest {
     @Test
     void getTagsTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        createConfigProperty(ACCESS_MANAGEMENT_ACL_ENABLED, "true");
 
         final var projectA = new Project();
         projectA.setName("acme-app-a");
@@ -445,12 +441,7 @@ class TagResourceTest extends ResourceTest {
     void deleteTagsWhenAssignedToInaccessibleProjectTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT, Permissions.TAG_MANAGEMENT);
 
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        createConfigProperty(ACCESS_MANAGEMENT_ACL_ENABLED, "true");
 
         final Tag unusedTag = qm.createTag("foo");
         final Tag usedTag = qm.createTag("bar");
@@ -594,12 +585,7 @@ class TagResourceTest extends ResourceTest {
     @Test
     void getTaggedProjectsTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        createConfigProperty(ACCESS_MANAGEMENT_ACL_ENABLED, "true");
 
         final var projectA = new Project();
         projectA.setName("acme-app-a");
@@ -815,12 +801,7 @@ class TagResourceTest extends ResourceTest {
     @Test
     void tagProjectsWithAclTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        createConfigProperty(ACCESS_MANAGEMENT_ACL_ENABLED, "true");
 
         final var projectA = new Project();
         projectA.setName("acme-app-a");
@@ -897,12 +878,7 @@ class TagResourceTest extends ResourceTest {
     @Test
     void untagProjectsWithAclTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        createConfigProperty(ACCESS_MANAGEMENT_ACL_ENABLED, "true");
 
         final var projectA = new Project();
         projectA.setName("acme-app-a");
@@ -1029,12 +1005,7 @@ class TagResourceTest extends ResourceTest {
     void getTaggedCollectionProjectsTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        createConfigProperty(ACCESS_MANAGEMENT_ACL_ENABLED, "true");
 
         final Tag tagFoo = qm.createTag("foo");
         final Tag tagBar = qm.createTag("bar");

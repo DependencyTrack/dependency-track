@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_MATCH_MODE;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 
 class InternalComponentIdentifierTest extends PersistenceCapableTest {
 
@@ -84,24 +85,9 @@ class InternalComponentIdentifierTest extends PersistenceCapableTest {
             String componentName,
             String matchMode,
             boolean shouldBeInternal) {
-        qm.createConfigProperty(
-                INTERNAL_COMPONENTS_GROUPS_REGEX.getGroupName(),
-                INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName(),
-                groupsRegexProperty,
-                INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyType(),
-                INTERNAL_COMPONENTS_GROUPS_REGEX.getDescription());
-        qm.createConfigProperty(
-                INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName(),
-                INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyName(),
-                namesRegexProperty,
-                INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyType(),
-                INTERNAL_COMPONENTS_NAMES_REGEX.getDescription());
-        qm.createConfigProperty(
-                INTERNAL_COMPONENTS_MATCH_MODE.getGroupName(),
-                INTERNAL_COMPONENTS_MATCH_MODE.getPropertyName(),
-                matchMode,
-                INTERNAL_COMPONENTS_MATCH_MODE.getPropertyType(),
-                INTERNAL_COMPONENTS_MATCH_MODE.getDescription());
+        createConfigProperty(INTERNAL_COMPONENTS_GROUPS_REGEX, groupsRegexProperty);
+        createConfigProperty(INTERNAL_COMPONENTS_NAMES_REGEX, namesRegexProperty);
+        createConfigProperty(INTERNAL_COMPONENTS_MATCH_MODE, matchMode);
 
         final Component component = new Component();
         component.setGroup(componentGroup);

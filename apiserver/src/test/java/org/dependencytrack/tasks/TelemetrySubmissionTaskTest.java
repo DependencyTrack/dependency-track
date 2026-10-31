@@ -18,10 +18,11 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.model.ConfigProperty;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao.ConfigPropertyRow;
 import org.eclipse.microprofile.config.Config;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -43,6 +44,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.TELEMETRY_LAST_SUBMISSION_DATA;
 import static org.dependencytrack.model.ConfigPropertyConstants.TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS;
 import static org.dependencytrack.model.ConfigPropertyConstants.TELEMETRY_SUBMISSION_ENABLED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
 
@@ -86,17 +89,19 @@ class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
                         }
                         """)));
 
-        qm.getPersistenceManager().evictAll();
-        final ConfigProperty lastSubmissionEpoch = qm.getConfigProperty(
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getGroupName(),
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getPropertyName());
+        final ConfigPropertyRow lastSubmissionEpoch = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getProperty(
+                        TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getGroupName(),
+                        TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getPropertyName()));
         assertThat(lastSubmissionEpoch).isNotNull();
-        assertThat(lastSubmissionEpoch.getPropertyValue()).isNotNull();
+        assertThat(lastSubmissionEpoch.propertyValue()).isNotNull();
 
-        final ConfigProperty lastSubmissionData = qm.getConfigProperty(
-                TELEMETRY_LAST_SUBMISSION_DATA.getGroupName(), TELEMETRY_LAST_SUBMISSION_DATA.getPropertyName());
+        final ConfigPropertyRow lastSubmissionData = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getProperty(
+                        TELEMETRY_LAST_SUBMISSION_DATA.getGroupName(),
+                        TELEMETRY_LAST_SUBMISSION_DATA.getPropertyName()));
         assertThat(lastSubmissionData).isNotNull();
-        assertThatJson(lastSubmissionData.getPropertyValue()).isEqualTo("""
+        assertThatJson(lastSubmissionData.propertyValue()).isEqualTo("""
                 {
                     "system_id": "${json-unit.any-string}",
                     "dt_version": "999-SNAPSHOT",
@@ -157,10 +162,12 @@ class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
 
         wireMock.verify(postRequestedFor(urlEqualTo("/")));
 
-        final ConfigProperty lastSubmissionEpoch = qm.getConfigProperty(
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getGroupName(),
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getPropertyName());
-        assertThat(lastSubmissionEpoch.getPropertyValue()).isNull();
+        final ConfigPropertyRow lastSubmissionEpoch = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getProperty(
+                        TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getGroupName(),
+                        TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getPropertyName()));
+        assertThat(lastSubmissionEpoch).isNotNull();
+        assertThat(lastSubmissionEpoch.propertyValue()).isNull();
     }
 
     @Test
@@ -176,30 +183,17 @@ class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
 
         wireMock.verify(postRequestedFor(urlEqualTo("/")));
 
-        final ConfigProperty lastSubmissionEpoch = qm.getConfigProperty(
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getGroupName(),
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getPropertyName());
-        assertThat(lastSubmissionEpoch.getPropertyValue()).isNull();
+        final ConfigPropertyRow lastSubmissionEpoch = withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class)
+                .getProperty(
+                        TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getGroupName(),
+                        TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getPropertyName()));
+        assertThat(lastSubmissionEpoch).isNotNull();
+        assertThat(lastSubmissionEpoch.propertyValue()).isNull();
     }
 
     private void createTelemetryConfigProperties(String enabled, String lastSubmissionEpoch) {
-        qm.createConfigProperty(
-                TELEMETRY_SUBMISSION_ENABLED.getGroupName(),
-                TELEMETRY_SUBMISSION_ENABLED.getPropertyName(),
-                enabled,
-                TELEMETRY_SUBMISSION_ENABLED.getPropertyType(),
-                TELEMETRY_SUBMISSION_ENABLED.getDescription());
-        qm.createConfigProperty(
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getGroupName(),
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getPropertyName(),
-                lastSubmissionEpoch,
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getPropertyType(),
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getDescription());
-        qm.createConfigProperty(
-                TELEMETRY_LAST_SUBMISSION_DATA.getGroupName(),
-                TELEMETRY_LAST_SUBMISSION_DATA.getPropertyName(),
-                null,
-                TELEMETRY_LAST_SUBMISSION_DATA.getPropertyType(),
-                TELEMETRY_LAST_SUBMISSION_DATA.getDescription());
+        createConfigProperty(TELEMETRY_SUBMISSION_ENABLED, enabled);
+        createConfigProperty(TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS, lastSubmissionEpoch);
+        createConfigProperty(TELEMETRY_LAST_SUBMISSION_DATA, null);
     }
 }

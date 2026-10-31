@@ -43,7 +43,9 @@ import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -246,6 +248,65 @@ public class ComponentsResourceTest extends ResourceTest {
                   }
                 }
                 """);
+    }
+
+    @Test
+    public void listComponentsSubstringFilterPaginationTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project projectA = qm.createProject("projectA", null, "1.0", null, null, null, null, false);
+        projectA.addAccessTeam(team);
+        final Project projectB = qm.createProject("projectB", null, "1.0", null, null, null, null, false);
+        projectB.addAccessTeam(team);
+
+        for (final String name : List.of("libopenssl3", "openssl", "openssl-libs", "pyopenssl", "zlib", "curl")) {
+            final var component = new Component();
+            component.setProject(projectA);
+            component.setName(name);
+            qm.createComponent(component, false);
+        }
+        final var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("openssl");
+        qm.createComponent(componentB, false);
+
+        final List<String> expectedAsc = List.of("libopenssl3", "openssl", "openssl", "openssl-libs", "pyopenssl");
+
+        assertThat(listAllComponentNames("openssl", "ASC")).isEqualTo(expectedAsc);
+        assertThat(listAllComponentNames("openssl", "DESC")).isEqualTo(expectedAsc.reversed());
+        assertThat(listAllComponentNames("ss", "ASC")).isEqualTo(expectedAsc);
+    }
+
+    private List<String> listAllComponentNames(final String nameContains, final String sortDirection) {
+        final var names = new ArrayList<String>();
+        final var uuids = new HashSet<String>();
+        String pageToken = null;
+        do {
+            var target = jersey.target("/components")
+                    .queryParam("name_contains", nameContains)
+                    .queryParam("sort_by", "name")
+                    .queryParam("sort_direction", sortDirection)
+                    .queryParam("limit", 2);
+            if (pageToken != null) {
+                target = target.queryParam("page_token", pageToken);
+            }
+            final Response response = target.request().header(X_API_KEY, apiKey).get();
+            assertThat(response.getStatus()).isEqualTo(200);
+
+            final JsonObject responseJson = parseJsonObject(response);
+            assertThatJson(responseJson.getJsonObject("total").toString()).isEqualTo(/* language=JSON */ """
+                    {
+                      "count": 5,
+                      "type": "EXACT"
+                    }
+                    """);
+            for (final JsonObject item : responseJson.getJsonArray("items").getValuesAs(JsonObject.class)) {
+                names.add(item.getString("name"));
+                assertThat(uuids.add(item.getString("uuid"))).isTrue();
+            }
+            pageToken = responseJson.getString("next_page_token", null);
+        } while (pageToken != null);
+        return names;
     }
 
     @Test

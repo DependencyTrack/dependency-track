@@ -27,6 +27,8 @@ rules:
   operation-tags: error
   operation-tag-defined: error
 
+  oas3-parameter-description: error
+
   # Every operation must declare exactly one tag. Combined with
   # operation-tag-defined (above), this guarantees the tag is from the
   # canonical list in openapi.yaml.
@@ -144,3 +146,69 @@ rules:
     then:
       field: content.application/problem+json
       function: truthy
+
+  must-use-boolean-for-is-and-has-properties:
+    message: Properties prefixed with is_ or has_ must be boolean
+    severity: error
+    given: "$.paths..properties[?(@property.match(/^(is|has)_/))]"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [type]
+          properties:
+            type:
+              const: boolean
+
+  must-use-since-and-before-for-time-ranges:
+    message: Time range query parameters must use the _since and _before suffixes
+    severity: error
+    given: $.paths.*.*.parameters[?(@ && @.in=='query')].name
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: _(from|to|after|until|between)$
+
+  # Timestamps are epoch milliseconds, see shared/schemas/timestamp.yaml.
+  must-not-use-date-or-date-time-formats:
+    message: Use shared/schemas/timestamp.yaml instead of the date or date-time formats
+    severity: error
+    given: $.paths..[?(@ && @.type=='string')]
+    then:
+      field: format
+      function: pattern
+      functionOptions:
+        notMatch: ^(date|date-time)$
+
+  must-use-repeated-form-for-array-query-parameters:
+    message: Array query parameters must declare style form with explode true
+    severity: error
+    given: $.paths.*.*.parameters[?(@ && @.in=='query' && @.schema && @.schema.type=='array')]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [style, explode]
+          properties:
+            style:
+              const: form
+            explode:
+              const: true
+
+  must-use-uuid-format-for-uuid-fields:
+    message: Fields named uuid or *_uuid must have format uuid
+    severity: error
+    given:
+      - "$.paths..properties[?(@property.match(/(^|_)uuid$/))]"
+      - "$.paths.*.*.parameters[?(@ && @.name && @.name.match(/(^|_)uuid$/))].schema"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [format]
+          properties:
+            format:
+              const: uuid

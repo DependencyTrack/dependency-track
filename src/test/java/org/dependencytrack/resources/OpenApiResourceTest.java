@@ -20,6 +20,7 @@ package org.dependencytrack.resources;
 
 import alpine.server.filters.ApiFilter;
 import io.swagger.parser.OpenAPIParser;
+import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -76,6 +78,29 @@ class OpenApiResourceTest extends ResourceTest {
         // Version resource is defined in Alpine and outside our control.
         validationMessages.removeIf("attribute paths.'/version'(get).responses.200.description is missing"::equals);
         assertThat(validationMessages).isEmpty();
+    }
+
+    @Test
+    void testSortOrderParameterAllowableValues() {
+        final Response response = jersey.target("/openapi.yaml")
+                // NB: Initial generation of the OpenAPI spec can take a while in CI.
+                .property(ClientProperties.READ_TIMEOUT, "60000")
+                .request()
+                .get(Response.class);
+        final String openApiYaml = getPlainTextBody(response);
+        final SwaggerParseResult parseResult = new OpenAPIParser().readContents(openApiYaml, null, null);
+
+        final List<Parameter> sortOrderParameters = parseResult.getOpenAPI().getPaths().values().stream()
+                .flatMap(pathItem -> pathItem.readOperations().stream())
+                .flatMap(operation ->
+                        Stream.ofNullable(operation.getParameters()).flatMap(List::stream))
+                .filter(parameter -> "sortOrder".equals(parameter.getName()))
+                .toList();
+
+        assertThat(sortOrderParameters)
+                .isNotEmpty()
+                .allSatisfy(
+                        parameter -> assertThat(parameter.getSchema().getEnum()).containsExactly("asc", "desc"));
     }
 
 }

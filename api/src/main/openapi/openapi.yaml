@@ -57,6 +57,25 @@ info:
     instead of exact counts (type `EXACT`). Which type to expect is usually
     documented in the operation's description.
 
+    ## Filtering
+
+    Items in a collection can be filtered using query parameters.
+    When multiple filter parameters are given, an item must match all of them.
+
+    Filters that accept multiple values take them as repeated parameters,
+    e.g. `?<field>=a&<field>=b`. How the values are combined depends on the field:
+
+    - If the field holds a single value, an item matches when it has *any* of the given values.
+    - If the field holds multiple values, the parameter name states how they are combined:
+      `<field>_all` requires every given value, `<field>_any` at least one.
+
+    Time range filters are named `<field>_since` and `<field>_before`.
+    `_since` is inclusive and `_before` is exclusive, so adjacent ranges neither overlap nor leave gaps.
+
+    Text filters state how they match with a suffix: `<field>_contains` matches a substring,
+    `<field>_prefix` the start of the value. A filter without a suffix matches the exact value.
+    Which filter types are available depends on the operation.
+
     ## Sorting
 
     Items in a collection can be sorted using the `sort_by` and `sort_direction`

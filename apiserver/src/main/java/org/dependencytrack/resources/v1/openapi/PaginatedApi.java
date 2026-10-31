@@ -60,7 +60,7 @@ import java.lang.annotation.Target;
     @Parameter(
             name = "sortOrder",
             in = ParameterIn.QUERY,
-            schema = @Schema(allowableValues = "asc, desc"),
+            schema = @Schema(allowableValues = {"asc", "desc"}),
             description = "Ordering of items when sorting with <code>sortName</code>.")
 })
 public @interface PaginatedApi {}

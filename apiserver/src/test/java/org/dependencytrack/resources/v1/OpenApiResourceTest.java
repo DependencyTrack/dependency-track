@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import io.swagger.parser.OpenAPIParser;
+import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -67,5 +69,24 @@ public class OpenApiResourceTest extends ResourceTest {
         // Version resource is defined in Alpine and outside our control.
         validationMessages.removeIf("attribute paths.'/version'(get).responses.200.description is missing"::equals);
         assertThat(validationMessages).isEmpty();
+    }
+
+    @Test
+    public void testSortOrderParameterAllowableValues() {
+        final Response response = jersey.target("/openapi.yaml").request().get(Response.class);
+        final String openApiYaml = getPlainTextBody(response);
+        final SwaggerParseResult parseResult = new OpenAPIParser().readContents(openApiYaml, null, null);
+
+        final List<Parameter> sortOrderParameters = parseResult.getOpenAPI().getPaths().values().stream()
+                .flatMap(pathItem -> pathItem.readOperations().stream())
+                .flatMap(operation ->
+                        Stream.ofNullable(operation.getParameters()).flatMap(List::stream))
+                .filter(parameter -> "sortOrder".equals(parameter.getName()))
+                .toList();
+
+        assertThat(sortOrderParameters)
+                .isNotEmpty()
+                .allSatisfy(
+                        parameter -> assertThat(parameter.getSchema().getEnum()).containsExactly("asc", "desc"));
     }
 }

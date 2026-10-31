@@ -2210,6 +2210,30 @@ class BomResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldAutoAssignApiKeyTeamWhenAutoCreatingProjectWithAclDisabled() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(qm.getProject("acme-app", "1.0.0"))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
+    }
+
+    @Test
     void shouldReturnForbiddenWhenAutoCreateButProjectExistsInaccessible() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         enablePortfolioAccessControl();

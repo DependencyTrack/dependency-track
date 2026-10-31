@@ -457,9 +457,12 @@ final class ProjectQueryManager extends QueryManager {
 
     /**
      * Updates a Project ACL to add the principal's first team to the AccessTeams.
-     * This only happens if Portfolio Access Control is enabled, and only for machine principals,
-     * i.e. API keys and service accounts. For a human user we don't know which Team(s) to add,
+     * This only happens for machine principals, i.e. API keys and service accounts.
+     * For a human user we don't know which Team(s) to add,
      * See https://github.com/DependencyTrack/dependency-track/issues/1435
+     * <p>
+     * The team is added regardless of whether Portfolio Access Control is enabled,
+     * so that the principal retains access to the project once it is enabled later on.
      *
      * @param project
      * @param principal
@@ -467,7 +470,7 @@ final class ProjectQueryManager extends QueryManager {
      */
     @Override
     public boolean updateNewProjectACL(Project project, Principal principal) {
-        if (principal == null || request == null || !request.isPortfolioAccessControlEnabled()) {
+        if (principal == null) {
             return false;
         }
 

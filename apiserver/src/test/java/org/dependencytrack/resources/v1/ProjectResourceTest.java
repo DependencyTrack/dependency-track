@@ -4875,7 +4875,7 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    void shouldNotAssignApiKeyTeamWhenCreatingProjectWithAclDisabled() {
+    void shouldAutoAssignApiKeyTeamWhenCreatingProjectWithAclDisabled() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final Response response =
@@ -4887,7 +4887,38 @@ class ProjectResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(201);
 
         assertThat(qm.getProject("acme-app", null))
-                .satisfies(project -> assertThat(project.getAccessTeams()).isEmpty());
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
+    }
+
+    @Test
+    void shouldAutoAssignServiceAccountTeamWhenCreatingProjectWithAclDisabled() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+
+        final var serviceAccount = new ServiceAccount();
+        serviceAccount.setUsername("svc:ci");
+        serviceAccount.setSuspended(false);
+        qm.persist(serviceAccount);
+        qm.addUserToTeam(serviceAccount, team);
+        final String serviceAccountKey = qm.createApiKey(
+                        serviceAccount, null, Date.from(Instant.now().plus(Duration.ofDays(30))))
+                .getKey();
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, serviceAccountKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        assertThat(qm.getProject("acme-app", null))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
     }
 
     @Test

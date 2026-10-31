@@ -26,6 +26,8 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.secret.TestSecretManager;
 import org.junit.jupiter.api.Test;
 
@@ -45,36 +47,18 @@ import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_API_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_TOKEN;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 @WireMockTest
 class KennaSecurityUploadTaskTest extends PersistenceCapableTest {
 
     @Test
     void test(WireMockRuntimeInfo wmRuntimeInfo) {
-        qm.createConfigProperty(
-                KENNA_ENABLED.getGroupName(),
-                KENNA_ENABLED.getPropertyName(),
-                "true",
-                KENNA_ENABLED.getPropertyType(),
-                KENNA_ENABLED.getDescription());
-        qm.createConfigProperty(
-                KENNA_API_URL.getGroupName(),
-                KENNA_API_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl() + "/",
-                KENNA_API_URL.getPropertyType(),
-                KENNA_API_URL.getDescription());
-        qm.createConfigProperty(
-                KENNA_TOKEN.getGroupName(),
-                KENNA_TOKEN.getPropertyName(),
-                "kennaTokenSecretName",
-                KENNA_TOKEN.getPropertyType(),
-                KENNA_TOKEN.getDescription());
-        qm.createConfigProperty(
-                KENNA_CONNECTOR_ID.getGroupName(),
-                KENNA_CONNECTOR_ID.getPropertyName(),
-                "foo",
-                KENNA_CONNECTOR_ID.getPropertyType(),
-                KENNA_CONNECTOR_ID.getDescription());
+        createConfigProperty(KENNA_ENABLED, "true");
+        createConfigProperty(KENNA_API_URL, wmRuntimeInfo.getHttpBaseUrl() + "/");
+        createConfigProperty(KENNA_TOKEN, "kennaTokenSecretName");
+        createConfigProperty(KENNA_CONNECTOR_ID, "foo");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -95,8 +79,15 @@ class KennaSecurityUploadTaskTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.createProjectProperty(
-                project, "integrations", "kenna.asset.external_id", "666", IConfigProperty.PropertyType.STRING, null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "kenna.asset.external_id",
+                                "666",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
 
         stubFor(post(urlPathEqualTo("/connectors/foo/data_file"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """

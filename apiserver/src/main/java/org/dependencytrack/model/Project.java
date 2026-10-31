@@ -54,7 +54,6 @@ import javax.jdo.annotations.ForeignKeyAction;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
-import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -95,7 +94,6 @@ import java.util.UUID;
                 @Persistent(name = "uuid"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
-                @Persistent(name = "properties"),
                 @Persistent(name = "tags"),
                 @Persistent(name = "accessTeams"),
                 @Persistent(name = "metadata"),
@@ -287,16 +285,6 @@ public class Project implements Serializable {
 
     @Persistent(mappedBy = "parent")
     private Collection<Project> children;
-
-    @Persistent(mappedBy = "project")
-    @Order(
-            extensions =
-                    @Extension(
-                            vendorName = "datanucleus",
-                            key = "list-ordering",
-                            value = "groupName ASC, propertyName ASC"))
-    @JsonIgnore
-    private List<ProjectProperty> properties;
 
     @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true")
     @Join(
@@ -531,14 +519,6 @@ public class Project implements Serializable {
 
     public void setChildren(Collection<Project> children) {
         this.children = children;
-    }
-
-    public List<ProjectProperty> getProperties() {
-        return properties;
-    }
-
-    public void setProperties(List<ProjectProperty> properties) {
-        this.properties = properties;
     }
 
     public Set<Tag> getTags() {

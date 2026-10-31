@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.config.AlpineConfigKeys;
 import alpine.model.About;
 import alpine.model.ApiKey;
-import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
@@ -40,7 +39,6 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -1644,20 +1642,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c3, "none");
         qm.addVulnerability(v3, c2, "none");
         qm.addVulnerability(v4, c5, "none");
-        ConfigProperty aclToggle = qm.getConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
-        if (aclToggle == null) {
-            qm.createConfigProperty(
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                    "true",
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-        } else {
-            aclToggle.setPropertyValue("true");
-            qm.persist(aclToggle);
-        }
+        enablePortfolioAccessControl();
         Response response = jersey.target(V1_FINDING)
                 .request()
                 .header(X_API_KEY, apiKey.getKey())
@@ -1969,20 +1954,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v3, c2, "none");
         qm.addVulnerability(v3, c6, "none");
         qm.addVulnerability(v4, c5, "none");
-        ConfigProperty aclToggle = qm.getConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
-        if (aclToggle == null) {
-            qm.createConfigProperty(
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                    "true",
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-        } else {
-            aclToggle.setPropertyValue("true");
-            qm.persist(aclToggle);
-        }
+        enablePortfolioAccessControl();
         Response response = jersey.target(V1_FINDING + "/grouped")
                 .request()
                 .header(X_API_KEY, apiKey.getKey())

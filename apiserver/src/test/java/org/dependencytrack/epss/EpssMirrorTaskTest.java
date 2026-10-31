@@ -40,6 +40,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_EPSS_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_EPSS_FEEDS_URL;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigPropertyWithDefaultValue;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
@@ -65,18 +67,8 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
 
     @Test
     void shouldMirrorEpssRecords() throws Exception {
-        qm.createConfigProperty(
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getGroupName(),
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getPropertyName(),
-                "true",
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getPropertyType(),
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getDescription());
-        qm.createConfigProperty(
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getGroupName(),
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getPropertyName(),
-                wireMock.baseUrl() + "/",
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getPropertyType(),
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getDescription());
+        createConfigProperty(VULNERABILITY_SOURCE_EPSS_ENABLED, "true");
+        createConfigProperty(VULNERABILITY_SOURCE_EPSS_FEEDS_URL, wireMock.baseUrl() + "/");
 
         final var compressedFeedOutputStream = new ByteArrayOutputStream();
         try (final var gzipOutputStream = new GZIPOutputStream(compressedFeedOutputStream)) {
@@ -122,18 +114,8 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
 
     @Test
     void shouldFailOnMalformedFeed() throws Exception {
-        qm.createConfigProperty(
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getGroupName(),
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getPropertyName(),
-                "true",
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getPropertyType(),
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getDescription());
-        qm.createConfigProperty(
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getGroupName(),
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getPropertyName(),
-                wireMock.baseUrl(),
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getPropertyType(),
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getDescription());
+        createConfigProperty(VULNERABILITY_SOURCE_EPSS_ENABLED, "true");
+        createConfigProperty(VULNERABILITY_SOURCE_EPSS_FEEDS_URL, wireMock.baseUrl());
 
         final var compressedFeedOutputStream = new ByteArrayOutputStream();
         try (final var gzipOutputStream = new GZIPOutputStream(compressedFeedOutputStream)) {
@@ -154,18 +136,8 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
 
     @Test
     void shouldNotExecuteWhenDisabled() {
-        qm.createConfigProperty(
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getGroupName(),
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getPropertyName(),
-                "false",
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getPropertyType(),
-                VULNERABILITY_SOURCE_EPSS_ENABLED.getDescription());
-        qm.createConfigProperty(
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getGroupName(),
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getPropertyName(),
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getDefaultPropertyValue(),
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getPropertyType(),
-                VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getDescription());
+        createConfigProperty(VULNERABILITY_SOURCE_EPSS_ENABLED, "false");
+        createConfigPropertyWithDefaultValue(VULNERABILITY_SOURCE_EPSS_FEEDS_URL);
 
         new EpssMirrorTask(httpClient).run();
 

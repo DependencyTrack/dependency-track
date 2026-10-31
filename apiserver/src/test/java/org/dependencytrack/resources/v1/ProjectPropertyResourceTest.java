@@ -25,7 +25,6 @@ import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.secret.management.SecretManager;
@@ -37,7 +36,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.UUID;
@@ -45,6 +43,7 @@ import java.util.function.Supplier;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.Mockito.mock;
 
@@ -68,8 +67,14 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_READ);
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
-        qm.createProjectProperty(project, "mygroup", "prop1", "value1", PropertyType.STRING, "Test Property 1");
-        qm.createProjectProperty(project, "mygroup", "prop2", "value2", PropertyType.STRING, "Test Property 2");
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow("mygroup", "prop1", "value1", PropertyType.STRING, "Test Property 1")));
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow("mygroup", "prop2", "value2", PropertyType.STRING, "Test Property 2")));
         Response response = jersey.target(V1_PROJECT + "/" + project.getUuid().toString() + "/property")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -151,17 +156,18 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
-        ProjectProperty property = new ProjectProperty();
-        property.setProject(project);
-        property.setGroupName("mygroup");
-        property.setPropertyName("prop1");
-        property.setPropertyValue("value1");
-        property.setPropertyType(PropertyType.STRING);
-        property.setDescription("Test Property 1");
         Response response = jersey.target(V1_PROJECT + "/" + project.getUuid().toString() + "/property")
                 .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity(property, MediaType.APPLICATION_JSON));
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "mygroup",
+                          "propertyName": "prop1",
+                          "propertyValue": "value1",
+                          "propertyType": "STRING",
+                          "description": "Test Property 1"
+                        }
+                        """));
         assertThat(response.getStatus()).isEqualTo(201);
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
@@ -210,20 +216,24 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
-        qm.createProjectProperty(project, "mygroup", "prop1", "value1", PropertyType.STRING, null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow("mygroup", "prop1", "value1", PropertyType.STRING, null)));
         String uuid = project.getUuid().toString();
         qm.close();
-        ProjectProperty property = new ProjectProperty();
-        property.setProject(project);
-        property.setGroupName("mygroup");
-        property.setPropertyName("prop1");
-        property.setPropertyValue("value1");
-        property.setPropertyType(PropertyType.STRING);
-        property.setDescription("Test Property 1");
         Response response = jersey.target(V1_PROJECT + "/" + uuid + "/property")
                 .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity(property, MediaType.APPLICATION_JSON));
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "mygroup",
+                          "propertyName": "prop1",
+                          "propertyValue": "value1",
+                          "propertyType": "STRING",
+                          "description": "Test Property 1"
+                        }
+                        """));
         Assertions.assertEquals(409, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
@@ -235,17 +245,18 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
-        ProjectProperty property = new ProjectProperty();
-        property.setProject(project);
-        property.setGroupName("mygroup");
-        property.setPropertyName("prop1");
-        property.setPropertyValue("value1");
-        property.setPropertyType(PropertyType.STRING);
-        property.setDescription("Test Property 1");
         Response response = jersey.target(V1_PROJECT + "/" + UUID.randomUUID() + "/property")
                 .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity(property, MediaType.APPLICATION_JSON));
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "mygroup",
+                          "propertyName": "prop1",
+                          "propertyValue": "value1",
+                          "propertyType": "STRING",
+                          "description": "Test Property 1"
+                        }
+                        """));
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
@@ -301,15 +312,21 @@ public class ProjectPropertyResourceTest extends ResourceTest {
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         String uuid = project.getUuid().toString();
-        ProjectProperty property =
-                qm.createProjectProperty(project, "mygroup", "prop1", "value1", PropertyType.STRING, null);
-        qm.getPersistenceManager().detachCopy(property);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow("mygroup", "prop1", "value1", PropertyType.STRING, null)));
         qm.close();
-        property.setPropertyValue("updatedValue");
         Response response = jersey.target(V1_PROJECT + "/" + uuid + "/property")
                 .request()
                 .header(X_API_KEY, apiKey)
-                .post(Entity.entity(property, MediaType.APPLICATION_JSON));
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "mygroup",
+                          "propertyName": "prop1",
+                          "propertyValue": "updatedValue"
+                        }
+                        """));
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
@@ -357,17 +374,16 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
-        ProjectProperty property = new ProjectProperty();
-        property.setProject(project);
-        property.setGroupName("mygroup");
-        property.setPropertyName("prop1");
-        property.setPropertyValue("value1");
-        property.setPropertyType(PropertyType.STRING);
-        property.setDescription("Test Property 1");
         Response response = jersey.target(V1_PROJECT + "/" + UUID.randomUUID().toString() + "/property")
                 .request()
                 .header(X_API_KEY, apiKey)
-                .post(Entity.entity(property, MediaType.APPLICATION_JSON));
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "mygroup",
+                          "propertyName": "prop1",
+                          "propertyValue": "value1"
+                        }
+                        """));
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
@@ -388,13 +404,9 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final var property = new ProjectProperty();
-        property.setProject(project);
-        property.setGroupName("foo");
-        property.setPropertyName("bar");
-        property.setPropertyValue("baz");
-        property.setPropertyType(PropertyType.STRING);
-        qm.persist(property);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(), new ProjectPropertyRow("foo", "bar", "baz", PropertyType.STRING, null)));
 
         final Supplier<Response> responseSupplier =
                 () -> jersey.target(V1_PROJECT + "/" + project.getUuid() + "/property")
@@ -430,16 +442,22 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_DELETE);
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
-        ProjectProperty property =
-                qm.createProjectProperty(project, "mygroup", "prop1", "value1", PropertyType.STRING, null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow("mygroup", "prop1", "value1", PropertyType.STRING, null)));
         String uuid = project.getUuid().toString();
-        qm.getPersistenceManager().detachCopy(property);
         qm.close();
         Response response = jersey.target(V1_PROJECT + "/" + uuid + "/property")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
-                .method("DELETE", Entity.entity(property, MediaType.APPLICATION_JSON)); // HACK
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "mygroup",
+                          "propertyName": "prop1"
+                        }
+                        """)); // HACK
         Assertions.assertEquals(204, response.getStatus(), 0);
 
         final ProjectPropertyRow storedProperty = withJdbiHandle(handle ->
@@ -482,13 +500,9 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final var property = new ProjectProperty();
-        property.setProject(project);
-        property.setGroupName("foo");
-        property.setPropertyName("bar");
-        property.setPropertyValue("baz");
-        property.setPropertyType(PropertyType.STRING);
-        qm.persist(property);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(), new ProjectPropertyRow("foo", "bar", "baz", PropertyType.STRING, null)));
 
         final Supplier<Response> responseSupplier =
                 () -> jersey.target(V1_PROJECT + "/" + project.getUuid() + "/property")

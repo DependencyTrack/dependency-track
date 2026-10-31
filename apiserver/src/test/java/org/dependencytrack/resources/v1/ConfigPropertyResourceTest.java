@@ -45,6 +45,8 @@ import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCOR
 import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCORE_LOW;
 import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCORE_MEDIUM;
 import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCORE_UNASSIGNED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigPropertyWithDefaultValue;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -68,8 +70,8 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldReturnFullJsonForGetConfigProperties() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        qm.createConfigProperty("my.group", "my.string", "ABC", PropertyType.STRING, "A string");
-        qm.createConfigProperty("my.group", "my.integer", "1", PropertyType.INTEGER, "A integer");
+        createConfigProperty("my.group", "my.string", "ABC", PropertyType.STRING, "A string");
+        createConfigProperty("my.group", "my.integer", "1", PropertyType.INTEGER, "A integer");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -101,7 +103,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldUpdateStringProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty("my.group", "my.string", "ABC", PropertyType.STRING, "A string");
+        createConfigProperty("my.group", "my.string", "ABC", PropertyType.STRING, "A string");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -135,7 +137,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldUpdateBooleanProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty("my.group", "my.boolean", "false", PropertyType.BOOLEAN, "A boolean");
+        createConfigProperty("my.group", "my.boolean", "false", PropertyType.BOOLEAN, "A boolean");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -164,7 +166,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldUpdateNumberProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty("my.group", "my.number", "7.75", PropertyType.NUMBER, "A number");
+        createConfigProperty("my.group", "my.number", "7.75", PropertyType.NUMBER, "A number");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -193,7 +195,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldUpdateUrlProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty("my.group", "my.url", "http://localhost", PropertyType.URL, "A url");
+        createConfigProperty("my.group", "my.url", "http://localhost", PropertyType.URL, "A url");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -222,7 +224,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldUpdateUuidProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty(
+        createConfigProperty(
                 "my.group", "my.uuid", "a496cabc-749d-4751-b9e5-3b49b656d018", PropertyType.UUID, "A uuid");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
@@ -252,12 +254,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldRejectUpdateOfReadOnlyProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getGroupName(),
-                ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getPropertyName(),
-                ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getDefaultPropertyValue(),
-                ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getPropertyType(),
-                ConfigPropertyConstants.INTERNAL_CLUSTER_ID.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.INTERNAL_CLUSTER_ID);
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -330,9 +327,9 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldUpdateAggregatedProperties() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty("my.group", "my.string1", "ABC", PropertyType.STRING, "A string");
-        qm.createConfigProperty("my.group", "my.string2", "DEF", PropertyType.STRING, "A string");
-        qm.createConfigProperty("my.group", "my.string3", "GHI", PropertyType.STRING, "A string");
+        createConfigProperty("my.group", "my.string1", "ABC", PropertyType.STRING, "A string");
+        createConfigProperty("my.group", "my.string2", "DEF", PropertyType.STRING, "A string");
+        createConfigProperty("my.group", "my.string3", "GHI", PropertyType.STRING, "A string");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY + "/aggregate")
                 .request()
@@ -394,7 +391,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldPreserveMixedResponseShapeWhenAggregateIncludesUnknownProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty("my.group", "known", "ABC", PropertyType.STRING, "A string");
+        createConfigProperty("my.group", "known", "ABC", PropertyType.STRING, "A string");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY + "/aggregate")
                 .request()
@@ -433,12 +430,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldUpdateBomValidationMode() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.BOM_VALIDATION_MODE.getGroupName(),
-                ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyName(),
-                ConfigPropertyConstants.BOM_VALIDATION_MODE.getDefaultPropertyValue(),
-                ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyType(),
-                ConfigPropertyConstants.BOM_VALIDATION_MODE.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BOM_VALIDATION_MODE);
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -467,12 +459,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldRejectInvalidBomValidationMode() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.BOM_VALIDATION_MODE.getGroupName(),
-                ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyName(),
-                ConfigPropertyConstants.BOM_VALIDATION_MODE.getDefaultPropertyValue(),
-                ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyType(),
-                ConfigPropertyConstants.BOM_VALIDATION_MODE.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BOM_VALIDATION_MODE);
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -494,12 +481,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldUpdateBomValidationTagsExclusive() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getGroupName(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyName(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getDefaultPropertyValue(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE);
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -528,12 +510,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldRejectInvalidBomValidationTagsExclusive() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getGroupName(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyName(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getDefaultPropertyValue(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE);
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -554,12 +531,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldUpdateBomValidationTagsInclusive() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getDefaultPropertyValue(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE);
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -588,12 +560,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldRejectInvalidBomValidationTagsInclusive() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getDefaultPropertyValue(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
-                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE);
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY)
                 .request()
@@ -614,12 +581,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldRejectUnknownSecretName() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.FORTIFY_SSC_TOKEN.getGroupName(),
-                ConfigPropertyConstants.FORTIFY_SSC_TOKEN.getPropertyName(),
-                ConfigPropertyConstants.FORTIFY_SSC_TOKEN.getDefaultPropertyValue(),
-                ConfigPropertyConstants.FORTIFY_SSC_TOKEN.getPropertyType(),
-                ConfigPropertyConstants.FORTIFY_SSC_TOKEN.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.FORTIFY_SSC_TOKEN);
 
         when(secretManager.getSecretMetadata("nonexistent-secret")).thenReturn(null);
 
@@ -643,12 +605,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldAcceptKnownSecretName() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.KENNA_TOKEN.getGroupName(),
-                ConfigPropertyConstants.KENNA_TOKEN.getPropertyName(),
-                ConfigPropertyConstants.KENNA_TOKEN.getDefaultPropertyValue(),
-                ConfigPropertyConstants.KENNA_TOKEN.getPropertyType(),
-                ConfigPropertyConstants.KENNA_TOKEN.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.KENNA_TOKEN);
 
         when(secretManager.getSecretMetadata("my-secret"))
                 .thenReturn(new SecretMetadata("my-secret", null, null, null));
@@ -699,12 +656,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldReturnFullJsonForPublicConfigProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED, "true");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/public/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName()
@@ -730,12 +682,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
         for (final ConfigPropertyConstants configProperty : ConfigPropertyConstants.values()) {
-            qm.createConfigProperty(
-                    configProperty.getGroupName(),
-                    configProperty.getPropertyName(),
-                    configProperty.getDefaultPropertyValue(),
-                    configProperty.getPropertyType(),
-                    configProperty.getDescription());
+            createConfigPropertyWithDefaultValue(configProperty);
 
             final Response response = jersey.target(V1_CONFIG_PROPERTY
                             + "/public/" + configProperty.getGroupName()
@@ -780,12 +727,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
     void shouldReturnFullJsonForInternalConfigProperty() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.BANNER_CONFIG.getGroupName(),
-                ConfigPropertyConstants.BANNER_CONFIG.getPropertyName(),
-                ConfigPropertyConstants.BANNER_CONFIG.getDefaultPropertyValue(),
-                ConfigPropertyConstants.BANNER_CONFIG.getPropertyType(),
-                ConfigPropertyConstants.BANNER_CONFIG.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BANNER_CONFIG);
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/internal/" + ConfigPropertyConstants.BANNER_CONFIG.getGroupName()
@@ -811,12 +753,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
         for (final var configProperty : ConfigPropertyConstants.values()) {
-            qm.createConfigProperty(
-                    configProperty.getGroupName(),
-                    configProperty.getPropertyName(),
-                    configProperty.getDefaultPropertyValue(),
-                    configProperty.getPropertyType(),
-                    configProperty.getDescription());
+            createConfigPropertyWithDefaultValue(configProperty);
 
             final Response response = jersey.target(V1_CONFIG_PROPERTY
                             + "/internal/" + configProperty.getGroupName()
@@ -833,12 +770,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
     @Test
     void shouldReadPublicConfigPropertyWithoutAuthentication() {
-        qm.createConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED, "true");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/public/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName()
@@ -851,12 +783,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
     @Test
     void shouldRequireAuthenticationForInternalConfigProperty() {
-        qm.createConfigProperty(
-                ConfigPropertyConstants.BANNER_CONFIG.getGroupName(),
-                ConfigPropertyConstants.BANNER_CONFIG.getPropertyName(),
-                ConfigPropertyConstants.BANNER_CONFIG.getDefaultPropertyValue(),
-                ConfigPropertyConstants.BANNER_CONFIG.getPropertyType(),
-                ConfigPropertyConstants.BANNER_CONFIG.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BANNER_CONFIG);
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/internal/" + ConfigPropertyConstants.BANNER_CONFIG.getGroupName()
@@ -869,12 +796,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
     @Test
     void shouldReadInternalConfigPropertyWithoutPermission() {
-        qm.createConfigProperty(
-                ConfigPropertyConstants.BANNER_CONFIG.getGroupName(),
-                ConfigPropertyConstants.BANNER_CONFIG.getPropertyName(),
-                ConfigPropertyConstants.BANNER_CONFIG.getDefaultPropertyValue(),
-                ConfigPropertyConstants.BANNER_CONFIG.getPropertyType(),
-                ConfigPropertyConstants.BANNER_CONFIG.getDescription());
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BANNER_CONFIG);
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/internal/" + ConfigPropertyConstants.BANNER_CONFIG.getGroupName()
@@ -888,12 +810,7 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
     @Test
     void shouldReturnPublicConfigPropertyViaInternalEndpoint() {
-        qm.createConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED, "true");
 
         final Response response = jersey.target(V1_CONFIG_PROPERTY
                         + "/internal/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName()
@@ -915,35 +832,10 @@ class ConfigPropertyResourceTest extends ResourceTest {
     }
 
     private void createRiskScoreProperties() {
-        qm.createConfigProperty(
-                CUSTOM_RISK_SCORE_CRITICAL.getGroupName(),
-                CUSTOM_RISK_SCORE_CRITICAL.getPropertyName(),
-                CUSTOM_RISK_SCORE_CRITICAL.getDefaultPropertyValue(),
-                CUSTOM_RISK_SCORE_CRITICAL.getPropertyType(),
-                CUSTOM_RISK_SCORE_CRITICAL.getDescription());
-        qm.createConfigProperty(
-                CUSTOM_RISK_SCORE_HIGH.getGroupName(),
-                CUSTOM_RISK_SCORE_HIGH.getPropertyName(),
-                CUSTOM_RISK_SCORE_HIGH.getDefaultPropertyValue(),
-                CUSTOM_RISK_SCORE_HIGH.getPropertyType(),
-                CUSTOM_RISK_SCORE_HIGH.getDescription());
-        qm.createConfigProperty(
-                CUSTOM_RISK_SCORE_MEDIUM.getGroupName(),
-                CUSTOM_RISK_SCORE_MEDIUM.getPropertyName(),
-                CUSTOM_RISK_SCORE_MEDIUM.getDefaultPropertyValue(),
-                CUSTOM_RISK_SCORE_MEDIUM.getPropertyType(),
-                CUSTOM_RISK_SCORE_MEDIUM.getDescription());
-        qm.createConfigProperty(
-                CUSTOM_RISK_SCORE_LOW.getGroupName(),
-                CUSTOM_RISK_SCORE_LOW.getPropertyName(),
-                CUSTOM_RISK_SCORE_LOW.getDefaultPropertyValue(),
-                CUSTOM_RISK_SCORE_LOW.getPropertyType(),
-                CUSTOM_RISK_SCORE_LOW.getDescription());
-        qm.createConfigProperty(
-                CUSTOM_RISK_SCORE_UNASSIGNED.getGroupName(),
-                CUSTOM_RISK_SCORE_UNASSIGNED.getPropertyName(),
-                CUSTOM_RISK_SCORE_UNASSIGNED.getDefaultPropertyValue(),
-                CUSTOM_RISK_SCORE_UNASSIGNED.getPropertyType(),
-                CUSTOM_RISK_SCORE_UNASSIGNED.getDescription());
+        createConfigPropertyWithDefaultValue(CUSTOM_RISK_SCORE_CRITICAL);
+        createConfigPropertyWithDefaultValue(CUSTOM_RISK_SCORE_HIGH);
+        createConfigPropertyWithDefaultValue(CUSTOM_RISK_SCORE_MEDIUM);
+        createConfigPropertyWithDefaultValue(CUSTOM_RISK_SCORE_LOW);
+        createConfigPropertyWithDefaultValue(CUSTOM_RISK_SCORE_UNASSIGNED);
     }
 }

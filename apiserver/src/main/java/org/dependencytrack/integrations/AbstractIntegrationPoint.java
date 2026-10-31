@@ -19,9 +19,12 @@
 package org.dependencytrack.integrations;
 
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -45,6 +48,12 @@ public abstract class AbstractIntegrationPoint implements IntegrationPoint {
     protected static boolean isConfigEnabled(ConfigPropertyConstants property) {
         return Boolean.TRUE.equals(
                 withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).isEnabled(property)));
+    }
+
+    protected static @Nullable String getProjectPropertyValue(Project project, String groupName, String propertyName) {
+        final ProjectPropertyRow property = withJdbiHandle(handle ->
+                handle.attach(ProjectPropertyDao.class).getProperty(project.getUuid(), groupName, propertyName));
+        return property != null ? property.propertyValue() : null;
     }
 
     public void handleUnexpectedHttpResponse(

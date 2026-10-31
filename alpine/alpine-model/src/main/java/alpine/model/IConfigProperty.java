@@ -52,9 +52,9 @@ public interface IConfigProperty {
 
     void setPropertyValue(String propertyValue);
 
-    ConfigProperty.PropertyType getPropertyType();
+    PropertyType getPropertyType();
 
-    void setPropertyType(ConfigProperty.PropertyType propertyType);
+    void setPropertyType(PropertyType propertyType);
 
     String getDescription();
 

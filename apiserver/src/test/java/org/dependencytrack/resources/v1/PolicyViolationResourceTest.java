@@ -18,14 +18,12 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.model.ConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -514,20 +512,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
         assertThat(parseJsonArray(responseA)).hasSize(4);
 
-        ConfigProperty aclToggle = qm.getConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
-        if (aclToggle == null) {
-            qm.createConfigProperty(
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                    "true",
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-        } else {
-            aclToggle.setPropertyValue("true");
-            qm.persist(aclToggle);
-        }
+        enablePortfolioAccessControl();
 
         final Response responseB = jersey.target(V1_POLICY_VIOLATION)
                 .request()

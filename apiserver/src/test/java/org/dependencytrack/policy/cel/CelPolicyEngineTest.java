@@ -46,6 +46,8 @@ import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.KevDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
@@ -146,8 +148,15 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         projectMetadata.setTools(new Tools(List.of(toolComponent), null));
         qm.persist(projectMetadata);
 
-        qm.createProjectProperty(
-                project, "propertyGroup", "propertyName", "propertyValue", IConfigProperty.PropertyType.STRING, null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "propertyGroup",
+                                "propertyName",
+                                "propertyValue",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
 
         qm.bind(project, List.of(qm.createTag("projectTagA"), qm.createTag("projectTagB")));
 
@@ -2954,8 +2963,16 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        qm.createProjectProperty(project, "groupA", "nameA", "valueA", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(project, "groupB", "nameB", "valueB", IConfigProperty.PropertyType.STRING, null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "groupA", "nameA", "valueA", IConfigProperty.PropertyType.STRING, null)));
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "groupB", "nameB", "valueB", IConfigProperty.PropertyType.STRING, null)));
 
         final var component = new Component();
         component.setProject(project);

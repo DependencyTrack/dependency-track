@@ -18,10 +18,13 @@
  */
 package org.dependencytrack.resources;
 
+import alpine.model.Team;
 import alpine.model.auth.Principal;
+import alpine.model.auth.TeamRef;
 import alpine.server.resources.AlpineResource;
 import org.dependencytrack.api.v2.model.TotalCount;
 import org.dependencytrack.api.v2.model.TotalCountType;
+import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.MdcScope;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.exception.ProjectAccessDeniedException;
@@ -36,7 +39,11 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.core.Response;
+
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -95,6 +102,73 @@ public abstract class AbstractApiResource extends AlpineResource {
             throw new ProjectAccessDeniedException(
                     requireNonNullElse(message, "Access to the requested project is forbidden"));
         }
+    }
+
+    /**
+     * Resolves teams requested to be granted access to a new {@link Project}.
+     * <p>
+     * Each team must be identified by either UUID or name. Only teams the authenticated {@link Principal}
+     * is a member of can be resolved, unless it has the {@code ACCESS_MANAGEMENT}
+     * or {@code ACCESS_MANAGEMENT_READ} permission.
+     *
+     * @param qm             The {@link QueryManager} to use.
+     * @param requestedTeams The teams to resolve, as provided by the client.
+     * @return The resolved, persistent {@link Team}s.
+     * @throws ClientErrorException When a team has no identifier, does not exist,
+     *                              or is not accessible to the authenticated {@link Principal}.
+     */
+    protected Set<Team> resolveAccessTeams(final QueryManager qm, final @Nullable Collection<Team> requestedTeams) {
+        if (requestedTeams == null || requestedTeams.isEmpty()) {
+            return Set.of();
+        }
+
+        for (final Team requestedTeam : requestedTeams) {
+            if (requestedTeam.getUuid() == null && requestedTeam.getName() == null) {
+                throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                        .entity("""
+                                accessTeams must either specify a UUID or a name,\
+                                but the team %s has neither.\
+                                """.formatted(requestedTeam.getName()))
+                        .build());
+            }
+        }
+
+        final Principal principal = getPrincipal();
+        final List<TeamRef> principalTeams = principal != null ? principal.teams() : List.of();
+
+        final boolean canSeeAllTeams = hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
+                || hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
+        final Set<UUID> memberTeamUuids = new HashSet<>();
+        if (!canSeeAllTeams) {
+            for (final TeamRef principalTeam : principalTeams) {
+                memberTeamUuids.add(principalTeam.uuid());
+            }
+        }
+
+        final Set<Team> resolvedTeams = new HashSet<>();
+        for (final Team requestedTeam : requestedTeams) {
+            Team visibleTeam = null;
+            if (requestedTeam.getUuid() != null) {
+                visibleTeam = qm.getObjectByUuid(Team.class, requestedTeam.getUuid());
+            }
+            if (visibleTeam == null && requestedTeam.getName() != null) {
+                visibleTeam = qm.getTeam(requestedTeam.getName());
+            }
+            if (visibleTeam == null || (!canSeeAllTeams && !memberTeamUuids.contains(visibleTeam.getUuid()))) {
+                throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                        .entity("""
+                                The team with %s can not be assigned because it does not exist, \
+                                or is not accessible to the authenticated principal.\
+                                """.formatted(
+                                        requestedTeam.getUuid() != null
+                                                ? "UUID " + requestedTeam.getUuid()
+                                                : "name " + requestedTeam.getName()))
+                        .build());
+            }
+            resolvedTeams.add(visibleTeam);
+        }
+
+        return resolvedTeams;
     }
 
     /**

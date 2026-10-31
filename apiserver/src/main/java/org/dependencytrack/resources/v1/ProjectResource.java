@@ -20,7 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.model.Team;
 import alpine.model.auth.Principal;
-import alpine.model.auth.TeamRef;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -82,7 +81,6 @@ import jakarta.ws.rs.core.Response;
 import javax.jdo.FetchGroup;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -92,7 +90,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNullElse;
-import static java.util.Objects.requireNonNullElseGet;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
@@ -639,56 +636,9 @@ public class ProjectResource extends AbstractApiResource {
 
                 Principal principal = getPrincipal();
 
-                final Set<Team> chosenTeams =
-                        requireNonNullElseGet(jsonProject.getAccessTeams(), Collections::emptySet);
+                final Set<Team> chosenTeams = resolveAccessTeams(qm, jsonProject.getAccessTeams());
                 jsonProject.setAccessTeams(null);
-
-                for (final Team chosenTeam : chosenTeams) {
-                    if (chosenTeam.getUuid() == null && chosenTeam.getName() == null) {
-                        throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
-                                .entity("""
-                                        accessTeams must either specify a UUID or a name,\
-                                        but the team %s has neither.\
-                                        """.formatted(chosenTeam.getName()))
-                                .build());
-                    }
-                }
-
-                if (!chosenTeams.isEmpty()) {
-                    final List<TeamRef> principalTeams = principal != null ? principal.teams() : List.of();
-
-                    boolean canSeeAllTeams = super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
-                            || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
-                    final Set<UUID> memberTeamUuids = new HashSet<>();
-                    if (!canSeeAllTeams) {
-                        for (final TeamRef principalTeam : principalTeams) {
-                            memberTeamUuids.add(principalTeam.uuid());
-                        }
-                    }
-
-                    for (Team chosenTeam : chosenTeams) {
-                        Team visibleTeam = null;
-                        if (chosenTeam.getUuid() != null) {
-                            visibleTeam = qm.getObjectByUuid(Team.class, chosenTeam.getUuid());
-                        }
-                        if (visibleTeam == null && chosenTeam.getName() != null) {
-                            visibleTeam = qm.getTeam(chosenTeam.getName());
-                        }
-                        if (visibleTeam == null
-                                || (!canSeeAllTeams && !memberTeamUuids.contains(visibleTeam.getUuid()))) {
-                            throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
-                                    .entity("""
-                                            The team with %s can not be assigned because it does not exist, \
-                                            or is not accessible to the authenticated principal.\
-                                            """.formatted(
-                                                    chosenTeam.getUuid() != null
-                                                            ? "UUID " + chosenTeam.getUuid()
-                                                            : "name " + chosenTeam.getName()))
-                                    .build());
-                        }
-                        jsonProject.addAccessTeam(visibleTeam);
-                    }
-                }
+                chosenTeams.forEach(jsonProject::addAccessTeam);
 
                 final Project project;
                 try {

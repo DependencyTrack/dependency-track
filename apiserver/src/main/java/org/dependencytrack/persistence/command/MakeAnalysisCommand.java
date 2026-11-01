@@ -37,7 +37,8 @@ import static java.util.Objects.requireNonNull;
  * @param state         The analysis state to set
  * @param justification The justification to set
  * @param response      The vendor response to set
- * @param details       The details to set
+ * @param details       The details to set. {@code null} leaves the current details unchanged,
+ *                      an empty string clears them.
  * @param suppress      Whether to suppress the finding
  * @param commenter     Name of the principal on which behalf audit trail entries will be created
  * @param comment       The comment to add to the audit trail

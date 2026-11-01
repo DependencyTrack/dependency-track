@@ -31,6 +31,10 @@ import java.math.BigDecimal;
 import java.net.http.HttpClient;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -44,6 +48,9 @@ import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.create
 import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigPropertyWithDefaultValue;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 
 class EpssMirrorTaskTest extends PersistenceCapableTest {
 
@@ -133,7 +140,59 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
 
         assertThat(findAllEpss()).isEmpty();
     }
+        @Test
+    void shouldDeleteTempFileWhenDownloadFails() throws Exception {
+        createConfigProperty(VULNERABILITY_SOURCE_EPSS_ENABLED, "true");
+        createConfigProperty(VULNERABILITY_SOURCE_EPSS_FEEDS_URL, wireMock.baseUrl());
 
+        wireMock.stubFor(get(urlPathEqualTo("/epss_scores-current.csv.gz"))
+                .willReturn(aResponse().withStatus(500).withBody("error")));
+
+        final var downloadedPath = new AtomicReference<Path>();
+        final HttpClient capturingClient = mock(HttpClient.class);
+        doAnswer(invocation -> {
+            final HttpRequest request = invocation.getArgument(0);
+            final HttpResponse.BodyHandler<Path> bodyHandler = invocation.getArgument(1);
+            final HttpResponse<Path> response = httpClient.send(request, bodyHandler);
+            downloadedPath.set(response.body());
+            return response;
+        }).when(capturingClient).send(any(), any());
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(new EpssMirrorTask(capturingClient)::run)
+                .withMessageContaining("500");
+
+        // The error response body was written to the temp file by BodyHandlers.ofFile.
+        // It must not be left behind.
+        assertThat(downloadedPath.get()).isNotNull();
+        assertThat(downloadedPath.get()).doesNotExist();
+    }
+
+    @Test
+    void shouldSetRequestTimeout() throws Exception {
+        createConfigProperty(VULNERABILITY_SOURCE_EPSS_ENABLED, "true");
+        createConfigProperty(VULNERABILITY_SOURCE_EPSS_FEEDS_URL, wireMock.baseUrl());
+
+        wireMock.stubFor(get(urlPathEqualTo("/epss_scores-current.csv.gz"))
+                .willReturn(aResponse().withStatus(500)));
+
+        final var sentRequest = new AtomicReference<HttpRequest>();
+        final HttpClient capturingClient = mock(HttpClient.class);
+        doAnswer(invocation -> {
+            final HttpRequest request = invocation.getArgument(0);
+            final HttpResponse.BodyHandler<Path> bodyHandler = invocation.getArgument(1);
+            sentRequest.set(request);
+            return httpClient.send(request, bodyHandler);
+        }).when(capturingClient).send(any(), any());
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(new EpssMirrorTask(capturingClient)::run);
+
+        // Without a request timeout, a server that accepts the connection
+        // but never responds would block the task indefinitely.
+        assertThat(sentRequest.get()).isNotNull();
+        assertThat(sentRequest.get().timeout()).isPresent();
+    }
     @Test
     void shouldNotExecuteWhenDisabled() {
         createConfigProperty(VULNERABILITY_SOURCE_EPSS_ENABLED, "false");

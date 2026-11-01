@@ -31,6 +31,7 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.Scope;
+import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
@@ -1502,6 +1503,285 @@ public class ProjectsResourceTest extends ResourceTest {
         gamma.setName("gamma-app");
         gamma.setVersion("3.0.0");
         qm.persist(gamma);
+    }
+
+    @Test
+    public void getProjectDependencyGraphShouldReturnAllComponentsAndEdges() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, "2.0.0", null, null, null, null, false);
+        project.setGroup("acme-group");
+
+        final var leaf = new Component();
+        leaf.setProject(project);
+        leaf.setName("z-leaf");
+        qm.persist(leaf);
+
+        final var root = new Component();
+        root.setProject(project);
+        root.setGroup("acme");
+        root.setName("m-root");
+        root.setVersion("1.0.0");
+        root.setDirectDependencies(/* language=JSON */ """
+            [{"uuid": "%s"}]
+            """.formatted(leaf.getUuid()));
+        qm.persist(root);
+
+        final var unreachable = new Component();
+        unreachable.setProject(project);
+        unreachable.setName("a-unreachable");
+        qm.persist(unreachable);
+
+        project.setDirectDependencies(/* language=JSON */ """
+            [{"uuid": "%s"}]
+            """.formatted(root.getUuid()));
+        qm.persist(project);
+
+        final Project otherProject = qm.createProject("other-app", null, null, null, null, null, null, false);
+
+        final var otherComponent = new Component();
+        otherComponent.setProject(otherProject);
+        otherComponent.setName("other-component");
+        qm.persist(otherComponent);
+
+        final var otherService = new ServiceComponent();
+        otherService.setProject(otherProject);
+        otherService.setName("other-service");
+        qm.persist(otherService);
+
+        final Response response = jersey.target("/projects/%s/dependency-graph".formatted(project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(
+                        /* language=JSON */ """
+                    {
+                      "nodes": [
+                        {
+                          "uuid": "%1$s",
+                          "type": "COMPONENT",
+                          "name": "z-leaf",
+                          "direct_dependencies": []
+                        },
+                        {
+                          "uuid": "%2$s",
+                          "type": "COMPONENT",
+                          "group": "acme",
+                          "name": "m-root",
+                          "version": "1.0.0",
+                          "direct_dependencies": ["%1$s"]
+                        },
+                        {
+                          "uuid": "%3$s",
+                          "type": "COMPONENT",
+                          "name": "a-unreachable",
+                          "direct_dependencies": []
+                        },
+                        {
+                          "uuid": "%4$s",
+                          "type": "PROJECT",
+                          "group": "acme-group",
+                          "name": "acme-app",
+                          "version": "2.0.0",
+                          "direct_dependencies": ["%2$s"]
+                        }
+                      ]
+                    }
+                    """.formatted(
+                                        leaf.getUuid(), root.getUuid(), unreachable.getUuid(), project.getUuid()));
+    }
+
+    @Test
+    public void getProjectDependencyGraphShouldReturnServices() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+
+        final var service = new ServiceComponent();
+        service.setProject(project);
+        service.setGroup("acme");
+        service.setName("acme-service");
+        service.setVersion("1.0.0");
+        qm.persist(service);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setDirectDependencies(/* language=JSON */ """
+            [{"uuid": "%s"}]
+            """.formatted(service.getUuid()));
+        qm.persist(component);
+
+        final Response response = jersey.target("/projects/%s/dependency-graph".formatted(project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(
+                        /* language=JSON */ """
+                    {
+                      "nodes": [
+                        {
+                          "uuid": "%1$s",
+                          "type": "COMPONENT",
+                          "name": "acme-lib",
+                          "direct_dependencies": ["%2$s"]
+                        },
+                        {
+                          "uuid": "%3$s",
+                          "type": "PROJECT",
+                          "name": "acme-app",
+                          "direct_dependencies": []
+                        },
+                        {
+                          "uuid": "%2$s",
+                          "type": "SERVICE",
+                          "group": "acme",
+                          "name": "acme-service",
+                          "version": "1.0.0",
+                          "direct_dependencies": []
+                        }
+                      ]
+                    }
+                    """.formatted(component.getUuid(), service.getUuid(), project.getUuid()));
+    }
+
+    @Test
+    public void getProjectDependencyGraphShouldOmitEdgesToNodesThatDoNotExist() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+
+        final var leaf = new Component();
+        leaf.setProject(project);
+        leaf.setName("leaf");
+        qm.persist(leaf);
+
+        final UUID deletedUuid = UUID.randomUUID();
+
+        final var root = new Component();
+        root.setProject(project);
+        root.setName("root");
+        root.setDirectDependencies(/* language=JSON */ """
+            [{"uuid": "%s"}, {"uuid": "%s"}]
+            """.formatted(deletedUuid, leaf.getUuid()));
+        qm.persist(root);
+
+        project.setDirectDependencies(/* language=JSON */ """
+            [{"uuid": "%s"}, {"uuid": "%s"}]
+            """.formatted(deletedUuid, root.getUuid()));
+        qm.persist(project);
+
+        final Response response = jersey.target("/projects/%s/dependency-graph".formatted(project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
+                    {
+                      "nodes": [
+                        {
+                          "uuid": "%1$s",
+                          "type": "COMPONENT",
+                          "name": "leaf",
+                          "direct_dependencies": []
+                        },
+                        {
+                          "uuid": "%2$s",
+                          "type": "COMPONENT",
+                          "name": "root",
+                          "direct_dependencies": ["%1$s"]
+                        },
+                        {
+                          "uuid": "%3$s",
+                          "type": "PROJECT",
+                          "name": "acme-app",
+                          "direct_dependencies": ["%2$s"]
+                        }
+                      ]
+                    }
+                    """.formatted(leaf.getUuid(), root.getUuid(), project.getUuid()));
+    }
+
+    @Test
+    public void getProjectDependencyGraphShouldReturnGraphWithProjectAccess() {
+        enablePortfolioAccessControl();
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+        project.addAccessTeam(team);
+
+        final Response response = jersey.target("/projects/%s/dependency-graph".formatted(project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+            {
+              "nodes": [
+                {
+                  "uuid": "%s",
+                  "type": "PROJECT",
+                  "name": "acme-app",
+                  "direct_dependencies": []
+                }
+              ]
+            }
+            """.formatted(project.getUuid()));
+    }
+
+    @Test
+    public void getProjectDependencyGraphShouldReturnForbiddenWithoutProjectAccess() {
+        enablePortfolioAccessControl();
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+
+        final Response response = jersey.target("/projects/%s/dependency-graph".formatted(project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(403);
+    }
+
+    @Test
+    public void getProjectDependencyGraphShouldReturnOnlyProjectWhenProjectHasNoComponents() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+
+        final Response response = jersey.target("/projects/%s/dependency-graph".formatted(project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+            {
+              "nodes": [
+                {
+                  "uuid": "%s",
+                  "type": "PROJECT",
+                  "name": "acme-app",
+                  "direct_dependencies": []
+                }
+              ]
+            }
+            """.formatted(project.getUuid()));
+    }
+
+    @Test
+    public void getProjectDependencyGraphShouldReturnNotFoundWhenProjectDoesNotExist() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Response response = jersey.target("/projects/%s/dependency-graph".formatted(UUID.randomUUID()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(404);
     }
 
     private Project prepareProject() {

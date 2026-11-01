@@ -180,10 +180,11 @@ public class ProjectResource extends AbstractApiResource {
 
     @GET
     @Path("/concise")
+    @Deprecated(since = "5.3.0")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Returns a list of all projects, in a concise representation.",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
+    @Operation(summary = "Returns a list of all projects, in a concise representation.", description = """
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
+                    <p><strong>Deprecated</strong>! Use <code>/api/v2/projects</code> instead.</p>""")
     @PaginatedApi
     @ApiResponses(
             value = {
@@ -242,10 +243,13 @@ public class ProjectResource extends AbstractApiResource {
 
     @GET
     @Path("/concise/{uuid}/children")
+    @Deprecated(since = "5.3.0")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns a list of a given project's children, in a concise representation.",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
+            description = """
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
+                    <p><strong>Deprecated</strong>! Use <code>/api/v2/projects?parent_uuid={uuid}</code> instead.</p>""")
     @PaginatedApi
     @ApiResponses(
             value = {

@@ -455,39 +455,6 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             int unassigned,
             int vulnerabilities) {}
 
-    /// Projection of metrics JSON for API v2 [listAllProjects].
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record ListAllProjectMetricsRow(
-            int components,
-            int vulnerableComponents,
-            int critical,
-            int high,
-            int medium,
-            int low,
-            int unassigned,
-            int kev,
-            int vulnerabilities,
-            int suppressed,
-            double inheritedRiskScore,
-            int findingsTotal,
-            int findingsAudited,
-            int findingsUnaudited,
-            int policyViolationsFail,
-            int policyViolationsWarn,
-            int policyViolationsInfo,
-            int policyViolationsTotal,
-            int policyViolationsAudited,
-            int policyViolationsUnaudited,
-            int policyViolationsSecurityTotal,
-            int policyViolationsSecurityAudited,
-            int policyViolationsSecurityUnaudited,
-            int policyViolationsLicenseTotal,
-            int policyViolationsLicenseAudited,
-            int policyViolationsLicenseUnaudited,
-            int policyViolationsOperationalTotal,
-            int policyViolationsOperationalAudited,
-            int policyViolationsOperationalUnaudited) {}
-
     record ListProjectsRowV1(
             UUID uuid,
             @Nullable String group,
@@ -534,7 +501,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Nullable Double lastInheritedRiskScore,
             @Nullable List<String> tagNames,
             @Nullable List<String> teamNames,
-            @Json @ColumnName("metricsJson") @Nullable ListAllProjectMetricsRow metrics,
+            @Json @ColumnName("metricsJson") @Nullable ProjectMetrics metrics,
             @Nullable ProjectCollectionLogic collectionLogic,
             @Nullable String collectionTagName,
             @Nullable UUID parentUuid,
@@ -853,14 +820,6 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
         if (Boolean.TRUE.equals(query.onlyRoot())) {
             whereConditions.add("\"PROJECT\".\"PARENT_PROJECT_ID\" IS NULL");
         }
-        if (Boolean.TRUE.equals(query.hasChildren())) {
-            whereConditions.add("""
-                    EXISTS (
-                      SELECT 1
-                        FROM "PROJECT" AS "CHILD_PROJECT"
-                       WHERE "CHILD_PROJECT"."PARENT_PROJECT_ID" = "PROJECT"."ID"
-                    )""");
-        }
         if (query.isActive() != null) {
             whereConditions.add(
                     query.isActive()
@@ -904,11 +863,6 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                             case GROUP -> decodedPageToken.lastGroup();
                             case VERSION -> decodedPageToken.lastVersion();
                             case CLASSIFIER -> decodedPageToken.lastClassifier();
-                            case INACTIVE_SINCE ->
-                                decodedPageToken.lastInactiveSince() != null
-                                        ? Instant.ofEpochMilli(decodedPageToken.lastInactiveSince())
-                                        : null;
-                            case IS_LATEST -> decodedPageToken.lastIsLatest();
                             case LAST_BOM_IMPORTED ->
                                 decodedPageToken.lastBomImport() != null
                                         ? Instant.ofEpochMilli(decodedPageToken.lastBomImport())
@@ -955,10 +909,6 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                                         ? lastRow.classifier().name()
                                         : null
                                 : null,
-                        effectiveSortBy == ListAllProjectsQuery.SortBy.INACTIVE_SINCE && lastRow.inactiveSince() != null
-                                ? lastRow.inactiveSince().getTime()
-                                : null,
-                        effectiveSortBy == ListAllProjectsQuery.SortBy.IS_LATEST ? lastRow.isLatest() : null,
                         effectiveSortBy == ListAllProjectsQuery.SortBy.LAST_BOM_IMPORTED
                                         && lastRow.lastBomImport() != null
                                 ? lastRow.lastBomImport().getTime()
@@ -1055,9 +1005,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
              WHERE ${apiProjectAclCondition}
                AND ${whereConditions?join(" AND ")}
             <#assign castedLastSortValue>
-                <#if sortByColumn?has_content && sortByColumn == "INACTIVE_SINCE">CAST(:lastSortValue AS TIMESTAMPTZ)
-                <#elseif sortByColumn?has_content && sortByColumn == "LAST_BOM_IMPORTED">CAST(:lastSortValue AS TIMESTAMPTZ)
-                <#elseif sortByColumn?has_content && sortByColumn == "IS_LATEST">CAST(:lastSortValue AS BOOLEAN)
+                <#if sortByColumn?has_content && sortByColumn == "LAST_BOM_IMPORTED">CAST(:lastSortValue AS TIMESTAMPTZ)
                 <#elseif sortByColumn?has_content && sortByColumn == "LAST_RISKSCORE">CAST(:lastSortValue AS DOUBLE PRECISION)
                 <#else>CAST(:lastSortValue AS TEXT)
                 </#if>
@@ -1108,8 +1056,8 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Define ListAllProjectsQuery.SortBy sortByColumn,
             @Define SortDirection sortDirection,
             @Define boolean hasCursor,
-            @Define String collectionMetricsSubquery,
-            @Define String leafMetricsSubquery);
+            @Define @CompileTimeConstant String collectionMetricsSubquery,
+            @Define @CompileTimeConstant String leafMetricsSubquery);
 
     @SqlUpdate("""
             DELETE

@@ -94,7 +94,6 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
             final UUID parentUuid,
             final UUID ancestorUuid,
             final Boolean onlyRoot,
-            final Boolean hasChildren,
             final ProjectState state,
             final Boolean isLatest,
             final Long lastBomImportSince,
@@ -120,8 +119,6 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                         case "group" -> ListAllProjectsQuery.SortBy.GROUP;
                         case "version" -> ListAllProjectsQuery.SortBy.VERSION;
                         case "classifier" -> ListAllProjectsQuery.SortBy.CLASSIFIER;
-                        case "inactive_since" -> ListAllProjectsQuery.SortBy.INACTIVE_SINCE;
-                        case "is_latest" -> ListAllProjectsQuery.SortBy.IS_LATEST;
                         case "last_bom_import" -> ListAllProjectsQuery.SortBy.LAST_BOM_IMPORTED;
                         case "last_inherited_risk_score" -> ListAllProjectsQuery.SortBy.LAST_RISKSCORE;
                         default ->
@@ -132,8 +129,6 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                                             "group",
                                             "version",
                                             "classifier",
-                                            "inactive_since",
-                                            "is_latest",
                                             "last_bom_import",
                                             "last_inherited_risk_score"));
                     };
@@ -147,7 +142,6 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                             parentUuid,
                             ancestorUuid,
                             onlyRoot,
-                            hasChildren,
                             switch (state) {
                                 case ACTIVE -> Boolean.TRUE;
                                 case INACTIVE -> Boolean.FALSE;

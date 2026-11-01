@@ -33,7 +33,6 @@ import org.dependencytrack.api.v2.model.Scope;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.persistence.jdbi.ProjectDao.ListAllProjectMetricsRow;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRowV2;
 import org.jspecify.annotations.Nullable;
 
@@ -114,40 +113,40 @@ public class ModelMapper {
                 .build();
     }
 
-    public static ProjectMetrics mapProjectMetrics(@Nullable ListAllProjectMetricsRow metrics) {
+    public static ProjectMetrics mapProjectMetrics(org.dependencytrack.metrics.@Nullable ProjectMetrics metrics) {
         if (metrics == null) {
             return null;
         }
         return ProjectMetrics.builder()
-                .components(metrics.components())
-                .vulnerableComponents(metrics.vulnerableComponents())
-                .critical(metrics.critical())
-                .high(metrics.high())
-                .medium(metrics.medium())
-                .low(metrics.low())
-                .unassigned(metrics.unassigned())
-                .kev(metrics.kev())
-                .vulnerabilities(metrics.vulnerabilities())
-                .suppressed(metrics.suppressed())
-                .findingsTotal(metrics.findingsTotal())
-                .findingsAudited(metrics.findingsAudited())
-                .findingsUnaudited(metrics.findingsUnaudited())
-                .inheritedRiskScore(metrics.inheritedRiskScore())
-                .policyViolationsFail(metrics.policyViolationsFail())
-                .policyViolationsWarn(metrics.policyViolationsWarn())
-                .policyViolationsInfo(metrics.policyViolationsInfo())
-                .policyViolationsTotal(metrics.policyViolationsTotal())
-                .policyViolationsAudited(metrics.policyViolationsAudited())
-                .policyViolationsUnaudited(metrics.policyViolationsUnaudited())
-                .policyViolationsSecurityTotal(metrics.policyViolationsSecurityTotal())
-                .policyViolationsSecurityAudited(metrics.policyViolationsSecurityAudited())
-                .policyViolationsSecurityUnaudited(metrics.policyViolationsSecurityUnaudited())
-                .policyViolationsLicenseTotal(metrics.policyViolationsLicenseTotal())
-                .policyViolationsLicenseAudited(metrics.policyViolationsLicenseAudited())
-                .policyViolationsLicenseUnaudited(metrics.policyViolationsLicenseUnaudited())
-                .policyViolationsOperationalTotal(metrics.policyViolationsOperationalTotal())
-                .policyViolationsOperationalAudited(metrics.policyViolationsOperationalAudited())
-                .policyViolationsOperationalUnaudited(metrics.policyViolationsOperationalUnaudited())
+                .components(metrics.getComponents())
+                .vulnerableComponents(metrics.getVulnerableComponents())
+                .critical(metrics.getCritical())
+                .high(metrics.getHigh())
+                .medium(metrics.getMedium())
+                .low(metrics.getLow())
+                .unassigned(metrics.getUnassigned())
+                .kev(metrics.getKev())
+                .vulnerabilities(metrics.getVulnerabilities())
+                .suppressed(metrics.getSuppressed())
+                .findingsTotal(metrics.getFindingsTotal())
+                .findingsAudited(metrics.getFindingsAudited())
+                .findingsUnaudited(metrics.getFindingsUnaudited())
+                .inheritedRiskScore(metrics.getInheritedRiskScore())
+                .policyViolationsFail(metrics.getPolicyViolationsFail())
+                .policyViolationsWarn(metrics.getPolicyViolationsWarn())
+                .policyViolationsInfo(metrics.getPolicyViolationsInfo())
+                .policyViolationsTotal(metrics.getPolicyViolationsTotal())
+                .policyViolationsAudited(metrics.getPolicyViolationsAudited())
+                .policyViolationsUnaudited(metrics.getPolicyViolationsUnaudited())
+                .policyViolationsSecurityTotal(metrics.getPolicyViolationsSecurityTotal())
+                .policyViolationsSecurityAudited(metrics.getPolicyViolationsSecurityAudited())
+                .policyViolationsSecurityUnaudited(metrics.getPolicyViolationsSecurityUnaudited())
+                .policyViolationsLicenseTotal(metrics.getPolicyViolationsLicenseTotal())
+                .policyViolationsLicenseAudited(metrics.getPolicyViolationsLicenseAudited())
+                .policyViolationsLicenseUnaudited(metrics.getPolicyViolationsLicenseUnaudited())
+                .policyViolationsOperationalTotal(metrics.getPolicyViolationsOperationalTotal())
+                .policyViolationsOperationalAudited(metrics.getPolicyViolationsOperationalAudited())
+                .policyViolationsOperationalUnaudited(metrics.getPolicyViolationsOperationalUnaudited())
                 .build();
     }
 
@@ -162,7 +161,7 @@ public class ModelMapper {
                         row.classifier() != null
                                 ? Classifier.fromValue(row.classifier().name())
                                 : null)
-                .isActive(row.inactiveSince() == null ? ProjectState.ACTIVE : ProjectState.INACTIVE)
+                .state(row.inactiveSince() == null ? ProjectState.ACTIVE : ProjectState.INACTIVE)
                 .isLatest(row.isLatest())
                 .lastBomImport(row.lastBomImport() != null ? row.lastBomImport().getTime() : null)
                 .lastBomImportFormat(row.lastBomImportFormat())

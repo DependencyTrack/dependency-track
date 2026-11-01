@@ -35,8 +35,6 @@ get:
     * `group`
     * `version`
     * `classifier`
-    * `inactive_since`
-    * `is_latest`
     * `last_bom_import`
     * `last_inherited_risk_score`
 
@@ -124,22 +122,6 @@ get:
     - name: only_root
       in: query
       description: When `true`, return only root projects (those without a parent).
-      schema:
-        type: boolean
-    - name: has_children
-      in: query
-      description: |-
-        When `true`, return only projects that have at least one direct child
-        visible to the caller.
-
-        Portfolio access control applies to every row in the result set: a project
-        is returned only if the caller is permitted to access that project. With
-        this filter active, the project must also have at least one direct child
-        the caller is permitted to access.
-
-        Projects the caller cannot access are never included. Access is evaluated
-        per project using the standard portfolio ACL rules (including hierarchy:
-        access granted on an ancestor also grants access to its descendants).
       schema:
         type: boolean
     - name: state

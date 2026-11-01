@@ -576,13 +576,11 @@ public class ProjectsResourceTest extends ResourceTest {
 
         final var oldest = new Project();
         oldest.setName("oldest");
-        oldest.setInactiveSince(new Date(1_600_000_000_000L));
         oldest.setLastBomImport(new Date(1_600_000_000_000L));
         qm.persist(oldest);
 
         final var newest = new Project();
         newest.setName("newest");
-        newest.setInactiveSince(new Date(1_700_000_000_000L));
         newest.setLastBomImport(new Date(1_700_000_000_000L));
         qm.persist(newest);
 
@@ -590,36 +588,34 @@ public class ProjectsResourceTest extends ResourceTest {
         withoutTimestamp.setName("without-timestamp");
         qm.persist(withoutTimestamp);
 
-        for (final String sortBy : List.of("inactive_since", "last_bom_import")) {
-            Response response = jersey.target("/projects")
-                    .queryParam("limit", 1)
-                    .queryParam("sort_by", sortBy)
-                    .request()
-                    .header(X_API_KEY, apiKey)
-                    .get();
-            assertThat(response.getStatus()).isEqualTo(200);
-            final JsonObject firstPage = parseJsonObject(response);
-            assertThatJson(firstPage.toString()).inPath("$.items[*].name").isEqualTo("[\"oldest\"]");
+        Response response = jersey.target("/projects")
+                .queryParam("limit", 1)
+                .queryParam("sort_by", "last_bom_import")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final JsonObject firstPage = parseJsonObject(response);
+        assertThatJson(firstPage.toString()).inPath("$.items[*].name").isEqualTo("[\"oldest\"]");
 
-            response = jersey.target("/projects")
-                    .queryParam("limit", 1)
-                    .queryParam("page_token", firstPage.getString("next_page_token"))
-                    .request()
-                    .header(X_API_KEY, apiKey)
-                    .get();
-            assertThat(response.getStatus()).isEqualTo(200);
-            final JsonObject secondPage = parseJsonObject(response);
-            assertThatJson(secondPage.toString()).inPath("$.items[*].name").isEqualTo("[\"newest\"]");
+        response = jersey.target("/projects")
+                .queryParam("limit", 1)
+                .queryParam("page_token", firstPage.getString("next_page_token"))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final JsonObject secondPage = parseJsonObject(response);
+        assertThatJson(secondPage.toString()).inPath("$.items[*].name").isEqualTo("[\"newest\"]");
 
-            response = jersey.target("/projects")
-                    .queryParam("limit", 1)
-                    .queryParam("page_token", secondPage.getString("next_page_token"))
-                    .request()
-                    .header(X_API_KEY, apiKey)
-                    .get();
-            assertThat(response.getStatus()).isEqualTo(200);
-            assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name").isEqualTo("[\"without-timestamp\"]");
-        }
+        response = jersey.target("/projects")
+                .queryParam("limit", 1)
+                .queryParam("page_token", secondPage.getString("next_page_token"))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name").isEqualTo("[\"without-timestamp\"]");
     }
 
     @Test
@@ -1003,7 +999,7 @@ public class ProjectsResourceTest extends ResourceTest {
                   "title": "Invalid sort field",
                   "detail": "Sorting by field 'invalid_field' is not supported",
                   "invalid_field": "invalid_field",
-                  "supported_fields": ["name", "group", "version", "classifier", "inactive_since", "is_latest", "last_bom_import", "last_inherited_risk_score"]
+                  "supported_fields": ["name", "group", "version", "classifier", "last_bom_import", "last_inherited_risk_score"]
                 }
                 """);
     }
@@ -1048,7 +1044,7 @@ public class ProjectsResourceTest extends ResourceTest {
         final String parentBody = getPlainTextBody(response);
         assertThatJson(parentBody).inPath("$.items[0].name").isEqualTo("collection-app");
         assertThatJson(parentBody).inPath("$.items[0].has_children").isEqualTo(true);
-        assertThatJson(parentBody).inPath("$.items[0].is_active").isEqualTo("ACTIVE");
+        assertThatJson(parentBody).inPath("$.items[0].state").isEqualTo("ACTIVE");
         assertThatJson(parentBody).inPath("$.items[0].last_bom_import_format").isEqualTo("CycloneDX");
         assertThatJson(parentBody).inPath("$.items[0].collection_logic").isEqualTo("AGGREGATE_DIRECT_CHILDREN");
         assertThatJson(parentBody).inPath("$.items[0].teams[0]").isEqualTo("Test Users");
@@ -1268,114 +1264,6 @@ public class ProjectsResourceTest extends ResourceTest {
                 .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("child-app", "grandchild-app");
-    }
-
-    @Test
-    public void listProjectsHasChildrenFilterTest() {
-        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
-
-        final var rootWithChild = new Project();
-        rootWithChild.setName("root-with-child");
-        qm.persist(rootWithChild);
-
-        final var childWithGrandchild = new Project();
-        childWithGrandchild.setName("child-with-grandchild");
-        childWithGrandchild.setParent(rootWithChild);
-        qm.persist(childWithGrandchild);
-
-        final var grandchild = new Project();
-        grandchild.setName("grandchild-app");
-        grandchild.setParent(childWithGrandchild);
-        qm.persist(grandchild);
-
-        final var rootWithoutChild = new Project();
-        rootWithoutChild.setName("root-without-child");
-        qm.persist(rootWithoutChild);
-
-        final Response response = jersey.target("/projects")
-                .queryParam("has_children", true)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .inPath("$.items[*].name")
-                .isArray()
-                .containsExactlyInAnyOrder("root-with-child", "child-with-grandchild");
-    }
-
-    @Test
-    public void listProjectsHasChildrenFilterAclTest() {
-        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
-        enablePortfolioAccessControl();
-
-        final var inaccessibleParent = new Project();
-        inaccessibleParent.setName("inaccessible-parent");
-        qm.persist(inaccessibleParent);
-
-        final var inaccessibleChild = new Project();
-        inaccessibleChild.setName("inaccessible-child");
-        inaccessibleChild.setParent(inaccessibleParent);
-        qm.persist(inaccessibleChild);
-
-        Response response = jersey.target("/projects")
-                .queryParam("has_children", true)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
-                {
-                  "items": [],
-                  "total": {
-                    "count": 0,
-                    "type": "EXACT"
-                  }
-                }
-                """);
-
-        final var accessibleParent = new Project();
-        accessibleParent.setName("accessible-parent");
-        accessibleParent.addAccessTeam(team);
-        qm.persist(accessibleParent);
-
-        final var accessibleChild = new Project();
-        accessibleChild.setName("accessible-child");
-        accessibleChild.setParent(accessibleParent);
-        qm.persist(accessibleChild);
-
-        response = jersey.target("/projects")
-                .queryParam("has_children", true)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .inPath("$.items[*].name")
-                .isArray()
-                .containsExactly("accessible-parent");
-
-        final var childOnlyParent = new Project();
-        childOnlyParent.setName("child-only-parent");
-        qm.persist(childOnlyParent);
-
-        final var childWithTeam = new Project();
-        childWithTeam.setName("child-with-team");
-        childWithTeam.setParent(childOnlyParent);
-        childWithTeam.addAccessTeam(team);
-        qm.persist(childWithTeam);
-
-        response = jersey.target("/projects")
-                .queryParam("has_children", true)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .inPath("$.items[*].name")
-                .isArray()
-                .containsExactly("accessible-parent")
-                .doesNotContain("child-only-parent");
     }
 
     @Test

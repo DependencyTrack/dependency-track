@@ -34,7 +34,6 @@ public record ListAllProjectsQuery(
         @Nullable UUID parentUuid,
         @Nullable UUID ancestorUuid,
         @Nullable Boolean onlyRoot,
-        @Nullable Boolean hasChildren,
         @Nullable Boolean isActive,
         @Nullable Boolean isLatest,
         @Nullable Instant lastBomImportSince,
@@ -53,8 +52,6 @@ public record ListAllProjectsQuery(
         GROUP,
         VERSION,
         CLASSIFIER,
-        INACTIVE_SINCE,
-        IS_LATEST,
         LAST_BOM_IMPORTED,
         LAST_RISKSCORE
     }
@@ -65,8 +62,6 @@ public record ListAllProjectsQuery(
             @Nullable String lastGroup,
             @Nullable String lastVersion,
             @Nullable String lastClassifier,
-            @Nullable Long lastInactiveSince,
-            @Nullable Boolean lastIsLatest,
             @Nullable Long lastBomImport,
             @Nullable Double lastInheritedRiskScore,
             @Nullable SortBy sortBy,

@@ -261,6 +261,8 @@ paths:
     $ref: "./resources/projects/project-clone.yaml"
   /projects/{uuid}/components:
     $ref: "./resources/projects/project-components.yaml"
+  /projects/{uuid}/dependency-graph:
+    $ref: "./resources/projects/project-dependency-graph.yaml"
   /secrets:
     $ref: "./resources/secrets/secrets.yaml"
   /secrets/{name}:

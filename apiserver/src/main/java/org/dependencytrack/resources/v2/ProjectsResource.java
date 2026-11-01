@@ -25,6 +25,8 @@ import org.dependencytrack.api.v2.model.Classifier;
 import org.dependencytrack.api.v2.model.CloneProjectInclude;
 import org.dependencytrack.api.v2.model.CloneProjectRequest;
 import org.dependencytrack.api.v2.model.CloneProjectResponse;
+import org.dependencytrack.api.v2.model.GetProjectDependencyGraphResponse;
+import org.dependencytrack.api.v2.model.GetProjectDependencyGraphResponseNode;
 import org.dependencytrack.api.v2.model.ListProjectComponentsResponse;
 import org.dependencytrack.api.v2.model.ListProjectComponentsResponseItem;
 import org.dependencytrack.api.v2.model.ListProjectsResponse;
@@ -37,6 +39,8 @@ import org.dependencytrack.metrics.DependencyMetrics;
 import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.DependencyGraphDao;
+import org.dependencytrack.persistence.jdbi.DependencyGraphDao.ProjectGraphNode;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.persistence.jdbi.query.ListAllProjectsQuery;
@@ -310,6 +314,45 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                     .build();
             return Response.ok(response).build();
         });
+    }
+
+    @Override
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getProjectDependencyGraph(UUID uuid) {
+        // NB: Project graph retrieval customizes the query's fetch size.
+        // Without a transaction, the PG driver ignores that customization.
+        final List<ProjectGraphNode> graphNodes = inJdbiTransaction(getAlpineRequest(), handle -> {
+            requireProjectAccess(handle, uuid);
+            return handle.attach(DependencyGraphDao.class).getProjectGraphNodes(uuid);
+        });
+        if (graphNodes.isEmpty()) {
+            throw new NotFoundException();
+        }
+
+        final Set<UUID> nodeUuids =
+                graphNodes.stream().map(ProjectGraphNode::uuid).collect(Collectors.toSet());
+
+        final var nodes = graphNodes.stream()
+                .<GetProjectDependencyGraphResponseNode>map(node -> GetProjectDependencyGraphResponseNode.builder()
+                        .uuid(node.uuid())
+                        .type(
+                                switch (node.type()) {
+                                    case PROJECT -> GetProjectDependencyGraphResponseNode.TypeEnum.PROJECT;
+                                    case COMPONENT -> GetProjectDependencyGraphResponseNode.TypeEnum.COMPONENT;
+                                    case SERVICE -> GetProjectDependencyGraphResponseNode.TypeEnum.SERVICE;
+                                })
+                        .group(node.group())
+                        .name(node.name())
+                        .version(node.version())
+                        .directDependencies(node.directDependencies().stream()
+                                .filter(nodeUuids::contains)
+                                .toList())
+                        .build())
+                .toList();
+
+        return Response.ok(
+                        GetProjectDependencyGraphResponse.builder().nodes(nodes).build())
+                .build();
     }
 
     @Override

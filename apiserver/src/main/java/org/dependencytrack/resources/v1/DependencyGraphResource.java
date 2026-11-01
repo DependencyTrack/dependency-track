@@ -75,11 +75,13 @@ public class DependencyGraphResource extends AbstractApiResource {
 
     @GET
     @Path("/project/{uuid}/directDependencies")
+    @Deprecated(since = "5.3.0")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Returns a list of specific components and services from project UUID",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
+    @Operation(summary = "Returns a list of specific components and services from project UUID", description = """
+        <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
+        <p><strong>Deprecated</strong>! Use <code>/api/v2/projects/{uuid}/dependency-graph</code> instead.</p>\
+        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -135,11 +137,16 @@ public class DependencyGraphResource extends AbstractApiResource {
 
     @GET
     @Path("/component/{uuid}/directDependencies")
+    @Deprecated(since = "5.3.0")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Returns a list of specific components and services from component UUID",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
+    @Operation(summary = "Returns a list of specific components and services from component UUID", description = """
+        <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
+        <p>
+          <strong>Deprecated</strong>! Use <code>/api/v2/projects/{uuid}/dependency-graph</code>
+          of the component's project instead.
+        </p>\
+        """)
     @ApiResponses(
             value = {
                 @ApiResponse(

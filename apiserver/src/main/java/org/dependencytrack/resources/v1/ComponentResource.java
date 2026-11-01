@@ -700,10 +700,12 @@ public class ComponentResource extends AbstractApiResource {
 
     @GET
     @Path("/project/{projectUuid}/dependencyGraph/{componentUuids}")
+    @Deprecated(since = "5.3.0")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Returns the expanded dependency graph to every occurrence of a component",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
+    @Operation(summary = "Returns the expanded dependency graph to every occurrence of a component", description = """
+        <p>Requires permission <strong>VIEW_PORTFOLIO</strong>.</p>
+        <p><strong>Deprecated</strong>! Use <code>/api/v2/projects/{uuid}/dependency-graph</code> instead.</p>\
+        """)
     @ApiResponses(
             value = {
                 @ApiResponse(

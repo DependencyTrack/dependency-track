@@ -45,7 +45,7 @@ import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
-import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRowV1;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsConciseQuery;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
@@ -162,7 +162,7 @@ public class ProjectResource extends AbstractApiResource {
                             .build();
                 }
             }
-            final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+            final Page<ListProjectsRowV1> projectsPage = withJdbiHandle(
                     getAlpineRequest(),
                     handle -> handle.attach(ProjectDao.class)
                             .getProjects(new ListProjectsQuery()
@@ -180,10 +180,11 @@ public class ProjectResource extends AbstractApiResource {
 
     @GET
     @Path("/concise")
+    @Deprecated(since = "5.3.0")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Returns a list of all projects, in a concise representation.",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
+    @Operation(summary = "Returns a list of all projects, in a concise representation.", description = """
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
+                    <p><strong>Deprecated</strong>! Use <code>/api/v2/projects</code> instead.</p>""")
     @PaginatedApi
     @ApiResponses(
             value = {
@@ -242,10 +243,13 @@ public class ProjectResource extends AbstractApiResource {
 
     @GET
     @Path("/concise/{uuid}/children")
+    @Deprecated(since = "5.3.0")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns a list of a given project's children, in a concise representation.",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
+            description = """
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
+                    <p><strong>Deprecated</strong>! Use <code>/api/v2/projects?parent_uuid={uuid}</code> instead.</p>""")
     @PaginatedApi
     @ApiResponses(
             value = {
@@ -484,7 +488,7 @@ public class ProjectResource extends AbstractApiResource {
             @Parameter(description = "Optionally excludes children projects from being returned")
                     @QueryParam("onlyRoot")
                     boolean onlyRoot) {
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+        final Page<ListProjectsRowV1> projectsPage = withJdbiHandle(
                 getAlpineRequest(),
                 handle -> handle.attach(ProjectDao.class)
                         .getProjects(new ListProjectsQuery()
@@ -535,7 +539,7 @@ public class ProjectResource extends AbstractApiResource {
             @Parameter(description = "Optionally excludes children projects from being returned", required = false)
                     @QueryParam("onlyRoot")
                     boolean onlyRoot) {
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+        final Page<ListProjectsRowV1> projectsPage = withJdbiHandle(
                 getAlpineRequest(),
                 handle -> handle.attach(ProjectDao.class)
                         .getProjects(new ListProjectsQuery()
@@ -1263,7 +1267,7 @@ public class ProjectResource extends AbstractApiResource {
                     @QueryParam("excludeInactive")
                     boolean excludeInactive) {
         final UUID parentUuid = UUID.fromString(uuid);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(getAlpineRequest(), handle -> {
+        final Page<ListProjectsRowV1> projectsPage = withJdbiHandle(getAlpineRequest(), handle -> {
             requireProjectAccess(handle, parentUuid);
             return handle.attach(ProjectDao.class)
                     .getProjects(new ListProjectsQuery()
@@ -1327,7 +1331,7 @@ public class ProjectResource extends AbstractApiResource {
                     @QueryParam("excludeInactive")
                     boolean excludeInactive) {
         final UUID parentUuid = UUID.fromString(uuid);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(getAlpineRequest(), handle -> {
+        final Page<ListProjectsRowV1> projectsPage = withJdbiHandle(getAlpineRequest(), handle -> {
             requireProjectAccess(handle, parentUuid);
             return handle.attach(ProjectDao.class)
                     .getProjects(new ListProjectsQuery()
@@ -1391,7 +1395,7 @@ public class ProjectResource extends AbstractApiResource {
                     @QueryParam("excludeInactive")
                     boolean excludeInactive) {
         final UUID parentUuid = UUID.fromString(uuid);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(getAlpineRequest(), handle -> {
+        final Page<ListProjectsRowV1> projectsPage = withJdbiHandle(getAlpineRequest(), handle -> {
             requireProjectAccess(handle, parentUuid);
             return handle.attach(ProjectDao.class)
                     .getProjects(new ListProjectsQuery()
@@ -1457,7 +1461,7 @@ public class ProjectResource extends AbstractApiResource {
                     @QueryParam("excludeInactive")
                     boolean excludeInactive) {
         final UUID rootUuid = UUID.fromString(uuid);
-        final Page<ListProjectsRow> projectsPage = withJdbiHandle(getAlpineRequest(), handle -> {
+        final Page<ListProjectsRowV1> projectsPage = withJdbiHandle(getAlpineRequest(), handle -> {
             requireProjectAccess(handle, rootUuid);
             return handle.attach(ProjectDao.class)
                     .getProjects(new ListProjectsQuery()

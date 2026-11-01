@@ -1554,7 +1554,7 @@ class BomResourceTest extends ResourceTest {
 
         // Upload first child, search parent by UUID
         request = new BomSubmitRequest(
-                null, "Acme Example", "1.0", null, true, parentUUID, null, null, false, true, bomString);
+                null, "Acme Example", "1.0", null, true, parentUUID, null, null, false, true, null, bomString);
         response = jersey.target(V1_BOM)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1571,7 +1571,7 @@ class BomResourceTest extends ResourceTest {
 
         // Upload second child, search parent by name+ver
         request = new BomSubmitRequest(
-                null, "Acme Example", "2.0", null, true, null, "Acme Parent", "1.0", false, true, bomString);
+                null, "Acme Example", "2.0", null, true, null, "Acme Parent", "1.0", false, true, null, bomString);
         response = jersey.target(V1_BOM)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1598,6 +1598,7 @@ class BomResourceTest extends ResourceTest {
                 "1.0",
                 false,
                 true,
+                null,
                 bomString);
         response = jersey.target(V1_BOM)
                 .request()
@@ -1630,6 +1631,7 @@ class BomResourceTest extends ResourceTest {
                 null,
                 false,
                 true,
+                null,
                 bomString);
         Response response = jersey.target(V1_BOM)
                 .request()
@@ -1640,7 +1642,18 @@ class BomResourceTest extends ResourceTest {
         Assertions.assertEquals("The parent project could not be found.", body);
 
         request = new BomSubmitRequest(
-                null, "Acme Example", "2.0", null, true, null, "Non-existent parent", null, false, true, bomString);
+                null,
+                "Acme Example",
+                "2.0",
+                null,
+                true,
+                null,
+                "Non-existent parent",
+                null,
+                false,
+                true,
+                null,
+                bomString);
         response = jersey.target(V1_BOM)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -2207,6 +2220,223 @@ class BomResourceTest extends ResourceTest {
                 .satisfies(project -> assertThat(project.getAccessTeams())
                         .extracting(Team::getName)
                         .containsOnly(team.getName()));
+    }
+
+    @Test
+    void shouldAssignAccessTeamsByNameWhenAutoCreatingProject() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{"name": "%s"}],
+                          "bom": "%s"
+                        }
+                        """.formatted(team.getName(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(qm.getProject("acme-app", "1.0.0"))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
+    }
+
+    @Test
+    void shouldAssignAccessTeamsByUuidWhenAutoCreatingProject() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{"uuid": "%s"}],
+                          "bom": "%s"
+                        }
+                        """.formatted(team.getUuid(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(qm.getProject("acme-app", "1.0.0"))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
+    }
+
+    @Test
+    void shouldAssignAccessTeamsNotMemberOfWhenAutoCreatingProjectWithAccessManagementPermission() throws Exception {
+        initializeWithPermissions(
+                Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD, Permissions.ACCESS_MANAGEMENT);
+        enablePortfolioAccessControl();
+
+        final Team otherTeam = qm.createTeam("other-team");
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{"uuid": "%s"}],
+                          "bom": "%s"
+                        }
+                        """.formatted(otherTeam.getUuid(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        // The API key's own team is still auto-assigned in addition to the requested team.
+        assertThat(qm.getProject("acme-app", "1.0.0"))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsExactlyInAnyOrder("other-team", team.getName()));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenAutoCreatingProjectWithAccessTeamNotMemberOf() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Team otherTeam = qm.createTeam("other-team");
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{"uuid": "%s"}],
+                          "bom": "%s"
+                        }
+                        """.formatted(otherTeam.getUuid(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("""
+                The team with UUID %s can not be assigned because it does not exist, \
+                or is not accessible to the authenticated principal.""".formatted(otherTeam.getUuid()));
+
+        assertThat(qm.getProject("acme-app", "1.0.0")).isNull();
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenAutoCreatingProjectWithAccessTeamWithoutIdentifier() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{}],
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).startsWith("accessTeams must either specify a UUID or a name");
+
+        assertThat(qm.getProject("acme-app", "1.0.0")).isNull();
+    }
+
+    @Test
+    void shouldIgnoreAccessTeamsWhenUploadingToExistingProject() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final var existing = new Project();
+        existing.setName("acme-app");
+        existing.setVersion("1.0.0");
+        qm.persist(existing);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{"name": "%s"}],
+                          "bom": "%s"
+                        }
+                        """.formatted(team.getName(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().refresh(existing);
+        assertThat(existing.getAccessTeams()).isEmpty();
+    }
+
+    @Test
+    void shouldAssignAccessTeamsWhenAutoCreatingProjectViaMultipart() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final var multiPart = new FormDataMultiPart()
+                .field(
+                        "bom",
+                        resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8),
+                        MediaType.APPLICATION_XML_TYPE)
+                .field("projectName", "acme-app")
+                .field("projectVersion", "1.0.0")
+                .field("autoCreate", "true")
+                .field("accessTeams", /* language=JSON */ """
+                        [{"name": "%s"}]
+                        """.formatted(team.getName()));
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client.target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(qm.getProject("acme-app", "1.0.0"))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenAutoCreatingProjectViaMultipartWithInvalidAccessTeams() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final var multiPart = new FormDataMultiPart()
+                .field(
+                        "bom",
+                        resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8),
+                        MediaType.APPLICATION_XML_TYPE)
+                .field("projectName", "acme-app")
+                .field("projectVersion", "1.0.0")
+                .field("autoCreate", "true")
+                .field("accessTeams", "not-json");
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client.target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response))
+                .isEqualTo("accessTeams must be a JSON array of teams, each specifying either a UUID or a name.");
+
+        assertThat(qm.getProject("acme-app", "1.0.0")).isNull();
     }
 
     @Test

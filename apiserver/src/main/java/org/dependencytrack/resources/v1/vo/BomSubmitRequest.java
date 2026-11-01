@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1.vo;
 
 import alpine.common.validation.RegexSequence;
+import alpine.model.Team;
 import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -96,6 +97,13 @@ public final class BomSubmitRequest {
 
     private final Boolean isActive;
 
+    @Schema(description = """
+            Teams to grant access to the project when it is created via autoCreate. \
+            Either uuid or name of a team must be specified. Only teams which the authenticated \
+            principal is a member of can be assigned. Principals with ACCESS_MANAGEMENT \
+            permission can assign any team. Ignored when the project already exists.""")
+    private final List<Team> accessTeams;
+
     public BomSubmitRequest(
             String project,
             String projectName,
@@ -105,7 +113,19 @@ public final class BomSubmitRequest {
             boolean isLatest,
             boolean isActive,
             String bom) {
-        this(project, projectName, projectVersion, projectTags, autoCreate, null, null, null, isLatest, isActive, bom);
+        this(
+                project,
+                projectName,
+                projectVersion,
+                projectTags,
+                autoCreate,
+                null,
+                null,
+                null,
+                isLatest,
+                isActive,
+                null,
+                bom);
     }
 
     @JsonCreator
@@ -121,6 +141,7 @@ public final class BomSubmitRequest {
             @JsonProperty(value = "isLatest", defaultValue = "false") @JsonAlias("isLatestProjectVersion")
                     boolean isLatest,
             @JsonProperty(value = "isActive") Boolean isActive,
+            @JsonProperty(value = "accessTeams") List<Team> accessTeams,
             @JsonProperty(value = "bom", required = true) String bom) {
         this.project = project;
         this.projectName = projectName;
@@ -132,6 +153,7 @@ public final class BomSubmitRequest {
         this.parentVersion = parentVersion;
         this.isLatest = isLatest;
         this.isActive = isActive;
+        this.accessTeams = accessTeams;
         this.bom = bom;
     }
 
@@ -182,6 +204,10 @@ public final class BomSubmitRequest {
     @JsonProperty("isActive")
     public Boolean isActive() {
         return isActive;
+    }
+
+    public List<Team> getAccessTeams() {
+        return accessTeams;
     }
 
     @Schema(

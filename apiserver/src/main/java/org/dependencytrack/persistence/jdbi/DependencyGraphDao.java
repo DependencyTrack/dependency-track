@@ -23,6 +23,7 @@ import org.jdbi.v3.json.Json;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.FetchSize;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -40,11 +41,13 @@ import java.util.stream.Collectors;
 @NullMarked
 public interface DependencyGraphDao extends SqlObject {
 
-    /// Retrieve the dependency graph of a [Project], expanded to every occurrence of the given components.
+    /// Retrieve the dependency graph of a project, expanded to every occurrence of the given components.
     ///
-    /// @param projectUuid    UUID of the [Project] to retrieve the dependency graph of.
+    /// @param projectUuid    UUID of the project to retrieve the dependency graph of.
     /// @param componentUuids UUIDs of the components to expand the graph to.
     /// @return The expanded dependency graph, keyed by component UUID.
+    /// @deprecated Use [#getProjectGraphNodes(UUID)] instead.
+    @Deprecated(since = "5.3.0")
     default Map<UUID, GraphComponent> getDependencyGraph(UUID projectUuid, Collection<UUID> componentUuids) {
         final ProjectRow project = getProject(projectUuid);
         if (project == null
@@ -107,6 +110,49 @@ public interface DependencyGraphDao extends SqlObject {
         return graphComponentByUuid;
     }
 
+    /// Retrieve the entire dependency graph of a project.
+    ///
+    /// @param projectUuid UUID of the project to retrieve the dependency graph of.
+    /// @return The nodes of the dependency graph, including the project itself,
+    ///         or an empty list if the project does not exist.
+    /// @since 5.3.0
+    @SqlQuery("""
+        SELECT 'PROJECT' AS "TYPE"
+             , p."ID"
+             , p."UUID"
+             , p."GROUP"
+             , p."NAME"
+             , p."VERSION"
+             , COALESCE(JSONB_PATH_QUERY_ARRAY(p."DIRECT_DEPENDENCIES", '$[*].uuid'), '[]') AS "DIRECT_DEPENDENCIES"
+          FROM "PROJECT" AS p
+         WHERE p."UUID" = :projectUuid
+         UNION ALL
+        SELECT 'COMPONENT'
+             , c."ID"
+             , c."UUID"
+             , c."GROUP"
+             , c."NAME"
+             , c."VERSION"
+             , COALESCE(JSONB_PATH_QUERY_ARRAY(c."DIRECT_DEPENDENCIES", '$[*].uuid'), '[]')
+          FROM "COMPONENT" AS c
+         WHERE c."PROJECT_ID" = (SELECT "ID" FROM "PROJECT" WHERE "UUID" = :projectUuid)
+         UNION ALL
+        SELECT 'SERVICE'
+             , s."ID"
+             , s."UUID"
+             , s."GROUP"
+             , s."NAME"
+             , s."VERSION"
+             , '[]'
+          FROM "SERVICECOMPONENT" AS s
+         WHERE s."PROJECT_ID" = (SELECT "ID" FROM "PROJECT" WHERE "UUID" = :projectUuid)
+         ORDER BY "TYPE"
+                , "ID"
+        """)
+    @FetchSize(1000)
+    @RegisterConstructorMapper(ProjectGraphNode.class)
+    List<ProjectGraphNode> getProjectGraphNodes(@Bind UUID projectUuid);
+
     @SqlQuery("""
         SELECT "ID"
              , "DIRECT_DEPENDENCIES"
@@ -115,6 +161,7 @@ public interface DependencyGraphDao extends SqlObject {
         """)
     @RegisterConstructorMapper(ProjectRow.class)
     @Nullable
+    @Deprecated(since = "5.3.0")
     ProjectRow getProject(@Bind UUID projectUuid);
 
     @SqlQuery("""
@@ -134,6 +181,7 @@ public interface DependencyGraphDao extends SqlObject {
         SELECT "UUID"
           FROM cte_dependent
         """)
+    @Deprecated(since = "5.3.0")
     Set<UUID> getDependentUuids(@Bind long projectId, @Bind Collection<UUID> componentUuids);
 
     @SqlQuery("""
@@ -148,6 +196,7 @@ public interface DependencyGraphDao extends SqlObject {
            AND "UUID" = ANY(:componentUuids)
         """)
     @RegisterConstructorMapper(ComponentRow.class)
+    @Deprecated(since = "5.3.0")
     List<ComponentRow> getComponents(@Bind long projectId, @Bind Collection<UUID> componentUuids);
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -189,4 +238,20 @@ public interface DependencyGraphDao extends SqlObject {
             @Nullable String purlCoordinates,
             @Nullable Set<UUID> directDependencyUuids,
             boolean onSearchPath) {}
+
+    /// @since 5.3.0
+    record ProjectGraphNode(
+            Type type,
+            UUID uuid,
+            @Nullable String group,
+            String name,
+            @Nullable String version,
+            @Json List<UUID> directDependencies) {
+
+        public enum Type {
+            PROJECT,
+            COMPONENT,
+            SERVICE
+        }
+    }
 }

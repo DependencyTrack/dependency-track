@@ -176,6 +176,7 @@
         <lib.s3mock.version>5.2.3</lib.s3mock.version>
         <lib.slf4j.version>2.0.20</lib.slf4j.version>
         <lib.smallrye-config.version>4.1.0</lib.smallrye-config.version>
+        <lib.snappy-java.version>1.1.10.12</lib.snappy-java.version>
         <lib.swagger.version>2.2.55</lib.swagger.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
         <lib.tink.version>1.24.0</lib.tink.version>
@@ -630,6 +631,13 @@
                 <groupId>org.wiremock</groupId>
                 <artifactId>wiremock-standalone</artifactId>
                 <version>${lib.wiremock.version}</version>
+            </dependency>
+            <dependency>
+                <!-- Transitive via minio and kafka-clients; pinned to resolve
+                     GHSA-gwq9-9ffj-mvrv, GHSA-q233-g92q-qxp6 and GHSA-xqrx-qh46-34m7. -->
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>${lib.snappy-java.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.luben</groupId>

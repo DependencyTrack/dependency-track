@@ -189,19 +189,16 @@ public class ComponentsResourceTest extends ResourceTest {
                 withJdbiHandle(handle -> handle.attach(ComponentDao.class)
                         .getLicenseRows(List.of(persistedComponent.getId()))
                         .get(persistedComponent.getId()));
-        
-        assertThat(licenseRows)
-                .singleElement()
-                .satisfies(row -> {
-                        assertThat(row.componentId()).isEqualTo(persistedComponent.getId());
-                        assertThat(row.licenseId()).isNull();
-                        assertThat(row.license()).isEqualTo("Custom License");
-                        assertThat(row.licenseExpression()).isNull();
-                        assertThat(row.licenseUrl()).isEqualTo("https://example.com/custom-license");
-                        assertThat(row.ordinality()).isEqualTo(1);
-                        assertThat(row.acknowledgement()).isEqualTo("DECLARED");
-                });
 
+        assertThat(licenseRows).singleElement().satisfies(row -> {
+            assertThat(row.componentId()).isEqualTo(persistedComponent.getId());
+            assertThat(row.licenseId()).isNull();
+            assertThat(row.license()).isEqualTo("Custom License");
+            assertThat(row.licenseExpression()).isNull();
+            assertThat(row.licenseUrl()).isEqualTo("https://example.com/custom-license");
+            assertThat(row.ordinality()).isEqualTo(1);
+            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+        });
     }
 
     @Test

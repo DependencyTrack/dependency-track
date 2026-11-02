@@ -523,14 +523,16 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             }
 
             for (final org.cyclonedx.model.License candidate : candidates) {
-                if (isNotBlank(candidate.getId())) {
+                final int id = trimToNull(candidate.getId());
+                final int name = trimToNull(candidate.getName());
+                if (isNotBlank(id)) {
                     // Only the resolved license should have an associated ID.
                     // In the model License, this is the LICENSEID column
-                    identifiers.add(candidate.getId());
+                    identifiers.add(id);
                 }
-                if (isNotBlank(candidate.getName())) {
+                if (isNotBlank(name)) {
                     // Other licenses will need to be looked up by name
-                    identifiers.add(candidate.getName());
+                    identifiers.add(name);
                 }
             }
         }
@@ -546,6 +548,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             FROM "LICENSE"
             WHERE "LICENSEID" = ANY(:identifiers)
                 OR "NAME" = ANY(:identifiers)
+            ORDER BY ID
             """)
                         .bindArray("identifiers", String.class, identifiers)
                         .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {

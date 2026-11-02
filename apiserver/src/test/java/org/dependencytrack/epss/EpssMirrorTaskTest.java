@@ -29,12 +29,12 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.net.http.HttpClient;
-import java.util.List;
-import java.util.zip.GZIPOutputStream;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.GZIPOutputStream;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -140,7 +140,8 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
 
         assertThat(findAllEpss()).isEmpty();
     }
-        @Test
+
+    @Test
     void shouldDeleteTempFileWhenDownloadFails() throws Exception {
         createConfigProperty(VULNERABILITY_SOURCE_EPSS_ENABLED, "true");
         createConfigProperty(VULNERABILITY_SOURCE_EPSS_FEEDS_URL, wireMock.baseUrl());
@@ -151,12 +152,14 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
         final var downloadedPath = new AtomicReference<Path>();
         final HttpClient capturingClient = mock(HttpClient.class);
         doAnswer(invocation -> {
-            final HttpRequest request = invocation.getArgument(0);
-            final HttpResponse.BodyHandler<Path> bodyHandler = invocation.getArgument(1);
-            final HttpResponse<Path> response = httpClient.send(request, bodyHandler);
-            downloadedPath.set(response.body());
-            return response;
-        }).when(capturingClient).send(any(), any());
+                    final HttpRequest request = invocation.getArgument(0);
+                    final HttpResponse.BodyHandler<Path> bodyHandler = invocation.getArgument(1);
+                    final HttpResponse<Path> response = httpClient.send(request, bodyHandler);
+                    downloadedPath.set(response.body());
+                    return response;
+                })
+                .when(capturingClient)
+                .send(any(), any());
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(new EpssMirrorTask(capturingClient)::run)
@@ -179,20 +182,22 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
         final var sentRequest = new AtomicReference<HttpRequest>();
         final HttpClient capturingClient = mock(HttpClient.class);
         doAnswer(invocation -> {
-            final HttpRequest request = invocation.getArgument(0);
-            final HttpResponse.BodyHandler<Path> bodyHandler = invocation.getArgument(1);
-            sentRequest.set(request);
-            return httpClient.send(request, bodyHandler);
-        }).when(capturingClient).send(any(), any());
+                    final HttpRequest request = invocation.getArgument(0);
+                    final HttpResponse.BodyHandler<Path> bodyHandler = invocation.getArgument(1);
+                    sentRequest.set(request);
+                    return httpClient.send(request, bodyHandler);
+                })
+                .when(capturingClient)
+                .send(any(), any());
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(new EpssMirrorTask(capturingClient)::run);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(new EpssMirrorTask(capturingClient)::run);
 
         // Without a request timeout, a server that accepts the connection
         // but never responds would block the task indefinitely.
         assertThat(sentRequest.get()).isNotNull();
         assertThat(sentRequest.get().timeout()).isPresent();
     }
+
     @Test
     void shouldNotExecuteWhenDisabled() {
         createConfigProperty(VULNERABILITY_SOURCE_EPSS_ENABLED, "false");

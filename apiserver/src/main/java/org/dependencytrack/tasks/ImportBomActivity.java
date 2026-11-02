@@ -523,8 +523,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             }
 
             for (final org.cyclonedx.model.License candidate : candidates) {
-                final int id = trimToNull(candidate.getId());
-                final int name = trimToNull(candidate.getName());
+                final String id = trimToNull(candidate.getId());
+                final String name = trimToNull(candidate.getName());
                 if (isNotBlank(id)) {
                     // Only the resolved license should have an associated ID.
                     // In the model License, this is the LICENSEID column

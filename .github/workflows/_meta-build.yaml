@@ -102,7 +102,7 @@ jobs:
           install: true
 
       - name: Login to Docker.io
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # tag=v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # tag=v4.7.0
         if: ${{ inputs.publish-container }}
         with:
           registry: docker.io

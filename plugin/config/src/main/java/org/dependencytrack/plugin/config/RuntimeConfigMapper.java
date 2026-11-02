@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -153,7 +154,7 @@ public final class RuntimeConfigMapper {
         final JsonNode configNode = jsonMapper.convertValue(config, JsonNode.class);
 
         final List<Error> validationErrors =
-                new java.util.ArrayList<>(schema.jsonSchema().validate(configNode));
+                new ArrayList<>(schema.jsonSchema().validate(configNode));
         validationErrors.addAll(
                 validateCustomSchemaAnnotations(configNode, schema.jsonSchema().getSchemaNode()));
         if (!validationErrors.isEmpty()) {
@@ -246,7 +247,7 @@ public final class RuntimeConfigMapper {
     }
 
     private List<Error> validateCustomSchemaAnnotations(JsonNode configNode, JsonNode schemaNode) {
-        final var validationErrors = new java.util.ArrayList<Error>();
+        final var validationErrors = new ArrayList<Error>();
         validateCustomSchemaAnnotations(configNode, schemaNode, validationErrors);
         return validationErrors;
     }
@@ -257,10 +258,10 @@ public final class RuntimeConfigMapper {
         }
 
         if (configNode.isArray() && schemaNode.has(CustomAnnotations.UNIQUE_ITEM_PROPERTIES)) {
-            final var propertyNames = new java.util.ArrayList<String>();
+            final var propertyNames = new ArrayList<String>();
             schemaNode.get(CustomAnnotations.UNIQUE_ITEM_PROPERTIES).forEach(node -> propertyNames.add(node.asText()));
 
-            final var seen = new java.util.HashSet<String>();
+            final var seen = new HashSet<String>();
             for (int i = 0; i < configNode.size(); i++) {
                 final JsonNode item = configNode.get(i);
                 if (!item.isObject()) {
@@ -271,7 +272,7 @@ public final class RuntimeConfigMapper {
                         .map(name -> item.path(name).isMissingNode()
                                 ? ""
                                 : item.path(name).asText())
-                        .collect(java.util.stream.Collectors.joining("\u0000"));
+                        .collect(Collectors.joining("\u0000"));
                 if (!seen.add(signature)) {
                     errors.add(Error.builder()
                             .keyword(CustomAnnotations.UNIQUE_ITEM_PROPERTIES)

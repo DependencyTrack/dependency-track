@@ -23,6 +23,7 @@ import org.dependencytrack.plugin.api.storage.CompareAndPutResult;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -97,6 +98,7 @@ final class WatermarkStore {
     }
 
     private String getKey(final String ecosystem) {
-        return "watermark/" + DigestUtils.sha256Hex(sourceDataUrl).substring(0, WATERMARK_KEY_HASH_LENGTH) + "/" + ecosystem;
+        return "watermark/" + DigestUtils.sha256Hex(sourceDataUrl).substring(0, WATERMARK_KEY_HASH_LENGTH) + "/"
+                + ecosystem;
     }
 }

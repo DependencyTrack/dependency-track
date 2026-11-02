@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 class RuntimeConfigMapperTest {
 
     private record UniqueItemRuntimeConfig(java.util.List<Feed> feeds) implements RuntimeConfig {}
+
     private record Feed(String name) implements RuntimeConfig {}
 
     private final RuntimeConfigMapper runtimeConfigMapper = new RuntimeConfigMapper();

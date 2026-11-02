@@ -31,8 +31,6 @@ import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.dialect.Dialect;
 import com.networknt.schema.dialect.Dialects;
 import com.networknt.schema.keyword.NonValidationKeyword;
-import com.networknt.schema.path.NodePath;
-import com.networknt.schema.path.PathType;
 import com.networknt.schema.serialization.DefaultNodeReader;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
@@ -154,8 +152,10 @@ public final class RuntimeConfigMapper {
         final RuntimeConfigSchema schema = getSchema(runtimeConfigSpec);
         final JsonNode configNode = jsonMapper.convertValue(config, JsonNode.class);
 
-        final List<Error> validationErrors = new java.util.ArrayList<>(schema.jsonSchema().validate(configNode));
-        validationErrors.addAll(validateCustomSchemaAnnotations(configNode, schema.jsonSchema().getSchemaNode()));
+        final List<Error> validationErrors =
+                new java.util.ArrayList<>(schema.jsonSchema().validate(configNode));
+        validationErrors.addAll(
+                validateCustomSchemaAnnotations(configNode, schema.jsonSchema().getSchemaNode()));
         if (!validationErrors.isEmpty()) {
             throw new RuntimeConfigSchemaValidationException(validationErrors);
         }
@@ -190,7 +190,8 @@ public final class RuntimeConfigMapper {
         }
 
         final List<Error> validationErrors = new ArrayList<>(schema.jsonSchema().validate(configNode));
-        validationErrors.addAll(validateCustomSchemaAnnotations(configNode, schema.jsonSchema().getSchemaNode()));
+        validationErrors.addAll(
+                validateCustomSchemaAnnotations(configNode, schema.jsonSchema().getSchemaNode()));
         if (!validationErrors.isEmpty()) {
             throw new RuntimeConfigSchemaValidationException(validationErrors);
         }
@@ -267,7 +268,9 @@ public final class RuntimeConfigMapper {
                 }
 
                 final var signature = propertyNames.stream()
-                        .map(name -> item.path(name).isMissingNode() ? "" : item.path(name).asText())
+                        .map(name -> item.path(name).isMissingNode()
+                                ? ""
+                                : item.path(name).asText())
                         .collect(java.util.stream.Collectors.joining("\u0000"));
                 if (!seen.add(signature)) {
                     errors.add(Error.builder()

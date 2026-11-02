@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +46,7 @@ final class OsvCompositeVulnDataSource implements VulnDataSource {
      * Tracks the originating data source for a Bom instance so markProcessed can be
      * delegated to the producer even if currentDataSource has moved on.
      */
-    private final Map<Bom, OsvVulnDataSource> originMap = Collections.synchronizedMap(new IdentityHashMap<>());
+    private final Map<Bom, OsvVulnDataSource> originMap = new IdentityHashMap<>();
 
     OsvCompositeVulnDataSource(final List<OsvVulnDataSource> dataSources) {
         this.dataSources = requireNonNull(dataSources, "dataSources must not be null");

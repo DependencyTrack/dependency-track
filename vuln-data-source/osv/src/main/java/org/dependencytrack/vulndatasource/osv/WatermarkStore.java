@@ -18,11 +18,11 @@
  */
 package org.dependencytrack.vulndatasource.osv;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.dependencytrack.plugin.api.storage.CompareAndPutResult;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,11 +40,13 @@ final class WatermarkStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WatermarkStore.class);
 
-    private final String sourceName;
+    private static final int WATERMARK_KEY_HASH_LENGTH = 12;
+
+    private final String sourceDataUrl;
     private final KeyValueStore kvStore;
 
-    WatermarkStore(final String sourceName, final KeyValueStore kvStore) {
-        this.sourceName = requireNonNull(sourceName, "OSV sourceName must not be null");
+    WatermarkStore(final String sourceDataUrl, final KeyValueStore kvStore) {
+        this.sourceDataUrl = requireNonNull(sourceDataUrl, "OSV sourceDataUrl must not be null");
         this.kvStore = kvStore;
     }
 
@@ -95,6 +97,6 @@ final class WatermarkStore {
     }
 
     private String getKey(final String ecosystem) {
-        return "watermark/" + sourceName + "/" + ecosystem;
+        return "watermark/" + DigestUtils.sha256Hex(sourceDataUrl).substring(0, WATERMARK_KEY_HASH_LENGTH) + "/" + ecosystem;
     }
 }

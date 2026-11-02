@@ -91,6 +91,10 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         final var defaultConfig = new OsvVulnDataSourceConfigV1().withFeeds(new LinkedHashSet<>(Set.of(defaultSource)));
 
         return RuntimeConfigSpec.of(defaultConfig, (OsvVulnDataSourceConfigV1 config) -> {
+            if (config.getFeeds() == null) {
+                throw new InvalidRuntimeConfigException("No data feeds provided");
+            }
+
             final Set<String> seenNames = new LinkedHashSet<>();
             for (final var feed : config.getFeeds()) {
                 if (feed.getName() == null || feed.getName().isBlank()) {
@@ -135,7 +139,7 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         final var dataSources = new ArrayList<OsvVulnDataSource>(feeds.size());
         for (final OsvSourceConfigV1 feed : feeds) {
             final WatermarkManager watermarkManager = feed.isIncrementalMirroringEnabled()
-                    ? new WatermarkManager(feed.getName(), feed.getEcosystems(), kvStore)
+                    ? new WatermarkManager(feed.getDataUrl().toString(), feed.getEcosystems(), kvStore)
                     : null;
 
             dataSources.add(new OsvVulnDataSource(

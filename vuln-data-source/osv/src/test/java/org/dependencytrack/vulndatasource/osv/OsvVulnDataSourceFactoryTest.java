@@ -19,6 +19,8 @@
 package org.dependencytrack.vulndatasource.osv;
 
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
+import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
+import org.dependencytrack.plugin.api.config.RuntimeConfigValidator;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
 import org.dependencytrack.plugin.testing.ExtensionContextBuilder;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
@@ -32,6 +34,7 @@ import java.net.URI;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class OsvVulnDataSourceFactoryTest
@@ -84,6 +87,50 @@ class OsvVulnDataSourceFactoryTest
         config.getFeeds().forEach(feed -> feed.setEnabled(false));
         initFactory(config);
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
+    }
+
+    @Test
+    void validateShouldRejectMissingFeeds() {
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        config.setFeeds(null);
+
+        assertThatExceptionOfType(InvalidRuntimeConfigException.class).isThrownBy(() -> validate(config));
+    }
+
+    @Test
+    void validateShouldAcceptDisabledSourceWithoutDataUrlAndEcosystems() {
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        config.getFeeds().forEach(feed -> {
+            feed.setEnabled(false);
+            feed.setDataUrl(null);
+            feed.setEcosystems(null);
+        });
+
+        assertThatCode(() -> validate(config)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateShouldRejectEnabledSourceWithoutDataUrl() {
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        config.getFeeds().forEach(feed -> {
+            feed.setEnabled(true);
+            feed.setDataUrl(null);
+            feed.setEcosystems(Set.of("Maven"));
+        });
+
+        assertThatExceptionOfType(InvalidRuntimeConfigException.class).isThrownBy(() -> validate(config));
+    }
+
+    @Test
+    void validateShouldRejectEnabledSourceWithoutEcosystems() {
+        final OsvVulnDataSourceConfigV1 config = defaultConfig();
+        config.getFeeds().forEach(feed -> {
+            feed.setEnabled(true);
+            feed.setDataUrl(URI.create("https://example.com/osv-vulnerabilities"));
+            feed.setEcosystems(Set.of());
+        });
+
+        assertThatExceptionOfType(InvalidRuntimeConfigException.class).isThrownBy(() -> validate(config));
     }
 
     @Test
@@ -154,6 +201,13 @@ class OsvVulnDataSourceFactoryTest
                     .satisfies(
                             source -> assertThat(source.getWatermarkManager()).isNotNull());
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void validate(final OsvVulnDataSourceConfigV1 config) {
+        ((RuntimeConfigValidator<OsvVulnDataSourceConfigV1>)
+                        factory.runtimeConfigSpec().validator())
+                .validate(config);
     }
 
     private OsvVulnDataSourceConfigV1 defaultConfig() {

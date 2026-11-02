@@ -153,8 +153,7 @@ public final class RuntimeConfigMapper {
         final RuntimeConfigSchema schema = getSchema(runtimeConfigSpec);
         final JsonNode configNode = jsonMapper.convertValue(config, JsonNode.class);
 
-        final List<Error> validationErrors =
-                new ArrayList<>(schema.jsonSchema().validate(configNode));
+        final List<Error> validationErrors = new ArrayList<>(schema.jsonSchema().validate(configNode));
         validationErrors.addAll(
                 validateCustomSchemaAnnotations(configNode, schema.jsonSchema().getSchemaNode()));
         if (!validationErrors.isEmpty()) {

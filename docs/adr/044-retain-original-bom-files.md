@@ -22,7 +22,8 @@ that stored object.
 
 [Issue 7516] requests opt-in retention of the BOM document used for import,
 authorized retrieval of that document, and cleanup when its project is
-deleted.
+deleted. It was marked as a duplicate issue of [Issue 877], which asks for
+a retention policy for uploaded BOMs.
 
 Maintainer guidance in [Discussion 6133] identifies the same integration
 points. Dependency-Track should retain the existing FileStorage object, provide
@@ -35,14 +36,19 @@ BOM document that the import processes. It does not preserve the exact HTTP
 request body or its transport wrapper.
 
 Retaining BOM documents increases storage use. The amount grows with every
-successful retained import until its project is deleted. Operators need to
-choose whether to accept this cost.
+successful retained import. Therefore, a limit or a retention policy needs
+to be in place to act as a safeguard to avoid the growth from continuing
+without a clear stopping point. Operators need to be aware that there will
+still be a storage requirement they need to accept upon using this retention
+policy and feature. 
 
 ### Possible Solutions
 
+#### BOM Retention Solutions
+
 #### A: Store complete FileStorage metadata on each BOM record
 
-Add a nullable binary column to the `BOM` table. Store the serialized
+We add a nullable binary column to the `BOM` table. Store the serialized
 FileStorage `FileMetadata` protobuf after a successful retained import.
 
 *Pros*:
@@ -60,7 +66,7 @@ FileStorage `FileMetadata` protobuf after a successful retained import.
 
 #### B: Derive the reference from a FileStorage name
 
-Give each retained document a stable logical name and rebuild its reference
+We give each retained document a stable logical name and rebuild its reference
 when the document is downloaded or deleted.
 
 *Pros*:
@@ -96,7 +102,7 @@ Extend the FileStorage API and its providers with a lookup or move operation.
 
 #### D: Store a pointer manifest in FileStorage
 
-Write a small project-specific file that points to the retained object.
+We write a small project-specific file that points to the retained object.
 
 *Pros*:
 
@@ -110,9 +116,52 @@ Write a small project-specific file that points to the retained object.
    FileStorage does not provide.
 3. The manifest is derived state that needs repair or reconciliation.
 
+#### BOM Retention Clean-up Solutions
+
+#### E: Dedicated retention workflow
+
+We will create a new workflow that will select the proper files and delete
+them through a file deletion step, where each reference is only cleared
+after the file is deleted. It processes the file in batches.
+
+*Pros*:
+
+1. A failed deletion keeps its reference, so a later run can try again.
+2. A failed deletion does not leave a file in storage without a reference.
+
+*Cons*:
+
+1. It adds a second layer of orchestration on top of the existing file
+deletion workflow.
+2. If clearing a reference fails after the file is deleted, the reference
+points to a missing file.
+3. Every retained import would start a workflow run, even when there is
+nothing to delete.
+
+#### F: Clear references, reuse asynchronous file deletion
+
+A small database transaction clears the references to the files for deletion,
+and returns their metadata. The existing workflow for asynchronous file
+deletion is used to delete the appropriate file. Follows the same structure
+as project deletion.
+
+*Pros*:
+
+1. It reuses existing workflow and deletion procedures, without adding
+overhead.
+2. Follows the existing project deletion pattern that already exists.
+
+*Cons*:
+
+1. If deletion fails after retries, the file stays in storage without a
+reference.
+2. The same happens if the process stops between the commit and scheduling
+the deletion.
+
 ## Decision
 
-We will follow solution A. We will store the complete serialized FileStorage
+We will follow solution A for BOM storage and file reference, and
+solution F for cleanup. We will store the complete serialized FileStorage
 `FileMetadata` on the corresponding `BOM` record in a nullable PostgreSQL
 `BYTEA` column.
 
@@ -121,27 +170,46 @@ The metadata includes the provider name, location, media type, digest, and any
 additional provider data. Application code will not rebuild a reference from a
 filename or from a subset of these fields.
 
-Original BOM retention will be disabled by default. The setting will be read
-when an upload is accepted and carried with that import workflow. It will apply
-only to future uploads and will not backfill existing BOM records.
+Original BOM retention will be disabled by default. Whether an upload is retained
+will be decided when it is accepted and carried with its import workflow. It will
+apply only to future uploads and will not backfill existing BOM records.
 
 When retention is enabled, a successful import will associate the metadata of
 the existing upload object with the new `BOM` record. The workflow will leave
-that object in FileStorage. It will not write a second copy. Every successful
-import accepted with retention enabled will be retained.
+that object in FileStorage. It will not write a second copy.
+
+Administrators will choose one of two retention policies. Latest-only is the
+default. It keeps the retained document of the newest import of each project.
+After a retained import commits, the retained documents of older imports of
+that project are removed. The new import and any later imports are kept.
+Age-based retention keeps retained documents until they reach a configured age.
+The age is measured from the import time in whole 24-hour days. A document that
+reaches the configured age exactly becomes eligible for removal, and the next
+scheduled run removes it. The default is 90 days, and the value must be
+positive. The newest document of a project is also removed once it is old
+enough. The endpoint then returns not found for that project.
+
+The policy settings will be read when cleanup runs, not when the upload is
+accepted. Latest-only cleanup runs after each retained import. Age-based
+cleanup runs as a scheduled maintenance task, daily by default. Disabling
+retention stops new cleanup, but it does not delete existing documents.
+Switching from age-based to latest-only removes the accumulated older documents
+of a project at its next retained import. Retention cleanup keeps BOM records
+and only clears their reference to the stored document.
 
 When retention is disabled, the workflow will continue deleting the upload
-after a successful import. A failed import will attempt to delete the upload
-regardless of the retention setting. A failure to create the import workflow
-will also trigger a compensating deletion attempt.
+after a successful import. A failed import will delete the upload unless a
+committed `BOM` record references it. If the workflow cannot determine whether
+such a reference exists, it retains the upload. A failure to create the import
+workflow will also trigger a compensating deletion attempt.
 
 The existing V1 upload API will remain the upload path. The document retained
 from this path will be the decoded and decompressed BOM document used by the
 import. Transport wrappers and a leading byte-order mark will not be retained.
 
-We will use the existing JDO import path to write the new field. New read and
-deletion queries will use raw SQL and JDBI, in line with the current persistence
-guidance.
+We will use the existing JDO import path to write the new field. New read,
+cleanup, and deletion queries will use raw SQL and JDBI, in line with the
+current persistence guidance.
 
 We will add one spec-first V2 endpoint to the Projects resource. It will return
 the newest successfully imported BOM for the requested project that has
@@ -152,20 +220,30 @@ transaction, and then retrieve the document from FileStorage.
 The endpoint will preserve the recorded media type. It will return not found
 when the project, retained reference, or stored object does not exist. The
 initial endpoint will not list imports or retrieve an older retained document.
-Older retained documents will remain stored until their project is deleted.
 
 Retained documents will share the lifecycle of their project. Manual, batch,
-cascade, and maintenance deletion will collect all affected metadata in the
-same database transaction that deletes the project rows. FileStorage cleanup
-will begin only after that transaction commits.
+cascade, and maintenance deletion will collect the affected metadata in the
+same database statement that deletes the project rows. FileStorage cleanup
+will begin only after that transaction commits. It will run asynchronously
+in a Dex workflow with retries, not as part of the thread that handles the
+request.
+
+Retention cleanup will follow the same idea, a small database 
+transaction clears the references and returns their metadata. Afterwards,
+the same asynchronous file deletion will be scheduled. A failure of
+latest-only cleanup will be logged and will not fail the import. Its
+transaction rolls back, so the next retained import of the project
+tries again. A failed age-based run keeps its references, and the
+next scheduled run tries again.
 
 A missing object during cleanup will be treated as already deleted. Malformed
 metadata and other cleanup failures will be logged for manual follow-up. They
-will not roll back a committed project deletion.
+will not roll back a committed project deletion or a committed import.
 
-Historical retrieval, deleting older documents when a new import succeeds,
-orphan garbage collection, notification references, VEX retention, historical
-backfill, and a V2 upload endpoint are outside this decision.
+Historical retrieval, per-project retention policies, retention overrides
+at upload time, orphan garbage collection, notification references, VEX
+retention, historical backfill, and a V2 upload endpoint are outside this
+decision.
 
 ## Consequences
 
@@ -173,25 +251,36 @@ Users can retrieve the BOM document that Dependency-Track processed instead of
 only receiving a newly constructed export. Large BOM content remains outside
 PostgreSQL and workflow messages.
 
-The database gains one nullable column. Existing rows remain valid. No index or
-backfill is required.
+The database gains one nullable column. Existing rows remain valid. No backfill
+is required. Age-based cleanup filters on the import time without a
+dedicated index. An index can be added if measurements show a need.
 
 Each successful opted-in import adds one retained FileStorage object and one
-small metadata value. Storage use can grow without a per-project limit. The
-initial API exposes only the newest retained document for each project even
-though older retained documents continue to consume storage. Operators must
-plan storage capacity and retention around this behavior.
+small metadata value. The retention policies are meant to limit how much of
+this storage stays in use. With latest-only retention, each project will
+normally store one document. With age-based retention, storage use depends
+on how often the projects receive uploads and on the configured number of
+days. The initial API exposes only the newest retained document for each
+project. Older files retained with age-based retention cannot be retrieved
+by the API yet. Operators must plan storage capacity and retention around this
+behavior.
 
 Database and FileStorage operations remain non-atomic. A reference can point
 to a missing object. A crash can also leave an object with no database
 reference. The endpoint and cleanup paths must tolerate these states, as
 required by [ADR 004].
 
-Project deletion will make its database changes final before it attempts file
-cleanup. A cleanup failure can therefore leave an orphaned object, but it
+Project deletion and retention cleanup will make their database changes final
+before they delete files. A cleanup failure can therefore leave an
+orphaned object without a reference, if the deletion fails after all retries
+or if an import commits while its project is being deleted. The
+deletion statement does not see the new import record, but the database
+still removes that record with the project. This consumes storage but it
 cannot restore or partially restore the deleted project. A future garbage
-collector or provider retention policy may remove orphans if operational
-evidence justifies that work.
+collector or provider retention policy may remove such objects.
+
+A failed import now checks the database before it deletes its upload. This
+adds one database query to the failure path of retained imports.
 
 Retained documents remain tied to the FileStorage provider that created them.
 Changing providers can make older documents unavailable unless their content
@@ -203,4 +292,6 @@ encryption, backups, and lifecycle policies to their FileStorage provider.
 
 [ADR 004]: ./004-file-storage-plugin.md
 [Discussion 6133]: https://github.com/DependencyTrack/dependency-track/discussions/6133#discussioncomment-16909921
+[Issue 877]: https://github.com/DependencyTrack/dependency-track/issues/877
 [Issue 7516]: https://github.com/DependencyTrack/dependency-track/issues/7516
+[PR 7527]: https://github.com/DependencyTrack/dependency-track/pull/7527#discussion_r4287252393

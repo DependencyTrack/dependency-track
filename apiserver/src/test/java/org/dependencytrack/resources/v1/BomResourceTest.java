@@ -1316,7 +1316,7 @@ class BomResourceTest extends ResourceTest {
     }
 
     @ParameterizedTest
-    @MethodSource("originalBomRetentionParameters")
+    @CsvSource({", false", "false, false", "true, true", "invalid, false"})
     void uploadBomSetsOriginalRetentionFlag(String configuredValue, boolean expectedRetention) throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
@@ -1356,17 +1356,11 @@ class BomResourceTest extends ResourceTest {
                 .containsEntry(WF_LABEL_BOM_UPLOAD_TOKEN, workflowArg.getBomUploadToken());
     }
 
-    private static Object[] originalBomRetentionParameters() {
-        return new Object[] {
-            new Object[] {null, false},
-            new Object[] {"false", false},
-            new Object[] {"true", true},
-            new Object[] {"invalid", false},
-        };
-    }
-
     @ParameterizedTest
-    @MethodSource("bomMediaTypeParameters")
+    @CsvSource({
+        "/unit/bom-1.xml, application/vnd.cyclonedx+xml",
+        "/unit/cyclonedx/valid-bom-1.5.json, application/vnd.cyclonedx+json"
+    })
     void uploadBomSetsCycloneDxMediaType(String resourcePath, String expectedMediaType) throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
@@ -1390,13 +1384,6 @@ class BomResourceTest extends ResourceTest {
         final var workflowArg = (ImportBomArg) captor.getValue().argument();
 
         assertThat(workflowArg.getBomFileMetadata().getMediaType()).isEqualTo(expectedMediaType);
-    }
-
-    private static Object[] bomMediaTypeParameters() {
-        return new Object[] {
-            new Object[] {"/unit/bom-1.xml", CycloneDxMediaType.APPLICATION_CYCLONEDX_XML},
-            new Object[] {"/unit/cyclonedx/valid-bom-1.5.json", CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON},
-        };
     }
 
     @Test

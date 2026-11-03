@@ -97,7 +97,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
                 .when(FILE_STORAGE_MOCK)
                 .get(expectedFileMetadata);
 
-        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
                 .request()
                 .property(DISABLE_OPENAPI_VALIDATION, "true")
                 .header(X_API_KEY, apiKey)
@@ -119,7 +119,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
 
         persistBomWithoutMetadata(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6");
 
-        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -148,7 +148,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
                 .when(FILE_STORAGE_MOCK)
                 .get(fileMetadata);
 
-        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -164,7 +164,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
 
         final UUID projectUuid = UUID.randomUUID();
 
-        final Response response = jersey.target("/projects/%s/bom/original".formatted(projectUuid))
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(projectUuid))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -181,7 +181,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
 
         final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
 
-        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -195,7 +195,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
     void getProjectOriginalBomShouldReturnForbiddenWithoutPermission() {
         initializeWithPermissions();
 
-        final Response response = jersey.target("/projects/%s/bom/original".formatted(UUID.randomUUID()))
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(UUID.randomUUID()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -225,7 +225,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
                 .when(FILE_STORAGE_MOCK)
                 .get(fileMetadata);
 
-        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
                 .request()
                 .property(DISABLE_OPENAPI_VALIDATION, "true")
                 .header(X_API_KEY, apiKey)
@@ -247,7 +247,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
 
         persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6", new byte[] {(byte) 0x80});
 
-        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
                 .request()
                 .property(DISABLE_OPENAPI_VALIDATION, "true")
                 .header(X_API_KEY, apiKey)
@@ -275,7 +275,7 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
 
         doThrow(new IOException("Storage unavailable")).when(FILE_STORAGE_MOCK).get(fileMetadata);
 
-        final Response response = jersey.target("/projects/%s/bom/original".formatted(project.getUuid()))
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
                 .request()
                 .property(DISABLE_OPENAPI_VALIDATION, "true")
                 .header(X_API_KEY, apiKey)

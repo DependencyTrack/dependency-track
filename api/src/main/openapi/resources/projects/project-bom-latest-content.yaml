@@ -16,7 +16,7 @@
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 get:
   operationId: getProjectOriginalBom
-  summary: Retrieves the original BOM for a project.
+  summary: Retrieves the latest retained BOM content for a project.
   description: |-
     Retrieves the newest successfully imported BOM for which the original
     document was retained.

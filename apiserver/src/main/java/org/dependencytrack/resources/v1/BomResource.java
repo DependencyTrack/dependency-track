@@ -862,18 +862,10 @@ public class BomResource extends AbstractApiResource {
 
         final boolean retainBomFile = withJdbiHandle(
                 getAlpineRequest(),
-                handle -> handle.attach(ConfigPropertyDao.class)
-                        .getOptionalValue(BOM_ORIGINAL_RETENTION_ENABLED, Boolean.class)
-                        .orElseGet(
-                                () -> Boolean.parseBoolean(BOM_ORIGINAL_RETENTION_ENABLED.getDefaultPropertyValue())));
+                handle -> handle.attach(ConfigPropertyDao.class).isEnabled(BOM_ORIGINAL_RETENTION_ENABLED));
 
         final FileMetadata bomFileMetadata;
         try {
-            // TODO: Provide mediaType to FileStorage#store. Should be any of:
-            //   * application/vnd.cyclonedx+json
-            //   * application/vnd.cyclonedx+xml
-            //  Consider also attaching the detected version, i.e. application/vnd.cyclonedx+xml; version=1.6
-            //  See https://cyclonedx.org/specification/overview/ -> Media Types.
             bomFileMetadata = fileStorage.store(
                     "bom-upload/%s".formatted(bomUploadToken),
                     determineBomMediaType(bomBytes),

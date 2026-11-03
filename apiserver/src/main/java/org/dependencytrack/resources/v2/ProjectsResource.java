@@ -93,11 +93,6 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectOriginalBom(final UUID projectUuid) {
         final byte[] serializedFileMetadata = inJdbiTransaction(getAlpineRequest(), handle -> {
-            final Long projectId = handle.attach(ProjectDao.class).getProjectId(projectUuid);
-            if (projectId == null) {
-                throw new NotFoundException();
-            }
-
             requireProjectAccess(handle, projectUuid);
 
             final byte[] metadata = handle.attach(BomDao.class).getLatestOriginalFileMetadata(projectUuid);

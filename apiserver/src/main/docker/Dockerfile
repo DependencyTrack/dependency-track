@@ -24,7 +24,7 @@ ARG DATA_DIR=/data/
 ARG UID=1000
 ARG GID=1000
 
-FROM eclipse-temurin:25.0.4.1_1-jdk-alpine@sha256:1e20ead9eec7234db293f1913438090d533ed47c0b9e12dc8c7627a802a44ed6 AS jre-build
+FROM eclipse-temurin:25.0.5_8-jdk-alpine@sha256:425f0b733cb23843bd78dbe5552513976d0cf12b9722752c48a5161cf5cd2f32 AS jre-build
 
 WORKDIR /work
 
@@ -33,11 +33,6 @@ COPY ./target/lib/ ./target/lib-internal/ ./lib/
 COPY ./target/dependency-track-apiserver.jar ./
 
 RUN ./create-jre.sh -i ./dependency-track-apiserver.jar -o ./jre
-
-# Distrust compromised eMudhra intermediates until Temurin drops the root,
-# see https://emudhra.we-have-a-problem.com/
-RUN keytool -delete -keystore ./jre/lib/security/cacerts -storepass changeit \
-    -alias 'cn_emsign_ecc_root_ca__g3,o_emudhra_technologies_limited,ou_emsign_pki,c_in [jdk]'
 
 FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
 

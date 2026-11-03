@@ -19,7 +19,7 @@ ARG COMMIT_SHA=unknown
 ARG APP_VERSION=0.0.0
 ARG APP_DIR=/opt/owasp/dependency-track/
 
-FROM eclipse-temurin:25.0.4_7-jre-alpine@sha256:3137541deb3cac6626b5d9a4a2187bc0d6a34312f858bd2c67dd01e732e6b682
+FROM eclipse-temurin:25.0.5_8-jre-alpine@sha256:56f273059de6b13a6b49fe0ded691ed2d0399bbee76156a8f2d385f7524a3d43
 
 ARG COMMIT_SHA
 ARG APP_VERSION
@@ -28,11 +28,6 @@ ARG APP_DIR
 ENV TZ=Etc/UTC \
     JAVA_OPTIONS="" \
     LANG=C.UTF-8
-
-# Distrust compromised eMudhra intermediates until Temurin drops the root,
-# see https://emudhra.we-have-a-problem.com/
-RUN keytool -delete -cacerts -storepass changeit \
-    -alias 'cn_emsign_ecc_root_ca__g3,o_emudhra_technologies_limited,ou_emsign_pki,c_in [jdk]'
 
 WORKDIR ${APP_DIR}
 USER nobody

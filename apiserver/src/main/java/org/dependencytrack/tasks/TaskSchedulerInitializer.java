@@ -39,7 +39,6 @@ import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.epss.EpssMirrorTask;
-import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.kevdatasource.KevDataSourceMirrorService;
 import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.kevdatasource.api.KevDataSourceFactory;
@@ -55,6 +54,7 @@ import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificati
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.secret.management.SecretManager;
 import org.dependencytrack.tasks.maintenance.MetricsMaintenanceTask;
+import org.dependencytrack.tasks.maintenance.OriginalBomFileMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.PackageMetadataMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.ProjectMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.TagMaintenanceTask;
@@ -130,11 +130,7 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
         final var secretManager = (SecretManager) event.getServletContext().getAttribute(SecretManager.class.getName());
         requireNonNull(secretManager, "secretManager has not been initialized");
 
-        final var fileStorage = (FileStorage) event.getServletContext().getAttribute(FileStorage.class.getName());
-        requireNonNull(fileStorage, "fileStorage has not been initialized");
-
-        final List<RecurringTask<Void>> tasks =
-                recurringTasks(config, dexEngine, pluginManager, secretManager, fileStorage);
+        final List<RecurringTask<Void>> tasks = recurringTasks(config, dexEngine, pluginManager, secretManager);
 
         LOGGER.info("Starting task scheduler");
         final int threads = config.getValue(ConfigKeys.TASK_SCHEDULER_THREADS, int.class);
@@ -188,11 +184,7 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
     }
 
     static List<RecurringTask<Void>> recurringTasks(
-            Config config,
-            DexEngine dexEngine,
-            PluginManager pluginManager,
-            SecretManager secretManager,
-            FileStorage fileStorage) {
+            Config config, DexEngine dexEngine, PluginManager pluginManager, SecretManager secretManager) {
         final var kevDataSourceMirrorService = new KevDataSourceMirrorService(pluginManager, dexEngine);
         final var vulnDataSourceMirrorService = new VulnDataSourceMirrorService(pluginManager, dexEngine);
 
@@ -262,7 +254,11 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                 recurringTask(
                         "Project Maintenance",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_PROJECT_MAINTENANCE_CRON),
-                        new ProjectMaintenanceTask(fileStorage)),
+                        new ProjectMaintenanceTask(dexEngine)),
+                recurringTask(
+                        "Original BOM File Maintenance",
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_ORIGINAL_BOM_FILE_MAINTENANCE_CRON),
+                        new OriginalBomFileMaintenanceTask(dexEngine)),
                 recurringTask(
                         "Tag Maintenance",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_TAG_MAINTENANCE_CRON),

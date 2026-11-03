@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.tasks.maintenance;
 
-import org.dependencytrack.filestorage.api.FileStorage;
+import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import static org.dependencytrack.filestorage.OriginalBomFileCleanup.deleteOriginalBomFiles;
+import static org.dependencytrack.filestorage.OriginalBomFileDeletion.scheduleOriginalBomFileDeletion;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_DAYS;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_TYPE;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_VERSIONS;
@@ -41,11 +41,11 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
     private static final int BATCH_SIZE = 25;
     private static final int MAX_ITERATIONS = 1000;
 
-    private final FileStorage fileStorage;
+    private final DexEngine dexEngine;
 
-    public ProjectMaintenanceTask(final FileStorage fileStorage) {
+    public ProjectMaintenanceTask(final DexEngine dexEngine) {
         super(MAX_ITERATIONS);
-        this.fileStorage = fileStorage;
+        this.dexEngine = dexEngine;
     }
 
     @Override
@@ -69,7 +69,7 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
                     result -> result.deletedProjects().size(),
                     result -> {
                         logDeletedProjects(result.deletedProjects());
-                        deleteOriginalBomFiles(fileStorage, result.originalBomFiles());
+                        scheduleOriginalBomFileDeletion(dexEngine, result.originalBomFiles());
                     });
 
             if (deleted > 0) {
@@ -89,7 +89,7 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
                 result -> result.deletedProjects().size(),
                 result -> {
                     logDeletedProjects(result.deletedProjects());
-                    deleteOriginalBomFiles(fileStorage, result.originalBomFiles());
+                    scheduleOriginalBomFileDeletion(dexEngine, result.originalBomFiles());
                 });
 
         if (deleted > 0) {

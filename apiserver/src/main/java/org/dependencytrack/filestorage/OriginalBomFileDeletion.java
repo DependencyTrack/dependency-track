@@ -19,28 +19,28 @@
 package org.dependencytrack.filestorage;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.dependencytrack.filestorage.api.FileStorage;
+import org.dependencytrack.dex.DeleteFilesWorkflow;
+import org.dependencytrack.dex.engine.api.DexEngine;
+import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.persistence.jdbi.ProjectDao.OriginalBomFileMetadataRow;
+import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.NoSuchFileException;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.Set;
 
-public final class OriginalBomFileCleanup {
+public final class OriginalBomFileDeletion {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OriginalBomFileCleanup.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OriginalBomFileDeletion.class);
 
-    private OriginalBomFileCleanup() {}
+    private OriginalBomFileDeletion() {}
 
-    public static void deleteOriginalBomFiles(
-            final FileStorage fileStorage, final List<OriginalBomFileMetadataRow> originalBomFiles) {
-        final Map<FileMetadata, UUID> uniqueFileMetadata = new LinkedHashMap<>();
+    public static void scheduleOriginalBomFileDeletion(
+            final DexEngine dexEngine, final List<OriginalBomFileMetadataRow> originalBomFiles) {
+        final Set<FileMetadata> uniqueFileMetadata = new LinkedHashSet<>();
 
         for (final OriginalBomFileMetadataRow originalBomFile : originalBomFiles) {
             final FileMetadata fileMetadata;
@@ -56,25 +56,20 @@ public final class OriginalBomFileCleanup {
                 continue;
             }
 
-            uniqueFileMetadata.putIfAbsent(fileMetadata, originalBomFile.projectUuid());
+            uniqueFileMetadata.add(fileMetadata);
         }
 
-        for (final Map.Entry<FileMetadata, UUID> entry : uniqueFileMetadata.entrySet()) {
-            final FileMetadata fileMetadata = entry.getKey();
-            final UUID projectUuid = entry.getValue();
+        if (uniqueFileMetadata.isEmpty()) {
+            return;
+        }
 
-            try {
-                fileStorage.delete(fileMetadata);
-            } catch (NoSuchFileException e) {
-                // Deletion is idempotent. The desired state is already met.
-            } catch (IOException | RuntimeException e) {
-                LOGGER.warn(
-                        "Failed to delete original BOM file {} for deleted "
-                                + "project {}; Manual cleanup may be required",
-                        fileMetadata.getLocation(),
-                        projectUuid,
-                        e);
-            }
+        try {
+            dexEngine.createRun(new CreateWorkflowRunRequest<>(DeleteFilesWorkflow.class)
+                    .withArgument(DeleteFilesArgument.newBuilder()
+                            .addAllFileMetadata(uniqueFileMetadata)
+                            .build()));
+        } catch (RuntimeException e) {
+            LOGGER.warn("Failed to schedule original BOM file deletion; Manual cleanup may be required", e);
         }
     }
 }

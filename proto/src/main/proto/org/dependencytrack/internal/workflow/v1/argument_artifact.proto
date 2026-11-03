@@ -34,6 +34,15 @@ message ImportBomArg {
   bool retain_bom_file = 6;
 }
 
+message IsOriginalBomFileReferencedArg {
+  string project_uuid = 1;
+  org.dependencytrack.filestorage.v1.FileMetadata bom_file_metadata = 2;
+}
+
+message IsOriginalBomFileReferencedRes {
+  bool referenced = 1;
+}
+
 message ImportVexArg {
   string project_uuid = 1;
   string project_name = 2;

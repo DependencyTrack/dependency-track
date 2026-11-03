@@ -37,7 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.common.pagination.Page;
-import org.dependencytrack.filestorage.api.FileStorage;
+import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
@@ -99,7 +99,7 @@ import static java.util.Objects.requireNonNullElseGet;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
-import static org.dependencytrack.filestorage.OriginalBomFileCleanup.deleteOriginalBomFiles;
+import static org.dependencytrack.filestorage.OriginalBomFileDeletion.scheduleOriginalBomFileDeletion;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -119,7 +119,7 @@ public class ProjectResource extends AbstractApiResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectResource.class);
 
     @Inject
-    private FileStorage fileStorage;
+    private DexEngine dexEngine;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -1131,7 +1131,7 @@ public class ProjectResource extends AbstractApiResource {
         });
 
         logDeletedProjects(deletionResult.deletedProjects());
-        deleteOriginalBomFiles(fileStorage, deletionResult.originalBomFiles());
+        scheduleOriginalBomFileDeletion(dexEngine, deletionResult.originalBomFiles());
 
         return Response.status(Response.Status.NO_CONTENT).build();
     }
@@ -1156,7 +1156,7 @@ public class ProjectResource extends AbstractApiResource {
                 handle -> handle.attach(ProjectDao.class).deleteProjectsWithOriginalBomFiles(uuids));
 
         logDeletedProjects(deletionResult.deletedProjects());
-        deleteOriginalBomFiles(fileStorage, deletionResult.originalBomFiles());
+        scheduleOriginalBomFileDeletion(dexEngine, deletionResult.originalBomFiles());
 
         return Response.status(Response.Status.NO_CONTENT).build();
     }

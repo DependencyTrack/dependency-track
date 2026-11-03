@@ -22,6 +22,7 @@ import alpine.common.util.BooleanUtil;
 import alpine.common.util.UuidUtil;
 import alpine.model.IConfigProperty;
 import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.model.BomRetentionPolicy;
 import org.dependencytrack.model.BomValidationMode;
 import org.dependencytrack.model.ConfigPropertyAccessMode;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -128,6 +129,17 @@ abstract class AbstractConfigPropertyResource extends AbstractApiResource {
                             "Risk score \"" + property.getPropertyName() + "\" changed to value: " + propertyValue
                                     + " by user " + super.getPrincipal().getName());
                 }
+                if (ConfigPropertyConstants.BOM_ORIGINAL_EXPIRATION_DAYS
+                        .getPropertyName()
+                        .equals(property.getPropertyName())) {
+                    if (propertyValue <= 0) {
+                        return Response.status(Response.Status.BAD_REQUEST)
+                                .entity("Expiration Days \"" + property.getPropertyName()
+                                        + "\" must be greater than zero. An invalid value of "
+                                        + propertyValue + " was provided.")
+                                .build();
+                    }
+                }
                 property.setPropertyValue(String.valueOf(propertyValue));
             } catch (NumberFormatException e) {
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -162,6 +174,20 @@ abstract class AbstractConfigPropertyResource extends AbstractApiResource {
             } else {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity("The property expected a UUID but a valid UUID was not sent.")
+                        .build();
+            }
+        } else if (ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_POLICY
+                .getPropertyName()
+                .equals(property.getPropertyName())) {
+            try {
+                BomRetentionPolicy.valueOf(StringUtils.defaultString(requestedValue));
+                property.setPropertyValue(requestedValue);
+            } catch (IllegalArgumentException e) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("Value must be any of: %s"
+                                .formatted(Arrays.stream(BomRetentionPolicy.values())
+                                        .map(Enum::name)
+                                        .collect(Collectors.joining(", "))))
                         .build();
             }
         } else if (ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyName().equals(property.getPropertyName())) {

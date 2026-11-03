@@ -65,7 +65,7 @@ abstract class AbstractBatchingMaintenanceTask implements Runnable {
         }
 
         if (iteration >= maxIterations) {
-            logger.warn("Reached safety cap of {} iterations; " + "will resume on next run", maxIterations);
+            logger.warn("Reached safety cap of {} iterations; will resume on next run", maxIterations);
         }
 
         return totalProcessed;

@@ -20,7 +20,7 @@ package org.dependencytrack.tasks.maintenance;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.common.pagination.Page;
-import org.dependencytrack.filestorage.api.FileStorage;
+import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.model.Bom;
@@ -28,24 +28,24 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
+import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.dependencytrack.util.DateUtil;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.NoSuchFileException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_DAYS;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_TYPE;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_VERSIONS;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -53,6 +53,7 @@ import static org.mockito.Mockito.verify;
 class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
     private final MemoryFileStorage fileStorage = new MemoryFileStorage();
+    private final DexEngine dexEngine = mock(DexEngine.class);
 
     @Test
     void testWithRetentionTypeAge() {
@@ -80,7 +81,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         qm.persist(projectA, projectB);
 
         // Delete projects older than default 30 days
-        final var task = new ProjectMaintenanceTask(fileStorage);
+        final var task = new ProjectMaintenanceTask(dexEngine);
         assertThatNoException().isThrownBy(task::run);
 
         final Page<ListProjectsRow> projectsPage =
@@ -92,7 +93,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testWithRetentionTypeAgeDeletesOriginalBomFiles() throws Exception {
+    void testWithRetentionTypeAgeSchedulesOriginalBomFileDeletion() throws Exception {
         qm.createConfigProperty(
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
@@ -125,18 +126,22 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         final FileMetadata childFileMetadata = storeOriginalBom(childProject, "maintenance/age-child");
         final FileMetadata retainedFileMetadata = storeOriginalBom(retainedProject, "maintenance/age-retained");
 
-        final var task = new ProjectMaintenanceTask(fileStorage);
+        final var task = new ProjectMaintenanceTask(dexEngine);
         assertThatNoException().isThrownBy(task::run);
 
-        assertThatThrownBy(() -> fileStorage.get(expiredFileMetadata)).isInstanceOf(NoSuchFileException.class);
-        assertThatThrownBy(() -> fileStorage.get(childFileMetadata)).isInstanceOf(NoSuchFileException.class);
+        verify(dexEngine).createRun(argThat(request -> {
+            assertThat(request.workflowName()).isEqualTo("delete-files");
+            assertThat(((DeleteFilesArgument) request.argument()).getFileMetadataList())
+                    .containsExactlyInAnyOrder(expiredFileMetadata, childFileMetadata);
+            return true;
+        }));
         try (final var inputStream = fileStorage.get(retainedFileMetadata)) {
             assertThat(inputStream).hasBinaryContent("maintenance/age-retained".getBytes(StandardCharsets.UTF_8));
         }
     }
 
     @Test
-    void testCleanupFailureDoesNotUndoProjectDeletion() throws Exception {
+    void testCleanupSchedulingFailureDoesNotUndoProjectDeletion() throws Exception {
         qm.createConfigProperty(
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
@@ -163,15 +168,12 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
                 .build();
         persistOriginalBom(expiredProject, fileMetadata);
 
-        final FileStorage failingFileStorage = mock(FileStorage.class);
-        doThrow(new IllegalStateException("Storage unavailable"))
-                .when(failingFileStorage)
-                .delete(any(FileMetadata.class));
+        doThrow(new IllegalStateException("Dex unavailable")).when(dexEngine).createRun(any());
 
-        final var task = new ProjectMaintenanceTask(failingFileStorage);
+        final var task = new ProjectMaintenanceTask(dexEngine);
         assertThatNoException().isThrownBy(task::run);
 
-        verify(failingFileStorage).delete(fileMetadata);
+        verify(dexEngine).createRun(any());
         final Long deletedProjectId =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjectId(expiredProject.getUuid()));
         assertThat(deletedProjectId).isNull();
@@ -223,7 +225,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         qm.persist(project);
 
         // Retain all active and last 2 inactive versions of a project and delete rest
-        final var task = new ProjectMaintenanceTask(fileStorage);
+        final var task = new ProjectMaintenanceTask(dexEngine);
         assertThatNoException().isThrownBy(task::run);
         final Page<ListProjectsRow> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
@@ -235,7 +237,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testWithRetentionTypeVersionsDeletesOriginalBomFiles() throws Exception {
+    void testWithRetentionTypeVersionsSchedulesOriginalBomFileDeletion() throws Exception {
         qm.createConfigProperty(
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
@@ -264,10 +266,15 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         final FileMetadata oldestFileMetadata = storeOriginalBom(oldestProject, "maintenance/version-oldest");
         final FileMetadata newerFileMetadata = storeOriginalBom(newerProject, "maintenance/version-newer");
 
-        final var task = new ProjectMaintenanceTask(fileStorage);
+        final var task = new ProjectMaintenanceTask(dexEngine);
         assertThatNoException().isThrownBy(task::run);
 
-        assertThatThrownBy(() -> fileStorage.get(oldestFileMetadata)).isInstanceOf(NoSuchFileException.class);
+        verify(dexEngine).createRun(argThat(request -> {
+            assertThat(request.workflowName()).isEqualTo("delete-files");
+            assertThat(((DeleteFilesArgument) request.argument()).getFileMetadataList())
+                    .containsExactly(oldestFileMetadata);
+            return true;
+        }));
         try (final var inputStream = fileStorage.get(newerFileMetadata)) {
             assertThat(inputStream).hasBinaryContent("maintenance/version-newer".getBytes(StandardCharsets.UTF_8));
         }
@@ -319,7 +326,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         qm.persist(project);
 
         // Retain all active and last 2 inactive versions of all projects and delete rest
-        final var task = new ProjectMaintenanceTask(fileStorage);
+        final var task = new ProjectMaintenanceTask(dexEngine);
         assertThatNoException().isThrownBy(task::run);
         final Page<ListProjectsRow> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
@@ -354,7 +361,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         project.setInactiveSince(DateUtil.parseShortDate("20100109"));
         qm.persist(project);
 
-        final var task = new ProjectMaintenanceTask(fileStorage);
+        final var task = new ProjectMaintenanceTask(dexEngine);
         assertThatNoException().isThrownBy(task::run);
         final Page<ListProjectsRow> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
@@ -376,7 +383,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         project.setInactiveSince(DateUtil.parseShortDate("20100109"));
         qm.persist(project);
 
-        final var task = new ProjectMaintenanceTask(fileStorage);
+        final var task = new ProjectMaintenanceTask(dexEngine);
         assertThatNoException().isThrownBy(task::run);
         final Page<ListProjectsRow> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));

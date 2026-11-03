@@ -58,7 +58,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 
@@ -747,6 +746,12 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  , project."NAME" AS "NAME"
                  , project."VERSION" AS "VERSION"
                  , CASE WHEN ph."DEPTH" = 0 THEN NULL ELSE ancestor."UUID" END AS "ANCESTOR_UUID"
+                 , ARRAY(
+                     SELECT bom."ORIGINAL_FILE_METADATA"
+                       FROM "BOM" AS bom
+                      WHERE bom."PROJECT_ID" = project."ID"
+                        AND bom."ORIGINAL_FILE_METADATA" IS NOT NULL
+                   ) AS "ORIGINAL_BOM_FILES_METADATA"
               FROM "PROJECT_HIERARCHY" AS ph
              INNER JOIN "PROJECT" AS ancestor
                 ON ancestor."ID" = ph."PARENT_PROJECT_ID"
@@ -763,72 +768,24 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             UUID uuid,
             String name,
             @Nullable String version,
-            @Nullable UUID ancestorUuid) {}
+            @Nullable UUID ancestorUuid,
+            List<byte[]> originalBomFilesMetadata) {}
 
     /**
      * Deletes accessible projects and returns both the deleted projects and
      * retained original BOM file metadata that requires cleanup.
      *
-     * <p>This method must be called inside a transaction so metadata collection
-     * and project deletion use the same transaction boundary.</p>
+     * <p>File cleanup must be performed after the deletion transaction commits.</p>
      */
     default ProjectDeletionResult deleteProjectsWithOriginalBomFiles(final Collection<UUID> projectUuids) {
-        lockProjectsForDeletion(projectUuids);
-        final List<OriginalBomFileMetadataRow> originalBomFiles = getOriginalBomFileMetadataForProjects(projectUuids);
         final List<DeletedProjectRow> deletedProjects = deleteProjects(projectUuids);
-
-        final Set<UUID> deletedProjectUuids =
-                deletedProjects.stream().map(DeletedProjectRow::uuid).collect(Collectors.toSet());
-        // Access can change between metadata collection and deletion.
-        final List<OriginalBomFileMetadataRow> filesToDelete = originalBomFiles.stream()
-                .filter(file -> deletedProjectUuids.contains(file.projectUuid()))
+        final List<OriginalBomFileMetadataRow> filesToDelete = deletedProjects.stream()
+                .flatMap(project -> project.originalBomFilesMetadata().stream()
+                        .map(metadata -> new OriginalBomFileMetadataRow(project.uuid(), metadata)))
                 .toList();
 
         return new ProjectDeletionResult(deletedProjects, filesToDelete);
     }
-
-    @SqlQuery(/* language=InjectedFreeMarker */ """
-            <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
-            WITH cte_roots AS (
-                SELECT "ID"
-                  FROM "PROJECT"
-                 WHERE ${apiProjectAclCondition}
-                   AND "UUID" = ANY(:projectUuids)
-              )
-              SELECT "ID"
-                FROM "PROJECT"
-               WHERE "ID" IN (
-                       SELECT ph."CHILD_PROJECT_ID"
-                         FROM "PROJECT_HIERARCHY" AS ph
-                        WHERE ph."PARENT_PROJECT_ID" IN (
-                                SELECT "ID"
-                                  FROM cte_roots
-                              )
-                     )
-               ORDER BY "ID"
-                 FOR UPDATE
-            """)
-    List<Long> lockProjectsForDeletion(@Bind Collection<UUID> projectUuids);
-
-    @SqlQuery(/* language=InjectedFreeMarker */ """
-              <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
-              SELECT project."UUID" AS "PROJECT_UUID"
-                   , bom."ORIGINAL_FILE_METADATA"
-                FROM "PROJECT"
-               INNER JOIN "PROJECT_HIERARCHY" AS ph
-                  ON ph."PARENT_PROJECT_ID" = "PROJECT"."ID"
-               INNER JOIN "PROJECT" AS project
-                  ON project."ID" = ph."CHILD_PROJECT_ID"
-               INNER JOIN "BOM" AS bom
-                  ON bom."PROJECT_ID" = project."ID"
-               WHERE ${apiProjectAclCondition}
-                 AND "PROJECT"."UUID" = ANY(:projectUuids)
-                 AND bom."ORIGINAL_FILE_METADATA" IS NOT NULL
-               ORDER BY project."ID"
-                      , bom."ID"
-            """)
-    @RegisterConstructorMapper(OriginalBomFileMetadataRow.class)
-    List<OriginalBomFileMetadataRow> getOriginalBomFileMetadataForProjects(@Bind Collection<UUID> projectUuids);
 
     record ProjectDeletionResult(
             List<DeletedProjectRow> deletedProjects, List<OriginalBomFileMetadataRow> originalBomFiles) {}
@@ -841,7 +798,8 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @ColumnName("NAME") String name,
             @ColumnName("VERSION") String version,
             @ColumnName("INACTIVE_SINCE") Instant inactiveSince,
-            @ColumnName("UUID") UUID uuid) {}
+            @ColumnName("UUID") UUID uuid,
+            List<byte[]> originalBomFilesMetadata) {}
 
     default MaintenanceProjectDeletionResult deleteInactiveProjectsWithOriginalBomFiles(
             final Instant retentionCutOff, final int batchSize) {
@@ -863,13 +821,17 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             return new MaintenanceProjectDeletionResult(List.of(), List.of());
         }
 
-        lockMaintenanceProjectHierarchyForDeletion(projectUuids);
-
-        final List<OriginalBomFileMetadataRow> originalBomFiles =
-                getOriginalBomFileMetadataForMaintenanceProjects(projectUuids);
         final List<DeletedProject> deletedProjects = deleteMaintenanceProjects(projectUuids);
+        final List<OriginalBomFileMetadataRow> originalBomFiles = deletedProjects.stream()
+                .flatMap(project -> project.originalBomFilesMetadata().stream()
+                        .map(metadata -> new OriginalBomFileMetadataRow(project.uuid(), metadata)))
+                .toList();
 
-        return new MaintenanceProjectDeletionResult(deletedProjects, originalBomFiles);
+        return new MaintenanceProjectDeletionResult(
+                deletedProjects.stream()
+                        .filter(project -> projectUuids.contains(project.uuid()))
+                        .toList(),
+                originalBomFiles);
     }
 
     @SqlQuery("""
@@ -911,50 +873,29 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
     List<UUID> getExcessProjectVersionUuidsForDeletion(@Bind int versionCountThreshold, @Bind int batchSize);
 
     @SqlQuery("""
-              SELECT project."ID"
-                FROM "PROJECT" AS project
-               WHERE project."ID" IN (
-                       SELECT ph."CHILD_PROJECT_ID"
-                         FROM "PROJECT" AS deletion_root
-                        INNER JOIN "PROJECT_HIERARCHY" AS ph
-                           ON ph."PARENT_PROJECT_ID" =
-                                  deletion_root."ID"
-                        WHERE deletion_root."UUID" =
-                                  ANY(:projectUuids)
-                     )
-               ORDER BY project."ID"
-                 FOR UPDATE OF project
-            """)
-    List<Long> lockMaintenanceProjectHierarchyForDeletion(@Bind Collection<UUID> projectUuids);
-
-    @SqlQuery("""
-              SELECT project."UUID" AS "PROJECT_UUID"
-                   , bom."ORIGINAL_FILE_METADATA"
-                FROM "PROJECT" AS deletion_root
-               INNER JOIN "PROJECT_HIERARCHY" AS ph
-                  ON ph."PARENT_PROJECT_ID" =
-                         deletion_root."ID"
-               INNER JOIN "PROJECT" AS project
-                  ON project."ID" = ph."CHILD_PROJECT_ID"
-               INNER JOIN "BOM" AS bom
-                  ON bom."PROJECT_ID" = project."ID"
-               WHERE deletion_root."UUID" = ANY(:projectUuids)
-                 AND bom."ORIGINAL_FILE_METADATA" IS NOT NULL
-               ORDER BY project."ID"
-                      , bom."ID"
-            """)
-    @RegisterConstructorMapper(OriginalBomFileMetadataRow.class)
-    List<OriginalBomFileMetadataRow> getOriginalBomFileMetadataForMaintenanceProjects(
-            @Bind Collection<UUID> projectUuids);
-
-    @SqlQuery("""
+            WITH cte_deleted AS (
               DELETE
                 FROM "PROJECT"
                WHERE "UUID" = ANY(:projectUuids)
-              RETURNING "NAME"
-                      , "VERSION"
-                      , "INACTIVE_SINCE"
-                      , "UUID"
+              RETURNING "ID"
+            )
+            SELECT project."NAME"
+                 , project."VERSION"
+                 , project."INACTIVE_SINCE"
+                 , project."UUID"
+                 , ARRAY(
+                     SELECT bom."ORIGINAL_FILE_METADATA"
+                       FROM "BOM" AS bom
+                      WHERE bom."PROJECT_ID" = project."ID"
+                        AND bom."ORIGINAL_FILE_METADATA" IS NOT NULL
+                   ) AS "ORIGINAL_BOM_FILES_METADATA"
+              FROM "PROJECT" AS project
+             WHERE project."ID" IN (
+                     SELECT ph."CHILD_PROJECT_ID"
+                       FROM "PROJECT_HIERARCHY" AS ph
+                      WHERE ph."PARENT_PROJECT_ID" IN (SELECT "ID" FROM cte_deleted)
+                   )
+             ORDER BY project."ID"
             """)
     @RegisterConstructorMapper(DeletedProject.class)
     List<DeletedProject> deleteMaintenanceProjects(@Bind Collection<UUID> projectUuids);

@@ -22,6 +22,7 @@ import org.dependencytrack.v4migrator.ExitCode;
 import org.dependencytrack.v4migrator.config.Connections;
 import org.dependencytrack.v4migrator.config.GlobalOptions;
 import org.dependencytrack.v4migrator.config.SourceOptions;
+import org.dependencytrack.v4migrator.load.BulkLoadSchemaObjects;
 import org.dependencytrack.v4migrator.source.SourceFlavor;
 import org.jdbi.v3.core.Jdbi;
 import org.jspecify.annotations.Nullable;
@@ -91,6 +92,9 @@ public final class Preflight {
             checkTargetExtensions(failures);
             if (isV5SchemaApplied(failures)) {
                 checkFlywayHead(failures);
+                if (failures.isEmpty()) {
+                    checkNoUnfinishedLoad(failures);
+                }
                 if (mode == Mode.DEFAULT) {
                     checkTargetEmpty(failures);
                 }
@@ -220,6 +224,23 @@ public final class Preflight {
             }
         } catch (final RuntimeException e) {
             failures.add("Could not read flyway_schema_history: " + e.getMessage());
+        }
+    }
+
+    private void checkNoUnfinishedLoad(final List<String> failures) {
+        try {
+            final List<String> missing = BulkLoadSchemaObjects.findMissing(targetJdbi);
+            if (missing.isEmpty()) {
+                return;
+            }
+            failures.add(
+                    "Target is missing %d foreign key(s) or index(es), so a previous load did not finish (first: %s). %s"
+                            .formatted(
+                                    missing.size(),
+                                    String.join(", ", missing.subList(0, Math.min(5, missing.size()))),
+                                    BulkLoadSchemaObjects.recoveryInstructions(options.stagingSchema)));
+        } catch (final RuntimeException e) {
+            failures.add("Could not inspect target foreign keys and indexes: " + e.getMessage());
         }
     }
 

@@ -71,6 +71,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -447,7 +448,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
     private static List<ComponentDao.ComponentLicenseRow> buildComponentLicenseRows(
             final Component component, final long persistedId, final Map<String, Long> licenseIds) {
 
-        final HashMap<String, ComponentDao.ComponentLicenseRow> rowMap = new HashMap<>();
+        // LinkedHashMap lends itself to keeping the ordinality intact
+        final Map<String, ComponentDao.ComponentLicenseRow> rowMap = new LinkedHashMap<>();
         final List<org.cyclonedx.model.License> candidates = component.getLicenseCandidates();
         final String expression = trimToNull(component.getLicenseExpression());
 
@@ -548,7 +550,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             FROM "LICENSE"
             WHERE "LICENSEID" = ANY(:identifiers)
                 OR "NAME" = ANY(:identifiers)
-            ORDER BY ID
+            ORDER BY "ID"
             """)
                         .bindArray("identifiers", String.class, identifiers)
                         .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {

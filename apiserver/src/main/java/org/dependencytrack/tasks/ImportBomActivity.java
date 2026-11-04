@@ -473,7 +473,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 rowMap.putIfAbsent(
                         key,
                         new ComponentDao.ComponentLicenseRow(
-                        null,
+                                null,
                                 persistedId,
                                 licenseId,
                                 licenseId == null

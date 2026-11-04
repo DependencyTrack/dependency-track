@@ -221,7 +221,7 @@ public class ComponentDaoTest extends PersistenceCapableTest {
         componentDao.replaceComponentLicenses(List.of(component.getId()), replacementRows);
 
         final var actualRows = componentDao.getLicenseRows(List.of(component.getId(), otherComponent.getId()));
- 
+
         assertThat(actualRows.get(component.getId()))
                 .extracting(
                         ComponentDao.ComponentLicenseRow::componentId,
@@ -231,14 +231,6 @@ public class ComponentDaoTest extends PersistenceCapableTest {
                         ComponentDao.ComponentLicenseRow::licenseUrl,
                         ComponentDao.ComponentLicenseRow::ordinality,
                         ComponentDao.ComponentLicenseRow::acknowledgement)
-                .containsExactly(
-                        tuple(
-                                component.getId(),
-                                null,
-                                "Replacement License",
-                                null,
-                                null,
-                                1L,
-                                "DECLARED"));
-        }
+                .containsExactly(tuple(component.getId(), null, "Replacement License", null, null, 1L, "DECLARED"));
+    }
 }

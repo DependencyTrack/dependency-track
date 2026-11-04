@@ -148,7 +148,7 @@
         <lib.jboss-logging.version>3.6.3.Final</lib.jboss-logging.version>
         <lib.jdbi.version>3.55.0</lib.jdbi.version>
         <lib.jersey.version>4.0.3</lib.jersey.version>
-        <lib.jetbrains-annotations.version>17.0.0</lib.jetbrains-annotations.version>
+        <lib.jetbrains-annotations.version>26.1.0</lib.jetbrains-annotations.version>
         <lib.jetty.version>12.1.14</lib.jetty.version>
         <lib.jimfs.version>1.3.2</lib.jimfs.version>
         <lib.json-schema-validator.version>2.0.8</lib.json-schema-validator.version>

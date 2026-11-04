@@ -75,6 +75,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_M
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
 import static org.dependencytrack.parser.cyclonedx.CycloneDxBomAssert.assertThatBom;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -917,12 +918,7 @@ public class VexResourceTest extends ResourceTest {
     public void uploadVexWithValidationModeDisabledTest() {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.DISABLED.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.DISABLED.name());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -962,18 +958,8 @@ public class VexResourceTest extends ResourceTest {
     public void uploadVexWithValidationModeEnabledForTagsTest() {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.ENABLED_FOR_TAGS.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
-        qm.createConfigProperty(
-                BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
-                "[\"foo\"]",
-                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.ENABLED_FOR_TAGS.name());
+        createConfigProperty(BOM_VALIDATION_TAGS_INCLUSIVE, "[\"foo\"]");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1029,18 +1015,8 @@ public class VexResourceTest extends ResourceTest {
     public void uploadVexWithValidationModeDisabledForTagsTest() {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.DISABLED_FOR_TAGS.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
-        qm.createConfigProperty(
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getGroupName(),
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyName(),
-                "[\"foo\"]",
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.DISABLED_FOR_TAGS.name());
+        createConfigProperty(BOM_VALIDATION_TAGS_EXCLUSIVE, "[\"foo\"]");
 
         final var project = new Project();
         project.setName("acme-app");

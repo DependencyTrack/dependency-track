@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.model;
 
-import alpine.model.IConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
 import org.dependencytrack.common.ConfigKeys;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -416,10 +415,9 @@ public enum ConfigPropertyConstants {
         this.isSecretName = isSecretName;
     }
 
-    public static ConfigPropertyConstants ofProperty(final IConfigProperty property) {
+    public static ConfigPropertyConstants ofProperty(final String groupName, final String propertyName) {
         return Arrays.stream(values())
-                .filter(value -> value.groupName.equals(property.getGroupName())
-                        && value.propertyName.equals(property.getPropertyName()))
+                .filter(value -> value.groupName.equals(groupName) && value.propertyName.equals(propertyName))
                 .findFirst()
                 .orElse(null);
     }

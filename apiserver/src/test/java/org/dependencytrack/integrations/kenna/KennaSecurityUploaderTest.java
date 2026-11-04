@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.integrations.kenna;
 
-import alpine.model.IConfigProperty;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.secret.TestSecretManager;
 import org.junit.jupiter.api.AfterAll;
@@ -31,6 +30,7 @@ import java.net.http.HttpClient;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 
 class KennaSecurityUploaderTest extends PersistenceCapableTest {
 
@@ -57,18 +57,8 @@ class KennaSecurityUploaderTest extends PersistenceCapableTest {
 
     @Test
     public void testIntegrationEnabledCases() {
-        qm.createConfigProperty(
-                KENNA_ENABLED.getGroupName(),
-                KENNA_ENABLED.getPropertyName(),
-                "true",
-                IConfigProperty.PropertyType.BOOLEAN,
-                null);
-        qm.createConfigProperty(
-                KENNA_ENABLED.getGroupName(),
-                KENNA_CONNECTOR_ID.getPropertyName(),
-                "Dependency-Track (KDI)",
-                IConfigProperty.PropertyType.STRING,
-                null);
+        createConfigProperty(KENNA_ENABLED, "true");
+        createConfigProperty(KENNA_CONNECTOR_ID, "Dependency-Track (KDI)");
         KennaSecurityUploader extension = new KennaSecurityUploader(httpClient, new TestSecretManager());
         extension.setQueryManager(qm);
         Assertions.assertTrue(extension.isEnabled());

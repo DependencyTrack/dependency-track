@@ -32,6 +32,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCOR
 import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCORE_LOW;
 import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCORE_MEDIUM;
 import static org.dependencytrack.model.ConfigPropertyConstants.CUSTOM_RISK_SCORE_UNASSIGNED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigPropertyWithDefaultValue;
 
 abstract class AbstractMetricsUpdateTaskTest extends PersistenceCapableTest {
 
@@ -50,35 +51,10 @@ abstract class AbstractMetricsUpdateTaskTest extends PersistenceCapableTest {
     }
 
     public void createTestConfigProperties() {
-        qm.createConfigProperty(
-                CUSTOM_RISK_SCORE_CRITICAL.getGroupName(),
-                CUSTOM_RISK_SCORE_CRITICAL.getPropertyName(),
-                CUSTOM_RISK_SCORE_CRITICAL.getDefaultPropertyValue(),
-                CUSTOM_RISK_SCORE_CRITICAL.getPropertyType(),
-                CUSTOM_RISK_SCORE_CRITICAL.getDescription());
-        qm.createConfigProperty(
-                CUSTOM_RISK_SCORE_HIGH.getGroupName(),
-                CUSTOM_RISK_SCORE_HIGH.getPropertyName(),
-                CUSTOM_RISK_SCORE_HIGH.getDefaultPropertyValue(),
-                CUSTOM_RISK_SCORE_HIGH.getPropertyType(),
-                CUSTOM_RISK_SCORE_HIGH.getDescription());
-        qm.createConfigProperty(
-                CUSTOM_RISK_SCORE_MEDIUM.getGroupName(),
-                CUSTOM_RISK_SCORE_MEDIUM.getPropertyName(),
-                CUSTOM_RISK_SCORE_MEDIUM.getDefaultPropertyValue(),
-                CUSTOM_RISK_SCORE_MEDIUM.getPropertyType(),
-                CUSTOM_RISK_SCORE_MEDIUM.getDescription());
-        qm.createConfigProperty(
-                CUSTOM_RISK_SCORE_LOW.getGroupName(),
-                CUSTOM_RISK_SCORE_LOW.getPropertyName(),
-                CUSTOM_RISK_SCORE_LOW.getDefaultPropertyValue(),
-                CUSTOM_RISK_SCORE_LOW.getPropertyType(),
-                CUSTOM_RISK_SCORE_LOW.getDescription());
-        qm.createConfigProperty(
-                CUSTOM_RISK_SCORE_UNASSIGNED.getGroupName(),
-                CUSTOM_RISK_SCORE_UNASSIGNED.getPropertyName(),
-                CUSTOM_RISK_SCORE_UNASSIGNED.getDefaultPropertyValue(),
-                CUSTOM_RISK_SCORE_UNASSIGNED.getPropertyType(),
-                CUSTOM_RISK_SCORE_UNASSIGNED.getDescription());
+        createConfigPropertyWithDefaultValue(CUSTOM_RISK_SCORE_CRITICAL);
+        createConfigPropertyWithDefaultValue(CUSTOM_RISK_SCORE_HIGH);
+        createConfigPropertyWithDefaultValue(CUSTOM_RISK_SCORE_MEDIUM);
+        createConfigPropertyWithDefaultValue(CUSTOM_RISK_SCORE_LOW);
+        createConfigPropertyWithDefaultValue(CUSTOM_RISK_SCORE_UNASSIGNED);
     }
 }

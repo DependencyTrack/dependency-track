@@ -341,6 +341,40 @@ class ModelConverterTest {
     }
 
     @Test
+    void shouldConvertRustRangeWithPreReleaseLowerBoundUsingCargoScheme() throws IOException {
+        var securityAdvisory = MAPPER.readValue(/* language=JSON */ """
+                {
+                  "ghsaId": "GHSA-3v94-mw7p-v465",
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "vulnerableVersionRange": ">= 0.26.0-alpha.1, <= 0.26.0",
+                          "package": {
+                            "ecosystem": "RUST",
+                            "name": "hickory-net"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
+
+        Bom bom = ModelConverter.convert(securityAdvisory, true);
+
+        assertThatJson(JsonFormat.printer().print(bom))
+                .inPath("$.vulnerabilities[0].affects[0].versions")
+                .isEqualTo(/* language=JSON */ """
+                        [
+                          {
+                            "range": "vers:cargo/>=0.26.0-alpha.1|<=0.26.0"
+                          }
+                        ]
+                        """);
+    }
+
+    @Test
     void shouldEmitBothCvssV3AndCvssV4RatingsWhenBothPresent() throws IOException {
         var securityAdvisory =
                 MAPPER.readValue(getClass().getResourceAsStream("/advisory-04.json"), SecurityAdvisory.class);

@@ -96,12 +96,17 @@ public final class LoadPhase {
         final long start = System.nanoTime();
         long totalRows = 0;
         int tableCount = 0;
-        preLoad();
-        for (final TableMigration t : TableRegistry.loaded()) {
-            totalRows += loadOne(t);
-            tableCount++;
+        try {
+            preLoad();
+            for (final TableMigration t : TableRegistry.loaded()) {
+                totalRows += loadOne(t);
+                tableCount++;
+            }
+            postLoad();
+        } catch (final RuntimeException e) {
+            throw new IllegalStateException(
+                    "Load failed. " + BulkLoadSchemaObjects.recoveryInstructions(options.stagingSchema), e);
         }
-        postLoad();
 
         if (dropStagingAfter) {
             LOGGER.info("Dropping staging schema (--drop-staging set).");
@@ -113,6 +118,8 @@ public final class LoadPhase {
     }
 
     private void preLoad() {
+        BulkLoadSchemaObjects.dropAll(target);
+
         // Disable PROJECT_HIERARCHY maintenance triggers on PROJECT so the bulk PROJECT load
         // does not run the per-row ancestor walk; we load the pre-built closure directly.
         // Disable PROJECT_ACCESS_USERS write-blocking trigger so the derived backfill can
@@ -149,6 +156,7 @@ public final class LoadPhase {
                     """.formatted(t));
             }
         });
+        BulkLoadSchemaObjects.restoreIndexes(target);
         // ANALYZE every loaded table for fresh planner statistics.
         final List<TableMigration> loaded = TableRegistry.loaded();
         LOGGER.info("Analyzing {} loaded table(s)", loaded.size());
@@ -157,6 +165,8 @@ public final class LoadPhase {
                 h.execute("ANALYZE \"%s\"".formatted(t.name()));
             }
         });
+        // Must precede replayV570CleanupDeletes: its PERMISSION deletes rely on ON DELETE CASCADE.
+        BulkLoadSchemaObjects.restoreForeignKeys(target);
         // Refresh PORTFOLIOMETRICS_GLOBAL after PROJECTMETRICS is in place.
         // The view body uses CURRENT_DATE and implicit timestamptz coercion, so the
         // refresh must run with session TZ pinned to UTC to match the v5 apiserver

@@ -22,7 +22,6 @@
              xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd" version="2.2">
     <persistence-unit name="Alpine">
         <class>alpine.model.ApiKey</class>
-        <class>alpine.model.ConfigProperty</class>
         <class>alpine.model.LdapUser</class>
         <class>alpine.model.ManagedUser</class>
         <class>alpine.model.OidcUser</class>

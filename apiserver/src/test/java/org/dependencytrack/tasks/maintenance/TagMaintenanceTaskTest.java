@@ -30,17 +30,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_TAGS_DELETE_UNUSED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 
 class TagMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
     void test() {
-        qm.createConfigProperty(
-                MAINTENANCE_TAGS_DELETE_UNUSED.getGroupName(),
-                MAINTENANCE_TAGS_DELETE_UNUSED.getPropertyName(),
-                "true",
-                MAINTENANCE_TAGS_DELETE_UNUSED.getPropertyType(),
-                MAINTENANCE_TAGS_DELETE_UNUSED.getDescription());
+        createConfigProperty(MAINTENANCE_TAGS_DELETE_UNUSED, "true");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -81,12 +77,7 @@ class TagMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
     void testWithDeleteUnusedDisabled() {
-        qm.createConfigProperty(
-                MAINTENANCE_TAGS_DELETE_UNUSED.getGroupName(),
-                MAINTENANCE_TAGS_DELETE_UNUSED.getPropertyName(),
-                "false",
-                MAINTENANCE_TAGS_DELETE_UNUSED.getPropertyType(),
-                MAINTENANCE_TAGS_DELETE_UNUSED.getDescription());
+        createConfigProperty(MAINTENANCE_TAGS_DELETE_UNUSED, "false");
 
         qm.createTag("tag-orphaned");
 

@@ -21,7 +21,7 @@ package org.dependencytrack.resources.v1.vo;
 import alpine.model.IConfigProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -44,12 +44,12 @@ public record ProjectPropertyResponse(
         @Schema(description = "Description of the property") @Nullable
         String description) {
 
-    public static ProjectPropertyResponse of(ProjectProperty property) {
+    public static ProjectPropertyResponse of(ProjectPropertyRow property) {
         return new ProjectPropertyResponse(
-                property.getGroupName(),
-                property.getPropertyName(),
-                property.getPropertyValue(),
-                property.getPropertyType(),
-                property.getDescription());
+                property.groupName(),
+                property.propertyName(),
+                property.propertyValue(),
+                property.propertyType(),
+                property.description());
     }
 }

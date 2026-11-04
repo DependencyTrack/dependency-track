@@ -84,6 +84,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSE
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSING_FAILED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -103,12 +104,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity = new ImportBomActivity(fileStorage, dexEngineMock, false);
 
         // Enable processing of CycloneDX BOMs
-        qm.createConfigProperty(
-                ACCEPT_ARTIFACT_CYCLONEDX.getGroupName(),
-                ACCEPT_ARTIFACT_CYCLONEDX.getPropertyName(),
-                "true",
-                ACCEPT_ARTIFACT_CYCLONEDX.getPropertyType(),
-                ACCEPT_ARTIFACT_CYCLONEDX.getDescription());
+        createConfigProperty(ACCEPT_ARTIFACT_CYCLONEDX, "true");
 
         // Required for notifications to be emitted.
         createCatchAllNotificationRule(qm, NotificationScope.PORTFOLIO);

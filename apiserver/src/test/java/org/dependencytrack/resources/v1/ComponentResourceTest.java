@@ -35,6 +35,7 @@ import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
@@ -768,6 +769,51 @@ public class ComponentResourceTest extends ResourceTest {
 
         response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(201);
+    }
+
+    @Test
+    public void createComponentWithLicenseTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        List<OrganizationalContact> authors = new ArrayList<>();
+        authors.add(new OrganizationalContact() {
+            {
+                setName("SampleAuthor");
+            }
+        });
+        component.setAuthors(authors);
+        component.setClassifier(Classifier.APPLICATION);
+        component.setPurl("pkg:maven/org.acme/abc");
+        component.setLicense("Custom License");
+        component.setLicenseUrl("https://example.com/custom-license");
+        Response response = jersey.target(
+                        V1_COMPONENT + "/project/" + project.getUuid().toString())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(component, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(201, response.getStatus(), 0);
+
+        qm.getPersistenceManager().evictAll();
+
+        final Component persistedComponent = qm.getAllComponents(project).getFirst();
+        final List<ComponentDao.ComponentLicenseRow> licenseRows =
+                withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                        .getLicenseRows(List.of(persistedComponent.getId()))
+                        .get(persistedComponent.getId()));
+
+        assertThat(licenseRows).singleElement().satisfies(row -> {
+            assertThat(row.componentId()).isEqualTo(persistedComponent.getId());
+            assertThat(row.licenseId()).isNull();
+            assertThat(row.license()).isEqualTo("Custom License");
+            assertThat(row.licenseExpression()).isNull();
+            assertThat(row.licenseUrl()).isEqualTo("https://example.com/custom-license");
+            assertThat(row.ordinality()).isEqualTo(1);
+            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+        });
     }
 
     @Test

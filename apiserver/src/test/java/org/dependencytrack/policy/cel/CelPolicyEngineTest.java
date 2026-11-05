@@ -26,7 +26,6 @@ import org.dependencytrack.epss.EpssDao;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -105,11 +104,13 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         project.setLastBomImport(new Date());
         qm.persist(project);
 
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setGenerated(new Date(999));
-        bom.setImported(new Date());
-        qm.persist(bom);
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" ("GENERATED", "IMPORTED", "PROJECT_ID", "UUID")
+                        VALUES (:generated, NOW(), :projectId, GEN_RANDOM_UUID())
+                        """)
+                .bind("generated", new Date(999))
+                .bind("projectId", project.getId())
+                .execute());
 
         final var toolComponentLicense = new License();
         toolComponentLicense.setUuid(UUID.randomUUID());

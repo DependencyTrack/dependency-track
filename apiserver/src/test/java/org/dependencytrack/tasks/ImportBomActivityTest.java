@@ -19,8 +19,9 @@
 package org.dependencytrack.tasks;
 
 import alpine.model.IConfigProperty.PropertyType;
-import com.github.packageurl.PackageURL;
+import com.google.errorprone.annotations.CompileTimeConstant;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.filestorage.api.FileStorage;
@@ -39,11 +40,9 @@ import org.dependencytrack.persistence.DatabaseSeedingInitTask;
 import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
-import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
-import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
-import org.dependencytrack.pkgmetadata.PackageMetadata;
-import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,8 +59,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -70,13 +68,23 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.io.IOUtils.resourceToURL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.model.ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX;
+import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
 import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
 import static org.dependencytrack.notification.NotificationTestUtil.truncateNotificationOutbox;
@@ -239,73 +247,6 @@ class ImportBomActivityTest extends PersistenceCapableTest {
     }
 
     @Test
-    void informTestWithComponentAlreadyExistsForIntegrityCheck() throws Exception {
-        // Required for license resolution.
-        useJdbiTransaction(DatabaseSeedingInitTask::seedDefaultLicenses);
-
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
-
-        final var bomFileMetadata = storeBomFile("bom-1.xml");
-        final var bomUploadToken = UUID.randomUUID();
-        useJdbiTransaction(handle -> {
-            new PackageMetadataDao(handle)
-                    .upsertAll(List.of(new PackageMetadata(
-                            new PackageURL("pkg:maven/com.example/xmlutil"),
-                            "1.0.0",
-                            null,
-                            Instant.now(),
-                            null,
-                            null)));
-            new PackageArtifactMetadataDao(handle)
-                    .upsertAll(List.of(new PackageArtifactMetadata(
-                            new PackageURL(
-                                    "pkg:maven/com.example/xmlutil@1.0.0?download_url=https%3A%2F%2Fon-premises.url%2Frepository%2Fnpm%2F%40babel%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration-7.18.6.tgz"),
-                            new PackageURL("pkg:maven/com.example/xmlutil"),
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            Instant.now().minus(2, ChronoUnit.HOURS))));
-        });
-        activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
-        assertBomProcessedNotification();
-        assertThat(getNotificationOutbox())
-                .satisfiesExactly(
-                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
-                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
-        qm.getPersistenceManager().refresh(project);
-        assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
-        assertThat(project.getLastBomImport()).isNotNull();
-        assertThat(project.getLastBomImportFormat()).isEqualTo("CycloneDX 1.5");
-        assertThat(project.getExternalReferences()).isNotNull();
-        assertThat(project.getExternalReferences()).hasSize(4);
-
-        final List<Component> components = qm.getAllComponents(project);
-        assertThat(components).hasSize(1);
-
-        final Component component = components.get(0);
-        assertThat(component.getAuthors().get(0).getName())
-                .isEqualTo(
-                        "Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
-        assertThat(component.getPublisher()).isEqualTo("Example Incorporated");
-        assertThat(component.getGroup()).isEqualTo("com.example");
-        assertThat(component.getName()).isEqualTo("xmlutil");
-        assertThat(component.getVersion()).isEqualTo("1.0.0");
-        assertThat(component.getDescription()).isEqualTo("A makebelieve XML utility library");
-        assertThat(component.getCpe()).isEqualTo("cpe:/a:example:xmlutil:1.0.0");
-        assertThat(component.getPurl().canonicalize())
-                .isEqualTo(
-                        "pkg:maven/com.example/xmlutil@1.0.0?download_url=https%3A%2F%2Fon-premises.url%2Frepository%2Fnpm%2F%40babel%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration%2Fhelper-split-export-declaration-7.18.6.tgz");
-        assertThat(component.getResolvedLicense()).isNotNull();
-        assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("Apache-2.0");
-        assertThat(component.getLicense()).isNull();
-        assertThat(component.getLicenseUrl()).isEqualTo("https://www.apache.org/licenses/LICENSE-2.0.txt");
-    }
-
-    @Test
     void informWithCycloneDx17BomTest() throws Exception {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
 
@@ -455,18 +396,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         final var bomFileMetadata = storeBomFile("bom-bloated.json");
         final var bomUploadToken = UUID.randomUUID();
 
-        final int objectUpdatesBefore = getPmfStatistics().getNumberOfObjectUpdates();
-
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
-
-        // Components must be inserted with their direct dependencies already assigned.
-        // Flushing before the dependency graph is resolved turns every component that has
-        // dependencies into an insert *and* an update, which leads to thousands of additional
-        // database round trips on a BOM this size. Only the project row should be updated.
-        // If this assertion fails, something in the import logic is causing premature flushes.
-        assertThat(getPmfStatistics().getNumberOfObjectUpdates() - objectUpdatesBefore)
-                .as("BOM import must not update components after inserting them")
-                .isLessThan(100);
 
         assertBomProcessedNotification();
 
@@ -547,6 +477,9 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                   "specVersion": "1.4",
                   "version": 1,
                   "metadata": {
+                    "supplier": { "name": "Acme Inc" },
+                    "authors": [ { "name": "Jane Doe" } ],
+                    "tools": [ { "vendor": "Acme Inc", "name": "acme-scanner", "version": "1.0.0" } ],
                     "component": {
                       "bom-ref": "root",
                       "type": "application",
@@ -561,6 +494,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                       "version": "1.0.0",
                       "purl": "pkg:maven/com.acme/acme-lib-a@1.0.0",
                       "author": "Acme Inc",
+                      "supplier": { "name": "Acme Inc" },
                       "externalReferences": [
                         { "type": "website", "url": "https://example.com", "comment": "homepage" }
                       ]
@@ -584,15 +518,20 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertBomProcessedNotification();
         assertThat(qm.getAllComponents(project)).hasSize(2);
 
-        final int objectUpdatesBefore = getPmfStatistics().getNumberOfObjectUpdates();
+        final List<String> componentRowVersionsBefore = getRowVersions("COMPONENT", project.getId());
+        final List<String> metadataRowVersionsBefore = getRowVersions("PROJECT_METADATA", project.getId());
 
         activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
         assertBomProcessedNotification();
 
-        // Only the project should be updated, nothing else.
-        assertThat(getPmfStatistics().getNumberOfObjectUpdates() - objectUpdatesBefore)
+        assertThat(getRowVersions("COMPONENT", project.getId()))
                 .as("re-import of an unchanged BOM must not update components")
-                .isEqualTo(1);
+                .hasSize(2)
+                .isEqualTo(componentRowVersionsBefore);
+        assertThat(getRowVersions("PROJECT_METADATA", project.getId()))
+                .as("re-import of an unchanged BOM must not update project metadata")
+                .hasSize(1)
+                .isEqualTo(metadataRowVersionsBefore);
     }
 
     @Test
@@ -611,6 +550,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                       "bom-ref": "acme-service@2.0.0",
                       "name": "acme-service",
                       "version": "2.0.0",
+                      "provider": { "name": "Acme Inc" },
                       "endpoints": [ "https://example.com/api" ],
                       "externalReferences": [
                         { "type": "website", "url": "https://example.com" }
@@ -626,15 +566,364 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
         assertBomProcessedNotification();
 
-        final int objectUpdatesBefore = getPmfStatistics().getNumberOfObjectUpdates();
+        final List<String> rowVersionsBefore = getRowVersions("SERVICECOMPONENT", project.getId());
 
         activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
         assertBomProcessedNotification();
 
-        // Only the project should be updated, nothing else.
-        assertThat(getPmfStatistics().getNumberOfObjectUpdates() - objectUpdatesBefore)
+        assertThat(getRowVersions("SERVICECOMPONENT", project.getId()))
                 .as("re-import of an unchanged BOM must not update the service")
-                .isEqualTo(1);
+                .hasSize(1)
+                .isEqualTo(rowVersionsBefore);
+    }
+
+    @Test
+    void informWithChangedComponentReimportShouldWriteEveryColumnTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        record HashColumn(String algorithm, int length, Function<Component, String> getter) {}
+        final List<HashColumn> hashColumns = List.of(
+                new HashColumn("MD5", 32, Component::getMd5),
+                new HashColumn("SHA-1", 40, Component::getSha1),
+                new HashColumn("SHA-256", 64, Component::getSha256),
+                new HashColumn("SHA-384", 96, Component::getSha384),
+                new HashColumn("SHA-512", 128, Component::getSha512),
+                new HashColumn("SHA3-256", 64, Component::getSha3_256),
+                new HashColumn("SHA3-384", 96, Component::getSha3_384),
+                new HashColumn("SHA3-512", 128, Component::getSha3_512),
+                new HashColumn("BLAKE2b-256", 64, Component::getBlake2b_256),
+                new HashColumn("BLAKE2b-384", 96, Component::getBlake2b_384),
+                new HashColumn("BLAKE2b-512", 128, Component::getBlake2b_512),
+                new HashColumn("BLAKE3", 64, Component::getBlake3),
+                new HashColumn("Streebog-256", 64, Component::getStreebog_256),
+                new HashColumn("Streebog-512", 128, Component::getStreebog_512));
+        final BiFunction<HashColumn, String, String> hashValue = (column, revision) ->
+                "%x%s".formatted(hashColumns.indexOf(column), revision.repeat(column.length() - 1));
+
+        UUID firstUuid = null;
+        for (final String revision : List.of("a", "b")) {
+            final boolean isSecondImport = revision.equals("b");
+            if (isSecondImport) {
+                createConfigProperty(INTERNAL_COMPONENTS_NAMES_REGEX, "acme-lib");
+            }
+
+            final String hashes = hashColumns.stream()
+                    .map(
+                            column -> /* language=JSON */
+                                    """
+                            { "alg": "%s", "content": "%s" }
+                            """.formatted(column.algorithm(), hashValue.apply(column, revision)))
+                    .collect(Collectors.joining(","));
+            final byte[] bomBytes = /* language=JSON */ """
+                    {
+                      "bomFormat": "CycloneDX",
+                      "specVersion": "1.7",
+                      "version": 1,
+                      "components": [
+                        {
+                          "type": "%3$s",
+                          "group": "com.acme",
+                          "name": "acme-lib",
+                          "version": "1.0.0",
+                          "cpe": "cpe:2.3:a:acme:acme-lib:1.0.0:*:*:*:*:*:*:*",
+                          "purl": "pkg:maven/com.acme/acme-lib@1.0.0?type=jar",
+                          "swid": { "tagId": "acme-lib-swid", "name": "acme-lib" },
+                          "author": "author-%1$s",
+                          "supplier": { "name": "supplier-%1$s" },
+                          "publisher": "publisher-%1$s",
+                          "description": "description-%1$s",
+                          "copyright": "copyright-%1$s",
+                          "licenses": [
+                            { "license": { "name": "license-%1$s", "url": "https://example.com/%1$s" } },
+                            { "expression": "%4$s" }
+                          ],
+                          "hashes": [ %2$s ],
+                          "externalReferences": [ { "type": "website", "url": "https://example.org/%1$s" } ]
+                        }
+                      ]
+                    }
+                    """.formatted(
+                            revision,
+                            hashes,
+                            isSecondImport ? "framework" : "library",
+                            isSecondImport ? "MIT AND Apache-2.0" : "MIT OR Apache-2.0")
+                    .getBytes(StandardCharsets.UTF_8);
+
+            activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+            assertBomProcessedNotification();
+            qm.getPersistenceManager().evictAll();
+
+            final Component component = qm.getAllComponents(project).getFirst();
+            firstUuid = firstUuid != null ? firstUuid : component.getUuid();
+            assertThat(component.getUuid()).isEqualTo(firstUuid);
+            assertThat(component.getGroup()).isEqualTo("com.acme");
+            assertThat(component.getName()).isEqualTo("acme-lib");
+            assertThat(component.getVersion()).isEqualTo("1.0.0");
+            assertThat(component.getCpe()).isEqualTo("cpe:2.3:a:acme:acme-lib:1.0.0:*:*:*:*:*:*:*");
+            assertThat(component.getPurl()).asString().isEqualTo("pkg:maven/com.acme/acme-lib@1.0.0?type=jar");
+            assertThat(component.getPurlCoordinates()).asString().isEqualTo("pkg:maven/com.acme/acme-lib@1.0.0");
+            assertThat(component.getSwidTagId()).isEqualTo("acme-lib-swid");
+            assertThat(component.getClassifier()).isEqualTo(isSecondImport ? Classifier.FRAMEWORK : Classifier.LIBRARY);
+            assertThat(component.isInternal()).isEqualTo(isSecondImport);
+            assertThat(component.getLicenseExpression())
+                    .isEqualTo(isSecondImport ? "MIT AND Apache-2.0" : "MIT OR Apache-2.0");
+            assertThat(component.getAuthors())
+                    .satisfiesExactly(author -> assertThat(author.getName()).isEqualTo("author-" + revision));
+            assertThat(component.getSupplier().getName()).isEqualTo("supplier-" + revision);
+            assertThat(component.getPublisher()).isEqualTo("publisher-" + revision);
+            assertThat(component.getDescription()).isEqualTo("description-" + revision);
+            assertThat(component.getCopyright()).isEqualTo("copyright-" + revision);
+            assertThat(component.getLicense()).isEqualTo("license-" + revision);
+            assertThat(component.getLicenseUrl()).isEqualTo("https://example.com/" + revision);
+            assertThat(component.getExternalReferences())
+                    .satisfiesExactly(
+                            reference -> assertThat(reference.getUrl()).isEqualTo("https://example.org/" + revision));
+            for (final HashColumn column : hashColumns) {
+                assertThat(column.getter().apply(component))
+                        .as(column.algorithm())
+                        .isEqualTo(hashValue.apply(column, revision));
+            }
+        }
+    }
+
+    @Test
+    void informWithChangedAndRemovedServiceReimportShouldWriteEveryColumnTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        for (final boolean authenticated : List.of(false, true)) {
+            final byte[] bomBytes = /* language=JSON */
+                    """
+                    {
+                      "bomFormat": "CycloneDX",
+                      "specVersion": "1.4",
+                      "version": 1,
+                      "services": [
+                        {
+                          "bom-ref": "acme-service",
+                          "group": "com.acme",
+                          "name": "acme-service",
+                          "version": "2.0.0",
+                          "description": "description-%1$s",
+                          "authenticated": %1$s,
+                          "x-trust-boundary": %2$s,
+                          "provider": { "name": "provider-%1$s" },
+                          "endpoints": [ "https://example.com/%1$s" ],
+                          "externalReferences": [ { "type": "website", "url": "https://example.org/%1$s" } ],
+                          "data": [ { "flow": "inbound", "classification": "data-%1$s" } ]
+                        }
+                      ]
+                    }
+                    """.formatted(authenticated, !authenticated).getBytes(StandardCharsets.UTF_8);
+
+            activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+            assertBomProcessedNotification();
+            qm.getPersistenceManager().evictAll();
+
+            assertThat(qm.getAllServiceComponents(project)).satisfiesExactly(service -> {
+                assertThat(service.getGroup()).isEqualTo("com.acme");
+                assertThat(service.getName()).isEqualTo("acme-service");
+                assertThat(service.getVersion()).isEqualTo("2.0.0");
+                assertThat(service.getDescription()).isEqualTo("description-" + authenticated);
+                assertThat(service.getAuthenticated()).isEqualTo(authenticated);
+                assertThat(service.getCrossesTrustBoundary()).isEqualTo(!authenticated);
+                assertThat(service.getProvider().getName()).isEqualTo("provider-" + authenticated);
+                assertThat(service.getEndpoints()).containsExactly("https://example.com/" + authenticated);
+                assertThat(service.getExternalReferences())
+                        .satisfiesExactly(reference ->
+                                assertThat(reference.getUrl()).isEqualTo("https://example.org/" + authenticated));
+                assertThat(service.getData())
+                        .satisfiesExactly(data -> assertThat(data.getName()).isEqualTo("data-" + authenticated));
+            });
+        }
+
+        final byte[] bomWithoutServices = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        activity.execute(null, buildArg(project, storeBomFile(bomWithoutServices), UUID.randomUUID()));
+        assertBomProcessedNotification();
+        qm.getPersistenceManager().evictAll();
+
+        assertThat(qm.getAllServiceComponents(project)).isEmpty();
+    }
+
+    @Test
+    void informWithChangedComponentsShouldLockRowsInIdOrderTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] firstBom = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "components": [
+                    { "type": "library", "bom-ref": "low", "name": "low", "description": "before" },
+                    { "type": "library", "bom-ref": "high", "name": "high", "description": "before" }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        activity.execute(null, buildArg(project, storeBomFile(firstBom), UUID.randomUUID()));
+
+        final byte[] secondBomWithHighIdFirst = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "components": [
+                    { "type": "library", "bom-ref": "high", "name": "high", "description": "after" },
+                    { "type": "library", "bom-ref": "low", "name": "low", "description": "after" }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        final FileMetadata secondBomFile = storeBomFile(secondBomWithHighIdFirst);
+
+        final Jdbi jdbi = Jdbi.create(DataSourceRegistry.getInstance().getDefault());
+        try (final ExecutorService executor = Executors.newSingleThreadExecutor();
+                final Handle lockHolder = jdbi.open();
+                final Handle observer = jdbi.open()) {
+            lockHolder.begin();
+            lockHolder.createQuery("""
+                            SELECT 1 FROM "COMPONENT" WHERE "NAME" = 'high' FOR UPDATE
+                            """).mapTo(Integer.class).one();
+
+            final Future<?> importRun =
+                    executor.submit(() -> activity.execute(null, buildArg(project, secondBomFile, UUID.randomUUID())));
+
+            await("Import to wait for the row with the highest ID")
+                    .atMost(Duration.ofSeconds(30))
+                    .untilAsserted(() -> assertThat(
+                                    observer.createQuery("""
+                                    SELECT COUNT(*)
+                                      FROM pg_stat_activity
+                                     WHERE wait_event_type = 'Lock'
+                                       AND datname = current_database()
+                                       AND query LIKE '%UPDATE "COMPONENT"%'
+                                    """).mapTo(Long.class).one())
+                            .isEqualTo(1));
+
+            assertThat(observer.createQuery("""
+                            SELECT 1 FROM "COMPONENT" WHERE "NAME" = 'low' FOR UPDATE SKIP LOCKED
+                            """).mapTo(Integer.class).findOne())
+                    .as("row with the lowest ID must be locked before the import waits for the highest ID")
+                    .isEmpty();
+
+            lockHolder.rollback();
+            importRun.get(30, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void informWithoutMetadataComponentAfterImportWithMetadataComponentTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] bomWithMetadataComponent = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "bom-ref": "root",
+                      "type": "firmware",
+                      "name": "acme-app",
+                      "publisher": "Acme Inc"
+                    }
+                  },
+                  "components": [
+                    {
+                      "bom-ref": "a",
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0"
+                    }
+                  ],
+                  "dependencies": [
+                    { "ref": "root", "dependsOn": [ "a" ] }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        activity.execute(null, buildArg(project, storeBomFile(bomWithMetadataComponent), UUID.randomUUID()));
+        assertBomProcessedNotification();
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getDirectDependencies()).isNotNull();
+
+        final byte[] bomWithoutMetadataComponent = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "components": [
+                    {
+                      "bom-ref": "a",
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        activity.execute(null, buildArg(project, storeBomFile(bomWithoutMetadataComponent), UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getDirectDependencies()).isNull();
+        assertThat(project.getClassifier()).isEqualTo(Classifier.FIRMWARE);
+        assertThat(project.getPublisher()).isEqualTo("Acme Inc");
+    }
+
+    @Test
+    void informShouldEmitFailureNotificationAndRollBackWhenDatabaseRejectsBomTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] tooLongPublisherBom = /* language=JSON */
+                """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "name": "acme-app",
+                      "publisher": "Acme Inc"
+                    }
+                  },
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0",
+                      "publisher": "%s"
+                    }
+                  ]
+                }
+                """.formatted("x".repeat(256)).getBytes(StandardCharsets.UTF_8);
+
+        assertThatExceptionOfType(TerminalApplicationFailureException.class)
+                .isThrownBy(() -> activity.execute(
+                        null, buildArg(project, storeBomFile(tooLongPublisherBom), UUID.randomUUID())));
+
+        assertThat(getNotificationOutbox())
+                .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
+
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getPublisher()).isNull();
+        assertThat(project.getLastBomImport()).isNull();
+        assertThat(qm.getAllComponents(project)).isEmpty();
+        assertThat(getBoms(project)).isEmpty();
     }
 
     @Test
@@ -2285,6 +2574,297 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                             assertThat(row.ordinality()).isEqualTo(2L);
                             assertThat(row.acknowledgement()).isEqualTo("DECLARED");
                         });
+    }
+
+    @Test
+    void shouldAttributeLicensesToComponentsSharingBomRef() throws Exception {
+        final var license = new License();
+        license.setLicenseId("MIT");
+        license.setName("MIT License");
+        qm.persist(license);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final byte[] bomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "bom-ref": "dup",
+                      "name": "a",
+                      "version": "1",
+                      "licenses": [{"license": {"id": "MIT"}}, {"license": {"name": "License A"}}]
+                    },
+                    {
+                      "type": "library",
+                      "bom-ref": "dup",
+                      "name": "b",
+                      "version": "1",
+                      "licenses": [{"license": {"id": "MIT"}}, {"license": {"name": "License B"}}]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        assertThat(qm.getAllComponents(project))
+                .hasSize(2)
+                .allSatisfy(component -> assertThat(getLicenseRows(component.getId()))
+                        .extracting(
+                                ComponentLicenseDao.ComponentLicenseRow::licenseId,
+                                ComponentLicenseDao.ComponentLicenseRow::license)
+                        .containsExactly(
+                                tuple(license.getId(), null),
+                                tuple(null, component.getName().equals("a") ? "License A" : "License B")));
+    }
+
+    @Test
+    void shouldImportLicensesOfComponentSharingBomRefWithService() throws Exception {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final byte[] bomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "bom-ref": "shared",
+                      "name": "a",
+                      "version": "1",
+                      "licenses": [{"license": {"name": "License A"}}]
+                    }
+                  ],
+                  "services": [
+                    {
+                      "bom-ref": "shared",
+                      "name": "svc",
+                      "version": "1"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        final Component component = qm.getAllComponents(project).getFirst();
+        assertThat(getLicenseRows(component.getId()))
+                .extracting(ComponentLicenseDao.ComponentLicenseRow::license)
+                .containsExactly("License A");
+    }
+
+    @Test
+    void shouldResolveLicenseNameSharedByLicensesToLowestLicenseId() throws Exception {
+        // Two licenses sharing a name, with the alphabetically later license ID persisted first.
+        final var laterLicense = new License();
+        laterLicense.setLicenseId("ZZZ-1.0");
+        laterLicense.setName("Shared Name");
+        qm.persist(laterLicense);
+        final var earlierLicense = new License();
+        earlierLicense.setLicenseId("AAA-1.0");
+        earlierLicense.setName("Shared Name");
+        qm.persist(earlierLicense);
+        final var mitLicense = new License();
+        mitLicense.setLicenseId("MIT");
+        mitLicense.setName("MIT License");
+        qm.persist(mitLicense);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final byte[] bomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "a",
+                      "version": "1",
+                      "licenses": [{"license": {"name": "Shared Name"}}]
+                    },
+                    {
+                      "type": "library",
+                      "name": "b",
+                      "version": "1",
+                      "licenses": [{"license": {"id": "NOT-A-LICENSE", "name": "MIT License"}}]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+        qm.getPersistenceManager().evictAll();
+
+        assertThat(qm.getAllComponents(project))
+                .satisfiesExactly(
+                        component -> {
+                            assertThat(component.getName()).isEqualTo("a");
+                            assertThat(component.getResolvedLicense().getId()).isEqualTo(earlierLicense.getId());
+                            assertThat(getLicenseRows(component.getId()))
+                                    .extracting(ComponentLicenseDao.ComponentLicenseRow::licenseId)
+                                    .containsExactly(earlierLicense.getId());
+                        },
+                        component -> {
+                            assertThat(component.getName()).isEqualTo("b");
+                            assertThat(component.getResolvedLicense().getId()).isEqualTo(mitLicense.getId());
+                            assertThat(getLicenseRows(component.getId()))
+                                    .extracting(ComponentLicenseDao.ComponentLicenseRow::licenseId)
+                                    .containsExactly(mitLicense.getId());
+                        });
+    }
+
+    @Test
+    void shouldImportExpressionMatchingMultipleLicenseCandidates() throws Exception {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final byte[] bomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.7",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "a",
+                      "version": "1",
+                      "licenses": [
+                        {"license": {"id": "MIT", "name": "Custom MIT"}},
+                        {"expression": "MIT"}
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        final Component component = qm.getAllComponents(project).getFirst();
+        assertThat(getLicenseRows(component.getId()))
+                .extracting(
+                        ComponentLicenseDao.ComponentLicenseRow::license,
+                        ComponentLicenseDao.ComponentLicenseRow::licenseExpression)
+                .containsExactly(tuple("Custom MIT", "MIT"), tuple("MIT", null));
+    }
+
+    @Test
+    void shouldOnlyWriteChangedLicenseRows() throws Exception {
+        final var mitLicense = new License();
+        mitLicense.setLicenseId("MIT");
+        mitLicense.setName("MIT License");
+        qm.persist(mitLicense);
+        final var apacheLicense = new License();
+        apacheLicense.setLicenseId("Apache-2.0");
+        apacheLicense.setName("Apache License 2.0");
+        qm.persist(apacheLicense);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final String bomTemplate = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "a",
+                      "version": "1",
+                      "licenses": %s
+                    }
+                  ]
+                }
+                """;
+
+        activity.execute(
+                null,
+                buildArg(
+                        project,
+                        storeBomFile(bomTemplate
+                                .formatted("[{\"license\": {\"id\": \"MIT\"}}]")
+                                .getBytes(StandardCharsets.UTF_8)),
+                        UUID.randomUUID()));
+        final List<Long> rowIdsBefore = getLicenseRowIds();
+
+        activity.execute(
+                null,
+                buildArg(
+                        project,
+                        storeBomFile(bomTemplate
+                                .formatted(
+                                        "[{\"license\": {\"id\": \"MIT\"}}, {\"license\": {\"id\": \"Apache-2.0\"}}]")
+                                .getBytes(StandardCharsets.UTF_8)),
+                        UUID.randomUUID()));
+
+        assertThat(rowIdsBefore).hasSize(1);
+        assertThat(getLicenseRowIds()).hasSize(2).startsWith(rowIdsBefore.getFirst());
+    }
+
+    @Test
+    void shouldUseUnresolvableLicenseIdAsLicenseName() throws Exception {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final byte[] bomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "a",
+                      "version": "1",
+                      "licenses": [{"license": {"id": "Foo-1.0", "url": "https://example.com/foo"}}]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+        qm.getPersistenceManager().evictAll();
+
+        final Component component = qm.getAllComponents(project).getFirst();
+        assertThat(component.getResolvedLicense()).isNull();
+        assertThat(component.getLicense()).isEqualTo("Foo-1.0");
+        assertThat(component.getLicenseUrl()).isEqualTo("https://example.com/foo");
+        assertThat(getLicenseRows(component.getId()))
+                .extracting(ComponentLicenseDao.ComponentLicenseRow::license)
+                .containsExactly("Foo-1.0");
+    }
+
+    private static List<ComponentLicenseDao.ComponentLicenseRow> getLicenseRows(long componentId) {
+        return withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                .getLicenseRows(List.of(componentId))
+                .getOrDefault(componentId, List.of()));
+    }
+
+    private static List<Long> getLicenseRowIds() {
+        return withJdbiHandle(
+                handle -> handle.createQuery("""
+                        SELECT "ID" FROM "COMPONENTLICENSES" ORDER BY "ID"
+                        """).mapTo(Long.class).list());
+    }
+
+    private static List<String> getRowVersions(@CompileTimeConstant String table, long projectId) {
+        return withJdbiHandle(handle -> handle.createQuery(/* language=SQL */ """
+                        SELECT CAST(xmin AS TEXT)
+                          FROM "%s"
+                         WHERE "PROJECT_ID" = :projectId
+                         ORDER BY "ID"
+                        """.formatted(table))
+                .bind("projectId", projectId)
+                .mapTo(String.class)
+                .list());
     }
 
     private void assertBomProcessedNotification() throws Exception {

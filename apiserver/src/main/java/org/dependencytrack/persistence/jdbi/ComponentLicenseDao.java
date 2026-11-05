@@ -71,13 +71,7 @@ public interface ComponentLicenseDao extends SqlObject {
         final List<ComponentLicenseRow> rows = row != null ? List.of(row) : List.of();
         final List<ComponentLicenseRow> existingRows =
                 getLicenseRows(List.of(component.getId())).getOrDefault(component.getId(), List.of());
-        if (!rows.equals(existingRows)) {
-            replaceAll(List.of(component.getId()), rows);
-        }
-    }
-
-    default void replaceAll(List<Long> componentIds, List<ComponentLicenseRow> updates) {
-        if (componentIds.isEmpty()) {
+        if (rows.equals(existingRows)) {
             return;
         }
 
@@ -85,11 +79,15 @@ public interface ComponentLicenseDao extends SqlObject {
                 .createUpdate(/* language=SQL */ """
                     DELETE
                       FROM "COMPONENTLICENSES"
-                     WHERE "COMPONENT_ID" = ANY(:componentIds)
+                     WHERE "COMPONENT_ID" = :componentId
                     """)
-                .bindArray("componentIds", Long.class, componentIds)
+                .bind("componentId", component.getId())
                 .execute();
-        if (updates.isEmpty()) {
+        createAll(rows);
+    }
+
+    default void createAll(List<ComponentLicenseRow> rows) {
+        if (rows.isEmpty()) {
             return;
         }
 
@@ -115,17 +113,14 @@ public interface ComponentLicenseDao extends SqlObject {
                            , :acknowledgements
                            )
                     """)
-                .bindArray("componentIds", Long.class, columnValues(updates, ComponentLicenseRow::componentId))
-                .bindArray("licenseIds", Long.class, columnValues(updates, ComponentLicenseRow::licenseId))
-                .bindArray("licenses", String.class, columnValues(updates, ComponentLicenseRow::license))
+                .bindArray("componentIds", Long.class, columnValues(rows, ComponentLicenseRow::componentId))
+                .bindArray("licenseIds", Long.class, columnValues(rows, ComponentLicenseRow::licenseId))
+                .bindArray("licenses", String.class, columnValues(rows, ComponentLicenseRow::license))
                 .bindArray(
-                        "licenseExpressions",
-                        String.class,
-                        columnValues(updates, ComponentLicenseRow::licenseExpression))
-                .bindArray("licenseUrls", String.class, columnValues(updates, ComponentLicenseRow::licenseUrl))
-                .bindArray("ordinalities", Long.class, columnValues(updates, ComponentLicenseRow::ordinality))
-                .bindArray(
-                        "acknowledgements", String.class, columnValues(updates, ComponentLicenseRow::acknowledgement))
+                        "licenseExpressions", String.class, columnValues(rows, ComponentLicenseRow::licenseExpression))
+                .bindArray("licenseUrls", String.class, columnValues(rows, ComponentLicenseRow::licenseUrl))
+                .bindArray("ordinalities", Long.class, columnValues(rows, ComponentLicenseRow::ordinality))
+                .bindArray("acknowledgements", String.class, columnValues(rows, ComponentLicenseRow::acknowledgement))
                 .execute();
     }
 

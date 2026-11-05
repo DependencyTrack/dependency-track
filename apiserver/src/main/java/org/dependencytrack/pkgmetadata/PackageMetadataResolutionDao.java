@@ -22,6 +22,8 @@ import org.jdbi.v3.core.Handle;
 
 import java.util.Map;
 
+import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_QUERY_NAME;
+
 /// @since 5.1.0
 public final class PackageMetadataResolutionDao {
 
@@ -29,6 +31,25 @@ public final class PackageMetadataResolutionDao {
 
     public PackageMetadataResolutionDao(Handle jdbiHandle) {
         this.jdbiHandle = jdbiHandle;
+    }
+
+    public void seedPending(long projectId) {
+        jdbiHandle
+                .createUpdate(/* language=SQL */ """
+                        INSERT INTO "PACKAGE_METADATA_RESOLUTION" ("PURL", "STATUS")
+                        SELECT DISTINCT "PURL"
+                             , 'PENDING'
+                          FROM "COMPONENT"
+                         WHERE "PROJECT_ID" = :projectId
+                           AND "PURL" IS NOT NULL
+                         ORDER BY "PURL"
+                        ON CONFLICT ("PURL") DO NOTHING
+                        """)
+                .define(
+                        ATTRIBUTE_QUERY_NAME,
+                        "%s#seedPending".formatted(getClass().getSimpleName()))
+                .bind("projectId", projectId)
+                .execute();
     }
 
     public int upsertAll(Map<String, PackageMetadataResolutionStatus> statusByPurl) {

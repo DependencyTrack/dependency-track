@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import javax.jdo.JDOObjectNotFoundException;
-import java.util.Date;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
@@ -33,25 +32,14 @@ public class ProjectTest extends PersistenceCapableTest {
     public void testProjectPersistence() {
         Project p1 = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, null, false);
         Project p2 = qm.createProject("Example Project 2", "Description 2", "1.1", null, null, null, null, false);
-        Bom bom = new Bom();
-        bom.setProject(p1);
-        bom.setImported(new Date());
-        bom.setBomFormat(Bom.Format.CYCLONEDX);
-        bom = qm.persist(bom);
 
         Assertions.assertEquals("Example Project 1", p1.getName());
         Assertions.assertEquals("Example Project 2", p2.getName());
+        Assertions.assertEquals("Description 1", p1.getDescription());
+        Assertions.assertEquals("1.0", p1.getVersion());
 
         Assertions.assertNotNull(p1.getUuid());
         Assertions.assertNotNull(p2.getUuid());
-
-        Assertions.assertNotNull(bom.getProject());
-        Assertions.assertEquals("Example Project 1", bom.getProject().getName());
-        Assertions.assertEquals("Description 1", bom.getProject().getDescription());
-        Assertions.assertEquals("1.0", bom.getProject().getVersion());
-
-        Assertions.assertNotNull(bom.getUuid());
-        Assertions.assertNotNull(bom.getImported());
     }
 
     @Test

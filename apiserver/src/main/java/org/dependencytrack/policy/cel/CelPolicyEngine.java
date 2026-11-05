@@ -49,6 +49,7 @@ import org.dependencytrack.policy.cel.compat.VersionCelPolicyScriptSourceBuilder
 import org.dependencytrack.policy.cel.compat.VersionDistanceCelScriptBuilder;
 import org.dependencytrack.policy.cel.compat.VulnerabilityIdCelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.persistence.CelPolicyDao;
+import org.dependencytrack.policy.cel.persistence.CelPolicyDao.ComponentVulnerability;
 import org.dependencytrack.policy.cel.persistence.CelPolicyDao.ComponentWithLicenseId;
 import org.dependencytrack.proto.policy.v1.Component;
 import org.dependencytrack.proto.policy.v1.License;
@@ -66,7 +67,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -217,16 +217,17 @@ public final class CelPolicyEngine {
         // Preload vulnerabilities for the entire project,
         // as chances are high that they will be used by multiple components.
         final Map<Long, Vulnerability> protoVulnById;
-        final Map<Long, Set<Long>> vulnIdsByComponentId;
+        final Map<Long, List<ComponentVulnerability>> vulnsByComponentId;
         if (requirements.containsKey(TYPE_VULNERABILITY)) {
-            vulnIdsByComponentId =
+            vulnsByComponentId =
                     withJdbiHandle(handle -> new CelPolicyDao(handle).fetchAllComponentsVulnerabilities(projectId));
 
-            if (!vulnIdsByComponentId.isEmpty()) {
+            if (!vulnsByComponentId.isEmpty()) {
                 protoVulnById = withJdbiHandle(handle -> new CelPolicyDao(handle)
                         .fetchAllVulnerabilities(
-                                vulnIdsByComponentId.values().stream()
-                                        .flatMap(Set::stream)
+                                vulnsByComponentId.values().stream()
+                                        .flatMap(List::stream)
+                                        .map(ComponentVulnerability::vulnId)
                                         .collect(Collectors.toSet()),
                                 requirements.getOrDefault(TYPE_VULNERABILITY, Set.of())));
             } else {
@@ -234,7 +235,7 @@ public final class CelPolicyEngine {
             }
         } else {
             protoVulnById = Map.of();
-            vulnIdsByComponentId = Map.of();
+            vulnsByComponentId = Map.of();
         }
 
         final var violationsByComponentId = new HashMap<Long, List<PolicyViolation>>();
@@ -248,14 +249,12 @@ public final class CelPolicyEngine {
             final long componentId = entry.getKey();
             final Component protoComponent = entry.getValue();
 
-            final List<Vulnerability> protoVulns;
-            if (requirements.containsKey(TYPE_VULNERABILITY)) {
-                protoVulns = vulnIdsByComponentId.getOrDefault(componentId, Set.of()).stream()
-                        .map(protoVulnById::get)
-                        .filter(Objects::nonNull)
-                        .toList();
-            } else {
-                protoVulns = List.of();
+            final var protoVulns = new ArrayList<Vulnerability>();
+            for (final ComponentVulnerability componentVuln : vulnsByComponentId.getOrDefault(componentId, List.of())) {
+                final Vulnerability protoVuln = protoVulnById.get(componentVuln.vulnId());
+                if (protoVuln != null) {
+                    protoVulns.add(componentVuln.applyOverrides(protoVuln));
+                }
             }
 
             evaluateComponentAgainstPolicies(

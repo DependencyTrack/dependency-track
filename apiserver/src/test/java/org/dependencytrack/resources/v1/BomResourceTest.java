@@ -628,9 +628,7 @@ class BomResourceTest extends ResourceTest {
 
         // A global default is configured, but the project-specific manufacturer
         // captured from a previously imported BOM must take precedence over it.
-        qm.createConfigProperty(
-                GENERAL_MANUFACTURER_NAME.getGroupName(), GENERAL_MANUFACTURER_NAME.getPropertyName(),
-                "Global Corp", GENERAL_MANUFACTURER_NAME.getPropertyType(), GENERAL_MANUFACTURER_NAME.getDescription());
+        createConfigProperty(GENERAL_MANUFACTURER_NAME, "Global Corp");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -652,7 +650,8 @@ class BomResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
 
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatNoException()
+                .isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
         assertThatJson(jsonResponse).node("metadata.manufacturer.name").isEqualTo("Project-Specific Manufacturer");
     }
 
@@ -660,12 +659,8 @@ class BomResourceTest extends ResourceTest {
     void exportProjectAsCycloneDx16ManufacturerFromGlobalConfigTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
-        qm.createConfigProperty(
-                GENERAL_MANUFACTURER_NAME.getGroupName(), GENERAL_MANUFACTURER_NAME.getPropertyName(),
-                "Global Corp", GENERAL_MANUFACTURER_NAME.getPropertyType(), GENERAL_MANUFACTURER_NAME.getDescription());
-        qm.createConfigProperty(
-                GENERAL_MANUFACTURER_URL.getGroupName(), GENERAL_MANUFACTURER_URL.getPropertyName(),
-                "https://global.example.com", GENERAL_MANUFACTURER_URL.getPropertyType(), GENERAL_MANUFACTURER_URL.getDescription());
+        createConfigProperty(GENERAL_MANUFACTURER_NAME, "Global Corp");
+        createConfigProperty(GENERAL_MANUFACTURER_URL, "https://global.example.com");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -680,18 +675,20 @@ class BomResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
 
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatNoException()
+                .isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
         assertThatJson(jsonResponse).node("metadata.manufacturer.name").isEqualTo("Global Corp");
-        assertThatJson(jsonResponse).node("metadata.manufacturer.url").isArray().containsExactly("https://global.example.com");
+        assertThatJson(jsonResponse)
+                .node("metadata.manufacturer.url")
+                .isArray()
+                .containsExactly("https://global.example.com");
     }
 
     @Test
     void exportProjectAsCycloneDx15OmitsManufacturerTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
-        qm.createConfigProperty(
-                GENERAL_MANUFACTURER_NAME.getGroupName(), GENERAL_MANUFACTURER_NAME.getPropertyName(),
-                "Global Corp", GENERAL_MANUFACTURER_NAME.getPropertyType(), GENERAL_MANUFACTURER_NAME.getDescription());
+        createConfigProperty(GENERAL_MANUFACTURER_NAME, "Global Corp");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -707,7 +704,8 @@ class BomResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
 
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatNoException()
+                .isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
         assertThatJson(jsonResponse).node("specVersion").isEqualTo("\"1.5\"");
         assertThatJson(jsonResponse).node("metadata.manufacturer").isAbsent();
     }
@@ -729,7 +727,8 @@ class BomResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
 
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatNoException()
+                .isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
         assertThatJson(jsonResponse).node("metadata.manufacturer").isAbsent();
     }
 

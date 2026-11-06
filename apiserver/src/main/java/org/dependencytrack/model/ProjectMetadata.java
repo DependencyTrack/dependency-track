@@ -27,6 +27,8 @@ import org.dependencytrack.persistence.converter.ToolsJsonConverter;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Convert;
+import javax.jdo.annotations.Extension;
+import javax.jdo.annotations.Extensions;
 import javax.jdo.annotations.ForeignKey;
 import javax.jdo.annotations.ForeignKeyAction;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -72,6 +74,10 @@ public class ProjectMetadata {
     @Persistent(defaultFetchGroup = "true")
     @Convert(OrganizationalEntityJsonConverter.class)
     @Column(name = "MANUFACTURER", jdbcType = "CLOB", allowsNull = "true")
+    @Extensions({
+        @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS JSONB)"),
+        @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS JSONB)")
+    })
     private OrganizationalEntity manufacturer;
 
     @Persistent(defaultFetchGroup = "true")

@@ -96,11 +96,13 @@ BEGIN
     "PROJECT_ID"
   , "AUTHORS"
   , "SUPPLIER"
+  , "MANUFACTURER"
   , "TOOLS"
   )
   SELECT target_project.id
        , "AUTHORS"
        , "SUPPLIER"
+       , "MANUFACTURER"
        , "TOOLS"
     FROM "PROJECT_METADATA"
    WHERE "PROJECT_ID" = source_project.id;

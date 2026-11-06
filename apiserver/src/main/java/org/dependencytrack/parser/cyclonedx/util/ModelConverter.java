@@ -174,6 +174,7 @@ public class ModelConverter {
 
         final var projectMetadata = new ProjectMetadata();
         projectMetadata.setSupplier(ModelConverter.convert(cdxMetadata.getSupplier()));
+        projectMetadata.setManufacturer(ModelConverter.convert(cdxMetadata.getManufacturer()));
         projectMetadata.setAuthors(ModelConverter.convertCdxContacts(cdxMetadata.getAuthors()));
 
         final var toolComponents = new ArrayList<Component>();
@@ -997,7 +998,9 @@ public class ModelConverter {
      * precedence over the instance-wide default.
      */
     private static OrganizationalEntity resolveBomManufacturer(final Project project) {
-        if (project != null && project.getMetadata() != null && project.getMetadata().getManufacturer() != null) {
+        if (project != null
+                && project.getMetadata() != null
+                && project.getMetadata().getManufacturer() != null) {
             return project.getMetadata().getManufacturer();
         }
 

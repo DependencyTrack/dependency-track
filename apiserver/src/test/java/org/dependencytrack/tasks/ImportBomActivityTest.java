@@ -31,7 +31,9 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.License;
+import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.proto.v1.BomProcessingFailedSubject;
 import org.dependencytrack.notification.proto.v1.Notification;
@@ -1643,6 +1645,60 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 i++;
             }
         }
+    }
+
+    @Test
+    void informIssue3935ManufacturerTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var bomFileMetadata = storeBomFile("bom-issue3935-manufacturer.json");
+        final var bomUploadToken = UUID.randomUUID();
+        activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
+        assertBomProcessedNotification();
+        qm.getPersistenceManager().refresh(project);
+
+        assertThat(project.getMetadata()).isNotNull();
+        assertThat(project.getMetadata().getManufacturer()).satisfies(manufacturer -> {
+            assertThat(manufacturer.getName()).isEqualTo("Acme, Inc.");
+            assertThat(manufacturer.getUrls()).containsOnly("https://acme.example.com");
+            assertThat(manufacturer.getContacts()).satisfiesExactly(contact -> {
+                assertThat(contact.getName()).isEqualTo("Acme BOM Team");
+                assertThat(contact.getEmail()).isEqualTo("bom-team@acme.example.com");
+            });
+        });
+    }
+
+    @Test
+    void informIssue3935ManufacturerUpdateTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        // Pre-existing metadata forces the import down the update branch of
+        // processProject, rather than persisting a fresh ProjectMetadata.
+        final var existingSupplier = new OrganizationalEntity();
+        existingSupplier.setName("Existing Supplier");
+        final var existingMetadata = new ProjectMetadata();
+        existingMetadata.setProject(project);
+        existingMetadata.setSupplier(existingSupplier);
+        qm.persist(existingMetadata);
+
+        final var bomFileMetadata = storeBomFile("bom-issue3935-manufacturer.json");
+        final var bomUploadToken = UUID.randomUUID();
+        activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
+        assertBomProcessedNotification();
+
+        // Evict so the pre-persisted ProjectMetadata instance isn't served from the cache.
+        qm.getPersistenceManager().evictAll();
+        final Project persistentProject = qm.getObjectByUuid(Project.class, project.getUuid());
+
+        assertThat(persistentProject.getMetadata()).isNotNull();
+        assertThat(persistentProject.getMetadata().getManufacturer())
+                .satisfies(manufacturer -> assertThat(manufacturer.getName()).isEqualTo("Acme, Inc."));
     }
 
     @Test

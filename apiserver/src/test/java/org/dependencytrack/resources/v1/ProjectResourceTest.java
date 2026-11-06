@@ -3636,10 +3636,13 @@ class ProjectResourceTest extends ResourceTest {
         metadataAuthor.setName("metadataAuthor");
         final var metadataSupplier = new OrganizationalEntity();
         metadataSupplier.setName("metadataSupplier");
+        final var metadataManufacturer = new OrganizationalEntity();
+        metadataManufacturer.setName("metadataManufacturer");
         final var metadata = new ProjectMetadata();
         metadata.setProject(project);
         metadata.setAuthors(List.of(metadataAuthor));
         metadata.setSupplier(metadataSupplier);
+        metadata.setManufacturer(metadataManufacturer);
         qm.persist(metadata);
 
         final var componentSupplier = new OrganizationalEntity();
@@ -3823,6 +3826,8 @@ class ProjectResourceTest extends ResourceTest {
                 .satisfiesExactly(contact -> assertThat(contact.getName()).isEqualTo("metadataAuthor"));
         assertThat(clonedMetadata.getSupplier())
                 .satisfies(entity -> assertThat(entity.getName()).isEqualTo("metadataSupplier"));
+        assertThat(clonedMetadata.getManufacturer())
+                .satisfies(entity -> assertThat(entity.getName()).isEqualTo("metadataManufacturer"));
 
         assertThat(qm.getAllComponents(clonedProject))
                 .satisfiesExactlyInAnyOrder(

@@ -26,17 +26,106 @@ import io.github.jeremylong.openvulnerability.client.nvd.DefCveItem;
 import net.javacrumbs.jsonunit.core.Option;
 import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
+import org.cyclonedx.proto.v1_7.VulnerabilityRating;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ModelConverterTest {
+
+    @Test
+    void shouldOrderPrimaryCvssMetricsBeforeSecondaryMetrics() throws Exception {
+        final DefCveItem cveItem = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .readValue(/* language=JSON */ """
+                        {
+                          "cve": {
+                            "id": "CVE-2026-0001",
+                            "published": "2026-01-01T00:00:00Z",
+                            "lastModified": "2026-01-01T00:00:00Z",
+                            "descriptions": [],
+                            "references": [],
+                            "metrics": {
+                              "cvssMetricV2": [
+                                {
+                                  "source": "cna@example.com",
+                                  "type": "Secondary",
+                                  "cvssData": {"version": "2.0", "vectorString": "secondary-v2", "baseScore": 2.0}
+                                },
+                                {
+                                  "source": "nvd@nist.gov",
+                                  "type": "Primary",
+                                  "cvssData": {"version": "2.0", "vectorString": "primary-v2", "baseScore": 8.0}
+                                }
+                              ],
+                              "cvssMetricV30": [
+                                {
+                                  "source": "cna@example.com",
+                                  "type": "Secondary",
+                                  "cvssData": {"version": "3.0", "vectorString": "secondary-v30", "baseScore": 3.0, "baseSeverity": "LOW"}
+                                },
+                                {
+                                  "source": "nvd@nist.gov",
+                                  "type": "Primary",
+                                  "cvssData": {"version": "3.0", "vectorString": "primary-v30", "baseScore": 9.0, "baseSeverity": "CRITICAL"}
+                                }
+                              ],
+                              "cvssMetricV31": [
+                                {
+                                  "source": "cna@example.com",
+                                  "type": "Secondary",
+                                  "cvssData": {"version": "3.1", "vectorString": "secondary-v31", "baseScore": 4.0, "baseSeverity": "MEDIUM"}
+                                },
+                                {
+                                  "source": "nvd@nist.gov",
+                                  "type": "Primary",
+                                  "cvssData": {"version": "3.1", "vectorString": "primary-v31", "baseScore": 10.0, "baseSeverity": "CRITICAL"}
+                                }
+                              ],
+                              "cvssMetricV40": [
+                                {
+                                  "source": "untyped@example.com",
+                                  "cvssData": {"version": "4.0", "vectorString": "untyped-v40", "baseScore": 6.0, "baseSeverity": "MEDIUM"}
+                                },
+                                {
+                                  "source": "cna@example.com",
+                                  "type": "Secondary",
+                                  "cvssData": {"version": "4.0", "vectorString": "secondary-v40", "baseScore": 9.0, "baseSeverity": "CRITICAL"}
+                                },
+                                {
+                                  "source": "nvd@nist.gov",
+                                  "type": "Primary",
+                                  "cvssData": {"version": "4.0", "vectorString": "primary-v40", "baseScore": 7.0, "baseSeverity": "HIGH"}
+                                }
+                              ]
+                            }
+                          }
+                        }
+                        """, DefCveItem.class);
+
+        final List<VulnerabilityRating> ratings =
+                ModelConverter.convert(cveItem).getVulnerabilities(0).getRatingsList();
+
+        assertThat(ratings)
+                .extracting(VulnerabilityRating::getVector)
+                .containsExactly(
+                        "primary-v2",
+                        "secondary-v2",
+                        "primary-v30",
+                        "secondary-v30",
+                        "primary-v31",
+                        "secondary-v31",
+                        "primary-v40",
+                        "untyped-v40",
+                        "secondary-v40");
+    }
 
     @Test
     public void testVulnerabilityConversion() throws IOException {

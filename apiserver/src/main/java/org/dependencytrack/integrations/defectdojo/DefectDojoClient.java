@@ -103,54 +103,42 @@ public class DefectDojoClient {
     }
 
     public ArrayList<String> getDojoTestIds(final String token, final String eid) {
-        LOGGER.debug("Pulling DefectDojo Tests API ...");
-        LOGGER.debug("Make the first pagination call");
+        final ArrayList<String> dojoTests = new ArrayList<>();
+        String pageUrl = baseURL + "/api/v2/tests/?limit=100&engagement=" + eid;
         try {
-            final String url = baseURL + "/api/v2/tests/?limit=100&engagement=" + eid;
-            var request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Accept", "application/json")
-                    .header("Authorization", "Token " + token)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 200 && response.body() != null) {
-                JsonNode dojoObj = Mappers.jsonMapper().readTree(response.body());
-                JsonNode dojoArray = dojoObj.get("results");
-                ArrayList<String> dojoTests = jsonToList(dojoArray);
-
-                while (dojoObj.hasNonNull("next")
-                        && !dojoObj.get("next").asText().isBlank()) {
-                    final String nextUrl = dojoObj.get("next").asText();
-                    LOGGER.debug("Making the subsequent pagination call on {}", nextUrl);
-                    request = HttpRequest.newBuilder()
-                            .uri(URI.create(nextUrl))
-                            .header("Accept", "application/json")
-                            .header("Authorization", "Token " + token)
-                            .GET()
-                            .build();
-                    response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-                    dojoObj = Mappers.jsonMapper().readTree(response.body());
-                    dojoArray = dojoObj.get("results");
-                    if (dojoArray != null) {
-                        dojoTests.addAll(jsonToList(dojoArray));
-                    }
+            while (pageUrl != null && !pageUrl.isBlank()) {
+                final var request = HttpRequest.newBuilder()
+                        .uri(URI.create(pageUrl))
+                        .header("Accept", "application/json")
+                        .header("Authorization", "Token " + token)
+                        .GET()
+                        .build();
+                final HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() != 200) {
+                    throw new IllegalStateException("DefectDojo test lookup failed with HTTP " + response.statusCode());
                 }
-                LOGGER.debug("Successfully retrieved the test list ");
-                return dojoTests;
-            } else {
-                LOGGER.warn(
-                        "DefectDojo Client did not receive expected response while attempting to retrieve tests list {}",
-                        response.statusCode());
+                if (response.body() == null || response.body().isBlank()) {
+                    throw new IllegalStateException("DefectDojo test lookup returned an empty body");
+                }
+                final JsonNode page = Mappers.jsonMapper().readTree(response.body());
+                final JsonNode results = page == null ? null : page.get("results");
+                if (results == null || !results.isArray()) {
+                    throw new IllegalStateException("DefectDojo test lookup returned no results array");
+                }
+                dojoTests.addAll(jsonToList(results));
+                final JsonNode next = page.get("next");
+                if (next != null && !next.isNull() && !next.isTextual()) {
+                    throw new IllegalStateException("DefectDojo test lookup returned an invalid next page URL");
+                }
+                pageUrl = next == null || next.isNull() ? null : next.asText();
             }
+            return dojoTests;
         } catch (IOException ex) {
-            uploader.handleException(LOGGER, ex);
+            throw new UncheckedIOException("DefectDojo test lookup failed; upload aborted", ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            uploader.handleException(LOGGER, ex);
+            throw new IllegalStateException("DefectDojo test lookup interrupted; upload aborted", ex);
         }
-        return new ArrayList<>();
     }
 
     public String getDojoTestId(

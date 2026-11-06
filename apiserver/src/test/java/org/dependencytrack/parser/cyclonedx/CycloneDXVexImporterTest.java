@@ -39,6 +39,7 @@ import javax.jdo.Query;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -774,5 +775,128 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         final Analysis analysis = qm.getAnalysis(component, vuln);
         assertThat(analysis.getOwaspVector()).isNull();
         assertThat(analysis.getOwaspScore()).isNull();
+    }
+
+    @Test
+    public void shouldKeepAnalysisDetailsWhenVexDetailIsEmpty() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, component, "none");
+
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+                .withDetails("Old details")
+                .withOptions(EnumSet.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0001",
+                      "source": { "name": "NVD" },
+                      "analysis": {
+                        "state": "exploitable",
+                        "detail": ""
+                      },
+                      "affects": [
+                        { "ref": "project" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+
+        final Analysis analysis = qm.getAnalysis(component, vuln);
+        assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.EXPLOITABLE);
+        assertThat(analysis.getAnalysisDetails()).isEqualTo("Old details");
+        assertThat(analysis.getAnalysisComments())
+                .extracting(AnalysisComment::getComment)
+                .noneMatch(comment -> comment.startsWith("Details:"));
+    }
+
+    @Test
+    public void shouldKeepAnalysisDetailsWhenVexDetailIsAbsent() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, component, "none");
+
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+                .withDetails("Old details")
+                .withOptions(EnumSet.of(
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "acme-app",
+                      "version": "1.0.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0001",
+                      "source": { "name": "NVD" },
+                      "analysis": {
+                        "state": "exploitable"
+                      },
+                      "affects": [
+                        { "ref": "project" }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+
+        final Analysis analysis = qm.getAnalysis(component, vuln);
+        assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.EXPLOITABLE);
+        assertThat(analysis.getAnalysisDetails()).isEqualTo("Old details");
+        assertThat(analysis.getAnalysisComments())
+                .extracting(AnalysisComment::getComment)
+                .noneMatch(comment -> comment.startsWith("Details:"));
     }
 }

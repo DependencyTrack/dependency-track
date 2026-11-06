@@ -66,6 +66,7 @@ import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.parser.spdx.expression.SpdxExpression;
 import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -824,6 +825,59 @@ public class ModelConverter {
             }
         }
         */
+
+        return cycloneComponent;
+    }
+
+    public static org.cyclonedx.model.Component convert(
+            final Component component,
+            final List<ComponentDao.ComponentLicenseRow> licenseRows,
+            final Map<Long, ComponentDao.LicenseRow> licensesById) {
+
+        final org.cyclonedx.model.Component cycloneComponent = convert(component);
+        cycloneComponent.setLicenses(null);
+        if (licenseRows.isEmpty()) {
+            return cycloneComponent;
+        }
+
+        final var licenseChoice = new LicenseChoice();
+        for (final ComponentDao.ComponentLicenseRow row : licenseRows) {
+            if (row.licenseExpression() != null) {
+                final var expression = new Expression();
+                expression.setValue(row.licenseExpression());
+                licenseChoice.setExpression(expression);
+                continue;
+            }
+
+            final var cycloneLicense = new License();
+            if (row.licenseId() != null) {
+                final ComponentDao.LicenseRow license = licensesById.get(row.licenseId());
+                if (license == null) {
+                    continue;
+                }
+
+                if (license.customLicense()) {
+                    cycloneLicense.setName(license.name());
+                } else {
+                    cycloneLicense.setId(license.licenseId());
+                }
+            } else if (row.license() != null) {
+                cycloneLicense.setName(row.license());
+            } else {
+                continue;
+            }
+
+            cycloneLicense.setUrl(row.licenseUrl());
+            licenseChoice.addLicense(cycloneLicense);
+        }
+
+        final boolean hasLicenses = licenseChoice.getLicenses() != null
+                && !licenseChoice.getLicenses().isEmpty();
+        final boolean hasExpression = licenseChoice.getExpression() != null;
+
+        if (hasLicenses || hasExpression) {
+            cycloneComponent.setLicenses(licenseChoice);
+        }
 
         return cycloneComponent;
     }

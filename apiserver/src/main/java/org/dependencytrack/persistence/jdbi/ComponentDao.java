@@ -31,6 +31,7 @@ import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
 import org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.mapper.reflect.BeanMapper;
+import org.jdbi.v3.core.statement.PreparedBatch;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
@@ -613,6 +614,9 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             if (rs.getString("LAST_RISKSCORE") != null) {
                 columns.maybeSet(rs, "LAST_RISKSCORE", ResultSet::getDouble, component::setLastInheritedRiskScore);
             }
+            columns.maybeSet(rs, "componentLicenseName", ResultSet::getString, component::setLicense);
+            columns.maybeSet(rs, "licenseExpression", ResultSet::getString, component::setLicenseExpression);
+            columns.maybeSet(rs, "licenseUrl", ResultSet::getString, component::setLicenseUrl);
             if (columns.contains("licenseUuid") && rs.getString("licenseUuid") != null) {
                 final var license = new License();
                 license.setUuid(UUID.fromString(rs.getString("licenseUuid")));
@@ -633,5 +637,192 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             }
             return new ListedComponent(component, publishedAtMicros);
         }
+    }
+
+    public record ComponentLicenseRow(
+            long componentId,
+            Long licenseId,
+            String license,
+            String licenseExpression,
+            String licenseUrl,
+            long ordinality,
+            String acknowledgement) {}
+
+    default void replaceComponentLicenses(List<Long> componentIds, List<ComponentLicenseRow> updates) {
+
+        if (componentIds.isEmpty()) {
+            return;
+        }
+
+        final PreparedBatch deleteBatch = getHandle().prepareBatch("""
+            DELETE FROM "COMPONENTLICENSES"
+            WHERE "COMPONENTID" = :componentId
+        """);
+
+        for (final Long componentId : componentIds) {
+            deleteBatch.bind("componentId", componentId).add();
+        }
+
+        deleteBatch.execute();
+
+        if (updates.isEmpty()) {
+            return;
+        }
+
+        final PreparedBatch batch = getHandle().prepareBatch("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENTID",
+                "LICENSE_ID",
+                "LICENSE",
+                "LICENSE_EXPRESSION",
+                "LICENSE_URL",
+                "ORDINALITY",
+                "ACKNOWLEDGEMENT"
+            )
+            VALUES (
+                :componentId,
+                :licenseId,
+                :license,
+                :licenseExpression,
+                :licenseUrl,
+                :ordinality,
+                :acknowledgement
+            )
+            """);
+
+        for (final ComponentLicenseRow update : updates) {
+            batch.bind("componentId", update.componentId())
+                    .bind("licenseId", update.licenseId())
+                    .bind("license", update.license())
+                    .bind("licenseExpression", update.licenseExpression())
+                    .bind("licenseUrl", update.licenseUrl())
+                    .bind("ordinality", update.ordinality())
+                    .bind("acknowledgement", update.acknowledgement())
+                    .add();
+        }
+
+        batch.execute();
+    }
+
+    default Map<Long, ComponentLicenseRow> getFirstLicenseRow(Collection<Long> componentIds) {
+        if (componentIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getHandle()
+                .createQuery("""
+            SELECT DISTINCT ON (cl."COMPONENTID")
+                cl."COMPONENTID",
+                cl."LICENSE_ID",
+                cl."LICENSE",
+                cl."LICENSE_EXPRESSION",
+                cl."LICENSE_URL",
+                cl."ORDINALITY",
+                cl."ACKNOWLEDGEMENT"
+            FROM "COMPONENTLICENSES" AS cl
+            WHERE cl."COMPONENTID" = ANY(:componentIds)
+            ORDER BY cl."COMPONENTID",
+                cl."ORDINALITY",
+                cl."ID"
+            """)
+                .bindArray("componentIds", Long.class, componentIds)
+                .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
+                    final long componentId = rs.getLong("COMPONENTID");
+
+                    final long licenseIdValue = rs.getLong("LICENSE_ID");
+                    final Long licenseId = rs.wasNull() ? null : licenseIdValue;
+
+                    result.put(
+                            componentId,
+                            new ComponentLicenseRow(
+                                    componentId,
+                                    licenseId,
+                                    rs.getString("LICENSE"),
+                                    rs.getString("LICENSE_EXPRESSION"),
+                                    rs.getString("LICENSE_URL"),
+                                    rs.getLong("ORDINALITY"),
+                                    rs.getString("ACKNOWLEDGEMENT")));
+
+                    return result;
+                });
+    }
+
+    default Map<Long, List<ComponentLicenseRow>> getLicenseRows(final Collection<Long> componentIds) {
+        if (componentIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getHandle()
+                .createQuery("""
+                SELECT "COMPONENTID",
+                    "LICENSE_ID",
+                    "LICENSE",
+                    "LICENSE_EXPRESSION",
+                    "LICENSE_URL",
+                    "ORDINALITY",
+                    "ACKNOWLEDGEMENT"
+                FROM "COMPONENTLICENSES"
+                WHERE "COMPONENTID" = ANY(:componentIds)
+                ORDER BY "COMPONENTID", "ORDINALITY", "ID"
+                """)
+                .bindArray("componentIds", Long.class, componentIds)
+                .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
+                    final long componentId = rs.getLong("COMPONENTID");
+                    final Long licenseId = rs.getObject("LICENSE_ID", Long.class);
+
+                    result.computeIfAbsent(componentId, ignored -> new ArrayList<>())
+                            .add(new ComponentLicenseRow(
+                                    componentId,
+                                    licenseId,
+                                    rs.getString("LICENSE"),
+                                    rs.getString("LICENSE_EXPRESSION"),
+                                    rs.getString("LICENSE_URL"),
+                                    rs.getLong("ORDINALITY"),
+                                    rs.getString("ACKNOWLEDGEMENT")));
+
+                    return result;
+                });
+    }
+
+    public record LicenseRow(
+            long id,
+            UUID uuid,
+            String licenseId,
+            String name,
+            boolean customLicense,
+            boolean fsfLibre,
+            boolean osiApproved) {}
+
+    default Map<Long, LicenseRow> getLicensesByIds(Collection<Long> licenseIds) {
+        if (licenseIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getHandle()
+                .createQuery("""
+            SELECT "ID",
+                "UUID",
+                "LICENSEID",
+                "NAME",
+                "ISCUSTOMLICENSE",
+                "FSFLIBRE",
+                "ISOSIAPPROVED"
+            FROM "LICENSE"
+            WHERE "ID" = ANY(:licenseIds)
+            """)
+                .bindArray("licenseIds", Long.class, licenseIds)
+                .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
+                    final var license = new LicenseRow(
+                            rs.getLong("ID"),
+                            UUID.fromString(rs.getString("UUID")),
+                            rs.getString("LICENSEID"),
+                            rs.getString("NAME"),
+                            rs.getBoolean("ISCUSTOMLICENSE"),
+                            rs.getBoolean("FSFLIBRE"),
+                            rs.getBoolean("ISOSIAPPROVED"));
+
+                    result.put(license.id(), license);
+                    return result;
+                });
     }
 }

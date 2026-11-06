@@ -43,6 +43,7 @@ import javax.jdo.JDOObjectNotFoundException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -176,5 +177,50 @@ public class ComponentDaoTest extends PersistenceCapableTest {
         assertThat(componentDao.getComponentId(component.getUuid())).isEqualTo(null);
         qm.persist(component);
         assertThat(componentDao.getComponentId(component.getUuid())).isEqualTo(component.getId());
+    }
+
+    @Test
+    public void testReplacingComponentLicenses() {
+
+        final var project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        qm.persist(component);
+
+        final var otherComponent = new Component();
+        otherComponent.setProject(project);
+        otherComponent.setName("other-lib");
+        otherComponent.setVersion("1.0.0");
+        qm.persist(otherComponent);
+        qm.getPersistenceManager().flush();
+
+        final var originalRows = List.of(
+                new ComponentDao.ComponentLicenseRow(
+                        component.getId(), null, "License A", null, "https://example.com/license-a", 1, "DECLARED"),
+                new ComponentDao.ComponentLicenseRow(
+                        component.getId(), null, null, "MIT OR Apache-2.0", null, 2, "DECLARED"),
+                new ComponentDao.ComponentLicenseRow(
+                        otherComponent.getId(), null, "Other License", null, null, 1, "DECLARED"));
+
+        componentDao.replaceComponentLicenses(List.of(component.getId(), otherComponent.getId()), originalRows);
+
+        final var replacementRows = List.of(new ComponentDao.ComponentLicenseRow(
+                component.getId(), null, "Replacement License", null, null, 1, "DECLARED"));
+
+        componentDao.replaceComponentLicenses(List.of(component.getId()), replacementRows);
+
+        assertThat(componentDao.getLicenseRows(List.of(component.getId(), otherComponent.getId())))
+                .containsOnlyKeys(component.getId(), otherComponent.getId())
+                .satisfies(rowsByComponentId -> {
+                    assertThat(rowsByComponentId.get(component.getId())).containsExactlyElementsOf(replacementRows);
+                    assertThat(rowsByComponentId.get(otherComponent.getId())).containsExactly(originalRows.get(2));
+                });
+
+        componentDao.replaceComponentLicenses(List.of(component.getId()), List.of());
+
+        assertThat(componentDao.getLicenseRows(List.of(component.getId()))).doesNotContainKey(component.getId());
     }
 }

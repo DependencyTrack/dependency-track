@@ -32,17 +32,22 @@ class WatermarkManagerTest {
 
     private final KeyValueStore kvStore = new MockKeyValueStore();
 
+    private static String hash(final String value) {
+        return org.apache.commons.codec.digest.DigestUtils.sha256Hex(value).substring(0, 12);
+    }
+
     @Test
     void createShouldInitializeWatermarkWhenAvailable() {
+        final String dataUrl = "https://example.com/osv-vulnerabilities";
         kvStore.putMany(Map.ofEntries(
                 Map.entry(
-                        "watermark/maven",
+                        "watermark/" + hash(dataUrl) + "/maven",
                         String.valueOf(Instant.ofEpochSecond(666).toEpochMilli())),
                 Map.entry(
-                        "watermark/npm",
+                        "watermark/" + hash(dataUrl) + "/npm",
                         String.valueOf(Instant.ofEpochSecond(555).toEpochMilli()))));
 
-        final var watermarkManager = new WatermarkManager(List.of("maven", "npm"), kvStore);
+        final var watermarkManager = new WatermarkManager(dataUrl, List.of("maven", "npm"), kvStore);
         assertThat(watermarkManager).isNotNull();
         assertThat(watermarkManager.getWatermark("maven")).isEqualTo(Instant.ofEpochSecond(666));
         assertThat(watermarkManager.getWatermark("npm")).isEqualTo(Instant.ofEpochSecond(555));
@@ -50,14 +55,28 @@ class WatermarkManagerTest {
 
     @Test
     void createShouldNotInitializeWatermarkWhenNotAvailable() {
-        final var watermarkManager = new WatermarkManager(List.of("maven"), kvStore);
+        final var watermarkManager =
+                new WatermarkManager("https://example.com/osv-vulnerabilities", List.of("maven"), kvStore);
         assertThat(watermarkManager).isNotNull();
         assertThat(watermarkManager.getWatermark("maven")).isNull();
     }
 
     @Test
+    void shouldUseSourceUrlForWatermarkKey() {
+        final String originalUrl = "https://a.example.com";
+        final String newUrl = "https://b.example.com";
+        kvStore.put(
+                "watermark/" + hash(originalUrl) + "/maven",
+                String.valueOf(Instant.ofEpochSecond(666).toEpochMilli()));
+
+        final var watermarkManager = new WatermarkManager(newUrl, List.of("maven"), kvStore);
+        assertThat(watermarkManager.getWatermark("maven")).isNull();
+    }
+
+    @Test
     void shouldAdvanceWatermarkWhenInitialWatermarkIsNull() {
-        final var watermarkManager = new WatermarkManager(List.of("maven"), kvStore);
+        final var watermarkManager =
+                new WatermarkManager("https://example.com/osv-vulnerabilities", List.of("maven"), kvStore);
 
         watermarkManager.maybeAdvance("maven", Instant.ofEpochSecond(666));
         assertThat(watermarkManager.getWatermark("maven")).isNull();
@@ -68,9 +87,12 @@ class WatermarkManagerTest {
 
     @Test
     void shouldAdvanceWatermarkWhenInitialWatermarkIsEarlier() {
-        kvStore.put("watermark/maven", String.valueOf(Instant.ofEpochSecond(666).toEpochMilli()));
+        final String dataUrl = "https://example.com/osv-vulnerabilities";
+        kvStore.put(
+                "watermark/" + hash(dataUrl) + "/maven",
+                String.valueOf(Instant.ofEpochSecond(666).toEpochMilli()));
 
-        final var watermarkManager = new WatermarkManager(List.of("maven"), kvStore);
+        final var watermarkManager = new WatermarkManager(dataUrl, List.of("maven"), kvStore);
 
         watermarkManager.maybeAdvance("maven", Instant.ofEpochSecond(667));
         assertThat(watermarkManager.getWatermark("maven")).isEqualTo(Instant.ofEpochSecond(666));

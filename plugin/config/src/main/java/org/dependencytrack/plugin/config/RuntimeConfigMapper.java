@@ -38,6 +38,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,6 +47,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -70,6 +72,7 @@ public final class RuntimeConfigMapper {
         private static final String I18N = "x-i18n";
         private static final String SECRET_REF = "x-secret-ref";
         private static final String UI_HINT = "x-ui-hint";
+        private static final String UNIQUE_ITEM_PROPERTIES = "x-unique-item-properties";
     }
 
     private static final RuntimeConfigMapper INSTANCE = new RuntimeConfigMapper();
@@ -95,7 +98,8 @@ public final class RuntimeConfigMapper {
                 .keywords(List.of(
                         new NonValidationKeyword(CustomAnnotations.I18N),
                         new NonValidationKeyword(CustomAnnotations.SECRET_REF),
-                        new NonValidationKeyword(CustomAnnotations.UI_HINT)))
+                        new NonValidationKeyword(CustomAnnotations.UI_HINT),
+                        new NonValidationKeyword(CustomAnnotations.UNIQUE_ITEM_PROPERTIES)))
                 .build();
         this.schemaRegistry = SchemaRegistry.withDialect(
                 schemaDialect,
@@ -149,7 +153,9 @@ public final class RuntimeConfigMapper {
         final RuntimeConfigSchema schema = getSchema(runtimeConfigSpec);
         final JsonNode configNode = jsonMapper.convertValue(config, JsonNode.class);
 
-        final List<Error> validationErrors = schema.jsonSchema().validate(configNode);
+        final List<Error> validationErrors = new ArrayList<>(schema.jsonSchema().validate(configNode));
+        validationErrors.addAll(
+                validateCustomSchemaAnnotations(configNode, schema.jsonSchema().getSchemaNode()));
         if (!validationErrors.isEmpty()) {
             throw new RuntimeConfigSchemaValidationException(validationErrors);
         }
@@ -183,7 +189,9 @@ public final class RuntimeConfigMapper {
             throw new UncheckedIOException(e);
         }
 
-        final List<Error> validationErrors = schema.jsonSchema().validate(configNode);
+        final List<Error> validationErrors = new ArrayList<>(schema.jsonSchema().validate(configNode));
+        validationErrors.addAll(
+                validateCustomSchemaAnnotations(configNode, schema.jsonSchema().getSchemaNode()));
         if (!validationErrors.isEmpty()) {
             throw new RuntimeConfigSchemaValidationException(validationErrors);
         }
@@ -235,6 +243,59 @@ public final class RuntimeConfigMapper {
 
             return new RuntimeConfigSchema(jsonSchema, secretRefPaths);
         });
+    }
+
+    private List<Error> validateCustomSchemaAnnotations(JsonNode configNode, JsonNode schemaNode) {
+        final var validationErrors = new ArrayList<Error>();
+        validateCustomSchemaAnnotations(configNode, schemaNode, validationErrors);
+        return validationErrors;
+    }
+
+    private void validateCustomSchemaAnnotations(JsonNode configNode, JsonNode schemaNode, List<Error> errors) {
+        if (configNode == null || schemaNode == null || !schemaNode.isObject()) {
+            return;
+        }
+
+        if (configNode.isArray() && schemaNode.has(CustomAnnotations.UNIQUE_ITEM_PROPERTIES)) {
+            final var propertyNames = new ArrayList<String>();
+            schemaNode.get(CustomAnnotations.UNIQUE_ITEM_PROPERTIES).forEach(node -> propertyNames.add(node.asText()));
+
+            final var seen = new HashSet<String>();
+            for (int i = 0; i < configNode.size(); i++) {
+                final JsonNode item = configNode.get(i);
+                if (!item.isObject()) {
+                    continue;
+                }
+
+                final var signature = propertyNames.stream()
+                        .map(name -> item.path(name).isMissingNode()
+                                ? ""
+                                : item.path(name).asText())
+                        .collect(Collectors.joining("\u0000"));
+                if (!seen.add(signature)) {
+                    errors.add(Error.builder()
+                            .keyword(CustomAnnotations.UNIQUE_ITEM_PROPERTIES)
+                            .message("Duplicate item for unique property set %s".formatted(propertyNames))
+                            .build());
+                }
+            }
+        }
+
+        if (schemaNode.has("properties")) {
+            schemaNode.get("properties").fields().forEachRemaining(entry -> {
+                final JsonNode propertyNode = configNode.get(entry.getKey());
+                if (propertyNode != null) {
+                    validateCustomSchemaAnnotations(propertyNode, entry.getValue(), errors);
+                }
+            });
+        }
+
+        if (schemaNode.has("items") && configNode.isArray()) {
+            final JsonNode itemsSchema = schemaNode.get("items");
+            for (int i = 0; i < configNode.size(); i++) {
+                validateCustomSchemaAnnotations(configNode.get(i), itemsSchema, errors);
+            }
+        }
     }
 
     private Set<String> getSecretRefPaths(JsonNode schemaNode, @Nullable String currentPath) {

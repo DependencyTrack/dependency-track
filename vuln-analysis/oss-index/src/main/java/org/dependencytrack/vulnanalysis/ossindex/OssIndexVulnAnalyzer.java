@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import io.github.nscuro.versatile.VersionFactory;
+import io.github.nscuro.versatile.version.KnownVersioningSchemes;
 import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
@@ -46,6 +48,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
@@ -54,6 +57,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Gatherers;
 
@@ -234,31 +238,167 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
             throw new UncheckedIOException("Failed to retrieve component report", e);
         }
 
+        final var reportBySubmittedPurl = new HashMap<String, ComponentReport>();
+        final var reportsByExactCoord = new HashMap<String, ComponentReport>();
+        for (final ComponentReport report : batchReports) {
+            if (report.coordinates() != null) {
+                reportsByExactCoord.put(report.coordinates(), report);
+            }
+        }
+
+        final var unmatchedSubmittedPurls = new ArrayList<String>();
+        for (final String purl : purlBatch) {
+            final ComponentReport exactMatch = reportsByExactCoord.get(purl);
+            if (exactMatch != null) {
+                reportBySubmittedPurl.put(purl, exactMatch);
+            } else {
+                unmatchedSubmittedPurls.add(purl);
+            }
+        }
+
+        if (!unmatchedSubmittedPurls.isEmpty()) {
+            for (final String submittedPurl : unmatchedSubmittedPurls) {
+                final PackageURL parsedSubmitted = parsePurlQuietly(submittedPurl);
+                if (parsedSubmitted == null) {
+                    continue;
+                }
+
+                for (final ComponentReport report : batchReports) {
+                    if (report.coordinates() == null) {
+                        continue;
+                    }
+                    final PackageURL parsedReport = parsePurlQuietly(report.coordinates());
+                    if (parsedReport != null && arePurlsEquivalent(parsedSubmitted, parsedReport)) {
+                        reportBySubmittedPurl.put(submittedPurl, report);
+                        LOGGER.debug(
+                                "Correlated OSS Index report coordinates '{}' to submitted PURL '{}'",
+                                report.coordinates(),
+                                submittedPurl);
+                        break;
+                    }
+                }
+            }
+        }
+
         final var reportedVulnsByPurl = new HashMap<String, List<ComponentReportVulnerability>>(batchReports.size());
         final var entriesToCache = new HashMap<String, byte @Nullable []>(purlBatch.size());
 
-        for (final var report : batchReports) {
+        for (final var entry : reportBySubmittedPurl.entrySet()) {
+            final String submittedPurl = entry.getKey();
+            final ComponentReport report = entry.getValue();
+
             if (report.vulnerabilities() != null && !report.vulnerabilities().isEmpty()) {
-                reportedVulnsByPurl.put(report.coordinates(), report.vulnerabilities());
+                reportedVulnsByPurl.put(submittedPurl, report.vulnerabilities());
                 try {
-                    entriesToCache.put(report.coordinates(), objectMapper.writeValueAsBytes(report.vulnerabilities()));
+                    final byte[] serializedBytes = objectMapper.writeValueAsBytes(report.vulnerabilities());
+                    entriesToCache.put(submittedPurl, serializedBytes);
+                    if (report.coordinates() != null && !report.coordinates().equals(submittedPurl)) {
+                        entriesToCache.put(report.coordinates(), serializedBytes);
+                    }
                 } catch (IOException e) {
-                    LOGGER.warn(
-                            "Failed to serialize component report for PURL '{}'; Skipping cache",
-                            report.coordinates(),
-                            e);
+                    LOGGER.warn("Failed to serialize component report for PURL '{}'; Skipping cache", submittedPurl, e);
+                }
+            } else {
+                entriesToCache.put(submittedPurl, null);
+                if (report.coordinates() != null && !report.coordinates().equals(submittedPurl)) {
+                    entriesToCache.put(report.coordinates(), null);
                 }
             }
         }
 
         for (final String purl : purlBatch) {
-            if (!reportedVulnsByPurl.containsKey(purl)) {
+            if (!reportBySubmittedPurl.containsKey(purl)) {
                 entriesToCache.put(purl, null);
+            }
+        }
+
+        for (final ComponentReport report : batchReports) {
+            if (report.coordinates() != null && !entriesToCache.containsKey(report.coordinates())) {
+                if (report.vulnerabilities() != null
+                        && !report.vulnerabilities().isEmpty()) {
+                    reportedVulnsByPurl.put(report.coordinates(), report.vulnerabilities());
+                    try {
+                        entriesToCache.put(
+                                report.coordinates(), objectMapper.writeValueAsBytes(report.vulnerabilities()));
+                    } catch (IOException e) {
+                        LOGGER.warn(
+                                "Failed to serialize component report for PURL '{}'; Skipping cache",
+                                report.coordinates(),
+                                e);
+                    }
+                } else {
+                    entriesToCache.put(report.coordinates(), null);
+                }
             }
         }
 
         resultsCache.putMany(entriesToCache);
         return reportedVulnsByPurl;
+    }
+
+    private static @Nullable PackageURL parsePurlQuietly(final String coordinates) {
+        try {
+            return new PackageURL(coordinates);
+        } catch (MalformedPackageURLException e) {
+            return null;
+        }
+    }
+
+    private static boolean arePurlsEquivalent(final PackageURL purl1, final PackageURL purl2) {
+        if (!Objects.equals(purl1.getType(), purl2.getType())
+                || !areNamespacesEqual(purl1.getNamespace(), purl2.getNamespace())
+                || !Objects.equals(purl1.getName(), purl2.getName())
+                || !areSubpathsEqual(purl1.getSubpath(), purl2.getSubpath())
+                || !areQualifiersEqual(purl1.getQualifiers(), purl2.getQualifiers())) {
+            return false;
+        }
+
+        if (Objects.equals(purl1.getVersion(), purl2.getVersion())) {
+            return true;
+        }
+
+        final String scheme = KnownVersioningSchemes.fromPurlType(purl1.getType())
+                .orElse(
+                        PackageURL.StandardTypes.GOLANG.equals(purl1.getType())
+                                ? KnownVersioningSchemes.SCHEME_GOLANG
+                                : null);
+        if (scheme != null && purl1.getVersion() != null && purl2.getVersion() != null) {
+            try {
+                final var v1 = VersionFactory.forScheme(scheme, purl1.getVersion());
+                final var v2 = VersionFactory.forScheme(scheme, purl2.getVersion());
+                return v1.compareTo(v2) == 0;
+            } catch (Exception e) {
+                LOGGER.debug(
+                        "Failed to compare versions '{}' and '{}' for scheme '{}'",
+                        purl1.getVersion(),
+                        purl2.getVersion(),
+                        scheme,
+                        e);
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean areNamespacesEqual(final @Nullable String n1, final @Nullable String n2) {
+        final String s1 = (n1 == null || n1.isEmpty()) ? null : n1;
+        final String s2 = (n2 == null || n2.isEmpty()) ? null : n2;
+        return Objects.equals(s1, s2);
+    }
+
+    private static boolean areSubpathsEqual(final @Nullable String s1, final @Nullable String s2) {
+        final String n1 = (s1 == null || s1.isEmpty()) ? null : s1;
+        final String n2 = (s2 == null || s2.isEmpty()) ? null : s2;
+        return Objects.equals(n1, n2);
+    }
+
+    private static boolean areQualifiersEqual(
+            final @Nullable Map<String, String> q1, final @Nullable Map<String, String> q2) {
+        if ((q1 == null || q1.isEmpty()) && (q2 == null || q2.isEmpty())) {
+            return true;
+        }
+        return Objects.equals(q1, q2);
     }
 
     private List<ComponentReport> getComponentReports(Collection<String> coordinates)

@@ -25,6 +25,8 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
+import org.cyclonedx.proto.v1_7.Vulnerability;
+import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.memory.MemoryCacheProvider;
 import org.dependencytrack.plugin.config.RuntimeConfigMapper;
@@ -447,5 +449,112 @@ class OssIndexVulnAnalyzerTest {
 
         final Bom vdr = analyzer.analyze(bom);
         assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
+    }
+
+    @Test
+    void shouldCorrelateGoVulnerabilitiesWhenOssIndexNormalizesVersionWithPrefix() throws Exception {
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
+                        [
+                          {
+                            "coordinates": "pkg:golang/golang.org/x/text@v0.3.5",
+                            "description": "golang.org/x/text",
+                            "reference": "https://ossindex.sonatype.org/component/pkg:golang/golang.org/x/text@v0.3.5",
+                            "vulnerabilities": [
+                              {
+                                "id": "CVE-2020-14040",
+                                "displayName": "CVE-2020-14040",
+                                "title": "[CVE-2020-14040] CWE-400: Uncontrolled Resource Consumption ('Resource Exhaustion')",
+                                "description": "The Read method of the encoding/unicode UTF-16 decoder allows an attacker to cause resource exhaustion.",
+                                "cvssScore": 7.5,
+                                "cvssVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+                                "cve": "CVE-2020-14040",
+                                "reference": "https://ossindex.sonatype.org/vulnerability/CVE-2020-14040?component-type=golang&component-name=golang.org%2Fx%2Ftext"
+                              }
+                            ]
+                          }
+                        ]
+                        """)));
+
+        final var bomWithoutPrefix = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("golang-text")
+                        .setName("text")
+                        .setPurl("pkg:golang/golang.org/x/text@0.3.5")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bomWithoutPrefix);
+        assertThat(vdr.getVulnerabilitiesCount()).isEqualTo(1);
+        final Vulnerability vuln = vdr.getVulnerabilities(0);
+        assertThat(vuln.getId()).isEqualTo("CVE-2020-14040");
+        assertThat(vuln.getAffectsList())
+                .containsExactly(
+                        VulnerabilityAffects.newBuilder().setRef("golang-text").build());
+
+        // Subsequent analysis with the same component should hit the cache.
+        final Bom cachedVdr = analyzer.analyze(bomWithoutPrefix);
+        assertThat(cachedVdr).isEqualTo(vdr);
+
+        // Subsequent analysis with the normalized version (as returned by OSS Index) should also hit the cache.
+        final var bomWithPrefix = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("golang-text-prefixed")
+                        .setName("text")
+                        .setPurl("pkg:golang/golang.org/x/text@v0.3.5")
+                        .build())
+                .build();
+        final Bom cachedPrefixedVdr = analyzer.analyze(bomWithPrefix);
+        assertThat(cachedPrefixedVdr.getVulnerabilitiesCount()).isEqualTo(1);
+        assertThat(cachedPrefixedVdr.getVulnerabilities(0).getId()).isEqualTo("CVE-2020-14040");
+        assertThat(cachedPrefixedVdr.getVulnerabilities(0).getAffectsList())
+                .containsExactly(VulnerabilityAffects.newBuilder()
+                        .setRef("golang-text-prefixed")
+                        .build());
+
+        verify(1, postRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void shouldCacheNegativeResultWhenGoComponentHasNoVulnerabilitiesAndOssIndexNormalizesVersion() throws Exception {
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
+                        [
+                          {
+                            "coordinates": "pkg:golang/golang.org/x/text@v0.3.5",
+                            "description": "golang.org/x/text",
+                            "reference": "https://ossindex.sonatype.org/component/pkg:golang/golang.org/x/text@v0.3.5",
+                            "vulnerabilities": []
+                          }
+                        ]
+                        """)));
+
+        final var bomWithoutPrefix = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("golang-text")
+                        .setName("text")
+                        .setPurl("pkg:golang/golang.org/x/text@0.3.5")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bomWithoutPrefix);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
+
+        // Subsequent analysis with the same component should hit the cache.
+        final Bom cachedVdr = analyzer.analyze(bomWithoutPrefix);
+        assertThat(cachedVdr).isEqualTo(Bom.getDefaultInstance());
+
+        // Subsequent analysis with normalized version should also hit the cache.
+        final var bomWithPrefix = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("golang-text-prefixed")
+                        .setName("text")
+                        .setPurl("pkg:golang/golang.org/x/text@v0.3.5")
+                        .build())
+                .build();
+        final Bom cachedPrefixedVdr = analyzer.analyze(bomWithPrefix);
+        assertThat(cachedPrefixedVdr).isEqualTo(Bom.getDefaultInstance());
+
+        verify(1, postRequestedFor(anyUrl()));
     }
 }

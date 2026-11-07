@@ -119,7 +119,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 .withAnyRequestBodyPart(aMultipart().withName("scan_date").withBody(matching("\\d{4}-\\d{2}-\\d{2}")))
                 .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",
@@ -233,7 +233,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                         aMultipart().withName("test_title").withBody(equalTo("configured name of test")))
                 .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",
@@ -455,7 +455,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 .withAnyRequestBodyPart(aMultipart().withName("scan_date").withBody(matching("\\d{4}-\\d{2}-\\d{2}")))
                 .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",
@@ -595,7 +595,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
                 .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",
@@ -717,7 +717,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                         aMultipart().withName("test_title").withBody(equalTo("configured name of test")))
                 .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",
@@ -791,7 +791,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
                 .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",

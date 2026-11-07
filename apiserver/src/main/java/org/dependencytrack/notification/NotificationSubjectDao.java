@@ -37,6 +37,7 @@ import org.jdbi.v3.sqlobject.config.RegisterRowMappers;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -673,7 +674,27 @@ public interface NotificationSubjectDao extends SqlObject {
     }
 
     default List<PolicyViolationSubject> getForNewPolicyViolations(Collection<Long> violationIds) {
-        if (violationIds.isEmpty()) {
+        return getForPolicyViolationUpdates(violationIds, true, false).stream()
+                .map(PolicyViolationUpdateSubject::subject)
+                .toList();
+    }
+
+    record PolicyViolationUpdateSubject(
+            PolicyViolationSubject subject,
+            @Nullable String analysisState,
+            @Nullable Boolean suppressed) {
+
+        public boolean isReviewed() {
+            return "APPROVED".equals(analysisState) || Boolean.TRUE.equals(suppressed);
+        }
+    }
+
+    /// Fetch both classes in one statement so a concurrent review cannot move the
+    /// same message transition between separate active and reviewed queries.
+    /// Review metadata represents the snapshot observed by this statement.
+    default List<PolicyViolationUpdateSubject> getForPolicyViolationUpdates(
+            Collection<Long> violationIds, boolean includeActive, boolean includeReviewed) {
+        if (violationIds.isEmpty() || (!includeActive && !includeReviewed)) {
             return List.of();
         }
 
@@ -728,11 +749,18 @@ public interface NotificationSubjectDao extends SqlObject {
                             ON p."ID" = pv."PROJECT_ID"
                           LEFT JOIN "VIOLATIONANALYSIS" AS va
                             ON va."POLICYVIOLATION_ID" = pv."ID"
-                         WHERE va."SUPPRESSED" IS DISTINCT FROM TRUE
-                           AND va."STATE" IS DISTINCT FROM 'APPROVED'
+                           AND va."COMPONENT_ID" = pv."COMPONENT_ID"
+                           AND va."PROJECT_ID" = pv."PROJECT_ID"
+                         WHERE (:includeActive
+                                AND va."SUPPRESSED" IS DISTINCT FROM TRUE
+                                AND va."STATE" IS DISTINCT FROM 'APPROVED')
+                            OR (:includeReviewed
+                                AND (va."SUPPRESSED" IS TRUE OR va."STATE" = 'APPROVED'))
                         """)
                 .bindArray("violationIds", Long.class, violationIds)
-                .map((RowViewMapper<PolicyViolationSubject>) row -> {
+                .bind("includeActive", includeActive)
+                .bind("includeReviewed", includeReviewed)
+                .map((RowViewMapper<PolicyViolationUpdateSubject>) row -> {
                     final Component component = row.getRow(Component.class);
                     final Project project = row.getRow(Project.class);
 
@@ -761,11 +789,15 @@ public interface NotificationSubjectDao extends SqlObject {
                     }
                     final PolicyViolation violation = violationBuilder.build();
 
-                    return PolicyViolationSubject.newBuilder()
+                    final var subject = PolicyViolationSubject.newBuilder()
                             .setProject(project)
                             .setComponent(component)
                             .setPolicyViolation(violation)
                             .build();
+                    return new PolicyViolationUpdateSubject(
+                            subject,
+                            row.getColumn("analysisState", String.class),
+                            row.getColumn("analysisSuppressed", Boolean.class));
                 })
                 .list();
     }

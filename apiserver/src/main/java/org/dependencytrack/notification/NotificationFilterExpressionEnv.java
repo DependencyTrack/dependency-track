@@ -43,6 +43,7 @@ import org.dependencytrack.notification.proto.v1.NewVulnerableDependencySubject;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysisDecisionChangeSubject;
 import org.dependencytrack.notification.proto.v1.PolicyViolationSubject;
+import org.dependencytrack.notification.proto.v1.PolicyViolationUpdatedSubject;
 import org.dependencytrack.notification.proto.v1.UserSubject;
 import org.dependencytrack.notification.proto.v1.VexConsumedOrProcessedSubject;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject;
@@ -94,6 +95,7 @@ public final class NotificationFilterExpressionEnv {
                         NewVulnerabilitySubject.getDescriptor(),
                         NewVulnerableDependencySubject.getDescriptor(),
                         PolicyViolationSubject.getDescriptor(),
+                        PolicyViolationUpdatedSubject.getDescriptor(),
                         PolicyViolationAnalysisDecisionChangeSubject.getDescriptor(),
                         VulnerabilityAnalysisDecisionChangeSubject.getDescriptor(),
                         VexConsumedOrProcessedSubject.getDescriptor(),
@@ -113,6 +115,7 @@ public final class NotificationFilterExpressionEnv {
                         NewVulnerabilitySubject.getDescriptor(),
                         NewVulnerableDependencySubject.getDescriptor(),
                         PolicyViolationSubject.getDescriptor(),
+                        PolicyViolationUpdatedSubject.getDescriptor(),
                         PolicyViolationAnalysisDecisionChangeSubject.getDescriptor(),
                         VulnerabilityAnalysisDecisionChangeSubject.getDescriptor(),
                         VexConsumedOrProcessedSubject.getDescriptor(),

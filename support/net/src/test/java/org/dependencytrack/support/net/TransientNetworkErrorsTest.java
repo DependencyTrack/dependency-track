@@ -54,6 +54,22 @@ class TransientNetworkErrorsTest {
     }
 
     @Test
+    void shouldClassifyTransportFailuresWithoutSpecificTypeAsTransient() {
+        // The same peer reset does not always reach us as a socket or channel exception.
+        // Ten runs of one WireMock CONNECTION_RESET_BY_PEER fault on Linux produced
+        // SocketException, EOFException, ClosedChannelException, and a plain IOException
+        // reading "Broken pipe", the last of which has no more specific type to match on.
+        assertThat(TransientNetworkErrors.isTransient(new IOException("Connection reset by peer")))
+                .isTrue();
+        assertThat(TransientNetworkErrors.isTransient(new IOException("connection reset")))
+                .isTrue();
+        assertThat(TransientNetworkErrors.isTransient(new IOException("Broken pipe")))
+                .isTrue();
+        assertThat(TransientNetworkErrors.isTransient(new IOException("broken pipe")))
+                .isTrue();
+    }
+
+    @Test
     void shouldClassifyPermanentFailuresAsNotTransient() {
         assertThat(TransientNetworkErrors.isTransient(new SSLHandshakeException("bad cert")))
                 .isFalse();

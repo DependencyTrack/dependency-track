@@ -404,6 +404,52 @@ class NotificationRouterTest extends PersistenceCapableTest {
         });
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldApplyDocumentedOptionalFieldFiltersWithoutMatchingAbsentValues(boolean reviewed) throws Exception {
+        final Notification notification = reviewed
+                ? TestNotificationFactory.createReviewedPolicyViolationUpdatedTestNotification()
+                : TestNotificationFactory.createPolicyViolationUpdatedTestNotification();
+        final var expressions = List.of(
+                "has(subject.current_message) && subject.current_message.contains('CVE-2021-45046')",
+                "has(subject.analysis_state) && subject.analysis_state == 'APPROVED'",
+                "has(subject.suppressed) && subject.suppressed");
+        final var names = List.of("current-message", "approved", "suppressed");
+        for (int index = 0; index < expressions.size(); index++) {
+            final var rule = new NotificationRule();
+            rule.setName(names.get(index));
+            rule.setTriggerType(NotificationTriggerType.EVENT);
+            rule.setScope(NotificationScope.PORTFOLIO);
+            rule.setNotifyOn(Set.of(convert(notification.getGroup())));
+            rule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+            rule.setEnabled(true);
+            rule.setFilterExpression(expressions.get(index));
+            qm.persist(rule);
+        }
+        assertThat(router.route(List.of(notification)))
+                .satisfiesExactly(result -> assertThat(result.ruleNames())
+                        .containsExactlyInAnyOrderElementsOf(reviewed ? names : List.of("current-message")));
+
+        final var absent = notification.getSubject().unpack(PolicyViolationUpdatedSubject.class).toBuilder()
+                .clearCurrentMessage()
+                .clearAnalysisState()
+                .clearSuppressed()
+                .build();
+        assertThat(router.route(List.of(
+                        notification.toBuilder().setSubject(Any.pack(absent)).build())))
+                .isEmpty();
+        if (reviewed) {
+            final var unsuppressed = notification.getSubject().unpack(PolicyViolationUpdatedSubject.class).toBuilder()
+                    .setSuppressed(false)
+                    .build();
+            assertThat(router.route(List.of(notification.toBuilder()
+                            .setSubject(Any.pack(unsuppressed))
+                            .build())))
+                    .satisfiesExactly(result ->
+                            assertThat(result.ruleNames()).containsExactlyInAnyOrder("current-message", "approved"));
+        }
+    }
+
     @Test
     void shouldApplyProjectAndTagLimitsToUpdates() throws Exception {
         final var tag = qm.persist(new Tag("selected"));

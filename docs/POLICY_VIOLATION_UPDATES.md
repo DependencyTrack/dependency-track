@@ -42,7 +42,8 @@ The new subject type is
   An absent field means no captured value; ordinary-group events retain their original shape
   and omit review metadata. Decisions may change later without altering this historical event.
 
-An example notification filter is `subject.current_message.contains('CVE-2021-45046')`.
+An example notification filter is
+`has(subject.current_message) && subject.current_message.contains('CVE-2021-45046')`.
 An arbitrary text change is not proof of a new KEV. Added and removed identifiers are not
 parsed from policy text. Set a filter appropriate to the policy and destination. Existing
 JSON webhook templates serialize the structured subject. Default human-readable templates
@@ -59,6 +60,8 @@ This implementation needs no schema migration. Existing group numbers and config
 subscriptions stay unchanged. Older consumers should continue processing the original group;
 consumers newly subscribing to updates need support for the new group and subject. The reviewed
 update group uses Protobuf value 26 and the same subject type with additive optional fields.
-A rule can use `subject.analysis_state == 'APPROVED'` or `subject.suppressed` to narrow the
-reviewed events it receives. Normal project, tag and group subscriptions still apply; a CEL
+A rule can use `has(subject.analysis_state) && subject.analysis_state == 'APPROVED'` or
+`has(subject.suppressed) && subject.suppressed` to narrow the reviewed events it receives.
+Presence checks distinguish an absent value from a recorded value. Normal project, tag and
+group subscriptions still apply; a CEL
 filter cannot turn an ordinary-group subscription into a reviewed-group subscription.

@@ -32,14 +32,17 @@ import org.dependencytrack.proto.policy.v1.Project;
 import org.dependencytrack.proto.policy.v1.Vulnerability;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.statement.StatementContext;
+import org.jdbi.v3.core.transaction.TransactionIsolationLevel;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -268,6 +271,7 @@ public final class CelPolicyDao {
                             AND fa."DELETED_AT" IS NULL
                        )
                        AND a."SUPPRESSED" IS NOT TRUE
+                     ORDER BY cv."COMPONENT_ID", cv."VULNERABILITY_ID"
                     """)
                 .define(
                         JdbiAttributes.ATTRIBUTE_QUERY_NAME,
@@ -550,8 +554,54 @@ public final class CelPolicyDao {
                 .toList();
     }
 
+    /** Backwards-compatible entry point: report only newly inserted violation IDs. */
     public Set<Long> reconcileViolations(
             long projectId, Map<Long, List<PolicyViolation>> reportedViolationsByComponentId) {
+        return reconcileViolationChanges(projectId, reportedViolationsByComponentId)
+                .createdIds();
+    }
+
+    /** A change in the evaluation message of an existing violation. */
+    public record MessageChange(
+            UUID uuid,
+            @Nullable String previousMessage,
+            @Nullable String currentMessage,
+            Instant changedAt) {}
+
+    /** Creation and update notifications are separate; existing behavior remains unchanged. */
+    public record ViolationChanges(Set<Long> createdIds, Map<Long, MessageChange> updatedById) {}
+
+    private record UpsertChange(
+            long id,
+            UUID uuid,
+            boolean created,
+            @Nullable String previousMessage,
+            @Nullable String currentMessage,
+            Instant changedAt) {}
+
+    public ViolationChanges reconcileViolationChanges(
+            long projectId, Map<Long, List<PolicyViolation>> reportedViolationsByComponentId) {
+        if (!jdbiHandle.isInTransaction()
+                || jdbiHandle.getTransactionIsolationLevel() != TransactionIsolationLevel.READ_COMMITTED) {
+            throw new IllegalStateException("Violation reconciliation requires a READ COMMITTED transaction");
+        }
+
+        // Serialize reconciliation even when no violations exist yet. This must be a
+        // separate statement: after waiting for the lock, the next READ COMMITTED
+        // snapshot includes the previous writer's committed messages. A lock inside
+        // the upsert CTE would still use its earlier, potentially stale snapshot.
+        // NO KEY UPDATE is compatible with the KEY SHARE locks taken by foreign keys.
+        if (jdbiHandle
+                .createQuery("""
+                        SELECT "ID" FROM "PROJECT" WHERE "ID" = :projectId FOR NO KEY UPDATE
+                        """)
+                .bind("projectId", projectId)
+                .mapTo(Long.class)
+                .findOne()
+                .isEmpty()) {
+            return new ViolationChanges(Set.of(), Map.of());
+        }
+
         if (reportedViolationsByComponentId.isEmpty()) {
             jdbiHandle.createUpdate("""
                             DELETE FROM "POLICYVIOLATION"
@@ -563,7 +613,7 @@ public final class CelPolicyDao {
                                   FOR UPDATE
                              )
                             """).bind("projectId", projectId).execute();
-            return Set.of();
+            return new ViolationChanges(Set.of(), Map.of());
         }
 
         int size = 0;
@@ -591,9 +641,18 @@ public final class CelPolicyDao {
             }
         }
 
-        return jdbiHandle
+        final List<UpsertChange> changes = jdbiHandle
                 .createQuery("""
-                        WITH upserted AS (
+                        -- The project lock was acquired before this statement's snapshot.
+                        WITH previous AS MATERIALIZED (
+                          SELECT pv."ID", pv."TEXT"
+                            FROM "POLICYVIOLATION" AS pv
+                           WHERE pv."PROJECT_ID" = :projectId
+                             AND (pv."COMPONENT_ID", pv."POLICYCONDITION_ID") IN (
+                               SELECT * FROM UNNEST(:componentIds, :policyConditionIds)
+                             )
+                        ),
+                        upserted AS (
                           INSERT INTO "POLICYVIOLATION" (
                             "UUID"
                           , "TIMESTAMP"
@@ -615,7 +674,7 @@ public final class CelPolicyDao {
                           WHERE "POLICYVIOLATION"."TEXT" IS DISTINCT FROM EXCLUDED."TEXT"
                           -- xmax is zero for rows created by this statement,
                           -- and non-zero for existing rows that were updated.
-                          RETURNING "ID", (xmax = 0) AS "CREATED"
+                          RETURNING "ID", "UUID", "TEXT", (xmax = 0) AS "CREATED"
                         ),
                         deleted AS (
                           DELETE FROM "POLICYVIOLATION"
@@ -630,7 +689,12 @@ public final class CelPolicyDao {
                                 FOR UPDATE
                            )
                         )
-                        SELECT "ID" FROM upserted WHERE "CREATED"
+                        SELECT u."ID", u."UUID", u."CREATED"
+                             , p."TEXT" AS "PREVIOUS_MESSAGE"
+                             , u."TEXT" AS "CURRENT_MESSAGE"
+                             , STATEMENT_TIMESTAMP() AS "CHANGED_AT"
+                          FROM upserted AS u
+                          LEFT JOIN previous AS p ON p."ID" = u."ID"
                         """)
                 .bind("timestamps", timestamps)
                 .bind("componentIds", componentIds)
@@ -639,8 +703,28 @@ public final class CelPolicyDao {
                 .bind("types", types)
                 .bind("texts", texts)
                 .bind("projectId", projectId)
-                .mapTo(Long.class)
-                .set();
+                .map((rs, ctx) -> new UpsertChange(
+                        rs.getLong("ID"),
+                        rs.getObject("UUID", UUID.class),
+                        rs.getBoolean("CREATED"),
+                        rs.getString("PREVIOUS_MESSAGE"),
+                        rs.getString("CURRENT_MESSAGE"),
+                        rs.getTimestamp("CHANGED_AT").toInstant()))
+                .list();
+
+        final Set<Long> createdIds = new HashSet<>();
+        final Map<Long, MessageChange> updatedById = new HashMap<>();
+        for (final UpsertChange change : changes) {
+            if (change.created()) {
+                createdIds.add(change.id());
+            } else {
+                updatedById.put(
+                        change.id(),
+                        new MessageChange(
+                                change.uuid(), change.previousMessage(), change.currentMessage(), change.changedAt()));
+            }
+        }
+        return new ViolationChanges(Set.copyOf(createdIds), Map.copyOf(updatedById));
     }
 
     public Project loadRequiredFields(long projectId, Map<CelType, Set<String>> requirements) {

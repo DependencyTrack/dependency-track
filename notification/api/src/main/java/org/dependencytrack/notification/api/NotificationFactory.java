@@ -22,6 +22,7 @@ import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedEpochRandomGenerator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
 import org.dependencytrack.notification.proto.v1.AnalysisTrigger;
 import org.dependencytrack.notification.proto.v1.BackReference;
@@ -41,6 +42,7 @@ import org.dependencytrack.notification.proto.v1.PolicyViolation;
 import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysis;
 import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysisDecisionChangeSubject;
 import org.dependencytrack.notification.proto.v1.PolicyViolationSubject;
+import org.dependencytrack.notification.proto.v1.PolicyViolationUpdatedSubject;
 import org.dependencytrack.notification.proto.v1.Project;
 import org.dependencytrack.notification.proto.v1.Scope;
 import org.dependencytrack.notification.proto.v1.UserSubject;
@@ -67,6 +69,8 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERAB
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABILITY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABLE_DEPENDENCY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_POLICY_VIOLATION;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_POLICY_VIOLATION_UPDATED;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_POLICY_VIOLATION_UPDATED_REVIEWED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_CREATED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_UNSPECIFIED;
@@ -401,6 +405,79 @@ public final class NotificationFactory {
                         .setComponent(component)
                         .setPolicyViolation(violation)
                         .build()))
+                .build();
+    }
+
+    public static Notification createPolicyViolationUpdatedNotification(
+            Project project,
+            Component component,
+            PolicyViolation violation,
+            @Nullable String previousMessage,
+            @Nullable String currentMessage,
+            Timestamp changedAt) {
+        return createPolicyViolationUpdatedNotification(
+                project, component, violation, previousMessage, currentMessage, changedAt, null, null);
+    }
+
+    /**
+     * Creates one update event using the review metadata captured by subject assembly.
+     * Approved or suppressed violations use a separately subscribed group. This does
+     * not change or clear the recorded review decision.
+     */
+    public static Notification createPolicyViolationUpdatedNotification(
+            Project project,
+            Component component,
+            PolicyViolation violation,
+            @Nullable String previousMessage,
+            @Nullable String currentMessage,
+            Timestamp changedAt,
+            @Nullable String analysisState,
+            @Nullable Boolean suppressed) {
+        requireNonNull(project, "project must not be null");
+        requireNonNull(component, "component must not be null");
+        requireNonNull(violation, "violation must not be null");
+        requireNonNull(changedAt, "changedAt must not be null");
+
+        final var violationBuilder = violation.toBuilder().clearMessage();
+        final var subjectBuilder = PolicyViolationUpdatedSubject.newBuilder()
+                .setProject(project)
+                .setComponent(component)
+                .setChangedAt(changedAt);
+        if (previousMessage != null) {
+            subjectBuilder.setPreviousMessage(previousMessage);
+        }
+        if (currentMessage != null) {
+            subjectBuilder.setCurrentMessage(currentMessage);
+            violationBuilder.setMessage(currentMessage);
+        }
+        if (analysisState != null) {
+            subjectBuilder.setAnalysisState(analysisState);
+        }
+        if (suppressed != null) {
+            subjectBuilder.setSuppressed(suppressed);
+        }
+        subjectBuilder.setPolicyViolation(violationBuilder);
+
+        final boolean reviewed = "APPROVED".equals(analysisState) || Boolean.TRUE.equals(suppressed);
+        final Group group = reviewed ? GROUP_POLICY_VIOLATION_UPDATED_REVIEWED : GROUP_POLICY_VIOLATION_UPDATED;
+        var title = (reviewed
+                        ? "Reviewed Policy Violation Updated on Project: ["
+                        : "Policy Violation Updated on Project: [")
+                + project.getName();
+        if (project.hasVersion()) {
+            title += " : " + project.getVersion();
+        }
+        title += "]";
+
+        final String content = reviewed
+                ? "The message of an approved or suppressed %s policy violation changed; the review decision is retained"
+                        .formatted(violation.getType().toLowerCase(Locale.ROOT))
+                : "The message of an existing %s policy violation changed"
+                        .formatted(violation.getType().toLowerCase(Locale.ROOT));
+        return newNotificationBuilder(SCOPE_PORTFOLIO, group, LEVEL_INFORMATIONAL)
+                .setTitle(title)
+                .setContent(content)
+                .setSubject(Any.pack(subjectBuilder.build()))
                 .build();
     }
 

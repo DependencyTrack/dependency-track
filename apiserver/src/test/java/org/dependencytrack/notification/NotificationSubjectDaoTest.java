@@ -43,14 +43,21 @@ import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
+import org.jdbi.v3.core.statement.SqlLogger;
+import org.jdbi.v3.core.statement.SqlStatements;
+import org.jdbi.v3.core.statement.StatementContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -973,5 +980,172 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                 handle -> handle.attach(NotificationSubjectDao.class).getForNewPolicyViolations(List.of()));
 
         assertThat(subjects).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"NONE", "REJECTED", "APPROVED"})
+    void shouldIgnoreReviewRowsForOtherComponentsOrProjects(String state) {
+        final var project = new Project();
+        project.setName("review-owner");
+        qm.persist(project);
+        final var otherProject = new Project();
+        otherProject.setName("other-review-owner");
+        qm.persist(otherProject);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("reviewed-component");
+        qm.persist(component);
+        final var otherComponent = new Component();
+        otherComponent.setProject(project);
+        otherComponent.setName("other-component");
+        qm.persist(otherComponent);
+        final var policy = qm.createPolicy("review-owner", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        final var condition = qm.createPolicyCondition(policy, Subject.EXPRESSION, Operator.MATCHES, "true");
+        final var violation = new PolicyViolation();
+        violation.setComponent(component);
+        violation.setPolicyCondition(condition);
+        violation.setType(PolicyViolation.Type.SECURITY);
+        violation.setTimestamp(new Date());
+        qm.persist(violation);
+
+        final boolean reviewed = "APPROVED".equals(state);
+        if (!"NONE".equals(state)) {
+            qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(component, violation)
+                    .withState(ViolationAnalysisState.valueOf(state))
+                    .withSuppress(false)
+                    .withOptions(Set.of(MakeViolationAnalysisCommand.Option.OMIT_NOTIFICATION)));
+        }
+        // The database's separate foreign keys permit inconsistent component/project tuples.
+        useJdbiTransaction(handle -> handle.createUpdate("""
+                        INSERT INTO "VIOLATIONANALYSIS"
+                            ("PROJECT_ID", "COMPONENT_ID", "POLICYVIOLATION_ID", "STATE", "SUPPRESSED")
+                        VALUES (:projectId, :otherComponentId, :violationId, :state, :suppressed),
+                               (:otherProjectId, :componentId, :violationId, :state, :suppressed)
+                        """)
+                .bind("projectId", project.getId())
+                .bind("otherProjectId", otherProject.getId())
+                .bind("componentId", component.getId())
+                .bind("otherComponentId", otherComponent.getId())
+                .bind("violationId", violation.getId())
+                .bind("state", reviewed ? "REJECTED" : "APPROVED")
+                .bind("suppressed", !reviewed)
+                .execute());
+
+        withJdbiHandle(handle -> {
+            assertThat(handle.createQuery("""
+                            SELECT COUNT(*) FROM "VIOLATIONANALYSIS" WHERE "POLICYVIOLATION_ID" = :id
+                            """)
+                            .bind("id", violation.getId())
+                            .mapTo(Integer.class)
+                            .one())
+                    .isEqualTo("NONE".equals(state) ? 2 : 3);
+            final var dao = handle.attach(NotificationSubjectDao.class);
+            final var ids = List.of(violation.getId());
+            assertThat(dao.getForPolicyViolationUpdates(ids, true, true))
+                    .singleElement()
+                    .satisfies(row -> {
+                        assertThat(row.subject().getPolicyViolation().getUuid())
+                                .isEqualTo(violation.getUuid().toString());
+                        assertThat(row.analysisState()).isEqualTo("NONE".equals(state) ? null : state);
+                        assertThat(row.suppressed()).isEqualTo("NONE".equals(state) ? null : Boolean.FALSE);
+                        assertThat(row.isReviewed()).isEqualTo(reviewed);
+                    });
+            assertThat(dao.getForPolicyViolationUpdates(ids, true, false)).hasSize(reviewed ? 0 : 1);
+            assertThat(dao.getForPolicyViolationUpdates(ids, false, true)).hasSize(reviewed ? 1 : 0);
+            assertThat(dao.getForNewPolicyViolations(ids)).hasSize(reviewed ? 0 : 1);
+            return null;
+        });
+    }
+
+    @Test
+    void shouldPartitionUpdateSubjectsOnceWithCapturedNullableReviewMetadata() {
+        final var project = new Project();
+        project.setName("partitioned-updates");
+        qm.persist(project);
+        final var policy = qm.createPolicy("partitioned", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        final var condition = qm.createPolicyCondition(policy, Subject.EXPRESSION, Operator.MATCHES, "true");
+        final var ids = new ArrayList<Long>();
+        final var expectedStates = new HashMap<String, String>();
+        final var expectedSuppressed = new HashMap<String, Boolean>();
+        final var reviewedUuids = new HashSet<String>();
+        final var activeUuids = new HashSet<String>();
+
+        for (int index = 0; index < 7; index++) {
+            final var component = new Component();
+            component.setProject(project);
+            component.setName("component-" + index);
+            qm.persist(component);
+            final var violation = new PolicyViolation();
+            violation.setComponent(component);
+            violation.setPolicyCondition(condition);
+            violation.setType(PolicyViolation.Type.SECURITY);
+            violation.setTimestamp(new Date());
+            violation.setText("CVE-A,CVE-B");
+            qm.persist(violation);
+            ids.add(violation.getId());
+            final String uuid = violation.getUuid().toString();
+            if (index == 0) {
+                expectedStates.put(uuid, null);
+                expectedSuppressed.put(uuid, null);
+                activeUuids.add(uuid);
+                continue;
+            }
+            final var state = List.of(
+                            ViolationAnalysisState.NOT_SET,
+                            ViolationAnalysisState.REJECTED,
+                            ViolationAnalysisState.APPROVED)
+                    .get((index - 1) / 2);
+            final boolean suppressed = index % 2 == 0;
+            qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(component, violation)
+                    .withState(state)
+                    .withSuppress(suppressed)
+                    .withOptions(Set.of(MakeViolationAnalysisCommand.Option.OMIT_NOTIFICATION)));
+            expectedStates.put(uuid, state.name());
+            expectedSuppressed.put(uuid, suppressed);
+            if (state == ViolationAnalysisState.APPROVED || suppressed) {
+                reviewedUuids.add(uuid);
+            } else {
+                activeUuids.add(uuid);
+            }
+        }
+        assertThat(activeUuids).hasSize(3);
+        assertThat(reviewedUuids).hasSize(4);
+        final var statements = new AtomicInteger();
+        final var both = withJdbiHandle(handle -> {
+            handle.getConfig(SqlStatements.class).setSqlLogger(new SqlLogger() {
+                @Override
+                public void logAfterExecution(StatementContext context) {
+                    statements.incrementAndGet();
+                }
+            });
+            return handle.attach(NotificationSubjectDao.class).getForPolicyViolationUpdates(ids, true, true);
+        });
+        assertThat(statements.get()).isEqualTo(1);
+        assertThat(both).hasSize(7);
+        assertThat(both)
+                .extracting(row -> row.subject().getPolicyViolation().getUuid())
+                .doesNotHaveDuplicates();
+        both.forEach(row -> {
+            final String uuid = row.subject().getPolicyViolation().getUuid();
+            assertThat(row.analysisState()).isEqualTo(expectedStates.get(uuid));
+            assertThat(row.suppressed()).isEqualTo(expectedSuppressed.get(uuid));
+            assertThat(row.isReviewed()).isEqualTo(reviewedUuids.contains(uuid));
+            assertThat(row.subject().getPolicyViolation().getMessage()).isEqualTo("CVE-A,CVE-B");
+        });
+        withJdbiHandle(handle -> {
+            final var dao = handle.attach(NotificationSubjectDao.class);
+            assertThat(dao.getForPolicyViolationUpdates(ids, true, false))
+                    .extracting(row -> row.subject().getPolicyViolation().getUuid())
+                    .containsExactlyInAnyOrderElementsOf(activeUuids);
+            assertThat(dao.getForPolicyViolationUpdates(ids, false, true))
+                    .extracting(row -> row.subject().getPolicyViolation().getUuid())
+                    .containsExactlyInAnyOrderElementsOf(reviewedUuids);
+            assertThat(dao.getForNewPolicyViolations(ids))
+                    .extracting(row -> row.getPolicyViolation().getUuid())
+                    .containsExactlyInAnyOrderElementsOf(activeUuids);
+            assertThat(dao.getForPolicyViolationUpdates(ids, false, false)).isEmpty();
+            assertThat(dao.getForPolicyViolationUpdates(List.of(), true, true)).isEmpty();
+            return null;
+        });
     }
 }

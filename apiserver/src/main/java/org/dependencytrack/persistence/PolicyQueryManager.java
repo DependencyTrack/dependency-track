@@ -52,7 +52,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationAnalysisDecisionChangeNotification;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
@@ -624,24 +623,11 @@ final class PolicyQueryManager extends QueryManager {
                 switch (inputFilter[i].toLowerCase(Locale.ROOT)) {
                     case "policy_name" -> filterBuilder.append("policyCondition.policy.name");
                     case "component" -> filterBuilder.append("component.name");
-                    case "license" -> {
-                        final List<Long> matchingComponentIds = withJdbiHandle(handle -> handle.createQuery("""
-                                SELECT DISTINCT cl."COMPONENT_ID"
-                                FROM "COMPONENTLICENSES" AS cl
-                                LEFT JOIN "LICENSE" AS l
-                                    ON l."ID" = cl."LICENSE_ID"
-                                WHERE LOWER(COALESCE(cl."LICENSE", '')) LIKE :licensePattern
-                                    OR LOWER(COALESCE(cl."LICENSE_EXPRESSION", '')) LIKE :licensePattern
-                                    OR LOWER(COALESCE(l."LICENSEID", '')) LIKE :licensePattern
-                                    OR LOWER(COALESCE(l."NAME", '')) LIKE :licensePattern
-                                """)
-                                .bind("licensePattern", "%" + input.toLowerCase(Locale.ROOT) + "%")
-                                .mapTo(Long.class)
-                                .list());
-
-                        params.put("licenseComponentIds", matchingComponentIds);
-                        filterBuilder.append(":licenseComponentIds.contains(component.id)");
-                    }
+                    case "license" ->
+                        filterBuilder
+                                .append("component.resolvedLicense.licenseId.toLowerCase().matches(:")
+                                .append(paramName)
+                                .append(") || component.license");
                     case "project_name" ->
                         filterBuilder
                                 .append("project.name.toLowerCase().matches(:")

@@ -60,7 +60,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_ID",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -157,7 +157,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_EXPRESSION",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -199,7 +199,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -241,7 +241,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_EXPRESSION",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -283,7 +283,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_EXPRESSION",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -316,7 +316,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_EXPRESSION",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -357,7 +357,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_ID",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -405,7 +405,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_ID",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"

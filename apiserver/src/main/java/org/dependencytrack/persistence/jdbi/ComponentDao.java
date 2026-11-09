@@ -658,7 +658,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
         final PreparedBatch deleteBatch = getHandle().prepareBatch("""
             DELETE FROM "COMPONENTLICENSES"
-            WHERE "COMPONENTID" = :componentId
+            WHERE "COMPONENT_ID" = :componentId
         """);
 
         for (final Long componentId : componentIds) {
@@ -673,7 +673,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
         final PreparedBatch batch = getHandle().prepareBatch("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_ID",
                 "LICENSE",
                 "LICENSE_EXPRESSION",
@@ -706,50 +706,6 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         batch.execute();
     }
 
-    default Map<Long, ComponentLicenseRow> getFirstLicenseRow(Collection<Long> componentIds) {
-        if (componentIds.isEmpty()) {
-            return Map.of();
-        }
-
-        return getHandle()
-                .createQuery("""
-            SELECT DISTINCT ON (cl."COMPONENTID")
-                cl."COMPONENTID",
-                cl."LICENSE_ID",
-                cl."LICENSE",
-                cl."LICENSE_EXPRESSION",
-                cl."LICENSE_URL",
-                cl."ORDINALITY",
-                cl."ACKNOWLEDGEMENT"
-            FROM "COMPONENTLICENSES" AS cl
-            WHERE cl."COMPONENTID" = ANY(:componentIds)
-            ORDER BY cl."COMPONENTID",
-                cl."ORDINALITY",
-                cl."ID"
-            """)
-                .bindArray("componentIds", Long.class, componentIds)
-                .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
-                    final long componentId = rs.getLong("COMPONENTID");
-
-                    final long licenseIdValue = rs.getLong("LICENSE_ID");
-                    final Long licenseId = rs.wasNull() ? null : licenseIdValue;
-
-                    result.put(
-                            componentId,
-                            new ComponentLicenseRow(
-                                    rs.getLong("ID"),
-                                    componentId,
-                                    licenseId,
-                                    rs.getString("LICENSE"),
-                                    rs.getString("LICENSE_EXPRESSION"),
-                                    rs.getString("LICENSE_URL"),
-                                    rs.getLong("ORDINALITY"),
-                                    rs.getString("ACKNOWLEDGEMENT")));
-
-                    return result;
-                });
-    }
-
     default Map<Long, List<ComponentLicenseRow>> getLicenseRows(final Collection<Long> componentIds) {
         if (componentIds.isEmpty()) {
             return Map.of();
@@ -757,8 +713,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
         return getHandle()
                 .createQuery("""
-                SELECT "ID",
-                    "COMPONENTID",
+                SELECT "COMPONENT_ID",
                     "LICENSE_ID",
                     "LICENSE",
                     "LICENSE_EXPRESSION",
@@ -766,12 +721,12 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                     "ORDINALITY",
                     "ACKNOWLEDGEMENT"
                 FROM "COMPONENTLICENSES"
-                WHERE "COMPONENTID" = ANY(:componentIds)
-                ORDER BY "COMPONENTID", "ORDINALITY", "ID"
+                WHERE "COMPONENT_ID" = ANY(:componentIds)
+                ORDER BY "COMPONENT_ID", "ORDINALITY", "ID"
                 """)
                 .bindArray("componentIds", Long.class, componentIds)
                 .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
-                    final long componentId = rs.getLong("COMPONENTID");
+                    final long componentId = rs.getLong("COMPONENT_ID");
                     final Long licenseId = rs.getObject("LICENSE_ID", Long.class);
 
                     result.computeIfAbsent(componentId, ignored -> new ArrayList<>())

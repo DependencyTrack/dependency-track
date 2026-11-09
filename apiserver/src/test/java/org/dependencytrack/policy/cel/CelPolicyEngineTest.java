@@ -198,7 +198,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_ID",
                 "LICENSE",
                 "LICENSE_EXPRESSION",
@@ -3001,7 +3001,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_ID",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -3071,7 +3071,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_EXPRESSION",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -3121,7 +3121,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_ID",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"

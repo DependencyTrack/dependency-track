@@ -274,7 +274,7 @@ BEGIN
 
     -- Clone component licenses.
     INSERT INTO "COMPONENTLICENSES" (
-      "COMPONENTID",
+      "COMPONENT_ID",
       "LICENSE_ID",
       "LICENSE",
       "LICENSE_EXPRESSION",
@@ -292,7 +292,7 @@ BEGIN
         cl."ACKNOWLEDGEMENT"
     FROM tmp_component_mapping
     JOIN "COMPONENTLICENSES" AS cl
-      ON cl."COMPONENTID" = tmp_component_mapping."source_id";
+      ON cl."COMPONENT_ID" = tmp_component_mapping."source_id";
 
     -- Clone component occurrences.
     INSERT INTO "COMPONENT_OCCURRENCE" (

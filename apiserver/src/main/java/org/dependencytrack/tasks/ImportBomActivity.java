@@ -468,7 +468,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 final boolean isExpression = expression != null
                         && (expression.equals(candidate.getId()) || expression.equals(candidate.getName()));
 
-                // De-deuplicate licenseIDs to satisfy COMPONENTLICENSES_ID_UQ constraint
+                // De-deuplicate licenseIDs to satisfy COMPONENTLICENSES_ID_IDX constraint
                 String key = licenseId != null ? "resolved:" + licenseId : "unresolved:" + identifier;
                 rowMap.putIfAbsent(
                         key,

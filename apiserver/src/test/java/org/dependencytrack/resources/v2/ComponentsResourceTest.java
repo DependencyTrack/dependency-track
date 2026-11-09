@@ -1073,7 +1073,7 @@ public class ComponentsResourceTest extends ResourceTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"

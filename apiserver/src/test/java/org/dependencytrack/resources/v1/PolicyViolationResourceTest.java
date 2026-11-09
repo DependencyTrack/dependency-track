@@ -736,7 +736,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         final long componentAId = componentA.getId();
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -757,7 +757,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         final long componentBId = componentB.getId();
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -778,7 +778,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         final long componentCId = componentC.getId();
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -799,7 +799,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         final long componentDId = componentD.getId();
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"

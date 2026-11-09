@@ -626,7 +626,7 @@ final class PolicyQueryManager extends QueryManager {
                     case "component" -> filterBuilder.append("component.name");
                     case "license" -> {
                         final List<Long> matchingComponentIds = withJdbiHandle(handle -> handle.createQuery("""
-                                SELECT DISTINCT cl."COMPONENTID"
+                                SELECT DISTINCT cl."COMPONENT_ID"
                                 FROM "COMPONENTLICENSES" AS cl
                                 LEFT JOIN "LICENSE" AS l
                                     ON l."ID" = cl."LICENSE_ID"

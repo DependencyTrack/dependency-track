@@ -220,7 +220,7 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
                 INSERT INTO "COMPONENTLICENSES" (
-                        "COMPONENTID",
+                        "COMPONENT_ID",
                         "LICENSE_ID",
                         "LICENSE",
                         "LICENSE_EXPRESSION",

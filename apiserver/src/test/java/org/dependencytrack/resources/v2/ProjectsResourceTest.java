@@ -760,7 +760,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
         INSERT INTO "COMPONENTLICENSES" (
-            "COMPONENTID",
+            "COMPONENT_ID",
             "LICENSE_ID",
             "ORDINALITY",
             "ACKNOWLEDGEMENT"
@@ -786,7 +786,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"

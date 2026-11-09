@@ -648,7 +648,7 @@ class BomResourceTest extends ResourceTest {
         final long componentId = component.getId();
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_ID",
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
@@ -660,7 +660,7 @@ class BomResourceTest extends ResourceTest {
                 .execute());
         useJdbiHandle(handle -> handle.createUpdate("""
                 INSERT INTO "COMPONENTLICENSES" (
-                    "COMPONENTID",
+                    "COMPONENT_ID",
                     "LICENSE_EXPRESSION",
                     "ORDINALITY",
                     "ACKNOWLEDGEMENT"
@@ -775,7 +775,7 @@ class BomResourceTest extends ResourceTest {
         final long componentId = component.getId();
         useJdbiHandle(handle -> handle.createUpdate("""
             INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_ID",
                 "LICENSE",
                 "LICENSE_URL",

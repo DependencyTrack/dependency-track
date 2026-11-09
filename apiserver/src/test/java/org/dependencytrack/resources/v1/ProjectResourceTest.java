@@ -3673,6 +3673,7 @@ class ProjectResourceTest extends ResourceTest {
         componentB.setProject(project);
         componentB.setName("acme-lib-b");
         componentB.setVersion("2.1.0");
+        componentB.setParent(componentA);
         qm.persist(componentB);
 
         final var service = new ServiceComponent();
@@ -3687,6 +3688,7 @@ class ProjectResourceTest extends ResourceTest {
                 .toString());
         componentA.setDirectDependencies(Mappers.jsonMapper()
                 .createArrayNode()
+                .add(Mappers.jsonMapper().createObjectNode().put("uuid", "61503628-d2a2-447b-b99c-701b9d492cbd"))
                 .add(new ComponentIdentity(componentB).toJSON())
                 .toString());
 
@@ -3840,6 +3842,9 @@ class ProjectResourceTest extends ResourceTest {
                                     .isEqualTo(/* language=JSON */ """
                                     [
                                       {
+                                        "uuid": "61503628-d2a2-447b-b99c-701b9d492cbd"
+                                      },
+                                      {
                                         "objectType": "COMPONENT",
                                         "uuid": "${json-unit.matches:notSourceComponentUuid}",
                                         "name": "acme-lib-b",
@@ -3887,6 +3892,10 @@ class ProjectResourceTest extends ResourceTest {
                             assertThat(clonedComponent.getUuid()).isNotEqualTo(componentA.getUuid());
                             assertThat(clonedComponent.getName()).isEqualTo("acme-lib-b");
                             assertThat(clonedComponent.getVersion()).isEqualTo("2.1.0");
+                            assertThat(clonedComponent.getParent()).satisfies(clonedParent -> {
+                                assertThat(clonedParent.getName()).isEqualTo("acme-lib-a");
+                                assertThat(clonedParent.getProject().getId()).isEqualTo(clonedProject.getId());
+                            });
 
                             assertThat(qm.getAllPolicyViolations(clonedComponent))
                                     .satisfiesExactly(clonedViolation -> {

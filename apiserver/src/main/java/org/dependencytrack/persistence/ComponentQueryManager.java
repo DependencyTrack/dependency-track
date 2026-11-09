@@ -103,6 +103,7 @@ final class ComponentQueryManager extends QueryManager {
         final Query<Component> query = pm.newQuery(Component.class, "project == :project");
         query.getFetchPlan().setMaxFetchDepth(2);
         query.setOrdering("name asc");
+
         return (List<Component>) query.execute(project);
     }
 

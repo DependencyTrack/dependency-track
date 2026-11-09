@@ -35,6 +35,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -133,6 +134,59 @@ class ModelConverterTest extends PersistenceCapableTest {
                 assertThat(hash.getAlgorithm()).isEqualTo(fixture.algorithm().getSpec());
                 assertThat(hash.getValue()).isEqualTo(fixture.value());
             });
+        }
+
+        @Test
+        void shouldConvertComponentLicensesToCdxComponent() {
+            final var component = new Component();
+            component.setUuid(UUID.randomUUID());
+            component.setName("acme-lib");
+            final var licenseRows = List.of(
+                    new ComponentDao.ComponentLicenseRow(
+                            1, 101L, null, null, "https://example.com/apache-2.0", 1, null),
+                    new ComponentDao.ComponentLicenseRow(1, 102L, null, null, "https://example.com/custom", 2, null),
+                    new ComponentDao.ComponentLicenseRow(
+                            1, null, "Unknown license", null, "https://example.com/unknown", 3, null));
+            final var licensesById = Map.of(
+                    101L,
+                    new ComponentDao.LicenseRow(
+                            101, UUID.randomUUID(), "Apache-2.0", "Apache License 2.0", false, true, true),
+                    102L,
+                    new ComponentDao.LicenseRow(102, UUID.randomUUID(), null, "Custom license", true, false, false));
+
+            final var cdxComponent = ModelConverter.convert(component, licenseRows, licensesById);
+
+            assertThat(cdxComponent.getLicenses().getLicenses())
+                    .satisfiesExactly(
+                            license -> {
+                                assertThat(license.getId()).isEqualTo("Apache-2.0");
+                                assertThat(license.getName()).isNull();
+                                assertThat(license.getUrl()).isEqualTo("https://example.com/apache-2.0");
+                            },
+                            license -> {
+                                assertThat(license.getId()).isNull();
+                                assertThat(license.getName()).isEqualTo("Custom license");
+                                assertThat(license.getUrl()).isEqualTo("https://example.com/custom");
+                            },
+                            license -> {
+                                assertThat(license.getId()).isNull();
+                                assertThat(license.getName()).isEqualTo("Unknown license");
+                                assertThat(license.getUrl()).isEqualTo("https://example.com/unknown");
+                            });
+        }
+
+        @Test
+        void shouldConvertComponentLicenseExpressionToCdxComponent() {
+            final var component = new Component();
+            component.setUuid(UUID.randomUUID());
+            component.setName("acme-lib");
+            final var licenseRows =
+                    List.of(new ComponentDao.ComponentLicenseRow(1, null, null, "Apache-2.0 OR MIT", null, 1, null));
+
+            final var cdxComponent = ModelConverter.convert(component, licenseRows, Map.of());
+
+            assertThat(cdxComponent.getLicenses().getExpression().getValue()).isEqualTo("Apache-2.0 OR MIT");
+            assertThat(cdxComponent.getLicenses().getLicenses()).isNullOrEmpty();
         }
 
         @Test

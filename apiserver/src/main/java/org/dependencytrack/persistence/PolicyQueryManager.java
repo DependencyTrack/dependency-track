@@ -615,6 +615,7 @@ final class PolicyQueryManager extends QueryManager {
 
     private void processInputFilter(
             Map<String, Object> params, List<String> filterCriteria, String paramName, String filter, String input) {
+        boolean hasTextFilter = false;
         if (filter != null && !filter.isEmpty() && input != null && !input.isEmpty()) {
             StringBuilder filterBuilder = new StringBuilder("(");
             String[] inputFilter = filter.split(",");
@@ -622,26 +623,35 @@ final class PolicyQueryManager extends QueryManager {
                 switch (inputFilter[i].toLowerCase(Locale.ROOT)) {
                     case "policy_name" -> filterBuilder.append("policyCondition.policy.name");
                     case "component" -> filterBuilder.append("component.name");
-                    case "license" ->
+                    case "license" -> {
                         filterBuilder
-                                .append("component.resolvedLicense.licenseId.toLowerCase().matches(:")
+                                .append("(component.resolvedLicense.licenseId.toLowerCase().matches(:")
                                 .append(paramName)
-                                .append(") || component.license");
+                                .append(") || component.license.toLowerCase().matches(:")
+                                .append(paramName)
+                                .append("))");
+                        hasTextFilter = true;
+                    }
                     case "project_name" ->
                         filterBuilder
                                 .append("project.name.toLowerCase().matches(:")
                                 .append(paramName)
                                 .append(") || project.version");
                 }
-                filterBuilder
-                        .append(".toLowerCase().matches(:")
-                        .append(paramName)
-                        .append(")");
+                if (!inputFilter[i].equalsIgnoreCase("license")) {
+                    filterBuilder
+                            .append(".toLowerCase().matches(:")
+                            .append(paramName)
+                            .append(")");
+                    hasTextFilter = true;
+                }
                 if (i < inputFilterLength - 1) {
                     filterBuilder.append(" || ");
                 }
             }
-            params.put(paramName, ".*" + input.toLowerCase(Locale.ROOT) + ".*");
+            if (hasTextFilter) {
+                params.put(paramName, ".*" + input.toLowerCase(Locale.ROOT) + ".*");
+            }
             filterBuilder.append(")");
             filterCriteria.add(filterBuilder.toString());
         }

@@ -623,11 +623,15 @@ final class PolicyQueryManager extends QueryManager {
                 switch (inputFilter[i].toLowerCase(Locale.ROOT)) {
                     case "policy_name" -> filterBuilder.append("policyCondition.policy.name");
                     case "component" -> filterBuilder.append("component.name");
-                    case "license" ->
+                    case "license" -> {
                         filterBuilder
-                                .append("component.resolvedLicense.licenseId.toLowerCase().matches(:")
+                                .append("(component.resolvedLicense.licenseId.toLowerCase().matches(:")
                                 .append(paramName)
-                                .append(") || component.license");
+                                .append(") || component.license.toLowerCase().matches(:")
+                                .append(paramName)
+                                .append("))");
+                        hasTextFilter = true;
+                    }
                     case "project_name" ->
                         filterBuilder
                                 .append("project.name.toLowerCase().matches(:")

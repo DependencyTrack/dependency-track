@@ -37,7 +37,6 @@ import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.License;
@@ -466,16 +465,8 @@ public class QueryManager extends AlpineQueryManager {
         return getLicenseQueryManager().getLicense(licenseId);
     }
 
-    public License getLicenseByIdOrName(final String licenseIdOrName) {
-        return getLicenseQueryManager().getLicenseByIdOrName(licenseIdOrName);
-    }
-
     public License createCustomLicense(License license, boolean commitIndex) {
         return getLicenseQueryManager().createCustomLicense(license, commitIndex);
-    }
-
-    public License getCustomLicenseByName(final String licenseName) {
-        return getLicenseQueryManager().getCustomLicenseByName(licenseName);
     }
 
     public void deleteLicense(final License license, final boolean commitIndex) {
@@ -956,15 +947,6 @@ public class QueryManager extends AlpineQueryManager {
             final String description) {
         return getComponentQueryManager()
                 .createComponentProperty(component, groupName, propertyName, propertyValue, propertyType, description);
-    }
-
-    public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {
-        getComponentQueryManager().synchronizeComponentProperties(component, properties);
-    }
-
-    public void synchronizeComponentOccurrences(
-            final Component component, final Collection<ComponentOccurrence> occurrences) {
-        getComponentQueryManager().synchronizeComponentOccurrences(component, occurrences);
     }
 
     /**

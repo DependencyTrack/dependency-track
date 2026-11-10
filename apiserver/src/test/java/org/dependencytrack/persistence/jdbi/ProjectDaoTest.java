@@ -25,7 +25,6 @@ import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
@@ -171,11 +170,12 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         });
 
         // Create a BOM.
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setImported(new Date());
-        bom.setBomFormat(Bom.Format.CYCLONEDX);
-        qm.persist(bom);
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" ("BOM_FORMAT", "IMPORTED", "PROJECT_ID", "UUID")
+                        VALUES ('CycloneDX', NOW(), :projectId, GEN_RANDOM_UUID())
+                        """)
+                .bind("projectId", project.getId())
+                .execute());
 
         // Create a child project with an accompanying component.
         final var projectChild = new Project();
@@ -227,8 +227,13 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .isThrownBy(() -> qm.getObjectById(Component.class, projectChildComponent.getId()));
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
                 .isThrownBy(() -> qm.getObjectById(ProjectMetadata.class, projectMetadata.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class)
-                .isThrownBy(() -> qm.getObjectById(Bom.class, bom.getId()));
+        final boolean bomExists = withJdbiHandle(handle -> handle.createQuery(/* language=SQL */ """
+                        SELECT EXISTS(SELECT 1 FROM "BOM" WHERE "PROJECT_ID" = :projectId)
+                        """)
+                .bind("projectId", project.getId())
+                .mapTo(Boolean.class)
+                .one());
+        assertThat(bomExists).isFalse();
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
                 .isThrownBy(() -> qm.getObjectById(Vex.class, vex.getId()));
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
@@ -543,7 +548,7 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 new ComponentLicenseDao.ComponentLicenseRow(
                         component.getId(), null, null, "MIT OR Apache-2.0", null, 2, "DECLARED"));
 
-        jdbiHandle.attach(ComponentLicenseDao.class).replaceAll(List.of(component.getId()), sourceRows);
+        jdbiHandle.attach(ComponentLicenseDao.class).createAll(sourceRows);
 
         final UUID clonedUuid = projectDao.cloneProject(new CloneProjectCommand(
                 project.getUuid(),

@@ -30,7 +30,6 @@ import org.dependencytrack.metrics.DependencyMetrics;
 import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
@@ -46,7 +45,6 @@ import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -57,8 +55,6 @@ import java.util.stream.Collectors;
 import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 import static org.dependencytrack.model.sqlmapping.ComponentProjection.mapToComponent;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
-import static org.dependencytrack.util.PersistenceUtil.assertNonPersistent;
-import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
 final class ComponentQueryManager extends QueryManager {
 
@@ -103,7 +99,6 @@ final class ComponentQueryManager extends QueryManager {
         final Query<Component> query = pm.newQuery(Component.class, "project == :project");
         query.getFetchPlan().setMaxFetchDepth(2);
         query.setOrdering("name asc");
-
         return (List<Component>) query.execute(project);
     }
 
@@ -614,147 +609,6 @@ final class ComponentQueryManager extends QueryManager {
         property.setPropertyType(propertyType);
         property.setDescription(description);
         return persist(property);
-    }
-
-    @Override
-    public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {
-        assertPersistent(component, "component must be persistent");
-
-        if (properties == null || properties.isEmpty()) {
-            // TODO: We currently remove all existing properties that are no longer included in the BOM.
-            //   This is to stay consistent with the BOM being the source of truth. However, this may feel
-            //   counter-intuitive to some users, who might expect their manual changes to persist.
-            //   If we want to support that, we need a way to track which properties were added and / or
-            //   modified manually.
-            if (component.getProperties() != null && !component.getProperties().isEmpty()) {
-                pm.deletePersistentAll(component.getProperties());
-                component.setProperties(null);
-            }
-
-            return;
-        }
-
-        // Map and de-duplicate incoming properties by their identity.
-        final var incomingPropertyIdentitiesSeen = new HashSet<ComponentProperty.Identity>();
-        final var incomingPropertiesByIdentity = properties.stream()
-                .peek(property -> assertNonPersistent(property, "property must not be persistent"))
-                .filter(property -> incomingPropertyIdentitiesSeen.add(new ComponentProperty.Identity(property)))
-                .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
-
-        if (component.getProperties() == null || component.getProperties().isEmpty()) {
-            for (final ComponentProperty property : incomingPropertiesByIdentity.values()) {
-                property.setComponent(component);
-                pm.makePersistent(property);
-                component.addProperty(property);
-            }
-
-            return;
-        }
-
-        // Group properties by group, name, and value. Because CycloneDX supports duplicate
-        // property names, uniqueness can only be determined by also considering the value.
-        final var existingPropertyIdentitiesSeen = new HashSet<ComponentProperty.Identity>();
-        final var existingDuplicateProperties = new HashSet<ComponentProperty>();
-        final var existingPropertiesByIdentity = component.getProperties().stream()
-                // The legacy BOM processing in <= 4.11.x allowed duplicates to be persisted.
-                // Collectors#toMap fails upon encounter of duplicate keys.
-                // Prevent existing duplicates from breaking this.
-                // https://github.com/DependencyTrack/dependency-track/issues/4027
-                .filter(property -> {
-                    final var identity = new ComponentProperty.Identity(property);
-                    final boolean isUnique = existingPropertyIdentitiesSeen.add(identity);
-                    if (!isUnique) {
-                        existingDuplicateProperties.add(property);
-                    }
-                    return isUnique;
-                })
-                .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
-
-        if (!existingDuplicateProperties.isEmpty()) {
-            pm.deletePersistentAll(existingDuplicateProperties);
-            component.getProperties().removeAll(existingDuplicateProperties);
-        }
-
-        final var propertyIdentities = new HashSet<ComponentProperty.Identity>();
-        propertyIdentities.addAll(existingPropertiesByIdentity.keySet());
-        propertyIdentities.addAll(incomingPropertiesByIdentity.keySet());
-
-        for (final ComponentProperty.Identity identity : propertyIdentities) {
-            final ComponentProperty existingProperty = existingPropertiesByIdentity.get(identity);
-            final ComponentProperty incomingProperty = incomingPropertiesByIdentity.get(identity);
-
-            if (existingProperty == null) {
-                incomingProperty.setComponent(component);
-                pm.makePersistent(incomingProperty);
-                component.addProperty(incomingProperty);
-            } else if (incomingProperty == null) {
-                pm.deletePersistent(existingProperty);
-                component.getProperties().remove(existingProperty);
-            }
-        }
-    }
-
-    /**
-     * @since 5.0.0
-     */
-    @Override
-    public void synchronizeComponentOccurrences(
-            final Component component, final Collection<ComponentOccurrence> occurrences) {
-        assertPersistent(component, "component must be persistent");
-
-        // No incoming occurrences. Remove existing occurrences from the component if there are any.
-        if (occurrences == null || occurrences.isEmpty()) {
-            if (component.getOccurrences() != null
-                    && !component.getOccurrences().isEmpty()) {
-                pm.deletePersistentAll(component.getOccurrences());
-                component.setOccurrences(null);
-            }
-
-            return;
-        }
-
-        // Map and de-duplicate incoming occurrences by their identity.
-        final var incomingOccurrenceIdentitiesSeen = new HashSet<ComponentOccurrence.Identity>();
-        final var incomingOccurrenceByIdentity = occurrences.stream()
-                .peek(occurrence -> assertNonPersistent(occurrence, "occurrence must not be persistent"))
-                .filter(occurrence -> incomingOccurrenceIdentitiesSeen.add(ComponentOccurrence.Identity.of(occurrence)))
-                .collect(
-                        Collectors.toMap(ComponentOccurrence.Identity::of, Function.identity(), (left, right) -> left));
-
-        // No existing occurrences. Add them all.
-        if (component.getOccurrences() == null || component.getOccurrences().isEmpty()) {
-            for (final ComponentOccurrence occurrence : incomingOccurrenceByIdentity.values()) {
-                occurrence.setComponent(component);
-                pm.makePersistent(occurrence);
-                component.addOccurrence(occurrence);
-            }
-
-            return;
-        }
-
-        // Map existing occurrences by their identity.
-        final var existingOccurrenceIdentitiesSeen = new HashSet<ComponentOccurrence.Identity>();
-        final var existingOccurrenceByIdentity = component.getOccurrences().stream()
-                .filter(occurrence -> existingOccurrenceIdentitiesSeen.add(ComponentOccurrence.Identity.of(occurrence)))
-                .collect(Collectors.toMap(ComponentOccurrence.Identity::of, Function.identity()));
-
-        final var identities = new HashSet<ComponentOccurrence.Identity>();
-        identities.addAll(existingOccurrenceByIdentity.keySet());
-        identities.addAll(incomingOccurrenceByIdentity.keySet());
-
-        for (final ComponentOccurrence.Identity identity : identities) {
-            final ComponentOccurrence existingOccurrence = existingOccurrenceByIdentity.get(identity);
-            final ComponentOccurrence incomingOccurrence = incomingOccurrenceByIdentity.get(identity);
-
-            if (existingOccurrence == null) {
-                incomingOccurrence.setComponent(component);
-                pm.makePersistent(incomingOccurrence);
-                component.addOccurrence(incomingOccurrence);
-            } else if (incomingOccurrence == null) {
-                component.getOccurrences().remove(existingOccurrence);
-                pm.deletePersistent(existingOccurrence);
-            }
-        }
     }
 
     private void populateMetrics(final Collection<Component> components) {

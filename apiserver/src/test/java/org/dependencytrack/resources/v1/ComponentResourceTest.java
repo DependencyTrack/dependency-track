@@ -866,13 +866,11 @@ public class ComponentResourceTest extends ResourceTest {
         component.setClassifier(Classifier.LIBRARY);
         qm.createComponent(component, false);
         useJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
-                .replaceAll(
-                        List.of(component.getId()),
-                        List.of(
-                                new ComponentLicenseDao.ComponentLicenseRow(
-                                        component.getId(), null, "License A", null, null, 1, "DECLARED"),
-                                new ComponentLicenseDao.ComponentLicenseRow(
-                                        component.getId(), null, "License B", null, null, 2, "DECLARED"))));
+                .createAll(List.of(
+                        new ComponentLicenseDao.ComponentLicenseRow(
+                                component.getId(), null, "License A", null, null, 1, "DECLARED"),
+                        new ComponentLicenseDao.ComponentLicenseRow(
+                                component.getId(), null, "License B", null, null, 2, "DECLARED"))));
 
         final var jsonComponent = new Component();
         jsonComponent.setUuid(component.getUuid());

@@ -62,7 +62,7 @@ class LicensesResourceTest extends ResourceTest {
 
         useJdbiHandle(handle -> handle.createUpdate("""
                 INSERT INTO "COMPONENTLICENSES" (
-                    "COMPONENTID",
+                    "COMPONENT_ID",
                     "LICENSE_ID",
                     "LICENSE_URL",
                     "ORDINALITY",
@@ -131,7 +131,7 @@ class LicensesResourceTest extends ResourceTest {
         useJdbiHandle(handle ->
                 handle.createUpdate("""
                 INSERT INTO "COMPONENTLICENSES" (
-                    "COMPONENTID",
+                    "COMPONENT_ID",
                     "LICENSE",
                     "ORDINALITY",
                     "ACKNOWLEDGEMENT"
@@ -177,7 +177,7 @@ class LicensesResourceTest extends ResourceTest {
         useJdbiHandle(handle ->
                 handle.createUpdate("""
                 INSERT INTO "COMPONENTLICENSES" (
-                    "COMPONENTID",
+                    "COMPONENT_ID",
                     "LICENSE_EXPRESSION",
                     "ORDINALITY",
                     "ACKNOWLEDGEMENT"
@@ -242,7 +242,7 @@ class LicensesResourceTest extends ResourceTest {
         useJdbiHandle(handle ->
                 handle.createUpdate("""
                 INSERT INTO "COMPONENTLICENSES" (
-                    "COMPONENTID",
+                    "COMPONENT_ID",
                     "LICENSE",
                     "ORDINALITY",
                     "ACKNOWLEDGEMENT"

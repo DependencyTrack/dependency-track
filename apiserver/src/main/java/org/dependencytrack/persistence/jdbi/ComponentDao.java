@@ -800,7 +800,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                     .createQuery("""
                 SELECT COUNT(*)
                     FROM "COMPONENTLICENSES"
-                    WHERE "COMPONENTID" = :componentId
+                    WHERE "COMPONENT_ID" = :componentId
                 """)
                     .bind("componentId", query.componentId())
                     .mapTo(long.class)
@@ -812,7 +812,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         final List<ComponentLicenseRow> rows = getHandle()
                 .createQuery("""
             SELECT "ID",
-                "COMPONENTID",
+                "COMPONENT_ID",
                 "LICENSE_ID",
                 "LICENSE",
                 "LICENSE_EXPRESSION",
@@ -820,7 +820,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 "ORDINALITY",
                 "ACKNOWLEDGEMENT"
             FROM "COMPONENTLICENSES"
-            WHERE "COMPONENTID" = :componentId
+            WHERE "COMPONENT_ID" = :componentId
             AND (
                 :hasCursor = FALSE
                 OR "ORDINALITY" > :lastOrdinality
@@ -839,7 +839,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 .bind("limit", query.limit() + 1)
                 .map((rs, ctx) -> new ComponentLicenseRow(
                         rs.getLong("ID"), // here
-                        rs.getLong("COMPONENTID"),
+                        rs.getLong("COMPONENT_ID"),
                         (Long) rs.getObject("LICENSE_ID"),
                         rs.getString("LICENSE"),
                         rs.getString("LICENSE_EXPRESSION"),

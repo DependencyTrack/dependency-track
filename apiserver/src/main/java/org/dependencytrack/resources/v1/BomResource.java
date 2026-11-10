@@ -18,8 +18,11 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.model.Team;
 import alpine.model.auth.Principal;
 import alpine.server.auth.PermissionRequired;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.uuid.Generators;
 import com.github.luben.zstd.ZstdInputStream;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,6 +46,7 @@ import org.cyclonedx.parsers.XmlParser;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.common.ConfigKeys;
+import org.dependencytrack.common.Mappers;
 import org.dependencytrack.common.pagination.SortDirection;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
@@ -77,6 +81,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.jspecify.annotations.Nullable;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -423,7 +428,9 @@ public class BomResource extends AbstractApiResource {
                       When creating projects, <code>parentUUID</code> or <code>parentName</code> and
                       <code>parentVersion</code> can place the new project under a parent,
                       <code>projectTags</code> can apply tags, and <code>isLatest</code> can mark it as
-                      the latest version. The <code>isActive</code> parameter sets the project's active
+                      the latest version. <code>accessTeams</code> can grant teams access to the new project,
+                      following the same rules as <code>accessTeams</code> when creating a project via
+                      <code>PUT /api/v1/project</code>. The <code>isActive</code> parameter sets the project's active
                       state whenever it is provided, including when the target project already exists, so
                       clients should send it only when they intend to change that state.
                     </p>
@@ -540,6 +547,7 @@ public class BomResource extends AbstractApiResource {
                                             "Access to the previous latest project version is forbidden");
                                 }
                             }
+                            final Set<Team> accessTeams = resolveAccessTeams(qm, request.getAccessTeams());
                             try {
                                 project = qm.createProject(
                                         trimmedProjectName,
@@ -559,6 +567,7 @@ public class BomResource extends AbstractApiResource {
                                 }
                                 throw e;
                             }
+                            accessTeams.forEach(project::addAccessTeam);
                             Principal principal = getPrincipal();
                             qm.updateNewProjectACL(project, principal);
                             new JdoNotificationEmitter(qm)
@@ -635,7 +644,9 @@ public class BomResource extends AbstractApiResource {
                       When creating projects, <code>parentUUID</code> or <code>parentName</code> and
                       <code>parentVersion</code> can place the new project under a parent,
                       <code>projectTags</code> can apply tags, and <code>isLatest</code> can mark it as
-                      the latest version. The <code>isActive</code> parameter sets the project's active
+                      the latest version. <code>accessTeams</code> can grant teams access to the new project,
+                      following the same rules as <code>accessTeams</code> when creating a project via
+                      <code>PUT /api/v1/project</code>. The <code>isActive</code> parameter sets the project's active
                       state whenever it is provided, including when the target project already exists, so
                       clients should send it only when they intend to change that state.
                     </p>
@@ -679,6 +690,9 @@ public class BomResource extends AbstractApiResource {
             @FormDataParam("projectName") String projectName,
             @FormDataParam("projectVersion") String projectVersion,
             @FormDataParam("projectTags") String projectTags,
+            @Parameter(description = """
+                    JSON array of teams to grant access to the project when it is created via autoCreate, \
+                    e.g. <code>[{"name": "Team A"}, {"uuid": "..."}]</code>.""") @FormDataParam("accessTeams") String accessTeamsJson,
             @FormDataParam("parentName") String parentName,
             @FormDataParam("parentVersion") String parentVersion,
             @FormDataParam("parentUUID") String parentUUID,
@@ -699,6 +713,7 @@ public class BomResource extends AbstractApiResource {
                         .map(Tag::new)
                         .toList()
                 : null;
+        final List<Team> requestAccessTeams = parseAccessTeams(accessTeamsJson);
 
         final ProjectInfo projectInfo;
         if (projectUuid != null) { // behavior in v3.0.0
@@ -768,6 +783,7 @@ public class BomResource extends AbstractApiResource {
                                             "Access to the previous latest project version is forbidden");
                                 }
                             }
+                            final Set<Team> accessTeams = resolveAccessTeams(qm, requestAccessTeams);
                             try {
                                 project = qm.createProject(
                                         trimmedProjectName,
@@ -787,6 +803,7 @@ public class BomResource extends AbstractApiResource {
                                 }
                                 throw e;
                             }
+                            accessTeams.forEach(project::addAccessTeam);
                             Principal principal = getPrincipal();
                             qm.updateNewProjectACL(project, principal);
                             new JdoNotificationEmitter(qm)
@@ -1092,6 +1109,23 @@ public class BomResource extends AbstractApiResource {
             return (validationMode == BomValidationMode.ENABLED_FOR_TAGS && doTagsMatch)
                     || (validationMode == BomValidationMode.DISABLED_FOR_TAGS && !doTagsMatch);
         });
+    }
+
+    private static @Nullable List<Team> parseAccessTeams(final @Nullable String accessTeamsJson) {
+        if (accessTeamsJson == null || accessTeamsJson.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Mappers.jsonMapper().readValue(accessTeamsJson, new TypeReference<>() {});
+        } catch (JsonProcessingException e) {
+            throw new WebApplicationException(
+                    e,
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(
+                                    "accessTeams must be a JSON array of teams, each specifying either a UUID or a name.")
+                            .build());
+        }
     }
 
     private void maybeBindTags(QueryManager qm, Project project, List<Tag> tags) {

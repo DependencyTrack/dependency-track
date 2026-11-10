@@ -21,8 +21,10 @@ EOF
   export PATH="$tmp/bin:$PATH" GH_FIXTURE="$tmp/pr.json"
 
   git init -q --bare -b main "$tmp/DependencyTrack/dependency-track.git"
+  git init -q --bare -b main "$tmp/fork/dependency-track.git"
   git clone -q -o upstream "$tmp/DependencyTrack/dependency-track.git" "$tmp/work" 2>/dev/null
   cd "$tmp/work" || exit 1
+  git remote add origin "$tmp/fork/dependency-track.git"
   git config user.name Tester
   git config user.email tester@example.com
   git config commit.gpgsign false
@@ -160,6 +162,17 @@ test_unmerged_pr_aborts() {
 
   [ "$rc" = 1 ] || fail "exit code"
   grep -q "not merged" <<< "$out" || fail "message"
+  [ ! -e .claude/worktrees/backport-pr-1 ] || fail "worktree created"
+}
+
+test_origin_pointing_at_upstream_aborts() {
+  squash_pr
+  git remote set-url origin "$tmp/DependencyTrack/dependency-track.git"
+
+  run 1 5.0.x
+
+  [ "$rc" = 1 ] || fail "exit code"
+  grep -q "must be your fork" <<< "$out" || fail "message"
   [ ! -e .claude/worktrees/backport-pr-1 ] || fail "worktree created"
 }
 

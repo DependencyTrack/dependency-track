@@ -33,7 +33,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.net.http.HttpClient;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
@@ -227,6 +230,87 @@ class NvdVulnDataSourceTest {
 
         assertThat(dataSource.hasNext()).isFalse();
         verify(0, getRequestedFor(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz")));
+    }
+
+    @Test
+    void shouldSkipYearFeedsWhenWatermarkCoveredByModifiedFeed(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        final Instant watermark = Instant.now().minus(Duration.ofDays(1));
+
+        kvStore = new MockKeyValueStore();
+        kvStore.put("watermark", String.valueOf(watermark.toEpochMilli()));
+
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-2024.meta"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                                lastModifiedDate:%s
+                                sha256:0000000000000000000000000000000000000000000000000000000000000000
+                                """.formatted(watermark.minusSeconds(1)))));
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                                lastModifiedDate:%s
+                                sha256:1111111111111111111111111111111111111111111111111111111111111111
+                                """.formatted(Instant.now()))));
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/gzip")
+                        .withBody(gzip("{\"vulnerabilities\": []}"))));
+
+        dataSource = createDataSource(
+                wmRuntimeInfo.getHttpBaseUrl(),
+                kvStore,
+                List.of(new NvdDataFeed.YearDataFeed(2024), new NvdDataFeed.ModifiedDataFeed()));
+
+        assertThat(dataSource.hasNext()).isFalse();
+        verify(0, getRequestedFor(urlEqualTo("/json/cve/2.0/nvdcve-2.0-2024.meta")));
+        verify(getRequestedFor(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz")));
+    }
+
+    @Test
+    void shouldNotCommitWatermarkWhenModifiedFeedDoesNotReachBackToWatermark(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
+        final Instant watermark = Instant.now().minus(Duration.ofDays(1));
+
+        kvStore = new MockKeyValueStore();
+        kvStore.put("watermark", String.valueOf(watermark.toEpochMilli()));
+
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                                lastModifiedDate:%s
+                                sha256:1111111111111111111111111111111111111111111111111111111111111111
+                                """.formatted(Instant.now()))));
+        stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/gzip")
+                        .withBody(gzip(
+                                /* language=JSON */ """
+                                {
+                                  "vulnerabilities": [
+                                    {
+                                      "cve": {
+                                        "id": "CVE-2024-0001",
+                                        "lastModified": "%s",
+                                        "descriptions": [{"lang": "en", "value": "Test vulnerability"}],
+                                        "metrics": {}
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.formatted(LocalDateTime.ofInstant(
+                                        watermark.plus(Duration.ofHours(1)), ZoneOffset.UTC))))));
+
+        dataSource = createDataSource(
+                wmRuntimeInfo.getHttpBaseUrl(),
+                kvStore,
+                List.of(new NvdDataFeed.YearDataFeed(2024), new NvdDataFeed.ModifiedDataFeed()));
+
+        dataSource.markProcessed(dataSource.next());
+        assertThat(dataSource.hasNext()).isFalse();
+
+        dataSource.close();
+        dataSource = null;
+
+        assertThat(kvStore.get("watermark").value()).isEqualTo(String.valueOf(watermark.toEpochMilli()));
     }
 
     @Test

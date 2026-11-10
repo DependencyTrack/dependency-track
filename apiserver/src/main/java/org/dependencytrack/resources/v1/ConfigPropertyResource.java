@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.model.ConfigProperty;
 import alpine.server.auth.AuthenticationNotRequired;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,14 +33,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.ConfigPropertyVisibility;
-import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao.ConfigPropertyRow;
 import org.dependencytrack.resources.v1.vo.ConfigPropertyResponse;
 import org.dependencytrack.resources.v1.vo.UpdateConfigPropertyRequest;
 import org.dependencytrack.secret.management.SecretManager;
 
 import jakarta.inject.Inject;
 import jakarta.validation.Validator;
+import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -56,6 +56,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
@@ -97,12 +99,11 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             })
     @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response getConfigProperties() {
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            final List<ConfigProperty> configProperties = qm.getConfigProperties();
-            final List<ConfigPropertyResponse> response =
-                    configProperties.stream().map(ConfigPropertyResponse::of).toList();
-            return Response.ok(response).build();
-        }
+        final List<ConfigPropertyRow> configProperties =
+                withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).getProperties());
+        final List<ConfigPropertyResponse> response =
+                configProperties.stream().map(ConfigPropertyResponse::of).toList();
+        return Response.ok(response).build();
     }
 
     @POST
@@ -129,9 +130,7 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
                 validator.validateProperty(request, "propertyName"),
                 validator.validateProperty(request, "propertyValue"));
 
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> applyUpdate(qm, request));
-        }
+        return inJdbiTransaction(handle -> applyUpdate(handle.attach(ConfigPropertyDao.class), request));
     }
 
     @POST
@@ -175,14 +174,13 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
         }
 
         final var returnList = new ArrayList<>();
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            qm.runInTransaction(() -> {
-                for (final UpdateConfigPropertyRequest request : requests) {
-                    final Response itemResponse = applyUpdate(qm, request);
-                    returnList.add(itemResponse.getEntity());
-                }
-            });
-        }
+        useJdbiTransaction(handle -> {
+            final var dao = handle.attach(ConfigPropertyDao.class);
+            for (final UpdateConfigPropertyRequest request : requests) {
+                final Response itemResponse = applyUpdate(dao, request);
+                returnList.add(itemResponse.getEntity());
+            }
+        });
 
         return Response.ok(returnList).build();
     }
@@ -242,36 +240,45 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
 
     private Response getClassifiedConfigProperty(
             String groupName, String propertyName, Set<ConfigPropertyVisibility> allowedVisibilities) {
-        final var lookup = new ConfigProperty();
-        lookup.setGroupName(groupName);
-        lookup.setPropertyName(propertyName);
-
-        final var wellKnownProperty = ConfigPropertyConstants.ofProperty(lookup);
+        final var wellKnownProperty = ConfigPropertyConstants.ofProperty(groupName, propertyName);
         if (wellKnownProperty == null || !allowedVisibilities.contains(wellKnownProperty.getVisibility())) {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        return withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).getOptional(groupName, propertyName))
-                .map(property ->
-                        Response.ok(ConfigPropertyResponse.of(property)).build())
-                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-                        .entity("The config property could not be found.")
-                        .build());
-    }
-
-    private Response applyUpdate(QueryManager qm, UpdateConfigPropertyRequest request) {
-        final ConfigProperty property = qm.getConfigProperty(request.groupName(), request.propertyName());
+        final ConfigPropertyRow property =
+                withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).getProperty(groupName, propertyName));
         if (property == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity("The config property could not be found.")
                     .build();
         }
 
-        final Response validationError = applyPropertyValue(request.propertyValue(), property);
-        if (validationError != null) {
-            return validationError;
+        return Response.ok(ConfigPropertyResponse.of(property)).build();
+    }
+
+    private Response applyUpdate(ConfigPropertyDao dao, UpdateConfigPropertyRequest request) {
+        final ConfigPropertyRow property = dao.getProperty(request.groupName(), request.propertyName());
+        if (property == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("The config property could not be found.")
+                    .build();
         }
 
-        return Response.ok(ConfigPropertyResponse.of(property)).build();
+        final String value;
+        try {
+            value = normalizePropertyValue(
+                    property.groupName(), property.propertyName(), property.propertyType(), request.propertyValue());
+        } catch (ClientErrorException e) {
+            return e.getResponse();
+        }
+
+        dao.setValue(property.groupName(), property.propertyName(), value);
+        return Response.ok(ConfigPropertyResponse.of(new ConfigPropertyRow(
+                        property.groupName(),
+                        property.propertyName(),
+                        value,
+                        property.propertyType(),
+                        property.description())))
+                .build();
     }
 }

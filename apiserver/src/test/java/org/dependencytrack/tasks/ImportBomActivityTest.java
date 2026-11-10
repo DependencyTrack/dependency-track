@@ -38,6 +38,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.proto.v1.BomProcessingFailedSubject;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.persistence.DatabaseSeedingInitTask;
+import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
@@ -91,6 +92,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSE
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSING_FAILED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -113,12 +115,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity = new ImportBomActivity(fileStorage, dexEngineMock, false);
 
         // Enable processing of CycloneDX BOMs
-        qm.createConfigProperty(
-                ACCEPT_ARTIFACT_CYCLONEDX.getGroupName(),
-                ACCEPT_ARTIFACT_CYCLONEDX.getPropertyName(),
-                "true",
-                ACCEPT_ARTIFACT_CYCLONEDX.getPropertyType(),
-                ACCEPT_ARTIFACT_CYCLONEDX.getDescription());
+        createConfigProperty(ACCEPT_ARTIFACT_CYCLONEDX, "true");
 
         // Required for notifications to be emitted.
         createCatchAllNotificationRule(qm, NotificationScope.PORTFOLIO);
@@ -141,18 +138,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
     }
 
     private void configureRetention(boolean enabled, BomRetentionPolicy policy) {
-        qm.createConfigProperty(
-                BOM_ORIGINAL_RETENTION_ENABLED.getGroupName(),
-                BOM_ORIGINAL_RETENTION_ENABLED.getPropertyName(),
-                String.valueOf(enabled),
-                BOM_ORIGINAL_RETENTION_ENABLED.getPropertyType(),
-                BOM_ORIGINAL_RETENTION_ENABLED.getDescription());
-        qm.createConfigProperty(
-                BOM_ORIGINAL_RETENTION_POLICY.getGroupName(),
-                BOM_ORIGINAL_RETENTION_POLICY.getPropertyName(),
-                policy.name(),
-                BOM_ORIGINAL_RETENTION_POLICY.getPropertyType(),
-                BOM_ORIGINAL_RETENTION_POLICY.getDescription());
+        createConfigProperty(BOM_ORIGINAL_RETENTION_ENABLED, String.valueOf(enabled));
+        createConfigProperty(BOM_ORIGINAL_RETENTION_POLICY, policy.name());
     }
 
     private static List<byte[]> getOriginalFileMetadataOfBoms(Project project) {
@@ -255,6 +242,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("Apache-2.0");
         assertThat(component.getLicense()).isNull();
         assertThat(component.getLicenseUrl()).isEqualTo("https://www.apache.org/licenses/LICENSE-2.0.txt");
+        assertThat(component.getLastInheritedRiskScore()).isZero();
 
         assertThat(component.getProperties())
                 .satisfiesExactlyInAnyOrder(
@@ -799,9 +787,27 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
-            assertThat(component.getResolvedLicense()).isNotNull();
-            assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("MIT");
+        final List<Component> components = qm.getAllComponents(project);
+        assertThat(components).hasSize(1);
+
+        Component component = components.getFirst();
+        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                .getLicenseRows(List.of(component.getId()))
+                .get(component.getId()));
+
+        assertThat(rows).singleElement().satisfies(row -> {
+            assertThat(row.componentId()).isEqualTo(component.getId());
+            assertThat(row.licenseId()).isEqualTo(license.getId());
+            assertThat(row.license()).isNull();
+            assertThat(row.licenseExpression()).isNull();
+            assertThat(row.licenseUrl()).isNull();
+            assertThat(row.ordinality()).isEqualTo(1);
+            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+        });
+
+        assertThat(components).satisfiesExactly(comp -> {
+            assertThat(comp.getResolvedLicense()).isNotNull();
+            assertThat(comp.getResolvedLicense().getLicenseId()).isEqualTo("MIT");
         });
     }
 
@@ -982,16 +988,53 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                             assertThat(component.getResolvedLicense()).isNotNull();
                             assertThat(component.getResolvedLicense().getName()).isEqualTo("custom license foobar");
                             assertThat(component.getLicense()).isNull();
+
+                            final List<ComponentDao.ComponentLicenseRow> rows =
+                                    withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                                            .getLicenseRows(List.of(component.getId()))
+                                            .getOrDefault(component.getId(), List.of()));
+
+                            assertThat(rows).singleElement().satisfies(row -> {
+                                assertThat(row.componentId()).isEqualTo(component.getId());
+                                assertThat(row.licenseId()).isEqualTo(customLicense.getId());
+                                assertThat(row.license()).isNull();
+                                assertThat(row.licenseExpression()).isNull();
+                                assertThat(row.licenseUrl()).isNull();
+                                assertThat(row.ordinality()).isEqualTo(1);
+                                assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+                            });
                         },
                         component -> {
                             assertThat(component.getName()).isEqualTo("acme-lib-b");
                             assertThat(component.getResolvedLicense()).isNull();
                             assertThat(component.getLicense()).isEqualTo("does not exist");
+
+                            final List<ComponentDao.ComponentLicenseRow> rows =
+                                    withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                                            .getLicenseRows(List.of(component.getId()))
+                                            .getOrDefault(component.getId(), List.of()));
+
+                            assertThat(rows).singleElement().satisfies(row -> {
+                                assertThat(row.componentId()).isEqualTo(component.getId());
+                                assertThat(row.licenseId()).isNull();
+                                assertThat(row.license()).isEqualTo("does not exist");
+                                assertThat(row.licenseExpression()).isNull();
+                                assertThat(row.licenseUrl()).isNull();
+                                assertThat(row.ordinality()).isEqualTo(1);
+                                assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+                            });
                         },
                         component -> {
                             assertThat(component.getName()).isEqualTo("acme-lib-c");
                             assertThat(component.getResolvedLicense()).isNull();
                             assertThat(component.getLicense()).isNull();
+
+                            final List<ComponentDao.ComponentLicenseRow> rows =
+                                    withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                                            .getLicenseRows(List.of(component.getId()))
+                                            .getOrDefault(component.getId(), List.of()));
+
+                            assertThat(rows).isEmpty();
                         });
     }
 
@@ -1009,10 +1052,28 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
 
-        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
-            assertThat(component.getLicense()).isNull();
-            assertThat(component.getLicenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
-            assertThat(component.getResolvedLicense()).isNull();
+        final List<Component> components = qm.getAllComponents(project);
+        assertThat(components).hasSize(1);
+
+        Component component = components.getFirst();
+        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                .getLicenseRows(List.of(component.getId()))
+                .getOrDefault(component.getId(), List.of()));
+
+        assertThat(rows).singleElement().satisfies(row -> {
+            assertThat(row.componentId()).isEqualTo(component.getId());
+            assertThat(row.licenseId()).isNull();
+            assertThat(row.license()).isNull();
+            assertThat(row.licenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
+            assertThat(row.licenseUrl()).isNull();
+            assertThat(row.ordinality()).isEqualTo(1);
+            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+        });
+
+        assertThat(components).satisfiesExactly(comp -> {
+            assertThat(comp.getLicense()).isNull();
+            assertThat(comp.getLicenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
+            assertThat(comp.getResolvedLicense()).isNull();
         });
     }
 
@@ -1050,10 +1111,28 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
         assertBomProcessedNotification();
 
-        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
-            assertThat(component.getLicense()).isNull();
-            assertThat(component.getLicenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
-            assertThat(component.getResolvedLicense()).isNull();
+        final List<Component> components = qm.getAllComponents(project);
+        assertThat(components).hasSize(1);
+
+        Component component = components.getFirst();
+        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                .getLicenseRows(List.of(component.getId()))
+                .getOrDefault(component.getId(), List.of()));
+
+        assertThat(rows).singleElement().satisfies(row -> {
+            assertThat(row.componentId()).isEqualTo(component.getId());
+            assertThat(row.licenseId()).isNull();
+            assertThat(row.license()).isNull();
+            assertThat(row.licenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
+            assertThat(row.licenseUrl()).isNull();
+            assertThat(row.ordinality()).isEqualTo(1);
+            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+        });
+
+        assertThat(components).satisfiesExactly(comp -> {
+            assertThat(comp.getLicense()).isNull();
+            assertThat(comp.getLicenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
+            assertThat(comp.getResolvedLicense()).isNull();
         });
     }
 
@@ -1098,10 +1177,19 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_CONSUMED),
                         notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED));
 
-        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
-            assertThat(component.getLicense()).isNull();
-            assertThat(component.getLicenseExpression()).isNull();
-            assertThat(component.getResolvedLicense()).isNull();
+        final List<Component> components = qm.getAllComponents(project);
+        assertThat(components).hasSize(1);
+
+        Component component = components.getFirst();
+        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                .getLicenseRows(List.of(component.getId()))
+                .get(component.getId()));
+
+        assertThat(rows).isNull();
+        assertThat(components).satisfiesExactly(comp -> {
+            assertThat(comp.getLicense()).isNull();
+            assertThat(comp.getLicenseExpression()).isNull();
+            assertThat(comp.getResolvedLicense()).isNull();
         });
     }
 
@@ -1232,9 +1320,28 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertBomProcessedNotification();
         qm.getPersistenceManager().evictAll();
 
-        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
-            assertThat(component.getResolvedLicense()).isNotNull();
-            assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo(updatedLicense.getLicenseId());
+        final List<Component> components = qm.getAllComponents(project);
+        assertThat(components).hasSize(1);
+
+        Component component = components.getFirst();
+        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                .getLicenseRows(List.of(component.getId()))
+                .get(component.getId()));
+
+        assertThat(rows).singleElement().satisfies(row -> {
+            assertThat(row.componentId()).isEqualTo(component.getId());
+            assertThat(row.licenseId()).isEqualTo(updatedLicense.getId());
+            assertThat(row.licenseId()).isNotEqualTo(existingLicense.getId());
+            assertThat(row.license()).isNull();
+            assertThat(row.licenseExpression()).isNull();
+            assertThat(row.licenseUrl()).isNull();
+            assertThat(row.ordinality()).isEqualTo(1);
+            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+        });
+
+        assertThat(components).satisfiesExactly(comp -> {
+            assertThat(comp.getResolvedLicense()).isNotNull();
+            assertThat(comp.getResolvedLicense().getLicenseId()).isEqualTo(updatedLicense.getLicenseId());
         });
     }
 
@@ -1310,11 +1417,20 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertBomProcessedNotification();
         qm.getPersistenceManager().evictAll();
 
-        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
-            assertThat(component.getResolvedLicense()).isNull();
-            assertThat(component.getLicense()).isNull();
-            assertThat(component.getLicenseUrl()).isNull();
-            assertThat(component.getLicenseExpression()).isNull();
+        final List<Component> components = qm.getAllComponents(project);
+        assertThat(components).hasSize(1);
+
+        Component component = components.getFirst();
+        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                .getLicenseRows(List.of(component.getId()))
+                .get(component.getId()));
+
+        assertThat(rows).isNull();
+        assertThat(components).satisfiesExactly(comp -> {
+            assertThat(comp.getResolvedLicense()).isNull();
+            assertThat(comp.getLicense()).isNull();
+            assertThat(comp.getLicenseUrl()).isNull();
+            assertThat(comp.getLicenseExpression()).isNull();
         });
     }
 
@@ -2070,6 +2186,138 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                                     assertThat(occurrence.getSymbol()).isNull();
                                     assertThat(occurrence.getCreatedAt()).isNotNull();
                                 }));
+    }
+
+    @Test
+    void shouldDeduplicateLicensesDuringImport() throws Exception {
+        final var license = new License();
+        license.setLicenseId("MIT");
+        license.setName("MIT License");
+        qm.persist(license);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final byte[] bomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "group": "com.acme",
+                      "name": "acme-lib",
+                      "version": "1.0.0",
+                      "licenses": [
+                        {
+                          "license": {
+                            "id": "MIT"
+                          }
+                        },
+                        {
+                          "license": {
+                            "name": "MIT License"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        final Component component = qm.getAllComponents(project).stream()
+                .filter(candidate -> "acme-lib".equals(candidate.getName()))
+                .findFirst()
+                .orElseThrow();
+
+        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                .getLicenseRows(List.of(component.getId()))
+                .get(component.getId()));
+
+        assertThat(rows).hasSize(1);
+
+        final ComponentDao.ComponentLicenseRow row = rows.getFirst();
+
+        assertThat(row.licenseId()).isEqualTo(license.getId());
+        assertThat(row.license()).isNull();
+        assertThat(row.licenseExpression()).isNull();
+        assertThat(row.ordinality()).isEqualTo(1L);
+        assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+    }
+
+    @Test
+    void testMultipleLicensesDuringImport() throws Exception {
+        final var license = new License();
+        license.setLicenseId("MIT");
+        license.setName("MIT License");
+        qm.persist(license);
+
+        final var license2 = new License();
+        license2.setLicenseId("Apache-2.0");
+        license2.setName("Apache 2.0 License");
+        qm.persist(license2);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final byte[] bomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "group": "com.acme",
+                      "name": "acme-lib",
+                      "version": "1.0.0",
+                      "licenses": [
+                        {
+                          "license": {
+                            "id": "MIT"
+                          }
+                        },
+                        {
+                          "license": {
+                            "id": "Apache-2.0"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        activity.execute(null, buildArg(project, storeBomFile(bomBytes), UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        final List<Component> components = qm.getAllComponents(project);
+        final Component component = components.getFirst();
+        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                .getLicenseRows(List.of(component.getId()))
+                .get(component.getId()));
+
+        assertThat(rows).hasSize(2);
+        assertThat(rows)
+                .satisfiesExactlyInAnyOrder(
+                        row -> {
+                            assertThat(row.componentId()).isEqualTo(component.getId());
+                            assertThat(row.licenseId()).isEqualTo(license.getId());
+                            assertThat(row.license()).isNull();
+                            assertThat(row.licenseExpression()).isNull();
+                            assertThat(row.ordinality()).isEqualTo(1L);
+                            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+                        },
+                        row -> {
+                            assertThat(row.componentId()).isEqualTo(component.getId());
+                            assertThat(row.licenseId()).isEqualTo(license2.getId());
+                            assertThat(row.license()).isNull();
+                            assertThat(row.licenseExpression()).isNull();
+                            assertThat(row.ordinality()).isEqualTo(2L);
+                            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+                        });
     }
 
     private void assertBomProcessedNotification() throws Exception {

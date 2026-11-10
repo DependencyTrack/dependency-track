@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.model.ConfigProperty;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
@@ -31,6 +30,8 @@ import org.dependencytrack.model.DefaultRepository;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.Repository;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao.ConfigPropertyRow;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,7 @@ import javax.sql.DataSource;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class DatabaseSeedingInitTaskTest extends PersistenceCapableTest {
 
@@ -55,16 +57,17 @@ public class DatabaseSeedingInitTaskTest extends PersistenceCapableTest {
     public void test() throws Exception {
         new DatabaseSeedingInitTask().execute(new InitTaskContext(ConfigProvider.getConfig(), dataSource));
 
-        final List<ConfigProperty> configProperties = qm.getConfigProperties();
+        final List<ConfigPropertyRow> configProperties =
+                withJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).getProperties());
         assertThat(configProperties).hasSize(ConfigPropertyConstants.values().length);
         assertThat(configProperties).allSatisfy(property -> {
-            assertThat(property.getGroupName()).isNotBlank();
-            assertThat(property.getPropertyName()).isNotBlank();
-            assertThat(property.getPropertyType()).isNotNull();
-            assertThat(property.getDescription()).isNotNull();
+            assertThat(property.groupName()).isNotBlank();
+            assertThat(property.propertyName()).isNotBlank();
+            assertThat(property.propertyType()).isNotNull();
+            assertThat(property.description()).isNotNull();
         });
         assertThat(configProperties)
-                .anySatisfy(property -> assertThat(property.getPropertyValue()).isNotBlank());
+                .anySatisfy(property -> assertThat(property.propertyValue()).isNotBlank());
 
         final List<Permission> permissions = qm.getPermissions();
         assertThat(permissions).hasSize(Permissions.values().length);

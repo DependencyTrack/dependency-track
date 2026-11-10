@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -434,6 +435,41 @@ class NotificationRouterTest extends PersistenceCapableTest {
 
             assertThat(router.route(List.of(notification)))
                     .satisfiesExactly(result -> assertThat(result.ruleNames()).containsOnly(rule.getName()));
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = {true, false})
+        void shouldFilterOnSubjectProjectLatestStatus(boolean isLatest) throws Exception {
+            final var rule = new NotificationRule();
+            rule.setName("rule");
+            rule.setScope(NotificationScope.PORTFOLIO);
+            rule.setNotifyOn(Set.of(NotificationGroup.BOM_CONSUMED));
+            rule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+            rule.setEnabled(true);
+            rule.setTriggerType(NotificationTriggerType.EVENT);
+            rule.setFilterExpression("subject.project.is_latest == true");
+            qm.persist(rule);
+
+            final var project = new Project();
+            project.setName("projectName");
+            project.setIsLatest(isLatest);
+            qm.persist(project);
+
+            final var notificationBuilder = TestNotificationFactory.createBomConsumedTestNotification().toBuilder();
+            final var subject = notificationBuilder.getSubject().unpack(BomConsumedOrProcessedSubject.class).toBuilder()
+                    .setProject(convert(project))
+                    .build();
+            final var notification =
+                    notificationBuilder.setSubject(Any.pack(subject)).build();
+
+            if (isLatest) {
+                assertThat(router.route(List.of(notification))).satisfiesExactly(result -> {
+                    assertThat(result.ruleNames()).containsOnly(rule.getName());
+                    assertThat(result.notification()).isEqualTo(notification);
+                });
+            } else {
+                assertThat(router.route(List.of(notification))).isEmpty();
+            }
         }
 
         @Test

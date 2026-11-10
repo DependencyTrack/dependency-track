@@ -21,6 +21,8 @@ package org.dependencytrack.integrations.defectdojo;
 import alpine.model.IConfigProperty;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.secret.management.SecretManager;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -30,6 +32,8 @@ import org.junit.jupiter.api.Test;
 import java.net.http.HttpClient;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -62,20 +66,17 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
 
     @Test
     void testIntegrationEnabledCases() {
-        qm.createConfigProperty(
-                DEFECTDOJO_ENABLED.getGroupName(),
-                DEFECTDOJO_ENABLED.getPropertyName(),
-                "true",
-                IConfigProperty.PropertyType.BOOLEAN,
-                null);
+        createConfigProperty(DEFECTDOJO_ENABLED, "true");
         Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, null, false);
-        qm.createProjectProperty(
-                project,
-                DEFECTDOJO_ENABLED.getGroupName(),
-                "defectdojo.engagementId",
-                "12345",
-                IConfigProperty.PropertyType.STRING,
-                null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                DEFECTDOJO_ENABLED.getGroupName(),
+                                "defectdojo.engagementId",
+                                "12345",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
         DefectDojoUploader extension = new DefectDojoUploader(httpClient, secretManager);
         extension.setQueryManager(qm);
         Assertions.assertTrue(extension.isEnabled());
@@ -102,13 +103,15 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
     @Test
     void testGetGroupByReturnsValueWhenConfigured() {
         Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, null, false);
-        qm.createProjectProperty(
-                project,
-                DEFECTDOJO_ENABLED.getGroupName(),
-                "defectdojo.groupBy",
-                "component_name",
-                IConfigProperty.PropertyType.STRING,
-                null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                DEFECTDOJO_ENABLED.getGroupName(),
+                                "defectdojo.groupBy",
+                                "component_name",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
         DefectDojoUploader extension = new DefectDojoUploader(httpClient, secretManager);
         extension.setQueryManager(qm);
         Assertions.assertEquals("component_name", extension.getGroupBy(project));

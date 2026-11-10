@@ -56,7 +56,6 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
@@ -67,6 +66,8 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityDao.ComponentVulnerabilityRow;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
@@ -2142,6 +2143,95 @@ class ProjectResourceTest extends ResourceTest {
                         """);
     }
 
+    @Test
+    void getProjectLookupWithCollectionTagTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN_WITH_TAG);
+        project.setCollectionTag(qm.createTag("foo"));
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_PROJECT + "/lookup")
+                .queryParam("name", "acme-app")
+                .queryParam("version", "1.0.0")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "version": "1.0.0",
+                          "uuid": "${json-unit.matches:projectUuid}",
+                          "tags": [],
+                          "isLatest": false,
+                          "active":true,
+                          "collectionLogic": "AGGREGATE_DIRECT_CHILDREN_WITH_TAG",
+                          "collectionTag": {
+                            "name": "foo"
+                          },
+                          "versions": [
+                            {
+                              "uuid": "${json-unit.matches:projectUuid}",
+                              "version": "1.0.0",
+                              "isLatest": false,
+                              "active": true
+                            }
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
+    void getLatestProjectWithCollectionTagTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setIsLatest(true);
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN_WITH_TAG);
+        project.setCollectionTag(qm.createTag("foo"));
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_PROJECT_LATEST + "acme-app")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "version": "1.0.0",
+                          "uuid": "${json-unit.matches:projectUuid}",
+                          "tags": [],
+                          "isLatest": true,
+                          "active":true,
+                          "collectionLogic": "AGGREGATE_DIRECT_CHILDREN_WITH_TAG",
+                          "collectionTag": {
+                            "name": "foo"
+                          },
+                          "versions": [
+                            {
+                              "uuid": "${json-unit.matches:projectUuid}",
+                              "version": "1.0.0",
+                              "isLatest": true,
+                              "active": true
+                            }
+                          ]
+                        }
+                        """);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"uuid", "lookup", "latest"})
     void shouldReturnAggregatedChildMetricsWhenGettingCollectionProject(String endpoint) {
@@ -2159,9 +2249,16 @@ class ProjectResourceTest extends ResourceTest {
         childProject.setParent(collectionProject);
         qm.persist(childProject);
 
+        final var staleChildProject = new Project();
+        staleChildProject.setName("acme-stale-app");
+        staleChildProject.setParent(collectionProject);
+        qm.persist(staleChildProject);
+
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", LocalDate.now(ZoneOffset.UTC));
+            final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(3));
             final var now = Instant.now();
 
             final var childMetrics = new ProjectMetrics();
@@ -2170,6 +2267,13 @@ class ProjectResourceTest extends ResourceTest {
             childMetrics.setFirstOccurrence(Date.from(now));
             childMetrics.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(childMetrics);
+
+            final var staleChildMetrics = new ProjectMetrics();
+            staleChildMetrics.setProjectId(staleChildProject.getId());
+            staleChildMetrics.setMedium(7);
+            staleChildMetrics.setFirstOccurrence(Date.from(now.minus(3, ChronoUnit.DAYS)));
+            staleChildMetrics.setLastOccurrence(Date.from(now.minus(3, ChronoUnit.DAYS)));
+            testDao.createProjectMetrics(staleChildMetrics);
         });
 
         final WebTarget target =
@@ -3627,8 +3731,10 @@ class ProjectResourceTest extends ResourceTest {
         project.setAccessTeams(Set.of(team));
         qm.persist(project);
 
-        final ProjectProperty projectProperty =
-                qm.createProjectProperty(project, "group", "name", "value", PropertyType.STRING, "description");
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow("group", "name", "value", PropertyType.STRING, "description")));
 
         qm.bind(project, List.of(qm.createTag("tag-a"), qm.createTag("tag-b")));
 
@@ -3810,15 +3916,10 @@ class ProjectResourceTest extends ResourceTest {
                         ]
                         """);
 
-        final List<ProjectProperty> clonedProperties = qm.getProjectProperties(clonedProject);
-        assertThat(clonedProperties).satisfiesExactly(clonedProperty -> {
-            assertThat(clonedProperty.getId()).isNotEqualTo(projectProperty.getId());
-            assertThat(clonedProperty.getGroupName()).isEqualTo("group");
-            assertThat(clonedProperty.getPropertyName()).isEqualTo("name");
-            assertThat(clonedProperty.getPropertyValue()).isEqualTo("value");
-            assertThat(clonedProperty.getPropertyType()).isEqualTo(PropertyType.STRING);
-            assertThat(clonedProperty.getDescription()).isEqualTo("description");
-        });
+        final List<ProjectPropertyRow> clonedProperties = withJdbiHandle(
+                handle -> handle.attach(ProjectPropertyDao.class).getProperties(clonedProject.getUuid()));
+        assertThat(clonedProperties)
+                .containsExactly(new ProjectPropertyRow("group", "name", "value", PropertyType.STRING, "description"));
 
         assertThat(clonedProject.getTags()).extracting(Tag::getName).containsOnly("tag-a", "tag-b");
 
@@ -5244,6 +5345,11 @@ class ProjectResourceTest extends ResourceTest {
         childProject.setParent(collectionProject);
         qm.persist(childProject);
 
+        final var staleChildProject = new Project();
+        staleChildProject.setName("acme-stale-child");
+        staleChildProject.setParent(collectionProject);
+        qm.persist(staleChildProject);
+
         final var collectionWithoutChildMetrics = new Project();
         collectionWithoutChildMetrics.setName("acme-collection-without-child-metrics");
         collectionWithoutChildMetrics.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
@@ -5258,6 +5364,7 @@ class ProjectResourceTest extends ResourceTest {
             final var testDao = handle.attach(MetricsTestDao.class);
             final LocalDate today = LocalDate.now(ZoneOffset.UTC);
             testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(3));
             final Instant now = Instant.now();
 
             final var regularMetrics = new ProjectMetrics();
@@ -5276,6 +5383,13 @@ class ProjectResourceTest extends ResourceTest {
             childMetrics.setFirstOccurrence(Date.from(now));
             childMetrics.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(childMetrics);
+
+            final var staleChildMetrics = new ProjectMetrics();
+            staleChildMetrics.setProjectId(staleChildProject.getId());
+            staleChildMetrics.setCritical(100);
+            staleChildMetrics.setFirstOccurrence(Date.from(now.minus(3, ChronoUnit.DAYS)));
+            staleChildMetrics.setLastOccurrence(Date.from(now.minus(3, ChronoUnit.DAYS)));
+            testDao.createProjectMetrics(staleChildMetrics);
         });
 
         final Response response = jersey.target(V1_PROJECT + "/concise")
@@ -5284,10 +5398,10 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("6");
 
         final JsonArray jsonArray = parseJsonArray(response);
-        assertThat(jsonArray).hasSize(5);
+        assertThat(jsonArray).hasSize(6);
 
         final JsonObject collectionObj = jsonArray.stream()
                 .map(JsonObject.class::cast)

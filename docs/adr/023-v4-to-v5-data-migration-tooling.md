@@ -253,6 +253,38 @@ matching IT) rather than on stylistic cohesion across entries. After v5 GA plus
 a short deprecation window, the module is expected to be removed wholesale
 rather than maintained.
 
+## Follow-up (2026-11-03)
+
+The statement in [Load](#load) that constraints are never deferred was wrong.
+66 of the 77 foreign keys in the schema are `DEFERRABLE INITIALLY DEFERRED`,
+so PostgreSQL runs one check per row at `COMMIT`.
+On large tables with few indexes, such as `COMPONENTS_VULNERABILITIES`, those checks dominate load time.
+
+Load now drops the foreign keys of all loaded tables before inserting. It also drops their
+non-unique indexes that do not back a constraint and are not on a partitioned table.
+It rebuilds the indexes and re-adds the foreign keys afterwards. `COMPONENT` alone has 26 such
+indexes. Unique indexes stay in place so that duplicates still fail on insert.
+
+In synthetic benchmarks on PostgreSQL 14, bulk foreign key validation was about 10x faster than
+per-row checks, and more under constrained I/O. Dropping the `COMPONENT` indexes made loading that
+table about 3x faster.
+
+The definitions are hardcoded against the pinned Flyway head, rather than read from the catalog.
+A crash after the drop would otherwise let a re-run read a catalog without the foreign keys,
+restore nothing, and report success. An integration test compares the schema before and after load.
+
+The metrics foreign keys are dropped but not re-added, because `V202606101343__drop_metrics_fks`
+removes them when the apiserver first starts.
+
+This changes recovery. A failed load can leave foreign keys and indexes missing and triggers
+disabled, so deleting partial rows is no longer valid. The operator must drop the v5 schema,
+keep the staging schema, and re-run `bootstrap` and `load`. `extract` and `transform` do not need
+to be repeated. Preflight refuses to run, and `verify` fails, while any of the hardcoded foreign
+keys or indexes are missing, because a killed process cannot report its own failure.
+
+Foreign key violations now surface when load re-adds the constraint, after all tables are loaded,
+instead of at the affected table.
+
 [^1]: https://github.com/DependencyTrack/community/blob/main/community-meetings/2026-01-07.pdf
 [ADR-006]: ./006-consolidate-user-tables.md
 [ADR-020]: ./020-flyway-migrations.md

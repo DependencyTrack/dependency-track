@@ -41,6 +41,7 @@ import java.util.function.BiConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_METRICS_RETENTION_DAYS;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigPropertyWithDefaultValue;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 
 public class MetricsMaintenanceTaskTest extends PersistenceCapableTest {
@@ -67,12 +68,7 @@ public class MetricsMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
     public void test() throws Exception {
-        qm.createConfigProperty(
-                MAINTENANCE_METRICS_RETENTION_DAYS.getGroupName(),
-                MAINTENANCE_METRICS_RETENTION_DAYS.getPropertyName(),
-                MAINTENANCE_METRICS_RETENTION_DAYS.getDefaultPropertyValue(),
-                MAINTENANCE_METRICS_RETENTION_DAYS.getPropertyType(),
-                MAINTENANCE_METRICS_RETENTION_DAYS.getDescription());
+        createConfigPropertyWithDefaultValue(MAINTENANCE_METRICS_RETENTION_DAYS);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -136,12 +132,7 @@ public class MetricsMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testCreateMetricsPartitions() {
-        qm.createConfigProperty(
-                MAINTENANCE_METRICS_RETENTION_DAYS.getGroupName(),
-                MAINTENANCE_METRICS_RETENTION_DAYS.getPropertyName(),
-                MAINTENANCE_METRICS_RETENTION_DAYS.getDefaultPropertyValue(),
-                MAINTENANCE_METRICS_RETENTION_DAYS.getPropertyType(),
-                MAINTENANCE_METRICS_RETENTION_DAYS.getDescription());
+        createConfigPropertyWithDefaultValue(MAINTENANCE_METRICS_RETENTION_DAYS);
 
         new MetricsMaintenanceTask().run();
         final LocalDate todayDate = LocalDate.now(ZoneOffset.UTC);

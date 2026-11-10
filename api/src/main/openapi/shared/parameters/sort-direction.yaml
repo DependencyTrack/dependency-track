@@ -15,6 +15,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 name: sort_direction
+description: Direction to sort in.
 in: query
 schema:
   $ref: "../schemas/sort-direction.yaml"

@@ -21,6 +21,9 @@ done
 cd "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 CANON=${CANON:-$(git remote -v | awk '/DependencyTrack\/dependency-track.*\(fetch\)/ {print $1; exit}')}
 [ -n "$CANON" ] || ask "No remote points at DependencyTrack/dependency-track. Re-run with CANON=<remote>."
+origin_url=$(git remote get-url --push origin 2>/dev/null) || die "No 'origin' remote. Add your fork as 'origin'."
+! grep -qiE '[:/]DependencyTrack/dependency-track(\.git)?$' <<< "$origin_url" ||
+  die "'origin' points at DependencyTrack/dependency-track. It must be your fork."
 git fetch -q "$CANON"
 
 info=$(gh pr view "$pr" --repo DependencyTrack/dependency-track --json state,baseRefName,mergeCommit,labels \

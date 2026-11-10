@@ -80,6 +80,7 @@ final class ActivityHeartbeatScheduler implements Closeable {
         this(lockRenewer, interval, Clock.systemUTC());
     }
 
+    @SuppressWarnings("UndefinedEquals") // For using Future as key in registrationByActivityFuture.
     ActivityHeartbeatScheduler(LockRenewer lockRenewer, Duration interval, Clock clock) {
         this.lockRenewer = lockRenewer;
         this.interval = interval;

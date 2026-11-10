@@ -54,6 +54,11 @@ public interface TagDao extends SqlObject {
                       FROM "VULNERABILITIES_TAGS" AS vt
                      WHERE vt."TAG_ID" = t."ID"
                   )
+                  AND NOT EXISTS(
+                    SELECT 1
+                      FROM "PROJECT" AS p
+                     WHERE p."COLLECTION_TAG_ID" = t."ID"
+                  )
                 LIMIT :batchSize
              )
             """)

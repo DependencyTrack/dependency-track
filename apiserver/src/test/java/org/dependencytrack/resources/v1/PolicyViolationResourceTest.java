@@ -18,14 +18,12 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.model.ConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -47,6 +45,7 @@ import java.util.function.Supplier;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class PolicyViolationResourceTest extends ResourceTest {
 
@@ -514,20 +513,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
         assertThat(parseJsonArray(responseA)).hasSize(4);
 
-        ConfigProperty aclToggle = qm.getConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
-        if (aclToggle == null) {
-            qm.createConfigProperty(
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                    "true",
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-        } else {
-            aclToggle.setPropertyValue("true");
-            qm.persist(aclToggle);
-        }
+        enablePortfolioAccessControl();
 
         final Response responseB = jersey.target(V1_POLICY_VIOLATION)
                 .request()
@@ -732,12 +718,40 @@ public class PolicyViolationResourceTest extends ResourceTest {
         componentA.setLicense("License A");
         componentA = qm.createComponent(componentA, false);
 
+        final long componentAId = componentA.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENT_ID",
+                "LICENSE",
+                "ORDINALITY",
+                "ACKNOWLEDGEMENT"
+            )
+            VALUES (:componentId, :license, 1, 'DECLARED')
+        """)
+                .bind("componentId", componentAId)
+                .bind("license", "License A")
+                .execute());
+
         var componentB = new Component();
         componentB.setProject(projectB);
         componentB.setName("Component B");
         componentB.setVersion("1.0");
         componentB.setLicense("License B");
         componentB = qm.createComponent(componentB, false);
+
+        final long componentBId = componentB.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENT_ID",
+                "LICENSE",
+                "ORDINALITY",
+                "ACKNOWLEDGEMENT"
+            )
+            VALUES (:componentId, :license, 1, 'DECLARED')
+        """)
+                .bind("componentId", componentBId)
+                .bind("license", "License B")
+                .execute());
 
         var componentC = new Component();
         componentC.setProject(projectC);
@@ -746,12 +760,40 @@ public class PolicyViolationResourceTest extends ResourceTest {
         componentC.setLicense("License C");
         componentC = qm.createComponent(componentC, false);
 
+        final long componentCId = componentC.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENT_ID",
+                "LICENSE",
+                "ORDINALITY",
+                "ACKNOWLEDGEMENT"
+            )
+            VALUES (:componentId, :license, 1, 'DECLARED')
+            """)
+                .bind("componentId", componentCId)
+                .bind("license", "License C")
+                .execute());
+
         var componentD = new Component();
         componentD.setProject(projectD);
         componentD.setName("Component D");
         componentD.setVersion("1.0");
         componentD.setLicense("License D");
         componentD = qm.createComponent(componentD, false);
+
+        final long componentDId = componentD.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENT_ID",
+                "LICENSE",
+                "ORDINALITY",
+                "ACKNOWLEDGEMENT"
+            )
+            VALUES (:componentId, :license, 1, 'DECLARED')
+        """)
+                .bind("componentId", componentDId)
+                .bind("license", "License D")
+                .execute());
 
         final Policy policyA = qm.createPolicy("Policy A", Policy.Operator.ALL, Policy.ViolationState.FAIL);
         final PolicyCondition conditionA = qm.createPolicyCondition(

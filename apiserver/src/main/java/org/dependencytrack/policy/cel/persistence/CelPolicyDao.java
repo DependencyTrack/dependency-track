@@ -22,8 +22,10 @@ import dev.cel.common.types.CelType;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.persistence.jdbi.JdbiAttributes;
 import org.dependencytrack.persistence.jdbi.mapping.OptionalColumnRowMapper;
 import org.dependencytrack.persistence.jdbi.mapping.OptionalColumnRowMapper.Columns;
+import org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil;
 import org.dependencytrack.proto.policy.v1.Component;
 import org.dependencytrack.proto.policy.v1.License;
 import org.dependencytrack.proto.policy.v1.Project;
@@ -38,7 +40,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -164,39 +165,129 @@ public final class CelPolicyDao {
                 });
     }
 
-    public Map<Long, Set<Long>> fetchAllComponentsVulnerabilities(long projectId) {
+    public record ComponentVulnerability(
+            long vulnId,
+            @Nullable String severity,
+            @Nullable Double cvssV2Score,
+            @Nullable String cvssV2Vector,
+            @Nullable Double cvssV3Score,
+            @Nullable String cvssV3Vector,
+            @Nullable Double cvssV4Score,
+            @Nullable String cvssV4Vector,
+            @Nullable Double owaspScore,
+            @Nullable String owaspVector) {
+
+        public Vulnerability applyOverrides(Vulnerability vuln) {
+            final boolean overridesCvssV2 = cvssV2Score != null || cvssV2Vector != null;
+            final boolean overridesCvssV3 = cvssV3Score != null || cvssV3Vector != null;
+            final boolean overridesCvssV4 = cvssV4Score != null || cvssV4Vector != null;
+            final boolean overridesOwasp = owaspScore != null || owaspVector != null;
+            if (severity == null && !overridesCvssV2 && !overridesCvssV3 && !overridesCvssV4 && !overridesOwasp) {
+                return vuln;
+            }
+
+            final Vulnerability.Builder builder = vuln.toBuilder();
+            if (severity != null) {
+                builder.setSeverity(severity);
+            }
+            if (overridesCvssV2) {
+                builder.clearCvssv2BaseScore().clearCvssv2Vector();
+                if (cvssV2Score != null) {
+                    builder.setCvssv2BaseScore(cvssV2Score);
+                }
+                if (cvssV2Vector != null) {
+                    builder.setCvssv2Vector(cvssV2Vector);
+                }
+            }
+            if (overridesCvssV3) {
+                builder.clearCvssv3BaseScore().clearCvssv3Vector();
+                if (cvssV3Score != null) {
+                    builder.setCvssv3BaseScore(cvssV3Score);
+                }
+                if (cvssV3Vector != null) {
+                    builder.setCvssv3Vector(cvssV3Vector);
+                }
+            }
+            if (overridesCvssV4) {
+                builder.clearCvssv4Score().clearCvssv4Vector();
+                if (cvssV4Score != null) {
+                    builder.setCvssv4Score(cvssV4Score);
+                }
+                if (cvssV4Vector != null) {
+                    builder.setCvssv4Vector(cvssV4Vector);
+                }
+            }
+            if (overridesOwasp) {
+                // Analyses only record a single OWASP RR score, which notifications also apply to all three.
+                builder.clearOwaspRrLikelihoodScore()
+                        .clearOwaspRrTechnicalImpactScore()
+                        .clearOwaspRrBusinessImpactScore()
+                        .clearOwaspRrVector();
+                if (owaspScore != null) {
+                    builder.setOwaspRrLikelihoodScore(owaspScore)
+                            .setOwaspRrTechnicalImpactScore(owaspScore)
+                            .setOwaspRrBusinessImpactScore(owaspScore);
+                }
+                if (owaspVector != null) {
+                    builder.setOwaspRrVector(owaspVector);
+                }
+            }
+
+            return builder.build();
+        }
+    }
+
+    public Map<Long, List<ComponentVulnerability>> fetchAllComponentsVulnerabilities(long projectId) {
         return jdbiHandle
-                .createQuery("""
-                        SELECT cv."COMPONENT_ID" AS component_id
-                             , cv."VULNERABILITY_ID" AS vulnerability_id
-                          FROM "COMPONENTS_VULNERABILITIES" AS cv
-                         INNER JOIN "COMPONENT" AS c
-                            ON c."ID" = cv."COMPONENT_ID"
-                         WHERE c."PROJECT_ID" = :projectId
-                           AND EXISTS (
-                             SELECT 1
-                               FROM "FINDINGATTRIBUTION" AS fa
-                              WHERE fa."PROJECT_ID" = :projectId
-                                AND fa."COMPONENT_ID" = c."ID"
-                                AND fa."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
-                                AND fa."DELETED_AT" IS NULL
-                           )
-                           AND NOT EXISTS (
-                             SELECT 1
-                               FROM "ANALYSIS" AS a
-                              WHERE a."PROJECT_ID" = :projectId
-                                AND a."COMPONENT_ID" = cv."COMPONENT_ID"
-                                AND a."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
-                                AND a."SUPPRESSED" IS TRUE
-                           )
-                        """)
+                .createQuery(/* language=SQL */ """
+                    SELECT cv."COMPONENT_ID" AS component_id
+                         , cv."VULNERABILITY_ID" AS vulnerability_id
+                         , a."SEVERITY" AS severity
+                         , a."CVSSV2SCORE" AS cvssv2_score
+                         , a."CVSSV2VECTOR" AS cvssv2_vector
+                         , a."CVSSV3SCORE" AS cvssv3_score
+                         , a."CVSSV3VECTOR" AS cvssv3_vector
+                         , a."CVSSV4SCORE" AS cvssv4_score
+                         , a."CVSSV4VECTOR" AS cvssv4_vector
+                         , a."OWASPSCORE" AS owasp_score
+                         , a."OWASPVECTOR" AS owasp_vector
+                      FROM "COMPONENTS_VULNERABILITIES" AS cv
+                     INNER JOIN "COMPONENT" AS c
+                        ON c."ID" = cv."COMPONENT_ID"
+                      LEFT JOIN "ANALYSIS" AS a
+                        ON a."PROJECT_ID" = :projectId
+                       AND a."COMPONENT_ID" = cv."COMPONENT_ID"
+                       AND a."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
+                     WHERE c."PROJECT_ID" = :projectId
+                       AND EXISTS (
+                         SELECT 1
+                           FROM "FINDINGATTRIBUTION" AS fa
+                          WHERE fa."PROJECT_ID" = :projectId
+                            AND fa."COMPONENT_ID" = c."ID"
+                            AND fa."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
+                            AND fa."DELETED_AT" IS NULL
+                       )
+                       AND a."SUPPRESSED" IS NOT TRUE
+                    """)
+                .define(
+                        JdbiAttributes.ATTRIBUTE_QUERY_NAME,
+                        "%s#fetchAllComponentsVulnerabilities"
+                                .formatted(getClass().getSimpleName()))
                 .bind("projectId", projectId)
                 .reduceResultSet(new HashMap<>(), (accumulator, rs, _) -> {
-                    final long componentId = rs.getLong("component_id");
-                    final long vulnerabilityId = rs.getLong("vulnerability_id");
                     accumulator
-                            .computeIfAbsent(componentId, k -> new HashSet<>())
-                            .add(vulnerabilityId);
+                            .computeIfAbsent(rs.getLong("component_id"), _ -> new ArrayList<>())
+                            .add(new ComponentVulnerability(
+                                    rs.getLong("vulnerability_id"),
+                                    rs.getString("severity"),
+                                    RowMapperUtil.nullableDouble(rs, "cvssv2_score"),
+                                    rs.getString("cvssv2_vector"),
+                                    RowMapperUtil.nullableDouble(rs, "cvssv3_score"),
+                                    rs.getString("cvssv3_vector"),
+                                    RowMapperUtil.nullableDouble(rs, "cvssv4_score"),
+                                    rs.getString("cvssv4_vector"),
+                                    RowMapperUtil.nullableDouble(rs, "owasp_score"),
+                                    rs.getString("owasp_vector")));
                     return accumulator;
                 });
     }
@@ -259,7 +350,7 @@ public final class CelPolicyDao {
                         <#-- @ftlvariable name="groupByColumns" type="java.util.Collection<String>" -->
                         SELECT DISTINCT
                           ${fetchColumns?join(", ")}
-                          FROM "LICENSE" AS l
+                            FROM "LICENSE" AS l
                          INNER JOIN "COMPONENT" AS c
                             ON c."LICENSE_ID" = l."ID"
                           LEFT JOIN "LICENSEGROUP_LICENSE" AS lgl

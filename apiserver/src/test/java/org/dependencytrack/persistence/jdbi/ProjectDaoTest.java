@@ -60,6 +60,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
@@ -549,5 +550,72 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .containsExactly(lowerIdProject.getUuid());
         assertThat(projectDao.getProjectId(lowerIdProject.getUuid())).isNull();
         assertThat(projectDao.getProjectId(higherIdProject.getUuid())).isEqualTo(higherIdProject.getId());
+    }
+
+    @Test
+    public void shouldCloneComponentLicensesWhenCloningProject() {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        qm.persist(component);
+        qm.getPersistenceManager().flush();
+
+        final var sourceRows = List.of(
+                new ComponentDao.ComponentLicenseRow(
+                        component.getId(), null, "License A", null, "https://example.com/license-a", 1, "DECLARED"),
+                new ComponentDao.ComponentLicenseRow(
+                        component.getId(), null, null, "MIT OR Apache-2.0", null, 2, "DECLARED"));
+
+        jdbiHandle.attach(ComponentDao.class).replaceComponentLicenses(List.of(component.getId()), sourceRows);
+
+        final UUID clonedUuid = projectDao.cloneProject(new CloneProjectCommand(
+                project.getUuid(),
+                "1.1.0",
+                /* targetProjectVersionIsLatest */ false,
+                /* includeAcl */ false,
+                /* includeComponents */ true,
+                /* includeFindings */ false,
+                /* includeFindingsAuditHistory */ false,
+                /* includePolicyViolations */ false,
+                /* includePolicyViolationsAuditHistory */ false,
+                /* includeProperties */ false,
+                /* includeServices */ false,
+                /* includeTags */ false));
+
+        final long clonedComponentId = jdbiHandle
+                .createQuery("""
+                SELECT c."ID"
+                  FROM "COMPONENT" AS c
+                 INNER JOIN "PROJECT" AS p
+                    ON p."ID" = c."PROJECT_ID"
+                 WHERE p."UUID" = :projectUuid
+                """)
+                .bind("projectUuid", clonedUuid)
+                .mapTo(Long.class)
+                .one();
+
+        final List<ComponentDao.ComponentLicenseRow> clonedRows = jdbiHandle
+                .attach(ComponentDao.class)
+                .getLicenseRows(List.of(clonedComponentId))
+                .get(clonedComponentId);
+
+        assertThat(clonedRows)
+                .extracting(
+                        ComponentDao.ComponentLicenseRow::license,
+                        ComponentDao.ComponentLicenseRow::licenseExpression,
+                        ComponentDao.ComponentLicenseRow::licenseUrl,
+                        ComponentDao.ComponentLicenseRow::ordinality,
+                        ComponentDao.ComponentLicenseRow::acknowledgement)
+                .containsExactly(
+                        tuple("License A", null, "https://example.com/license-a", 1L, "DECLARED"),
+                        tuple(null, "MIT OR Apache-2.0", null, 2L, "DECLARED"));
+
+        assertThat(clonedRows).allSatisfy(row -> assertThat(row.componentId()).isEqualTo(clonedComponentId));
     }
 }

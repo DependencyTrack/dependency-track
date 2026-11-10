@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_ORIGINAL_EXPIRATION_DAYS;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_POLICY;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -104,27 +105,12 @@ class OriginalBomFileMaintenanceTaskTest extends PersistenceCapableTest {
     }
 
     private void configureRetention(boolean enabled, BomRetentionPolicy policy) {
-        qm.createConfigProperty(
-                BOM_ORIGINAL_RETENTION_ENABLED.getGroupName(),
-                BOM_ORIGINAL_RETENTION_ENABLED.getPropertyName(),
-                String.valueOf(enabled),
-                BOM_ORIGINAL_RETENTION_ENABLED.getPropertyType(),
-                BOM_ORIGINAL_RETENTION_ENABLED.getDescription());
-        qm.createConfigProperty(
-                BOM_ORIGINAL_RETENTION_POLICY.getGroupName(),
-                BOM_ORIGINAL_RETENTION_POLICY.getPropertyName(),
-                policy.name(),
-                BOM_ORIGINAL_RETENTION_POLICY.getPropertyType(),
-                BOM_ORIGINAL_RETENTION_POLICY.getDescription());
+        createConfigProperty(BOM_ORIGINAL_RETENTION_ENABLED, String.valueOf(enabled));
+        createConfigProperty(BOM_ORIGINAL_RETENTION_POLICY, policy.name());
     }
 
     private void configureExpirationDays(int days) {
-        qm.createConfigProperty(
-                BOM_ORIGINAL_EXPIRATION_DAYS.getGroupName(),
-                BOM_ORIGINAL_EXPIRATION_DAYS.getPropertyName(),
-                String.valueOf(days),
-                BOM_ORIGINAL_EXPIRATION_DAYS.getPropertyType(),
-                BOM_ORIGINAL_EXPIRATION_DAYS.getDescription());
+        createConfigProperty(BOM_ORIGINAL_EXPIRATION_DAYS, String.valueOf(days));
     }
 
     private Bom persistBomImportedAt(

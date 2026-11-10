@@ -20,7 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
 import alpine.model.ApiKey;
-import alpine.model.ConfigProperty;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.ServiceAccount;
@@ -32,7 +31,6 @@ import org.assertj.core.api.Assertions;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.DatabaseSeedingInitTask;
 import org.glassfish.jersey.client.ClientProperties;
@@ -386,20 +384,7 @@ public class TeamResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
 
         Team team = qm.createTeam("My Team");
-        ConfigProperty aclToogle = qm.getConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
-        if (aclToogle == null) {
-            qm.createConfigProperty(
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                    "true",
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-        } else {
-            aclToogle.setPropertyValue("true");
-            qm.persist(aclToogle);
-        }
+        enablePortfolioAccessControl();
         Project project = qm.createProject("Acme Example", null, "1", null, null, null, null, false);
         project.addAccessTeam(team);
         qm.persist(project);

@@ -39,6 +39,8 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
@@ -108,7 +110,11 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
         project.setLastBomImport(new Date());
         qm.persist(project);
 
-        qm.createProjectProperty(project, "propertyGroup", "propertyName", "propertyValue", PropertyType.STRING, null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "propertyGroup", "propertyName", "propertyValue", PropertyType.STRING, null)));
 
         qm.bind(project, List.of(qm.createTag("projectTagA"), qm.createTag("projectTagB")));
 
@@ -217,6 +223,29 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
         component.setLicenseExpression("componentLicenseExpression");
         component.setResolvedLicense(license);
         qm.persist(component);
+
+        useJdbiHandle(handle -> handle.createUpdate("""
+                INSERT INTO "COMPONENTLICENSES" (
+                        "COMPONENT_ID",
+                        "LICENSE_ID",
+                        "LICENSE",
+                        "LICENSE_EXPRESSION",
+                        "ORDINALITY",
+                        "ACKNOWLEDGEMENT"
+                        )
+                VALUES (
+                        :componentId,
+                        :licenseId,
+                        :license,
+                        :licenseExpression,
+                        1,
+                        'DECLARED'
+                        )""")
+                .bind("componentId", component.getId())
+                .bind("licenseId", license.getId())
+                .bind("license", "componentLicenseName")
+                .bind("licenseExpression", "componentLicenseExpression")
+                .execute());
 
         useJdbiHandle(handle -> new PackageMetadataDao(handle)
                 .upsertAll(List.of(new PackageMetadata(

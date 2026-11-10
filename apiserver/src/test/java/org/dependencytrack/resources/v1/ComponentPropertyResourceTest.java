@@ -27,6 +27,8 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.jdbi.ComponentPropertyDao;
+import org.dependencytrack.persistence.jdbi.ComponentPropertyDao.ComponentPropertyRow;
 import org.dependencytrack.secret.management.SecretManager;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -37,11 +39,13 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.Mockito.mock;
 
@@ -134,7 +138,13 @@ public class ComponentPropertyResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThat(getPlainTextBody(response)).isEqualTo("The component could not be found.");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Component could not be found"
+                }
+                """);
     }
 
     @Test
@@ -211,6 +221,45 @@ public class ComponentPropertyResourceTest extends ResourceTest {
                   "uuid": "${json-unit.any-string}"
                 }
                 """);
+
+        final List<ComponentPropertyRow> storedProperties = withJdbiHandle(
+                handle -> handle.attach(ComponentPropertyDao.class).getProperties(component.getUuid()));
+        assertThat(storedProperties)
+                .extracting(ComponentPropertyRow::propertyValue)
+                .containsExactly("baz");
+    }
+
+    @Test
+    void createPropertyShouldNotPersistPropertyWithInvalidValue() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "foo",
+                          "propertyName": "bar",
+                          "propertyValue": "notAnInteger",
+                          "propertyType": "INTEGER"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response))
+                .isEqualTo("The property expected an integer and an integer was not sent.");
+
+        final List<ComponentPropertyRow> storedProperties = withJdbiHandle(
+                handle -> handle.attach(ComponentPropertyDao.class).getProperties(component.getUuid()));
+        assertThat(storedProperties).isEmpty();
     }
 
     @Test
@@ -319,7 +368,13 @@ public class ComponentPropertyResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThat(getPlainTextBody(response)).isEqualTo("The component could not be found.");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Component could not be found"
+                }
+                """);
     }
 
     @Test
@@ -395,6 +450,38 @@ public class ComponentPropertyResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(204);
         assertThat(getPlainTextBody(response)).isEmpty();
+
+        final List<ComponentPropertyRow> storedProperties = withJdbiHandle(
+                handle -> handle.attach(ComponentPropertyDao.class).getProperties(component.getUuid()));
+        assertThat(storedProperties).isEmpty();
+    }
+
+    @Test
+    void deletePropertyShouldReturnNotFoundWhenPropertyDoesNotExist() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_DELETE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        final Response response = jersey.target(
+                        "%s/%s/property/%s".formatted(V1_COMPONENT, component.getUuid(), UUID.randomUUID()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Component property could not be found"
+                }
+                """);
     }
 
     @Test

@@ -21,7 +21,7 @@ package org.dependencytrack.resources.v1.vo;
 import alpine.model.IConfigProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.dependencytrack.model.ComponentProperty;
+import org.dependencytrack.persistence.jdbi.ComponentPropertyDao.ComponentPropertyRow;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -49,13 +49,13 @@ public record ComponentPropertyResponse(
         @Schema(description = "UUID of the property", requiredMode = Schema.RequiredMode.REQUIRED)
         UUID uuid) {
 
-    public static ComponentPropertyResponse of(ComponentProperty property) {
+    public static ComponentPropertyResponse of(ComponentPropertyRow property) {
         return new ComponentPropertyResponse(
-                property.getGroupName(),
-                property.getPropertyName(),
-                property.getPropertyValue(),
-                property.getPropertyType(),
-                property.getDescription(),
-                property.getUuid());
+                property.groupName(),
+                property.propertyName(),
+                property.propertyValue(),
+                property.propertyType(),
+                property.description(),
+                property.uuid());
     }
 }

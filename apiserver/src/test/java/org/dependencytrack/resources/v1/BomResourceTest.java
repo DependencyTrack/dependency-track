@@ -59,7 +59,6 @@ import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
@@ -68,6 +67,8 @@ import org.dependencytrack.notification.proto.v1.BomValidationFailedSubject;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.dependencytrack.support.config.source.memory.MemoryConfigSource;
@@ -137,6 +138,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_VALIDATI
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
 import static org.dependencytrack.parser.cyclonedx.CycloneDxBomAssert.assertThatBom;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -413,13 +415,10 @@ class BomResourceTest extends ResourceTest {
         project.setAuthors(authors);
         qm.createProject(project, null, false);
 
-        final var projectProperty = new ProjectProperty();
-        projectProperty.setProject(project);
-        projectProperty.setGroupName("foo");
-        projectProperty.setPropertyName("bar");
-        projectProperty.setPropertyValue("baz");
-        projectProperty.setPropertyType(IConfigProperty.PropertyType.STRING);
-        qm.persist(projectProperty);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow("foo", "bar", "baz", IConfigProperty.PropertyType.STRING, null)));
 
         final var bomSupplier = new OrganizationalEntity();
         bomSupplier.setName("bomSupplier");
@@ -638,6 +637,140 @@ class BomResourceTest extends ResourceTest {
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         Component c = new Component();
+        Component cExp = new Component();
+        c.setProject(project);
+        c.setName("sample-component");
+        c.setVersion("1.0");
+        cExp.setProject(project);
+        cExp.setName("sample-component-expression");
+        cExp.setVersion("1.0");
+        c.setDirectDependencies("[]");
+        cExp.setDirectDependencies("[]");
+        Component component = qm.createComponent(c, false);
+        Component componentExp = qm.createComponent(cExp, false);
+
+        org.dependencytrack.model.License license = new org.dependencytrack.model.License();
+        license.setId(1234);
+        license.setName("CustomName");
+        license.setCustomLicense(true);
+        qm.createCustomLicense(license, false);
+
+        final long componentId = component.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENT_ID",
+                "LICENSE_ID",
+                "ORDINALITY",
+                "ACKNOWLEDGEMENT"
+            )
+            VALUES (:componentId, :licenseId, 1, 'DECLARED')
+            """)
+                .bind("componentId", component.getId())
+                .bind("licenseId", license.getId())
+                .execute());
+        useJdbiHandle(handle -> handle.createUpdate("""
+                INSERT INTO "COMPONENTLICENSES" (
+                    "COMPONENT_ID",
+                    "LICENSE_EXPRESSION",
+                    "ORDINALITY",
+                    "ACKNOWLEDGEMENT"
+                )
+                VALUES (:componentId, :licenseExpression, 1, 'DECLARED')
+                """)
+                .bind("componentId", componentExp.getId())
+                .bind("licenseExpression", "Apache-2.0 OR MIT")
+                .execute());
+
+        qm.persist(project);
+        Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
+        assertThatJson(jsonResponse)
+                .withMatcher("component", equalTo(component.getUuid().toString()))
+                .withMatcher(
+                        "expressionComponent", equalTo(componentExp.getUuid().toString()))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo(json("""
+                        {
+                            "bomFormat": "CycloneDX",
+                            "specVersion": "1.5",
+                            "serialNumber": "${json-unit.ignore}",
+                            "version": 1,
+                            "metadata": {
+                                "timestamp": "${json-unit.any-string}",
+                                "tools": {
+                                    "components": [
+                                        {
+                                            "type": "application",
+                                            "supplier": {
+                                              "name": "OWASP"
+                                            },
+                                            "name": "Dependency-Track",
+                                            "version": "${json-unit.any-string}"
+                                        }
+                                    ]
+                                },
+                                "component": {
+                                    "type": "library",
+                                    "bom-ref": "${json-unit.matches:projectUuid}",
+                                    "name": "Acme Example",
+                                    "version": "1.0"
+                                }
+                            },
+                            "components": [
+                                {
+                                    "type": "library",
+                                    "bom-ref": "${json-unit.matches:component}",
+                                    "name": "sample-component",
+                                    "version": "1.0",
+                                    "licenses": [
+                                        {
+                                            "license": {
+                                                "name": "CustomName"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "library",
+                                    "bom-ref": "${json-unit.matches:expressionComponent}",
+                                    "name": "sample-component-expression",
+                                    "version": "1.0",
+                                    "licenses": [
+                                        {
+                                            "expression": "Apache-2.0 OR MIT"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "dependencies": [
+                                {
+                                    "ref": "${json-unit.matches:projectUuid}",
+                                    "dependsOn": []
+                                },
+                                {
+                                    "ref": "${json-unit.matches:component}",
+                                    "dependsOn": []
+                                },
+                                {
+                                    "ref": "${json-unit.matches:expressionComponent}",
+                                    "dependsOn": []
+                                }
+                            ]
+                        }
+                        """));
+    }
+
+    @Test
+    void exportProjectAsCycloneDxMultipleLicensesTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        Component c = new Component();
         c.setProject(project);
         c.setName("sample-component");
         c.setVersion("1.0");
@@ -645,9 +778,32 @@ class BomResourceTest extends ResourceTest {
         license.setId(1234);
         license.setName("CustomName");
         license.setCustomLicense(true);
+        qm.createCustomLicense(license, false);
         c.setResolvedLicense(license);
         c.setDirectDependencies("[]");
         Component component = qm.createComponent(c, false);
+        final long componentId = component.getId();
+        useJdbiHandle(handle -> handle.createUpdate("""
+            INSERT INTO "COMPONENTLICENSES" (
+                "COMPONENT_ID",
+                "LICENSE_ID",
+                "LICENSE",
+                "LICENSE_URL",
+                "ORDINALITY",
+                "ACKNOWLEDGEMENT"
+            )
+            VALUES
+                (:componentId, :licenseId, NULL, :customLicenseUrl, 2, 'DECLARED'),
+                (:componentId, NULL, :firstLicense, :firstLicenseUrl, 1, 'DECLARED'),
+                (:componentId, NULL, :thirdLicense, NULL, 3, 'DECLARED')
+            """)
+                .bind("componentId", c.getId())
+                .bind("licenseId", license.getId())
+                .bind("customLicenseUrl", "https://example.com/custom")
+                .bind("firstLicense", "First license")
+                .bind("firstLicenseUrl", "https://example.com/first")
+                .bind("thirdLicense", "Third license")
+                .execute());
         qm.persist(project);
         Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .request()
@@ -693,12 +849,24 @@ class BomResourceTest extends ResourceTest {
                                     "name": "sample-component",
                                     "version": "1.0",
                                     "licenses": [
-                                        {
+                                          {
                                             "license": {
-                                                "name": "CustomName"
+                                              "name": "First license",
+                                              "url": "https://example.com/first"
                                             }
-                                        }
-                                    ]
+                                          },
+                                          {
+                                            "license": {
+                                              "name": "CustomName",
+                                              "url": "https://example.com/custom"
+                                            }
+                                          },
+                                          {
+                                            "license": {
+                                              "name": "Third license"
+                                            }
+                                          }
+                                        ]
                                 }
                             ],
                             "dependencies": [
@@ -1321,12 +1489,7 @@ class BomResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         if (configuredValue != null) {
-            qm.createConfigProperty(
-                    BOM_ORIGINAL_RETENTION_ENABLED.getGroupName(),
-                    BOM_ORIGINAL_RETENTION_ENABLED.getPropertyName(),
-                    configuredValue,
-                    BOM_ORIGINAL_RETENTION_ENABLED.getPropertyType(),
-                    BOM_ORIGINAL_RETENTION_ENABLED.getDescription());
+            createConfigProperty(BOM_ORIGINAL_RETENTION_ENABLED, configuredValue);
         }
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
@@ -1390,12 +1553,7 @@ class BomResourceTest extends ResourceTest {
     void uploadBomCleansUpFileWhenWorkflowStartFailsTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
-        qm.createConfigProperty(
-                BOM_ORIGINAL_RETENTION_ENABLED.getGroupName(),
-                BOM_ORIGINAL_RETENTION_ENABLED.getPropertyName(),
-                "true",
-                BOM_ORIGINAL_RETENTION_ENABLED.getPropertyType(),
-                BOM_ORIGINAL_RETENTION_ENABLED.getDescription());
+        createConfigProperty(BOM_ORIGINAL_RETENTION_ENABLED, "true");
 
         doThrow(new IllegalStateException("Workflow start failed"))
                 .when(DEX_ENGINE_MOCK)
@@ -1675,7 +1833,7 @@ class BomResourceTest extends ResourceTest {
 
         // Upload first child, search parent by UUID
         request = new BomSubmitRequest(
-                null, "Acme Example", "1.0", null, true, parentUUID, null, null, false, true, bomString);
+                null, "Acme Example", "1.0", null, true, parentUUID, null, null, false, true, null, bomString);
         response = jersey.target(V1_BOM)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1692,7 +1850,7 @@ class BomResourceTest extends ResourceTest {
 
         // Upload second child, search parent by name+ver
         request = new BomSubmitRequest(
-                null, "Acme Example", "2.0", null, true, null, "Acme Parent", "1.0", false, true, bomString);
+                null, "Acme Example", "2.0", null, true, null, "Acme Parent", "1.0", false, true, null, bomString);
         response = jersey.target(V1_BOM)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1719,6 +1877,7 @@ class BomResourceTest extends ResourceTest {
                 "1.0",
                 false,
                 true,
+                null,
                 bomString);
         response = jersey.target(V1_BOM)
                 .request()
@@ -1751,6 +1910,7 @@ class BomResourceTest extends ResourceTest {
                 null,
                 false,
                 true,
+                null,
                 bomString);
         Response response = jersey.target(V1_BOM)
                 .request()
@@ -1761,7 +1921,18 @@ class BomResourceTest extends ResourceTest {
         Assertions.assertEquals("The parent project could not be found.", body);
 
         request = new BomSubmitRequest(
-                null, "Acme Example", "2.0", null, true, null, "Non-existent parent", null, false, true, bomString);
+                null,
+                "Acme Example",
+                "2.0",
+                null,
+                true,
+                null,
+                "Non-existent parent",
+                null,
+                false,
+                true,
+                null,
+                bomString);
         response = jersey.target(V1_BOM)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -2049,12 +2220,7 @@ class BomResourceTest extends ResourceTest {
     void uploadBomWithValidationModeDisabledTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.DISABLED.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.DISABLED.name());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -2094,18 +2260,8 @@ class BomResourceTest extends ResourceTest {
     void uploadBomWithValidationModeEnabledForTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.ENABLED_FOR_TAGS.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
-        qm.createConfigProperty(
-                BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
-                "[\"foo\"]",
-                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.ENABLED_FOR_TAGS.name());
+        createConfigProperty(BOM_VALIDATION_TAGS_INCLUSIVE, "[\"foo\"]");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -2161,18 +2317,8 @@ class BomResourceTest extends ResourceTest {
     void uploadBomWithValidationModeDisabledForTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.DISABLED_FOR_TAGS.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
-        qm.createConfigProperty(
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getGroupName(),
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyName(),
-                "[\"foo\"]",
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.DISABLED_FOR_TAGS.name());
+        createConfigProperty(BOM_VALIDATION_TAGS_EXCLUSIVE, "[\"foo\"]");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -2228,18 +2374,8 @@ class BomResourceTest extends ResourceTest {
     void uploadBomWithValidationTagsInvalidTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
-        qm.createConfigProperty(
-                BOM_VALIDATION_MODE.getGroupName(),
-                BOM_VALIDATION_MODE.getPropertyName(),
-                BomValidationMode.ENABLED_FOR_TAGS.name(),
-                BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription());
-        qm.createConfigProperty(
-                BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
-                "invalid",
-                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
+        createConfigProperty(BOM_VALIDATION_MODE, BomValidationMode.ENABLED_FOR_TAGS.name());
+        createConfigProperty(BOM_VALIDATION_TAGS_INCLUSIVE, "invalid");
 
         final var project = new Project();
         project.setName("acme-app");
@@ -2363,6 +2499,223 @@ class BomResourceTest extends ResourceTest {
                 .satisfies(project -> assertThat(project.getAccessTeams())
                         .extracting(Team::getName)
                         .containsOnly(team.getName()));
+    }
+
+    @Test
+    void shouldAssignAccessTeamsByNameWhenAutoCreatingProject() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{"name": "%s"}],
+                          "bom": "%s"
+                        }
+                        """.formatted(team.getName(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(qm.getProject("acme-app", "1.0.0"))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
+    }
+
+    @Test
+    void shouldAssignAccessTeamsByUuidWhenAutoCreatingProject() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{"uuid": "%s"}],
+                          "bom": "%s"
+                        }
+                        """.formatted(team.getUuid(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(qm.getProject("acme-app", "1.0.0"))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
+    }
+
+    @Test
+    void shouldAssignAccessTeamsNotMemberOfWhenAutoCreatingProjectWithAccessManagementPermission() throws Exception {
+        initializeWithPermissions(
+                Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD, Permissions.ACCESS_MANAGEMENT);
+        enablePortfolioAccessControl();
+
+        final Team otherTeam = qm.createTeam("other-team");
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{"uuid": "%s"}],
+                          "bom": "%s"
+                        }
+                        """.formatted(otherTeam.getUuid(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        // The API key's own team is still auto-assigned in addition to the requested team.
+        assertThat(qm.getProject("acme-app", "1.0.0"))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsExactlyInAnyOrder("other-team", team.getName()));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenAutoCreatingProjectWithAccessTeamNotMemberOf() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Team otherTeam = qm.createTeam("other-team");
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{"uuid": "%s"}],
+                          "bom": "%s"
+                        }
+                        """.formatted(otherTeam.getUuid(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("""
+                The team with UUID %s can not be assigned because it does not exist, \
+                or is not accessible to the authenticated principal.""".formatted(otherTeam.getUuid()));
+
+        assertThat(qm.getProject("acme-app", "1.0.0")).isNull();
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenAutoCreatingProjectWithAccessTeamWithoutIdentifier() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{}],
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).startsWith("accessTeams must either specify a UUID or a name");
+
+        assertThat(qm.getProject("acme-app", "1.0.0")).isNull();
+    }
+
+    @Test
+    void shouldIgnoreAccessTeamsWhenUploadingToExistingProject() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final var existing = new Project();
+        existing.setName("acme-app");
+        existing.setVersion("1.0.0");
+        qm.persist(existing);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "accessTeams": [{"name": "%s"}],
+                          "bom": "%s"
+                        }
+                        """.formatted(team.getName(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().refresh(existing);
+        assertThat(existing.getAccessTeams()).isEmpty();
+    }
+
+    @Test
+    void shouldAssignAccessTeamsWhenAutoCreatingProjectViaMultipart() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final var multiPart = new FormDataMultiPart()
+                .field(
+                        "bom",
+                        resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8),
+                        MediaType.APPLICATION_XML_TYPE)
+                .field("projectName", "acme-app")
+                .field("projectVersion", "1.0.0")
+                .field("autoCreate", "true")
+                .field("accessTeams", /* language=JSON */ """
+                        [{"name": "%s"}]
+                        """.formatted(team.getName()));
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client.target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(qm.getProject("acme-app", "1.0.0"))
+                .satisfies(project -> assertThat(project.getAccessTeams())
+                        .extracting(Team::getName)
+                        .containsOnly(team.getName()));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenAutoCreatingProjectViaMultipartWithInvalidAccessTeams() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final var multiPart = new FormDataMultiPart()
+                .field(
+                        "bom",
+                        resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8),
+                        MediaType.APPLICATION_XML_TYPE)
+                .field("projectName", "acme-app")
+                .field("projectVersion", "1.0.0")
+                .field("autoCreate", "true")
+                .field("accessTeams", "not-json");
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client.target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response))
+                .isEqualTo("accessTeams must be a JSON array of teams, each specifying either a UUID or a name.");
+
+        assertThat(qm.getProject("acme-app", "1.0.0")).isNull();
     }
 
     @Test

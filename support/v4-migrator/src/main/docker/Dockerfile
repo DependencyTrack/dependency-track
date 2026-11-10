@@ -29,6 +29,9 @@ ENV TZ=Etc/UTC \
     JAVA_OPTIONS="" \
     LANG=C.UTF-8
 
+# Pull in security fixes released after the base image was built
+RUN apk upgrade --no-cache
+
 WORKDIR ${APP_DIR}
 USER nobody
 

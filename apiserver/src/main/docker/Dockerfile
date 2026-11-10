@@ -76,6 +76,8 @@ RUN mkdir -p ${APP_DIR}lib-external ${DATA_DIR} \
     && adduser -S -D -G dtrack -H -h ${DATA_DIR} -g "dtrack user" -s /bin/false -u ${UID} dtrack \
     && chown -R dtrack:0 ${DATA_DIR} \
     && chmod -R g=u ${DATA_DIR} \
+    # Pull in security fixes released after the base image was built
+    && apk upgrade --no-cache \
     && apk add --no-cache gcompat tini
 
 WORKDIR ${APP_DIR}

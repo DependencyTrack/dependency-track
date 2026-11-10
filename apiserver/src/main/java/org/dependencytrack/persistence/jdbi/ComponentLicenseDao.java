@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.dependencytrack.support.jdbi.binding.Bindings.columnValues;
 
@@ -165,5 +166,46 @@ public interface ComponentLicenseDao extends SqlObject {
 
                     return result;
                 });
+    }
+
+    record ComponentLicenseExportRow(
+            long componentId,
+            @Nullable String licenseId,
+            @Nullable String name,
+            @Nullable String licenseExpression,
+            @Nullable String licenseUrl) {}
+
+    default Map<Long, List<ComponentLicenseExportRow>> exportAll(Collection<Long> componentIds) {
+        if (componentIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getHandle()
+                .createQuery(/* language=SQL */ """
+                    SELECT cl."COMPONENT_ID"
+                         , CASE
+                             WHEN NOT COALESCE(lic."ISCUSTOMLICENSE", FALSE)
+                             THEN lic."LICENSEID"
+                             END
+                           AS "LICENSE_ID"
+                         , COALESCE(lic."NAME", cl."LICENSE") AS "NAME"
+                         , cl."LICENSE_EXPRESSION"
+                         , cl."LICENSE_URL"
+                      FROM "COMPONENTLICENSES" AS cl
+                      LEFT JOIN "LICENSE" AS lic
+                        ON lic."ID" = cl."LICENSE_ID"
+                     WHERE cl."COMPONENT_ID" = ANY(:componentIds)
+                     ORDER BY cl."COMPONENT_ID"
+                            , cl."ORDINALITY"
+                            , cl."ID"
+                    """)
+                .bindArray("componentIds", Long.class, componentIds)
+                .map((rs, _) -> new ComponentLicenseExportRow(
+                        rs.getLong("COMPONENT_ID"),
+                        rs.getString("LICENSE_ID"),
+                        rs.getString("NAME"),
+                        rs.getString("LICENSE_EXPRESSION"),
+                        rs.getString("LICENSE_URL")))
+                .collect(Collectors.groupingBy(ComponentLicenseExportRow::componentId));
     }
 }

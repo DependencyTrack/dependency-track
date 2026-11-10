@@ -496,22 +496,6 @@ class OssIndexVulnAnalyzerTest {
         final Bom cachedVdr = analyzer.analyze(bomWithoutPrefix);
         assertThat(cachedVdr).isEqualTo(vdr);
 
-        // Subsequent analysis with the normalized version (as returned by OSS Index) should also hit the cache.
-        final var bomWithPrefix = Bom.newBuilder()
-                .addComponents(Component.newBuilder()
-                        .setBomRef("golang-text-prefixed")
-                        .setName("text")
-                        .setPurl("pkg:golang/golang.org/x/text@v0.3.5")
-                        .build())
-                .build();
-        final Bom cachedPrefixedVdr = analyzer.analyze(bomWithPrefix);
-        assertThat(cachedPrefixedVdr.getVulnerabilitiesCount()).isEqualTo(1);
-        assertThat(cachedPrefixedVdr.getVulnerabilities(0).getId()).isEqualTo("CVE-2020-14040");
-        assertThat(cachedPrefixedVdr.getVulnerabilities(0).getAffectsList())
-                .containsExactly(VulnerabilityAffects.newBuilder()
-                        .setRef("golang-text-prefixed")
-                        .build());
-
         verify(1, postRequestedFor(anyUrl()));
     }
 
@@ -543,17 +527,6 @@ class OssIndexVulnAnalyzerTest {
         // Subsequent analysis with the same component should hit the cache.
         final Bom cachedVdr = analyzer.analyze(bomWithoutPrefix);
         assertThat(cachedVdr).isEqualTo(Bom.getDefaultInstance());
-
-        // Subsequent analysis with normalized version should also hit the cache.
-        final var bomWithPrefix = Bom.newBuilder()
-                .addComponents(Component.newBuilder()
-                        .setBomRef("golang-text-prefixed")
-                        .setName("text")
-                        .setPurl("pkg:golang/golang.org/x/text@v0.3.5")
-                        .build())
-                .build();
-        final Bom cachedPrefixedVdr = analyzer.analyze(bomWithPrefix);
-        assertThat(cachedPrefixedVdr).isEqualTo(Bom.getDefaultInstance());
 
         verify(1, postRequestedFor(anyUrl()));
     }

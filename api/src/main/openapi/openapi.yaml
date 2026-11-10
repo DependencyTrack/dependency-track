@@ -213,6 +213,8 @@ tags:
   description: Endpoints related to extensions
 - name: Kev Data Sources
   description: Endpoints related to KEV data sources
+- name: Licenses
+  description: Endpoints related to licenses
 - name: OAuth
   description: Endpoints related to OAuth 2.0 token issuance
 - name: Projects
@@ -253,6 +255,8 @@ paths:
     $ref: "./resources/kev-data-sources/kev-data-source-mirror-runs.yaml"
   /kev-data-sources/{name}/mirror-runs/latest:
     $ref: "./resources/kev-data-sources/kev-data-source-mirror-run-latest.yaml"
+  /licenses/{uuid}:
+    $ref: "./resources/licenses/licenses.yaml"
   /oauth/token:
     $ref: "./resources/oauth/oauth-token.yaml"
   /projects:

@@ -473,6 +473,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 rowMap.putIfAbsent(
                         key,
                         new ComponentDao.ComponentLicenseRow(
+                                null,
                                 persistedId,
                                 licenseId,
                                 licenseId == null
@@ -494,7 +495,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                                         || expression.equals(candidate.getName())))) {
             rowMap.putIfAbsent(
                     "expression",
-                    new ComponentDao.ComponentLicenseRow(persistedId, null, null, expression, null, 0, "DECLARED"));
+                    new ComponentDao.ComponentLicenseRow(0L, persistedId, null, null, expression, null, 0, "DECLARED"));
         }
 
         // Assign ordinalities now that rows are de-duplicated
@@ -502,6 +503,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         int ordinality = 1;
         for (ComponentDao.ComponentLicenseRow currentRow : rowMap.values()) {
             finalRows.add(new ComponentDao.ComponentLicenseRow(
+                    currentRow.id(),
                     currentRow.componentId(),
                     currentRow.licenseId(),
                     currentRow.license(),

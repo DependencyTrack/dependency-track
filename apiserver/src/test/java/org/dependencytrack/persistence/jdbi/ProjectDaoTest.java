@@ -539,9 +539,16 @@ public class ProjectDaoTest extends PersistenceCapableTest {
 
         final var sourceRows = List.of(
                 new ComponentDao.ComponentLicenseRow(
-                        component.getId(), null, "License A", null, "https://example.com/license-a", 1, "DECLARED"),
+                        null,
+                        component.getId(),
+                        null,
+                        "License A",
+                        null,
+                        "https://example.com/license-a",
+                        1,
+                        "DECLARED"),
                 new ComponentDao.ComponentLicenseRow(
-                        component.getId(), null, null, "MIT OR Apache-2.0", null, 2, "DECLARED"));
+                        null, component.getId(), null, null, "MIT OR Apache-2.0", null, 2, "DECLARED"));
 
         jdbiHandle.attach(ComponentDao.class).replaceComponentLicenses(List.of(component.getId()), sourceRows);
 

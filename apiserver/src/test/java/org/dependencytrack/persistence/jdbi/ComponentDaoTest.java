@@ -19,6 +19,7 @@
 package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.metrics.DependencyMetrics;
 import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.AnalysisJustification;
@@ -33,6 +34,7 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.query.ListComponentLicensesQuery;
 import org.dependencytrack.util.DateUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.AfterEach;
@@ -48,6 +50,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -199,28 +202,100 @@ public class ComponentDaoTest extends PersistenceCapableTest {
 
         final var originalRows = List.of(
                 new ComponentDao.ComponentLicenseRow(
-                        component.getId(), null, "License A", null, "https://example.com/license-a", 1, "DECLARED"),
+                        null,
+                        component.getId(),
+                        null,
+                        "License A",
+                        null,
+                        "https://example.com/license-a",
+                        1,
+                        "DECLARED"),
                 new ComponentDao.ComponentLicenseRow(
-                        component.getId(), null, null, "MIT OR Apache-2.0", null, 2, "DECLARED"),
+                        null, component.getId(), null, null, "MIT OR Apache-2.0", null, 2, "DECLARED"),
                 new ComponentDao.ComponentLicenseRow(
-                        otherComponent.getId(), null, "Other License", null, null, 1, "DECLARED"));
+                        null, otherComponent.getId(), null, "Other License", null, null, 1, "DECLARED"));
 
         componentDao.replaceComponentLicenses(List.of(component.getId(), otherComponent.getId()), originalRows);
 
         final var replacementRows = List.of(new ComponentDao.ComponentLicenseRow(
-                component.getId(), null, "Replacement License", null, null, 1, "DECLARED"));
+                null, component.getId(), null, "Replacement License", null, null, 1, "DECLARED"));
 
         componentDao.replaceComponentLicenses(List.of(component.getId()), replacementRows);
 
-        assertThat(componentDao.getLicenseRows(List.of(component.getId(), otherComponent.getId())))
-                .containsOnlyKeys(component.getId(), otherComponent.getId())
-                .satisfies(rowsByComponentId -> {
-                    assertThat(rowsByComponentId.get(component.getId())).containsExactlyElementsOf(replacementRows);
-                    assertThat(rowsByComponentId.get(otherComponent.getId())).containsExactly(originalRows.get(2));
-                });
+        final var actualRows = componentDao.getLicenseRows(List.of(component.getId(), otherComponent.getId()));
 
-        componentDao.replaceComponentLicenses(List.of(component.getId()), List.of());
+        assertThat(actualRows.get(component.getId()))
+                .extracting(
+                        ComponentDao.ComponentLicenseRow::componentId,
+                        ComponentDao.ComponentLicenseRow::licenseId,
+                        ComponentDao.ComponentLicenseRow::license,
+                        ComponentDao.ComponentLicenseRow::licenseExpression,
+                        ComponentDao.ComponentLicenseRow::licenseUrl,
+                        ComponentDao.ComponentLicenseRow::ordinality,
+                        ComponentDao.ComponentLicenseRow::acknowledgement)
+                .containsExactly(tuple(component.getId(), null, "Replacement License", null, null, 1L, "DECLARED"));
+    }
 
-        assertThat(componentDao.getLicenseRows(List.of(component.getId()))).doesNotContainKey(component.getId());
+    @Test
+    public void testPaginatedComponentLicenseRows() {
+        final var project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        qm.persist(component);
+        qm.getPersistenceManager().flush();
+
+        componentDao.replaceComponentLicenses(
+                List.of(component.getId()),
+                List.of(
+                        new ComponentDao.ComponentLicenseRow(
+                                null, component.getId(), null, "License A", null, null, 1, "DECLARED"),
+                        new ComponentDao.ComponentLicenseRow(
+                                null, component.getId(), null, "License B", null, null, 2, "DECLARED"),
+                        new ComponentDao.ComponentLicenseRow(
+                                null, component.getId(), null, "License C", null, null, 3, "DECLARED")));
+
+        final var firstPage = componentDao.getPaginatedComponentLicenseRows(
+                new ListComponentLicensesQuery(component.getId(), 2, null));
+
+        assertThat(firstPage.items())
+                .extracting(ComponentDao.ComponentLicenseRow::license, ComponentDao.ComponentLicenseRow::ordinality)
+                .containsExactly(tuple("License A", 1L), tuple("License B", 2L));
+        assertThat(firstPage.totalCount()).isNotNull();
+        assertThat(firstPage.totalCount().value()).isEqualTo(3);
+        assertThat(firstPage.totalCount().type()).isEqualTo(Page.TotalCount.Type.EXACT);
+        assertThat(firstPage.nextPageToken()).isNotNull();
+
+        final var secondPage = componentDao.getPaginatedComponentLicenseRows(
+                new ListComponentLicensesQuery(component.getId(), 2, firstPage.nextPageToken()));
+
+        assertThat(secondPage.items())
+                .extracting(ComponentDao.ComponentLicenseRow::license, ComponentDao.ComponentLicenseRow::ordinality)
+                .containsExactly(tuple("License C", 3L));
+        assertThat(secondPage.totalCount().value()).isEqualTo(3);
+        assertThat(secondPage.nextPageToken()).isNull();
+    }
+
+    @Test
+    public void testPaginatedComponentLicenseRowsEmptyPage() {
+        final var project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        qm.persist(component);
+        qm.getPersistenceManager().flush();
+
+        final var page = componentDao.getPaginatedComponentLicenseRows(
+                new ListComponentLicensesQuery(component.getId(), 10, null));
+
+        assertThat(page.items()).isEmpty();
+        assertThat(page.nextPageToken()).isNull();
+        assertThat(page.totalCount()).isNotNull();
+        assertThat(page.totalCount().value()).isZero();
+        assertThat(page.totalCount().type()).isEqualTo(Page.TotalCount.Type.EXACT);
     }
 }

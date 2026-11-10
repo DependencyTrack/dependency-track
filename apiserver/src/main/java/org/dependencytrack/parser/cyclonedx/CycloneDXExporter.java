@@ -141,7 +141,7 @@ public class CycloneDXExporter {
                         .map(ComponentDao.ComponentLicenseRow::licenseId)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toSet());
-                licensesById.putAll(componentDao.getLicensesByIds(referencedLicenseIds));
+                licensesById.putAll(componentDao.getLicenseRowsByIds(referencedLicenseIds));
             });
         }
 

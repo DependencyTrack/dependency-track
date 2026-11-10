@@ -365,6 +365,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
             licenseRows = List.of();
         } else {
             licenseRows = List.of(new ComponentDao.ComponentLicenseRow(
+                    0L,
                     component.getId(),
                     component.getResolvedLicense() != null
                             ? component.getResolvedLicense().getId()

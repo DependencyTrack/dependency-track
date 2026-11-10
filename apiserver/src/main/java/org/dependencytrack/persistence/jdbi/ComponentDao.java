@@ -27,6 +27,7 @@ import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.mapping.OptionalColumnRowMapper.Columns;
+import org.dependencytrack.persistence.jdbi.query.ListComponentLicensesQuery;
 import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
 import org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -640,6 +641,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
     }
 
     public record ComponentLicenseRow(
+            Long id,
             long componentId,
             Long licenseId,
             String license,
@@ -711,7 +713,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
         return getHandle()
                 .createQuery("""
-                SELECT "COMPONENT_ID",
+                SELECT "ID",
+                    "COMPONENT_ID",
                     "LICENSE_ID",
                     "LICENSE",
                     "LICENSE_EXPRESSION",
@@ -729,6 +732,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
                     result.computeIfAbsent(componentId, ignored -> new ArrayList<>())
                             .add(new ComponentLicenseRow(
+                                    rs.getLong("ID"),
                                     componentId,
                                     licenseId,
                                     rs.getString("LICENSE"),
@@ -750,7 +754,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             boolean fsfLibre,
             boolean osiApproved) {}
 
-    default Map<Long, LicenseRow> getLicensesByIds(Collection<Long> licenseIds) {
+    default Map<Long, LicenseRow> getLicenseRowsByIds(Collection<Long> licenseIds) {
         if (licenseIds.isEmpty()) {
             return Map.of();
         }
@@ -781,5 +785,82 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                     result.put(license.id(), license);
                     return result;
                 });
+    }
+
+    default Page<ComponentLicenseRow> getPaginatedComponentLicenseRows(ListComponentLicensesQuery query) {
+        final PageTokenEncoder pageTokenEncoder =
+                getHandle().getConfig(PaginationConfig.class).getPageTokenEncoder();
+
+        final var decodedPageToken =
+                pageTokenEncoder.decode(query.pageToken(), ListComponentLicensesQuery.PageToken.class);
+
+        final TotalCount totalCount;
+        if (decodedPageToken != null) {
+            totalCount = decodedPageToken.totalCount();
+        } else {
+            final long count = getHandle()
+                    .createQuery("""
+                SELECT COUNT(*)
+                    FROM "COMPONENTLICENSES"
+                    WHERE "COMPONENT_ID" = :componentId
+                """)
+                    .bind("componentId", query.componentId())
+                    .mapTo(long.class)
+                    .one();
+
+            totalCount = new TotalCount(count, Page.TotalCount.Type.EXACT);
+        }
+
+        final List<ComponentLicenseRow> rows = getHandle()
+                .createQuery("""
+            SELECT "ID",
+                "COMPONENT_ID",
+                "LICENSE_ID",
+                "LICENSE",
+                "LICENSE_EXPRESSION",
+                "LICENSE_URL",
+                "ORDINALITY",
+                "ACKNOWLEDGEMENT"
+            FROM "COMPONENTLICENSES"
+            WHERE "COMPONENT_ID" = :componentId
+            AND (
+                :hasCursor = FALSE
+                OR "ORDINALITY" > :lastOrdinality
+                OR (
+                    "ORDINALITY" = :lastOrdinality
+                    AND "ID" > :lastId
+                )
+            )
+            ORDER BY "ORDINALITY", "ID"
+            LIMIT :limit
+            """)
+                .bind("componentId", query.componentId())
+                .bind("hasCursor", decodedPageToken != null)
+                .bind("lastOrdinality", decodedPageToken != null ? decodedPageToken.lastOrdinality() : 0L)
+                .bind("lastId", decodedPageToken != null ? decodedPageToken.lastId() : 0L)
+                .bind("limit", query.limit() + 1)
+                .map((rs, ctx) -> new ComponentLicenseRow(
+                        rs.getLong("ID"),
+                        rs.getLong("COMPONENT_ID"),
+                        (Long) rs.getObject("LICENSE_ID"),
+                        rs.getString("LICENSE"),
+                        rs.getString("LICENSE_EXPRESSION"),
+                        rs.getString("LICENSE_URL"),
+                        rs.getLong("ORDINALITY"),
+                        rs.getString("ACKNOWLEDGEMENT")))
+                .list();
+
+        final boolean hasNextPage = rows.size() > query.limit();
+        final List<ComponentLicenseRow> resultRows = hasNextPage ? rows.subList(0, query.limit()) : rows;
+
+        final ListComponentLicensesQuery.PageToken nextPageToken;
+        if (hasNextPage) {
+            final ComponentLicenseRow lastRow = resultRows.getLast();
+            nextPageToken = new ListComponentLicensesQuery.PageToken(lastRow.ordinality(), lastRow.id(), totalCount);
+        } else {
+            nextPageToken = null;
+        }
+
+        return new Page<>(resultRows, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
 }

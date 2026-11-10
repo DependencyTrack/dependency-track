@@ -32,7 +32,18 @@ import static java.util.Objects.requireNonNull;
 /**
  * @since 5.1.0
  */
-public record RedHatDistribution(String majorVersion) implements OsDistribution {
+public record RedHatDistribution(Product product, String majorVersion) implements OsDistribution {
+
+    public enum Product {
+        RHEL("redhat"),
+        HUMMINGBIRD("hummingbird");
+
+        private final String qualifierPrefix;
+
+        Product(String qualifierPrefix) {
+            this.qualifierPrefix = qualifierPrefix;
+        }
+    }
 
     private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)(?:\\..*)?$");
 
@@ -51,19 +62,25 @@ public record RedHatDistribution(String majorVersion) implements OsDistribution 
     /// Note that only the major version is captured.
     private static final Pattern EL_MARKER_PATTERN = Pattern.compile("(?:^|[.+])el(\\d+)(?:\\.\\d+)?");
 
+    /// Finds the `hum<N>` dist tag of Red Hat Hummingbird, e.g. `2.43-8.7.hum1`.
+    private static final Pattern HUMMINGBIRD_MARKER_PATTERN = Pattern.compile("\\.hum(\\d+)");
+
     public RedHatDistribution {
+        requireNonNull(product, "product must not be null");
         requireNonNull(majorVersion, "majorVersion must not be null");
     }
 
     @Override
     public String purlQualifierValue() {
-        return "redhat-" + majorVersion;
+        return product.qualifierPrefix + "-" + majorVersion;
     }
 
     @Override
     public boolean matches(OsDistribution other) {
-        return other instanceof RedHatDistribution(final String otherMajorVersion)
-                && this.majorVersion.equals(otherMajorVersion);
+        // NB: Hummingbird is a rolling release, so its version does not identify a stream.
+        return other instanceof RedHatDistribution(final Product otherProduct, final String otherMajorVersion)
+                && this.product == otherProduct
+                && (this.product == Product.HUMMINGBIRD || this.majorVersion.equals(otherMajorVersion));
     }
 
     public static @Nullable RedHatDistribution of(@Nullable String qualifierValue) {
@@ -75,7 +92,9 @@ public record RedHatDistribution(String majorVersion) implements OsDistribution 
         // others "redhat-<version>" (e.g. Trivy).
         final String qualifierValueLower = qualifierValue.toLowerCase(Locale.ROOT);
         final String version;
-        if (qualifierValueLower.startsWith("rhel-")) {
+        if (qualifierValueLower.startsWith("hummingbird-")) {
+            return ofVersion(Product.HUMMINGBIRD, qualifierValue.substring("hummingbird-".length()));
+        } else if (qualifierValueLower.startsWith("rhel-")) {
             version = qualifierValue.substring("rhel-".length());
         } else if (qualifierValueLower.startsWith("redhat-")) {
             version = qualifierValue.substring("redhat-".length());
@@ -87,6 +106,10 @@ public record RedHatDistribution(String majorVersion) implements OsDistribution 
     }
 
     public static @Nullable RedHatDistribution ofVersion(@Nullable String version) {
+        return ofVersion(Product.RHEL, version);
+    }
+
+    private static @Nullable RedHatDistribution ofVersion(Product product, @Nullable String version) {
         if (version == null || version.isBlank()) {
             return null;
         }
@@ -96,7 +119,7 @@ public record RedHatDistribution(String majorVersion) implements OsDistribution 
             return null;
         }
 
-        return new RedHatDistribution(matcher.group(1));
+        return new RedHatDistribution(product, matcher.group(1));
     }
 
     public static @Nullable RedHatDistribution ofCpe(@Nullable String cpeSuffix) {
@@ -122,6 +145,9 @@ public record RedHatDistribution(String majorVersion) implements OsDistribution 
         if (isRhelStreamProduct(cpe.getProduct())) {
             return ofVersion(cpe.getVersion());
         }
+        if (cpe.getProduct().equals("hummingbird")) {
+            return ofVersion(Product.HUMMINGBIRD, cpe.getVersion());
+        }
 
         return null;
     }
@@ -131,12 +157,17 @@ public record RedHatDistribution(String majorVersion) implements OsDistribution 
             return null;
         }
 
-        final Matcher matcher = EL_MARKER_PATTERN.matcher(version);
-        if (!matcher.find()) {
-            return null;
+        final Matcher elMatcher = EL_MARKER_PATTERN.matcher(version);
+        if (elMatcher.find()) {
+            return new RedHatDistribution(Product.RHEL, elMatcher.group(1));
         }
 
-        return new RedHatDistribution(matcher.group(1));
+        final Matcher humMatcher = HUMMINGBIRD_MARKER_PATTERN.matcher(version);
+        if (humMatcher.find()) {
+            return new RedHatDistribution(Product.HUMMINGBIRD, humMatcher.group(1));
+        }
+
+        return null;
     }
 
     /// CPE products whose CPE version field is the RHEL `major(.minor)`. Determined

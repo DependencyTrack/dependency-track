@@ -41,6 +41,7 @@ class RedHatDistributionTest {
                     "pkg:rpm/redhat/sudo@1.9.5?distro=redhat-9.7, redhat-9",
                     "pkg:rpm/redhat/sudo@1.9.5?distro=9.2, redhat-9",
                     "pkg:rpm/redhat/sudo@1.9.5?distro=RHEL-9, redhat-9",
+                    "pkg:rpm/redhat/glibc@2.43-8.7.hum1?distro=hummingbird-1.0, hummingbird-1",
                 })
         void shouldParseFromPurl(String purl, String expectedQualifier) throws Exception {
             final OsDistribution distro = OsDistribution.of(new PackageURL(purl));
@@ -97,6 +98,7 @@ class RedHatDistributionTest {
                     "rhel_software_collections:3::el7, redhat-7",
                     "rhel_dotnet:6.0::el7, redhat-7",
                     "satellite:6.16::el8_sat, redhat-8",
+                    "hummingbird:1, hummingbird-1",
                 })
         void shouldParseFromCpe(String cpe, String expectedQualifier) {
             final RedHatDistribution distro = RedHatDistribution.ofCpe(cpe);
@@ -137,6 +139,8 @@ class RedHatDistributionTest {
                     "1.0-3.el8_6.cve_2021_44228, redhat-8",
                     "1:0.7.20-6.el8sat, redhat-8",
                     "el9, redhat-9",
+                    "0:2.43-8.7.hum1, hummingbird-1",
+                    "2.42-11.1.hum1, hummingbird-1",
                 })
         void shouldExtractFromRpmRelease(String version, String expectedQualifier) {
             final RedHatDistribution distro = RedHatDistribution.ofRpmRelease(version);
@@ -220,6 +224,30 @@ class RedHatDistributionTest {
             assertThat(distroB).isNotNull();
             assertThat(distroA.matches(distroB)).isFalse();
             assertThat(distroB.matches(distroA)).isFalse();
+        }
+
+        @Test
+        void shouldNotMatchRhelComponentAgainstHummingbirdCpe() throws Exception {
+            final OsDistribution component = OsDistribution.of(
+                    new PackageURL("pkg:rpm/redhat/glibc@2.34-284.el9_8.4?arch=x86_64&distro=redhat-9.8"));
+            final RedHatDistribution advisory = RedHatDistribution.ofCpe("hummingbird:1");
+
+            assertThat(component).isNotNull();
+            assertThat(advisory).isNotNull();
+            assertThat(component.matches(advisory)).isFalse();
+            assertThat(advisory.matches(component)).isFalse();
+        }
+
+        @Test
+        void shouldMatchHummingbirdRegardlessOfVersion() throws Exception {
+            final OsDistribution component =
+                    OsDistribution.of(new PackageURL("pkg:rpm/redhat/glibc@2.43-8.7.hum1?distro=hummingbird-20260315"));
+            final RedHatDistribution advisory = RedHatDistribution.ofCpe("hummingbird:1");
+
+            assertThat(component).isNotNull();
+            assertThat(advisory).isNotNull();
+            assertThat(component.matches(advisory)).isTrue();
+            assertThat(advisory.matches(component)).isTrue();
         }
     }
 }

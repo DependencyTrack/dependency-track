@@ -36,7 +36,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.proto.v1.BomProcessingFailedSubject;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.persistence.DatabaseSeedingInitTask;
-import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
@@ -750,9 +750,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(components).hasSize(1);
 
         Component component = components.getFirst();
-        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
-                .getLicenseRows(List.of(component.getId()))
-                .get(component.getId()));
+        final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                        .getLicenseRows(List.of(component.getId()))
+                        .get(component.getId()));
 
         assertThat(rows).singleElement().satisfies(row -> {
             assertThat(row.componentId()).isEqualTo(component.getId());
@@ -948,8 +949,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                             assertThat(component.getResolvedLicense().getName()).isEqualTo("custom license foobar");
                             assertThat(component.getLicense()).isNull();
 
-                            final List<ComponentDao.ComponentLicenseRow> rows =
-                                    withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                            final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                                    withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
                                             .getLicenseRows(List.of(component.getId()))
                                             .getOrDefault(component.getId(), List.of()));
 
@@ -968,8 +969,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                             assertThat(component.getResolvedLicense()).isNull();
                             assertThat(component.getLicense()).isEqualTo("does not exist");
 
-                            final List<ComponentDao.ComponentLicenseRow> rows =
-                                    withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                            final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                                    withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
                                             .getLicenseRows(List.of(component.getId()))
                                             .getOrDefault(component.getId(), List.of()));
 
@@ -988,8 +989,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                             assertThat(component.getResolvedLicense()).isNull();
                             assertThat(component.getLicense()).isNull();
 
-                            final List<ComponentDao.ComponentLicenseRow> rows =
-                                    withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                            final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                                    withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
                                             .getLicenseRows(List.of(component.getId()))
                                             .getOrDefault(component.getId(), List.of()));
 
@@ -1015,9 +1016,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(components).hasSize(1);
 
         Component component = components.getFirst();
-        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
-                .getLicenseRows(List.of(component.getId()))
-                .getOrDefault(component.getId(), List.of()));
+        final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                        .getLicenseRows(List.of(component.getId()))
+                        .getOrDefault(component.getId(), List.of()));
 
         assertThat(rows).singleElement().satisfies(row -> {
             assertThat(row.componentId()).isEqualTo(component.getId());
@@ -1074,9 +1076,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(components).hasSize(1);
 
         Component component = components.getFirst();
-        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
-                .getLicenseRows(List.of(component.getId()))
-                .getOrDefault(component.getId(), List.of()));
+        final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                        .getLicenseRows(List.of(component.getId()))
+                        .getOrDefault(component.getId(), List.of()));
 
         assertThat(rows).singleElement().satisfies(row -> {
             assertThat(row.componentId()).isEqualTo(component.getId());
@@ -1140,9 +1143,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(components).hasSize(1);
 
         Component component = components.getFirst();
-        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
-                .getLicenseRows(List.of(component.getId()))
-                .get(component.getId()));
+        final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                        .getLicenseRows(List.of(component.getId()))
+                        .get(component.getId()));
 
         assertThat(rows).isNull();
         assertThat(components).satisfiesExactly(comp -> {
@@ -1283,9 +1287,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(components).hasSize(1);
 
         Component component = components.getFirst();
-        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
-                .getLicenseRows(List.of(component.getId()))
-                .get(component.getId()));
+        final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                        .getLicenseRows(List.of(component.getId()))
+                        .get(component.getId()));
 
         assertThat(rows).singleElement().satisfies(row -> {
             assertThat(row.componentId()).isEqualTo(component.getId());
@@ -1380,9 +1385,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         assertThat(components).hasSize(1);
 
         Component component = components.getFirst();
-        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
-                .getLicenseRows(List.of(component.getId()))
-                .get(component.getId()));
+        final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                        .getLicenseRows(List.of(component.getId()))
+                        .get(component.getId()));
 
         assertThat(rows).isNull();
         assertThat(components).satisfiesExactly(comp -> {
@@ -2192,13 +2198,14 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 .findFirst()
                 .orElseThrow();
 
-        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
-                .getLicenseRows(List.of(component.getId()))
-                .get(component.getId()));
+        final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                        .getLicenseRows(List.of(component.getId()))
+                        .get(component.getId()));
 
         assertThat(rows).hasSize(1);
 
-        final ComponentDao.ComponentLicenseRow row = rows.getFirst();
+        final ComponentLicenseDao.ComponentLicenseRow row = rows.getFirst();
 
         assertThat(row.licenseId()).isEqualTo(license.getId());
         assertThat(row.license()).isNull();
@@ -2254,9 +2261,10 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
         final List<Component> components = qm.getAllComponents(project);
         final Component component = components.getFirst();
-        final List<ComponentDao.ComponentLicenseRow> rows = withJdbiHandle(handle -> handle.attach(ComponentDao.class)
-                .getLicenseRows(List.of(component.getId()))
-                .get(component.getId()));
+        final List<ComponentLicenseDao.ComponentLicenseRow> rows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                        .getLicenseRows(List.of(component.getId()))
+                        .get(component.getId()));
 
         assertThat(rows).hasSize(2);
         assertThat(rows)

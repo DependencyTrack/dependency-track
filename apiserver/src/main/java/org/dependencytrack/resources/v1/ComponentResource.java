@@ -47,6 +47,7 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.model.validation.ValidUuidList;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao.GraphComponent;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
@@ -500,29 +501,8 @@ public class ComponentResource extends AbstractApiResource {
 
                 qm.createComponent(component, true);
 
-                final List<ComponentDao.ComponentLicenseRow> licenseRows;
-                if (component.getResolvedLicense() == null
-                        && component.getLicense() == null
-                        && component.getLicenseExpression() == null
-                        && component.getLicenseUrl() == null) {
-                    licenseRows = List.of();
-                } else {
-                    licenseRows = List.of(new ComponentDao.ComponentLicenseRow(
-                            component.getId(),
-                            component.getResolvedLicense() != null
-                                    ? component.getResolvedLicense().getId()
-                                    : null,
-                            component.getLicense(),
-                            component.getLicenseExpression(),
-                            component.getLicenseUrl(),
-                            1,
-                            "DECLARED"));
-                }
-
                 useJdbiHandle(
-                        qm,
-                        handle -> handle.attach(ComponentDao.class)
-                                .replaceComponentLicenses(List.of(component.getId()), licenseRows));
+                        qm, handle -> handle.attach(ComponentLicenseDao.class).replaceAll(component));
 
                 return Response.status(Response.Status.CREATED)
                         .entity(component)
@@ -534,7 +514,7 @@ public class ComponentResource extends AbstractApiResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Updates a component. ", description = """
+    @Operation(summary = "Updates a component", description = """
                         <p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>
                         <p>Updating a component will wipe away all previous licenses in favor of what is provided in the update.</p>
                         """)
@@ -651,29 +631,9 @@ public class ComponentResource extends AbstractApiResource {
 
                     qm.updateComponent(component, true);
 
-                    final List<ComponentDao.ComponentLicenseRow> licenseRows;
-                    if (component.getResolvedLicense() == null
-                            && component.getLicense() == null
-                            && component.getLicenseExpression() == null
-                            && component.getLicenseUrl() == null) {
-                        licenseRows = List.of();
-                    } else {
-                        licenseRows = List.of(new ComponentDao.ComponentLicenseRow(
-                                component.getId(),
-                                component.getResolvedLicense() != null
-                                        ? component.getResolvedLicense().getId()
-                                        : null,
-                                component.getLicense(),
-                                component.getLicenseExpression(),
-                                component.getLicenseUrl(),
-                                1,
-                                "DECLARED"));
-                    }
-
                     useJdbiHandle(
                             qm,
-                            handle -> handle.attach(ComponentDao.class)
-                                    .replaceComponentLicenses(List.of(component.getId()), licenseRows));
+                            handle -> handle.attach(ComponentLicenseDao.class).replaceAll(component));
 
                     return Response.ok(component).build();
                 } else {

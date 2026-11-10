@@ -31,6 +31,7 @@ import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.FindingDao;
 
 import javax.jdo.FetchGroup;
@@ -127,18 +128,19 @@ public class CycloneDXExporter {
             final Project project,
             final Version version) {
 
-        final Map<Long, List<ComponentDao.ComponentLicenseRow>> licenseRowsByComponentId = new HashMap<>();
+        final Map<Long, List<ComponentLicenseDao.ComponentLicenseRow>> licenseRowsByComponentId = new HashMap<>();
         final Map<Long, ComponentDao.LicenseRow> licensesById = new HashMap<>();
         if (components != null && !components.isEmpty()) {
             List<Long> componentIds = components.stream().map(Component::getId).toList();
             useJdbiHandle(handle -> {
                 final ComponentDao componentDao = handle.attach(ComponentDao.class);
 
-                licenseRowsByComponentId.putAll(componentDao.getLicenseRows(componentIds));
+                licenseRowsByComponentId.putAll(
+                        handle.attach(ComponentLicenseDao.class).getLicenseRows(componentIds));
 
                 final Set<Long> referencedLicenseIds = licenseRowsByComponentId.values().stream()
                         .flatMap(Collection::stream)
-                        .map(ComponentDao.ComponentLicenseRow::licenseId)
+                        .map(ComponentLicenseDao.ComponentLicenseRow::licenseId)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toSet());
                 licensesById.putAll(componentDao.getLicensesByIds(referencedLicenseIds));

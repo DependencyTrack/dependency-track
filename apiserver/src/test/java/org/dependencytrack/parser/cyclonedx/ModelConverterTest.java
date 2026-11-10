@@ -27,6 +27,7 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.FindingDao;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Nested;
@@ -142,10 +143,11 @@ class ModelConverterTest extends PersistenceCapableTest {
             component.setUuid(UUID.randomUUID());
             component.setName("acme-lib");
             final var licenseRows = List.of(
-                    new ComponentDao.ComponentLicenseRow(
+                    new ComponentLicenseDao.ComponentLicenseRow(
                             1, 101L, null, null, "https://example.com/apache-2.0", 1, null),
-                    new ComponentDao.ComponentLicenseRow(1, 102L, null, null, "https://example.com/custom", 2, null),
-                    new ComponentDao.ComponentLicenseRow(
+                    new ComponentLicenseDao.ComponentLicenseRow(
+                            1, 102L, null, null, "https://example.com/custom", 2, null),
+                    new ComponentLicenseDao.ComponentLicenseRow(
                             1, null, "Unknown license", null, "https://example.com/unknown", 3, null));
             final var licensesById = Map.of(
                     101L,
@@ -180,8 +182,8 @@ class ModelConverterTest extends PersistenceCapableTest {
             final var component = new Component();
             component.setUuid(UUID.randomUUID());
             component.setName("acme-lib");
-            final var licenseRows =
-                    List.of(new ComponentDao.ComponentLicenseRow(1, null, null, "Apache-2.0 OR MIT", null, 1, null));
+            final var licenseRows = List.of(
+                    new ComponentLicenseDao.ComponentLicenseRow(1, null, null, "Apache-2.0 OR MIT", null, 1, null));
 
             final var cdxComponent = ModelConverter.convert(component, licenseRows, Map.of());
 

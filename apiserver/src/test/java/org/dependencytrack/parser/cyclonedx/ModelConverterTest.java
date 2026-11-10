@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
+import org.cyclonedx.Version;
 import org.cyclonedx.model.Hash;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
@@ -36,7 +37,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -143,20 +143,14 @@ class ModelConverterTest extends PersistenceCapableTest {
             component.setUuid(UUID.randomUUID());
             component.setName("acme-lib");
             final var licenseRows = List.of(
-                    new ComponentLicenseDao.ComponentLicenseRow(
-                            1, 101L, null, null, "https://example.com/apache-2.0", 1, null),
-                    new ComponentLicenseDao.ComponentLicenseRow(
-                            1, 102L, null, null, "https://example.com/custom", 2, null),
-                    new ComponentLicenseDao.ComponentLicenseRow(
-                            1, null, "Unknown license", null, "https://example.com/unknown", 3, null));
-            final var licensesById = Map.of(
-                    101L,
-                    new ComponentDao.LicenseRow(
-                            101, UUID.randomUUID(), "Apache-2.0", "Apache License 2.0", false, true, true),
-                    102L,
-                    new ComponentDao.LicenseRow(102, UUID.randomUUID(), null, "Custom license", true, false, false));
+                    new ComponentLicenseDao.ComponentLicenseExportRow(
+                            1, "Apache-2.0", "Apache License 2.0", null, "https://example.com/apache-2.0"),
+                    new ComponentLicenseDao.ComponentLicenseExportRow(
+                            1, null, "Custom license", null, "https://example.com/custom"),
+                    new ComponentLicenseDao.ComponentLicenseExportRow(
+                            1, null, "Unknown license", null, "https://example.com/unknown"));
 
-            final var cdxComponent = ModelConverter.convert(component, licenseRows, licensesById);
+            final var cdxComponent = ModelConverter.convert(component, licenseRows, Version.VERSION_16);
 
             assertThat(cdxComponent.getLicenses().getLicenses())
                     .satisfiesExactly(
@@ -183,9 +177,9 @@ class ModelConverterTest extends PersistenceCapableTest {
             component.setUuid(UUID.randomUUID());
             component.setName("acme-lib");
             final var licenseRows = List.of(
-                    new ComponentLicenseDao.ComponentLicenseRow(1, null, null, "Apache-2.0 OR MIT", null, 1, null));
+                    new ComponentLicenseDao.ComponentLicenseExportRow(1, null, null, "Apache-2.0 OR MIT", null));
 
-            final var cdxComponent = ModelConverter.convert(component, licenseRows, Map.of());
+            final var cdxComponent = ModelConverter.convert(component, licenseRows, Version.VERSION_16);
 
             assertThat(cdxComponent.getLicenses().getExpression().getValue()).isEqualTo("Apache-2.0 OR MIT");
             assertThat(cdxComponent.getLicenses().getLicenses()).isNullOrEmpty();

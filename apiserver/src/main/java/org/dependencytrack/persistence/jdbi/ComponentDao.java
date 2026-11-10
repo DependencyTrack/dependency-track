@@ -637,46 +637,4 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             return new ListedComponent(component, publishedAtMicros);
         }
     }
-
-    public record LicenseRow(
-            long id,
-            UUID uuid,
-            String licenseId,
-            String name,
-            boolean customLicense,
-            boolean fsfLibre,
-            boolean osiApproved) {}
-
-    default Map<Long, LicenseRow> getLicensesByIds(Collection<Long> licenseIds) {
-        if (licenseIds.isEmpty()) {
-            return Map.of();
-        }
-
-        return getHandle()
-                .createQuery("""
-            SELECT "ID",
-                "UUID",
-                "LICENSEID",
-                "NAME",
-                "ISCUSTOMLICENSE",
-                "FSFLIBRE",
-                "ISOSIAPPROVED"
-            FROM "LICENSE"
-            WHERE "ID" = ANY(:licenseIds)
-            """)
-                .bindArray("licenseIds", Long.class, licenseIds)
-                .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
-                    final var license = new LicenseRow(
-                            rs.getLong("ID"),
-                            UUID.fromString(rs.getString("UUID")),
-                            rs.getString("LICENSEID"),
-                            rs.getString("NAME"),
-                            rs.getBoolean("ISCUSTOMLICENSE"),
-                            rs.getBoolean("FSFLIBRE"),
-                            rs.getBoolean("ISOSIAPPROVED"));
-
-                    result.put(license.id(), license);
-                    return result;
-                });
-    }
 }

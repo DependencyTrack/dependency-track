@@ -538,12 +538,12 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         qm.getPersistenceManager().flush();
 
         final var sourceRows = List.of(
-                new ComponentDao.ComponentLicenseRow(
+                new ComponentLicenseDao.ComponentLicenseRow(
                         component.getId(), null, "License A", null, "https://example.com/license-a", 1, "DECLARED"),
-                new ComponentDao.ComponentLicenseRow(
+                new ComponentLicenseDao.ComponentLicenseRow(
                         component.getId(), null, null, "MIT OR Apache-2.0", null, 2, "DECLARED"));
 
-        jdbiHandle.attach(ComponentDao.class).replaceComponentLicenses(List.of(component.getId()), sourceRows);
+        jdbiHandle.attach(ComponentLicenseDao.class).replaceAll(List.of(component.getId()), sourceRows);
 
         final UUID clonedUuid = projectDao.cloneProject(new CloneProjectCommand(
                 project.getUuid(),
@@ -571,18 +571,18 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .mapTo(Long.class)
                 .one();
 
-        final List<ComponentDao.ComponentLicenseRow> clonedRows = jdbiHandle
-                .attach(ComponentDao.class)
+        final List<ComponentLicenseDao.ComponentLicenseRow> clonedRows = jdbiHandle
+                .attach(ComponentLicenseDao.class)
                 .getLicenseRows(List.of(clonedComponentId))
                 .get(clonedComponentId);
 
         assertThat(clonedRows)
                 .extracting(
-                        ComponentDao.ComponentLicenseRow::license,
-                        ComponentDao.ComponentLicenseRow::licenseExpression,
-                        ComponentDao.ComponentLicenseRow::licenseUrl,
-                        ComponentDao.ComponentLicenseRow::ordinality,
-                        ComponentDao.ComponentLicenseRow::acknowledgement)
+                        ComponentLicenseDao.ComponentLicenseRow::license,
+                        ComponentLicenseDao.ComponentLicenseRow::licenseExpression,
+                        ComponentLicenseDao.ComponentLicenseRow::licenseUrl,
+                        ComponentLicenseDao.ComponentLicenseRow::ordinality,
+                        ComponentLicenseDao.ComponentLicenseRow::acknowledgement)
                 .containsExactly(
                         tuple("License A", null, "https://example.com/license-a", 1L, "DECLARED"),
                         tuple(null, "MIT OR Apache-2.0", null, 2L, "DECLARED"));

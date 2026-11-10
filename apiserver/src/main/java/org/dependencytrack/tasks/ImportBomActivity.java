@@ -46,7 +46,7 @@ import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
@@ -405,7 +405,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 // so they can access the proper table IDs
                 final Map<String, Long> licenseIds = findLicenseIds(qm, bom.components());
                 final List<Long> componentIds = new ArrayList<>();
-                final List<ComponentDao.ComponentLicenseRow> licenseRows = new ArrayList<>();
+                final List<ComponentLicenseDao.ComponentLicenseRow> licenseRows = new ArrayList<>();
 
                 for (final Component component : bom.components()) {
                     final ComponentIdentity persistentIdentity =
@@ -429,9 +429,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 }
 
                 useJdbiHandle(
-                        qm,
-                        handle ->
-                                handle.attach(ComponentDao.class).replaceComponentLicenses(componentIds, licenseRows));
+                        qm, handle -> handle.attach(ComponentLicenseDao.class).replaceAll(componentIds, licenseRows));
 
                 recordBomImport(ctx, qm, persistentProject);
 
@@ -445,11 +443,11 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         }
     }
 
-    private static List<ComponentDao.ComponentLicenseRow> buildComponentLicenseRows(
+    private static List<ComponentLicenseDao.ComponentLicenseRow> buildComponentLicenseRows(
             final Component component, final long persistedId, final Map<String, Long> licenseIds) {
 
         // LinkedHashMap lends itself to keeping the ordinality intact
-        final Map<String, ComponentDao.ComponentLicenseRow> rowMap = new LinkedHashMap<>();
+        final Map<String, ComponentLicenseDao.ComponentLicenseRow> rowMap = new LinkedHashMap<>();
         final List<org.cyclonedx.model.License> candidates = component.getLicenseCandidates();
         final String expression = trimToNull(component.getLicenseExpression());
 
@@ -472,7 +470,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 String key = licenseId != null ? "resolved:" + licenseId : "unresolved:" + identifier;
                 rowMap.putIfAbsent(
                         key,
-                        new ComponentDao.ComponentLicenseRow(
+                        new ComponentLicenseDao.ComponentLicenseRow(
                                 persistedId,
                                 licenseId,
                                 licenseId == null
@@ -494,14 +492,15 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                                         || expression.equals(candidate.getName())))) {
             rowMap.putIfAbsent(
                     "expression",
-                    new ComponentDao.ComponentLicenseRow(persistedId, null, null, expression, null, 0, "DECLARED"));
+                    new ComponentLicenseDao.ComponentLicenseRow(
+                            persistedId, null, null, expression, null, 0, "DECLARED"));
         }
 
         // Assign ordinalities now that rows are de-duplicated
-        final List<ComponentDao.ComponentLicenseRow> finalRows = new ArrayList<>(rowMap.size());
+        final List<ComponentLicenseDao.ComponentLicenseRow> finalRows = new ArrayList<>(rowMap.size());
         int ordinality = 1;
-        for (ComponentDao.ComponentLicenseRow currentRow : rowMap.values()) {
-            finalRows.add(new ComponentDao.ComponentLicenseRow(
+        for (ComponentLicenseDao.ComponentLicenseRow currentRow : rowMap.values()) {
+            finalRows.add(new ComponentLicenseDao.ComponentLicenseRow(
                     currentRow.componentId(),
                     currentRow.licenseId(),
                     currentRow.license(),

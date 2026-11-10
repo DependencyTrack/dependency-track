@@ -67,6 +67,7 @@ import org.dependencytrack.parser.spdx.expression.SpdxExpression;
 import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -831,7 +832,7 @@ public class ModelConverter {
 
     public static org.cyclonedx.model.Component convert(
             final Component component,
-            final List<ComponentDao.ComponentLicenseRow> licenseRows,
+            final List<ComponentLicenseDao.ComponentLicenseRow> licenseRows,
             final Map<Long, ComponentDao.LicenseRow> licensesById) {
 
         final org.cyclonedx.model.Component cycloneComponent = convert(component);
@@ -841,7 +842,7 @@ public class ModelConverter {
         }
 
         final var licenseChoice = new LicenseChoice();
-        for (final ComponentDao.ComponentLicenseRow row : licenseRows) {
+        for (final ComponentLicenseDao.ComponentLicenseRow row : licenseRows) {
             if (row.licenseExpression() != null) {
                 final var expression = new Expression();
                 expression.setValue(row.licenseExpression());

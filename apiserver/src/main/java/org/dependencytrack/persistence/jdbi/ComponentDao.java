@@ -840,7 +840,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 .bind("lastId", decodedPageToken != null ? decodedPageToken.lastId() : 0L)
                 .bind("limit", query.limit() + 1)
                 .map((rs, ctx) -> new ComponentLicenseRow(
-                        rs.getLong("ID"), // here
+                        rs.getLong("ID"),
                         rs.getLong("COMPONENT_ID"),
                         (Long) rs.getObject("LICENSE_ID"),
                         rs.getString("LICENSE"),

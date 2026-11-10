@@ -614,9 +614,6 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             if (rs.getString("LAST_RISKSCORE") != null) {
                 columns.maybeSet(rs, "LAST_RISKSCORE", ResultSet::getDouble, component::setLastInheritedRiskScore);
             }
-            columns.maybeSet(rs, "componentLicenseName", ResultSet::getString, component::setLicense);
-            columns.maybeSet(rs, "licenseExpression", ResultSet::getString, component::setLicenseExpression);
-            columns.maybeSet(rs, "licenseUrl", ResultSet::getString, component::setLicenseUrl);
             if (columns.contains("licenseUuid") && rs.getString("licenseUuid") != null) {
                 final var license = new License();
                 license.setUuid(UUID.fromString(rs.getString("licenseUuid")));

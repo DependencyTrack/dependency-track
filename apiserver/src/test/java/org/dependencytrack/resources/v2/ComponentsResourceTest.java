@@ -1070,18 +1070,5 @@ public class ComponentsResourceTest extends ResourceTest {
         componentC.setLastInheritedRiskScore(2.3);
         componentC.setLicense("Public Domain");
         qm.createComponent(componentC, false);
-
-        useJdbiHandle(handle -> handle.createUpdate("""
-            INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENT_ID",
-                "LICENSE",
-                "ORDINALITY",
-                "ACKNOWLEDGEMENT"
-            )
-            VALUES (:componentId, :license, 1, 'DECLARED')
-            """)
-                .bind("componentId", componentC.getId())
-                .bind("license", "Public Domain")
-                .execute());
     }
 }

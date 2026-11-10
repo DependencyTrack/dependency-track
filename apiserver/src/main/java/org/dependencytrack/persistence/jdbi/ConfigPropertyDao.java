@@ -18,41 +18,70 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
-import alpine.model.ConfigProperty;
+import alpine.model.IConfigProperty.PropertyType;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
  * @since 5.0.0
  */
+@NullMarked
 public interface ConfigPropertyDao extends SqlObject {
 
-    @SqlQuery("""
-            SELECT *
-              FROM "CONFIGPROPERTY"
-             WHERE "GROUPNAME" = :group
-               AND "PROPERTYNAME" = :name
-            """)
-    @RegisterBeanMapper(ConfigProperty.class)
-    Optional<ConfigProperty> getOptional(@Bind String group, @Bind String name);
+    record ConfigPropertyRow(
+            String groupName,
+            String propertyName,
+            @Nullable String propertyValue,
+            PropertyType propertyType,
+            @Nullable String description) {}
 
-    default Optional<String> getOptionalRawValue(@BindBean ConfigPropertyConstants property) {
-        return getOptional(property.getGroupName(), property.getPropertyName()).map(ConfigProperty::getPropertyValue);
+    @SqlQuery("""
+        SELECT "GROUPNAME"
+             , "PROPERTYNAME"
+             , "PROPERTYVALUE"
+             , "PROPERTYTYPE"
+             , "DESCRIPTION"
+          FROM "CONFIGPROPERTY"
+         ORDER BY "GROUPNAME"
+                , "PROPERTYNAME"
+        """)
+    @RegisterConstructorMapper(ConfigPropertyRow.class)
+    List<ConfigPropertyRow> getProperties();
+
+    @SqlQuery("""
+        SELECT "GROUPNAME"
+             , "PROPERTYNAME"
+             , "PROPERTYVALUE"
+             , "PROPERTYTYPE"
+             , "DESCRIPTION"
+          FROM "CONFIGPROPERTY"
+         WHERE "GROUPNAME" = :groupName
+           AND "PROPERTYNAME" = :propertyName
+        """)
+    @RegisterConstructorMapper(ConfigPropertyRow.class)
+    @Nullable
+    ConfigPropertyRow getProperty(@Bind String groupName, @Bind String propertyName);
+
+    default Optional<String> getOptionalRawValue(ConfigPropertyConstants property) {
+        return Optional.ofNullable(getProperty(property.getGroupName(), property.getPropertyName()))
+                .map(ConfigPropertyRow::propertyValue);
     }
 
-    default Optional<String> getOptionalValue(final ConfigPropertyConstants property) {
+    default Optional<String> getOptionalValue(ConfigPropertyConstants property) {
         return getOptionalRawValue(property);
     }
 
-    default <T> Optional<T> getOptionalValue(final ConfigPropertyConstants property, final Class<T> clazz) {
+    default <T> Optional<T> getOptionalValue(ConfigPropertyConstants property, Class<T> clazz) {
         final Optional<String> optionalStringValue = getOptionalValue(property);
         if (optionalStringValue.isEmpty()) {
             return Optional.empty();
@@ -78,24 +107,24 @@ public interface ConfigPropertyDao extends SqlObject {
         return Optional.of(convertedValue);
     }
 
-    default boolean isEnabled(final ConfigPropertyConstants property) {
+    default boolean isEnabled(ConfigPropertyConstants property) {
         return getOptionalValue(property, Boolean.class)
                 .orElseGet(() -> Boolean.parseBoolean(property.getDefaultPropertyValue()));
     }
 
-    default <T> T getValue(final ConfigPropertyConstants property, final Class<T> clazz) {
+    default <T> T getValue(ConfigPropertyConstants property, Class<T> clazz) {
         return getOptionalValue(property, clazz).orElseThrow(NoSuchElementException::new);
     }
 
     @SqlUpdate("""
-            UPDATE "CONFIGPROPERTY"
-               SET "PROPERTYVALUE" = :value
-             WHERE "GROUPNAME" = :group
-               AND "PROPERTYNAME" = :name
-            """)
-    boolean setValue(@Bind String group, @Bind String name, @Bind String value);
+        UPDATE "CONFIGPROPERTY"
+           SET "PROPERTYVALUE" = :value
+         WHERE "GROUPNAME" = :group
+           AND "PROPERTYNAME" = :name
+        """)
+    boolean setValue(@Bind String group, @Bind String name, @Bind @Nullable String value);
 
-    default void setValue(@BindBean ConfigPropertyConstants property, @Bind String value) {
+    default void setValue(ConfigPropertyConstants property, @Bind @Nullable String value) {
         setValue(property.getGroupName(), property.getPropertyName(), value);
     }
 }

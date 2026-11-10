@@ -44,6 +44,7 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.validation.ValidUuid;
+import org.dependencytrack.model.validation.ValidUuidList;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao;
@@ -751,10 +752,15 @@ public class ComponentResource extends AbstractApiResource {
 
     @GET
     @Path("/project/{projectUuid}/dependencyGraph/{componentUuids}")
+    @Deprecated(since = "5.3.0")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Returns the expanded dependency graph to every occurrence of a component",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
+    @Operation(summary = "Returns the expanded dependency graph to every occurrence of a component", description = """
+        <p>Requires permission <strong>VIEW_PORTFOLIO</strong>.</p>
+        <p>
+          <strong>Deprecated</strong>! Use <code>/api/v2/projects/{uuid}/dependency-graph</code>
+          for the graph structure, and <code>/api/v2/projects/{uuid}/components</code> for component details.
+        </p>\
+        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -792,7 +798,7 @@ public class ComponentResource extends AbstractApiResource {
                                     "List of UUIDs of the components (separated by |) to get the expanded dependency graph for",
                             required = true)
                     @PathParam("componentUuids")
-                    @ValidUuid
+                    @ValidUuidList
                     String componentUuids) {
         final var parsedProjectUuid = UUID.fromString(projectUuid);
 

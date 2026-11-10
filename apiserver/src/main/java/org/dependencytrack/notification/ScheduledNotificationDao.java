@@ -94,7 +94,58 @@ public final class ScheduledNotificationDao {
                 .execute();
     }
 
-    public Set<Long> getApplicableProjectIds(long ruleId, boolean notifyChildren) {
+    public record RuleScope(boolean isLimitedToProjects, boolean isLimitedToTags) {
+
+        public boolean isConfigured() {
+            return isLimitedToProjects || isLimitedToTags;
+        }
+    }
+
+    public RuleScope getRuleScope(long ruleId) {
+        return jdbiHandle
+                .createQuery(/* language=SQL */ """
+                        SELECT EXISTS(
+                          SELECT 1
+                            FROM "NOTIFICATIONRULE_PROJECTS"
+                           WHERE "NOTIFICATIONRULE_ID" = :ruleId
+                        ) AS is_limited_to_projects
+                             , EXISTS(
+                          SELECT 1
+                            FROM "NOTIFICATIONRULE_TAGS"
+                           WHERE "NOTIFICATIONRULE_ID" = :ruleId
+                        ) AS is_limited_to_tags
+                        """)
+                .bind("ruleId", ruleId)
+                .map(ConstructorMapper.of(RuleScope.class))
+                .one();
+    }
+
+    public Set<Long> getApplicableProjectIds(long ruleId, RuleScope scope, boolean notifyChildren) {
+        if (scope.isLimitedToTags()) {
+            return getProjectIdsMatchingTags(ruleId);
+        }
+
+        return getBoundProjectIds(ruleId, notifyChildren);
+    }
+
+    private Set<Long> getProjectIdsMatchingTags(long ruleId) {
+        return jdbiHandle
+                .createQuery(/* language=SQL */ """
+                        SELECT DISTINCT pt."PROJECT_ID"
+                          FROM "NOTIFICATIONRULE_TAGS" rt
+                         INNER JOIN "PROJECTS_TAGS" pt
+                            ON pt."TAG_ID" = rt."TAG_ID"
+                         INNER JOIN "PROJECT" p
+                            ON p."ID" = pt."PROJECT_ID"
+                         WHERE rt."NOTIFICATIONRULE_ID" = :ruleId
+                           AND p."INACTIVE_SINCE" IS NULL
+                        """)
+                .bind("ruleId", ruleId)
+                .mapTo(Long.class)
+                .set();
+    }
+
+    private Set<Long> getBoundProjectIds(long ruleId, boolean notifyChildren) {
         if (notifyChildren) {
             return jdbiHandle
                     .createQuery(/* language=SQL */ """
@@ -211,19 +262,5 @@ public final class ScheduledNotificationDao {
                 .bindArray("projectIds", Long.class, projectIds)
                 .map(ConstructorMapper.of(NewPolicyViolation.class))
                 .list();
-    }
-
-    public boolean hasProjectsConfigured(long ruleId) {
-        return jdbiHandle
-                .createQuery(/* language=SQL */ """
-                        SELECT EXISTS(
-                          SELECT 1
-                            FROM "NOTIFICATIONRULE_PROJECTS"
-                           WHERE "NOTIFICATIONRULE_ID" = :ruleId
-                        )
-                        """)
-                .bind("ruleId", ruleId)
-                .mapTo(boolean.class)
-                .one();
     }
 }

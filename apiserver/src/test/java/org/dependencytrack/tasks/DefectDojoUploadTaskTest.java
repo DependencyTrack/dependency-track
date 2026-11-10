@@ -27,6 +27,8 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.secret.TestSecretManager;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -52,36 +54,19 @@ import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_K
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigPropertyWithDefaultValue;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 @WireMockTest
 class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
     @Test
     void testUpload(WireMockRuntimeInfo wmRuntimeInfo) {
-        qm.createConfigProperty(
-                DEFECTDOJO_ENABLED.getGroupName(),
-                DEFECTDOJO_ENABLED.getPropertyName(),
-                "true",
-                DEFECTDOJO_ENABLED.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_URL.getGroupName(),
-                DEFECTDOJO_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl() + "/",
-                DEFECTDOJO_URL.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_API_KEY.getGroupName(),
-                DEFECTDOJO_API_KEY.getPropertyName(),
-                "apiKeySecretName",
-                DEFECTDOJO_API_KEY.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getDefaultPropertyValue(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null);
+        createConfigProperty(DEFECTDOJO_ENABLED, "true");
+        createConfigProperty(DEFECTDOJO_URL, wmRuntimeInfo.getHttpBaseUrl() + "/");
+        createConfigProperty(DEFECTDOJO_API_KEY, "apiKeySecretName");
+        createConfigPropertyWithDefaultValue(DEFECTDOJO_REIMPORT_ENABLED);
 
         stubFor(post(urlPathEqualTo("/api/v2/import-scan/"))
                 .willReturn(aResponse().withStatus(201)));
@@ -105,8 +90,15 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.engagementId",
+                                "666",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
 
         new DefectDojoUploadTask(
                         HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
@@ -174,30 +166,10 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
     @Test
     void testUploadWithTestTitle(WireMockRuntimeInfo wmRuntimeInfo) {
-        qm.createConfigProperty(
-                DEFECTDOJO_ENABLED.getGroupName(),
-                DEFECTDOJO_ENABLED.getPropertyName(),
-                "true",
-                DEFECTDOJO_ENABLED.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_URL.getGroupName(),
-                DEFECTDOJO_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl(),
-                DEFECTDOJO_URL.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_API_KEY.getGroupName(),
-                DEFECTDOJO_API_KEY.getPropertyName(),
-                "apiKeySecretName",
-                DEFECTDOJO_API_KEY.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getDefaultPropertyValue(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null);
+        createConfigProperty(DEFECTDOJO_ENABLED, "true");
+        createConfigProperty(DEFECTDOJO_URL, wmRuntimeInfo.getHttpBaseUrl());
+        createConfigProperty(DEFECTDOJO_API_KEY, "apiKeySecretName");
+        createConfigPropertyWithDefaultValue(DEFECTDOJO_REIMPORT_ENABLED);
 
         stubFor(post(urlPathEqualTo("/api/v2/import-scan/"))
                 .willReturn(aResponse().withStatus(201)));
@@ -221,15 +193,24 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(
-                project,
-                "integrations",
-                "defectdojo.testTitle",
-                "configured name of test",
-                IConfigProperty.PropertyType.STRING,
-                null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.engagementId",
+                                "666",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.testTitle",
+                                "configured name of test",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
 
         new DefectDojoUploadTask(
                         HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
@@ -299,30 +280,10 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
     @Test
     void testUploadWithGlobalReimport(WireMockRuntimeInfo wmRuntimeInfo) {
-        qm.createConfigProperty(
-                DEFECTDOJO_ENABLED.getGroupName(),
-                DEFECTDOJO_ENABLED.getPropertyName(),
-                "true",
-                DEFECTDOJO_ENABLED.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_URL.getGroupName(),
-                DEFECTDOJO_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl() + "/",
-                DEFECTDOJO_URL.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_API_KEY.getGroupName(),
-                DEFECTDOJO_API_KEY.getPropertyName(),
-                "apiKeySecretName",
-                DEFECTDOJO_API_KEY.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
-                "true",
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null);
+        createConfigProperty(DEFECTDOJO_ENABLED, "true");
+        createConfigProperty(DEFECTDOJO_URL, wmRuntimeInfo.getHttpBaseUrl() + "/");
+        createConfigProperty(DEFECTDOJO_API_KEY, "apiKeySecretName");
+        createConfigProperty(DEFECTDOJO_REIMPORT_ENABLED, "true");
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -462,8 +423,15 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.engagementId",
+                                "666",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
 
         new DefectDojoUploadTask(
                         HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
@@ -534,30 +502,10 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
     @Test
     void testUploadWithProjectLevelReimport(WireMockRuntimeInfo wmRuntimeInfo) {
-        qm.createConfigProperty(
-                DEFECTDOJO_ENABLED.getGroupName(),
-                DEFECTDOJO_ENABLED.getPropertyName(),
-                "true",
-                DEFECTDOJO_ENABLED.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_URL.getGroupName(),
-                DEFECTDOJO_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl(),
-                DEFECTDOJO_URL.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_API_KEY.getGroupName(),
-                DEFECTDOJO_API_KEY.getPropertyName(),
-                "apiKeySecretName",
-                DEFECTDOJO_API_KEY.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
-                "false",
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null);
+        createConfigProperty(DEFECTDOJO_ENABLED, "true");
+        createConfigProperty(DEFECTDOJO_URL, wmRuntimeInfo.getHttpBaseUrl());
+        createConfigProperty(DEFECTDOJO_API_KEY, "apiKeySecretName");
+        createConfigProperty(DEFECTDOJO_REIMPORT_ENABLED, "false");
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -618,10 +566,24 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         component.setVersion("1.2.3");
         qm.persist(component);
 
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.reimport", "true", IConfigProperty.PropertyType.BOOLEAN, null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.engagementId",
+                                "666",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.reimport",
+                                "true",
+                                IConfigProperty.PropertyType.BOOLEAN,
+                                null)));
 
         new DefectDojoUploadTask(
                         HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
@@ -651,30 +613,10 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
     @Test
     void testUploadWithProjectLevelReimportAndTestTitle(WireMockRuntimeInfo wmRuntimeInfo) {
-        qm.createConfigProperty(
-                DEFECTDOJO_ENABLED.getGroupName(),
-                DEFECTDOJO_ENABLED.getPropertyName(),
-                "true",
-                DEFECTDOJO_ENABLED.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_URL.getGroupName(),
-                DEFECTDOJO_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl(),
-                DEFECTDOJO_URL.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_API_KEY.getGroupName(),
-                DEFECTDOJO_API_KEY.getPropertyName(),
-                "apiKeySecretName",
-                DEFECTDOJO_API_KEY.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
-                "false",
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null);
+        createConfigProperty(DEFECTDOJO_ENABLED, "true");
+        createConfigProperty(DEFECTDOJO_URL, wmRuntimeInfo.getHttpBaseUrl());
+        createConfigProperty(DEFECTDOJO_API_KEY, "apiKeySecretName");
+        createConfigProperty(DEFECTDOJO_REIMPORT_ENABLED, "false");
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -735,17 +677,33 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         component.setVersion("1.2.3");
         qm.persist(component);
 
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.reimport", "true", IConfigProperty.PropertyType.BOOLEAN, null);
-        qm.createProjectProperty(
-                project,
-                "integrations",
-                "defectdojo.testTitle",
-                "configured name of test",
-                IConfigProperty.PropertyType.STRING,
-                null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.engagementId",
+                                "666",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.reimport",
+                                "true",
+                                IConfigProperty.PropertyType.BOOLEAN,
+                                null)));
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.testTitle",
+                                "configured name of test",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
 
         new DefectDojoUploadTask(
                         HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
@@ -777,30 +735,10 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
     @Test
     void testUploadWithReimportAndNoExistingTest(WireMockRuntimeInfo wmRuntimeInfo) {
-        qm.createConfigProperty(
-                DEFECTDOJO_ENABLED.getGroupName(),
-                DEFECTDOJO_ENABLED.getPropertyName(),
-                "true",
-                DEFECTDOJO_ENABLED.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_URL.getGroupName(),
-                DEFECTDOJO_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl(),
-                DEFECTDOJO_URL.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_API_KEY.getGroupName(),
-                DEFECTDOJO_API_KEY.getPropertyName(),
-                "apiKeySecretName",
-                DEFECTDOJO_API_KEY.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
-                "true",
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null);
+        createConfigProperty(DEFECTDOJO_ENABLED, "true");
+        createConfigProperty(DEFECTDOJO_URL, wmRuntimeInfo.getHttpBaseUrl());
+        createConfigProperty(DEFECTDOJO_API_KEY, "apiKeySecretName");
+        createConfigProperty(DEFECTDOJO_REIMPORT_ENABLED, "true");
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -833,8 +771,15 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         component.setVersion("1.2.3");
         qm.persist(component);
 
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.engagementId",
+                                "666",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
 
         new DefectDojoUploadTask(
                         HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
@@ -864,30 +809,10 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
     @Test
     void testUploadWithGroupBy(WireMockRuntimeInfo wmRuntimeInfo) {
-        qm.createConfigProperty(
-                DEFECTDOJO_ENABLED.getGroupName(),
-                DEFECTDOJO_ENABLED.getPropertyName(),
-                "true",
-                DEFECTDOJO_ENABLED.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_URL.getGroupName(),
-                DEFECTDOJO_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl(),
-                DEFECTDOJO_URL.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_API_KEY.getGroupName(),
-                DEFECTDOJO_API_KEY.getPropertyName(),
-                "apiKeySecretName",
-                DEFECTDOJO_API_KEY.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getDefaultPropertyValue(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null);
+        createConfigProperty(DEFECTDOJO_ENABLED, "true");
+        createConfigProperty(DEFECTDOJO_URL, wmRuntimeInfo.getHttpBaseUrl());
+        createConfigProperty(DEFECTDOJO_API_KEY, "apiKeySecretName");
+        createConfigPropertyWithDefaultValue(DEFECTDOJO_REIMPORT_ENABLED);
 
         stubFor(post(urlPathEqualTo("/api/v2/import-scan/"))
                 .willReturn(aResponse().withStatus(201)));
@@ -903,15 +828,24 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         component.setVersion("1.2.3");
         qm.persist(component);
 
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(
-                project,
-                "integrations",
-                "defectdojo.groupBy",
-                "component_name",
-                IConfigProperty.PropertyType.STRING,
-                null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.engagementId",
+                                "666",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.groupBy",
+                                "component_name",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
 
         new DefectDojoUploadTask(
                         HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
@@ -925,30 +859,10 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
     @Test
     void testUploadWithReimportAndGroupBy(WireMockRuntimeInfo wmRuntimeInfo) {
-        qm.createConfigProperty(
-                DEFECTDOJO_ENABLED.getGroupName(),
-                DEFECTDOJO_ENABLED.getPropertyName(),
-                "true",
-                DEFECTDOJO_ENABLED.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_URL.getGroupName(),
-                DEFECTDOJO_URL.getPropertyName(),
-                wmRuntimeInfo.getHttpBaseUrl(),
-                DEFECTDOJO_URL.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_API_KEY.getGroupName(),
-                DEFECTDOJO_API_KEY.getPropertyName(),
-                "apiKeySecretName",
-                DEFECTDOJO_API_KEY.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
-                "false",
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null);
+        createConfigProperty(DEFECTDOJO_ENABLED, "true");
+        createConfigProperty(DEFECTDOJO_URL, wmRuntimeInfo.getHttpBaseUrl());
+        createConfigProperty(DEFECTDOJO_API_KEY, "apiKeySecretName");
+        createConfigProperty(DEFECTDOJO_REIMPORT_ENABLED, "false");
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -1009,17 +923,33 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         component.setVersion("1.2.3");
         qm.persist(component);
 
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.engagementId", "666", IConfigProperty.PropertyType.STRING, null);
-        qm.createProjectProperty(
-                project, "integrations", "defectdojo.reimport", "true", IConfigProperty.PropertyType.BOOLEAN, null);
-        qm.createProjectProperty(
-                project,
-                "integrations",
-                "defectdojo.groupBy",
-                "component_name+component_version",
-                IConfigProperty.PropertyType.STRING,
-                null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.engagementId",
+                                "666",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.reimport",
+                                "true",
+                                IConfigProperty.PropertyType.BOOLEAN,
+                                null)));
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.groupBy",
+                                "component_name+component_version",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
 
         new DefectDojoUploadTask(
                         HttpClient.newHttpClient(), new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
@@ -1050,24 +980,9 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         final var globalReimport = false;
         final var projectReimport = false;
 
-        qm.createConfigProperty(
-                DEFECTDOJO_URL.getGroupName(),
-                DEFECTDOJO_URL.getPropertyName(),
-                baseUrl,
-                DEFECTDOJO_URL.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_API_KEY.getGroupName(),
-                DEFECTDOJO_API_KEY.getPropertyName(),
-                "apiKeySecretName",
-                DEFECTDOJO_API_KEY.getPropertyType(),
-                null);
-        qm.createConfigProperty(
-                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
-                Boolean.toString(globalReimport),
-                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
-                null);
+        createConfigProperty(DEFECTDOJO_URL, baseUrl);
+        createConfigProperty(DEFECTDOJO_API_KEY, "apiKeySecretName");
+        createConfigProperty(DEFECTDOJO_REIMPORT_ENABLED, Boolean.toString(globalReimport));
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1088,20 +1003,24 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.createProjectProperty(
-                project,
-                "integrations",
-                "defectdojo.engagementId",
-                engagementId,
-                IConfigProperty.PropertyType.STRING,
-                null);
-        qm.createProjectProperty(
-                project,
-                "integrations",
-                "defectdojo.reimport",
-                Boolean.toString(projectReimport),
-                IConfigProperty.PropertyType.BOOLEAN,
-                null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.engagementId",
+                                engagementId,
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                "integrations",
+                                "defectdojo.reimport",
+                                Boolean.toString(projectReimport),
+                                IConfigProperty.PropertyType.BOOLEAN,
+                                null)));
 
         new DefectDojoUploadTask(HttpClient.newHttpClient(), new TestSecretManager(Map.of("wmRuntimeInfo", apiKey)))
                 .run();

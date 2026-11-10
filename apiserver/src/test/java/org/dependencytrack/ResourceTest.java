@@ -39,6 +39,8 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+
 public abstract class ResourceTest {
 
     protected final String V1_ACL = "/v1/acl";
@@ -126,12 +128,7 @@ public abstract class ResourceTest {
     }
 
     protected void enablePortfolioAccessControl() {
-        qm.createConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                null);
+        createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED, "true");
     }
 
     protected String getPlainTextBody(Response response) {

@@ -767,7 +767,7 @@ class DexEngineImplTest {
         }
 
         @Test
-        void shouldFailChildWorkflowWhenRunSameInstanceIdIsInProgress() {
+        void shouldFailChildWorkflowWhenRunSameInstanceIdIsInProgress() throws Exception {
             registerWorkflow("parent", (ctx, _) -> {
                 ctx.callChildWorkflow(
                                 "child",
@@ -782,7 +782,9 @@ class DexEngineImplTest {
                 return null;
             });
             registerWorkflow("child", (ctx, _) -> {
-                ctx.createTimer("sleep", Duration.ofSeconds(3)).await();
+                // Keep the instance ID occupied until the parent has attempted to create its child.
+                ctx.waitForExternalEvent("release", voidConverter(), Duration.ofMinutes(5))
+                        .await();
                 return null;
             });
             registerWorkflowWorker("workflow-worker", 2);
@@ -829,6 +831,10 @@ class DexEngineImplTest {
                                     .isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
                             entry -> assertThat(entry.getSubjectCase())
                                     .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+
+            engine.sendExternalEvent(new ExternalEvent(childRunId, "release", null))
+                    .join();
+            awaitRunStatus(childRunId, WorkflowRunStatus.COMPLETED);
         }
 
         @Test

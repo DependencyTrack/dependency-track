@@ -49,7 +49,6 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryType;
@@ -433,26 +432,6 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().updateNewProjectACL(transientProject, principal);
     }
 
-    public ProjectProperty createProjectProperty(
-            final Project project,
-            final String groupName,
-            final String propertyName,
-            final String propertyValue,
-            final ProjectProperty.PropertyType propertyType,
-            final String description) {
-        return getProjectQueryManager()
-                .createProjectProperty(project, groupName, propertyName, propertyValue, propertyType, description);
-    }
-
-    public ProjectProperty getProjectProperty(
-            final Project project, final String groupName, final String propertyName) {
-        return getProjectQueryManager().getProjectProperty(project, groupName, propertyName);
-    }
-
-    public List<ProjectProperty> getProjectProperties(final Project project) {
-        return getProjectQueryManager().getProjectProperties(project);
-    }
-
     public PaginatedResult getComponentByHash(String hash) {
         return getComponentQueryManager().getComponentByHash(hash);
     }
@@ -759,6 +738,10 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().createNotificationRule(name, scope, level, publisher);
     }
 
+    public NotificationRule createNotificationRule(final NotificationRule transientRule) {
+        return getNotificationQueryManager().createNotificationRule(transientRule);
+    }
+
     public NotificationRule createScheduledNotificationRule(
             String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
         return getNotificationQueryManager().createScheduledNotificationRule(name, scope, level, publisher);
@@ -968,15 +951,6 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilities(tag);
     }
 
-    public List<ComponentProperty> getComponentProperties(final Component component) {
-        return getComponentQueryManager().getComponentProperties(component);
-    }
-
-    public List<ComponentProperty> getComponentProperties(
-            final Component component, final String groupName, final String propertyName) {
-        return getComponentQueryManager().getComponentProperties(component, groupName, propertyName);
-    }
-
     public ComponentProperty createComponentProperty(
             final Component component,
             final String groupName,
@@ -986,10 +960,6 @@ public class QueryManager extends AlpineQueryManager {
             final String description) {
         return getComponentQueryManager()
                 .createComponentProperty(component, groupName, propertyName, propertyValue, propertyType, description);
-    }
-
-    public long deleteComponentPropertyByUuid(final Component component, final UUID uuid) {
-        return getComponentQueryManager().deleteComponentPropertyByUuid(component, uuid);
     }
 
     public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {

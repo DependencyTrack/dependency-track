@@ -209,7 +209,8 @@ public final class NotificationModelConverter {
         final Project.Builder builder = Project.newBuilder()
                 .setUuid(project.getUuid().toString())
                 .setName(project.getName())
-                .setIsActive(project.isActive());
+                .setIsActive(project.isActive())
+                .setIsLatest(project.isLatest());
 
         if (project.getVersion() != null) {
             builder.setVersion(project.getVersion());

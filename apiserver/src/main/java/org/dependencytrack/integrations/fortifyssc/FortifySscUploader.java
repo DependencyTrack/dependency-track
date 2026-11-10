@@ -24,7 +24,6 @@ import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.integrations.ProjectFindingUploader;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.secret.management.SecretManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,9 +70,7 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public boolean isProjectConfigured(final Project project) {
-        final ProjectProperty applicationId =
-                qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
-        return applicationId != null && applicationId.getPropertyValue() != null;
+        return getProjectPropertyValue(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY) != null;
     }
 
     @Override
@@ -86,8 +83,8 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
     public void upload(final Project project, final InputStream payload) {
         final String sscUrl = getConfigValue(FORTIFY_SSC_URL);
         final String citoken = getConfigValue(FORTIFY_SSC_TOKEN);
-        final ProjectProperty applicationId =
-                qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
+        final String applicationId =
+                getProjectPropertyValue(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
         if (citoken == null) {
             LOGGER.warn("Fortify SSC token not specified. Aborting");
             return;
@@ -107,7 +104,7 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
             }
             final String token = client.generateOneTimeUploadToken(tokenValue);
             if (token != null) {
-                client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), payload);
+                client.uploadDependencyTrackFindings(token, applicationId, payload);
             }
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to Fortify Software Security Center", e);

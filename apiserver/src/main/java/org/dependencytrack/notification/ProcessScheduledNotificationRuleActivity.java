@@ -119,19 +119,20 @@ public final class ProcessScheduledNotificationRuleActivity
 
         final Set<Long> projectIds = withJdbiHandle(handle -> {
             final var dao = new ScheduledNotificationDao(handle);
-            if (!dao.hasProjectsConfigured(rule.getId())) {
+            final var scope = dao.getRuleScope(rule.getId());
+            if (!scope.isConfigured()) {
                 return null;
             }
 
-            return dao.getApplicableProjectIds(rule.getId(), rule.isNotifyChildren());
+            return dao.getApplicableProjectIds(rule.getId(), scope, rule.isNotifyChildren());
         });
         if (projectIds == null) {
-            LOGGER.warn("Rule has no projects configured; advancing schedule");
+            LOGGER.warn("Rule has no projects or tags configured; advancing schedule");
             advanceSchedule(rule, processingStartedAt);
             return;
         }
         if (projectIds.isEmpty()) {
-            LOGGER.warn("All projects configured for rule are inactive; advancing schedule");
+            LOGGER.warn("No active projects are applicable for rule; advancing schedule");
             advanceSchedule(rule, processingStartedAt);
             return;
         }

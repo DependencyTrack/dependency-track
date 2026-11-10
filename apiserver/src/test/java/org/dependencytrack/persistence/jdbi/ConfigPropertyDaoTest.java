@@ -27,6 +27,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 
 class ConfigPropertyDaoTest extends PersistenceCapableTest {
@@ -51,8 +52,7 @@ class ConfigPropertyDaoTest extends PersistenceCapableTest {
     @CsvSource({"GENERAL_BADGE_ENABLED, true, true", "VULNERABILITY_SOURCE_EPSS_ENABLED, false, false"})
     void isEnabledShouldReturnStoredValue(
             ConfigPropertyConstants property, String storedValue, boolean expectedEnabled) {
-        qm.createConfigProperty(
-                property.getGroupName(), property.getPropertyName(), storedValue, property.getPropertyType(), null);
+        createConfigProperty(property, storedValue);
 
         assertThat(dao.isEnabled(property)).isEqualTo(expectedEnabled);
     }

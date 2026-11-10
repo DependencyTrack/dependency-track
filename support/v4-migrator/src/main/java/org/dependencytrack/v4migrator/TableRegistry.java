@@ -3118,6 +3118,8 @@ public final class TableRegistry {
      * excluded from {@code tgt_vulnerability}.
      * §6.3 {@code SEVERITY} cast to native enum {@code severity}. v4 already stores the canonical
      * set after {@code ComputeSeveritiesChange}; the cast surfaces any malformed value.
+     * Retired or unknown {@code SOURCE} values (e.g. legacy {@code NPM}) are remapped to
+     * {@code UNKNOWN} so v5's {@code Vulnerability.Source} enum can parse them.
      * Builds an identity {@code vulnerability_canonical_id_map} for valid-UUID rows. Downstream
      * join tables INNER JOIN this map to drop rows pointing at malformed-UUID vulnerabilities.
      */
@@ -3286,7 +3288,7 @@ public final class TableRegistry {
           -- not transitively drop this column. Keep the value list in sync with
           -- migration/.../V202605022031__init.sql.
           , "SEVERITY"                    varchar(255) CHECK ("SEVERITY" IN ('UNASSIGNED', 'INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'))
-          , "SOURCE"                      varchar(255) NOT NULL
+          , "SOURCE"                      varchar(255) NOT NULL CHECK ("SOURCE" IN ('NVD', 'GITHUB', 'VULNDB', 'OSSINDEX', 'INTERNAL', 'OSV', 'SNYK', 'CX', 'JVN', 'UNKNOWN'))
           , "SUBTITLE"                    varchar(255)
           , "TITLE"                       varchar(255)
           , "UPDATED"                     timestamp with time zone
@@ -3357,7 +3359,13 @@ public final class TableRegistry {
              -- v4 allows NULL "SEVERITY"; treat that as the canonical UNASSIGNED sentinel
              -- so the v5 column is never NULL.
              , COALESCE("SEVERITY", 'UNASSIGNED')
-             , "SOURCE"
+             -- v4 allows retired or unknown sources (e.g. legacy NPM from Node Security Working Group);
+             -- map them to UNKNOWN so v5's Vulnerability.Source enum can parse them without error.
+             , CASE
+                 WHEN UPPER("SOURCE") IN ('NVD', 'GITHUB', 'VULNDB', 'OSSINDEX', 'INTERNAL', 'OSV', 'SNYK', 'CX', 'JVN', 'UNKNOWN')
+                   THEN UPPER("SOURCE")
+                 ELSE 'UNKNOWN'
+               END
              , "SUBTITLE"
              , "TITLE"
              , "UPDATED"
@@ -4153,7 +4161,7 @@ public final class TableRegistry {
             "ID"                  bigint NOT NULL PRIMARY KEY
           , "FIRST_SEEN"          timestamptz NOT NULL
           , "LAST_SEEN"           timestamptz NOT NULL
-          , "SOURCE"               varchar(255) NOT NULL
+          , "SOURCE"               varchar(255) NOT NULL CHECK ("SOURCE" IN ('NVD', 'GITHUB', 'VULNDB', 'OSSINDEX', 'INTERNAL', 'OSV', 'SNYK', 'CX', 'JVN', 'UNKNOWN'))
           , "VULNERABILITY"       bigint NOT NULL
           , "VULNERABLE_SOFTWARE" bigint NOT NULL
         );
@@ -4168,7 +4176,11 @@ public final class TableRegistry {
         SELECT a."ID"
              , a."FIRST_SEEN"
              , a."LAST_SEEN"
-             , a."SOURCE"
+             , CASE
+                 WHEN UPPER(a."SOURCE") IN ('NVD', 'GITHUB', 'VULNDB', 'OSSINDEX', 'INTERNAL', 'OSV', 'SNYK', 'CX', 'JVN', 'UNKNOWN')
+                   THEN UPPER(a."SOURCE")
+                 ELSE 'UNKNOWN'
+               END
              , vm.canonical_id
              , sm.canonical_id
           FROM "%1$s".src_affectedversionattribution a

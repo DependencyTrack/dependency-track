@@ -38,6 +38,7 @@ public final class NotificationProjectRowMapper implements OptionalColumnRowMapp
         columns.maybeSet(rs, "projectPurl", ResultSet::getString, builder::setPurl);
         columns.maybeSet(rs, "projectTags", RowMapperUtil::stringArray, builder::addAllTags);
         columns.maybeSet(rs, "isActive", ResultSet::getBoolean, builder::setIsActive);
+        columns.maybeSet(rs, "isLatest", ResultSet::getBoolean, builder::setIsLatest);
         return builder.build();
     }
 }

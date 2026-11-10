@@ -22,7 +22,7 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
-import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRowV1;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
 import org.dependencytrack.util.DateUtil;
 import org.junit.jupiter.api.Test;
@@ -36,25 +36,17 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_DAYS;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_TYPE;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_VERSIONS;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigPropertyWithDefaultValue;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
     void testWithRetentionTypeAge() {
-        qm.createConfigProperty(
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
-                "AGE",
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyType(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getDescription());
+        createConfigProperty(MAINTENANCE_PROJECTS_RETENTION_TYPE, "AGE");
 
-        qm.createConfigProperty(
-                MAINTENANCE_PROJECTS_RETENTION_DAYS.getGroupName(),
-                MAINTENANCE_PROJECTS_RETENTION_DAYS.getPropertyName(),
-                MAINTENANCE_PROJECTS_RETENTION_DAYS.getDefaultPropertyValue(),
-                MAINTENANCE_PROJECTS_RETENTION_DAYS.getPropertyType(),
-                MAINTENANCE_PROJECTS_RETENTION_DAYS.getDescription());
+        createConfigPropertyWithDefaultValue(MAINTENANCE_PROJECTS_RETENTION_DAYS);
 
         final var projectA = new Project();
         projectA.setName("acme-app-A");
@@ -69,7 +61,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
 
-        final Page<ListProjectsRow> projectsPage =
+        final Page<ListProjectsRowV1> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
 
         assertThat(projectsPage.items())
@@ -79,19 +71,9 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
     void testWithRetentionTypeVersionsForSameProject() {
-        qm.createConfigProperty(
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
-                "VERSIONS",
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyType(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getDescription());
+        createConfigProperty(MAINTENANCE_PROJECTS_RETENTION_TYPE, "VERSIONS");
 
-        qm.createConfigProperty(
-                MAINTENANCE_PROJECTS_RETENTION_VERSIONS.getGroupName(),
-                MAINTENANCE_PROJECTS_RETENTION_VERSIONS.getPropertyName(),
-                "2",
-                MAINTENANCE_PROJECTS_RETENTION_VERSIONS.getPropertyType(),
-                MAINTENANCE_PROJECTS_RETENTION_VERSIONS.getDescription());
+        createConfigProperty(MAINTENANCE_PROJECTS_RETENTION_VERSIONS, "2");
 
         var project = new Project();
         project.setName("acme-app-A");
@@ -125,7 +107,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         // Retain all active and last 2 inactive versions of a project and delete rest
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage =
+        final Page<ListProjectsRowV1> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items())
                 .satisfiesExactly(
@@ -136,19 +118,9 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
     void testWithRetentionTypeVersionsForDifferentProjects() {
-        qm.createConfigProperty(
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
-                "VERSIONS",
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyType(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getDescription());
+        createConfigProperty(MAINTENANCE_PROJECTS_RETENTION_TYPE, "VERSIONS");
 
-        qm.createConfigProperty(
-                MAINTENANCE_PROJECTS_RETENTION_VERSIONS.getGroupName(),
-                MAINTENANCE_PROJECTS_RETENTION_VERSIONS.getPropertyName(),
-                "1",
-                MAINTENANCE_PROJECTS_RETENTION_VERSIONS.getPropertyType(),
-                MAINTENANCE_PROJECTS_RETENTION_VERSIONS.getDescription());
+        createConfigProperty(MAINTENANCE_PROJECTS_RETENTION_VERSIONS, "1");
 
         var project = new Project();
         project.setName("acme-app-A");
@@ -182,7 +154,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         // Retain all active and last 2 inactive versions of all projects and delete rest
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage =
+        final Page<ListProjectsRowV1> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items())
                 .satisfiesExactlyInAnyOrder(
@@ -202,12 +174,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
     void testWithProjectRetentionDisabled() {
-        qm.createConfigProperty(
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getDefaultPropertyValue(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyType(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getDescription());
+        createConfigPropertyWithDefaultValue(MAINTENANCE_PROJECTS_RETENTION_TYPE);
 
         var project = new Project();
         project.setName("acme-app");
@@ -217,19 +184,14 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage =
+        final Page<ListProjectsRowV1> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items()).isNotEmpty();
     }
 
     @Test
     void testWithProjectRetentionDisabledWithEmptyValue() {
-        qm.createConfigProperty(
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
-                "",
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyType(),
-                MAINTENANCE_PROJECTS_RETENTION_TYPE.getDescription());
+        createConfigProperty(MAINTENANCE_PROJECTS_RETENTION_TYPE, "");
 
         var project = new Project();
         project.setName("acme-app");
@@ -239,7 +201,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(task::run);
-        final Page<ListProjectsRow> projectsPage =
+        final Page<ListProjectsRowV1> projectsPage =
                 withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
         assertThat(projectsPage.items()).isNotEmpty();
     }

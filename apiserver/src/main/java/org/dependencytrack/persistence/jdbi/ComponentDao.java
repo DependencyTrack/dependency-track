@@ -780,6 +780,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                             rs.getBoolean("ISCUSTOMLICENSE"),
                             rs.getBoolean("FSFLIBRE"),
                             rs.getBoolean("ISOSIAPPROVED"));
+
                     result.put(license.id(), license);
                     return result;
                 });

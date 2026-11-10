@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.config.AlpineConfigKeys;
 import alpine.model.About;
 import alpine.model.ApiKey;
-import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
@@ -40,7 +39,6 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -99,6 +97,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static wiremock.org.apache.commons.io.IOUtils.resourceToString;
@@ -1232,6 +1231,31 @@ public class FindingResourceTest extends ResourceTest {
     }
 
     @Test
+    public void analyzeProjectAclTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
+        enablePortfolioAccessControl();
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        Response response = jersey.target("%s/project/%s/analyze".formatted(V1_FINDING, project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json("{}"));
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 403,
+                  "title": "Project access denied",
+                  "detail": "Access to the requested project is forbidden"
+                }
+                """);
+
+        verify(DEX_ENGINE_MOCK, never()).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
+    }
+
+    @Test
     public void getAllFindings() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
@@ -1618,20 +1642,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c3, "none");
         qm.addVulnerability(v3, c2, "none");
         qm.addVulnerability(v4, c5, "none");
-        ConfigProperty aclToggle = qm.getConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
-        if (aclToggle == null) {
-            qm.createConfigProperty(
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                    "true",
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-        } else {
-            aclToggle.setPropertyValue("true");
-            qm.persist(aclToggle);
-        }
+        enablePortfolioAccessControl();
         Response response = jersey.target(V1_FINDING)
                 .request()
                 .header(X_API_KEY, apiKey.getKey())
@@ -1943,20 +1954,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v3, c2, "none");
         qm.addVulnerability(v3, c6, "none");
         qm.addVulnerability(v4, c5, "none");
-        ConfigProperty aclToggle = qm.getConfigProperty(
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
-        if (aclToggle == null) {
-            qm.createConfigProperty(
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                    "true",
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-        } else {
-            aclToggle.setPropertyValue("true");
-            qm.persist(aclToggle);
-        }
+        enablePortfolioAccessControl();
         Response response = jersey.target(V1_FINDING + "/grouped")
                 .request()
                 .header(X_API_KEY, apiKey.getKey())

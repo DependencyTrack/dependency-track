@@ -21,6 +21,8 @@ package org.dependencytrack.integrations.fortifyssc;
 import alpine.model.IConfigProperty;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.secret.TestSecretManager;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -32,6 +34,8 @@ import java.net.http.HttpClient;
 import java.util.ArrayList;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 class FortifySscUploaderTest extends PersistenceCapableTest {
 
@@ -59,20 +63,17 @@ class FortifySscUploaderTest extends PersistenceCapableTest {
 
     @Test
     void testIntegrationEnabledCases() {
-        qm.createConfigProperty(
-                FORTIFY_SSC_ENABLED.getGroupName(),
-                FORTIFY_SSC_ENABLED.getPropertyName(),
-                "true",
-                IConfigProperty.PropertyType.BOOLEAN,
-                null);
+        createConfigProperty(FORTIFY_SSC_ENABLED, "true");
         Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, null, false);
-        qm.createProjectProperty(
-                project,
-                FORTIFY_SSC_ENABLED.getGroupName(),
-                "fortify.ssc.applicationId",
-                "12345",
-                IConfigProperty.PropertyType.STRING,
-                null);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                FORTIFY_SSC_ENABLED.getGroupName(),
+                                "fortify.ssc.applicationId",
+                                "12345",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
         FortifySscUploader extension = new FortifySscUploader(httpClient, new TestSecretManager());
         extension.setQueryManager(qm);
         Assertions.assertTrue(extension.isEnabled());

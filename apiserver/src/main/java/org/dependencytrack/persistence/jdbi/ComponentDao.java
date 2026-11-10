@@ -713,7 +713,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
         return getHandle()
                 .createQuery("""
-                SELECT "COMPONENT_ID",
+                SELECT "ID",
+                    "COMPONENT_ID",
                     "LICENSE_ID",
                     "LICENSE",
                     "LICENSE_EXPRESSION",

@@ -47,6 +47,7 @@ import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
+import org.dependencytrack.pkgmetadata.PackageMetadataResolutionDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
@@ -433,7 +434,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
                 recordBomImport(ctx, qm, persistentProject);
 
-                qm.seedPackageMetadataResolution(persistentProject);
+                useJdbiHandle(
+                        qm, handle -> new PackageMetadataResolutionDao(handle).seedPending(persistentProject.getId()));
 
                 return new ProcessedBom(
                         persistentProject,

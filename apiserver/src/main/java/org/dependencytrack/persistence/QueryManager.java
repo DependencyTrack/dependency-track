@@ -454,10 +454,6 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().updateComponent(transientComponent, commitIndex);
     }
 
-    public void seedPackageMetadataResolution(Project project) {
-        getComponentQueryManager().seedPackageMetadataResolution(project);
-    }
-
     public PaginatedResult getLicenses() {
         return getLicenseQueryManager().getLicenses();
     }

@@ -494,24 +494,6 @@ final class ComponentQueryManager extends QueryManager {
         }
     }
 
-    /// @since 5.1.0
-    @Override
-    public void seedPackageMetadataResolution(Project project) {
-        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
-            final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                    INSERT INTO "PACKAGE_METADATA_RESOLUTION" ("PURL", "STATUS")
-                    SELECT DISTINCT "PURL"
-                         , 'PENDING'
-                      FROM "COMPONENT"
-                     WHERE "PROJECT_ID" = ?
-                       AND "PURL" IS NOT NULL
-                     ORDER BY "PURL"
-                    ON CONFLICT ("PURL") DO NOTHING
-                    """);
-            executeAndCloseWithArray(query, project.getId());
-        }
-    }
-
     /**
      * Returns a list of components by matching its identity information.
      *

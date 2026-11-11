@@ -1094,6 +1094,12 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  , project."NAME" AS "NAME"
                  , project."VERSION" AS "VERSION"
                  , CASE WHEN ph."DEPTH" = 0 THEN NULL ELSE ancestor."UUID" END AS "ANCESTOR_UUID"
+                 , ARRAY(
+                     SELECT bom."ORIGINAL_FILE_METADATA"
+                       FROM "BOM" AS bom
+                      WHERE bom."PROJECT_ID" = project."ID"
+                        AND bom."ORIGINAL_FILE_METADATA" IS NOT NULL
+                   ) AS "ORIGINAL_BOM_FILES_METADATA"
               FROM "PROJECT_HIERARCHY" AS ph
              INNER JOIN "PROJECT" AS ancestor
                 ON ancestor."ID" = ph."PARENT_PROJECT_ID"
@@ -1110,53 +1116,140 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             UUID uuid,
             String name,
             @Nullable String version,
-            @Nullable UUID ancestorUuid) {}
+            @Nullable UUID ancestorUuid,
+            List<byte[]> originalBomFilesMetadata) {}
 
-    @SqlQuery("""
-             WITH "CTE" AS (
-               SELECT "ID"
-                 FROM "PROJECT"
-                WHERE "INACTIVE_SINCE" < :retentionCutOff
-                ORDER BY "INACTIVE_SINCE"
-                LIMIT :batchSize
-             )
-             DELETE
-               FROM "PROJECT"
-              WHERE "ID" IN (SELECT "ID" FROM "CTE")
-              RETURNING "NAME", "VERSION", "INACTIVE_SINCE", "UUID"
-            """)
-    @RegisterConstructorMapper(DeletedProject.class)
-    List<DeletedProject> deleteInactiveProjectsForRetentionDuration(
-            @Bind final Instant retentionCutOff, @Bind final int batchSize);
+    /**
+     * Deletes accessible projects and returns both the deleted projects and
+     * retained original BOM file metadata that requires cleanup.
+     *
+     * <p>File cleanup must be performed after the deletion transaction commits.</p>
+     */
+    default ProjectDeletionResult deleteProjectsWithOriginalBomFiles(final Collection<UUID> projectUuids) {
+        final List<DeletedProjectRow> deletedProjects = deleteProjects(projectUuids);
+        final List<OriginalBomFileMetadataRow> filesToDelete = deletedProjects.stream()
+                .flatMap(project -> project.originalBomFilesMetadata().stream()
+                        .map(metadata -> new OriginalBomFileMetadataRow(project.uuid(), metadata)))
+                .toList();
+
+        return new ProjectDeletionResult(deletedProjects, filesToDelete);
+    }
+
+    record ProjectDeletionResult(
+            List<DeletedProjectRow> deletedProjects, List<OriginalBomFileMetadataRow> originalBomFiles) {}
+
+    record OriginalBomFileMetadataRow(
+            @ColumnName("PROJECT_UUID") UUID projectUuid,
+            @ColumnName("ORIGINAL_FILE_METADATA") byte[] serializedFileMetadata) {}
 
     record DeletedProject(
             @ColumnName("NAME") String name,
             @ColumnName("VERSION") String version,
             @ColumnName("INACTIVE_SINCE") Instant inactiveSince,
-            @ColumnName("UUID") UUID uuid) {}
+            @ColumnName("UUID") UUID uuid,
+            List<byte[]> originalBomFilesMetadata) {}
+
+    default MaintenanceProjectDeletionResult deleteInactiveProjectsWithOriginalBomFiles(
+            final Instant retentionCutOff, final int batchSize) {
+        final List<UUID> projectUuids = getInactiveProjectUuidsForDeletion(retentionCutOff, batchSize);
+
+        return deleteMaintenanceProjectsWithOriginalBomFiles(projectUuids);
+    }
+
+    default MaintenanceProjectDeletionResult deleteExcessProjectVersionsWithOriginalBomFiles(
+            final int versionCountThreshold, final int batchSize) {
+        final List<UUID> projectUuids = getExcessProjectVersionUuidsForDeletion(versionCountThreshold, batchSize);
+
+        return deleteMaintenanceProjectsWithOriginalBomFiles(projectUuids);
+    }
+
+    private MaintenanceProjectDeletionResult deleteMaintenanceProjectsWithOriginalBomFiles(
+            final List<UUID> projectUuids) {
+        if (projectUuids.isEmpty()) {
+            return new MaintenanceProjectDeletionResult(List.of(), List.of());
+        }
+
+        final List<DeletedProject> deletedProjects = deleteMaintenanceProjects(projectUuids);
+        final List<OriginalBomFileMetadataRow> originalBomFiles = deletedProjects.stream()
+                .flatMap(project -> project.originalBomFilesMetadata().stream()
+                        .map(metadata -> new OriginalBomFileMetadataRow(project.uuid(), metadata)))
+                .toList();
+
+        return new MaintenanceProjectDeletionResult(
+                deletedProjects.stream()
+                        .filter(project -> projectUuids.contains(project.uuid()))
+                        .toList(),
+                originalBomFiles);
+    }
 
     @SqlQuery("""
-            WITH cte_candidates AS (
-              SELECT "ID"
-                FROM (
-                  SELECT "ID"
-                       , ROW_NUMBER() OVER (PARTITION BY "NAME" ORDER BY "INACTIVE_SINCE" DESC) AS rn
-                    FROM "PROJECT"
-                   WHERE "INACTIVE_SINCE" IS NOT NULL
-                ) AS ranked
-               WHERE rn > :versionCountThreshold
+              SELECT "UUID"
+                FROM "PROJECT"
+               WHERE "INACTIVE_SINCE" < :retentionCutOff
+               ORDER BY "INACTIVE_SINCE"
+                      , "ID"
                LIMIT :batchSize
+                 FOR UPDATE
+            """)
+    List<UUID> getInactiveProjectUuidsForDeletion(@Bind Instant retentionCutOff, @Bind int batchSize);
+
+    @SqlQuery("""
+              WITH cte_ranked AS (
+                SELECT "ID"
+                     , ROW_NUMBER() OVER (
+                             PARTITION BY "NAME"
+                             ORDER BY "INACTIVE_SINCE" DESC
+                                    , "ID" DESC
+                       ) AS row_number
+                  FROM "PROJECT"
+                 WHERE "INACTIVE_SINCE" IS NOT NULL
+              ),
+              cte_candidates AS (
+                SELECT "ID"
+                  FROM cte_ranked
+                 WHERE row_number > :versionCountThreshold
+                 ORDER BY "ID"
+                 LIMIT :batchSize
+              )
+              SELECT project."UUID"
+                FROM "PROJECT" AS project
+               INNER JOIN cte_candidates AS candidate
+                  ON candidate."ID" = project."ID"
+               ORDER BY project."ID"
+                 FOR UPDATE OF project
+            """)
+    List<UUID> getExcessProjectVersionUuidsForDeletion(@Bind int versionCountThreshold, @Bind int batchSize);
+
+    @SqlQuery("""
+            WITH cte_deleted AS (
+              DELETE
+                FROM "PROJECT"
+               WHERE "UUID" = ANY(:projectUuids)
+              RETURNING "ID"
             )
-            DELETE
-              FROM "PROJECT"
-             WHERE "ID" IN (SELECT "ID" FROM cte_candidates)
-            RETURNING "NAME"
-                    , "VERSION"
-                    , "INACTIVE_SINCE"
-                    , "UUID"
+            SELECT project."NAME"
+                 , project."VERSION"
+                 , project."INACTIVE_SINCE"
+                 , project."UUID"
+                 , ARRAY(
+                     SELECT bom."ORIGINAL_FILE_METADATA"
+                       FROM "BOM" AS bom
+                      WHERE bom."PROJECT_ID" = project."ID"
+                        AND bom."ORIGINAL_FILE_METADATA" IS NOT NULL
+                   ) AS "ORIGINAL_BOM_FILES_METADATA"
+              FROM "PROJECT" AS project
+             WHERE project."ID" IN (
+                     SELECT ph."CHILD_PROJECT_ID"
+                       FROM "PROJECT_HIERARCHY" AS ph
+                      WHERE ph."PARENT_PROJECT_ID" IN (SELECT "ID" FROM cte_deleted)
+                   )
+             ORDER BY project."ID"
             """)
     @RegisterConstructorMapper(DeletedProject.class)
-    List<DeletedProject> deleteExcessProjectVersions(@Bind int versionCountThreshold, @Bind int batchSize);
+    List<DeletedProject> deleteMaintenanceProjects(@Bind Collection<UUID> projectUuids);
+
+    record MaintenanceProjectDeletionResult(
+            List<DeletedProject> deletedProjects, List<OriginalBomFileMetadataRow> originalBomFiles) {}
 
     record ProjectInfoRow(long id, boolean isCollection) {}
 

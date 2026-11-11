@@ -60,6 +60,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -526,6 +527,34 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                             assertThat(row.uuid()).isEqualTo(grandChild.getUuid());
                             assertThat(row.ancestorUuid()).isEqualTo(child.getUuid());
                         });
+    }
+
+    @Test
+    public void testDeleteExcessProjectVersionsBreaksTimestampTiesById() {
+        final Date inactiveSince = Date.from(Instant.parse("2026-01-01T00:00:00Z"));
+
+        final var lowerIdProject = new Project();
+        lowerIdProject.setName("versioned-project-with-tied-timestamps");
+        lowerIdProject.setVersion("1.0");
+        lowerIdProject.setInactiveSince(inactiveSince);
+        qm.persist(lowerIdProject);
+
+        final var higherIdProject = new Project();
+        higherIdProject.setName("versioned-project-with-tied-timestamps");
+        higherIdProject.setVersion("2.0");
+        higherIdProject.setInactiveSince(inactiveSince);
+        qm.persist(higherIdProject);
+
+        assertThat(higherIdProject.getId()).isGreaterThan(lowerIdProject.getId());
+
+        final ProjectDao.MaintenanceProjectDeletionResult result = inJdbiTransaction(
+                handle -> handle.attach(ProjectDao.class).deleteExcessProjectVersionsWithOriginalBomFiles(1, 25));
+
+        assertThat(result.deletedProjects())
+                .extracting(ProjectDao.DeletedProject::uuid)
+                .containsExactly(lowerIdProject.getUuid());
+        assertThat(projectDao.getProjectId(lowerIdProject.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(higherIdProject.getUuid())).isEqualTo(higherIdProject.getId());
     }
 
     @Test

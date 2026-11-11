@@ -26,6 +26,8 @@ import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
+import org.dependencytrack.proto.internal.workflow.v1.IsOriginalBomFileReferencedArg;
+import org.dependencytrack.proto.internal.workflow.v1.IsOriginalBomFileReferencedRes;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
@@ -59,11 +61,15 @@ public final class ImportBomWorkflow implements Workflow<ImportBomArg, Void> {
             try {
                 ctx.activity(ImportBomActivity.class).call(arg).await();
             } catch (Exception e) {
-                tryDeleteBomFile(ctx, arg.getBomFileMetadata());
+                if (!arg.getRetainBomFile() || !isBomFileReferenced(ctx, arg)) {
+                    tryDeleteBomFile(ctx, arg.getBomFileMetadata());
+                }
                 throw e;
             }
 
-            tryDeleteBomFile(ctx, arg.getBomFileMetadata());
+            if (!arg.getRetainBomFile()) {
+                tryDeleteBomFile(ctx, arg.getBomFileMetadata());
+            }
 
             ctx.logger().info("BOM import completed");
             return null;
@@ -80,6 +86,25 @@ public final class ImportBomWorkflow implements Workflow<ImportBomArg, Void> {
         } catch (RuntimeException e) {
             ctx.logger()
                     .warn("Failed to delete BOM file {}; Will need manual cleanup", bomFileMetadata.getLocation(), e);
+        }
+    }
+
+    private boolean isBomFileReferenced(WorkflowContext<?> ctx, ImportBomArg arg) {
+        try {
+            final IsOriginalBomFileReferencedRes result = ctx.activity(IsOriginalBomFileReferencedActivity.class)
+                    .call(IsOriginalBomFileReferencedArg.newBuilder()
+                            .setProjectUuid(arg.getProjectUuid())
+                            .setBomFileMetadata(arg.getBomFileMetadata())
+                            .build())
+                    .await();
+            return result != null && result.getReferenced();
+        } catch (RuntimeException e) {
+            ctx.logger()
+                    .warn(
+                            "Failed to determine whether BOM file {} is referenced; Keeping it to be safe",
+                            arg.getBomFileMetadata().getLocation(),
+                            e);
+            return true;
         }
     }
 }

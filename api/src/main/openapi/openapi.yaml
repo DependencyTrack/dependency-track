@@ -257,6 +257,8 @@ paths:
     $ref: "./resources/oauth/oauth-token.yaml"
   /projects:
     $ref: "./resources/projects/projects.yaml"
+  /projects/{uuid}/boms/latest/content:
+    $ref: "./resources/projects/project-bom-latest-content.yaml"
   /projects/{uuid}/clone:
     $ref: "./resources/projects/project-clone.yaml"
   /projects/{uuid}/components:

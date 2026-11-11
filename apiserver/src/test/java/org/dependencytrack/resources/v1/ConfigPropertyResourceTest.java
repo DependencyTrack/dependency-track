@@ -478,6 +478,56 @@ class ConfigPropertyResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldUpdateBomRetentionPolicy() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
+
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_POLICY);
+
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "artifact",
+                          "propertyName": "bom.original.retention.policy",
+                          "propertyValue": "AGE_BASED"
+                        }
+                        """));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "groupName": "artifact",
+                  "propertyName": "bom.original.retention.policy",
+                  "propertyValue": "AGE_BASED",
+                  "propertyType": "STRING",
+                  "description": "${json-unit.any-string}"
+                }
+                """);
+    }
+
+    @Test
+    void shouldRejectInvalidBomRetentionPolicy() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
+
+        createConfigPropertyWithDefaultValue(ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_POLICY);
+
+        final Response response = jersey.target(V1_CONFIG_PROPERTY)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "groupName": "artifact",
+                          "propertyName": "bom.original.retention.policy",
+                          "propertyValue": "foo"
+                        }
+                        """));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("Value must be any of: LATEST_ONLY, AGE_BASED");
+    }
+
+    @Test
     void shouldUpdateBomValidationTagsExclusive() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 

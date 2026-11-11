@@ -54,6 +54,7 @@ import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificati
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.secret.management.SecretManager;
 import org.dependencytrack.tasks.maintenance.MetricsMaintenanceTask;
+import org.dependencytrack.tasks.maintenance.OriginalBomFileMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.PackageMetadataMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.ProjectMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.TagMaintenanceTask;
@@ -253,7 +254,11 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                 recurringTask(
                         "Project Maintenance",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_PROJECT_MAINTENANCE_CRON),
-                        new ProjectMaintenanceTask()),
+                        new ProjectMaintenanceTask(dexEngine)),
+                recurringTask(
+                        "Original BOM File Maintenance",
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_ORIGINAL_BOM_FILE_MAINTENANCE_CRON),
+                        new OriginalBomFileMaintenanceTask(dexEngine)),
                 recurringTask(
                         "Tag Maintenance",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_TAG_MAINTENANCE_CRON),

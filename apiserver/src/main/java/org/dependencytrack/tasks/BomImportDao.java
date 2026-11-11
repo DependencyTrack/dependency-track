@@ -149,15 +149,16 @@ final class BomImportDao {
                 .execute();
     }
 
-    void recordBomImport(
+    long recordBomImport(
             long projectId,
             @Nullable String directDependencies,
             String format,
             @Nullable String specVersion,
             @Nullable String serialNumber,
             @Nullable Integer bomVersion,
-            @Nullable Date generated) {
-        handle.createUpdate(/* language=SQL */ """
+            @Nullable Date generated,
+            byte @Nullable [] originalFileMetadata) {
+        return handle.createQuery(/* language=SQL */ """
             WITH imported_bom AS (
               INSERT INTO "BOM" (
                 "PROJECT_ID"
@@ -168,6 +169,7 @@ final class BomImportDao {
               , "BOM_VERSION"
               , "IMPORTED"
               , "GENERATED"
+              , "ORIGINAL_FILE_METADATA"
               )
               VALUES (
                 :projectId
@@ -178,13 +180,16 @@ final class BomImportDao {
               , :bomVersion
               , :imported
               , :generated
+              , :originalFileMetadata
               )
+              RETURNING "ID"
             )
             UPDATE "PROJECT"
                SET "DIRECT_DEPENDENCIES" = CAST(:directDependencies AS JSONB)
                  , "LAST_BOM_IMPORTED" = :imported
                  , "LAST_BOM_IMPORTED_FORMAT" = :importedFormat
              WHERE "ID" = :projectId
+             RETURNING (SELECT "ID" FROM imported_bom)
             """)
                 .define(
                         ATTRIBUTE_QUERY_NAME,
@@ -198,7 +203,9 @@ final class BomImportDao {
                 .bind("imported", new Date())
                 .bind("generated", generated)
                 .bind("importedFormat", "%s %s".formatted(format, specVersion))
-                .execute();
+                .bind("originalFileMetadata", originalFileMetadata)
+                .mapTo(Long.class)
+                .one();
     }
 
     Map<String, Long> getLicenseIdsByIdOrName(Collection<String> idsOrNames) {

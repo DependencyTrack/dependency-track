@@ -22,6 +22,7 @@ import alpine.common.util.BooleanUtil;
 import alpine.common.util.UuidUtil;
 import alpine.model.IConfigProperty.PropertyType;
 import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.model.BomRetentionPolicy;
 import org.dependencytrack.model.BomValidationMode;
 import org.dependencytrack.model.ConfigPropertyAccessMode;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -128,13 +129,24 @@ abstract class AbstractConfigPropertyResource extends AbstractApiResource {
                                     + " was provided.")
                             .build());
                 }
-
                 super.logSecurityEvent(
                         LOGGER,
                         SecurityMarkers.SECURITY_AUDIT,
                         "Risk score \"" + propertyName + "\" changed to value: " + propertyValue + " by user "
                                 + super.getPrincipal().getName());
             }
+
+            if (ConfigPropertyConstants.BOM_ORIGINAL_EXPIRATION_DAYS
+                            .getPropertyName()
+                            .equals(propertyName)
+                    && propertyValue <= 0) {
+                throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                        .entity("Expiration Days \"" + propertyName
+                                + "\" must be greater than zero. An invalid value of " + propertyValue
+                                + " was provided.")
+                        .build());
+            }
+
             return String.valueOf(propertyValue);
         }
 
@@ -174,6 +186,23 @@ abstract class AbstractConfigPropertyResource extends AbstractApiResource {
                         .build());
             }
             return requestedValue;
+        }
+        if (ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_POLICY
+                .getPropertyName()
+                .equals(propertyName)) {
+            try {
+                BomRetentionPolicy.valueOf(StringUtils.defaultString(requestedValue));
+                return requestedValue;
+            } catch (IllegalArgumentException e) {
+                throw new ClientErrorException(
+                        Response.status(Response.Status.BAD_REQUEST)
+                                .entity("Value must be any of: %s"
+                                        .formatted(Arrays.stream(BomRetentionPolicy.values())
+                                                .map(Enum::name)
+                                                .collect(Collectors.joining(", "))))
+                                .build(),
+                        e);
+            }
         }
 
         if (ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyName().equals(propertyName)) {

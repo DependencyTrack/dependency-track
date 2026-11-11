@@ -28,7 +28,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scope;
-import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
@@ -185,8 +185,8 @@ public class ComponentsResourceTest extends ResourceTest {
         qm.getPersistenceManager().evictAll();
 
         final Component persistedComponent = qm.getAllComponents(project).getFirst();
-        final List<ComponentDao.ComponentLicenseRow> licenseRows =
-                withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+        final List<ComponentLicenseDao.ComponentLicenseRow> licenseRows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
                         .getLicenseRows(List.of(persistedComponent.getId()))
                         .get(persistedComponent.getId()));
 
@@ -1070,18 +1070,5 @@ public class ComponentsResourceTest extends ResourceTest {
         componentC.setLastInheritedRiskScore(2.3);
         componentC.setLicense("Public Domain");
         qm.createComponent(componentC, false);
-
-        useJdbiHandle(handle -> handle.createUpdate("""
-            INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENT_ID",
-                "LICENSE",
-                "ORDINALITY",
-                "ACKNOWLEDGEMENT"
-            )
-            VALUES (:componentId, :license, 1, 'DECLARED')
-            """)
-                .bind("componentId", componentC.getId())
-                .bind("license", "Public Domain")
-                .execute());
     }
 }

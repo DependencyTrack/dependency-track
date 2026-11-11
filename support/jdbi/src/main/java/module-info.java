@@ -21,6 +21,7 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 module jdbi.support {
+    exports org.dependencytrack.support.jdbi.binding;
     exports org.dependencytrack.support.jdbi.exception;
     exports org.dependencytrack.support.jdbi.mapping;
 

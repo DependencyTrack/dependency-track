@@ -21,7 +21,6 @@ package org.dependencytrack.tasks.maintenance;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.BomRetentionPolicy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
@@ -55,9 +54,9 @@ class OriginalBomFileMaintenanceTaskTest extends PersistenceCapableTest {
         configureExpirationDays(30);
         final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
         final FileMetadata expiredFile = fileMetadata("expired");
-        final Bom expired =
+        final long expired =
                 persistBomImportedAt(project, expiredFile, Instant.now().minus(Duration.ofDays(40)));
-        final Bom recent = persistBomImportedAt(project, fileMetadata("recent"), Instant.now());
+        final long recent = persistBomImportedAt(project, fileMetadata("recent"), Instant.now());
 
         new OriginalBomFileMaintenanceTask(dexEngine).run();
 
@@ -76,9 +75,9 @@ class OriginalBomFileMaintenanceTaskTest extends PersistenceCapableTest {
     void shouldUseDefaultExpirationDaysWhenNotConfigured() {
         configureRetention(true, BomRetentionPolicy.AGE_BASED);
         final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
-        final Bom olderThanDefault = persistBomImportedAt(
+        final long olderThanDefault = persistBomImportedAt(
                 project, fileMetadata("older"), Instant.now().minus(Duration.ofDays(100)));
-        final Bom newerThanDefault = persistBomImportedAt(
+        final long newerThanDefault = persistBomImportedAt(
                 project, fileMetadata("newer"), Instant.now().minus(Duration.ofDays(80)));
 
         new OriginalBomFileMaintenanceTask(dexEngine).run();
@@ -94,7 +93,7 @@ class OriginalBomFileMaintenanceTaskTest extends PersistenceCapableTest {
         configureRetention(retentionEnabled, policy);
         configureExpirationDays(30);
         final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
-        final Bom expired = persistBomImportedAt(
+        final long expired = persistBomImportedAt(
                 project, fileMetadata("expired"), Instant.now().minus(Duration.ofDays(40)));
 
         new OriginalBomFileMaintenanceTask(dexEngine).run();
@@ -113,18 +112,20 @@ class OriginalBomFileMaintenanceTaskTest extends PersistenceCapableTest {
         createConfigProperty(BOM_ORIGINAL_EXPIRATION_DAYS, String.valueOf(days));
     }
 
-    private Bom persistBomImportedAt(
+    private long persistBomImportedAt(
             final Project project, final @Nullable FileMetadata fileMetadata, final Instant importedAt) {
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setImported(Date.from(importedAt));
-        bom.setBomFormat(Bom.Format.CYCLONEDX);
-        bom.setSpecVersion("1.6");
-        bom.setBomVersion(1);
-        if (fileMetadata != null) {
-            bom.setOriginalFileMetadata(fileMetadata.toByteArray());
-        }
-        return qm.persist(bom);
+        return withJdbiHandle(handle -> handle.createQuery(/* language=SQL */ """
+                        INSERT INTO "BOM" (
+                          "PROJECT_ID", "UUID", "BOM_FORMAT", "SPEC_VERSION", "BOM_VERSION", "IMPORTED", "ORIGINAL_FILE_METADATA"
+                        )
+                        VALUES (:projectId, GEN_RANDOM_UUID(), 'CycloneDX', '1.6', 1, :imported, :originalFileMetadata)
+                        RETURNING "ID"
+                        """)
+                .bind("projectId", project.getId())
+                .bind("imported", Date.from(importedAt))
+                .bind("originalFileMetadata", fileMetadata != null ? fileMetadata.toByteArray() : null)
+                .mapTo(long.class)
+                .one());
     }
 
     private static FileMetadata fileMetadata(final String name) {
@@ -136,12 +137,10 @@ class OriginalBomFileMaintenanceTaskTest extends PersistenceCapableTest {
                 .build();
     }
 
-    private static byte @Nullable [] getOriginalFileMetadata(final Bom bom) {
-        return withJdbiHandle(handle -> handle.createQuery("""
+    private static byte @Nullable [] getOriginalFileMetadata(final long bomId) {
+        return withJdbiHandle(handle ->
+                handle.createQuery("""
                         SELECT "ORIGINAL_FILE_METADATA" FROM "BOM" WHERE "ID" = :id
-                        """)
-                .bind("id", bom.getId())
-                .mapTo(byte[].class)
-                .one());
+                        """).bind("id", bomId).mapTo(byte[].class).one());
     }
 }

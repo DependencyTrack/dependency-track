@@ -40,6 +40,7 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
@@ -357,29 +358,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
 
         qm.createComponent(component, true);
 
-        final List<ComponentDao.ComponentLicenseRow> licenseRows;
-        if (component.getResolvedLicense() == null
-                && component.getLicense() == null
-                && component.getLicenseExpression() == null
-                && component.getLicenseUrl() == null) {
-            licenseRows = List.of();
-        } else {
-            licenseRows = List.of(new ComponentDao.ComponentLicenseRow(
-                    component.getId(),
-                    component.getResolvedLicense() != null
-                            ? component.getResolvedLicense().getId()
-                            : null,
-                    component.getLicense(),
-                    component.getLicenseExpression(),
-                    component.getLicenseUrl(),
-                    1,
-                    "DECLARED"));
-        }
-
-        useJdbiHandle(
-                qm,
-                handle -> handle.attach(ComponentDao.class)
-                        .replaceComponentLicenses(List.of(component.getId()), licenseRows));
+        useJdbiHandle(qm, handle -> handle.attach(ComponentLicenseDao.class).replaceAll(component));
 
         return component;
     }

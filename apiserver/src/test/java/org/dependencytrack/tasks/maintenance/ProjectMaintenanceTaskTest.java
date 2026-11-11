@@ -23,7 +23,6 @@ import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRowV1;
@@ -45,6 +44,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJ
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_VERSIONS;
 import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigPropertyWithDefaultValue;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -332,13 +332,14 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
     }
 
     private void persistOriginalBom(final Project project, final FileMetadata fileMetadata) {
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setImported(new Date());
-        bom.setBomFormat(Bom.Format.CYCLONEDX);
-        bom.setSpecVersion("1.6");
-        bom.setBomVersion(1);
-        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
-        qm.persist(bom);
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" (
+                          "PROJECT_ID", "UUID", "BOM_FORMAT", "SPEC_VERSION", "BOM_VERSION", "IMPORTED", "ORIGINAL_FILE_METADATA"
+                        )
+                        VALUES (:projectId, GEN_RANDOM_UUID(), 'CycloneDX', '1.6', 1, NOW(), :originalFileMetadata)
+                        """)
+                .bind("projectId", project.getId())
+                .bind("originalFileMetadata", fileMetadata.toByteArray())
+                .execute());
     }
 }

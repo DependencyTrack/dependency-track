@@ -63,7 +63,6 @@ import javax.jdo.annotations.Unique;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -89,9 +88,6 @@ import java.util.UUID;
                 @Persistent(name = "vulnerabilities"),
             }),
     @FetchGroup(
-            name = "BOM_UPLOAD_PROCESSING",
-            members = {@Persistent(name = "occurrences"), @Persistent(name = "properties")}),
-    @FetchGroup(
             name = "IDENTITY",
             members = {@Persistent(name = "id"), @Persistent(name = "uuid")})
 })
@@ -105,7 +101,6 @@ public class Component implements Serializable {
      */
     public enum FetchGroup {
         ALL,
-        BOM_UPLOAD_PROCESSING,
         IDENTITY
     }
 
@@ -898,26 +893,12 @@ public class Component implements Serializable {
         this.occurrences = occurrences;
     }
 
-    public void addOccurrence(final ComponentOccurrence occurrence) {
-        if (occurrences == null) {
-            occurrences = new HashSet<>();
-        }
-        occurrences.add(occurrence);
-    }
-
     public List<ComponentProperty> getProperties() {
         return properties;
     }
 
     public void setProperties(List<ComponentProperty> properties) {
         this.properties = properties;
-    }
-
-    public void addProperty(final ComponentProperty property) {
-        if (properties == null) {
-            properties = new ArrayList<>();
-        }
-        properties.add(property);
     }
 
     public List<Vulnerability> getVulnerabilities() {

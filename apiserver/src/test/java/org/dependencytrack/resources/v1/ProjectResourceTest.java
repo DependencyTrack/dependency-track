@@ -41,7 +41,6 @@ import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -6069,13 +6068,14 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     private void persistOriginalBom(final Project project, final FileMetadata fileMetadata) {
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setImported(new Date());
-        bom.setBomFormat(Bom.Format.CYCLONEDX);
-        bom.setSpecVersion("1.6");
-        bom.setBomVersion(1);
-        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
-        qm.persist(bom);
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" (
+                          "PROJECT_ID", "UUID", "BOM_FORMAT", "SPEC_VERSION", "BOM_VERSION", "IMPORTED", "ORIGINAL_FILE_METADATA"
+                        )
+                        VALUES (:projectId, GEN_RANDOM_UUID(), 'CycloneDX', '1.6', 1, NOW(), :originalFileMetadata)
+                        """)
+                .bind("projectId", project.getId())
+                .bind("originalFileMetadata", fileMetadata.toByteArray())
+                .execute());
     }
 }

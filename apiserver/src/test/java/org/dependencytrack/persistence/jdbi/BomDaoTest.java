@@ -20,7 +20,6 @@ package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.ProjectDao.OriginalBomFileMetadataRow;
 import org.jdbi.v3.core.Handle;
@@ -76,14 +75,14 @@ public class BomDaoTest extends PersistenceCapableTest {
         final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
         final Project otherProject = qm.createProject("acme-other", null, "1.0", null, null, null, null, false);
 
-        final Bom olderA = persistBom(project, fileMetadata("older-a"));
-        final Bom olderB = persistBom(project, fileMetadata("older-b"));
-        final Bom notRetained = persistBom(project, null);
-        final Bom otherProjectBom = persistBom(otherProject, fileMetadata("other-project"));
-        final Bom boundary = persistBom(project, fileMetadata("current"));
-        final Bom newer = persistBom(project, fileMetadata("newer"));
+        final long olderA = persistBom(project, fileMetadata("older-a"));
+        final long olderB = persistBom(project, fileMetadata("older-b"));
+        final long notRetained = persistBom(project, null);
+        final long otherProjectBom = persistBom(otherProject, fileMetadata("other-project"));
+        final long boundary = persistBom(project, fileMetadata("current"));
+        final long newer = persistBom(project, fileMetadata("newer"));
 
-        final List<OriginalBomFileMetadataRow> clearedRows = dao.clearOlderOriginalFileMetadata(boundary.getId());
+        final List<OriginalBomFileMetadataRow> clearedRows = dao.clearOlderOriginalFileMetadata(boundary);
 
         assertThat(clearedRows)
                 .extracting(OriginalBomFileMetadataRow::projectUuid)
@@ -112,10 +111,10 @@ public class BomDaoTest extends PersistenceCapableTest {
         final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
         final FileMetadata current = fileMetadata("current");
 
-        final Bom duplicate = persistBom(project, current);
-        final Bom boundary = persistBom(project, current);
+        final long duplicate = persistBom(project, current);
+        final long boundary = persistBom(project, current);
 
-        assertThat(dao.clearOlderOriginalFileMetadata(boundary.getId())).isEmpty();
+        assertThat(dao.clearOlderOriginalFileMetadata(boundary)).isEmpty();
         assertThat(getOriginalFileMetadata(duplicate)).isEqualTo(current.toByteArray());
     }
 
@@ -123,10 +122,10 @@ public class BomDaoTest extends PersistenceCapableTest {
     void clearOlderOriginalFileMetadataShouldReturnNothingWhenRepeated() {
         final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
         persistBom(project, fileMetadata("older"));
-        final Bom boundary = persistBom(project, fileMetadata("current"));
+        final long boundary = persistBom(project, fileMetadata("current"));
 
-        assertThat(dao.clearOlderOriginalFileMetadata(boundary.getId())).hasSize(1);
-        assertThat(dao.clearOlderOriginalFileMetadata(boundary.getId())).isEmpty();
+        assertThat(dao.clearOlderOriginalFileMetadata(boundary)).hasSize(1);
+        assertThat(dao.clearOlderOriginalFileMetadata(boundary)).isEmpty();
     }
 
     @Test
@@ -135,12 +134,12 @@ public class BomDaoTest extends PersistenceCapableTest {
         final Project otherProject = qm.createProject("acme-other", null, "1.0", null, null, null, null, false);
         final Instant cutoff = Instant.parse("2026-01-10T00:00:00Z");
 
-        final Bom beforeCutoff =
+        final long beforeCutoff =
                 persistBomImportedAt(project, fileMetadata("before"), cutoff.minus(Duration.ofDays(1)));
-        final Bom atCutoff = persistBomImportedAt(project, fileMetadata("at"), cutoff);
-        final Bom afterCutoff = persistBomImportedAt(project, fileMetadata("after"), cutoff.plusSeconds(1));
-        final Bom notRetained = persistBomImportedAt(project, null, cutoff.minus(Duration.ofDays(1)));
-        final Bom otherProjectExpired =
+        final long atCutoff = persistBomImportedAt(project, fileMetadata("at"), cutoff);
+        final long afterCutoff = persistBomImportedAt(project, fileMetadata("after"), cutoff.plusSeconds(1));
+        final long notRetained = persistBomImportedAt(project, null, cutoff.minus(Duration.ofDays(1)));
+        final long otherProjectExpired =
                 persistBomImportedAt(otherProject, fileMetadata("other"), cutoff.minus(Duration.ofDays(1)));
 
         final List<OriginalBomFileMetadataRow> clearedRows = dao.clearExpiredOriginalFileMetadata(cutoff, 10);
@@ -184,29 +183,32 @@ public class BomDaoTest extends PersistenceCapableTest {
         final Instant cutoff = Instant.now();
         final FileMetadata shared = fileMetadata("shared");
 
-        final Bom expired = persistBomImportedAt(project, shared, cutoff.minus(Duration.ofDays(1)));
+        final long expired = persistBomImportedAt(project, shared, cutoff.minus(Duration.ofDays(1)));
         persistBomImportedAt(project, shared, cutoff.plusSeconds(60));
 
         assertThat(dao.clearExpiredOriginalFileMetadata(cutoff, 10)).isEmpty();
         assertThat(getOriginalFileMetadata(expired)).isEqualTo(shared.toByteArray());
     }
 
-    private Bom persistBom(final Project project, final @Nullable FileMetadata fileMetadata) {
+    private long persistBom(final Project project, final @Nullable FileMetadata fileMetadata) {
         return persistBomImportedAt(project, fileMetadata, Instant.now());
     }
 
-    private Bom persistBomImportedAt(
+    private long persistBomImportedAt(
             final Project project, final @Nullable FileMetadata fileMetadata, final Instant importedAt) {
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setImported(Date.from(importedAt));
-        bom.setBomFormat(Bom.Format.CYCLONEDX);
-        bom.setSpecVersion("1.6");
-        bom.setBomVersion(1);
-        if (fileMetadata != null) {
-            bom.setOriginalFileMetadata(fileMetadata.toByteArray());
-        }
-        return qm.persist(bom);
+        return jdbiHandle
+                .createQuery(/* language=SQL */ """
+                        INSERT INTO "BOM" (
+                          "PROJECT_ID", "UUID", "BOM_FORMAT", "SPEC_VERSION", "BOM_VERSION", "IMPORTED", "ORIGINAL_FILE_METADATA"
+                        )
+                        VALUES (:projectId, GEN_RANDOM_UUID(), 'CycloneDX', '1.6', 1, :imported, :originalFileMetadata)
+                        RETURNING "ID"
+                        """)
+                .bind("projectId", project.getId())
+                .bind("imported", Date.from(importedAt))
+                .bind("originalFileMetadata", fileMetadata != null ? fileMetadata.toByteArray() : null)
+                .mapTo(long.class)
+                .one();
     }
 
     private static FileMetadata fileMetadata(final String name) {
@@ -218,14 +220,10 @@ public class BomDaoTest extends PersistenceCapableTest {
                 .build();
     }
 
-    private byte @Nullable [] getOriginalFileMetadata(final Bom bom) {
-        return jdbiHandle
-                .createQuery("""
+    private byte @Nullable [] getOriginalFileMetadata(final long bomId) {
+        return jdbiHandle.createQuery("""
                         SELECT "ORIGINAL_FILE_METADATA" FROM "BOM" WHERE "ID" = :id
-                        """)
-                .bind("id", bom.getId())
-                .mapTo(byte[].class)
-                .one();
+                        """).bind("id", bomId).mapTo(byte[].class).one();
     }
 
     private long countBoms() {

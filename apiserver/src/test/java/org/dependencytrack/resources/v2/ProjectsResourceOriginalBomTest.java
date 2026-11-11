@@ -23,7 +23,6 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Project;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.junit.jupiter.api.AfterEach;
@@ -42,6 +41,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.resources.v2.OpenApiValidationClientResponseFilter.DISABLE_OPENAPI_VALIDATION;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -286,23 +286,25 @@ class ProjectsResourceOriginalBomTest extends ResourceTest {
         verify(FILE_STORAGE_MOCK).get(fileMetadata);
     }
 
-    private Bom persistBom(
+    private void persistBom(
             final Project project,
             final Instant importedAt,
             final String specVersion,
             final byte[] originalFileMetadata) {
-        final Bom bom = persistBomWithoutMetadata(project, importedAt, specVersion);
-        bom.setOriginalFileMetadata(originalFileMetadata);
-        return bom;
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" (
+                          "PROJECT_ID", "UUID", "BOM_FORMAT", "SPEC_VERSION", "BOM_VERSION", "IMPORTED", "ORIGINAL_FILE_METADATA"
+                        )
+                        VALUES (:projectId, GEN_RANDOM_UUID(), 'CycloneDX', :specVersion, 1, :imported, :originalFileMetadata)
+                        """)
+                .bind("projectId", project.getId())
+                .bind("specVersion", specVersion)
+                .bind("imported", Date.from(importedAt))
+                .bind("originalFileMetadata", originalFileMetadata)
+                .execute());
     }
 
-    private Bom persistBomWithoutMetadata(final Project project, final Instant importedAt, final String specVersion) {
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setImported(Date.from(importedAt));
-        bom.setBomFormat(Bom.Format.CYCLONEDX);
-        bom.setSpecVersion(specVersion);
-        bom.setBomVersion(1);
-        return qm.persist(bom);
+    private void persistBomWithoutMetadata(final Project project, final Instant importedAt, final String specVersion) {
+        persistBom(project, importedAt, specVersion, null);
     }
 }

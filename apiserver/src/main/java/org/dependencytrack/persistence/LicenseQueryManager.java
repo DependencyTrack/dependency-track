@@ -27,7 +27,6 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 final class LicenseQueryManager extends QueryManager {
 
@@ -97,20 +96,6 @@ final class LicenseQueryManager extends QueryManager {
     }
 
     /**
-     * @since 4.12.0
-     */
-    @Override
-    public License getLicenseByIdOrName(final String licenseIdOrName) {
-        final Query<License> query = pm.newQuery(License.class);
-        query.setFilter("licenseId == :licenseIdOrName || name == :licenseIdOrName");
-        query.setNamedParameters(Map.of("licenseIdOrName", licenseIdOrName));
-        query.setOrdering("licenseId asc"); // Ensure result is consistent.
-        query.setRange(0, 1); // Multiple licenses can have the same name; Pick the first one.
-        final License license = query.executeUnique();
-        return license != null ? license : License.UNRESOLVED;
-    }
-
-    /**
      * Creates a new custom license.
      * @param license the license to create
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
@@ -121,20 +106,6 @@ final class LicenseQueryManager extends QueryManager {
         license.setCustomLicense(true);
         final License result = persist(license);
         return result;
-    }
-
-    /**
-     * @since 4.12.0
-     */
-    @Override
-    public License getCustomLicenseByName(final String licenseName) {
-        final Query<License> query = pm.newQuery(License.class);
-        query.setFilter("name == :name && customLicense == true");
-        query.setParameters(licenseName);
-        query.setOrdering("licenseId asc"); // Ensure result is consistent.
-        query.setRange(0, 1); // Multiple licenses can have the same name; Pick the first one.
-        final License license = query.executeUnique();
-        return license != null ? license : License.UNRESOLVED;
     }
 
     /**

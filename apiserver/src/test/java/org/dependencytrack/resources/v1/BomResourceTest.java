@@ -766,6 +766,72 @@ class BomResourceTest extends ResourceTest {
     }
 
     @Test
+    void exportProjectAsCycloneDxShouldOmitLicenseWithOnlyUrl() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("sample-component");
+        component.setVersion("1.0");
+        qm.createComponent(component, false);
+        useJdbiHandle(handle ->
+                handle.createUpdate("""
+                        INSERT INTO "COMPONENTLICENSES" ("COMPONENT_ID", "LICENSE_URL", "ORDINALITY", "ACKNOWLEDGEMENT")
+                        VALUES (:componentId, 'https://example.com/license', 1, 'DECLARED')
+                        """).bind("componentId", component.getId()).execute());
+
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String body = getPlainTextBody(response);
+
+        assertThatNoException()
+                .isThrownBy(() -> CycloneDxValidator.getInstance().validate(body.getBytes(StandardCharsets.UTF_8)));
+        assertThatJson(body).inPath("components[0].licenses").isAbsent();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"1.6, json", "1.6, xml", "1.7, json", "1.7, xml"})
+    void exportProjectAsCycloneDxWithLicensesAndExpressionTest(String version, String format) {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("sample-component");
+        component.setVersion("1.0");
+        qm.createComponent(component, false);
+        useJdbiHandle(handle ->
+                handle.createUpdate("""
+                        INSERT INTO "COMPONENTLICENSES" (
+                          "COMPONENT_ID", "LICENSE", "LICENSE_EXPRESSION", "ORDINALITY", "ACKNOWLEDGEMENT"
+                        )
+                        VALUES (:componentId, 'License A', NULL, 1, 'DECLARED')
+                             , (:componentId, NULL, 'MIT OR Apache-2.0', 2, 'DECLARED')
+                             , (:componentId, 'License B', NULL, 3, 'DECLARED')
+                        """).bind("componentId", component.getId()).execute());
+
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .queryParam("version", version)
+                .queryParam("format", format)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String body = getPlainTextBody(response);
+
+        assertThatNoException()
+                .isThrownBy(() -> CycloneDxValidator.getInstance().validate(body.getBytes(StandardCharsets.UTF_8)));
+        if ("1.7".equals(version)) {
+            assertThat(body).contains("License A", "MIT OR Apache-2.0", "License B");
+        } else {
+            // Before 1.7, licenses and an expression can't be mixed, and the expression wins.
+            assertThat(body).contains("MIT OR Apache-2.0").doesNotContain("License A", "License B");
+        }
+    }
+
+    @Test
     void exportProjectAsCycloneDxMultipleLicensesTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 

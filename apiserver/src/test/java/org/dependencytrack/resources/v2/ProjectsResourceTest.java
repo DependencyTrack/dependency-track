@@ -1800,7 +1800,7 @@ public class ProjectsResourceTest extends ResourceTest {
         final var license = new License();
         license.setLicenseId("MIT");
         license.setName("MIT License");
-        final License persistedLicense = qm.persist(license);
+        qm.persist(license);
 
         Component component = new Component();
         component.setProject(project);
@@ -1819,24 +1819,7 @@ public class ProjectsResourceTest extends ResourceTest {
         component.setPurl("pkg:maven/foo/bar@2.0");
         component.setScope(Scope.REQUIRED);
         component.setResolvedLicense(license);
-        final Component persistedComponent = qm.createComponent(component, false);
-
-        useJdbiHandle(handle -> handle.createUpdate("""
-        INSERT INTO "COMPONENTLICENSES" (
-            "COMPONENT_ID",
-            "LICENSE_ID",
-            "ORDINALITY",
-            "ACKNOWLEDGEMENT"
-        )
-        VALUES (
-            :componentId,
-            :licenseId,
-            1,
-            'DECLARED'
-        )""")
-                .bind("componentId", persistedComponent.getId())
-                .bind("licenseId", persistedLicense.getId())
-                .execute());
+        qm.createComponent(component, false);
 
         component = new Component();
         component.setProject(project);
@@ -1845,20 +1828,7 @@ public class ProjectsResourceTest extends ResourceTest {
         component.setVersion("3.0");
         component.setPurl("pkg:maven/foo/bar@3.0");
         component.setLicense("Public Domain");
-        final Component persistedComponent2 = qm.createComponent(component, false);
-
-        useJdbiHandle(handle -> handle.createUpdate("""
-            INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENT_ID",
-                "LICENSE",
-                "ORDINALITY",
-                "ACKNOWLEDGEMENT"
-            )
-            VALUES (:componentId, :license, 1, 'DECLARED')
-            """)
-                .bind("componentId", persistedComponent2.getId())
-                .bind("license", "Public Domain")
-                .execute());
+        qm.createComponent(component, false);
 
         return project;
     }

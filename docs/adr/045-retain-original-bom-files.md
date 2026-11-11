@@ -207,9 +207,8 @@ The existing V1 upload API will remain the upload path. The document retained
 from this path will be the decoded and decompressed BOM document used by the
 import. Transport wrappers and a leading byte-order mark will not be retained.
 
-We will use the existing JDO import path to write the new field. New read,
-cleanup, and deletion queries will use raw SQL and JDBI, in line with the
-current persistence guidance.
+We will write the new field in the JDBI path. New read, cleanup, and deletion
+queries will use raw SQL and JDBI, in line with the current persistence guidance.
 
 We will add one spec-first V2 endpoint to the Projects resource. It will return
 the newest successfully imported BOM for the requested project that has

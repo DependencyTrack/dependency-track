@@ -26,7 +26,6 @@ import org.dependencytrack.epss.EpssDao;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -105,11 +104,13 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         project.setLastBomImport(new Date());
         qm.persist(project);
 
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setGenerated(new Date(999));
-        bom.setImported(new Date());
-        qm.persist(bom);
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" ("GENERATED", "IMPORTED", "PROJECT_ID", "UUID")
+                        VALUES (:generated, NOW(), :projectId, GEN_RANDOM_UUID())
+                        """)
+                .bind("generated", new Date(999))
+                .bind("projectId", project.getId())
+                .execute());
 
         final var toolComponentLicense = new License();
         toolComponentLicense.setUuid(UUID.randomUUID());
@@ -206,25 +207,6 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setLicenseExpression("componentLicenseExpression");
         component.setResolvedLicense(license);
         qm.persist(component);
-
-        useJdbiHandle(handle -> handle.createUpdate("""
-            INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENT_ID",
-                "LICENSE_ID",
-                "LICENSE",
-                "LICENSE_EXPRESSION",
-                "LICENSE_URL",
-                "ORDINALITY",
-                "ACKNOWLEDGEMENT"
-            )
-            VALUES (:componentId, :licenseId, :license, :licenseExpression, :licenseUrl, 1, 'DECLARED')
-            """)
-                .bind("componentId", component.getId())
-                .bind("licenseId", license.getId())
-                .bind("license", "componentLicenseName")
-                .bind("licenseExpression", component.getLicenseExpression())
-                .bind("licenseUrl", "licenseUrl")
-                .execute());
 
         qm.createComponentProperty(
                 component,
@@ -3100,19 +3082,6 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setResolvedLicense(license);
         qm.persist(component);
 
-        useJdbiHandle(handle -> handle.createUpdate("""
-            INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENT_ID",
-                "LICENSE_ID",
-                "ORDINALITY",
-                "ACKNOWLEDGEMENT"
-            )
-            VALUES (:componentId, :licenseId, 1, 'DECLARED')
-            """)
-                .bind("componentId", component.getId())
-                .bind("licenseId", license.getId())
-                .execute());
-
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(
                 policy,
@@ -3170,19 +3139,6 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setLicenseExpression(licenseExpression);
         qm.persist(component);
 
-        useJdbiHandle(handle -> handle.createUpdate("""
-            INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENT_ID",
-                "LICENSE_EXPRESSION",
-                "ORDINALITY",
-                "ACKNOWLEDGEMENT"
-            )
-            VALUES (:componentId, :licenseExpression, 1, 'DECLARED')
-            """)
-                .bind("componentId", component.getId())
-                .bind("licenseExpression", component.getLicenseExpression())
-                .execute());
-
         new CelPolicyEngine().evaluateProject(project.getUuid());
         if (expectViolation) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -3219,19 +3175,6 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         component.setResolvedLicense(license);
         qm.persist(component);
-
-        useJdbiHandle(handle -> handle.createUpdate("""
-            INSERT INTO "COMPONENTLICENSES" (
-                "COMPONENT_ID",
-                "LICENSE_ID",
-                "ORDINALITY",
-                "ACKNOWLEDGEMENT"
-            )
-            VALUES (:componentId, :licenseId, 1, 'DECLARED')
-            """)
-                .bind("componentId", component.getId())
-                .bind("licenseId", license.getId())
-                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);

@@ -30,22 +30,18 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.FindingDao;
 
 import javax.jdo.FetchGroup;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class CycloneDXExporter {
@@ -127,23 +123,14 @@ public class CycloneDXExporter {
             final Project project,
             final Version version) {
 
-        final Map<Long, List<ComponentDao.ComponentLicenseRow>> licenseRowsByComponentId = new HashMap<>();
-        final Map<Long, ComponentDao.LicenseRow> licensesById = new HashMap<>();
-        if (components != null && !components.isEmpty()) {
-            List<Long> componentIds = components.stream().map(Component::getId).toList();
-            useJdbiHandle(handle -> {
-                final ComponentDao componentDao = handle.attach(ComponentDao.class);
-
-                licenseRowsByComponentId.putAll(componentDao.getLicenseRows(componentIds));
-
-                final Set<Long> referencedLicenseIds = licenseRowsByComponentId.values().stream()
-                        .flatMap(Collection::stream)
-                        .map(ComponentDao.ComponentLicenseRow::licenseId)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toSet());
-                licensesById.putAll(componentDao.getLicensesByIds(referencedLicenseIds));
-            });
-        }
+        final List<Long> componentIds = variant.hasCapability(Capability.EMITS_COMPONENT_DETAILS) && components != null
+                ? components.stream().map(Component::getId).toList()
+                : List.of();
+        final Map<Long, List<ComponentLicenseDao.ComponentLicenseExportRow>> licenseRowsByComponentId =
+                componentIds.isEmpty()
+                        ? Map.of()
+                        : withJdbiHandle(handle ->
+                                handle.attach(ComponentLicenseDao.class).exportAll(componentIds));
 
         if (variant.hasCapability(Capability.FILTERS_TO_VULNERABLE_COMPONENTS)) {
             final Set<UUID> vulnerableComponentUuids = findings.stream()
@@ -159,7 +146,7 @@ public class CycloneDXExporter {
                                 ? ModelConverter.convert(
                                         component,
                                         licenseRowsByComponentId.getOrDefault(component.getId(), List.of()),
-                                        licensesById)
+                                        version)
                                 : ModelConverter.convertIdentity(component))
                         .collect(Collectors.toList())
                 : null;

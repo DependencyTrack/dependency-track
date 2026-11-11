@@ -32,7 +32,6 @@ import org.dependencytrack.dex.testing.WorkflowTestExtension;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
@@ -52,7 +51,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -73,6 +71,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSI
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
 import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.Mockito.mock;
@@ -284,14 +283,15 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
     }
 
     private void persistBomReferencing(final Project project, final FileMetadata fileMetadata) {
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setImported(new Date());
-        bom.setBomFormat(Bom.Format.CYCLONEDX);
-        bom.setSpecVersion("1.6");
-        bom.setBomVersion(1);
-        bom.setOriginalFileMetadata(fileMetadata.toByteArray());
-        qm.persist(bom);
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" (
+                          "PROJECT_ID", "UUID", "BOM_FORMAT", "SPEC_VERSION", "BOM_VERSION", "IMPORTED", "ORIGINAL_FILE_METADATA"
+                        )
+                        VALUES (:projectId, GEN_RANDOM_UUID(), 'CycloneDX', '1.6', 1, NOW(), :originalFileMetadata)
+                        """)
+                .bind("projectId", project.getId())
+                .bind("originalFileMetadata", fileMetadata.toByteArray())
+                .execute());
     }
 
     private static byte[] getLatestOriginalFileMetadata(final Project project) {

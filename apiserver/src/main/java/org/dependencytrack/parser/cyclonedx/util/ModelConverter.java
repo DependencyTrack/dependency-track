@@ -66,7 +66,7 @@ import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.parser.spdx.expression.SpdxExpression;
 import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -831,8 +831,8 @@ public class ModelConverter {
 
     public static org.cyclonedx.model.Component convert(
             final Component component,
-            final List<ComponentDao.ComponentLicenseRow> licenseRows,
-            final Map<Long, ComponentDao.LicenseRow> licensesById) {
+            final List<ComponentLicenseDao.ComponentLicenseExportRow> licenseRows,
+            final Version version) {
 
         final org.cyclonedx.model.Component cycloneComponent = convert(component);
         cycloneComponent.setLicenses(null);
@@ -841,41 +841,37 @@ public class ModelConverter {
         }
 
         final var licenseChoice = new LicenseChoice();
-        for (final ComponentDao.ComponentLicenseRow row : licenseRows) {
+        for (final ComponentLicenseDao.ComponentLicenseExportRow row : licenseRows) {
             if (row.licenseExpression() != null) {
                 final var expression = new Expression();
                 expression.setValue(row.licenseExpression());
+                if (version.getVersion() >= Version.VERSION_17.getVersion()) {
+                    licenseChoice.addExpression(expression);
+                    continue;
+                }
+
+                // Before 1.7, an expression can't be combined with licenses. The expression wins.
                 licenseChoice.setExpression(expression);
+                break;
+            }
+
+            // CycloneDX requires either an ID or a name.
+            if (row.licenseId() == null && row.name() == null) {
                 continue;
             }
 
             final var cycloneLicense = new License();
             if (row.licenseId() != null) {
-                final ComponentDao.LicenseRow license = licensesById.get(row.licenseId());
-                if (license == null) {
-                    continue;
-                }
-
-                if (license.customLicense()) {
-                    cycloneLicense.setName(license.name());
-                } else {
-                    cycloneLicense.setId(license.licenseId());
-                }
-            } else if (row.license() != null) {
-                cycloneLicense.setName(row.license());
+                cycloneLicense.setId(row.licenseId());
             } else {
-                continue;
+                cycloneLicense.setName(row.name());
             }
 
             cycloneLicense.setUrl(row.licenseUrl());
             licenseChoice.addLicense(cycloneLicense);
         }
 
-        final boolean hasLicenses = licenseChoice.getLicenses() != null
-                && !licenseChoice.getLicenses().isEmpty();
-        final boolean hasExpression = licenseChoice.getExpression() != null;
-
-        if (hasLicenses || hasExpression) {
+        if (licenseChoice.getItems() != null) {
             cycloneComponent.setLicenses(licenseChoice);
         }
 

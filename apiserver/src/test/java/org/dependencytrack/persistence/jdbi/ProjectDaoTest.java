@@ -25,7 +25,6 @@ import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
@@ -172,11 +171,12 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         });
 
         // Create a BOM.
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setImported(new Date());
-        bom.setBomFormat(Bom.Format.CYCLONEDX);
-        qm.persist(bom);
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" ("BOM_FORMAT", "IMPORTED", "PROJECT_ID", "UUID")
+                        VALUES ('CycloneDX', NOW(), :projectId, GEN_RANDOM_UUID())
+                        """)
+                .bind("projectId", project.getId())
+                .execute());
 
         // Create a child project with an accompanying component.
         final var projectChild = new Project();
@@ -228,8 +228,13 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .isThrownBy(() -> qm.getObjectById(Component.class, projectChildComponent.getId()));
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
                 .isThrownBy(() -> qm.getObjectById(ProjectMetadata.class, projectMetadata.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class)
-                .isThrownBy(() -> qm.getObjectById(Bom.class, bom.getId()));
+        final boolean bomExists = withJdbiHandle(handle -> handle.createQuery(/* language=SQL */ """
+                        SELECT EXISTS(SELECT 1 FROM "BOM" WHERE "PROJECT_ID" = :projectId)
+                        """)
+                .bind("projectId", project.getId())
+                .mapTo(Boolean.class)
+                .one());
+        assertThat(bomExists).isFalse();
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
                 .isThrownBy(() -> qm.getObjectById(Vex.class, vex.getId()));
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
@@ -567,12 +572,12 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         qm.getPersistenceManager().flush();
 
         final var sourceRows = List.of(
-                new ComponentDao.ComponentLicenseRow(
+                new ComponentLicenseDao.ComponentLicenseRow(
                         component.getId(), null, "License A", null, "https://example.com/license-a", 1, "DECLARED"),
-                new ComponentDao.ComponentLicenseRow(
+                new ComponentLicenseDao.ComponentLicenseRow(
                         component.getId(), null, null, "MIT OR Apache-2.0", null, 2, "DECLARED"));
 
-        jdbiHandle.attach(ComponentDao.class).replaceComponentLicenses(List.of(component.getId()), sourceRows);
+        jdbiHandle.attach(ComponentLicenseDao.class).createAll(sourceRows);
 
         final UUID clonedUuid = projectDao.cloneProject(new CloneProjectCommand(
                 project.getUuid(),
@@ -600,18 +605,18 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .mapTo(Long.class)
                 .one();
 
-        final List<ComponentDao.ComponentLicenseRow> clonedRows = jdbiHandle
-                .attach(ComponentDao.class)
+        final List<ComponentLicenseDao.ComponentLicenseRow> clonedRows = jdbiHandle
+                .attach(ComponentLicenseDao.class)
                 .getLicenseRows(List.of(clonedComponentId))
                 .get(clonedComponentId);
 
         assertThat(clonedRows)
                 .extracting(
-                        ComponentDao.ComponentLicenseRow::license,
-                        ComponentDao.ComponentLicenseRow::licenseExpression,
-                        ComponentDao.ComponentLicenseRow::licenseUrl,
-                        ComponentDao.ComponentLicenseRow::ordinality,
-                        ComponentDao.ComponentLicenseRow::acknowledgement)
+                        ComponentLicenseDao.ComponentLicenseRow::license,
+                        ComponentLicenseDao.ComponentLicenseRow::licenseExpression,
+                        ComponentLicenseDao.ComponentLicenseRow::licenseUrl,
+                        ComponentLicenseDao.ComponentLicenseRow::ordinality,
+                        ComponentLicenseDao.ComponentLicenseRow::acknowledgement)
                 .containsExactly(
                         tuple("License A", null, "https://example.com/license-a", 1L, "DECLARED"),
                         tuple(null, "MIT OR Apache-2.0", null, 2L, "DECLARED"));

@@ -18,16 +18,19 @@
  */
 package org.dependencytrack.vulndatasource.osv;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.dependencytrack.plugin.api.storage.CompareAndPutResult;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -98,7 +101,15 @@ final class WatermarkStore {
     }
 
     private String getKey(final String ecosystem) {
-        return "watermark/" + DigestUtils.sha256Hex(sourceDataUrl).substring(0, WATERMARK_KEY_HASH_LENGTH) + "/"
-                + ecosystem;
+        return "watermark/" + sha256Hex(sourceDataUrl).substring(0, WATERMARK_KEY_HASH_LENGTH) + "/" + ecosystem;
+    }
+
+    private static String sha256Hex(final String value) {
+        try {
+            final var digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(value.getBytes(StandardCharsets.UTF_8)));
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

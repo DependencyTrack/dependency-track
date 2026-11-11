@@ -22,7 +22,11 @@ import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.dependencytrack.plugin.testing.MockKeyValueStore;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +37,14 @@ class WatermarkManagerTest {
     private final KeyValueStore kvStore = new MockKeyValueStore();
 
     private static String hash(final String value) {
-        return org.apache.commons.codec.digest.DigestUtils.sha256Hex(value).substring(0, 12);
+        try {
+            final var digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of()
+                    .formatHex(digest.digest(value.getBytes(StandardCharsets.UTF_8)))
+                    .substring(0, 12);
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Test

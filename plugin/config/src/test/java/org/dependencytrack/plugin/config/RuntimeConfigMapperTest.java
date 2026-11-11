@@ -25,13 +25,15 @@ import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class RuntimeConfigMapperTest {
 
-    private record UniqueItemRuntimeConfig(java.util.List<Feed> feeds) implements RuntimeConfig {}
+    private record UniqueItemRuntimeConfig(List<Feed> feeds) implements RuntimeConfig {}
 
     private record Feed(String name) implements RuntimeConfig {}
 
@@ -124,7 +126,7 @@ class RuntimeConfigMapperTest {
         @Test
         void shouldThrowWhenArrayItemsHaveDuplicateUniqueProperty() {
             final var spec = RuntimeConfigSpec.of(
-                    new UniqueItemRuntimeConfig(java.util.List.of()),
+                    new UniqueItemRuntimeConfig(List.of()),
                     new RuntimeConfigSchemaSource.Literal(/* language=JSON */ """
                             {
                               "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -180,7 +182,7 @@ class RuntimeConfigMapperTest {
                             }
                             """, configSpec);
 
-            runtimeConfigMapper.resolveSecretRefs(configNode, configSpec, mySecret -> "mySecretValue");
+            runtimeConfigMapper.resolveSecretRefs(configNode, configSpec, _ -> "mySecretValue");
 
             assertThatJson(configNode.toString()).isEqualTo(/* language=JSON */ """
                     {
@@ -206,7 +208,7 @@ class RuntimeConfigMapperTest {
                             """, configSpec);
 
             assertThatExceptionOfType(UnresolvableSecretException.class)
-                    .isThrownBy(() -> runtimeConfigMapper.resolveSecretRefs(configNode, configSpec, mySecret -> null))
+                    .isThrownBy(() -> runtimeConfigMapper.resolveSecretRefs(configNode, configSpec, _ -> null))
                     .withMessage("Secret 'mySecret' referenced at path '/secretString' does not exist");
         }
     }

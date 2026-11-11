@@ -10,19 +10,10 @@ WHERE "EXTENSION_POINT" = 'vuln-data-source'
     AND "EXTENSION" = 'osv'
     AND NOT ("CONFIG" ? 'feeds');
 
--- Watermarks are namespaced by the source URL hash. Move legacy default-source
--- watermarks to the default feed's URL-derived namespace.
-UPDATE "EXTENSION_KV_STORE" kv
-SET "KEY" = 'watermark/' || substr(encode(digest(feed."dataUrl", 'sha256'), 'hex'), 1, 12) || '/' || split_part(kv."KEY", '/', 3)
-FROM "EXTENSION_RUNTIME_CONFIG" rc
-CROSS JOIN LATERAL (
-    SELECT value->>'dataUrl' AS "dataUrl"
-    FROM jsonb_array_elements(rc."CONFIG"->'feeds') AS value
-    WHERE value->>'name' = 'default'
-) AS feed
-WHERE kv."EXTENSION_POINT" = 'vuln-data-source'
-    AND kv."EXTENSION" = 'osv'
-    AND kv."KEY" LIKE 'watermark/default/%'
-    AND rc."EXTENSION_POINT" = kv."EXTENSION_POINT"
-    AND rc."EXTENSION" = kv."EXTENSION"
-    AND rc."CONFIG" ? 'feeds';
+-- Legacy OSV watermarks were keyed by source name, which can become stale after a
+-- source is recreated with a different URL. The current implementation keys them by
+-- the source URL hash instead, so old entries are no longer used and must be cleared.
+DELETE FROM "EXTENSION_KV_STORE"
+WHERE "EXTENSION_POINT" = 'vuln-data-source'
+    AND "EXTENSION" = 'osv'
+    AND "KEY" LIKE 'watermark/%';

@@ -51,6 +51,7 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -194,27 +195,54 @@ public final class TestIdentityProvider {
                 .item(0);
     }
 
+    public static void removeSubjectConfirmationInResponseTo(Document document) {
+        ((Element) document.getElementsByTagNameNS(SamlXml.NS_ASSERTION, "SubjectConfirmationData")
+                        .item(0))
+                .removeAttribute("InResponseTo");
+    }
+
+    /// The parameters of a signature. Defaults describe a valid signature.
+    public static final class SignatureSpec {
+        public String canonicalizationMethod = CanonicalizationMethod.EXCLUSIVE;
+        public List<String> transforms = List.of(Transform.ENVELOPED, CanonicalizationMethod.EXCLUSIVE);
+        public int referenceCount = 1;
+    }
+
     /// Signs an element with an enveloped signature, placed after its `Issuer` child.
     public static void sign(Element element, Key key) {
-        sign(element, element, key);
+        sign(element, element, key, new SignatureSpec());
     }
 
     /// Signs `signed`, placing the signature into `container`.
     public static void sign(Element signed, Element container, Key key) {
+        sign(signed, container, key, new SignatureSpec());
+    }
+
+    /// Signs an element with a signature as described by `spec`.
+    public static void sign(Element element, Key key, SignatureSpec spec) {
+        sign(element, element, key, spec);
+    }
+
+    private static void sign(Element signed, Element container, Key key, SignatureSpec spec) {
         try {
             final XMLSignatureFactory factory = XMLSignatureFactory.getInstance("DOM");
-            final Reference reference = factory.newReference(
-                    "#" + signed.getAttribute("ID"),
-                    factory.newDigestMethod(DigestMethod.SHA256, null),
-                    List.of(
-                            factory.newTransform(Transform.ENVELOPED, (TransformParameterSpec) null),
-                            factory.newTransform(CanonicalizationMethod.EXCLUSIVE, (TransformParameterSpec) null)),
-                    null,
-                    null);
+            final var transforms = new ArrayList<Transform>();
+            for (final String transform : spec.transforms) {
+                transforms.add(factory.newTransform(transform, (TransformParameterSpec) null));
+            }
+            final var references = new ArrayList<Reference>();
+            for (int i = 0; i < spec.referenceCount; i++) {
+                references.add(factory.newReference(
+                        "#" + signed.getAttribute("ID"),
+                        factory.newDigestMethod(DigestMethod.SHA256, null),
+                        transforms,
+                        null,
+                        null));
+            }
             final SignedInfo signedInfo = factory.newSignedInfo(
-                    factory.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE, (C14NMethodParameterSpec) null),
+                    factory.newCanonicalizationMethod(spec.canonicalizationMethod, (C14NMethodParameterSpec) null),
                     factory.newSignatureMethod(SignatureMethod.RSA_SHA256, null),
-                    List.of(reference));
+                    references);
             final KeyInfoFactory keyInfoFactory = factory.getKeyInfoFactory();
             final KeyInfo keyInfo =
                     keyInfoFactory.newKeyInfo(List.of(keyInfoFactory.newX509Data(List.of(key.certificate()))));

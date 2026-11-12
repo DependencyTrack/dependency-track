@@ -109,11 +109,13 @@ The server verifies a response as follows. Any failure refuses the login without
   Secure validation of the JDK is on, which refuses weak algorithms such as SHA-1.
 * The server reads data only from the verified assertion.
 * Issuer, destination, recipient, audience and the time limits must match. Clock skew of up to 60 seconds is allowed.
+* The bearer subject confirmation inside the assertion must refer to the request with `InResponseTo`. When only the
+  assertion is signed, the `InResponseTo` attribute of the response is not protected by a signature.
 
 ### IdP configuration
 
 The server reads the IdP's entity ID, single sign-on URL and signing certificates from its SAML metadata. Administrators
-configure a metadata URL or a file in the deployment configuration. The server caches the metadata and fetches it again
+configure an HTTPS metadata URL or a file in the deployment configuration. The server caches the metadata and fetches it again
 after one hour. When fetching fails, it keeps using the cached metadata.
 
 The server publishes its own SP metadata at `GET /api/v2/saml/metadata`, which administrators can upload to the IdP.

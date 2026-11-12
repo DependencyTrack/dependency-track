@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -44,7 +45,7 @@ public final class SamlIdpMetadataProvider {
     private static final Duration CACHE_DURATION = Duration.ofHours(1);
     private static final Duration RETRY_DELAY = Duration.ofMinutes(1);
     private static final Duration FETCH_TIMEOUT = Duration.ofSeconds(10);
-    private static final int MAX_METADATA_BYTES = 1024 * 1024;
+    static final int MAX_METADATA_BYTES = 1024 * 1024;
 
     private final @Nullable URI metadataUrl;
     private final @Nullable Path metadataFile;
@@ -104,15 +105,20 @@ public final class SamlIdpMetadataProvider {
             throw new IllegalStateException("Neither metadata URL nor file configured");
         }
 
-        final HttpResponse<byte[]> response = httpClient.send(
+        final HttpResponse<InputStream> response = httpClient.send(
                 HttpRequest.newBuilder(metadataUrl).timeout(FETCH_TIMEOUT).GET().build(),
-                HttpResponse.BodyHandlers.ofByteArray());
-        if (response.statusCode() != 200) {
-            throw new IOException("Unexpected response code %d from %s".formatted(response.statusCode(), metadataUrl));
+                HttpResponse.BodyHandlers.ofInputStream());
+        try (final InputStream body = response.body()) {
+            if (response.statusCode() != 200) {
+                throw new IOException(
+                        "Unexpected response code %d from %s".formatted(response.statusCode(), metadataUrl));
+            }
+            // Read at most one byte more than allowed, so that an oversized response is never held in memory.
+            final byte[] bytes = body.readNBytes(MAX_METADATA_BYTES);
+            if (body.read() != -1) {
+                throw new IOException("Metadata exceeds %d bytes".formatted(MAX_METADATA_BYTES));
+            }
+            return bytes;
         }
-        if (response.body().length > MAX_METADATA_BYTES) {
-            throw new IOException("Metadata exceeds %d bytes".formatted(MAX_METADATA_BYTES));
-        }
-        return response.body();
     }
 }

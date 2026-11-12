@@ -72,7 +72,7 @@ public record SamlConfig(
         }
 
         final URI idpMetadataUrl = optionalString(config, IDP_METADATA_URL)
-                .map(value -> requireAbsoluteHttpUri(IDP_METADATA_URL, value))
+                .map(value -> requireHttpsUri(IDP_METADATA_URL, value))
                 .orElse(null);
         final Path idpMetadataFile =
                 optionalString(config, IDP_METADATA_FILE).map(Path::of).orElse(null);
@@ -116,6 +116,15 @@ public record SamlConfig(
     private static String requireString(Config config, String name) {
         return optionalString(config, name)
                 .orElseThrow(() -> new IllegalStateException("%s must be set".formatted(name)));
+    }
+
+    // The signature of the metadata is not verified, so only TLS protects the signing certificates in it.
+    private static URI requireHttpsUri(String name, String value) {
+        final URI uri = requireAbsoluteHttpUri(name, value);
+        if (!"https".equals(uri.getScheme())) {
+            throw new IllegalStateException("%s must be an https URL".formatted(name));
+        }
+        return uri;
     }
 
     private static URI requireAbsoluteHttpUri(String name, String value) {

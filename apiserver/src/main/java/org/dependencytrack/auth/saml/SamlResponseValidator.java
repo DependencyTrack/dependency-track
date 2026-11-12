@@ -323,8 +323,9 @@ public final class SamlResponseValidator {
             return false;
         }
 
-        final String dataInResponseTo = attribute(data, "InResponseTo");
-        if (dataInResponseTo != null && !dataInResponseTo.equals(inResponseTo)) {
+        // Required, because Response/@InResponseTo is not signed when only the assertion is. Without it,
+        // a captured assertion could be wrapped into a new response for a request started by an attacker.
+        if (!inResponseTo.equals(attribute(data, "InResponseTo"))) {
             return false;
         }
 

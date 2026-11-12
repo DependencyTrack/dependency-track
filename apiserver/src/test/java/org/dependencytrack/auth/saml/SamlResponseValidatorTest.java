@@ -20,14 +20,18 @@ package org.dependencytrack.auth.saml;
 
 import org.dependencytrack.auth.saml.SamlResponseValidator.ValidatedAssertion;
 import org.dependencytrack.auth.saml.TestIdentityProvider.ResponseSpec;
+import org.dependencytrack.auth.saml.TestIdentityProvider.SignatureSpec;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.xml.crypto.dsig.CanonicalizationMethod;
+import javax.xml.crypto.dsig.Transform;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -177,6 +181,57 @@ class SamlResponseValidatorTest {
     }
 
     @Test
+    void shouldAcceptExclusiveCanonicalizationWithComments() throws Exception {
+        final Document document = parse(responseXml(spec()));
+        final var signatureSpec = new SignatureSpec();
+        signatureSpec.canonicalizationMethod = CanonicalizationMethod.EXCLUSIVE_WITH_COMMENTS;
+        signatureSpec.transforms = List.of(Transform.ENVELOPED, CanonicalizationMethod.EXCLUSIVE_WITH_COMMENTS);
+        sign(assertion(document), IDP_KEY, signatureSpec);
+
+        assertThat(validator.validate(encode(document), metadata()).nameId()).isEqualTo("jane.doe@example.com");
+    }
+
+    @Test
+    void shouldRefuseInclusiveCanonicalization() {
+        final Document document = parse(responseXml(spec()));
+        final var signatureSpec = new SignatureSpec();
+        signatureSpec.canonicalizationMethod = CanonicalizationMethod.INCLUSIVE;
+        sign(assertion(document), IDP_KEY, signatureSpec);
+
+        assertRefused(encode(document), "Canonicalization method");
+    }
+
+    @Test
+    void shouldRefuseSignatureWithMoreThanOneReference() {
+        final Document document = parse(responseXml(spec()));
+        final var signatureSpec = new SignatureSpec();
+        signatureSpec.referenceCount = 2;
+        sign(assertion(document), IDP_KEY, signatureSpec);
+
+        assertRefused(encode(document), "exactly one reference");
+    }
+
+    @Test
+    void shouldRefuseTransformThatIsNotAllowed() {
+        final Document document = parse(responseXml(spec()));
+        final var signatureSpec = new SignatureSpec();
+        signatureSpec.transforms = List.of(Transform.ENVELOPED, CanonicalizationMethod.INCLUSIVE);
+        sign(assertion(document), IDP_KEY, signatureSpec);
+
+        assertRefused(encode(document), "is not allowed");
+    }
+
+    @Test
+    void shouldRefuseSignatureThatIsNotEnveloped() {
+        final Document document = parse(responseXml(spec()));
+        final var signatureSpec = new SignatureSpec();
+        signatureSpec.transforms = List.of(CanonicalizationMethod.EXCLUSIVE);
+        sign(assertion(document), IDP_KEY, signatureSpec);
+
+        assertRefused(encode(document), "not an enveloped signature");
+    }
+
+    @Test
     void shouldRefuseEncryptedAssertion() {
         final Document document = parse(responseXml(spec()));
         sign(assertion(document), IDP_KEY);
@@ -254,6 +309,26 @@ class SamlResponseValidatorTest {
                 spec(), document -> response(document).setAttributeNS(null, "InResponseTo", "_otherRequest"));
 
         assertRefused(response, "no valid bearer subject confirmation");
+    }
+
+    @Test
+    void shouldRefuseMissingInResponseToInSubjectConfirmation() {
+        final String response =
+                signedAssertionResponse(spec(), TestIdentityProvider::removeSubjectConfirmationInResponseTo);
+
+        assertRefused(response, "no valid bearer subject confirmation");
+    }
+
+    @Test
+    void shouldRefuseReplayedAssertionWrappedIntoResponseForAnotherRequest() {
+        // The assertion is signed, but does not name the request in its subject confirmation. An attacker who
+        // captured it puts it into a new, unsigned response for a request that the attacker started.
+        final Document document = parse(responseXml(spec()));
+        TestIdentityProvider.removeSubjectConfirmationInResponseTo(document);
+        sign(assertion(document), IDP_KEY);
+        response(document).setAttributeNS(null, "InResponseTo", "_attackerRequest");
+
+        assertRefused(encode(document), "no valid bearer subject confirmation");
     }
 
     @Test

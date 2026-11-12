@@ -61,7 +61,7 @@ import static org.dependencytrack.auth.saml.SamlXml.requireChildElement;
 ///
 /// Only the profile that Dependency-Track needs is supported: a response to an authentication request
 /// of Dependency-Track, with exactly one unencrypted assertion, signed on the response, the assertion, or both.
-/// See ADR 044 for the reasoning behind each check.
+/// See ADR 045 for the reasoning behind each check.
 ///
 /// @since 5.3.0
 public final class SamlResponseValidator {

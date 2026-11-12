@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 
-/// Runs the SAML login flow described in ADR 044.
+/// Runs the SAML login flow described in ADR 045.
 ///
 /// @since 5.3.0
 public final class SamlLoginService {

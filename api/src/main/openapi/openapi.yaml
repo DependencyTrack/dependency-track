@@ -303,6 +303,8 @@ paths:
     $ref: "./resources/vulns/vuln-kev-assertions.yaml"
   /internal/system-capabilities:
     $ref: "./resources/internal/system-capabilities/system-capabilities.yaml"
+  /internal/system-capabilities/public:
+    $ref: "./resources/internal/system-capabilities/public-system-capabilities.yaml"
   /internal/task-queues/{type}:
     $ref: "./resources/internal/task-queues/task-queues.yaml"
   /internal/task-queues/{type}/{name}:

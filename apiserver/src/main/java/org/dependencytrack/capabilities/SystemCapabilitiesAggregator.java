@@ -71,12 +71,27 @@ public final class SystemCapabilitiesAggregator {
         this.providerByNamespace = Collections.unmodifiableMap(new LinkedHashMap<>(byNamespace));
     }
 
+    /// Collects the capabilities of all namespaces, for authenticated clients.
     public Map<String, Map<String, Object>> collect() {
+        return collect(false);
+    }
+
+    /// Collects the capabilities of public namespaces only, for clients that are not authenticated.
+    ///
+    /// @see CapabilityProvider#isPublic()
+    public Map<String, Map<String, Object>> collectPublic() {
+        return collect(true);
+    }
+
+    private Map<String, Map<String, Object>> collect(boolean publicOnly) {
         final var result = new LinkedHashMap<String, Map<String, Object>>();
 
         for (final var entry : providerByNamespace.entrySet()) {
             final String namespace = entry.getKey();
             final CapabilityProvider provider = entry.getValue();
+            if (publicOnly && !provider.isPublic()) {
+                continue;
+            }
             try {
                 final Map<String, Object> capabilities = provider.capabilities();
                 requireValidCapabilities(namespace, capabilities);

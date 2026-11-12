@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v2;
 
+import alpine.server.auth.AuthenticationNotRequired;
 import org.dependencytrack.api.v2.SystemCapabilitiesApi;
 import org.dependencytrack.api.v2.model.SystemCapabilitiesResponse;
 import org.dependencytrack.capabilities.SystemCapabilitiesAggregator;
@@ -44,6 +45,15 @@ public final class SystemCapabilitiesResource extends AbstractApiResource implem
     public Response getSystemCapabilities() {
         final var response = SystemCapabilitiesResponse.builder()
                 .capabilities(aggregator.collect())
+                .build();
+        return Response.ok(response).build();
+    }
+
+    @Override
+    @AuthenticationNotRequired
+    public Response getPublicSystemCapabilities() {
+        final var response = SystemCapabilitiesResponse.builder()
+                .capabilities(aggregator.collectPublic())
                 .build();
         return Response.ok(response).build();
     }

@@ -54,4 +54,28 @@ Frontends must tolerate unknown keys. The server can extend without coordinated 
 Pre-login hints, such as which authentication methods are enabled, are not supported until a public
 sibling endpoint is added. Until then, clients must authenticate before reading any capability.
 
+
+## Follow-up (2026-11-12)
+
+The login page needs to know which login methods the server offers before anyone has authenticated.
+We add the public sibling endpoint that the consequences above anticipated: `GET /api/v2/internal/system-capabilities/public`.
+It requires no authentication, and has the same response shape as the authenticated endpoint.
+
+A provider opts in to the public endpoint by overriding `CapabilityProvider#isPublic()`, which defaults to `false`.
+The public endpoint returns only public namespaces. The authenticated endpoint keeps returning all namespaces,
+including the public ones, so that clients need a single request after login. Both endpoints share one set of
+providers, so namespace collisions between public and non-public providers still fail at boot.
+
+Public capabilities are visible to anyone who can reach the server. A namespace should only be public when clients
+need it before login, and when its flags reveal nothing that helps an attacker, such as versions, host names,
+or other configuration details.
+
+The first public namespace is `oidc`, with a single flag `disabled`. It mirrors `GET /api/v1/oidc/available`,
+which stays in place for existing clients of REST API v1.
+
+Login methods are disabled by default, which sits uneasily with the rule that an absent namespace means enabled.
+Providers of such features must therefore always report their state explicitly, rather than omitting the namespace
+when the feature is off. A provider that fails at request time is still omitted, so a client may offer a login method
+that then fails. We accept this, because the login itself does not depend on the hint.
+
 [matrix-capabilities]: https://spec.matrix.org/v1.11/client-server-api/#capabilities-negotiation

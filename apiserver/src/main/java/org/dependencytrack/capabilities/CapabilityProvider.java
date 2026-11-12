@@ -31,5 +31,16 @@ public interface CapabilityProvider {
 
     Map<String, Object> capabilities();
 
+    /// Whether the namespace is also served to clients that are not authenticated, for example the login page.
+    ///
+    /// Public capabilities are visible to anyone who can reach the server. Only make a namespace public when
+    /// clients need it before login, and when its flags reveal nothing that helps an attacker,
+    /// such as versions, host names, or other configuration details.
+    ///
+    /// @since 5.3.0
+    default boolean isPublic() {
+        return false;
+    }
+
     default void init(ServiceLocator serviceLocator) {}
 }

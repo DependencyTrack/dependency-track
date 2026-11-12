@@ -71,6 +71,7 @@ class SamlResponseValidatorTest {
 
         assertThat(assertion.inResponseTo()).isEqualTo("_request1");
         assertThat(assertion.nameId()).isEqualTo("jane.doe@example.com");
+        assertThat(assertion.nameIdFormat()).isEqualTo("urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress");
         assertThat(assertion.attributeValues("groups"))
                 .containsExactly("CONTOSO\\DT-Admins", "3f2b9c1e-8a4d-4b7e-9c2f-1d5e6a7b8c9d");
         assertThat(assertion.attributeValues("email")).containsExactly("jane.doe@example.com");

@@ -82,6 +82,7 @@ class SamlResourceTest extends ResourceTest {
                 null,
                 null,
                 null,
+                null,
                 true,
                 false,
                 false,

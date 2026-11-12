@@ -26,6 +26,7 @@ import org.dependencytrack.auth.saml.SamlLoginService.CompletedLogin;
 import org.dependencytrack.auth.saml.SamlLoginService.FailureReason;
 import org.dependencytrack.auth.saml.SamlLoginService.LoginRefusedException;
 import org.dependencytrack.auth.saml.TestIdentityProvider.ResponseSpec;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -52,6 +53,9 @@ class SamlLoginServiceTest extends PersistenceCapableTest {
 
     private static final String GROUPS_ATTRIBUTE = "http://schemas.microsoft.com/ws/2008/06/identity/claims/groups";
     private static final String EMAIL_ATTRIBUTE = "email";
+    private static final String OBJECT_ID_ATTRIBUTE = "http://schemas.microsoft.com/identity/claims/objectidentifier";
+    private static final String NAME_ATTRIBUTE = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
+    private static final String NAME_ID_FORMAT_TRANSIENT = "urn:oasis:names:tc:SAML:2.0:nameid-format:transient";
     private static final String CODE_VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
 
     @TempDir
@@ -70,13 +74,28 @@ class SamlLoginServiceTest extends PersistenceCapableTest {
             boolean teamSynchronization,
             boolean groupProvisioning,
             List<String> defaultTeams) {
+        return createService(null, null, userProvisioning, teamSynchronization, groupProvisioning, defaultTeams);
+    }
+
+    private SamlLoginService createService(@Nullable String subjectAttribute, @Nullable String usernameAttribute) {
+        return createService(subjectAttribute, usernameAttribute, true, false, false, List.of());
+    }
+
+    private SamlLoginService createService(
+            @Nullable String subjectAttribute,
+            @Nullable String usernameAttribute,
+            boolean userProvisioning,
+            boolean teamSynchronization,
+            boolean groupProvisioning,
+            List<String> defaultTeams) {
         final var config = new SamlConfig(
                 SP_ENTITY_ID,
                 ACS_URL,
                 URI.create("https://dtrack.example.com"),
                 null,
                 metadataFile,
-                null,
+                subjectAttribute,
+                usernameAttribute,
                 EMAIL_ATTRIBUTE,
                 GROUPS_ATTRIBUTE,
                 userProvisioning,
@@ -204,6 +223,89 @@ class SamlLoginServiceTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldStoreSubjectIdentifierOfProvisionedUser() throws Exception {
+        final SamlLoginService service = createService(OBJECT_ID_ATTRIBUTE, NAME_ATTRIBUTE);
+
+        complete(service, start(service), entraSpec("3f2b9c1e", "jane.doe@contoso.com"));
+
+        assertThat(subjectIdentifierOf("jane.doe@contoso.com")).isEqualTo("3f2b9c1e");
+    }
+
+    @Test
+    void shouldBindAdministratorCreatedUserOnFirstLogin() throws Exception {
+        withJdbiHandle(handle -> handle.attach(SamlUserDao.class).createUser("jane.doe@contoso.com", null));
+        final SamlLoginService service =
+                createService(OBJECT_ID_ATTRIBUTE, NAME_ATTRIBUTE, false, false, false, List.of());
+
+        complete(service, start(service), entraSpec("3f2b9c1e", "jane.doe@contoso.com"));
+
+        assertThat(subjectIdentifierOf("jane.doe@contoso.com")).isEqualTo("3f2b9c1e");
+    }
+
+    @Test
+    void shouldRefuseUsernameThatIsBoundToAnotherSubject() throws Exception {
+        // The username was given to a new person at the IdP. The account still belongs to its previous owner.
+        final SamlLoginService service = createService(OBJECT_ID_ATTRIBUTE, NAME_ATTRIBUTE);
+        complete(service, start(service), entraSpec("3f2b9c1e", "jane.doe@contoso.com"));
+
+        assertRefused(
+                service, response(start(service), entraSpec("7a1d4e5f", "jane.doe@contoso.com")), FailureReason.FAILED);
+        assertThat(subjectIdentifierOf("jane.doe@contoso.com")).isEqualTo("3f2b9c1e");
+    }
+
+    @Test
+    void shouldFollowRenameAtIdentityProvider() throws Exception {
+        final SamlLoginService service = createService(OBJECT_ID_ATTRIBUTE, NAME_ATTRIBUTE);
+        final CompletedLogin first = complete(service, start(service), entraSpec("3f2b9c1e", "jane.doe@contoso.com"));
+        final Long userId = SamlLoginService.exchangeCode(first.code(), CODE_VERIFIER, Instant.now());
+
+        final CompletedLogin second =
+                complete(service, start(service), entraSpec("3f2b9c1e", "jane.smith@contoso.com"));
+
+        assertThat(second.username()).isEqualTo("jane.smith@contoso.com");
+        assertThat(qm.getUser("jane.doe@contoso.com")).isNull();
+        assertThat(qm.getUser("jane.smith@contoso.com").getId()).isEqualTo(userId);
+    }
+
+    @Test
+    void shouldRefuseRenameToTakenUsername() throws Exception {
+        withJdbiHandle(handle -> handle.attach(SamlUserDao.class).createUser("jane.smith@contoso.com", null));
+        final SamlLoginService service = createService(OBJECT_ID_ATTRIBUTE, NAME_ATTRIBUTE);
+        complete(service, start(service), entraSpec("3f2b9c1e", "jane.doe@contoso.com"));
+
+        assertRefused(
+                service,
+                response(start(service), entraSpec("3f2b9c1e", "jane.smith@contoso.com")),
+                FailureReason.FAILED);
+        assertThat(qm.getUser("jane.doe@contoso.com")).isNotNull();
+    }
+
+    @Test
+    void shouldRefuseMissingSubjectAttribute() throws Exception {
+        final SamlLoginService service = createService(OBJECT_ID_ATTRIBUTE, null);
+
+        assertRefused(service, response(start(service), new ResponseSpec()), FailureReason.FAILED);
+    }
+
+    @Test
+    void shouldRefuseTransientNameIdAsSubjectIdentifier() throws Exception {
+        final SamlLoginService service = createService();
+        final ResponseSpec spec = new ResponseSpec();
+        spec.nameIdFormat = NAME_ID_FORMAT_TRANSIENT;
+
+        assertRefused(service, response(start(service), spec), FailureReason.FAILED);
+    }
+
+    @Test
+    void shouldAcceptTransientNameIdWithSubjectAttribute() throws Exception {
+        final SamlLoginService service = createService(OBJECT_ID_ATTRIBUTE, NAME_ATTRIBUTE);
+        final ResponseSpec spec = entraSpec("3f2b9c1e", "jane.doe@contoso.com");
+        spec.nameIdFormat = NAME_ID_FORMAT_TRANSIENT;
+
+        assertThat(complete(service, start(service), spec).username()).isEqualTo("jane.doe@contoso.com");
+    }
+
+    @Test
     void shouldRefuseReservedServiceAccountPrefix() throws Exception {
         final SamlLoginService service = createService();
         final ResponseSpec spec = new ResponseSpec();
@@ -259,6 +361,23 @@ class SamlLoginServiceTest extends PersistenceCapableTest {
         assertThat(qm.getUser("jane.doe@example.com").getTeams())
                 .extracting(Team::getName)
                 .containsExactly("Auditors");
+    }
+
+    private static ResponseSpec entraSpec(String objectId, String name) {
+        final ResponseSpec spec =
+                new ResponseSpec().attribute(OBJECT_ID_ATTRIBUTE, objectId).attribute(NAME_ATTRIBUTE, name);
+        // Entra ID sends a NameID that is neither the object ID nor necessarily the name.
+        spec.nameId = "unrelated-" + objectId;
+        return spec;
+    }
+
+    private static @Nullable String subjectIdentifierOf(String username) {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT "SUBJECT_IDENTIFIER" FROM "USER" WHERE "USERNAME" = :username
+                        """)
+                .bind("username", username)
+                .mapTo(String.class)
+                .one());
     }
 
     private String start(SamlLoginService service) throws Exception {

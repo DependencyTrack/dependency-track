@@ -84,6 +84,7 @@ public final class TestIdentityProvider {
         public String audience = SP_ENTITY_ID;
         public String status = "urn:oasis:names:tc:SAML:2.0:status:Success";
         public String nameId = "jane.doe@example.com";
+        public String nameIdFormat = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress";
         public Instant issueInstant = Instant.now();
         public Duration lifetime = Duration.ofMinutes(5);
         public Map<String, List<String>> attributes = new LinkedHashMap<>();
@@ -147,7 +148,7 @@ public final class TestIdentityProvider {
                 <saml:Assertion ID="%7$s" Version="2.0" IssueInstant="%2$s">\
                 <saml:Issuer>%5$s</saml:Issuer>\
                 <saml:Subject>\
-                <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">%8$s</saml:NameID>\
+                <saml:NameID Format="%13$s">%8$s</saml:NameID>\
                 <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">\
                 <saml:SubjectConfirmationData InResponseTo="%4$s" NotOnOrAfter="%9$s" Recipient="%10$s"/>\
                 </saml:SubjectConfirmation>\
@@ -174,7 +175,8 @@ public final class TestIdentityProvider {
                         notOnOrAfter,
                         spec.recipient,
                         spec.audience,
-                        attributes);
+                        attributes,
+                        spec.nameIdFormat);
     }
 
     public static Document parse(String xml) {

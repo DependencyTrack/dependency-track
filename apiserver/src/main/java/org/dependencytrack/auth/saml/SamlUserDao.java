@@ -44,10 +44,11 @@ import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 /// @since 5.3.0
 public interface SamlUserDao extends SqlObject {
 
-    record UserRow(long id, String type, @Nullable String email) {}
+    record UserRow(
+            long id, String type, String username, @Nullable String subjectIdentifier) {}
 
     @SqlQuery("""
-        SELECT "ID", "TYPE", "EMAIL"
+        SELECT "ID", "TYPE", "USERNAME", "SUBJECT_IDENTIFIER"
           FROM "USER"
          WHERE "USERNAME" = :username
         """)
@@ -55,13 +56,43 @@ public interface SamlUserDao extends SqlObject {
     @Nullable
     UserRow getUser(@Bind String username);
 
+    @SqlQuery("""
+        SELECT "ID", "TYPE", "USERNAME", "SUBJECT_IDENTIFIER"
+          FROM "USER"
+         WHERE "TYPE" = 'SAML'
+           AND "SUBJECT_IDENTIFIER" = :subjectIdentifier
+        """)
+    @RegisterConstructorMapper(UserRow.class)
+    @Nullable
+    UserRow getUserBySubjectIdentifier(@Bind String subjectIdentifier);
+
+    /// Creates a user without subject identifier. It is assigned on the user's first login.
+    default long createUser(String username, @Nullable String email) {
+        return createUser(username, email, null);
+    }
+
     @SqlUpdate("""
-        INSERT INTO "USER" ("TYPE", "USERNAME", "EMAIL")
-        VALUES ('SAML', :username, :email)
+        INSERT INTO "USER" ("TYPE", "USERNAME", "EMAIL", "SUBJECT_IDENTIFIER")
+        VALUES ('SAML', :username, :email, :subjectIdentifier)
         RETURNING "ID"
         """)
     @GetGeneratedKeys
-    long createUser(@Bind String username, @Bind @Nullable String email);
+    long createUser(@Bind String username, @Bind @Nullable String email, @Bind @Nullable String subjectIdentifier);
+
+    @SqlUpdate("""
+        UPDATE "USER"
+           SET "SUBJECT_IDENTIFIER" = :subjectIdentifier
+         WHERE "ID" = :id
+           AND "SUBJECT_IDENTIFIER" IS NULL
+        """)
+    int assignSubjectIdentifier(@Bind long id, @Bind String subjectIdentifier);
+
+    @SqlUpdate("""
+        UPDATE "USER"
+           SET "USERNAME" = :username
+         WHERE "ID" = :id
+        """)
+    void updateUsername(@Bind long id, @Bind String username);
 
     @SqlUpdate("""
         UPDATE "USER"

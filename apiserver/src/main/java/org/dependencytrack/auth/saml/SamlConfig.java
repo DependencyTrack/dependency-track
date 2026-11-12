@@ -36,6 +36,7 @@ public record SamlConfig(
         URI frontendUrl,
         @Nullable URI idpMetadataUrl,
         @Nullable Path idpMetadataFile,
+        @Nullable String subjectAttribute,
         @Nullable String usernameAttribute,
         @Nullable String emailAttribute,
         @Nullable String groupsAttribute,
@@ -50,6 +51,7 @@ public record SamlConfig(
     static final String FRONTEND_URL = ConfigKeys.FRONTEND_URL;
     static final String IDP_METADATA_URL = "dt.saml.idp.metadata-url";
     static final String IDP_METADATA_FILE = "dt.saml.idp.metadata-file";
+    static final String SUBJECT_ATTRIBUTE = "dt.saml.subject-attribute";
     static final String USERNAME_ATTRIBUTE = "dt.saml.username-attribute";
     static final String EMAIL_ATTRIBUTE = "dt.saml.email-attribute";
     static final String GROUPS_ATTRIBUTE = "dt.saml.groups-attribute";
@@ -97,6 +99,7 @@ public record SamlConfig(
                 requireAbsoluteHttpUri(FRONTEND_URL, requireString(config, FRONTEND_URL)),
                 idpMetadataUrl,
                 idpMetadataFile,
+                optionalString(config, SUBJECT_ATTRIBUTE).orElse(null),
                 optionalString(config, USERNAME_ATTRIBUTE).orElse(null),
                 optionalString(config, EMAIL_ATTRIBUTE).orElse(null),
                 groupsAttribute,

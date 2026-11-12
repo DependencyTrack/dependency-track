@@ -63,6 +63,8 @@ public final class SamlLoginService {
     private static final Pattern CONTROL_CHARACTERS = Pattern.compile("\\p{Cc}");
     private static final int MAX_REDIRECT_PATH_LENGTH = 2048;
     private static final int MAX_USERNAME_LENGTH = 255;
+    private static final int MAX_SUBJECT_IDENTIFIER_LENGTH = 1024;
+    private static final String NAME_ID_FORMAT_TRANSIENT = "urn:oasis:names:tc:SAML:2.0:nameid-format:transient";
     private static final int MAX_GROUP_NAME_LENGTH = 1024;
 
     /// The reason why a login was refused. Sent to the frontend, which shows a matching message.
@@ -168,6 +170,7 @@ public final class SamlLoginService {
             throw new LoginRefusedException(FailureReason.FAILED, "Response refused: " + e.getMessage(), e);
         }
 
+        final String subjectIdentifier = resolveSubjectIdentifier(assertion);
         final String username = resolveUsername(assertion);
         final String email = resolveEmail(assertion);
         final List<String> groups = resolveGroups(assertion);
@@ -189,7 +192,12 @@ public final class SamlLoginService {
 
         inJdbiTransaction(handle -> {
             final long userId = provisionUser(
-                    handle.attach(SamlUserDao.class), handle.attach(SamlGroupDao.class), username, email, groups);
+                    handle.attach(SamlUserDao.class),
+                    handle.attach(SamlGroupDao.class),
+                    subjectIdentifier,
+                    username,
+                    email,
+                    groups);
             handle.attach(SamlLoginDao.class)
                     .createLoginCode(sha256Hex(code), userId, request.codeChallenge(), now.plus(LOGIN_CODE_LIFETIME));
             return userId;
@@ -227,34 +235,64 @@ public final class SamlLoginService {
     }
 
     private long provisionUser(
-            SamlUserDao dao, SamlGroupDao groupDao, String username, @Nullable String email, List<String> groups)
+            SamlUserDao dao,
+            SamlGroupDao groupDao,
+            String subjectIdentifier,
+            String username,
+            @Nullable String email,
+            List<String> groups)
             throws LoginRefusedException {
-        final UserRow existingUser = dao.getUser(username);
-
         final long userId;
         final boolean created;
-        if (existingUser != null) {
-            // Never let an IdP user take over an account of another type with the same name.
-            if (!UserType.SAML.name().equals(existingUser.type())) {
+
+        final UserRow userBySubject = dao.getUserBySubjectIdentifier(subjectIdentifier);
+        if (userBySubject != null) {
+            userId = userBySubject.id();
+            created = false;
+            if (!userBySubject.username().equals(username)) {
+                renameUser(dao, userBySubject, username);
+            }
+        } else {
+            final UserRow userByName = dao.getUser(username);
+            if (userByName != null) {
+                // Never let an IdP user take over an account of another type with the same name.
+                if (!UserType.SAML.name().equals(userByName.type())) {
+                    throw new LoginRefusedException(
+                            FailureReason.FAILED,
+                            "Username %s is already used by a user of type %s".formatted(username, userByName.type()),
+                            null);
+                }
+                // The name was given to another person at the IdP, after the account was bound to its previous owner.
+                if (userByName.subjectIdentifier() != null) {
+                    throw new LoginRefusedException(
+                            FailureReason.FAILED,
+                            "User %s is bound to subject %s, but the response is for subject %s"
+                                    .formatted(username, userByName.subjectIdentifier(), subjectIdentifier),
+                            null);
+                }
+                // Created by an administrator, and logging in for the first time.
+                dao.assignSubjectIdentifier(userByName.id(), subjectIdentifier);
+                LOGGER.info(
+                        SecurityMarkers.SECURITY_AUDIT,
+                        "Bound SAML user {} to subject {}",
+                        username,
+                        subjectIdentifier);
+                userId = userByName.id();
+                created = false;
+            } else if (config.userProvisioning()) {
+                userId = dao.createUser(username, email, subjectIdentifier);
+                created = true;
+                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Provisioned SAML user {}", username);
+            } else {
                 throw new LoginRefusedException(
-                        FailureReason.FAILED,
-                        "Username %s is already used by a user of type %s".formatted(username, existingUser.type()),
+                        FailureReason.UNMAPPED_ACCOUNT,
+                        "User %s does not exist, and user provisioning is disabled".formatted(username),
                         null);
             }
-            userId = existingUser.id();
-            created = false;
-            if (config.emailAttribute() != null) {
-                dao.updateEmail(userId, email);
-            }
-        } else if (config.userProvisioning()) {
-            userId = dao.createUser(username, email);
-            created = true;
-            LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Provisioned SAML user {}", username);
-        } else {
-            throw new LoginRefusedException(
-                    FailureReason.UNMAPPED_ACCOUNT,
-                    "User %s does not exist, and user provisioning is disabled".formatted(username),
-                    null);
+        }
+
+        if (!created && config.emailAttribute() != null) {
+            dao.updateEmail(userId, email);
         }
 
         if (config.groupProvisioning()) {
@@ -274,6 +312,53 @@ public final class SamlLoginService {
         }
 
         return userId;
+    }
+
+    /// Follows a rename at the IdP. The user keeps their teams, permissions and API keys.
+    private static void renameUser(SamlUserDao dao, UserRow user, String newUsername) throws LoginRefusedException {
+        if (dao.getUser(newUsername) != null) {
+            throw new LoginRefusedException(
+                    FailureReason.FAILED,
+                    "Cannot rename user %s to %s, because that username is already taken"
+                            .formatted(user.username(), newUsername),
+                    null);
+        }
+        dao.updateUsername(user.id(), newUsername);
+        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Renamed SAML user {} to {}", user.username(), newUsername);
+    }
+
+    private String resolveSubjectIdentifier(ValidatedAssertion assertion) throws LoginRefusedException {
+        final String subjectIdentifier;
+        if (config.subjectAttribute() != null) {
+            final List<String> values = assertion.attributeValues(config.subjectAttribute());
+            if (values.size() != 1) {
+                throw new LoginRefusedException(
+                        FailureReason.FAILED,
+                        "Expected exactly one value of subject attribute %s, but got %d"
+                                .formatted(config.subjectAttribute(), values.size()),
+                        null);
+            }
+            subjectIdentifier = values.getFirst().strip();
+        } else {
+            // A transient NameID changes with every login, so it cannot identify a user.
+            if (NAME_ID_FORMAT_TRANSIENT.equals(assertion.nameIdFormat())) {
+                throw new LoginRefusedException(
+                        FailureReason.FAILED,
+                        "NameID is transient; Configure the IdP to send a persistent NameID, or set %s"
+                                .formatted(SamlConfig.SUBJECT_ATTRIBUTE),
+                        null);
+            }
+            subjectIdentifier = assertion.nameId();
+        }
+
+        if (subjectIdentifier.isEmpty()
+                || subjectIdentifier.length() > MAX_SUBJECT_IDENTIFIER_LENGTH
+                || CONTROL_CHARACTERS.matcher(subjectIdentifier).find()) {
+            throw new LoginRefusedException(
+                    FailureReason.FAILED, "Subject identifier is empty, too long, or invalid", null);
+        }
+
+        return subjectIdentifier;
     }
 
     private String resolveUsername(ValidatedAssertion assertion) throws LoginRefusedException {

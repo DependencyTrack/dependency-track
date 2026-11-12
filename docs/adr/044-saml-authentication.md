@@ -122,7 +122,33 @@ The server publishes its own SP metadata at `GET /api/v2/saml/metadata`, which a
 
 ### Users, groups and teams
 
-SAML users get the new user type `SAML`. The username comes from the subject `NameID`, or from an attribute if one is configured.
+SAML users get the new user type `SAML`.
+
+A user has two values from the IdP. The *subject identifier* says who the user is. It comes from the subject `NameID`,
+or from an attribute if one is configured, such as the object ID in Entra ID. The *username* is what administrators see.
+It comes from the `NameID` as well, or from another attribute. The two are separate because usernames are not reliable
+identifiers: depending on the IdP, they can be renamed, reassigned to another person after the previous owner left,
+or even be chosen by the user. The OIDC integration solves the same problem by storing the `sub` claim.
+
+Dependency-Track stores the subject identifier in the existing `SUBJECT_IDENTIFIER` column, unique among SAML users.
+At login, the server looks up the user as follows:
+
+* A user with the subject identifier exists: this is the user. If the username differs, the user was renamed at the IdP,
+  and the server renames the account, unless another account already has the new name.
+* Otherwise, a SAML user with the username exists: if it has no subject identifier yet, an administrator created it,
+  and the server binds it to the subject identifier. If it is bound to another subject identifier, the login is refused,
+  because the username now belongs to another person.
+* Otherwise, the user is new, and is created if user provisioning is enabled.
+
+A transient `NameID` changes with every login, so it is refused as subject identifier. An IdP that only sends transient
+`NameID`s needs a subject attribute.
+
+Until an administrator-created user logs in for the first time, it is bound to whoever first logs in with its username.
+This is the same as for OIDC, because administrators usually do not know the subject identifier.
+
+All subject identifiers belong to the one configured IdP. Switching to another IdP that assigns other identifiers
+means deleting and re-creating the SAML users.
+
 SAML groups are stored in their own table, separate from OIDC and LDAP groups, and mapped to teams the same way.
 User provisioning, team synchronization, default teams and automatic creation of groups work as for OIDC,
 and are configured separately.

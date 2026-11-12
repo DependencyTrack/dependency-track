@@ -81,8 +81,10 @@ public final class SamlResponseValidator {
     ///
     /// @param inResponseTo ID of the authentication request that the response answers.
     /// @param nameId Value of the subject's `NameID`.
+    /// @param nameIdFormat Format of the subject's `NameID`, if the IdP states one.
     /// @param attributes Values of the assertion's attributes, by attribute name.
-    public record ValidatedAssertion(String inResponseTo, String nameId, Map<String, List<String>> attributes) {
+    public record ValidatedAssertion(
+            String inResponseTo, String nameId, @Nullable String nameIdFormat, Map<String, List<String>> attributes) {
 
         public ValidatedAssertion {
             attributes = Map.copyOf(attributes);
@@ -150,9 +152,10 @@ public final class SamlResponseValidator {
 
         final Instant now = clock.instant();
         final String inResponseTo = validateResponse(response, responseSignature != null, idp);
-        final String nameId = validateAssertion(assertion, inResponseTo, idp, now);
+        final Element nameId = validateAssertion(assertion, inResponseTo, idp, now);
 
-        return new ValidatedAssertion(inResponseTo, nameId, readAttributes(assertion));
+        return new ValidatedAssertion(
+                inResponseTo, nameId.getTextContent().strip(), attribute(nameId, "Format"), readAttributes(assertion));
     }
 
     private static byte[] decode(String encodedResponse) throws SamlException {
@@ -265,7 +268,8 @@ public final class SamlResponseValidator {
         return requireAttribute(response, "InResponseTo");
     }
 
-    private String validateAssertion(Element assertion, String inResponseTo, SamlIdpMetadata idp, Instant now)
+    /// @return The subject's `NameID` element.
+    private Element validateAssertion(Element assertion, String inResponseTo, SamlIdpMetadata idp, Instant now)
             throws SamlException {
         requireIssuer(requireChildElement(assertion, NS_ASSERTION, "Issuer"), idp);
 
@@ -306,7 +310,7 @@ public final class SamlResponseValidator {
             throw new SamlException("Assertion has no authentication statement");
         }
 
-        return nameId;
+        return nameIdElement;
     }
 
     private boolean isValidBearerConfirmation(Element confirmation, String inResponseTo, Instant now)

@@ -33,6 +33,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.PACKAGE_HEALTH_RESOLUTION_ENABLED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -69,7 +70,7 @@ class PackageHealthResolutionScheduleTest extends PersistenceCapableTest {
     }
 
     private void createEnabledProperty(final String value) {
-        qm.createConfigProperty(
+        createConfigProperty(
                 PACKAGE_HEALTH_RESOLUTION_ENABLED.getGroupName(),
                 PACKAGE_HEALTH_RESOLUTION_ENABLED.getPropertyName(),
                 value,

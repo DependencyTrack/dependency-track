@@ -57,6 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.protoConverter;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.voidConverter;
 import static org.dependencytrack.model.ConfigPropertyConstants.PACKAGE_HEALTH_RESOLUTION_ENABLED;
+import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -262,7 +263,7 @@ class ResolvePackageHealthMetadataWorkflowTest extends PersistenceCapableTest {
     @Test
     void shouldStopWhenDisabled() throws Exception {
         createPackageMetadata(new PackageURL("pkg:npm/a"));
-        qm.createConfigProperty(
+        createConfigProperty(
                 PACKAGE_HEALTH_RESOLUTION_ENABLED.getGroupName(),
                 PACKAGE_HEALTH_RESOLUTION_ENABLED.getPropertyName(),
                 "false",

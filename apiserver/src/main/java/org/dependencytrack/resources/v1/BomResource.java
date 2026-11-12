@@ -38,7 +38,7 @@ import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.Version;
-import org.cyclonedx.exception.GeneratorException;
+import org.cyclonedx.model.Bom;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.common.ConfigKeys;
@@ -102,6 +102,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -261,57 +262,38 @@ public class BomResource extends AbstractApiResource {
                         .build();
             }
 
-            try {
-                if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
-                    if (download) {
-                        return Response.ok(
-                                        exporter.export(
-                                                exporter.create(project, cdxOutputVersion),
-                                                CycloneDXExporter.Format.JSON,
-                                                cdxOutputVersion),
-                                        MediaType.APPLICATION_OCTET_STREAM)
-                                .header(
-                                        "content-disposition",
-                                        "attachment; filename=\"" + project.getUuid() + "-" + variant + ".cdx.json\"")
-                                .build();
-                    } else {
-                        return Response.ok(
-                                        exporter.export(
-                                                exporter.create(project, cdxOutputVersion),
-                                                CycloneDXExporter.Format.JSON,
-                                                cdxOutputVersion),
-                                        CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON)
-                                .build();
-                    }
-                } else if (format.equalsIgnoreCase("XML")) {
-                    if (download) {
-                        return Response.ok(
-                                        exporter.export(
-                                                exporter.create(project, cdxOutputVersion),
-                                                CycloneDXExporter.Format.XML,
-                                                cdxOutputVersion),
-                                        MediaType.APPLICATION_OCTET_STREAM)
-                                .header(
-                                        "content-disposition",
-                                        "attachment; filename=\"" + project.getUuid() + "-" + variant + ".cdx.xml\"")
-                                .build();
-                    } else {
-                        return Response.ok(
-                                        exporter.export(
-                                                exporter.create(project, cdxOutputVersion),
-                                                CycloneDXExporter.Format.XML,
-                                                cdxOutputVersion),
-                                        CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
-                                .build();
-                    }
+            if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
+                final Bom bom = exporter.create(project, cdxOutputVersion);
+                final StreamingOutput entity =
+                        out -> exporter.export(bom, CycloneDXExporter.Format.JSON, cdxOutputVersion, out);
+                if (download) {
+                    return Response.ok(entity, MediaType.APPLICATION_OCTET_STREAM)
+                            .header(
+                                    "content-disposition",
+                                    "attachment; filename=\"" + project.getUuid() + "-" + variant + ".cdx.json\"")
+                            .build();
                 } else {
-                    return Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Invalid BOM format specified.")
+                    return Response.ok(entity, CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON)
                             .build();
                 }
-            } catch (GeneratorException e) {
-                LOGGER.error("An error occurred while building a CycloneDX document for export", e);
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            } else if (format.equalsIgnoreCase("XML")) {
+                final Bom bom = exporter.create(project, cdxOutputVersion);
+                final StreamingOutput entity =
+                        out -> exporter.export(bom, CycloneDXExporter.Format.XML, cdxOutputVersion, out);
+                if (download) {
+                    return Response.ok(entity, MediaType.APPLICATION_OCTET_STREAM)
+                            .header(
+                                    "content-disposition",
+                                    "attachment; filename=\"" + project.getUuid() + "-" + variant + ".cdx.xml\"")
+                            .build();
+                } else {
+                    return Response.ok(entity, CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
+                            .build();
+                }
+            } else {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("Invalid BOM format specified.")
+                        .build();
             }
         }
     }
@@ -371,31 +353,24 @@ public class BomResource extends AbstractApiResource {
             requireAccess(qm, component.getProject());
 
             final CycloneDXExporter exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY, qm);
-            try {
-                if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
-                    return Response.ok(
-                                    exporter.export(
-                                            exporter.create(component, cdxOutputVersion),
-                                            CycloneDXExporter.Format.JSON,
-                                            cdxOutputVersion),
-                                    CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON)
-                            .build();
-                } else if (format.equalsIgnoreCase("XML")) {
-                    return Response.ok(
-                                    exporter.export(
-                                            exporter.create(component, cdxOutputVersion),
-                                            CycloneDXExporter.Format.XML,
-                                            cdxOutputVersion),
-                                    CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
-                            .build();
-                } else {
-                    return Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Invalid BOM format specified.")
-                            .build();
-                }
-            } catch (GeneratorException e) {
-                LOGGER.error("An error occurred while building a CycloneDX document for export", e);
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
+                final Bom bom = exporter.create(component, cdxOutputVersion);
+                return Response.ok(
+                                (StreamingOutput) out ->
+                                        exporter.export(bom, CycloneDXExporter.Format.JSON, cdxOutputVersion, out),
+                                CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON)
+                        .build();
+            } else if (format.equalsIgnoreCase("XML")) {
+                final Bom bom = exporter.create(component, cdxOutputVersion);
+                return Response.ok(
+                                (StreamingOutput) out ->
+                                        exporter.export(bom, CycloneDXExporter.Format.XML, cdxOutputVersion, out),
+                                CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
+                        .build();
+            } else {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("Invalid BOM format specified.")
+                        .build();
             }
         }
     }

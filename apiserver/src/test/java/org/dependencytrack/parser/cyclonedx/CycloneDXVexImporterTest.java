@@ -36,6 +36,7 @@ import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.junit.jupiter.api.Test;
 
 import javax.jdo.Query;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -269,9 +270,13 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                 .withJustification(AnalysisJustification.CODE_NOT_REACHABLE));
 
         final var exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VEX, qm);
-        final byte[] vexBytes = exporter.export(
-                        exporter.create(project, Version.VERSION_16), CycloneDXExporter.Format.JSON, Version.VERSION_16)
-                .getBytes(StandardCharsets.UTF_8);
+        final var vexOut = new ByteArrayOutputStream();
+        exporter.export(
+                exporter.create(project, Version.VERSION_16),
+                CycloneDXExporter.Format.JSON,
+                Version.VERSION_16,
+                vexOut);
+        final byte[] vexBytes = vexOut.toByteArray();
 
         vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
 

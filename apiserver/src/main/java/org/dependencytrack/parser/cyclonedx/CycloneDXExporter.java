@@ -34,6 +34,8 @@ import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.FindingDao;
 
 import javax.jdo.FetchGroup;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -169,11 +171,15 @@ public class CycloneDXExporter {
         return bom;
     }
 
-    public String export(final Bom bom, final Format format, final Version version) throws GeneratorException {
-        if (Format.JSON == format) {
-            return BomGeneratorFactory.createJson(version, bom).toJsonString();
+    public void export(Bom bom, Format format, Version version, OutputStream out) throws IOException {
+        try {
+            if (Format.JSON == format) {
+                BomGeneratorFactory.createJson(version, bom).writeJson(out, true);
+            } else {
+                BomGeneratorFactory.createXml(version, bom).writeXml(out, true);
+            }
+        } catch (GeneratorException e) {
+            throw new IOException(e);
         }
-
-        return BomGeneratorFactory.createXml(version, bom).toXmlString();
     }
 }

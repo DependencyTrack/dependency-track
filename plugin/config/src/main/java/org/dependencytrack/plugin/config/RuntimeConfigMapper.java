@@ -76,7 +76,7 @@ public final class RuntimeConfigMapper {
 
     private final ObjectMapper jsonMapper;
     private final SchemaRegistry schemaRegistry;
-    private final Map<RuntimeConfigSpec, RuntimeConfigSchema> schemaCache;
+    private final Map<String, RuntimeConfigSchema> schemaCache;
 
     RuntimeConfigMapper() {
         this.jsonMapper = new ObjectMapper().setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
@@ -217,11 +217,15 @@ public final class RuntimeConfigMapper {
         return jsonMapper;
     }
 
+    int schemaCacheSize() {
+        return schemaCache.size();
+    }
+
     private RuntimeConfigSchema getSchema(RuntimeConfigSpec runtimeConfigSpec) {
-        return schemaCache.computeIfAbsent(runtimeConfigSpec, _ -> {
+        return schemaCache.computeIfAbsent(runtimeConfigSpec.schema(), schemaJson -> {
             final JsonNode schemaNode;
             try {
-                schemaNode = jsonMapper.readValue(runtimeConfigSpec.schema(), JsonNode.class);
+                schemaNode = jsonMapper.readValue(schemaJson, JsonNode.class);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

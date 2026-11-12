@@ -33,7 +33,7 @@ import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.Version;
-import org.cyclonedx.exception.GeneratorException;
+import org.cyclonedx.model.Bom;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.common.ConfigKeys;
@@ -72,6 +72,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -174,31 +175,19 @@ public class VexResource extends AbstractApiResource {
             requireAccess(qm, project);
 
             final CycloneDXExporter exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VEX, qm);
+            final Bom bom = exporter.create(project, cdxOutputVersion);
+            final StreamingOutput entity =
+                    out -> exporter.export(bom, CycloneDXExporter.Format.JSON, cdxOutputVersion, out);
 
-            try {
-                if (download) {
-                    return Response.ok(
-                                    exporter.export(
-                                            exporter.create(project, cdxOutputVersion),
-                                            CycloneDXExporter.Format.JSON,
-                                            cdxOutputVersion),
-                                    MediaType.APPLICATION_OCTET_STREAM)
-                            .header(
-                                    "content-disposition",
-                                    "attachment; filename=\"" + project.getUuid() + "-vex.cdx.json\"")
-                            .build();
-                } else {
-                    return Response.ok(
-                                    exporter.export(
-                                            exporter.create(project, cdxOutputVersion),
-                                            CycloneDXExporter.Format.JSON,
-                                            cdxOutputVersion),
-                                    CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON)
-                            .build();
-                }
-            } catch (GeneratorException e) {
-                LOGGER.error("An error occurred while building a CycloneDX document for export", e);
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            if (download) {
+                return Response.ok(entity, MediaType.APPLICATION_OCTET_STREAM)
+                        .header(
+                                "content-disposition",
+                                "attachment; filename=\"" + project.getUuid() + "-vex.cdx.json\"")
+                        .build();
+            } else {
+                return Response.ok(entity, CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON)
+                        .build();
             }
         }
     }

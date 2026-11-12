@@ -272,6 +272,28 @@ BEGIN
      WHERE "PROJECT_ID" = target_project.id
        AND "PARENT_COMPONENT_ID" = tmp_component_mapping.source_id;
 
+    -- Clone component licenses.
+    INSERT INTO "COMPONENTLICENSES" (
+      "COMPONENT_ID",
+      "LICENSE_ID",
+      "LICENSE",
+      "LICENSE_EXPRESSION",
+      "LICENSE_URL",
+      "ORDINALITY",
+      "ACKNOWLEDGEMENT"
+    )
+    SELECT
+        tmp_component_mapping."target_id",
+        cl."LICENSE_ID",
+        cl."LICENSE",
+        cl."LICENSE_EXPRESSION",
+        cl."LICENSE_URL",
+        cl."ORDINALITY",
+        cl."ACKNOWLEDGEMENT"
+    FROM tmp_component_mapping
+    JOIN "COMPONENTLICENSES" AS cl
+      ON cl."COMPONENT_ID" = tmp_component_mapping."source_id";
+
     -- Clone component occurrences.
     INSERT INTO "COMPONENT_OCCURRENCE" (
       "COMPONENT_ID"

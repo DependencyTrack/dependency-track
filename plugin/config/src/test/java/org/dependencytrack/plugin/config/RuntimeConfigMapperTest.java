@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
@@ -88,6 +89,20 @@ class RuntimeConfigMapperTest {
             assertThatExceptionOfType(NullPointerException.class)
                     .isThrownBy(() -> runtimeConfigMapper.validate(new TestRuntimeConfig(), null))
                     .withMessage("configSpec must not be null");
+        }
+    }
+
+    @Nested
+    class SchemaCacheTest {
+
+        @Test
+        void shouldReuseSchemaAcrossConfigSpecInstancesWithSameSchema() {
+            final var config = new TestRuntimeConfig().withRequiredString("foo");
+
+            runtimeConfigMapper.validate(config, RuntimeConfigSpec.of(new TestRuntimeConfig()));
+            runtimeConfigMapper.validate(config, RuntimeConfigSpec.of(new TestRuntimeConfig()));
+
+            assertThat(runtimeConfigMapper.schemaCacheSize()).isEqualTo(1);
         }
     }
 

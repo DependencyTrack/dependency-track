@@ -18,13 +18,11 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.persistence.ScopedCustomization;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.exception.ParseException;
+import org.cyclonedx.model.Bom;
 import org.cyclonedx.parsers.BomParserFactory;
 import org.cyclonedx.parsers.Parser;
-import org.datanucleus.flush.FlushMode;
 import org.dependencytrack.analysis.AnalyzeProjectWorkflow;
 import org.dependencytrack.analysis.ProjectLastAnalysisDao;
 import org.dependencytrack.common.Mappers;
@@ -36,9 +34,10 @@ import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ComponentOccurrence;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetadata;
@@ -46,6 +45,9 @@ import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
+import org.dependencytrack.persistence.jdbi.ProjectDao;
+import org.dependencytrack.pkgmetadata.PackageMetadataResolutionDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
@@ -57,9 +59,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import javax.jdo.FetchGroup;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,26 +69,22 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNullElse;
-import static javax.jdo.FetchPlan.FETCH_SIZE_GREEDY;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.trim;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
 import static org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS;
-import static org.datanucleus.PropertyNames.PROPERTY_FLUSH_MODE;
-import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
-import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
-import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
 import static org.dependencytrack.common.MdcKeys.MDC_BOM_FORMAT;
 import static org.dependencytrack.common.MdcKeys.MDC_BOM_SERIAL_NUMBER;
 import static org.dependencytrack.common.MdcKeys.MDC_BOM_SPEC_VERSION;
@@ -112,8 +107,6 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertTo
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
-import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
-import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
 /**
  * @since 5.0.0
@@ -126,7 +119,6 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
         private final UUID token;
         private final Project project;
-        private final Bom.Format bomFormat;
         private final long startTimeNs;
         private @Nullable String bomSpecVersion;
         private @Nullable String bomSerialNumber;
@@ -136,12 +128,12 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         private ProcessingContext(UUID token, Project project) {
             this.token = token;
             this.project = project;
-            this.bomFormat = Bom.Format.CYCLONEDX;
             this.startTimeNs = System.nanoTime();
         }
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportBomActivity.class);
+    private static final String BOM_FORMAT = "CycloneDX";
 
     private final DexEngine dexEngine;
     private final FileStorage fileStorage;
@@ -188,7 +180,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         final ConsumedBom consumedBom;
         try {
             final Parser parser = BomParserFactory.createParser(cdxBomBytes);
-            final var cdxBom = parser.parse(cdxBomBytes);
+            final Bom cdxBom = parser.parse(cdxBomBytes);
             ctx.bomSpecVersion = cdxBom.getSpecVersion();
             if (cdxBom.getSerialNumber() != null) {
                 ctx.bomSerialNumber = cdxBom.getSerialNumber().replaceFirst("urn:uuid:", "");
@@ -212,17 +204,14 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
         dispatchBomConsumedNotification(ctx);
 
-        final ProcessedBom processedBom;
-        try (var _ = MDC.putCloseable(MDC_BOM_FORMAT, ctx.bomFormat.getFormatShortName());
+        try (var _ = MDC.putCloseable(MDC_BOM_FORMAT, BOM_FORMAT);
                 var _ = MDC.putCloseable(MDC_BOM_SPEC_VERSION, ctx.bomSpecVersion);
                 var _ = MDC.putCloseable(MDC_BOM_SERIAL_NUMBER, ctx.bomSerialNumber);
                 var _ = MDC.putCloseable(MDC_BOM_VERSION, String.valueOf(ctx.bomVersion))) {
             try {
-                processedBom = processBom(ctx, consumedBom);
-            } catch (CancellationException e) {
-                final var interruptedException = new InterruptedException("BOM processing was interrupted");
-                interruptedException.initCause(e);
-                throw interruptedException;
+                processBom(ctx, consumedBom);
+            } catch (InterruptedException e) {
+                throw e;
             } catch (Throwable e) {
                 LOGGER.error("Failed to process BOM", e);
                 try (final var qm = new QueryManager()) {
@@ -233,7 +222,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         }
 
         final var processingDurationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - ctx.startTimeNs);
-        LOGGER.info("BOM processed successfully in %s".formatted(formatDurationHMS(processingDurationMs)));
+        LOGGER.info("BOM processed successfully in {}", formatDurationHMS(processingDurationMs));
         if (!delayBomProcessedNotification) {
             dispatchBomProcessedNotification(ctx);
         }
@@ -242,8 +231,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 .setProjectUuid(ctx.project.getUuid().toString())
                 .setTrigger(ANALYSIS_TRIGGER_BOM_UPLOAD);
 
-        if (!processedBom.components().isEmpty()) {
-            final FileMetadata contextFileMetadata = storeVulnAnalysisContext(ctx, processedBom.components());
+        if (!consumedBom.components().isEmpty()) {
+            final FileMetadata contextFileMetadata = storeVulnAnalysisContext(ctx, consumedBom.components());
             if (contextFileMetadata != null) {
                 workflowArgBuilder.setContextFileMetadata(contextFileMetadata);
             }
@@ -265,28 +254,28 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                     handle.attach(ProjectLastAnalysisDao.class).recordAttempt(ctx.project.getUuid(), Instant.now()));
         }
 
-        if (!processedBom.components().isEmpty()) {
+        if (!consumedBom.components().isEmpty()) {
             dexEngine.createRun(new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class)
                     .withWorkflowInstanceId(ResolvePackageMetadataWorkflow.INSTANCE_ID));
         }
     }
 
     private record ConsumedBom(
-            Project project,
-            ProjectMetadata projectMetadata,
+            @Nullable Project project,
+            @Nullable ProjectMetadata projectMetadata,
             List<Component> components,
             List<ServiceComponent> services,
             Map<String, Set<String>> dependencyGraph,
             Map<String, ComponentIdentity> identitiesByBomRef,
             Map<ComponentIdentity, Set<String>> bomRefsByIdentity) {}
 
-    private ConsumedBom consumeBom(final org.cyclonedx.model.Bom cdxBom) {
+    private ConsumedBom consumeBom(final Bom cdxBom) {
         // Keep track of which BOM ref points to which component identity.
         // During component and service de-duplication, we'll potentially drop
         // some BOM refs, which can break the dependency graph.
         final var identitiesByBomRef = new HashMap<String, ComponentIdentity>();
 
-        // Component identities will change once components are persisted to the database.
+        // Component identities will change once components are assigned their UUIDs.
         // This means we'll eventually have to update identities in "identitiesByBomRef"
         // for every BOM ref pointing to them.
         // We avoid having to iterate over, and compare, all values of "identitiesByBomRef"
@@ -319,534 +308,351 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         services = services.stream()
                 .filter(distinctServicesByIdentity(identitiesByBomRef, bomRefsByIdentity))
                 .toList();
-        LOGGER.info("""
-                Consumed %d components (%d before de-duplication), %d services (%d before de-duplication), \
-                and %d dependency graph entries""".formatted(
-                components.size(), numComponentsTotal, services.size(), numServicesTotal, numDependencyGraphEntries));
+        LOGGER.info(
+                """
+                Consumed {} components ({} before de-duplication), {} services ({} before de-duplication), \
+                and {} dependency graph entries\
+                """,
+                components.size(),
+                numComponentsTotal,
+                services.size(),
+                numServicesTotal,
+                numDependencyGraphEntries);
 
         return new ConsumedBom(
                 project, projectMetadata, components, services, dependencyGraph, identitiesByBomRef, bomRefsByIdentity);
     }
 
-    record ProcessedBom(Project project, Collection<Component> components, Collection<ServiceComponent> services) {}
+    private static void processBom(ProcessingContext ctx, ConsumedBom bom) throws InterruptedException {
+        useJdbiTransaction(handle -> {
+            final var dao = new BomImportDao(handle);
 
-    private ProcessedBom processBom(final ProcessingContext ctx, final ConsumedBom bom) {
-        try (final var qm = new QueryManager()) {
-            // Disable reachability checks on commit.
-            // See https://www.datanucleus.org/products/accessplatform_4_1/jdo/performance_tuning.html
-            //
-            // Persistence-by-reachability is an expensive operation that involves traversing the entire
-            // object graph, and potentially issuing multiple database operations in doing so.
-            //
-            // It also enables cascading operations (both for persisting and deleting), but we don't need them here.
-            // If this circumstance ever changes, this property may be flicked to "true" again, at the cost of
-            // a noticeable performance hit.
-            // See:
-            //   https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#cascading
-            //   https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#_managing_relationships
-            qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+            final Long projectId = handle.attach(ProjectDao.class).getProjectId(ctx.project.getUuid());
+            if (projectId == null) {
+                throw new IllegalStateException("Project does not exist");
+            }
 
-            // Save some database round-trips by only flushing changes every FLUSH_THRESHOLD write operations.
-            // See https://www.datanucleus.org/products/accessplatform_4_1/jdo/performance_tuning.html
-            //
-            // Note: Queries (SELECT) will always directly hit the database. Using manual flushing means
-            // changes made before flush are not visible to queries. If "read-your-writes" is critical,
-            // either flush immediately after making changes, or change the FlushMode back to AUTO (the default).
-            // AUTO will flush all changes to the database immediately, on every single setter invocation.
-            //
-            // Another option would be to set FlushMode to QUERY, where flushes will be performed before *any*
-            // query. Hibernate has a smart(er) behavior, where it checks if the query "touches" non-flushed
-            // data, and only flushes if that's the case. DataNucleus is not as smart, and will always flush.
-            // Still, QUERY may be a nice middle-ground between AUTO and MANUAL.
-            //
-            // ImportBomActivityTest#informWithBloatedBomTest can be used to profile the impact on large BOMs.
-            qm.getPersistenceManager().setProperty(PROPERTY_FLUSH_MODE, FlushMode.MANUAL.name());
+            if (bom.project() != null) {
+                dao.updateProject(projectId, bom.project());
+            }
+            if (bom.projectMetadata() != null) {
+                dao.upsertProjectMetadata(projectId, bom.projectMetadata());
+            }
 
-            // Prevent object fields from being unloaded upon commit.
-            //
-            // DataNucleus transitions objects into the "hollow" state after the transaction is committed.
-            // In hollow state, all fields except the ID are unloaded. Accessing fields afterward triggers
-            // one or more database queries to load them again.
-            // See https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#lifecycle
-            qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
+            final Map<String, Long> licenseIds = dao.getLicenseIdsByIdOrName(bom.components().stream()
+                    .flatMap(component -> component.getLicenseCandidates().stream())
+                    .flatMap(license -> Stream.of(license.getId(), license.getName()))
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toSet()));
 
-            return qm.callInTransaction(() -> {
-                final Project persistentProject = processProject(ctx, qm, bom.project(), bom.projectMetadata());
+            LOGGER.info("Processing {} components", bom.components().size());
+            reconcileComponents(dao, projectId, bom, licenseIds);
 
-                LOGGER.info("Processing {} components", bom.components().size());
-                final Map<ComponentIdentity, Component> persistentComponentsByIdentity = processComponents(
-                        qm, persistentProject, bom.components(), bom.identitiesByBomRef(), bom.bomRefsByIdentity());
+            LOGGER.info("Processing {} services", bom.services().size());
+            reconcileServices(dao, projectId, bom);
 
-                LOGGER.info("Processing {} services", bom.services().size());
-                final Map<ComponentIdentity, ServiceComponent> persistentServicesByIdentity = processServices(
-                        qm, persistentProject, bom.services(), bom.identitiesByBomRef(), bom.bomRefsByIdentity());
+            LOGGER.info(
+                    "Processing {} dependency graph entries",
+                    bom.dependencyGraph().size());
+            final String projectDirectDependencies = processDependencyGraph(bom);
 
-                LOGGER.info(
-                        "Processing {} dependency graph entries",
-                        bom.dependencyGraph().size());
-                processDependencyGraph(
-                        persistentProject,
-                        bom.dependencyGraph(),
-                        persistentComponentsByIdentity,
-                        bom.identitiesByBomRef(),
-                        bom.bomRefsByIdentity());
+            dao.createComponents(
+                    projectId,
+                    bom.components().stream().filter(Component::isNew).toList());
+            dao.updateComponents(bom.components().stream()
+                    .filter(component -> !component.isNew())
+                    .toList());
 
-                // NB: This is supposed to be the *only* flush for the *entire* BOM.
-                // The logic leading up to this intentionally doesn't trigger flushes to prevent
-                // excessive DB round-trips and table bloat.
-                qm.getPersistenceManager().flush();
+            dao.createServices(
+                    projectId,
+                    bom.services().stream()
+                            .filter(service -> service.getId() == 0)
+                            .toList());
+            dao.updateServices(bom.services().stream()
+                    .filter(service -> service.getId() != 0)
+                    .toList());
 
-                recordBomImport(ctx, qm, persistentProject);
+            synchronizeComponentProperties(dao, projectId, bom.components());
+            synchronizeComponentOccurrences(dao, projectId, bom.components());
+            synchronizeComponentLicenses(dao, projectId, bom.components(), licenseIds);
 
-                qm.seedPackageMetadataResolution(persistentProject);
+            dao.recordBomImport(
+                    projectId,
+                    projectDirectDependencies,
+                    BOM_FORMAT,
+                    ctx.bomSpecVersion,
+                    ctx.bomSerialNumber,
+                    ctx.bomVersion,
+                    ctx.bomTimestamp);
+            new PackageMetadataResolutionDao(handle).seedPending(projectId);
+        });
+    }
 
-                return new ProcessedBom(
-                        persistentProject,
-                        persistentComponentsByIdentity.values(),
-                        persistentServicesByIdentity.values());
+    private static void reconcileComponents(
+            BomImportDao dao, long projectId, ConsumedBom bom, Map<String, Long> licenseIds)
+            throws InterruptedException {
+        final List<Component> components = bom.components();
+
+        final var internalComponentIdentifier = new InternalComponentIdentifier();
+
+        final List<BomImportDao.ExistingComponentRow> existingComponents = dao.getExistingComponents(projectId);
+
+        final Map<ComponentIdentity, BomImportDao.ExistingComponentRow> existingComponentByIdentity =
+                existingComponents.stream()
+                        .collect(Collectors.toMap(
+                                BomImportDao.ExistingComponentRow::identity, Function.identity(), (previous, _) -> {
+                                    LOGGER.warn("""
+                                        More than one existing component matches the identity {}; \
+                                        Proceeding with first match, others will be deleted\
+                                        """, previous.identity().toJSON());
+                                    return previous;
+                                }));
+
+        final Set<Long> idsOfComponentsToDelete = existingComponents.stream()
+                .map(BomImportDao.ExistingComponentRow::id)
+                .collect(Collectors.toSet());
+
+        for (final Component component : components) {
+            component.setInternal(internalComponentIdentifier.isInternal(component));
+            applyPrimaryLicense(component, licenseIds);
+
+            final BomImportDao.ExistingComponentRow existingComponent =
+                    existingComponentByIdentity.get(new ComponentIdentity(component));
+            if (existingComponent == null) {
+                // Direct dependencies reference UUIDs, so UUIDs must be known before anything is inserted.
+                component.setUuid(UUID.randomUUID());
+                component.setNew(true);
+            } else {
+                component.setId(existingComponent.id());
+                component.setUuid(existingComponent.uuid());
+                idsOfComponentsToDelete.remove(existingComponent.id());
+            }
+
+            final var oldIdentity = new ComponentIdentity(component, /* excludeUuid */ true);
+            final var newIdentity = new ComponentIdentity(component);
+            for (final String bomRef : bom.bomRefsByIdentity().getOrDefault(oldIdentity, Set.of())) {
+                bom.identitiesByBomRef().put(bomRef, newIdentity);
+            }
+        }
+
+        if (!idsOfComponentsToDelete.isEmpty()) {
+            LOGGER.info(
+                    "Deleting {} component(s) that are no longer part of the project", idsOfComponentsToDelete.size());
+            dao.deleteComponents(idsOfComponentsToDelete);
+        }
+    }
+
+    private static void reconcileServices(BomImportDao dao, long projectId, ConsumedBom bom)
+            throws InterruptedException {
+        final List<BomImportDao.ExistingServiceRow> existingServices = dao.getExistingServices(projectId);
+
+        final Map<ComponentIdentity, BomImportDao.ExistingServiceRow> existingServiceByIdentity =
+                existingServices.stream()
+                        .collect(Collectors.toMap(
+                                BomImportDao.ExistingServiceRow::identity, Function.identity(), (previous, _) -> {
+                                    LOGGER.warn("""
+                                        More than one existing service matches the identity {}; \
+                                        Proceeding with first match, others will be deleted\
+                                        """, previous.identity().toJSON());
+                                    return previous;
+                                }));
+
+        final Set<Long> idsOfServicesToDelete = existingServices.stream()
+                .map(BomImportDao.ExistingServiceRow::id)
+                .collect(Collectors.toSet());
+
+        for (final ServiceComponent service : bom.services()) {
+            final BomImportDao.ExistingServiceRow existingService =
+                    existingServiceByIdentity.get(new ComponentIdentity(service));
+            if (existingService == null) {
+                service.setUuid(UUID.randomUUID());
+            } else {
+                service.setId(existingService.id());
+                service.setUuid(existingService.uuid());
+                idsOfServicesToDelete.remove(existingService.id());
+            }
+
+            final var oldIdentity = new ComponentIdentity(service, /* excludeUuid */ true);
+            final var newIdentity = new ComponentIdentity(service);
+            for (final String bomRef : bom.bomRefsByIdentity().getOrDefault(oldIdentity, Set.of())) {
+                bom.identitiesByBomRef().put(bomRef, newIdentity);
+            }
+        }
+
+        if (!idsOfServicesToDelete.isEmpty()) {
+            LOGGER.info("Deleting {} service(s) that are no longer part of the project", idsOfServicesToDelete.size());
+            dao.deleteServices(idsOfServicesToDelete);
+        }
+    }
+
+    private static @Nullable String processDependencyGraph(ConsumedBom bom) {
+        for (final Component component : bom.components()) {
+            // Merges the edges of every BOM ref that was de-duplicated into this component.
+            final Set<String> sourceBomRefs = bom.bomRefsByIdentity()
+                    .getOrDefault(new ComponentIdentity(component, /* excludeUuid */ true), Set.of());
+            component.setDirectDependencies(
+                    resolveDependencies(sourceBomRefs, bom.dependencyGraph(), bom.identitiesByBomRef()));
+        }
+
+        if (bom.project() == null) {
+            return null;
+        }
+
+        final String projectBomRef = bom.project().getBomRef();
+        final Collection<String> directDependencyBomRefs = bom.dependencyGraph().get(projectBomRef);
+        if (directDependencyBomRefs == null || directDependencyBomRefs.isEmpty()) {
+            LOGGER.warn("""
+                The dependency graph has {} entries, but the project (metadata.component node of the BOM) \
+                is not one of them; Graph will be incomplete because it is not possible to determine its root\
+                """, bom.dependencyGraph().size());
+        }
+        return resolveDependencies(List.of(projectBomRef), bom.dependencyGraph(), bom.identitiesByBomRef());
+    }
+
+    private static void synchronizeComponentProperties(BomImportDao dao, long projectId, List<Component> components)
+            throws InterruptedException {
+        final var propertiesToCreate = new ArrayList<ComponentProperty>();
+        final var idsOfPropertiesToDelete = new ArrayList<Long>();
+        synchronizeComponentOwnedRows(
+                components,
+                dao.getComponentProperties(projectId),
+                Component::getProperties,
+                ComponentProperty.Identity::new,
+                (component, property) -> {
+                    property.setComponent(component);
+                    propertiesToCreate.add(property);
+                },
+                idsOfPropertiesToDelete::add);
+        dao.deleteComponentProperties(idsOfPropertiesToDelete);
+        dao.createComponentProperties(propertiesToCreate);
+    }
+
+    private static void synchronizeComponentOccurrences(BomImportDao dao, long projectId, List<Component> components)
+            throws InterruptedException {
+        final var occurrencesToCreate = new ArrayList<ComponentOccurrence>();
+        final var idsOfOccurrencesToDelete = new ArrayList<UUID>();
+        synchronizeComponentOwnedRows(
+                components,
+                dao.getComponentOccurrences(projectId),
+                Component::getOccurrences,
+                ComponentOccurrence.Identity::of,
+                (component, occurrence) -> {
+                    occurrence.setComponent(component);
+                    occurrencesToCreate.add(occurrence);
+                },
+                idsOfOccurrencesToDelete::add);
+        dao.deleteComponentOccurrences(idsOfOccurrencesToDelete);
+        dao.createComponentOccurrences(occurrencesToCreate);
+    }
+
+    private static void synchronizeComponentLicenses(
+            BomImportDao dao, long projectId, List<Component> components, Map<String, Long> licenseIds)
+            throws InterruptedException {
+        final var rowsToCreate = new ArrayList<ComponentLicenseDao.ComponentLicenseRow>();
+        final var idsOfRowsToDelete = new ArrayList<Long>();
+        synchronizeComponentOwnedRows(
+                components,
+                dao.getComponentLicenses(projectId),
+                component -> buildComponentLicenseRows(component, licenseIds),
+                Function.identity(),
+                (_, row) -> rowsToCreate.add(row),
+                idsOfRowsToDelete::add);
+        dao.deleteComponentLicenses(idsOfRowsToDelete);
+        dao.createComponentLicenses(rowsToCreate);
+    }
+
+    private static List<ComponentLicenseDao.ComponentLicenseRow> buildComponentLicenseRows(
+            Component component, Map<String, Long> licenseIds) {
+        // Keyed by license to satisfy the COMPONENTLICENSES_ID_IDX unique index.
+        final var rowsByKey = new LinkedHashMap<String, ComponentLicenseDao.ComponentLicenseRow>();
+        final String expression = trimToNull(component.getLicenseExpression());
+        // Only one row may hold the expression, per the COMPONENTLICENSES_EXP_IDX unique index.
+        boolean expressionAssigned = false;
+
+        for (final org.cyclonedx.model.License candidate : component.getLicenseCandidates()) {
+            Long licenseId = candidate.getId() != null ? licenseIds.get(candidate.getId()) : null;
+            if (licenseId == null && candidate.getName() != null) {
+                licenseId = licenseIds.get(candidate.getName());
+            }
+
+            final String name =
+                    StringUtils.firstNonBlank(trimToNull(candidate.getName()), trimToNull(candidate.getId()));
+            if (licenseId == null && name == null) {
+                continue;
+            }
+
+            final String key = licenseId != null ? "resolved:" + licenseId : "unresolved:" + name;
+            if (rowsByKey.containsKey(key)) {
+                continue;
+            }
+
+            final boolean isExpression = !expressionAssigned
+                    && expression != null
+                    && (expression.equals(candidate.getId()) || expression.equals(candidate.getName()));
+            expressionAssigned |= isExpression;
+            rowsByKey.put(
+                    key,
+                    new ComponentLicenseDao.ComponentLicenseRow(
+                            component.getId(),
+                            licenseId,
+                            licenseId == null ? name : null,
+                            isExpression ? expression : null,
+                            trimToNull(candidate.getUrl()),
+                            rowsByKey.size() + 1,
+                            "DECLARED"));
+        }
+
+        // Expressions are a valid substitute for license objects, so they need a row of their own.
+        if (expression != null && !expressionAssigned) {
+            rowsByKey.put(
+                    "expression",
+                    new ComponentLicenseDao.ComponentLicenseRow(
+                            component.getId(), null, null, expression, null, rowsByKey.size() + 1, "DECLARED"));
+        }
+
+        return List.copyOf(rowsByKey.values());
+    }
+
+    private static <T, R extends BomImportDao.ComponentOwnedRow<I, K>, I, K> void synchronizeComponentOwnedRows(
+            List<Component> components,
+            List<R> existingRows,
+            Function<Component, @Nullable Collection<T>> incomingGetter,
+            Function<T, K> identityOf,
+            BiConsumer<Component, T> onCreate,
+            Consumer<I> onDelete) {
+        final Map<Long, List<R>> existingRowsByComponentId =
+                existingRows.stream().collect(Collectors.groupingBy(BomImportDao.ComponentOwnedRow::componentId));
+
+        for (final Component component : components) {
+            final var incomingByIdentity = new LinkedHashMap<K, T>();
+            final Collection<T> incoming = incomingGetter.apply(component);
+            if (incoming != null) {
+                for (final T item : incoming) {
+                    incomingByIdentity.putIfAbsent(identityOf.apply(item), item);
+                }
+            }
+
+            final var identitiesSeen = new HashSet<K>();
+            for (final R existingRow : existingRowsByComponentId.getOrDefault(component.getId(), List.of())) {
+                // Older versions could store duplicate rows.
+                final boolean isDuplicate = !identitiesSeen.add(existingRow.identity());
+                if (isDuplicate || !incomingByIdentity.containsKey(existingRow.identity())) {
+                    onDelete.accept(existingRow.id());
+                }
+            }
+
+            incomingByIdentity.forEach((identity, item) -> {
+                if (!identitiesSeen.contains(identity)) {
+                    onCreate.accept(component, item);
+                }
             });
         }
     }
 
-    private static Project processProject(
-            final ProcessingContext ctx,
-            final QueryManager qm,
-            final Project project,
-            final ProjectMetadata projectMetadata) {
-        final Query<@Nullable Project> query = qm.getPersistenceManager().newQuery(Project.class);
-        query.setFilter("uuid == :uuid");
-        query.setParameters(ctx.project.getUuid());
-
-        final Project persistentProject;
-        try {
-            persistentProject = query.executeUnique();
-        } finally {
-            query.closeAll();
-        }
-        if (persistentProject == null) {
-            throw new IllegalStateException("Project does not exist");
-        }
-
-        boolean hasChanged = false;
-        if (project != null) {
-            persistentProject.setBomRef(project.getBomRef()); // Transient
-            hasChanged |=
-                    applyIfChanged(persistentProject, project, Project::getAuthors, persistentProject::setAuthors);
-            hasChanged |=
-                    applyIfChanged(persistentProject, project, Project::getPublisher, persistentProject::setPublisher);
-            hasChanged |= applyIfChanged(
-                    persistentProject, project, Project::getClassifier, persistentProject::setClassifier);
-            hasChanged |=
-                    applyIfChanged(persistentProject, project, Project::getSupplier, persistentProject::setSupplier);
-            hasChanged |= applyIfChanged(
-                    persistentProject, project, Project::getManufacturer, persistentProject::setManufacturer);
-            // TODO: Currently these properties are "decoupled" from the BOM and managed directly by DT users.
-            //   Perhaps there could be a flag for BOM uploads saying "use BOM properties" or something?
-            // hasChanged |= applyIfChanged(persistentProject, project, Project::getGroup, persistentProject::setGroup);
-            // hasChanged |= applyIfChanged(persistentProject, project, Project::getName, persistentProject::setName);
-            // hasChanged |= applyIfChanged(persistentProject, project, Project::getVersion,
-            // persistentProject::setVersion);
-            // hasChanged |= applyIfChanged(persistentProject, project, Project::getDescription,
-            // persistentProject::setDescription);
-            hasChanged |= applyIfChanged(
-                    persistentProject,
-                    project,
-                    Project::getExternalReferences,
-                    persistentProject::setExternalReferences);
-            hasChanged |= applyIfChanged(persistentProject, project, Project::getCpe, persistentProject::setCpe);
-            hasChanged |= applyIfChanged(persistentProject, project, Project::getPurl, persistentProject::setPurl);
-            hasChanged |=
-                    applyIfChanged(persistentProject, project, Project::getSwidTagId, persistentProject::setSwidTagId);
-        }
-
-        if (projectMetadata != null) {
-            if (persistentProject.getMetadata() == null) {
-                projectMetadata.setProject(persistentProject);
-                qm.getPersistenceManager().makePersistent(projectMetadata);
-                hasChanged = true;
-            } else {
-                hasChanged |= applyIfChanged(
-                        persistentProject.getMetadata(),
-                        projectMetadata,
-                        ProjectMetadata::getAuthors,
-                        authors -> persistentProject
-                                .getMetadata()
-                                .setAuthors(authors != null ? new ArrayList<>(authors) : null));
-                hasChanged |= applyIfChanged(
-                        persistentProject.getMetadata(),
-                        projectMetadata,
-                        ProjectMetadata::getSupplier,
-                        persistentProject.getMetadata()::setSupplier);
-                hasChanged |= applyIfChanged(
-                        persistentProject.getMetadata(),
-                        projectMetadata,
-                        ProjectMetadata::getTools,
-                        persistentProject.getMetadata()::setTools);
-            }
-        }
-
-        if (hasChanged) {
-            qm.getPersistenceManager().flush();
-        }
-
-        return persistentProject;
-    }
-
-    private static Map<ComponentIdentity, Component> processComponents(
-            final QueryManager qm,
-            final Project project,
-            final List<Component> components,
-            final Map<String, ComponentIdentity> identitiesByBomRef,
-            final Map<ComponentIdentity, Set<String>> bomRefsByIdentity) {
-        assertPersistent(project, "Project must be persistent");
-
-        // Avoid redundant queries by caching resolved licenses.
-        // It is likely that if license IDs were present in a BOM,
-        // they appear multiple times for different components.
-        final var licenseCache = new HashMap<String, License>();
-
-        // We support resolution of custom licenses by their name.
-        // To avoid any conflicts with license IDs, cache those separately.
-        final var customLicenseCache = new HashMap<String, License>();
-
-        final var internalComponentIdentifier = new InternalComponentIdentifier();
-
-        final List<Component> persistentComponents = getAllComponents(qm, project);
-
-        // Group existing components by their identity for easier lookup.
-        // Note that we exclude the UUID from the identity here,
-        // since incoming non-persistent components won't have one yet.
-        final Map<ComponentIdentity, Component> persistentComponentByIdentity = persistentComponents.stream()
-                .collect(Collectors.toMap(
-                        component -> new ComponentIdentity(component, /* excludeUuid */ true),
-                        Function.identity(),
-                        (previous, _) -> {
-                            LOGGER.warn("""
-                                    More than one existing component matches the identity %s; \
-                                    Proceeding with first match, others will be deleted\
-                                    """.formatted(new ComponentIdentity(previous, /* excludeUuid */ true)));
-                            return previous;
-                        }));
-
-        final Set<Long> idsOfComponentsToDelete =
-                persistentComponents.stream().map(Component::getId).collect(Collectors.toSet());
-
-        for (final Component component : components) {
-            if (Thread.currentThread().isInterrupted()) {
-                throw new CancellationException("Interrupted before all components could be processed");
-            }
-
-            component.setInternal(internalComponentIdentifier.isInternal(component));
-            resolveAndApplyLicense(qm, component, licenseCache, customLicenseCache);
-
-            final var componentIdentity = new ComponentIdentity(component);
-            Component persistentComponent = persistentComponentByIdentity.get(componentIdentity);
-            if (persistentComponent == null) {
-                component.setProject(project);
-                // NB: Setting the risk score to 0 saves a ton of DB writes during the first
-                // project metrics calculation. The majority of components will have no risk,
-                // so I/O is wasted purely on changing NULL to 0 later. Particularly on large
-                // BOMs this makes a big difference.
-                component.setLastInheritedRiskScore(0.0);
-                persistentComponent = qm.getPersistenceManager().makePersistent(component);
-                persistentComponent.setNew(true); // Transient
-            } else {
-                persistentComponent.setBomRef(component.getBomRef()); // Transient
-                applyIfChanged(persistentComponent, component, Component::getAuthors, persistentComponent::setAuthors);
-                applyIfChanged(
-                        persistentComponent, component, Component::getPublisher, persistentComponent::setPublisher);
-                applyIfChanged(
-                        persistentComponent, component, Component::getSupplier, persistentComponent::setSupplier);
-                applyIfChanged(
-                        persistentComponent, component, Component::getClassifier, persistentComponent::setClassifier);
-                applyIfChanged(persistentComponent, component, Component::getGroup, persistentComponent::setGroup);
-                applyIfChanged(persistentComponent, component, Component::getName, persistentComponent::setName);
-                applyIfChanged(persistentComponent, component, Component::getVersion, persistentComponent::setVersion);
-                applyIfChanged(
-                        persistentComponent, component, Component::getDescription, persistentComponent::setDescription);
-                applyIfChanged(
-                        persistentComponent, component, Component::getCopyright, persistentComponent::setCopyright);
-                applyIfChanged(persistentComponent, component, Component::getCpe, persistentComponent::setCpe);
-                applyIfChanged(persistentComponent, component, Component::getPurl, persistentComponent::setPurl);
-                applyIfChanged(
-                        persistentComponent, component, Component::getSwidTagId, persistentComponent::setSwidTagId);
-                applyIfChanged(persistentComponent, component, Component::getMd5, persistentComponent::setMd5);
-                applyIfChanged(persistentComponent, component, Component::getSha1, persistentComponent::setSha1);
-                applyIfChanged(persistentComponent, component, Component::getSha256, persistentComponent::setSha256);
-                applyIfChanged(persistentComponent, component, Component::getSha384, persistentComponent::setSha384);
-                applyIfChanged(persistentComponent, component, Component::getSha512, persistentComponent::setSha512);
-                applyIfChanged(
-                        persistentComponent, component, Component::getSha3_256, persistentComponent::setSha3_256);
-                applyIfChanged(
-                        persistentComponent, component, Component::getSha3_384, persistentComponent::setSha3_384);
-                applyIfChanged(
-                        persistentComponent, component, Component::getSha3_512, persistentComponent::setSha3_512);
-                applyIfChanged(
-                        persistentComponent, component, Component::getBlake2b_256, persistentComponent::setBlake2b_256);
-                applyIfChanged(
-                        persistentComponent, component, Component::getBlake2b_384, persistentComponent::setBlake2b_384);
-                applyIfChanged(
-                        persistentComponent, component, Component::getBlake2b_512, persistentComponent::setBlake2b_512);
-                applyIfChanged(persistentComponent, component, Component::getBlake3, persistentComponent::setBlake3);
-                applyIfChanged(
-                        persistentComponent,
-                        component,
-                        Component::getStreebog_256,
-                        persistentComponent::setStreebog_256);
-                applyIfChanged(
-                        persistentComponent,
-                        component,
-                        Component::getStreebog_512,
-                        persistentComponent::setStreebog_512);
-                applyIfChanged(
-                        persistentComponent,
-                        component,
-                        Component::getResolvedLicense,
-                        persistentComponent::setResolvedLicense);
-                applyIfChanged(persistentComponent, component, Component::getLicense, persistentComponent::setLicense);
-                applyIfChanged(
-                        persistentComponent, component, Component::getLicenseUrl, persistentComponent::setLicenseUrl);
-                applyIfChanged(
-                        persistentComponent,
-                        component,
-                        Component::getLicenseExpression,
-                        persistentComponent::setLicenseExpression);
-                applyIfChanged(persistentComponent, component, Component::isInternal, persistentComponent::setInternal);
-                applyIfChanged(
-                        persistentComponent,
-                        component,
-                        Component::getExternalReferences,
-                        persistentComponent::setExternalReferences);
-                applyIfChanged(persistentComponent, component, Component::getScope, persistentComponent::setScope);
-
-                qm.synchronizeComponentOccurrences(persistentComponent, component.getOccurrences());
-                qm.synchronizeComponentProperties(persistentComponent, component.getProperties());
-                idsOfComponentsToDelete.remove(persistentComponent.getId());
-            }
-
-            // Update component identities in our Identity->BOMRef map,
-            // as after persisting the components, their identities now include UUIDs.
-            final var newIdentity = new ComponentIdentity(persistentComponent);
-            final ComponentIdentity oldIdentity = identitiesByBomRef.put(persistentComponent.getBomRef(), newIdentity);
-            for (final String bomRef : bomRefsByIdentity.getOrDefault(oldIdentity, Set.of())) {
-                identitiesByBomRef.put(bomRef, newIdentity);
-            }
-
-            persistentComponentByIdentity.put(newIdentity, persistentComponent);
-        }
-
-        persistentComponentByIdentity.entrySet().removeIf(entry -> {
-            // Remove entries for identities without UUID, those were only needed for matching.
-            final ComponentIdentity identity = entry.getKey();
-            if (identity.getUuid() == null) {
-                return true;
-            }
-
-            // Remove entries for components marked for deletion.
-            final Component component = entry.getValue();
-            return idsOfComponentsToDelete.contains(component.getId());
-        });
-
-        deleteComponentsById(qm, idsOfComponentsToDelete);
-
-        return persistentComponentByIdentity;
-    }
-
-    private static Map<ComponentIdentity, ServiceComponent> processServices(
-            final QueryManager qm,
-            final Project project,
-            final List<ServiceComponent> services,
-            final Map<String, ComponentIdentity> identitiesByBomRef,
-            final Map<ComponentIdentity, Set<String>> bomRefsByIdentity) {
-        assertPersistent(project, "Project must be persistent");
-
-        final List<ServiceComponent> persistentServices = getAllServices(qm, project);
-
-        // Group existing services by their identity for easier lookup.
-        // Note that we exclude the UUID from the identity here,
-        // since incoming non-persistent services won't have one yet.
-        final Map<ComponentIdentity, ServiceComponent> persistentServiceByIdentity = persistentServices.stream()
-                .collect(Collectors.toMap(
-                        service -> new ComponentIdentity(service, /* excludeUuid */ true),
-                        Function.identity(),
-                        (previous, _) -> {
-                            LOGGER.warn("""
-                                    More than one existing service matches the identity %s; \
-                                    Proceeding with first match, others will be deleted\
-                                    """.formatted(new ComponentIdentity(previous, /* excludeUuid */ true)));
-                            return previous;
-                        }));
-
-        final Set<Long> idsOfServicesToDelete =
-                persistentServices.stream().map(ServiceComponent::getId).collect(Collectors.toSet());
-
-        for (final ServiceComponent service : services) {
-            if (Thread.currentThread().isInterrupted()) {
-                throw new CancellationException("Interrupted before all services could be processed");
-            }
-
-            final var componentIdentity = new ComponentIdentity(service);
-            ServiceComponent persistentService = persistentServiceByIdentity.get(componentIdentity);
-            if (persistentService == null) {
-                service.setProject(project);
-                persistentService = qm.getPersistenceManager().makePersistent(service);
-            } else {
-                persistentService.setBomRef(service.getBomRef()); // Transient
-                applyIfChanged(persistentService, service, ServiceComponent::getGroup, persistentService::setGroup);
-                applyIfChanged(persistentService, service, ServiceComponent::getName, persistentService::setName);
-                applyIfChanged(persistentService, service, ServiceComponent::getVersion, persistentService::setVersion);
-                applyIfChanged(
-                        persistentService,
-                        service,
-                        ServiceComponent::getDescription,
-                        persistentService::setDescription);
-                applyIfChanged(
-                        persistentService,
-                        service,
-                        ServiceComponent::getAuthenticated,
-                        persistentService::setAuthenticated);
-                applyIfChanged(
-                        persistentService,
-                        service,
-                        ServiceComponent::getCrossesTrustBoundary,
-                        persistentService::setCrossesTrustBoundary);
-                applyIfChanged(
-                        persistentService,
-                        service,
-                        ServiceComponent::getExternalReferences,
-                        persistentService::setExternalReferences);
-                applyIfChanged(
-                        persistentService, service, ServiceComponent::getProvider, persistentService::setProvider);
-                applyIfChanged(persistentService, service, ServiceComponent::getData, persistentService::setData);
-                applyIfChanged(
-                        persistentService, service, ServiceComponent::getEndpoints, persistentService::setEndpoints);
-                idsOfServicesToDelete.remove(persistentService.getId());
-            }
-
-            // Update component identities in our Identity->BOMRef map,
-            // as after persisting the services, their identities now include UUIDs.
-            final var newIdentity = new ComponentIdentity(persistentService);
-            final ComponentIdentity oldIdentity = identitiesByBomRef.put(service.getBomRef(), newIdentity);
-            for (final String bomRef : bomRefsByIdentity.getOrDefault(oldIdentity, Set.of())) {
-                identitiesByBomRef.put(bomRef, newIdentity);
-            }
-
-            persistentServiceByIdentity.put(newIdentity, persistentService);
-        }
-
-        persistentServiceByIdentity.entrySet().removeIf(entry -> {
-            // Remove entries for identities without UUID, those were only needed for matching.
-            final ComponentIdentity identity = entry.getKey();
-            if (identity.getUuid() == null) {
-                return true;
-            }
-
-            // Remove entries for services marked for deletion.
-            final ServiceComponent service = entry.getValue();
-            return idsOfServicesToDelete.contains(service.getId());
-        });
-
-        deleteServicesById(qm, idsOfServicesToDelete);
-
-        return persistentServiceByIdentity;
-    }
-
-    private void processDependencyGraph(
-            final Project project,
-            final Map<String, Set<String>> dependencyGraph,
-            final Map<ComponentIdentity, Component> componentsByIdentity,
-            final Map<String, ComponentIdentity> identitiesByBomRef,
-            final Map<ComponentIdentity, Set<String>> bomRefsByIdentity) {
-        assertPersistent(project, "Project must be persistent");
-
-        if (project.getBomRef() != null) {
-            final Collection<String> directDependencyBomRefs = dependencyGraph.get(project.getBomRef());
-            if (directDependencyBomRefs == null || directDependencyBomRefs.isEmpty()) {
-                LOGGER.warn("""
-                        The dependency graph has %d entries, but the project (metadata.component node of the BOM) \
-                        is not one of them; Graph will be incomplete because it is not possible to determine its root\
-                        """.formatted(dependencyGraph.size()));
-            }
-            final ArrayNode directDependencies = resolveDependencies(
-                    List.of(project.getBomRef()),
-                    sourceBomRef -> sourceBomRef.equals(project.getBomRef()) ? directDependencyBomRefs : null,
-                    identitiesByBomRef);
-            if (!matchesPersistedJson(project.getDirectDependencies(), directDependencies)) {
-                project.setDirectDependencies(directDependencies != null ? directDependencies.toString() : null);
-            }
-        } else {
-            // Make sure we don't retain stale data from previous BOM uploads.
-            if (project.getDirectDependencies() != null) {
-                project.setDirectDependencies(null);
-            }
-        }
-
-        for (final Component component : componentsByIdentity.values()) {
-            if (Thread.currentThread().isInterrupted()) {
-                throw new CancellationException(
-                        "Interrupted before the dependency graph could be processed for all components");
-            }
-
-            assertPersistent(component, "Component must be persistent");
-            final ArrayNode mergedDirectDependencies =
-                    resolveMergedDirectDependencies(component, dependencyGraph, identitiesByBomRef, bomRefsByIdentity);
-            if (!matchesPersistedJson(component.getDirectDependencies(), mergedDirectDependencies)) {
-                component.setDirectDependencies(
-                        mergedDirectDependencies != null ? mergedDirectDependencies.toString() : null);
-            }
-        }
-    }
-
-    private static void recordBomImport(final ProcessingContext ctx, final QueryManager qm, final Project project) {
-        assertPersistent(project, "Project must be persistent");
-
-        final var bomImportDate = new Date();
-
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setBomFormat(ctx.bomFormat);
-        bom.setSpecVersion(ctx.bomSpecVersion);
-        bom.setSerialNumber(ctx.bomSerialNumber);
-        bom.setBomVersion(ctx.bomVersion);
-        bom.setImported(bomImportDate);
-        bom.setGenerated(ctx.bomTimestamp);
-        qm.getPersistenceManager().makePersistent(bom);
-
-        project.setLastBomImport(bomImportDate);
-        project.setLastBomImportFormat("%s %s".formatted(ctx.bomFormat.getFormatShortName(), ctx.bomSpecVersion));
-    }
-
-    /**
-     * Builds {@code directDependencies} JSON for one component by merging direct dependency edges from every BOM ref
-     * that maps to the same deduplicated identity.
-     * <p>
-     * {@link #distinctComponentsByIdentity} records those refs under {@code bomRefsByIdentity} using identities from
-     * consumption (UUID usually unset). After persist, {@link ComponentIdentity#equals(Object)} includes UUID, so we
-     * look up with {@code new ComponentIdentity(component, true)} — same structural key as at consumption, same pattern
-     * as matching existing rows in {@link #processComponents}.
-     */
-    private @Nullable ArrayNode resolveMergedDirectDependencies(
-            Component component,
+    private static @Nullable String resolveDependencies(
+            Collection<String> sourceBomRefs,
             Map<String, Set<String>> dependencyGraph,
-            Map<String, ComponentIdentity> identitiesByBomRef,
-            Map<ComponentIdentity, Set<String>> bomRefsByIdentity) {
-        final Collection<String> sourceBomRefs =
-                bomRefsByIdentity.get(new ComponentIdentity(component, /* excludeUuid */ true));
-        if (sourceBomRefs == null || sourceBomRefs.isEmpty()) {
-            return null;
-        }
-
-        return resolveDependencies(sourceBomRefs, dependencyGraph::get, identitiesByBomRef);
-    }
-
-    private @Nullable ArrayNode resolveDependencies(
-            @Nullable Collection<String> sourceBomRefs,
-            Function<String, @Nullable Collection<String>> directDependencyBomRefsProvider,
             Map<String, ComponentIdentity> identitiesByBomRef) {
-        if (sourceBomRefs == null || sourceBomRefs.isEmpty()) {
-            return null;
-        }
-
         final var jsonDependencies = Mappers.jsonMapper().createArrayNode();
         final var directDependencyIdentitiesSeen = new HashSet<ComponentIdentity>();
 
@@ -856,7 +662,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         final List<String> sortedSourceBomRefs = sourceBomRefs.stream().sorted().toList();
 
         for (final String sourceBomRef : sortedSourceBomRefs) {
-            final Collection<String> directDependencyBomRefs = directDependencyBomRefsProvider.apply(sourceBomRef);
+            final Collection<String> directDependencyBomRefs = dependencyGraph.get(sourceBomRef);
             if (directDependencyBomRefs == null || directDependencyBomRefs.isEmpty()) {
                 continue;
             }
@@ -868,187 +674,42 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 final ComponentIdentity directDependencyIdentity = identitiesByBomRef.get(directDependencyBomRef);
                 if (directDependencyIdentity != null) {
                     if (!directDependencyIdentitiesSeen.add(directDependencyIdentity)) {
-                        LOGGER.debug("Omitting duplicate direct dependency %s for BOM ref %s"
-                                .formatted(directDependencyBomRef, sourceBomRef));
+                        LOGGER.debug(
+                                "Omitting duplicate direct dependency {} for BOM ref {}",
+                                directDependencyBomRef,
+                                sourceBomRef);
                         continue;
                     }
                     jsonDependencies.add(directDependencyIdentity.toJSON());
                 } else {
                     LOGGER.warn("""
-                            Unable to resolve BOM ref %s to a component identity while processing direct \
-                            dependencies of BOM ref %s; As a result, the dependency graph will likely be incomplete\
-                            """.formatted(sourceBomRef, directDependencyBomRef));
+                        Unable to resolve BOM ref {} to a component identity while processing direct \
+                        dependencies of BOM ref {}; As a result, the dependency graph will likely be incomplete\
+                        """, directDependencyBomRef, sourceBomRef);
                 }
             }
         }
 
-        return jsonDependencies.isEmpty() ? null : jsonDependencies;
+        return jsonDependencies.isEmpty() ? null : jsonDependencies.toString();
     }
 
-    private static boolean matchesPersistedJson(@Nullable String persistedJson, @Nullable ArrayNode resolved) {
-        if (persistedJson == null || resolved == null) {
-            return persistedJson == null && resolved == null;
-        }
-
-        // NB: String equality is not sufficient here, because persistedJson is retrieved
-        // from a JSONB column, which normalizes whitespace and key order.
-        // Such values would never match the ones we resolved for the new BOM.
-        try {
-            return Mappers.jsonMapper().readTree(persistedJson).equals(resolved);
-        } catch (JsonProcessingException e) {
-            LOGGER.warn("Failed to parse persisted direct dependencies; Assuming they changed", e);
-            return false;
-        }
-    }
-
-    private static long deleteComponentsById(final QueryManager qm, final Collection<Long> componentIds) {
-        if (componentIds.isEmpty()) {
-            return 0;
-        }
-
-        LOGGER.info("Deleting %d component(s) that are no longer part of the project".formatted(componentIds.size()));
-
-        final PersistenceManager pm = qm.getPersistenceManager();
-        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
-            final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                    DELETE
-                      FROM "COMPONENT"
-                     WHERE "ID" = ANY(:ids)
-                    """);
-            try {
-                return (Long) query.executeWithMap(Map.of("ids", componentIds.toArray(new Long[0])));
-            } finally {
-                query.closeAll();
-            }
-        }
-    }
-
-    private static long deleteServicesById(final QueryManager qm, final Collection<Long> serviceIds) {
-        if (serviceIds.isEmpty()) {
-            return 0;
-        }
-
-        final PersistenceManager pm = qm.getPersistenceManager();
-        LOGGER.info("Deleting %d service(s) that are no longer part of the project".formatted(serviceIds.size()));
-        return pm.newQuery(ServiceComponent.class, ":ids.contains(id)").deletePersistentAll(serviceIds);
-    }
-
-    // License.UNRESOLVED is a cache sentinel and must be compared by identity.
-    @SuppressWarnings("ReferenceEquality")
-    private static void resolveAndApplyLicense(
-            final QueryManager qm,
-            final Component component,
-            final Map<String, License> licenseCache,
-            final Map<String, License> customLicenseCache) {
-        // CycloneDX components can declare multiple licenses, but we currently
-        // only support one. We assume that the licenseCandidates list is ordered
-        // by priority, and simply take the first resolvable candidate.
-        for (final org.cyclonedx.model.License licenseCandidate : component.getLicenseCandidates()) {
-            if (isNotBlank(licenseCandidate.getId())) {
-                final License resolvedLicense =
-                        licenseCache.computeIfAbsent(licenseCandidate.getId(), qm::getLicenseByIdOrName);
-                if (resolvedLicense != License.UNRESOLVED) {
-                    component.setResolvedLicense(resolvedLicense);
-                    component.setLicenseUrl(trimToNull(licenseCandidate.getUrl()));
-                    break;
-                }
-            }
-
-            if (isNotBlank(licenseCandidate.getName())) {
-                final License resolvedLicense =
-                        licenseCache.computeIfAbsent(licenseCandidate.getName(), qm::getLicenseByIdOrName);
-                if (resolvedLicense != License.UNRESOLVED) {
-                    component.setResolvedLicense(resolvedLicense);
-                    component.setLicenseUrl(trimToNull(licenseCandidate.getUrl()));
-                    break;
-                }
-
-                final License resolvedCustomLicense =
-                        customLicenseCache.computeIfAbsent(licenseCandidate.getName(), qm::getCustomLicenseByName);
-                if (resolvedCustomLicense != License.UNRESOLVED) {
-                    component.setResolvedLicense(resolvedCustomLicense);
-                    component.setLicenseUrl(trimToNull(licenseCandidate.getUrl()));
-                    break;
-                }
-            }
-        }
-
-        // If we were unable to resolve any license by its ID, at least
-        // populate the license name. Again assuming order by priority.
-        if (component.getResolvedLicense() == null) {
-            component.getLicenseCandidates().stream()
-                    .filter(license -> isNotBlank(license.getName()))
-                    .findFirst()
-                    .ifPresent(license -> {
-                        component.setLicense(trim(license.getName()));
-                        component.setLicenseUrl(trimToNull(license.getUrl()));
-                    });
-        }
-    }
-
-    private static List<Component> getAllComponents(final QueryManager qm, final Project project) {
-        final Query<Component> query = qm.getPersistenceManager().newQuery(Component.class);
-
-        // Every component contains a reference to its parent project, which also contains the set of direct references
-        // it has. For large BOM uploads, this results in massively duplicated data being fetched that we don't
-        // actually need. Unfortunately, a lot of other code relies on the project being part of the default fetch
-        // group, so it can't just be removed everywhere just yet. Instead, we'll selectively remove it here.
-        final var trimmedFetchGroup = qm.getPersistenceManager().getFetchGroup(Component.class, "DEFAULT_TRIMMED");
-        if (!trimmedFetchGroup.isUnmodifiable()) {
-            final var defaultFetchGroup = qm.getPersistenceManager().getFetchGroup(Component.class, FetchGroup.DEFAULT);
-            for (final var member : defaultFetchGroup.getMembers()) {
-                trimmedFetchGroup.addMembers(member.toString());
-            }
-
-            trimmedFetchGroup.removeMember("project");
-            trimmedFetchGroup.setUnmodifiable();
-        }
-
-        query.getFetchPlan().removeGroup(FetchGroup.DEFAULT);
-        query.getFetchPlan().addGroup("DEFAULT_TRIMMED");
-
-        query.getFetchPlan().addGroup(Component.FetchGroup.BOM_UPLOAD_PROCESSING.name());
-        query.getFetchPlan().setFetchSize(FETCH_SIZE_GREEDY);
-        query.setFilter("project.id == :projectId");
-        query.setParameters(project.getId());
-
-        try {
-            return List.copyOf(query.executeList());
-        } finally {
-            query.closeAll();
-        }
-    }
-
-    private static List<ServiceComponent> getAllServices(final QueryManager qm, final Project project) {
-        final Query<ServiceComponent> query = qm.getPersistenceManager().newQuery(ServiceComponent.class);
-
-        // Every service component contains a reference to its parent project, which also contains the set of direct
-        // references it has. For large BOM uploads, this results in massively duplicated data being fetched that we
-        // don't
-        // actually need. Unfortunately, a lot of other code relies on the project being part of the default fetch
-        // group, so it can't just be removed everywhere just yet. Instead, we'll selectively remove it here.
-        final var trimmedFetchGroup =
-                qm.getPersistenceManager().getFetchGroup(ServiceComponent.class, "DEFAULT_TRIMMED");
-        if (!trimmedFetchGroup.isUnmodifiable()) {
-            final var defaultFetchGroup =
-                    qm.getPersistenceManager().getFetchGroup(ServiceComponent.class, FetchGroup.DEFAULT);
-            for (final var member : defaultFetchGroup.getMembers()) {
-                trimmedFetchGroup.addMembers(member.toString());
-            }
-
-            trimmedFetchGroup.removeMember("project");
-            trimmedFetchGroup.setUnmodifiable();
-        }
-
-        query.getFetchPlan().setFetchSize(FETCH_SIZE_GREEDY);
-        query.setFilter("project.id == :projectId");
-        query.setParameters(project.getId());
-
-        try {
-            return List.copyOf(query.executeList());
-        } finally {
-            query.closeAll();
-        }
+    private static void applyPrimaryLicense(Component component, Map<String, Long> licenseIds) {
+        // The component's own columns hold one license: the first resolved row, else the first named one.
+        final List<ComponentLicenseDao.ComponentLicenseRow> rows = buildComponentLicenseRows(component, licenseIds);
+        rows.stream()
+                .filter(row -> row.licenseId() != null)
+                .findFirst()
+                .or(() -> rows.stream().filter(row -> row.license() != null).findFirst())
+                .ifPresent(row -> {
+                    if (row.licenseId() != null) {
+                        final var license = new License();
+                        license.setId(row.licenseId());
+                        component.setResolvedLicense(license);
+                    } else {
+                        component.setLicense(row.license());
+                    }
+                    component.setLicenseUrl(row.licenseUrl());
+                });
     }
 
     private static Predicate<Component> distinctComponentsByIdentity(
@@ -1062,9 +723,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                     identitiesByBomRef.putIfAbsent(component.getBomRef(), componentIdentity) == null;
             if (!isBomRefUnique) {
                 LOGGER.warn("""
-                        BOM ref %s is associated with multiple components in the BOM; \
-                        BOM refs are required to be unique; Please report this to the vendor \
-                        of the tool that generated the BOM""".formatted(component.getBomRef()));
+                    BOM ref {} is associated with multiple components in the BOM; \
+                    BOM refs are required to be unique; Please report this to the vendor \
+                    of the tool that generated the BOM\
+                    """, component.getBomRef());
             }
 
             bomRefsByIdentity
@@ -1073,8 +735,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
             final boolean isSeenBefore = !identitiesSeen.add(componentIdentity);
             if (LOGGER.isDebugEnabled() && isSeenBefore) {
-                LOGGER.debug("Filtering component with BOM ref %s and identity %s due to duplicate identity"
-                        .formatted(component.getBomRef(), componentIdentity.toJSON()));
+                LOGGER.debug(
+                        "Filtering component with BOM ref {} and identity {} due to duplicate identity",
+                        component.getBomRef(),
+                        componentIdentity.toJSON());
             }
 
             return !isSeenBefore;
@@ -1093,8 +757,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                     .add(service.getBomRef());
             final boolean isSeenBefore = !identitiesSeen.add(componentIdentity);
             if (LOGGER.isDebugEnabled() && isSeenBefore) {
-                LOGGER.debug("Filtering service with BOM ref %s and identity %s due to duplicate identity"
-                        .formatted(service.getBomRef(), componentIdentity.toJSON()));
+                LOGGER.debug(
+                        "Filtering service with BOM ref {} and identity {} due to duplicate identity",
+                        service.getBomRef(),
+                        componentIdentity.toJSON());
             }
 
             return !isSeenBefore;
@@ -1106,7 +772,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             new JdoNotificationEmitter(qm)
                     .emit(createBomConsumedNotification(
                             NotificationModelConverter.convert(ctx.project),
-                            ctx.bomFormat.getFormatShortName(),
+                            BOM_FORMAT,
                             ctx.bomSpecVersion,
                             ctx.token.toString()));
         }
@@ -1117,7 +783,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             new JdoNotificationEmitter(qm)
                     .emit(createBomProcessedNotification(
                             NotificationModelConverter.convert(ctx.project),
-                            ctx.bomFormat.getFormatShortName(),
+                            BOM_FORMAT,
                             ctx.bomSpecVersion,
                             ctx.token.toString()));
         }
@@ -1128,7 +794,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         new JdoNotificationEmitter(qm)
                 .emit(createBomProcessingFailedNotification(
                         NotificationModelConverter.convert(ctx.project),
-                        ctx.bomFormat.getFormatShortName(),
+                        BOM_FORMAT,
                         ctx.bomSpecVersion,
                         ctx.token.toString(),
                         requireNonNullElse(
@@ -1155,8 +821,9 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                     new ByteArrayInputStream(context.toByteArray()));
         } catch (Exception e) {
             LOGGER.warn("""
-                    Failed to store vuln analysis context; \
-                    NEW_VULNERABLE_DEPENDENCY notifications will not be emitted""", e);
+                Failed to store vuln analysis context; \
+                NEW_VULNERABLE_DEPENDENCY notifications will not be emitted\
+                """, e);
             return null;
         }
     }

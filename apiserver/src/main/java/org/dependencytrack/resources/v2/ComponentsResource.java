@@ -40,6 +40,7 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
@@ -73,6 +74,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.map;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapDependencyMetrics;
@@ -355,6 +357,8 @@ public class ComponentsResource extends AbstractApiResource implements Component
         component.setNotes(StringUtils.trimToNull(request.getNotes()));
 
         qm.createComponent(component, true);
+
+        useJdbiHandle(qm, handle -> handle.attach(ComponentLicenseDao.class).replaceAll(component));
 
         return component;
     }

@@ -27,7 +27,6 @@ import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.epss.Epss;
 import org.dependencytrack.epss.EpssDao;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
@@ -118,11 +117,12 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
 
         qm.bind(project, List.of(qm.createTag("projectTagA"), qm.createTag("projectTagB")));
 
-        var bom = new Bom();
-        bom.setProject(project);
-        bom.setGenerated(new Date());
-        bom.setImported(new Date());
-        qm.persist(bom);
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" ("GENERATED", "IMPORTED", "PROJECT_ID", "UUID")
+                        VALUES (NOW(), NOW(), :projectId, GEN_RANDOM_UUID())
+                        """)
+                .bind("projectId", project.getId())
+                .execute());
 
         final var requirements = new HashMap<CelType, Set<String>>();
         requirements

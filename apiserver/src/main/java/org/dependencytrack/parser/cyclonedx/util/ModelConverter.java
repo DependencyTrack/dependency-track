@@ -66,6 +66,7 @@ import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.parser.spdx.expression.SpdxExpression;
 import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -824,6 +825,55 @@ public class ModelConverter {
             }
         }
         */
+
+        return cycloneComponent;
+    }
+
+    public static org.cyclonedx.model.Component convert(
+            final Component component,
+            final List<ComponentLicenseDao.ComponentLicenseExportRow> licenseRows,
+            final Version version) {
+
+        final org.cyclonedx.model.Component cycloneComponent = convert(component);
+        cycloneComponent.setLicenses(null);
+        if (licenseRows.isEmpty()) {
+            return cycloneComponent;
+        }
+
+        final var licenseChoice = new LicenseChoice();
+        for (final ComponentLicenseDao.ComponentLicenseExportRow row : licenseRows) {
+            if (row.licenseExpression() != null) {
+                final var expression = new Expression();
+                expression.setValue(row.licenseExpression());
+                if (version.getVersion() >= Version.VERSION_17.getVersion()) {
+                    licenseChoice.addExpression(expression);
+                    continue;
+                }
+
+                // Before 1.7, an expression can't be combined with licenses. The expression wins.
+                licenseChoice.setExpression(expression);
+                break;
+            }
+
+            // CycloneDX requires either an ID or a name.
+            if (row.licenseId() == null && row.name() == null) {
+                continue;
+            }
+
+            final var cycloneLicense = new License();
+            if (row.licenseId() != null) {
+                cycloneLicense.setId(row.licenseId());
+            } else {
+                cycloneLicense.setName(row.name());
+            }
+
+            cycloneLicense.setUrl(row.licenseUrl());
+            licenseChoice.addLicense(cycloneLicense);
+        }
+
+        if (licenseChoice.getItems() != null) {
+            cycloneComponent.setLicenses(licenseChoice);
+        }
 
         return cycloneComponent;
     }

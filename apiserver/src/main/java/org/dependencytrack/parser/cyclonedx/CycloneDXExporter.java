@@ -30,12 +30,14 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.FindingDao;
 
 import javax.jdo.FetchGroup;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -120,6 +122,16 @@ public class CycloneDXExporter {
             final List<Finding> findings,
             final Project project,
             final Version version) {
+
+        final List<Long> componentIds = variant.hasCapability(Capability.EMITS_COMPONENT_DETAILS) && components != null
+                ? components.stream().map(Component::getId).toList()
+                : List.of();
+        final Map<Long, List<ComponentLicenseDao.ComponentLicenseExportRow>> licenseRowsByComponentId =
+                componentIds.isEmpty()
+                        ? Map.of()
+                        : withJdbiHandle(handle ->
+                                handle.attach(ComponentLicenseDao.class).exportAll(componentIds));
+
         if (variant.hasCapability(Capability.FILTERS_TO_VULNERABLE_COMPONENTS)) {
             final Set<UUID> vulnerableComponentUuids = findings.stream()
                     .map(finding -> (UUID) finding.getComponent().get("uuid"))
@@ -130,12 +142,15 @@ public class CycloneDXExporter {
         }
         final List<org.cyclonedx.model.Component> cycloneComponents = components != null
                 ? components.stream()
-                        .map(
-                                variant.hasCapability(Capability.EMITS_COMPONENT_DETAILS)
-                                        ? ModelConverter::convert
-                                        : ModelConverter::convertIdentity)
+                        .map(component -> variant.hasCapability(Capability.EMITS_COMPONENT_DETAILS)
+                                ? ModelConverter.convert(
+                                        component,
+                                        licenseRowsByComponentId.getOrDefault(component.getId(), List.of()),
+                                        version)
+                                : ModelConverter.convertIdentity(component))
                         .collect(Collectors.toList())
                 : null;
+
         final List<Service> cycloneServices = (variant.hasCapability(Capability.EMITS_SERVICES) && services != null)
                 ? services.stream()
                         .map(service -> ModelConverter.convert(qm, service))

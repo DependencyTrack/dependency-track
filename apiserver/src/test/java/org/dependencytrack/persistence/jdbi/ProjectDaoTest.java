@@ -25,7 +25,6 @@ import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
@@ -60,6 +59,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -170,11 +170,12 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         });
 
         // Create a BOM.
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setImported(new Date());
-        bom.setBomFormat(Bom.Format.CYCLONEDX);
-        qm.persist(bom);
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" ("BOM_FORMAT", "IMPORTED", "PROJECT_ID", "UUID")
+                        VALUES ('CycloneDX', NOW(), :projectId, GEN_RANDOM_UUID())
+                        """)
+                .bind("projectId", project.getId())
+                .execute());
 
         // Create a child project with an accompanying component.
         final var projectChild = new Project();
@@ -226,8 +227,13 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .isThrownBy(() -> qm.getObjectById(Component.class, projectChildComponent.getId()));
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
                 .isThrownBy(() -> qm.getObjectById(ProjectMetadata.class, projectMetadata.getId()));
-        assertThatExceptionOfType(JDOObjectNotFoundException.class)
-                .isThrownBy(() -> qm.getObjectById(Bom.class, bom.getId()));
+        final boolean bomExists = withJdbiHandle(handle -> handle.createQuery(/* language=SQL */ """
+                        SELECT EXISTS(SELECT 1 FROM "BOM" WHERE "PROJECT_ID" = :projectId)
+                        """)
+                .bind("projectId", project.getId())
+                .mapTo(Boolean.class)
+                .one());
+        assertThat(bomExists).isFalse();
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
                 .isThrownBy(() -> qm.getObjectById(Vex.class, vex.getId()));
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
@@ -520,5 +526,72 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                             assertThat(row.uuid()).isEqualTo(grandChild.getUuid());
                             assertThat(row.ancestorUuid()).isEqualTo(child.getUuid());
                         });
+    }
+
+    @Test
+    public void shouldCloneComponentLicensesWhenCloningProject() {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        qm.persist(component);
+        qm.getPersistenceManager().flush();
+
+        final var sourceRows = List.of(
+                new ComponentLicenseDao.ComponentLicenseRow(
+                        component.getId(), null, "License A", null, "https://example.com/license-a", 1, "DECLARED"),
+                new ComponentLicenseDao.ComponentLicenseRow(
+                        component.getId(), null, null, "MIT OR Apache-2.0", null, 2, "DECLARED"));
+
+        jdbiHandle.attach(ComponentLicenseDao.class).createAll(sourceRows);
+
+        final UUID clonedUuid = projectDao.cloneProject(new CloneProjectCommand(
+                project.getUuid(),
+                "1.1.0",
+                /* targetProjectVersionIsLatest */ false,
+                /* includeAcl */ false,
+                /* includeComponents */ true,
+                /* includeFindings */ false,
+                /* includeFindingsAuditHistory */ false,
+                /* includePolicyViolations */ false,
+                /* includePolicyViolationsAuditHistory */ false,
+                /* includeProperties */ false,
+                /* includeServices */ false,
+                /* includeTags */ false));
+
+        final long clonedComponentId = jdbiHandle
+                .createQuery("""
+                SELECT c."ID"
+                  FROM "COMPONENT" AS c
+                 INNER JOIN "PROJECT" AS p
+                    ON p."ID" = c."PROJECT_ID"
+                 WHERE p."UUID" = :projectUuid
+                """)
+                .bind("projectUuid", clonedUuid)
+                .mapTo(Long.class)
+                .one();
+
+        final List<ComponentLicenseDao.ComponentLicenseRow> clonedRows = jdbiHandle
+                .attach(ComponentLicenseDao.class)
+                .getLicenseRows(List.of(clonedComponentId))
+                .get(clonedComponentId);
+
+        assertThat(clonedRows)
+                .extracting(
+                        ComponentLicenseDao.ComponentLicenseRow::license,
+                        ComponentLicenseDao.ComponentLicenseRow::licenseExpression,
+                        ComponentLicenseDao.ComponentLicenseRow::licenseUrl,
+                        ComponentLicenseDao.ComponentLicenseRow::ordinality,
+                        ComponentLicenseDao.ComponentLicenseRow::acknowledgement)
+                .containsExactly(
+                        tuple("License A", null, "https://example.com/license-a", 1L, "DECLARED"),
+                        tuple(null, "MIT OR Apache-2.0", null, 2L, "DECLARED"));
+
+        assertThat(clonedRows).allSatisfy(row -> assertThat(row.componentId()).isEqualTo(clonedComponentId));
     }
 }

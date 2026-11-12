@@ -143,7 +143,37 @@ class SystemCapabilitiesAggregatorTest {
         assertThat(aggregator.collect()).containsOnlyKeys("namespace");
     }
 
+    @Test
+    void shouldCollectOnlyPublicNamespacesForPublicClients() {
+        final var providers = List.<CapabilityProvider>of(
+                new DummyProvider("internal", Map.of("read_only", true)),
+                new PublicProvider("login", Map.of("disabled", false)));
+
+        final var aggregator = new SystemCapabilitiesAggregator(providers, null);
+
+        assertThat(aggregator.collectPublic()).containsOnlyKeys("login");
+        assertThat(aggregator.collect()).containsOnlyKeys("internal", "login");
+    }
+
+    @Test
+    void shouldDetectNamespaceCollisionBetweenPublicAndNonPublicProviders() {
+        final var providers =
+                List.<CapabilityProvider>of(new DummyProvider("ns", Map.of()), new PublicProvider("ns", Map.of()));
+
+        assertThatThrownBy(() -> new SystemCapabilitiesAggregator(providers, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Duplicate capability namespace 'ns'");
+    }
+
     private record DummyProvider(String namespace, Map<String, Object> capabilities) implements CapabilityProvider {}
+
+    private record PublicProvider(String namespace, Map<String, Object> capabilities) implements CapabilityProvider {
+
+        @Override
+        public boolean isPublic() {
+            return true;
+        }
+    }
 
     private record ThrowingProvider(String namespace) implements CapabilityProvider {
 

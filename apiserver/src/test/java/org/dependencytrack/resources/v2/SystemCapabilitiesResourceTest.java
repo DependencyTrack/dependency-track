@@ -50,7 +50,9 @@ class SystemCapabilitiesResourceTest extends ResourceTest {
         protected void configure() {
             bind(SECRET_MANAGER_MOCK).to(SecretManager.class);
             bind(new SystemCapabilitiesAggregator(
-                            List.of(new SecretManagementProviderUnderTest(SECRET_MANAGER_MOCK)),
+                            List.of(
+                                    new SecretManagementProviderUnderTest(SECRET_MANAGER_MOCK),
+                                    new PublicProviderUnderTest()),
                             /* serviceLocator */ null))
                     .to(SystemCapabilitiesAggregator.class);
         }
@@ -81,6 +83,9 @@ class SystemCapabilitiesResourceTest extends ResourceTest {
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "capabilities": {
+                    "login": {
+                      "disabled": false
+                    },
                     "secret_management": {
                       "read_only": false
                     }
@@ -102,12 +107,52 @@ class SystemCapabilitiesResourceTest extends ResourceTest {
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "capabilities": {
+                    "login": {
+                      "disabled": false
+                    },
                     "secret_management": {
                       "read_only": true
                     }
                   }
                 }
                 """);
+    }
+
+    @Test
+    void shouldReturnOnlyPublicCapabilitiesWithoutCredentials() {
+        doReturn(true).when(SECRET_MANAGER_MOCK).isReadOnly();
+
+        final Response response =
+                jersey.target("/internal/system-capabilities/public").request().get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "capabilities": {
+                    "login": {
+                      "disabled": false
+                    }
+                  }
+                }
+                """);
+    }
+
+    private static final class PublicProviderUnderTest implements CapabilityProvider {
+
+        @Override
+        public @NonNull String namespace() {
+            return "login";
+        }
+
+        @Override
+        public boolean isPublic() {
+            return true;
+        }
+
+        @Override
+        public @NonNull Map<String, Object> capabilities() {
+            return Map.of("disabled", false);
+        }
     }
 
     private static final class SecretManagementProviderUnderTest implements CapabilityProvider {

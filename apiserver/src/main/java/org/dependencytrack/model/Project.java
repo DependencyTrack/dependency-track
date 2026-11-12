@@ -296,7 +296,7 @@ public class Project implements Serializable {
     private Set<Tag> tags;
 
     /**
-     * Convenience field which will contain the date of the last entry in the {@link Bom} table
+     * Convenience field which will contain the date of the last entry in the {@code BOM} table
      */
     @Persistent
     @Index(name = "PROJECT_LASTBOMIMPORT_IDX")
@@ -305,7 +305,7 @@ public class Project implements Serializable {
     private Date lastBomImport;
 
     /**
-     * Convenience field which will contain the format of the last entry in the {@link Bom} table
+     * Convenience field which will contain the format of the last entry in the {@code BOM} table
      */
     @Persistent
     @Index(name = "PROJECT_LASTBOMIMPORT_FORMAT_IDX")

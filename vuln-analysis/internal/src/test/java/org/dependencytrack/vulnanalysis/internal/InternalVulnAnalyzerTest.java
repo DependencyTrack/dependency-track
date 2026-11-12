@@ -1730,6 +1730,19 @@ class InternalVulnAnalyzerTest {
                             Range.withRange().havingStartExcluding("0.7.20-1.el8"),
                             MATCHES,
                             "pkg:rpm/redhat/libsolv@0.7.24-3.el8"),
+                    // Issue:    https://github.com/DependencyTrack/dependency-track/issues/7938
+                    // Scenario: Hummingbird hum1 fixed bound vs RHEL 9 component
+                    Arguments.of(
+                            "pkg:rpm/redhat/glibc",
+                            Range.withRange().havingEndExcluding("0:2.43-8.7.hum1"),
+                            DOES_NOT_MATCH,
+                            "pkg:rpm/redhat/glibc@2.34-284.el9_8.4?arch=x86_64&distro=redhat-9.8"),
+                    // Scenario: Hummingbird component as emitted by Syft vs Hummingbird VS
+                    Arguments.of(
+                            "pkg:rpm/redhat/glibc?distro=hummingbird-1",
+                            Range.withRange().havingEndExcluding("0:2.43-8.7.hum1"),
+                            MATCHES,
+                            "pkg:rpm/redhat/glibc@2.42-11.1.hum1?arch=x86_64&distro=hummingbird-1.0"),
                     // ---
                     // Unsupported RPM namespace falls back to raw string comparison
                     // ---

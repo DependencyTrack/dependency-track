@@ -47,6 +47,7 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.model.validation.ValidUuidList;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao.GraphComponent;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
@@ -85,6 +86,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_TRIGGERED_BY;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
@@ -499,6 +501,9 @@ public class ComponentResource extends AbstractApiResource {
 
                 qm.createComponent(component, true);
 
+                useJdbiHandle(
+                        qm, handle -> handle.attach(ComponentLicenseDao.class).replaceAll(component));
+
                 return Response.status(Response.Status.CREATED)
                         .entity(component)
                         .build();
@@ -509,10 +514,10 @@ public class ComponentResource extends AbstractApiResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Updates a component",
-            description =
-                    "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>")
+    @Operation(summary = "Updates a component", description = """
+                        <p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>
+                        <p>Updating a component will wipe away all previous licenses in favor of what is provided in the update.</p>
+                        """)
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -560,6 +565,7 @@ public class ComponentResource extends AbstractApiResource {
                 validator.validateProperty(jsonComponent, "blake3"),
                 validator.validateProperty(jsonComponent, "streebog_256"),
                 validator.validateProperty(jsonComponent, "streebog_512"));
+
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Component component = qm.getObjectByUuid(Component.class, jsonComponent.getUuid());
@@ -624,6 +630,10 @@ public class ComponentResource extends AbstractApiResource {
                     component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
                     qm.updateComponent(component, true);
+
+                    useJdbiHandle(
+                            qm,
+                            handle -> handle.attach(ComponentLicenseDao.class).replaceAll(component));
 
                     return Response.ok(component).build();
                 } else {

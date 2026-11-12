@@ -35,6 +35,7 @@ import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
@@ -771,6 +772,51 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    public void createComponentWithLicenseTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        List<OrganizationalContact> authors = new ArrayList<>();
+        authors.add(new OrganizationalContact() {
+            {
+                setName("SampleAuthor");
+            }
+        });
+        component.setAuthors(authors);
+        component.setClassifier(Classifier.APPLICATION);
+        component.setPurl("pkg:maven/org.acme/abc");
+        component.setLicense("Custom License");
+        component.setLicenseUrl("https://example.com/custom-license");
+        Response response = jersey.target(
+                        V1_COMPONENT + "/project/" + project.getUuid().toString())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(component, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(201, response.getStatus(), 0);
+
+        qm.getPersistenceManager().evictAll();
+
+        final Component persistedComponent = qm.getAllComponents(project).getFirst();
+        final List<ComponentLicenseDao.ComponentLicenseRow> licenseRows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                        .getLicenseRows(List.of(persistedComponent.getId()))
+                        .get(persistedComponent.getId()));
+
+        assertThat(licenseRows).singleElement().satisfies(row -> {
+            assertThat(row.componentId()).isEqualTo(persistedComponent.getId());
+            assertThat(row.licenseId()).isNull();
+            assertThat(row.license()).isEqualTo("Custom License");
+            assertThat(row.licenseExpression()).isNull();
+            assertThat(row.licenseUrl()).isEqualTo("https://example.com/custom-license");
+            assertThat(row.ordinality()).isEqualTo(1);
+            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+        });
+    }
+
+    @Test
     public void updateComponentTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
         Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
@@ -807,6 +853,112 @@ public class ComponentResourceTest extends ResourceTest {
         Assertions.assertEquals("LIBRARY", json.getString("classifier"));
         Assertions.assertEquals(1, json.getJsonArray("externalReferences").size());
         assertThat(resolutionStatusForPurl("pkg:maven/org.acme/abc@2.0.0")).isEqualTo("PENDING");
+    }
+
+    @Test
+    public void updateComponentWithLicenseShouldReplaceLicenseRows() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+        final Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        component.setClassifier(Classifier.LIBRARY);
+        qm.createComponent(component, false);
+        useJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                .createAll(List.of(
+                        new ComponentLicenseDao.ComponentLicenseRow(
+                                component.getId(), null, "License A", null, null, 1, "DECLARED"),
+                        new ComponentLicenseDao.ComponentLicenseRow(
+                                component.getId(), null, "License B", null, null, 2, "DECLARED"))));
+
+        final var jsonComponent = new Component();
+        jsonComponent.setUuid(component.getUuid());
+        jsonComponent.setName("My Component");
+        jsonComponent.setVersion("1.0");
+        jsonComponent.setClassifier(Classifier.LIBRARY);
+        jsonComponent.setLicense("License C");
+        jsonComponent.setLicenseUrl("https://example.com/license-c");
+
+        final Response response = jersey.target(V1_COMPONENT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(jsonComponent, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final List<ComponentLicenseDao.ComponentLicenseRow> licenseRows =
+                withJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class)
+                        .getLicenseRows(List.of(component.getId()))
+                        .get(component.getId()));
+        assertThat(licenseRows).singleElement().satisfies(row -> {
+            assertThat(row.licenseId()).isNull();
+            assertThat(row.license()).isEqualTo("License C");
+            assertThat(row.licenseExpression()).isNull();
+            assertThat(row.licenseUrl()).isEqualTo("https://example.com/license-c");
+            assertThat(row.ordinality()).isEqualTo(1);
+            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+        });
+    }
+
+    @Test
+    public void updateComponentWithoutLicenseShouldRemoveLicenseRows() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+        final Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        component.setClassifier(Classifier.LIBRARY);
+        component.setLicense("License A");
+        qm.createComponent(component, false);
+        useJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class).replaceAll(component));
+        assertThat(getLicenseRowIds(component.getId())).hasSize(1);
+
+        final var jsonComponent = new Component();
+        jsonComponent.setUuid(component.getUuid());
+        jsonComponent.setName("My Component");
+        jsonComponent.setVersion("1.0");
+        jsonComponent.setClassifier(Classifier.LIBRARY);
+
+        final Response response = jersey.target(V1_COMPONENT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(jsonComponent, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(getLicenseRowIds(component.getId())).isEmpty();
+    }
+
+    @Test
+    public void updateComponentWithUnchangedLicenseShouldNotRewriteLicenseRow() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+        final Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        component.setClassifier(Classifier.LIBRARY);
+        component.setLicense("License A");
+        qm.createComponent(component, false);
+        useJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class).replaceAll(component));
+        final List<Long> licenseRowIdsBefore = getLicenseRowIds(component.getId());
+
+        final var jsonComponent = new Component();
+        jsonComponent.setUuid(component.getUuid());
+        jsonComponent.setName("My Component");
+        jsonComponent.setVersion("1.0");
+        jsonComponent.setClassifier(Classifier.LIBRARY);
+        jsonComponent.setDescription("New description");
+        jsonComponent.setLicense("License A");
+
+        final Response response = jersey.target(V1_COMPONENT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(jsonComponent, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(licenseRowIdsBefore).hasSize(1);
+        assertThat(getLicenseRowIds(component.getId())).isEqualTo(licenseRowIdsBefore);
     }
 
     @Test
@@ -1824,5 +1976,17 @@ public class ComponentResourceTest extends ResourceTest {
         useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle).upsertAll(artifactMetadataList));
         project.setDirectDependencies("[" + String.join(",", directDependencies) + "]");
         return project;
+    }
+
+    private static List<Long> getLicenseRowIds(long componentId) {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT "ID"
+                          FROM "COMPONENTLICENSES"
+                         WHERE "COMPONENT_ID" = :componentId
+                         ORDER BY "ID"
+                        """)
+                .bind("componentId", componentId)
+                .mapTo(Long.class)
+                .list());
     }
 }

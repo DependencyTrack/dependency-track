@@ -31,6 +31,22 @@ public final class PackageMetadataResolutionDao {
         this.jdbiHandle = jdbiHandle;
     }
 
+    public void seedPending(long projectId) {
+        jdbiHandle
+                .createUpdate(/* language=SQL */ """
+                    INSERT INTO "PACKAGE_METADATA_RESOLUTION" ("PURL", "STATUS")
+                    SELECT DISTINCT "PURL"
+                         , 'PENDING'
+                      FROM "COMPONENT"
+                     WHERE "PROJECT_ID" = :projectId
+                       AND "PURL" IS NOT NULL
+                     ORDER BY "PURL"
+                    ON CONFLICT ("PURL") DO NOTHING
+                    """)
+                .bind("projectId", projectId)
+                .execute();
+    }
+
     public int upsertAll(Map<String, PackageMetadataResolutionStatus> statusByPurl) {
         if (statusByPurl.isEmpty()) {
             return 0;

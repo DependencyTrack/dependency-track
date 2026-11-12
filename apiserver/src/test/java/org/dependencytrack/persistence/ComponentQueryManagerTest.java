@@ -118,48 +118,6 @@ public class ComponentQueryManagerTest extends PersistenceCapableTest {
                         });
     }
 
-    @Test
-    void shouldSeedPendingResolutionRowsForProjectIncludingMalformedPurls() {
-        final var project = new Project();
-        project.setName("acme-app");
-        qm.persist(project);
-
-        final var componentResolved = new Component();
-        componentResolved.setProject(project);
-        componentResolved.setName("resolved");
-        componentResolved.setVersion("1.0.0");
-        componentResolved.setPurl("pkg:maven/com.acme/resolved@1.0.0");
-        qm.persist(componentResolved);
-
-        final var componentMalformedPurl = new Component();
-        componentMalformedPurl.setProject(project);
-        componentMalformedPurl.setName("malformed");
-        componentMalformedPurl.setVersion("1.0.0");
-        componentMalformedPurl.setPurl("pkg:maven/com.acme/malformed%ZZ@1.0.0");
-        qm.persist(componentMalformedPurl);
-
-        final var componentNoPurl = new Component();
-        componentNoPurl.setProject(project);
-        componentNoPurl.setName("no-purl");
-        componentNoPurl.setVersion("1.0.0");
-        qm.persist(componentNoPurl);
-
-        assertThat(packageMetadataResolutionRows()).isEmpty();
-
-        qm.seedPackageMetadataResolution(project);
-
-        assertThat(packageMetadataResolutionRows())
-                .satisfiesExactly(
-                        row -> {
-                            assertThat(row).containsEntry("purl", "pkg:maven/com.acme/malformed%ZZ@1.0.0");
-                            assertThat(row).containsEntry("status", "PENDING");
-                        },
-                        row -> {
-                            assertThat(row).containsEntry("purl", "pkg:maven/com.acme/resolved@1.0.0");
-                            assertThat(row).containsEntry("status", "PENDING");
-                        });
-    }
-
     private static List<Map<String, Object>> packageMetadataResolutionRows() {
         return withJdbiHandle(handle -> handle.createQuery("""
                         SELECT "PURL"

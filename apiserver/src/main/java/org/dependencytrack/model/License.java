@@ -98,7 +98,6 @@ public class License implements Serializable {
     }
 
     private static final long serialVersionUID = -1707920279688859358L;
-    public static final License UNRESOLVED = new License();
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)

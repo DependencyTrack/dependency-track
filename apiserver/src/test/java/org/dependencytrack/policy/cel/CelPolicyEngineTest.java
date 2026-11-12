@@ -24,8 +24,8 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.epss.Epss;
 import org.dependencytrack.epss.EpssDao;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
+import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -104,11 +104,13 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         project.setLastBomImport(new Date());
         qm.persist(project);
 
-        final var bom = new Bom();
-        bom.setProject(project);
-        bom.setGenerated(new Date(999));
-        bom.setImported(new Date());
-        qm.persist(bom);
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" ("GENERATED", "IMPORTED", "PROJECT_ID", "UUID")
+                        VALUES (:generated, NOW(), :projectId, GEN_RANDOM_UUID())
+                        """)
+                .bind("generated", new Date(999))
+                .bind("projectId", project.getId())
+                .execute());
 
         final var toolComponentLicense = new License();
         toolComponentLicense.setUuid(UUID.randomUUID());
@@ -3221,6 +3223,125 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         assertThat(qm.getAllPolicyViolations(componentUnsuppressed)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSuppressed)).isEmpty();
+    }
+
+    @Test
+    void shouldEvaluateAnalysisSeverityOverride() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                vulns.exists(v, v.severity == "CRITICAL")
+                """,
+                PolicyViolation.Type.SECURITY);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentWithoutOverride = new Component();
+        componentWithoutOverride.setProject(project);
+        componentWithoutOverride.setName("acme-lib-a");
+        qm.persist(componentWithoutOverride);
+
+        final var componentWithOverride = new Component();
+        componentWithOverride.setProject(project);
+        componentWithOverride.setName("acme-lib-b");
+        qm.persist(componentWithOverride);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.CRITICAL);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, componentWithoutOverride, "internal");
+        qm.addVulnerability(vuln, componentWithOverride, "internal");
+
+        final var analysis = new Analysis();
+        analysis.setComponent(componentWithOverride);
+        analysis.setVulnerability(vuln);
+        analysis.setAnalysisState(AnalysisState.EXPLOITABLE);
+        analysis.setSeverity(Severity.HIGH);
+        qm.persist(analysis);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentWithoutOverride)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(componentWithOverride)).isEmpty();
+    }
+
+    @Test
+    void shouldEvaluateAnalysisScoreAndVectorOverrides() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                vulns.exists(v,
+                  v.cvssv2_base_score != 1.0 || v.cvssv2_vector != "cvssV2VectorOverride"
+                    || v.cvssv3_base_score != 1.0 || v.cvssv3_vector != "cvssV3VectorOverride"
+                    || v.cvssv4_score != 1.0 || v.cvssv4_vector != "cvssV4VectorOverride"
+                    || v.owasp_rr_likelihood_score != 1.0
+                    || v.owasp_rr_technical_impact_score != 1.0
+                    || v.owasp_rr_business_impact_score != 1.0
+                    || v.owasp_rr_vector != "owaspVectorOverride")
+                """,
+                PolicyViolation.Type.SECURITY);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentWithoutOverride = new Component();
+        componentWithoutOverride.setProject(project);
+        componentWithoutOverride.setName("acme-lib-a");
+        qm.persist(componentWithoutOverride);
+
+        final var componentWithOverride = new Component();
+        componentWithOverride.setProject(project);
+        componentWithOverride.setName("acme-lib-b");
+        qm.persist(componentWithOverride);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setCvssV2BaseScore(BigDecimal.valueOf(9.0));
+        vuln.setCvssV2Vector("cvssV2Vector");
+        vuln.setCvssV3BaseScore(BigDecimal.valueOf(9.0));
+        vuln.setCvssV3Vector("cvssV3Vector");
+        vuln.setCvssV4Score(BigDecimal.valueOf(9.0));
+        vuln.setCvssV4Vector("cvssV4Vector");
+        vuln.setOwaspRRLikelihoodScore(BigDecimal.valueOf(9.0));
+        vuln.setOwaspRRTechnicalImpactScore(BigDecimal.valueOf(9.0));
+        vuln.setOwaspRRBusinessImpactScore(BigDecimal.valueOf(9.0));
+        vuln.setOwaspRRVector("owaspVector");
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, componentWithoutOverride, "internal");
+        qm.addVulnerability(vuln, componentWithOverride, "internal");
+
+        final var analysis = new Analysis();
+        analysis.setComponent(componentWithOverride);
+        analysis.setVulnerability(vuln);
+        analysis.setAnalysisState(AnalysisState.EXPLOITABLE);
+        analysis.setCvssV2Score(BigDecimal.valueOf(1.0));
+        analysis.setCvssV2Vector("cvssV2VectorOverride");
+        analysis.setCvssV3Score(BigDecimal.valueOf(1.0));
+        analysis.setCvssV3Vector("cvssV3VectorOverride");
+        analysis.setCvssV4Score(BigDecimal.valueOf(1.0));
+        analysis.setCvssV4Vector("cvssV4VectorOverride");
+        analysis.setOwaspScore(BigDecimal.valueOf(1.0));
+        analysis.setOwaspVector("owaspVectorOverride");
+        qm.persist(analysis);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentWithoutOverride)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(componentWithOverride)).isEmpty();
     }
 
     @Test

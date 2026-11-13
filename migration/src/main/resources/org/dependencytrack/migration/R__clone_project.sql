@@ -151,6 +151,9 @@ BEGIN
   IF include_components THEN
     -- Maintain a mapping of IDs between source and target components
     -- in order to be able to clone their relationships.
+    --
+    -- NB: Target IDs and UUIDs are allocated upfront, so that parent and dependency
+    -- references can be rewired during the insert, without updating rows afterwards.
     CREATE TEMP TABLE tmp_component_mapping (
       source_id BIGINT
     , source_uuid UUID
@@ -158,119 +161,131 @@ BEGIN
     , target_uuid UUID
     ) ON COMMIT DROP;
 
-    WITH
-    source_component AS (
-      SELECT *
-           , ROW_NUMBER() OVER(ORDER BY "ID") AS rn
-        FROM "COMPONENT"
-       WHERE "PROJECT_ID" = source_project.id
-    ),
-    target_component AS (
-      INSERT INTO "COMPONENT" (
-        "PROJECT_ID"
-      , "GROUP"
-      , "NAME"
-      , "VERSION"
-      , "CLASSIFIER"
-      , "FILENAME"
-      , "EXTENSION"
-      , "MD5"
-      , "SHA1"
-      , "SHA_256"
-      , "SHA_384"
-      , "SHA_512"
-      , "SHA3_256"
-      , "SHA3_384"
-      , "SHA3_512"
-      , "BLAKE2B_256"
-      , "BLAKE2B_384"
-      , "BLAKE2B_512"
-      , "BLAKE3"
-      , "STREEBOG_256"
-      , "STREEBOG_512"
-      , "CPE"
-      , "PURL"
-      , "PURLCOORDINATES"
-      , "SWIDTAGID"
-      , "INTERNAL"
-      , "DESCRIPTION"
-      , "COPYRIGHT"
-      , "LICENSE"
-      , "LICENSE_ID"
-      , "LICENSE_EXPRESSION"
-      , "LICENSE_URL"
-      , "AUTHORS"
-      , "SUPPLIER"
-      , "DIRECT_DEPENDENCIES"
-      , "PARENT_COMPONENT_ID"
-      , "UUID"
-      )
-      SELECT target_project.id
-           , "GROUP"
-           , "NAME"
-           , "VERSION"
-           , "CLASSIFIER"
-           , "FILENAME"
-           , "EXTENSION"
-           , "MD5"
-           , "SHA1"
-           , "SHA_256"
-           , "SHA_384"
-           , "SHA_512"
-           , "SHA3_256"
-           , "SHA3_384"
-           , "SHA3_512"
-           , "BLAKE2B_256"
-           , "BLAKE2B_384"
-           , "BLAKE2B_512"
-           , "BLAKE3"
-           , "STREEBOG_256"
-           , "STREEBOG_512"
-           , "CPE"
-           , "PURL"
-           , "PURLCOORDINATES"
-           , "SWIDTAGID"
-           , "INTERNAL"
-           , "DESCRIPTION"
-           , "COPYRIGHT"
-           , "LICENSE"
-           , "LICENSE_ID"
-           , "LICENSE_EXPRESSION"
-           , "LICENSE_URL"
-           , "AUTHORS"
-           , "SUPPLIER"
-           , "DIRECT_DEPENDENCIES"
-           , "PARENT_COMPONENT_ID"
-           , gen_random_uuid()
-        FROM source_component
-       ORDER BY rn
-      RETURNING "ID", "UUID"
-    ),
-    target_component_ranked AS (
-      SELECT *
-           , ROW_NUMBER() OVER() AS rn
-        FROM target_component
-    )
     INSERT INTO tmp_component_mapping (
       source_id
     , source_uuid
     , target_id
     , target_uuid
     )
-    SELECT source_component."ID"
-         , source_component."UUID"
-         , target_component_ranked."ID"
-         , target_component_ranked."UUID"
-      FROM source_component
-     INNER JOIN target_component_ranked
-        ON target_component_ranked.rn = source_component.rn;
+    SELECT "ID"
+         , "UUID"
+         , NEXTVAL('"COMPONENT_ID_seq"')
+         , gen_random_uuid()
+      FROM "COMPONENT"
+     WHERE "PROJECT_ID" = source_project.id
+     ORDER BY "ID";
 
-    -- Update parent component references.
-    UPDATE "COMPONENT"
-       SET "PARENT_COMPONENT_ID" = tmp_component_mapping.target_id
-      FROM tmp_component_mapping
-     WHERE "PROJECT_ID" = target_project.id
-       AND "PARENT_COMPONENT_ID" = tmp_component_mapping.source_id;
+    WITH
+    -- NB: Using MATERIALIZED prevents the planner from expanding dependencies
+    -- in a nested loop that scans the entire mapping once per component.
+    source_dependency AS MATERIALIZED (
+      SELECT c."ID" AS component_id
+           , dep.value AS dep
+           , dep.ordinality
+        FROM "COMPONENT" AS c
+       CROSS JOIN JSONB_ARRAY_ELEMENTS(c."DIRECT_DEPENDENCIES") WITH ORDINALITY AS dep
+       WHERE c."PROJECT_ID" = source_project.id
+    ),
+    target_dependencies AS (
+      SELECT source_dependency.component_id
+           , JSONB_AGG(
+               CASE
+                 WHEN tmp_component_mapping.target_uuid IS NULL
+                 THEN source_dependency.dep
+                 ELSE JSONB_SET(source_dependency.dep, '{uuid}', TO_JSONB(tmp_component_mapping.target_uuid::TEXT))
+               END
+               ORDER BY source_dependency.ordinality
+             ) AS deps
+        FROM source_dependency
+        LEFT JOIN tmp_component_mapping
+          ON tmp_component_mapping.source_uuid::TEXT = source_dependency.dep->>'uuid'
+       GROUP BY source_dependency.component_id
+    )
+    INSERT INTO "COMPONENT" (
+      "ID"
+    , "PROJECT_ID"
+    , "GROUP"
+    , "NAME"
+    , "VERSION"
+    , "CLASSIFIER"
+    , "FILENAME"
+    , "EXTENSION"
+    , "MD5"
+    , "SHA1"
+    , "SHA_256"
+    , "SHA_384"
+    , "SHA_512"
+    , "SHA3_256"
+    , "SHA3_384"
+    , "SHA3_512"
+    , "BLAKE2B_256"
+    , "BLAKE2B_384"
+    , "BLAKE2B_512"
+    , "BLAKE3"
+    , "STREEBOG_256"
+    , "STREEBOG_512"
+    , "CPE"
+    , "PURL"
+    , "PURLCOORDINATES"
+    , "SWIDTAGID"
+    , "INTERNAL"
+    , "DESCRIPTION"
+    , "COPYRIGHT"
+    , "LICENSE"
+    , "LICENSE_ID"
+    , "LICENSE_EXPRESSION"
+    , "LICENSE_URL"
+    , "AUTHORS"
+    , "SUPPLIER"
+    , "DIRECT_DEPENDENCIES"
+    , "PARENT_COMPONENT_ID"
+    , "UUID"
+    )
+    SELECT component_mapping.target_id
+         , target_project.id
+         , c."GROUP"
+         , c."NAME"
+         , c."VERSION"
+         , c."CLASSIFIER"
+         , c."FILENAME"
+         , c."EXTENSION"
+         , c."MD5"
+         , c."SHA1"
+         , c."SHA_256"
+         , c."SHA_384"
+         , c."SHA_512"
+         , c."SHA3_256"
+         , c."SHA3_384"
+         , c."SHA3_512"
+         , c."BLAKE2B_256"
+         , c."BLAKE2B_384"
+         , c."BLAKE2B_512"
+         , c."BLAKE3"
+         , c."STREEBOG_256"
+         , c."STREEBOG_512"
+         , c."CPE"
+         , c."PURL"
+         , c."PURLCOORDINATES"
+         , c."SWIDTAGID"
+         , c."INTERNAL"
+         , c."DESCRIPTION"
+         , c."COPYRIGHT"
+         , c."LICENSE"
+         , c."LICENSE_ID"
+         , c."LICENSE_EXPRESSION"
+         , c."LICENSE_URL"
+         , c."AUTHORS"
+         , c."SUPPLIER"
+         , COALESCE(target_dependencies.deps, c."DIRECT_DEPENDENCIES")
+         , COALESCE(parent_mapping.target_id, c."PARENT_COMPONENT_ID")
+         , component_mapping.target_uuid
+      FROM tmp_component_mapping AS component_mapping
+     INNER JOIN "COMPONENT" AS c
+        ON c."ID" = component_mapping.source_id
+      LEFT JOIN tmp_component_mapping AS parent_mapping
+        ON parent_mapping.source_id = c."PARENT_COMPONENT_ID"
+      LEFT JOIN target_dependencies
+        ON target_dependencies.component_id = c."ID";
 
     -- Clone component licenses.
     INSERT INTO "COMPONENTLICENSES" (
@@ -594,32 +609,6 @@ BEGIN
 
     DROP TABLE tmp_project_direct_deps;
 
-    -- Rewire component dependencies.
-    --
-    -- Flatten the DIRECT_DEPENDENCIES array into a temporary table
-    -- to make it more efficient to modify.
-    CREATE TEMP TABLE tmp_component_direct_deps ON COMMIT DROP AS
-    SELECT "ID" AS component_id
-         , JSONB_ARRAY_ELEMENTS("DIRECT_DEPENDENCIES") AS dep
-      FROM "COMPONENT"
-     WHERE "PROJECT_ID" = target_project.id
-       AND "DIRECT_DEPENDENCIES" IS NOT NULL;
-
-    UPDATE tmp_component_direct_deps
-       SET dep = JSONB_SET(dep, '{uuid}', TO_JSONB(tmp_component_mapping.target_uuid::TEXT))
-      FROM tmp_component_mapping
-     WHERE dep->>'uuid' = tmp_component_mapping.source_uuid::TEXT;
-
-    UPDATE "COMPONENT"
-       SET "DIRECT_DEPENDENCIES" = (
-             SELECT JSONB_AGG(dep)
-               FROM tmp_component_direct_deps
-              WHERE component_id = "COMPONENT"."ID"
-           )
-     WHERE "PROJECT_ID" = target_project.id
-       AND EXISTS(SELECT 1 FROM tmp_component_direct_deps WHERE component_id = "COMPONENT"."ID");
-
-    DROP TABLE tmp_component_direct_deps;
     DROP TABLE tmp_component_mapping;
   END IF;
 

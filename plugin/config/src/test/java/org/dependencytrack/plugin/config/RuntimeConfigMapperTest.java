@@ -19,9 +19,13 @@
 package org.dependencytrack.plugin.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.dependencytrack.plugin.api.config.RuntimeConfig;
+import org.dependencytrack.plugin.api.config.RuntimeConfigSchemaSource;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,6 +33,10 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class RuntimeConfigMapperTest {
+
+    private record UniqueItemRuntimeConfig(List<Feed> feeds) implements RuntimeConfig {}
+
+    private record Feed(String name) implements RuntimeConfig {}
 
     private final RuntimeConfigMapper runtimeConfigMapper = new RuntimeConfigMapper();
     private final RuntimeConfigSpec configSpec = RuntimeConfigSpec.of(new TestRuntimeConfig());
@@ -129,6 +137,46 @@ class RuntimeConfigMapperTest {
                                     }
                                     """, configSpec));
         }
+
+        @Test
+        void shouldThrowWhenArrayItemsHaveDuplicateUniqueProperty() {
+            final var spec = RuntimeConfigSpec.of(
+                    new UniqueItemRuntimeConfig(List.of()),
+                    new RuntimeConfigSchemaSource.Literal(/* language=JSON */ """
+                            {
+                              "$schema": "https://json-schema.org/draft/2020-12/schema",
+                              "$id": "https://example.com/schema/unique-item-test",
+                              "type": "object",
+                              "properties": {
+                                "feeds": {
+                                  "type": "array",
+                                  "x-unique-item-properties": ["name"],
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                     "name": { "type": "string" }
+                                    },
+                                    "required": ["name"]
+                                  }
+                                }
+                              },
+                              "required": ["feeds"]
+                            }
+                            """),
+                    null);
+
+            assertThatExceptionOfType(RuntimeConfigSchemaValidationException.class)
+                    .isThrownBy(() -> runtimeConfigMapper.validateJson(/* language=JSON */ """
+                                    {
+                                      "feeds": [
+                                        { "name": "one" },
+                                        { "name": "one" }
+                                      ]
+                                    }
+                                    """, spec))
+                    .withMessageContaining("Duplicate")
+                    .withMessageContaining("name");
+        }
     }
 
     @Nested
@@ -149,7 +197,7 @@ class RuntimeConfigMapperTest {
                             }
                             """, configSpec);
 
-            runtimeConfigMapper.resolveSecretRefs(configNode, configSpec, mySecret -> "mySecretValue");
+            runtimeConfigMapper.resolveSecretRefs(configNode, configSpec, _ -> "mySecretValue");
 
             assertThatJson(configNode.toString()).isEqualTo(/* language=JSON */ """
                     {
@@ -175,7 +223,7 @@ class RuntimeConfigMapperTest {
                             """, configSpec);
 
             assertThatExceptionOfType(UnresolvableSecretException.class)
-                    .isThrownBy(() -> runtimeConfigMapper.resolveSecretRefs(configNode, configSpec, mySecret -> null))
+                    .isThrownBy(() -> runtimeConfigMapper.resolveSecretRefs(configNode, configSpec, _ -> null))
                     .withMessage("Secret 'mySecret' referenced at path '/secretString' does not exist");
         }
     }

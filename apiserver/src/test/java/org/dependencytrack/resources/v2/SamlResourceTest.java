@@ -90,16 +90,6 @@ class SamlResourceTest extends ResourceTest {
     }
 
     @Test
-    void shouldReportSamlAsUnavailableWhenDisabled() {
-        SamlLoginServiceHolder.set(null);
-
-        final Response response = jersey.target("/saml/availability").request().get();
-
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(parseJsonObject(response).getBoolean("enabled")).isFalse();
-    }
-
-    @Test
     void shouldRespondWithNotFoundWhenDisabled() {
         SamlLoginServiceHolder.set(null);
 
@@ -133,10 +123,6 @@ class SamlResourceTest extends ResourceTest {
     @Test
     void shouldCompleteLoginFlow() throws Exception {
         enableSaml();
-
-        final Response availability =
-                jersey.target("/saml/availability").request().get();
-        assertThat(parseJsonObject(availability).getBoolean("enabled")).isTrue();
 
         // The browser starts the login, and is sent to the IdP.
         final Response loginResponse = jersey.target("/saml/login")

@@ -152,6 +152,22 @@ class SamlLoginE2ET extends AbstractE2ET {
     }
 
     @Test
+    void shouldReportSamlAsPublicCapability() throws Exception {
+        // The login page reads this before anyone has authenticated, to decide whether to show the SAML button.
+        final HttpResponse<String> response = newBrowser()
+                .send(
+                        HttpRequest.newBuilder(
+                                        URI.create(apiServerUrl() + "/api/v2/internal/system-capabilities/public"))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        final JsonNode capabilities = objectMapper.readTree(response.body()).get("capabilities");
+        assertThat(capabilities.path("saml").path("disabled").isBoolean()).isTrue();
+        assertThat(capabilities.path("saml").path("disabled").asBoolean()).isFalse();
+    }
+
+    @Test
     void shouldRefuseReplayedResponse() throws Exception {
         final HttpClient browser = newBrowser();
         final String samlResponse = authenticateAtIdp(browser, "bob", "bob");

@@ -266,8 +266,6 @@ paths:
     $ref: "./resources/projects/project-components.yaml"
   /projects/{uuid}/dependency-graph:
     $ref: "./resources/projects/project-dependency-graph.yaml"
-  /saml/availability:
-    $ref: "./resources/saml/saml-availability.yaml"
   /saml/metadata:
     $ref: "./resources/saml/saml-metadata.yaml"
   /saml/login:

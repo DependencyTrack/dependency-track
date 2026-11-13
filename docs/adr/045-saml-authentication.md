@@ -120,6 +120,9 @@ after one hour. When fetching fails, it keeps using the cached metadata.
 
 The server publishes its own SP metadata at `GET /api/v2/saml/metadata`, which administrators can upload to the IdP.
 
+The login page learns whether SAML is enabled from the public system capabilities of [ADR 025](./025-system-capabilities.md).
+SAML contributes the public namespace `saml` with the flag `disabled`, like OIDC does with `oidc`.
+
 ### Users, groups and teams
 
 SAML users get the new user type `SAML`.

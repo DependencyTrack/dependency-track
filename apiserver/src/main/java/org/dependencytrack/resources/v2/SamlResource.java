@@ -25,7 +25,6 @@ import org.dependencytrack.api.v2.SamlApi;
 import org.dependencytrack.api.v2.model.CreateSamlGroupRequest;
 import org.dependencytrack.api.v2.model.CreateSamlTokenResponse;
 import org.dependencytrack.api.v2.model.CreateSamlUserRequest;
-import org.dependencytrack.api.v2.model.GetSamlAvailabilityResponse;
 import org.dependencytrack.api.v2.model.ListSamlGroupsResponse;
 import org.dependencytrack.api.v2.model.ListSamlUsersResponse;
 import org.dependencytrack.api.v2.model.ProblemDetails;
@@ -82,15 +81,6 @@ public final class SamlResource extends AbstractApiResource implements SamlApi {
     private static final Logger LOGGER = LoggerFactory.getLogger(SamlResource.class);
 
     private final SessionTokenService sessionTokenService = new SessionTokenService();
-
-    @Override
-    @AuthenticationNotRequired
-    public Response getSamlAvailability() {
-        return Response.ok(GetSamlAvailabilityResponse.builder()
-                        .enabled(SamlLoginServiceHolder.get().isPresent())
-                        .build())
-                .build();
-    }
 
     @Override
     @AuthenticationNotRequired

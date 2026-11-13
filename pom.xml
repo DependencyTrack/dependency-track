@@ -163,7 +163,7 @@
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
         <lib.minio.version>9.0.4</lib.minio.version>
         <lib.mockito.version>5.24.0</lib.mockito.version>
-        <lib.nimbus-oauth2-oidc-sdk.version>11.38.2</lib.nimbus-oauth2-oidc-sdk.version>
+        <lib.nimbus-oauth2-oidc-sdk.version>11.39</lib.nimbus-oauth2-oidc-sdk.version>
         <lib.nullaway.version>0.14.3</lib.nullaway.version>
         <lib.okhttp.version>5.5.1</lib.okhttp.version>
         <lib.open-feign.version>13.17</lib.open-feign.version>

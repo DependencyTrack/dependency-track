@@ -36,6 +36,7 @@ import org.cyclonedx.model.Service;
 import org.cyclonedx.model.ServiceData;
 import org.cyclonedx.model.Swid;
 import org.cyclonedx.model.Tool;
+import org.cyclonedx.model.component.Tags;
 import org.cyclonedx.model.component.evidence.Occurrence;
 import org.cyclonedx.model.license.Expression;
 import org.cyclonedx.model.license.ExpressionDetailed;
@@ -59,6 +60,7 @@ import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.Scope;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Tools;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.common.resolver.CweResolver;
@@ -963,6 +965,13 @@ public class ModelConverter {
                 cycloneComponent.setExternalReferences(references);
             }
             cycloneComponent.setSupplier(convert(project.getSupplier()));
+            if (version.compareTo(Version.VERSION_16) >= 0
+                    && project.getTags() != null
+                    && !project.getTags().isEmpty()) {
+                final List<String> tagNames =
+                        project.getTags().stream().map(Tag::getName).sorted().toList();
+                cycloneComponent.setTags(new Tags(tagNames));
+            }
             // NB: Project properties are currently used to configure integrations
             // such as Defect Dojo. They can also contain encrypted values that most
             // definitely are not safe to share. Before we can include project properties

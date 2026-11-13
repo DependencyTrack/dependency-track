@@ -20,6 +20,7 @@ package org.dependencytrack.parser.cyclonedx;
 
 import org.cyclonedx.Version;
 import org.cyclonedx.model.Hash;
+import org.cyclonedx.model.Metadata;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
@@ -107,6 +108,36 @@ class ModelConverterTest extends PersistenceCapableTest {
                 ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, findings);
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getId()).isEqualTo("INT-001");
+    }
+
+    @Test
+    void createMetadataShouldIncludeSortedProjectTagsForSpecVersion16() {
+        final Project project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+        qm.bind(project, List.of(qm.createTag("foo"), qm.createTag("bar"), qm.createTag("baz")));
+
+        final Metadata metadata = ModelConverter.createMetadata(project, Version.VERSION_16);
+
+        assertThat(metadata.getComponent().getTags()).isNotNull();
+        assertThat(metadata.getComponent().getTags().getTags()).containsExactly("bar", "baz", "foo");
+    }
+
+    @Test
+    void createMetadataShouldNotIncludeProjectTagsForSpecVersion15() {
+        final Project project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+        qm.bind(project, List.of(qm.createTag("foo"), qm.createTag("bar")));
+
+        final Metadata metadata = ModelConverter.createMetadata(project, Version.VERSION_15);
+
+        assertThat(metadata.getComponent().getTags()).isNull();
+    }
+
+    @Test
+    void createMetadataShouldNotIncludeTagsWhenProjectHasNoTags() {
+        final Project project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+
+        final Metadata metadata = ModelConverter.createMetadata(project, Version.VERSION_16);
+
+        assertThat(metadata.getComponent().getTags()).isNull();
     }
 
     @Nested

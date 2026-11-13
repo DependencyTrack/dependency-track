@@ -263,6 +263,28 @@ class BomResourceTest extends ResourceTest {
                 new XmlParser().parse(body.getBytes(StandardCharsets.UTF_8)), expectedCdxVersionSpec);
     }
 
+    @Test
+    void exportProjectAsCycloneDxWithProjectTagsTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        qm.bind(project, List.of(qm.createTag("foo"), qm.createTag("bar"), qm.createTag("baz")));
+
+        Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .queryParam("version", "1.6")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+
+        assertThatNoException()
+                .isThrownBy(() -> CycloneDxValidator.getInstance().validate(body.getBytes(StandardCharsets.UTF_8)));
+        assertThatJson(body).node("metadata.component.tags").isEqualTo(/* language=JSON */ """
+                        ["bar", "baz", "foo"]
+                        """);
+    }
+
     private static boolean usesModernToolsMetadata(final String version) {
         return "1.5".equals(version) || "1.6".equals(version);
     }

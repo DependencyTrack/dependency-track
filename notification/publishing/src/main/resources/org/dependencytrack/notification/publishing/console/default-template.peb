@@ -8,3 +8,14 @@ Notification
   -- group:     {{ notification.group }}
   -- title:     {{ notification.title }}
   -- content:   {{ notification.content }}
+{% if notification.group == "GROUP_POLICY_VIOLATION_UPDATED" or notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" -%}
+  -- violation: {{ subject.policyViolation.uuid }}
+  -- previous:  {{ subject.previousMessage }}
+  -- current:   {{ subject.currentMessage }}
+  -- changedAt: {{ subject.changedAt | formatTimestamp }}
+{% if notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" -%}
+  -- analysisState: {{ subject.analysisState }}
+  -- suppressed: {% if subject.hasSuppressed() %}{{ subject.suppressed }}{% else %}not recorded{% endif %}
+  -- review decision retained
+{% endif -%}
+{% endif -%}

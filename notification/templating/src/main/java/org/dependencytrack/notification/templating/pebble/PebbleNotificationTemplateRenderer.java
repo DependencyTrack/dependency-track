@@ -38,6 +38,7 @@ import org.dependencytrack.notification.proto.v1.NewVulnerableDependencySubject;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysisDecisionChangeSubject;
 import org.dependencytrack.notification.proto.v1.PolicyViolationSubject;
+import org.dependencytrack.notification.proto.v1.PolicyViolationUpdatedSubject;
 import org.dependencytrack.notification.proto.v1.UserSubject;
 import org.dependencytrack.notification.proto.v1.VexConsumedOrProcessedSubject;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject;
@@ -188,6 +189,8 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
             return subject.unpack(VexConsumedOrProcessedSubject.class);
         } else if (subject.is(PolicyViolationSubject.class)) {
             return subject.unpack(PolicyViolationSubject.class);
+        } else if (subject.is(PolicyViolationUpdatedSubject.class)) {
+            return subject.unpack(PolicyViolationUpdatedSubject.class);
         } else if (subject.is(UserSubject.class)) {
             return subject.unpack(UserSubject.class);
         } else if (subject.is(NewVulnerabilitiesSummarySubject.class)) {

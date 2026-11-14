@@ -97,7 +97,7 @@ Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}
 Description:       {{ subject.project.description }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
-{% elseif notification.group == "GROUP_POLICY_VIOLATION" %}
+{% elseif notification.group == "GROUP_POLICY_VIOLATION" or notification.group == "GROUP_POLICY_VIOLATION_UPDATED" or notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" %}
 Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}
 Description:       {{ subject.project.description }}
@@ -108,6 +108,17 @@ Component Version: {{ subject.component.version }}
 Component URL:     {{ baseUrl }}/components/{{ subject.component.uuid }}
 
 Violated Policy:   {{ subject.policyViolation.condition.policy.name }}
+{% if notification.group == "GROUP_POLICY_VIOLATION_UPDATED" or notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" -%}
+Violation UUID:    {{ subject.policyViolation.uuid }}
+Previous Message:  {{ subject.previousMessage }}
+Current Message:   {{ subject.currentMessage }}
+Changed At:        {{ subject.changedAt | formatTimestamp }}
+{% if notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" -%}
+Analysis State:    {{ subject.analysisState }}
+Suppressed:        {% if subject.hasSuppressed() %}{{ subject.suppressed }}{% else %}not recorded{% endif %}
+Review Decision:   Retained
+{% endif -%}
+{% endif -%}
 {% if subject.policyViolation.message is not empty -%}
 Message:           {{ subject.policyViolation.message }}
 {% endif -%}

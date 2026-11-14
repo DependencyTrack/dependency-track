@@ -185,6 +185,40 @@ class NotificationRuleResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldCreateIndependentlySubscribedPolicyViolationUpdatedRule() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
+        final Response response = jersey.target(V1_NOTIFICATION_RULE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "Policy message changes only",
+                          "notificationLevel": "INFORMATIONAL",
+                          "scope": "PORTFOLIO",
+                          "publisher": {
+                            "uuid": "%s"
+                          },
+                          "notifyOn": ["POLICY_VIOLATION_UPDATED"],
+                          "filterExpression": "subject.current_message.contains('CVE-2021-45046')"
+                        }
+                        """.formatted(publisher.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(201);
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThat(responseJson.getString("triggerType")).isEqualTo("EVENT");
+        assertThat(responseJson.getJsonArray("notifyOn")).hasSize(1);
+        assertThat(responseJson.getJsonArray("notifyOn").getString(0)).isEqualTo("POLICY_VIOLATION_UPDATED");
+        assertThat(responseJson.getString("filterExpression"))
+                .isEqualTo("subject.current_message.contains('CVE-2021-45046')");
+
+        qm.getPersistenceManager().evictAll();
+        final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, responseJson.getString("uuid"));
+        assertThat(rule).isNotNull();
+        assertThat(rule.getTriggerType()).isEqualTo(NotificationTriggerType.EVENT);
+        assertThat(rule.getNotifyOn()).containsOnly(NotificationGroup.POLICY_VIOLATION_UPDATED);
+        assertThat(rule.getFilterExpression()).isEqualTo("subject.current_message.contains('CVE-2021-45046')");
+    }
+
+    @Test
     void createNotificationRuleInvalidPublisherTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_CREATE);
         final Response response = jersey.target(V1_NOTIFICATION_RULE)

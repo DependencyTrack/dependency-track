@@ -98,22 +98,26 @@ final class BomImportDao {
             INSERT INTO "PROJECT_METADATA" AS meta (
               "PROJECT_ID"
             , "SUPPLIER"
+            , "MANUFACTURER"
             , "AUTHORS"
             , "TOOLS"
             )
-            VALUES (:projectId, :supplier, :authors, :tools)
+            VALUES (:projectId, :supplier, CAST(:manufacturer AS JSONB), :authors, :tools)
             ON CONFLICT ("PROJECT_ID") DO UPDATE
             SET "SUPPLIER" = EXCLUDED."SUPPLIER"
+              , "MANUFACTURER" = EXCLUDED."MANUFACTURER"
               , "AUTHORS" = EXCLUDED."AUTHORS"
               , "TOOLS" = EXCLUDED."TOOLS"
-            WHERE (meta."SUPPLIER", meta."AUTHORS", meta."TOOLS")
-                  IS DISTINCT FROM (EXCLUDED."SUPPLIER", EXCLUDED."AUTHORS", EXCLUDED."TOOLS")
+            WHERE (meta."SUPPLIER", meta."MANUFACTURER", meta."AUTHORS", meta."TOOLS")
+                  IS DISTINCT FROM (
+                    EXCLUDED."SUPPLIER", EXCLUDED."MANUFACTURER", EXCLUDED."AUTHORS", EXCLUDED."TOOLS")
             """)
                 .define(
                         ATTRIBUTE_QUERY_NAME,
                         "%s#upsertProjectMetadata".formatted(getClass().getSimpleName()))
                 .bind("projectId", projectId)
                 .bind("supplier", ENTITY_CONVERTER.convertToDatastore(metadata.getSupplier()))
+                .bind("manufacturer", ENTITY_CONVERTER.convertToDatastore(metadata.getManufacturer()))
                 .bind("authors", CONTACTS_CONVERTER.convertToDatastore(metadata.getAuthors()))
                 .bind("tools", TOOLS_CONVERTER.convertToDatastore(metadata.getTools()))
                 .execute();

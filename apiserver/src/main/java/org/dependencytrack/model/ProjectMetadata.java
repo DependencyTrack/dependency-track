@@ -27,6 +27,8 @@ import org.dependencytrack.persistence.converter.ToolsJsonConverter;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Convert;
+import javax.jdo.annotations.Extension;
+import javax.jdo.annotations.Extensions;
 import javax.jdo.annotations.ForeignKey;
 import javax.jdo.annotations.ForeignKeyAction;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -70,6 +72,15 @@ public class ProjectMetadata {
     private OrganizationalEntity supplier;
 
     @Persistent(defaultFetchGroup = "true")
+    @Convert(OrganizationalEntityJsonConverter.class)
+    @Column(name = "MANUFACTURER", jdbcType = "CLOB", allowsNull = "true")
+    @Extensions({
+        @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS JSONB)"),
+        @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS JSONB)")
+    })
+    private OrganizationalEntity manufacturer;
+
+    @Persistent(defaultFetchGroup = "true")
     @Convert(OrganizationalContactsJsonConverter.class)
     @Column(name = "AUTHORS", jdbcType = "CLOB", allowsNull = "true")
     private List<OrganizationalContact> authors;
@@ -101,6 +112,14 @@ public class ProjectMetadata {
 
     public void setSupplier(final OrganizationalEntity supplier) {
         this.supplier = supplier;
+    }
+
+    public OrganizationalEntity getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(final OrganizationalEntity manufacturer) {
+        this.manufacturer = manufacturer;
     }
 
     public List<OrganizationalContact> getAuthors() {

@@ -1,2 +1,3 @@
 org.dependencytrack.auth.OidcCapabilityProvider
+org.dependencytrack.auth.saml.SamlCapabilityProvider
 org.dependencytrack.secret.SecretManagementCapabilityProvider

@@ -1,0 +1,90 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+get:
+  operationId: listSamlUsers
+  summary: List SAML users
+  description: |-
+    Returns a paginated list of SAML users, ordered by username, with their teams.
+
+    Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_READ` permission.
+  tags:
+    - SAML
+  parameters:
+    - name: q
+      description: >-
+        Optional search text to filter users by.
+        Filtering uses case-insensitive "contains" semantics on the username.
+      in: query
+      schema:
+        type: string
+        maxLength: 255
+    - $ref: "../../shared/parameters/page-token.yaml"
+    - $ref: "../../shared/parameters/pagination-limit.yaml"
+  responses:
+    "200":
+      description: Paginated list of SAML users
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/list-saml-users-response.yaml"
+    "400":
+      $ref: "../../shared/responses/invalid-request-error.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"
+
+post:
+  operationId: createSamlUser
+  summary: Create a SAML user
+  description: |-
+    Creates a SAML user, so that the user can log in when user provisioning is disabled.
+
+    A new user has no permissions and no team memberships.
+    Grant those through the REST API v1 endpoints `POST /api/v1/{permission}/user/{username}`
+    and `PUT /api/v1/user/membership`.
+
+    Requires the `ACCESS_MANAGEMENT` or `ACCESS_MANAGEMENT_CREATE` permission.
+  tags:
+    - SAML
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/create-saml-user-request.yaml"
+  responses:
+    "201":
+      description: SAML user created
+      headers:
+        Location:
+          description: URL of the created SAML user
+          schema:
+            type: string
+            format: uri
+    "400":
+      $ref: "../../shared/responses/invalid-request-error.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    "409":
+      $ref: "../../shared/responses/generic-conflict-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"

@@ -462,8 +462,9 @@ public class UserResource extends AbstractApiResource {
                             .entity(user)
                             .build();
                 }
-                // Service accounts are managed through /v2/service-accounts endpoints.
-                case SERVICE ->
+                // SAML users are managed by their identity provider,
+                // service accounts through /v2/service-accounts endpoints.
+                case SAML, SERVICE ->
                     Response.status(Response.Status.BAD_REQUEST)
                             .entity(qm.getUser(userPrincipal.username()))
                             .build();

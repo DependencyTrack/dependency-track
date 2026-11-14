@@ -74,8 +74,11 @@ final class BomImportDao {
     record ExistingComponentPropertyRow(Long id, long componentId, ComponentProperty.Identity identity)
             implements ComponentOwnedRow<Long, ComponentProperty.Identity> {}
 
-    record ExistingComponentLicenseRow(Long id, long componentId, ComponentLicenseDao.ComponentLicenseRow identity)
-            implements ComponentOwnedRow<Long, ComponentLicenseDao.ComponentLicenseRow> {}
+    record ComponentLicenseKey(long componentId, long ordinality) {}
+
+    record ExistingComponentLicenseRow(
+            ComponentLicenseKey id, long componentId, ComponentLicenseDao.ComponentLicenseRow identity)
+            implements ComponentOwnedRow<ComponentLicenseKey, ComponentLicenseDao.ComponentLicenseRow> {}
 
     record ExistingComponentOccurrenceRow(UUID id, long componentId, ComponentOccurrence.Identity identity)
             implements ComponentOwnedRow<UUID, ComponentOccurrence.Identity> {}
@@ -896,8 +899,7 @@ final class BomImportDao {
 
     List<ExistingComponentLicenseRow> getComponentLicenses(long projectId) {
         return handle.createQuery(/* language=SQL */ """
-            SELECT cl."ID"
-                 , cl."COMPONENT_ID"
+            SELECT cl."COMPONENT_ID"
                  , cl."LICENSE_ID"
                  , cl."LICENSE"
                  , cl."LICENSE_EXPRESSION"
@@ -914,7 +916,7 @@ final class BomImportDao {
                         "%s#getComponentLicenses".formatted(getClass().getSimpleName()))
                 .bind("projectId", projectId)
                 .map((rs, _) -> new ExistingComponentLicenseRow(
-                        rs.getLong("ID"),
+                        new ComponentLicenseKey(rs.getLong("COMPONENT_ID"), rs.getLong("ORDINALITY")),
                         rs.getLong("COMPONENT_ID"),
                         new ComponentLicenseDao.ComponentLicenseRow(
                                 rs.getLong("COMPONENT_ID"),
@@ -927,17 +929,21 @@ final class BomImportDao {
                 .list();
     }
 
-    void deleteComponentLicenses(Collection<Long> ids) throws InterruptedException {
-        inBatches(ids, batch -> {
+    void deleteComponentLicenses(Collection<ComponentLicenseKey> keys) throws InterruptedException {
+        inBatches(keys, batch -> {
             handle.createUpdate(/* language=SQL */ """
                 DELETE
                   FROM "COMPONENTLICENSES"
-                 WHERE "ID" = ANY(:ids)
+                 WHERE ("COMPONENT_ID", "ORDINALITY") IN (
+                   SELECT *
+                     FROM UNNEST(:componentIds, :ordinalities)
+                 )
                 """)
                     .define(
                             ATTRIBUTE_QUERY_NAME,
                             "%s#deleteComponentLicenses".formatted(getClass().getSimpleName()))
-                    .bindArray("ids", Long.class, batch)
+                    .bindArray("componentIds", Long.class, columnValues(batch, ComponentLicenseKey::componentId))
+                    .bindArray("ordinalities", Long.class, columnValues(batch, ComponentLicenseKey::ordinality))
                     .execute();
         });
     }

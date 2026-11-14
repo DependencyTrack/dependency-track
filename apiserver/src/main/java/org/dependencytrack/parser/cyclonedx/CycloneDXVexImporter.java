@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
+import org.cyclonedx.exception.BomLinkException;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.util.BomLink;
 import org.dependencytrack.model.AnalysisJustification;
@@ -81,10 +82,24 @@ public class CycloneDXVexImporter {
 
             for (final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect : vexVuln.getAffects()) {
                 final String affectedBomRef = affect.getRef();
-                final BomRefTarget target = affectedBomRef != null ? targetByBomRef.get(affectedBomRef) : null;
+                BomRefTarget target = affectedBomRef != null ? targetByBomRef.get(affectedBomRef) : null;
+                boolean isBomLinkWithoutFragment = false;
+
+                if (target == null && affectedBomRef != null && BomLink.isBomLink(affectedBomRef)) {
+                    try {
+                        final var bomLink = new BomLink(affectedBomRef);
+                        if (bomLink.getBomRef() != null) {
+                            target = targetByBomRef.get(bomLink.getBomRef());
+                        } else {
+                            isBomLinkWithoutFragment = true;
+                        }
+                    } catch (BomLinkException e) {
+                        LOGGER.warn("Failed to parse BOM-Link: {}", affectedBomRef, e);
+                    }
+                }
 
                 final boolean isProjectScoped = (target != null && target.isMetadataComponent())
-                        || (target == null && affectedBomRef != null && BomLink.isBomLink(affectedBomRef));
+                        || (target == null && isBomLinkWithoutFragment);
 
                 if (isProjectScoped) {
                     if (vulnerableComponents == null) {
@@ -94,8 +109,9 @@ public class CycloneDXVexImporter {
                         updateAnalysis(qm, component, dtVuln, vexVuln);
                     }
                 } else if (target != null) {
+                    final var targetComponent = target.component();
                     final List<Component> components = componentsByBomRef.computeIfAbsent(affectedBomRef, _ -> {
-                        final var cid = new ComponentIdentity(target.component());
+                        final var cid = new ComponentIdentity(targetComponent);
                         return qm.matchIdentity(project, cid);
                     });
                     for (final Component component : components) {

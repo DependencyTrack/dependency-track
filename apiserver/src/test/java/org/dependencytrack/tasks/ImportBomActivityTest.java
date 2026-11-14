@@ -2849,7 +2849,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                                 .formatted("[{\"license\": {\"id\": \"MIT\"}}]")
                                 .getBytes(StandardCharsets.UTF_8)),
                         UUID.randomUUID()));
-        final List<Long> rowIdsBefore = getLicenseRowIds();
+        final List<String> rowVersionsBefore = getLicenseRowVersions();
 
         activity.execute(
                 null,
@@ -2861,8 +2861,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                                 .getBytes(StandardCharsets.UTF_8)),
                         UUID.randomUUID()));
 
-        assertThat(rowIdsBefore).hasSize(1);
-        assertThat(getLicenseRowIds()).hasSize(2).startsWith(rowIdsBefore.getFirst());
+        assertThat(rowVersionsBefore).hasSize(1);
+        assertThat(getLicenseRowVersions()).hasSize(2).startsWith(rowVersionsBefore.getFirst());
     }
 
     @Test
@@ -2904,11 +2904,13 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 .getOrDefault(componentId, List.of()));
     }
 
-    private static List<Long> getLicenseRowIds() {
+    private static List<String> getLicenseRowVersions() {
         return withJdbiHandle(
                 handle -> handle.createQuery("""
-                        SELECT "ID" FROM "COMPONENTLICENSES" ORDER BY "ID"
-                        """).mapTo(Long.class).list());
+                        SELECT CAST(xmin AS TEXT)
+                          FROM "COMPONENTLICENSES"
+                         ORDER BY "COMPONENT_ID", "ORDINALITY"
+                        """).mapTo(String.class).list());
     }
 
     private static List<String> getRowVersions(@CompileTimeConstant String table, long projectId) {

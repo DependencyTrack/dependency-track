@@ -549,21 +549,21 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             BomImportDao dao, long projectId, List<Component> components, Map<String, Long> licenseIds)
             throws InterruptedException {
         final var rowsToCreate = new ArrayList<ComponentLicenseDao.ComponentLicenseRow>();
-        final var idsOfRowsToDelete = new ArrayList<Long>();
+        final var keysOfRowsToDelete = new ArrayList<BomImportDao.ComponentLicenseKey>();
         synchronizeComponentOwnedRows(
                 components,
                 dao.getComponentLicenses(projectId),
                 component -> buildComponentLicenseRows(component, licenseIds),
                 Function.identity(),
                 (_, row) -> rowsToCreate.add(row),
-                idsOfRowsToDelete::add);
-        dao.deleteComponentLicenses(idsOfRowsToDelete);
+                keysOfRowsToDelete::add);
+        dao.deleteComponentLicenses(keysOfRowsToDelete);
         dao.createComponentLicenses(rowsToCreate);
     }
 
     private static List<ComponentLicenseDao.ComponentLicenseRow> buildComponentLicenseRows(
             Component component, Map<String, Long> licenseIds) {
-        // Keyed by license to satisfy the COMPONENTLICENSES_ID_IDX unique index.
+        // Keyed by license to satisfy the COMPONENTLICENSES_LICENSE_COMPONENT_IDX unique index.
         final var rowsByKey = new LinkedHashMap<String, ComponentLicenseDao.ComponentLicenseRow>();
         final String expression = trimToNull(component.getLicenseExpression());
         // Only one row may hold the expression, per the COMPONENTLICENSES_EXP_IDX unique index.

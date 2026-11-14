@@ -170,7 +170,6 @@ public class Component implements Serializable {
 
     @Persistent
     @Column(name = "CLASSIFIER", jdbcType = "VARCHAR")
-    @Index(name = "COMPONENT_CLASSIFIER_IDX")
     @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
     @JsonView(JsonViews.MetadataTools.class)
     @NotNull
@@ -337,7 +336,6 @@ public class Component implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "PURLCOORDINATES", jdbcType = "VARCHAR", length = 1024)
-    @Index(name = "COMPONENT_PURL_COORDINATES_IDX")
     @Size(max = 1024)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
@@ -347,7 +345,6 @@ public class Component implements Serializable {
 
     @Persistent
     @Column(name = "SWIDTAGID")
-    @Index(name = "COMPONENT_SWID_TAGID_IDX")
     @Size(max = 255)
     @Pattern(
             regexp = RegexSequence.Definition.PRINTABLE_CHARS,

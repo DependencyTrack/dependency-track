@@ -31,17 +31,22 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.dex.engine.api.DexEngine;
+import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.metrics.UpdateProjectMetricsWorkflow;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisResponse;
 
+import jakarta.inject.Inject;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -51,6 +56,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.UUID;
 
 /**
  * JAX-RS resources for processing violation analysis decisions.
@@ -62,6 +69,13 @@ import jakarta.ws.rs.core.Response;
 @Tag(name = "violationanalysis")
 @SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class ViolationAnalysisResource extends AbstractApiResource {
+
+    private final DexEngine dexEngine;
+
+    @Inject
+    ViolationAnalysisResource(DexEngine dexEngine) {
+        this.dexEngine = dexEngine;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -157,31 +171,44 @@ public class ViolationAnalysisResource extends AbstractApiResource {
                 validator.validateProperty(request, "analysisState"),
                 validator.validateProperty(request, "comment"));
 
+        final ViolationAnalysisResponse response;
+        final UUID projectUuid;
         try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final var component = qm.getObjectByUuid(Component.class, request.getComponent());
-                if (component == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The component could not be found.")
-                            .build();
-                }
-                requireAccess(qm, component.getProject());
+            final var component = qm.getObjectByUuid(Component.class, request.getComponent());
+            if (component == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The component could not be found.")
+                        .build();
+            }
+            requireAccess(qm, component.getProject());
 
-                final var violation = qm.getObjectByUuid(PolicyViolation.class, request.getPolicyViolation());
-                if (violation == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The policy violation could not be found.")
-                            .build();
-                }
+            final var violation = qm.getObjectByUuid(PolicyViolation.class, request.getPolicyViolation());
+            if (violation == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The policy violation could not be found.")
+                        .build();
+            }
 
+            projectUuid = component.getProject().getUuid();
+
+            response = qm.callInTransaction(() -> {
                 final long analysisId = qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(component, violation)
                         .withState(request.getAnalysisState())
                         .withSuppress(request.isSuppressed())
                         .withComment(request.getComment()));
 
-                return Response.ok(ViolationAnalysisResponse.of(qm.getObjectById(ViolationAnalysis.class, analysisId)))
-                        .build();
+                return ViolationAnalysisResponse.of(qm.getObjectById(ViolationAnalysis.class, analysisId));
             });
         }
+
+        if (request.isSuppressed() != null || request.getAnalysisState() != null) {
+            dexEngine.createRun(new CreateWorkflowRunRequest<>(UpdateProjectMetricsWorkflow.class)
+                    .withWorkflowInstanceId(UpdateProjectMetricsWorkflow.instanceId(projectUuid))
+                    .withArgument(UpdateProjectMetricsArg.newBuilder()
+                            .setProjectUuid(projectUuid.toString())
+                            .build()));
+        }
+
+        return Response.ok(response).build();
     }
 }

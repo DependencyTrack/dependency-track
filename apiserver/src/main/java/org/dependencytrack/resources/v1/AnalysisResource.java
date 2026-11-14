@@ -32,6 +32,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.dex.engine.api.DexEngine;
+import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.metrics.UpdateProjectMetricsWorkflow;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
@@ -39,11 +42,13 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
 import org.dependencytrack.resources.v1.vo.AnalysisTrailResponse;
 
+import jakarta.inject.Inject;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -53,6 +58,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.UUID;
 
 /**
  * JAX-RS resources for processing analysis decisions.
@@ -64,6 +71,13 @@ import jakarta.ws.rs.core.Response;
 @Tag(name = "analysis")
 @SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class AnalysisResource extends AbstractApiResource {
+
+    private final DexEngine dexEngine;
+
+    @Inject
+    AnalysisResource(DexEngine dexEngine) {
+        this.dexEngine = dexEngine;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -188,24 +202,28 @@ public class AnalysisResource extends AbstractApiResource {
                 validator.validateProperty(request, "analysisResponse"),
                 validator.validateProperty(request, "analysisDetails"),
                 validator.validateProperty(request, "comment"));
+        final AnalysisTrailResponse response;
+        final UUID projectUuid;
         try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final var component = qm.getObjectByUuid(Component.class, request.getComponent());
-                if (component == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The component could not be found.")
-                            .build();
-                }
+            final var component = qm.getObjectByUuid(Component.class, request.getComponent());
+            if (component == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The component could not be found.")
+                        .build();
+            }
 
-                requireAccess(qm, component.getProject());
+            requireAccess(qm, component.getProject());
 
-                final var vulnerability = qm.getObjectByUuid(Vulnerability.class, request.getVulnerability());
-                if (vulnerability == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The vulnerability could not be found.")
-                            .build();
-                }
+            final var vulnerability = qm.getObjectByUuid(Vulnerability.class, request.getVulnerability());
+            if (vulnerability == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The vulnerability could not be found.")
+                        .build();
+            }
 
+            projectUuid = component.getProject().getUuid();
+
+            response = qm.callInTransaction(() -> {
                 final long analysisId = qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
                         .withState(request.getAnalysisState())
                         .withJustification(request.getAnalysisJustification())
@@ -214,9 +232,18 @@ public class AnalysisResource extends AbstractApiResource {
                         .withSuppress(request.isSuppressed())
                         .withComment(request.getComment()));
 
-                return Response.ok(AnalysisTrailResponse.of(qm.getObjectById(Analysis.class, analysisId)))
-                        .build();
+                return AnalysisTrailResponse.of(qm.getObjectById(Analysis.class, analysisId));
             });
         }
+
+        if (request.isSuppressed() != null || request.getAnalysisState() != null) {
+            dexEngine.createRun(new CreateWorkflowRunRequest<>(UpdateProjectMetricsWorkflow.class)
+                    .withWorkflowInstanceId(UpdateProjectMetricsWorkflow.instanceId(projectUuid))
+                    .withArgument(UpdateProjectMetricsArg.newBuilder()
+                            .setProjectUuid(projectUuid.toString())
+                            .build()));
+        }
+
+        return Response.ok(response).build();
     }
 }

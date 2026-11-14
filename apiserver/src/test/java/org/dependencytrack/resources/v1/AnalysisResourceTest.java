@@ -37,13 +37,20 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
+import org.dependencytrack.dex.engine.api.DexEngine;
+import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.metrics.UpdateProjectMetricsWorkflow;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao.VulnPolicyIdentityRow;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -67,12 +74,29 @@ import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONA
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 class AnalysisResourceTest extends ResourceTest {
 
+    private static final DexEngine DEX_ENGINE_MOCK = mock(DexEngine.class);
+
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(AnalysisResource.class).register(ApiFilter.class).register(AuthFeature.class));
+            new ResourceConfig(AnalysisResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthFeature.class)
+                    .register(new AbstractBinder() {
+                        @Override
+                        protected void configure() {
+                            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+                        }
+                    }));
+
+    @AfterEach
+    void afterEach() {
+        Mockito.reset(DEX_ENGINE_MOCK);
+    }
 
     @Test
     void retrieveAnalysisTest() {
@@ -501,6 +525,12 @@ class AnalysisResourceTest extends ResourceTest {
             assertThat(notification.getContent())
                     .isEqualTo("An analysis decision was made to a finding affecting a project");
         });
+
+        final var runRequestCaptor = ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(DEX_ENGINE_MOCK).createRun(runRequestCaptor.capture());
+        assertThat(runRequestCaptor.getValue().workflowName()).isEqualTo(UpdateProjectMetricsWorkflow.NAME);
+        assertThat(runRequestCaptor.getValue().workflowInstanceId())
+                .isEqualTo(UpdateProjectMetricsWorkflow.instanceId(project.getUuid()));
     }
 
     @Test
@@ -582,6 +612,12 @@ class AnalysisResourceTest extends ResourceTest {
             assertThat(notification.getContent())
                     .isEqualTo("An analysis decision was made to a finding affecting a project");
         });
+
+        final var runRequestCaptor = ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(DEX_ENGINE_MOCK).createRun(runRequestCaptor.capture());
+        assertThat(runRequestCaptor.getValue().workflowName()).isEqualTo(UpdateProjectMetricsWorkflow.NAME);
+        assertThat(runRequestCaptor.getValue().workflowInstanceId())
+                .isEqualTo(UpdateProjectMetricsWorkflow.instanceId(project.getUuid()));
     }
 
     @Test
@@ -723,6 +759,12 @@ class AnalysisResourceTest extends ResourceTest {
             assertThat(notification.getContent())
                     .isEqualTo("An analysis decision was made to a finding affecting a project");
         });
+
+        final var runRequestCaptor = ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(DEX_ENGINE_MOCK).createRun(runRequestCaptor.capture());
+        assertThat(runRequestCaptor.getValue().workflowName()).isEqualTo(UpdateProjectMetricsWorkflow.NAME);
+        assertThat(runRequestCaptor.getValue().workflowInstanceId())
+                .isEqualTo(UpdateProjectMetricsWorkflow.instanceId(project.getUuid()));
     }
 
     @Test
@@ -870,6 +912,12 @@ class AnalysisResourceTest extends ResourceTest {
             assertThat(notification.getContent())
                     .isEqualTo("An analysis decision was made to a finding affecting a project");
         });
+
+        final var runRequestCaptor = ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(DEX_ENGINE_MOCK).createRun(runRequestCaptor.capture());
+        assertThat(runRequestCaptor.getValue().workflowName()).isEqualTo(UpdateProjectMetricsWorkflow.NAME);
+        assertThat(runRequestCaptor.getValue().workflowInstanceId())
+                .isEqualTo(UpdateProjectMetricsWorkflow.instanceId(project.getUuid()));
     }
 
     @Test
@@ -1034,6 +1082,12 @@ class AnalysisResourceTest extends ResourceTest {
             assertThat(notification.getContent())
                     .isEqualTo("An analysis decision was made to a finding affecting a project");
         });
+
+        final var runRequestCaptor = ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(DEX_ENGINE_MOCK).createRun(runRequestCaptor.capture());
+        assertThat(runRequestCaptor.getValue().workflowName()).isEqualTo(UpdateProjectMetricsWorkflow.NAME);
+        assertThat(runRequestCaptor.getValue().workflowInstanceId())
+                .isEqualTo(UpdateProjectMetricsWorkflow.instanceId(project.getUuid()));
     }
 
     @Test

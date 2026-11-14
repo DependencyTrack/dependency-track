@@ -24,6 +24,9 @@ import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.dex.engine.api.DexEngine;
+import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.metrics.UpdateProjectMetricsWorkflow;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyCondition.Operator;
@@ -36,9 +39,13 @@ import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -58,13 +65,28 @@ import static org.dependencytrack.notification.NotificationTestUtil.getNotificat
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 class ViolationAnalysisResourceTest extends ResourceTest {
+
+    private static final DexEngine DEX_ENGINE_MOCK = mock(DexEngine.class);
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(ViolationAnalysisResource.class)
             .register(ApiFilter.class)
-            .register(AuthFeature.class));
+            .register(AuthFeature.class)
+            .register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+                }
+            }));
+
+    @AfterEach
+    void afterEach() {
+        Mockito.reset(DEX_ENGINE_MOCK);
+    }
 
     @Test
     void retrieveAnalysisTest() {
@@ -322,6 +344,12 @@ class ViolationAnalysisResourceTest extends ResourceTest {
             assertThat(notification.getContent())
                     .isEqualTo("An violation analysis decision was made to a policy violation affecting a project");
         });
+
+        final var runRequestCaptor = ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(DEX_ENGINE_MOCK).createRun(runRequestCaptor.capture());
+        assertThat(runRequestCaptor.getValue().workflowName()).isEqualTo(UpdateProjectMetricsWorkflow.NAME);
+        assertThat(runRequestCaptor.getValue().workflowInstanceId())
+                .isEqualTo(UpdateProjectMetricsWorkflow.instanceId(project.getUuid()));
     }
 
     @Test
@@ -440,6 +468,12 @@ class ViolationAnalysisResourceTest extends ResourceTest {
             assertThat(notification.getContent())
                     .isEqualTo("An violation analysis decision was made to a policy violation affecting a project");
         });
+
+        final var runRequestCaptor = ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(DEX_ENGINE_MOCK).createRun(runRequestCaptor.capture());
+        assertThat(runRequestCaptor.getValue().workflowName()).isEqualTo(UpdateProjectMetricsWorkflow.NAME);
+        assertThat(runRequestCaptor.getValue().workflowInstanceId())
+                .isEqualTo(UpdateProjectMetricsWorkflow.instanceId(project.getUuid()));
     }
 
     @Test
@@ -553,6 +587,12 @@ class ViolationAnalysisResourceTest extends ResourceTest {
             assertThat(notification.getContent())
                     .isEqualTo("An violation analysis decision was made to a policy violation affecting a project");
         });
+
+        final var runRequestCaptor = ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
+        verify(DEX_ENGINE_MOCK).createRun(runRequestCaptor.capture());
+        assertThat(runRequestCaptor.getValue().workflowName()).isEqualTo(UpdateProjectMetricsWorkflow.NAME);
+        assertThat(runRequestCaptor.getValue().workflowInstanceId())
+                .isEqualTo(UpdateProjectMetricsWorkflow.instanceId(project.getUuid()));
     }
 
     @Test

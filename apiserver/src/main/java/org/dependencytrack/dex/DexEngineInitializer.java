@@ -46,6 +46,7 @@ import org.dependencytrack.metrics.FetchProjectMetricsUpdateCandidatesActivity;
 import org.dependencytrack.metrics.RefreshGlobalPortfolioMetricsActivity;
 import org.dependencytrack.metrics.RefreshVulnerabilityMetricsActivity;
 import org.dependencytrack.metrics.UpdatePortfolioMetricsWorkflow;
+import org.dependencytrack.metrics.UpdateProjectMetricsWorkflow;
 import org.dependencytrack.metrics.UpdateProjectMetricsActivity;
 import org.dependencytrack.notification.ProcessScheduledNotificationRuleActivity;
 import org.dependencytrack.notification.ProcessScheduledNotificationsWorkflow;
@@ -223,6 +224,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
                 new UpdatePortfolioMetricsWorkflow(), voidConverter(), voidConverter(), Duration.ofMinutes(1));
+        engine.registerWorkflow(
+                new UpdateProjectMetricsWorkflow(),
+                protoConverter(UpdateProjectMetricsArg.class),
+                voidConverter(),
+                Duration.ofMinutes(1));
         engine.registerWorkflow(
                 new VulnAnalysisWorkflow(),
                 protoConverter(VulnAnalysisWorkflowArg.class),

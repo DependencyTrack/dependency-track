@@ -912,7 +912,7 @@ public class ComponentResourceTest extends ResourceTest {
         component.setLicense("License A");
         qm.createComponent(component, false);
         useJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class).replaceAll(component));
-        assertThat(getLicenseRowIds(component.getId())).hasSize(1);
+        assertThat(getLicenseRowVersions(component.getId())).hasSize(1);
 
         final var jsonComponent = new Component();
         jsonComponent.setUuid(component.getUuid());
@@ -926,7 +926,7 @@ public class ComponentResourceTest extends ResourceTest {
                 .post(Entity.entity(jsonComponent, MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(200);
 
-        assertThat(getLicenseRowIds(component.getId())).isEmpty();
+        assertThat(getLicenseRowVersions(component.getId())).isEmpty();
     }
 
     @Test
@@ -941,7 +941,7 @@ public class ComponentResourceTest extends ResourceTest {
         component.setLicense("License A");
         qm.createComponent(component, false);
         useJdbiHandle(handle -> handle.attach(ComponentLicenseDao.class).replaceAll(component));
-        final List<Long> licenseRowIdsBefore = getLicenseRowIds(component.getId());
+        final List<String> licenseRowVersionsBefore = getLicenseRowVersions(component.getId());
 
         final var jsonComponent = new Component();
         jsonComponent.setUuid(component.getUuid());
@@ -957,8 +957,8 @@ public class ComponentResourceTest extends ResourceTest {
                 .post(Entity.entity(jsonComponent, MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(200);
 
-        assertThat(licenseRowIdsBefore).hasSize(1);
-        assertThat(getLicenseRowIds(component.getId())).isEqualTo(licenseRowIdsBefore);
+        assertThat(licenseRowVersionsBefore).hasSize(1);
+        assertThat(getLicenseRowVersions(component.getId())).isEqualTo(licenseRowVersionsBefore);
     }
 
     @Test
@@ -1978,15 +1978,15 @@ public class ComponentResourceTest extends ResourceTest {
         return project;
     }
 
-    private static List<Long> getLicenseRowIds(long componentId) {
+    private static List<String> getLicenseRowVersions(long componentId) {
         return withJdbiHandle(handle -> handle.createQuery("""
-                        SELECT "ID"
+                        SELECT CAST(xmin AS TEXT)
                           FROM "COMPONENTLICENSES"
                          WHERE "COMPONENT_ID" = :componentId
-                         ORDER BY "ID"
+                         ORDER BY "ORDINALITY"
                         """)
                 .bind("componentId", componentId)
-                .mapTo(Long.class)
+                .mapTo(String.class)
                 .list());
     }
 }

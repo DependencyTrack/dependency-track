@@ -142,7 +142,6 @@ public interface ComponentLicenseDao extends SqlObject {
                      WHERE cl."COMPONENT_ID" = ANY(:componentIds)
                      ORDER BY cl."COMPONENT_ID"
                             , cl."ORDINALITY"
-                            , cl."ID"
                     """)
                 .bindArray("componentIds", Long.class, componentIds)
                 .reduceResultSet(new HashMap<>(), (result, rs, _) -> {
@@ -192,7 +191,6 @@ public interface ComponentLicenseDao extends SqlObject {
                      WHERE cl."COMPONENT_ID" = ANY(:componentIds)
                      ORDER BY cl."COMPONENT_ID"
                             , cl."ORDINALITY"
-                            , cl."ID"
                     """)
                 .bindArray("componentIds", Long.class, componentIds)
                 .map((rs, _) -> new ComponentLicenseExportRow(

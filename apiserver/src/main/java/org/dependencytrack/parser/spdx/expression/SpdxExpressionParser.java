@@ -37,6 +37,9 @@ import java.util.regex.Pattern;
  */
 public final class SpdxExpressionParser {
 
+    static final int MAX_EXPRESSION_LENGTH = 2_048;
+    static final int MAX_NESTING_DEPTH = 32;
+
     private static final SpdxExpressionParser INSTANCE = new SpdxExpressionParser();
     private static final Pattern TOKEN_PATTERN = Pattern.compile("[()]|[^\\s()]+");
 
@@ -56,6 +59,10 @@ public final class SpdxExpressionParser {
     public SpdxExpression parse(String expression) {
         if (expression == null || expression.isBlank()) {
             throw new SpdxExpressionParseException("Expression must not be null or blank");
+        }
+        if (expression.length() > MAX_EXPRESSION_LENGTH) {
+            throw new SpdxExpressionParseException(
+                    "Expression exceeds the maximum length of %d characters".formatted(MAX_EXPRESSION_LENGTH));
         }
 
         final var cursor = new TokenCursor(tokenize(expression));
@@ -191,8 +198,10 @@ public final class SpdxExpressionParser {
         }
 
         if (token == Grouping.LEFT_PAREN) {
+            cursor.enterGroup();
             final SpdxExpression expr = parseOrExpression(cursor);
             cursor.expect(Grouping.RIGHT_PAREN);
+            cursor.exitGroup();
             return expr;
         }
 
@@ -203,9 +212,21 @@ public final class SpdxExpressionParser {
 
         private final List<SpdxExpressionToken> tokens;
         private int position;
+        private int depth;
 
         private TokenCursor(List<SpdxExpressionToken> tokens) {
             this.tokens = tokens;
+        }
+
+        private void enterGroup() {
+            if (++depth > MAX_NESTING_DEPTH) {
+                throw new SpdxExpressionParseException(
+                        "Expression exceeds the maximum nesting depth of %d".formatted(MAX_NESTING_DEPTH));
+            }
+        }
+
+        private void exitGroup() {
+            depth--;
         }
 
         private boolean hasNext() {

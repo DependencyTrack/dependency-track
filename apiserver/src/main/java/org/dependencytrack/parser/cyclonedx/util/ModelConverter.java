@@ -101,6 +101,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNullElse;
+import static org.apache.commons.lang3.StringUtils.abbreviate;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
@@ -336,7 +337,7 @@ public class ModelConverter {
                                     Encountered invalid license expression "{}" for \
                                     Component{group={}, name={}, version={}, bomRef={}}; Skipping\
                                     """,
-                            licenseExpression,
+                            abbreviate(licenseExpression, 100),
                             component.getGroup(),
                             component.getName(),
                             component.getVersion(),

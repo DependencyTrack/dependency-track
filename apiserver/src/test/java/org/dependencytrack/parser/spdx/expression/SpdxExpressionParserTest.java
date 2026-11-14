@@ -112,6 +112,34 @@ class SpdxExpressionParserTest {
     }
 
     @Test
+    void shouldAcceptExpressionAtMaxLength() {
+        var exp = SpdxExpressionParser.getInstance().parse("a".repeat(SpdxExpressionParser.MAX_EXPRESSION_LENGTH));
+        assertThat(exp).isInstanceOf(SpdxExpression.Identifier.class);
+    }
+
+    @Test
+    void shouldRejectExpressionExceedingMaxLength() {
+        assertThatExceptionOfType(SpdxExpressionParseException.class)
+                .isThrownBy(() -> SpdxExpressionParser.getInstance()
+                        .parse("a".repeat(SpdxExpressionParser.MAX_EXPRESSION_LENGTH + 1)));
+    }
+
+    @Test
+    void shouldAcceptExpressionAtMaxNestingDepth() {
+        final int depth = SpdxExpressionParser.MAX_NESTING_DEPTH;
+        var exp = SpdxExpressionParser.getInstance().parse("(".repeat(depth) + "MIT" + ")".repeat(depth));
+        assertThat(exp).hasToString("MIT");
+    }
+
+    @Test
+    void shouldRejectExpressionExceedingMaxNestingDepth() {
+        final int depth = SpdxExpressionParser.MAX_NESTING_DEPTH + 1;
+        assertThatExceptionOfType(SpdxExpressionParseException.class)
+                .isThrownBy(
+                        () -> SpdxExpressionParser.getInstance().parse("(".repeat(depth) + "MIT" + ")".repeat(depth)));
+    }
+
+    @Test
     void shouldReturnNullFromTryParseOnInvalidInput() {
         assertThat(SpdxExpressionParser.getInstance().tryParse("MIT OR")).isNull();
         assertThat(SpdxExpressionParser.getInstance().tryParse(null)).isNull();

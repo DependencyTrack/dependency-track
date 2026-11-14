@@ -342,9 +342,15 @@ final class ModelConverter {
 
         List<VulnerabilityRating> ratings = new ArrayList<>();
 
+        // Keep Primary metrics first because downstream selection preserves input order when rating priorities tie.
+
         // CVSS V2
         List<CvssV2> baseMetricV2 = metrics.getCvssMetricV2();
         if (baseMetricV2 != null) {
+            baseMetricV2 = baseMetricV2.stream()
+                    .sorted(java.util.Comparator.comparingInt(
+                            metric -> metric.getType() == CvssV2.Type.PRIMARY ? 0 : 1))
+                    .toList();
             baseMetricV2.forEach(baseMetric -> {
                 CvssV2Data cvss = baseMetric.getCvssData();
                 Optional.ofNullable(cvss)
@@ -363,6 +369,10 @@ final class ModelConverter {
         // CVSS V30
         List<CvssV3> baseMetricV3 = metrics.getCvssMetricV30();
         if (baseMetricV3 != null) {
+            baseMetricV3 = baseMetricV3.stream()
+                    .sorted(java.util.Comparator.comparingInt(
+                            metric -> metric.getType() == CvssV3.Type.PRIMARY ? 0 : 1))
+                    .toList();
             baseMetricV3.forEach(baseMetric -> {
                 CvssV3Data cvss = baseMetric.getCvssData();
                 Optional.ofNullable(cvss)
@@ -381,6 +391,10 @@ final class ModelConverter {
         // CVSS V31
         List<CvssV3> baseMetricV31 = metrics.getCvssMetricV31();
         if (baseMetricV31 != null) {
+            baseMetricV31 = baseMetricV31.stream()
+                    .sorted(java.util.Comparator.comparingInt(
+                            metric -> metric.getType() == CvssV3.Type.PRIMARY ? 0 : 1))
+                    .toList();
             baseMetricV31.forEach(baseMetric -> {
                 CvssV3Data cvss = baseMetric.getCvssData();
                 Optional.ofNullable(cvss)
@@ -399,6 +413,10 @@ final class ModelConverter {
         // CVSS V4
         List<CvssV4> baseMetricV4 = metrics.getCvssMetricV40();
         if (baseMetricV4 != null) {
+            baseMetricV4 = baseMetricV4.stream()
+                    .sorted(java.util.Comparator.comparingInt(
+                            metric -> metric.getType() == CvssV4.Type.PRIMARY ? 0 : 1))
+                    .toList();
             baseMetricV4.forEach(baseMetric -> {
                 CvssV4Data cvss = baseMetric.getCvssData();
                 Optional.ofNullable(cvss)

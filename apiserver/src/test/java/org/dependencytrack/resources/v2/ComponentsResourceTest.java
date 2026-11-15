@@ -23,12 +23,15 @@ import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.pagination.Page.TotalCount;
+import org.dependencytrack.common.pagination.SimplePageTokenEncoder;
 import org.dependencytrack.metrics.DependencyMetrics;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scope;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
+import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
@@ -307,6 +310,83 @@ public class ComponentsResourceTest extends ResourceTest {
             pageToken = responseJson.getString("next_page_token", null);
         } while (pageToken != null);
         return names;
+    }
+
+    @Test
+    public void listComponentsAboveExactCountThresholdPaginationTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme", null, "1.0", null, null, null, null, false);
+        project.addAccessTeam(team);
+
+        // More matches than the bounded count's threshold of 10,000, so the count is not exact
+        // and matches are not materialized.
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "COMPONENT" ("NAME", "VERSION", "PROJECT_ID", "UUID")
+                        SELECT 'component-' || LPAD(i::TEXT, 5, '0'), '1.0', :projectId, GEN_RANDOM_UUID()
+                          FROM GENERATE_SERIES(1, 10010) AS i
+                        """)
+                .bind("projectId", project.getId())
+                .execute());
+
+        final JsonObject firstPage = getComponentsPage(null);
+        assertThat(componentNames(firstPage)).containsExactly("component-00001", "component-00002", "component-00003");
+        assertThatJson(firstPage.getJsonObject("total").toString()).isEqualTo(/* language=JSON */ """
+                {
+                  "count": 10000,
+                  "type": "AT_LEAST"
+                }
+                """);
+
+        final String nextPageToken = firstPage.getString("next_page_token");
+        final JsonObject secondPage = getComponentsPage(nextPageToken);
+        assertThat(componentNames(secondPage)).containsExactly("component-00004", "component-00005", "component-00006");
+        assertThatJson(secondPage.getJsonObject("total").toString()).isEqualTo(/* language=JSON */ """
+                {
+                  "count": 10000,
+                  "type": "AT_LEAST"
+                }
+                """);
+
+        // Page tokens are client-controlled. One that claims an exact count must still yield the
+        // correct next page, and its count is returned as-is to keep the total stable across pages.
+        final var pageTokenEncoder = new SimplePageTokenEncoder();
+        final ListComponentsQuery.PageToken decodedToken =
+                pageTokenEncoder.decode(nextPageToken, ListComponentsQuery.PageToken.class);
+        final String forgedPageToken = pageTokenEncoder.encode(new ListComponentsQuery.PageToken(
+                decodedToken.lastId(),
+                decodedToken.lastName(),
+                decodedToken.lastGroup(),
+                decodedToken.lastRiskScore(),
+                decodedToken.sortBy(),
+                decodedToken.sortDirection(),
+                new TotalCount(0, TotalCount.Type.EXACT)));
+
+        final JsonObject forgedSecondPage = getComponentsPage(forgedPageToken);
+        assertThat(componentNames(forgedSecondPage))
+                .containsExactly("component-00004", "component-00005", "component-00006");
+        assertThatJson(forgedSecondPage.getJsonObject("total").toString()).isEqualTo(/* language=JSON */ """
+                {
+                  "count": 0,
+                  "type": "EXACT"
+                }
+                """);
+    }
+
+    private JsonObject getComponentsPage(final String pageToken) {
+        var target = jersey.target("/components").queryParam("limit", 3);
+        if (pageToken != null) {
+            target = target.queryParam("page_token", pageToken);
+        }
+        final Response response = target.request().header(X_API_KEY, apiKey).get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        return parseJsonObject(response);
+    }
+
+    private static List<String> componentNames(final JsonObject page) {
+        return page.getJsonArray("items").getValuesAs(JsonObject.class).stream()
+                .map(item -> item.getString("name"))
+                .toList();
     }
 
     @Test

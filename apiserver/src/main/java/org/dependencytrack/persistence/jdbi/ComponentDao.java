@@ -35,13 +35,13 @@ import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
-import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMap;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.customizer.DefineNamedBindings;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -54,18 +54,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 
 public interface ComponentDao extends SqlObject, PaginationSupport {
-
-    /// Largest planner-estimated match count for which [#listComponents(ListComponentsQuery)]
-    /// collects all matches before sorting. That path's cost grows linearly with the match count
-    /// (roughly 1 s per 100k matches), so this caps it at about 2 s when the estimate is accurate.
-    /// Above it, matches are dense enough that walking the sort-order index fills a page sooner.
-    long LIST_COMPONENTS_MATERIALIZE_MAX_ESTIMATED_MATCHES = 200_000;
 
     @SqlUpdate("""
             DELETE
@@ -428,14 +420,30 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             queryParams.put("componentHash", query.hashValue());
         }
 
-        final boolean materializeMatches = shouldMaterializeMatches(whereConditions, queryParams);
+        // Postgres plans the sorted, limited query assuming matches are spread evenly across the sort order,
+        // so few matches that sort late make it walk most of the table. Collecting all matches before sorting
+        // avoids that, but only pays off when matches can be found without such a walk:
+        //   - An exact count means there are at most 10,000 matches, which are cheap to collect.
+        //   - A name, group or version filter of at least 3 characters can use the trigram index
+        //     COMPONENT_COORDINATES_SEARCH_IDX. Dense terms get slower, but rare ones no longer time out.
+        // Otherwise matches are likely dense, and walking the sort-order index fills a page sooner.
+        final boolean hasTrigramSearchableFilter = isTrigramSearchable(query.nameContains())
+                || isTrigramSearchable(query.groupContains())
+                || isTrigramSearchable(query.versionContains());
 
         final TotalCount totalCount;
+        final boolean materializeMatches;
         final ListComponentsQuery.SortBy effectiveSortBy;
         final SortDirection effectiveSortDirection;
 
         if (decodedPageToken != null) {
             totalCount = decodedPageToken.totalCount();
+            // Page tokens are client-controlled, so an exact count claimed by one is verified
+            // before it can make us collect all visible components. The token's count is still
+            // returned, so the total stays stable across pages.
+            materializeMatches = hasTrigramSearchableFilter
+                    || (isExact(totalCount)
+                            && isExact(getListComponentsTotalCount(query, whereConditions, queryParams)));
             effectiveSortBy =
                     decodedPageToken.sortBy() != null ? decodedPageToken.sortBy() : ListComponentsQuery.SortBy.NAME;
             effectiveSortDirection = decodedPageToken.sortDirection();
@@ -447,18 +455,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                         case LAST_RISKSCORE -> decodedPageToken.lastRiskScore();
                     });
         } else {
-            final String projectJoin = (query.projectActive() != null || query.projectIsLatest() != null)
-                    ? "INNER JOIN \"PROJECT\" ON \"C\".\"PROJECT_ID\" = \"PROJECT\".\"ID\""
-                    : "";
-            totalCount = getBoundedTotalCountWithProjectAcl(
-                    """
-                            FROM "COMPONENT" "C"
-                            %s
-                            WHERE %s
-                            """.formatted(projectJoin, String.join(" AND ", whereConditions)),
-                    queryParams,
-                    10000,
-                    "\"C\".\"PROJECT_ID\"");
+            totalCount = getListComponentsTotalCount(query, whereConditions, queryParams);
+            materializeMatches = hasTrigramSearchableFilter || isExact(totalCount);
             effectiveSortBy = query.sortBy() != null ? query.sortBy() : ListComponentsQuery.SortBy.NAME;
             effectiveSortDirection = query.sortDirection() != null ? query.sortDirection() : SortDirection.ASC;
         }
@@ -500,34 +498,30 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         return new Page<>(components, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
 
-    /// Postgres plans the sorted, limited query assuming matches are spread evenly across the sort order,
-    /// so few matches that sort late make it walk most of the table.
-    private boolean shouldMaterializeMatches(ArrayList<String> whereConditions, Map<String, Object> queryParams) {
-        final List<String> plan = explainListComponents(whereConditions, queryParams);
-        if (plan.isEmpty()) {
-            return false;
-        }
-
-        final Matcher rowsMatcher = Pattern.compile("rows=(\\d+)").matcher(plan.getFirst());
-        return rowsMatcher.find()
-                && Long.parseLong(rowsMatcher.group(1)) <= LIST_COMPONENTS_MATERIALIZE_MAX_ESTIMATED_MATCHES;
+    /// Counts matches up to 10,000. Beyond that, the count is [TotalCount.Type#AT_LEAST].
+    private TotalCount getListComponentsTotalCount(
+            ListComponentsQuery query, ArrayList<String> whereConditions, Map<String, Object> queryParams) {
+        final String projectJoin = (query.projectActive() != null || query.projectIsLatest() != null)
+                ? "INNER JOIN \"PROJECT\" ON \"C\".\"PROJECT_ID\" = \"PROJECT\".\"ID\""
+                : "";
+        return getBoundedTotalCountWithProjectAcl(
+                """
+                        FROM "COMPONENT" "C"
+                        %s
+                        WHERE %s
+                        """.formatted(projectJoin, String.join(" AND ", whereConditions)),
+                queryParams,
+                10000,
+                "\"C\".\"PROJECT_ID\"");
     }
 
-    @SqlQuery(/* language=InjectedFreeMarker */ """
-            <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
-            <#-- @ftlvariable name="whereConditions" type="java.util.Collection<String>" -->
-            EXPLAIN
-            SELECT 1
-              FROM "COMPONENT" "C"
-             INNER JOIN "PROJECT" ON "C"."PROJECT_ID" = "PROJECT"."ID"
-             WHERE ${apiProjectAclCondition}
-               AND ${whereConditions?join(" AND ")}
-            """)
-    @AllowUnusedBindings
-    @DefineNamedBindings
-    @DefineApiProjectAclCondition(projectIdColumn = "\"C\".\"PROJECT_ID\"")
-    List<String> explainListComponents(
-            @Define ArrayList<String> whereConditions, @BindMap Map<String, Object> queryParams);
+    private static boolean isExact(TotalCount totalCount) {
+        return totalCount.type() == TotalCount.Type.EXACT;
+    }
+
+    private static boolean isTrigramSearchable(@Nullable String searchTerm) {
+        return searchTerm != null && searchTerm.length() >= 3;
+    }
 
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->

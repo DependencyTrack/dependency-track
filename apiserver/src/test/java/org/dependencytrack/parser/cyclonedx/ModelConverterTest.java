@@ -110,6 +110,69 @@ class ModelConverterTest extends PersistenceCapableTest {
         assertThat(result.getFirst().getId()).isEqualTo("INT-001");
     }
 
+    @Test
+    void shouldIncludeKevPropertyWhenVulnerabilityIsKev() {
+        final Project project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("CVE-2021-44228");
+        vulnerability.setSource(Vulnerability.Source.NVD);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        vulnerability = qm.createVulnerability(vulnerability);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("log4j-core");
+        component.setVersion("2.14.1");
+        component = qm.createComponent(component, false);
+        qm.addVulnerability(vulnerability, component, "nvd");
+
+        withJdbiHandle(handle -> {
+            handle.createUpdate("""
+                    INSERT INTO "KEV_ASSERTION" ("ASSERTER", "VULN_SOURCE", "VULN_ID")
+                    VALUES ('cisa-kev', 'NVD', 'CVE-2021-44228')
+                    """).execute();
+            return null;
+        });
+
+        final List<Finding> findings =
+                withJdbiHandle(handle -> handle.attach(FindingDao.class).getFindings(project.getId(), true));
+
+        final List<org.cyclonedx.model.vulnerability.Vulnerability> result =
+                ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, project, findings);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getProperties()).satisfiesExactly(prop -> {
+            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:is-kev");
+            assertThat(prop.getValue()).isEqualTo("true");
+        });
+    }
+
+    @Test
+    void shouldNotIncludeKevPropertyWhenVulnerabilityIsNotKev() {
+        final Project project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("INT-001");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.HIGH);
+        vulnerability = qm.createVulnerability(vulnerability);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        component = qm.createComponent(component, false);
+        qm.addVulnerability(vulnerability, component, "internal");
+
+        final List<Finding> findings =
+                withJdbiHandle(handle -> handle.attach(FindingDao.class).getFindings(project.getId(), true));
+
+        final List<org.cyclonedx.model.vulnerability.Vulnerability> result =
+                ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, project, findings);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getProperties()).isNullOrEmpty();
+    }
+
     @Nested
     class HashConversionTest {
 

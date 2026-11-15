@@ -1141,7 +1141,8 @@ public class ModelConverter {
     private static org.cyclonedx.model.vulnerability.Vulnerability convert(
             Vulnerability vulnerability,
             FindingAnalysisDao.Analysis analysis,
-            SortedSet<String> affectedComponentUuids) {
+            SortedSet<String> affectedComponentUuids,
+            boolean kev) {
         // NB: No bom-ref. It is optional, nothing references a vulnerability entry,
         // and one vulnerability may yield several entries, which historically made the vulnerability
         // UUID a source of duplicate bom-refs. CycloneDX requires every bom-ref to be unique within the BOM.
@@ -1272,6 +1273,13 @@ public class ModelConverter {
             }
             cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.details()));
             cdxVulnerability.setAnalysis(cdxAnalysis);
+        }
+
+        if (kev) {
+            final var kevProperty = new Property();
+            kevProperty.setName("dependency-track:vuln:is-kev");
+            kevProperty.setValue("true");
+            cdxVulnerability.setProperties(List.of(kevProperty));
         }
 
         return cdxVulnerability;
@@ -1534,7 +1542,10 @@ public class ModelConverter {
                 continue;
             }
 
-            resolvedFindings.add(new ResolvedFinding(component, vulnerability));
+            resolvedFindings.add(new ResolvedFinding(
+                    component,
+                    vulnerability,
+                    Boolean.TRUE.equals(finding.getVulnerability().get("isKev"))));
         }
 
         final Map<FindingKey, FindingAnalysisDao.Analysis> analysisByFindingKey =
@@ -1551,17 +1562,22 @@ public class ModelConverter {
 
             groups.computeIfAbsent(
                             VulnerabilityGroupKey.of(vulnerability, analysis),
-                            ignored -> new VulnerabilityGroup(vulnerability, analysis, new TreeSet<>()))
+                            ignored -> new VulnerabilityGroup(
+                                    vulnerability,
+                                    analysis,
+                                    new TreeSet<>(),
+                                    resolvedFinding.kev()))
                     .affectedComponentUuids()
                     .add(component.getUuid().toString());
         }
 
         return groups.values().stream()
-                .map(group -> convert(group.vulnerability(), group.analysis(), group.affectedComponentUuids()))
+                .map(group ->
+                        convert(group.vulnerability(), group.analysis(), group.affectedComponentUuids(), group.kev()))
                 .toList();
     }
 
-    private record ResolvedFinding(Component component, Vulnerability vulnerability) {}
+    private record ResolvedFinding(Component component, Vulnerability vulnerability, boolean kev) {}
 
     private static Map<FindingKey, FindingAnalysisDao.Analysis> getAnalyses(
             QueryManager qm, long projectId, List<ResolvedFinding> resolvedFindings) {
@@ -1578,7 +1594,8 @@ public class ModelConverter {
     private record VulnerabilityGroup(
             Vulnerability vulnerability,
             FindingAnalysisDao.Analysis analysis,
-            SortedSet<String> affectedComponentUuids) {}
+            SortedSet<String> affectedComponentUuids,
+            boolean kev) {}
 
     private record VulnerabilityGroupKey(
             UUID vulnerabilityUuid,

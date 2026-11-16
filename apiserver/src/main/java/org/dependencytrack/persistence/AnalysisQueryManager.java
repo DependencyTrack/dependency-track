@@ -21,6 +21,7 @@ package org.dependencytrack.persistence;
 import alpine.model.auth.ApiKeyPrincipal;
 import alpine.model.auth.UserPrincipal;
 import alpine.resources.AlpineRequest;
+import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
@@ -41,6 +42,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.dependencytrack.notification.api.NotificationFactory.createVulnerabilityAnalysisDecisionChangeNotification;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.AnalysisCommentFormatter.formatComment;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
@@ -151,6 +153,17 @@ public class AnalysisQueryManager extends QueryManager {
             }
 
             createAnalysisComments(analysis, command.commenter(), comments);
+
+            if (suppressionChanged) {
+                // Suppressing (or unsuppressing) a finding changes the vulnerability counts that
+                // feed into the project's metrics. Those are otherwise only recalculated once a day
+                // (see FetchProjectMetricsUpdateCandidatesActivity) or via an explicit manual refresh,
+                // so without this, the portfolio would show stale counts until the next scheduled run.
+                withJdbiHandle(
+                        this,
+                        handle -> handle.attach(MetricsDao.class)
+                                .updateProjectMetrics(analysis.getProject().getUuid()));
+            }
 
             if (!command.options().contains(MakeAnalysisCommand.Option.OMIT_NOTIFICATION)
                     && (stateChanged || suppressionChanged)) {

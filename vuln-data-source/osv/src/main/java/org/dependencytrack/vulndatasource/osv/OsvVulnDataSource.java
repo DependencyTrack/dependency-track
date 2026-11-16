@@ -261,7 +261,8 @@ final class OsvVulnDataSource implements VulnDataSource {
         return new IncrementalOsvAdvisorySource(httpClient, objectMapper, dataUrl, ecosystem, modifiedAdvisoryIds);
     }
 
-    private ZipOsvAdvisorySource downloadFullArchive(String ecosystem, @Nullable Set<String> modifiedAdvisoryIds) {
+    private @Nullable OsvAdvisorySource downloadFullArchive(
+            String ecosystem, @Nullable Set<String> modifiedAdvisoryIds) {
         LOGGER.info("Downloading all advisories for ecosystem {} from upstream", ecosystem);
 
         final Path tempZipPath;
@@ -286,6 +287,23 @@ final class OsvVulnDataSource implements VulnDataSource {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Interrupted while downloading advisory archive", e);
             }
+
+            if (response.statusCode() == 404) {
+                // NB: Some ecosystems never get their own archive, e.g. versioned ecosystems
+                // such as "Alpine:v3.18" are folded into the unprefixed "Alpine" archive upstream.
+                // Treat a missing archive as "nothing to mirror" instead of aborting the whole run.
+                LOGGER.warn(
+                        "No advisory archive found for ecosystem {} (GET {} responded with 404); skipping this ecosystem",
+                        ecosystem,
+                        request.uri());
+                try {
+                    Files.deleteIfExists(tempZipPath);
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to delete temporary file {}", tempZipPath, e);
+                }
+                return null;
+            }
+
             if (response.statusCode() != 200) {
                 throw new IllegalStateException(
                         "Failed to download advisory archive for ecosystem %s: GET %s responded with status code %d"

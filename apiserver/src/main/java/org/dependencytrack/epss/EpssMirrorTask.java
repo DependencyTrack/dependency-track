@@ -53,6 +53,7 @@ public final class EpssMirrorTask implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(EpssMirrorTask.class);
     private static final int BATCH_SIZE = 1000;
     private static final Duration HEARTBEAT_LOG_INTERVAL = Duration.ofSeconds(30);
+    private static final Duration FEED_REQUEST_TIMEOUT = Duration.ofMinutes(10);
 
     private final HttpClient httpClient;
 
@@ -88,19 +89,34 @@ public final class EpssMirrorTask implements Runnable {
 
         final var request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl.replaceAll("/+$", "") + "/epss_scores-current.csv.gz"))
+                .timeout(FEED_REQUEST_TIMEOUT)
                 .GET()
                 .build();
         try {
+            // NB: BodyHandlers.ofFile writes the response body to the file regardless of
+            // the status code, i.e. error responses end up in the file as well.
             final HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
             if (response.statusCode() != 200) {
                 throw new IllegalStateException("Unexpected response code: " + response.statusCode());
             }
         } catch (InterruptedException e) {
+            tryDelete(tempFile);
             Thread.currentThread().interrupt();
             throw new IOException("Download interrupted", e);
+        } catch (IOException | RuntimeException e) {
+            tryDelete(tempFile);
+            throw e;
         }
 
         return tempFile;
+    }
+
+    private static void tryDelete(final Path filePath) {
+        try {
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete temp file {}", filePath, e);
+        }
     }
 
     private int processFeedFile(final Path feedFilePath) throws IOException {

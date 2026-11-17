@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 record EnisaKevEntry(
@@ -34,4 +35,4 @@ record EnisaKevEntry(
         LocalDate dateReported,
 
         String shortDescription,
-        String exploitationType) {}
+        List<String> exploitationType) {}

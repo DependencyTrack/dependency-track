@@ -72,8 +72,7 @@ public final class EnisaKevDataSourceFactory implements KevDataSourceFactory, Ru
     public RuntimeConfigSpec runtimeConfigSpec() {
         final var defaultConfig = new EnisaKevDataSourceConfigV1()
                 .withEnabled(true)
-                .withFeedUrl(
-                        URI.create("https://raw.githubusercontent.com/enisaeu/CNW/main/advisories/eukev/eukev.json"));
+                .withFeedUrl(URI.create("https://raw.githubusercontent.com/enisaeu/CNW/main/eukev/eukev.json"));
 
         return RuntimeConfigSpec.of(defaultConfig, config -> {
             if (!config.isEnabled()) {

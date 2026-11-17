@@ -63,8 +63,7 @@ class EnisaKevDataSourceFactoryTest
 
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.getFeedUrl())
-                .isEqualTo(
-                        URI.create("https://raw.githubusercontent.com/enisaeu/CNW/main/advisories/eukev/eukev.json"));
+                .isEqualTo(URI.create("https://raw.githubusercontent.com/enisaeu/CNW/main/eukev/eukev.json"));
     }
 
     @Test

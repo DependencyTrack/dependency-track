@@ -187,7 +187,7 @@ public class OidcAuthenticationService implements AuthenticationService<OidcUser
         }
 
         try (final var qm = new AlpineQueryManager()) {
-            OidcUser user = qm.getOidcUser(profile.getUsername());
+            OidcUser user = findUser(qm, profile);
             if (user != null) {
                 LOGGER.debug("Attempting to authenticate user: {}", user.getUsername());
                 if (user.getSubjectIdentifier() == null) {
@@ -196,9 +196,6 @@ public class OidcAuthenticationService implements AuthenticationService<OidcUser
                     user.setEmail(profile.getEmail());
 
                     return customizer.onAuthenticationSuccess(qm.updateOidcUser(user), profile, idToken, accessToken);
-                } else if (!user.getSubjectIdentifier().equals(profile.getSubject())) {
-                    LOGGER.error("Refusing to authenticate user {}: subject identifier has changed ({} to {})", user.getUsername(), user.getSubjectIdentifier(), profile.getSubject());
-                    throw new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.INVALID_CREDENTIALS);
                 }
 
                 if (!Objects.equals(user.getEmail(), profile.getEmail())) {
@@ -224,6 +221,58 @@ public class OidcAuthenticationService implements AuthenticationService<OidcUser
                 throw new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT);
             }
         }
+    }
+
+    /**
+     * Finds the user a profile belongs to.
+     * <p>
+     * A user who authenticated before is found by its subject identifier which was stored at that time after its
+     * successful OIDC login. The username (or other configured attribute to find an existing users with no previous
+     * successful logon) only finds a user who has no subject identifier yet. This way a user remains the same user when
+     * the identity provider changes the username.
+     * <p>
+     * The OpenID Connect Core standard in section 5.7 recommends implementing it this way; Not using attributes like
+     * email for this but using the sub instead.
+     *
+     * @return The user, or {@code null} when the profile belongs to no user yet
+     * @throws AlpineAuthenticationException When the profile cannot be attributed to exactly one user
+     */
+    private OidcUser findUser(final AlpineQueryManager qm, final OidcProfile profile) throws AlpineAuthenticationException {
+        List<OidcUser> linkedUsers = List.of();
+        if (profile.getSubject() != null) {
+            linkedUsers = qm.getOidcUsersBySubjectIdentifier(profile.getSubject());
+        }
+
+        if (linkedUsers.size() == 1) {
+            LOGGER.debug("The user ({}) was found based on its existing subject identifier ({})",
+                profile.getUsername(),
+                profile.getSubject());
+            return linkedUsers.getFirst();
+        }
+
+        if (linkedUsers.size() > 1) {
+            LOGGER.warn(
+                    "Refusing to authenticate user {}: subject identifier {} belongs to multiple users",
+                    profile.getUsername(),
+                    profile.getSubject());
+            throw new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.INVALID_CREDENTIALS);
+        }
+
+        // No user is linked to the subject identifier of this login, so we fell back to the username.
+        // If the user with that username is already linked to another subject identifier, the username
+        // belongs to someone else (it was reassigned, or the user was recreated at the identity provider).
+        // We must not hand that account over.
+        final OidcUser user = qm.getOidcUser(profile.getUsername());
+        if (user != null && user.getSubjectIdentifier() != null) {
+            LOGGER.error(
+                    "Refusing to authenticate user {}: username belongs to subject identifier {}, not to {}",
+                    user.getUsername(),
+                    user.getSubjectIdentifier(),
+                    profile.getSubject());
+            throw new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.INVALID_CREDENTIALS);
+        }
+
+        return user;
     }
 
     private OidcUser autoProvision(final AlpineQueryManager qm, final OidcProfile profile) {

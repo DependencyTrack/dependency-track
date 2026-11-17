@@ -78,7 +78,7 @@ final class EnisaKevDataSource extends AbstractJsonFeedKevDataSource {
                 // Requested clarification at https://github.com/enisaeu/CNW/issues/57
                 entry.dateReported().atStartOfDay(ZoneOffset.UTC).toInstant(),
                 /* requiredAction */ null,
-                "ransomware".equalsIgnoreCase(entry.exploitationType()) ? true : null,
+                entry.exploitationType().stream().anyMatch("ransomware"::equalsIgnoreCase) ? true : null,
                 entry.shortDescription(),
                 entryNode);
     }

@@ -19,6 +19,8 @@
 package org.dependencytrack.resources.v2;
 
 import alpine.server.auth.PermissionRequired;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +30,7 @@ import org.dependencytrack.api.v2.model.ListComponentsResponse;
 import org.dependencytrack.api.v2.model.ListComponentsResponseItem;
 import org.dependencytrack.api.v2.model.ProjectState;
 import org.dependencytrack.api.v2.model.SortDirection;
+import org.dependencytrack.api.v2.model.UpdateComponentRequest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.exception.InvalidSortFieldException;
@@ -38,6 +41,7 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.ComponentLicenseConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
@@ -54,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
+import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
@@ -73,6 +78,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.map;
@@ -92,6 +98,13 @@ public class ComponentsResource extends AbstractApiResource implements Component
 
     @Context
     private UriInfo uriInfo;
+
+    private final ObjectMapper objectMapper;
+
+    @Inject
+    ComponentsResource(final ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE})
@@ -123,6 +136,23 @@ public class ComponentsResource extends AbstractApiResource implements Component
             }
             throw e;
         }
+    }
+
+    @Override
+    @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE})
+    public Response updateComponent(final UUID uuid, final UpdateComponentRequest request) {
+        return inJdbiTransaction(getAlpineRequest(), handle -> {
+            requireComponentAccess(handle, uuid);
+            ComponentDao componentDao = handle.attach(ComponentDao.class);
+            final long componentId = componentDao.updateComponent(toComponentUpdate(uuid, request));
+
+            final List<ComponentDao.ComponentLicenseRow> licenseRows =
+                    ComponentLicenseConverter.buildComponentLicenseRows(componentId, request.getLicenses());
+            componentDao.replaceComponentLicenses(List.of(componentId), licenseRows);
+
+            LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Component updated: {}", request.getName());
+            return Response.ok().build();
+        });
     }
 
     @Override
@@ -383,5 +413,72 @@ public class ComponentsResource extends AbstractApiResource implements Component
                         .replaceComponentLicenses(List.of(component.getId()), licenseRows));
 
         return component;
+    }
+
+    private ComponentDao.ComponentUpdate toComponentUpdate(UUID uuid, UpdateComponentRequest request) {
+
+        ComponentDao.ComponentHashes hashes = request.getHashes() != null
+                ? new ComponentDao.ComponentHashes(
+                        StringUtils.trimToNull(request.getHashes().getMd5()),
+                        StringUtils.trimToNull(request.getHashes().getSha1()),
+                        StringUtils.trimToNull(request.getHashes().getSha256()),
+                        StringUtils.trimToNull(request.getHashes().getSha384()),
+                        StringUtils.trimToNull(request.getHashes().getSha512()),
+                        StringUtils.trimToNull(request.getHashes().getSha3256()),
+                        StringUtils.trimToNull(request.getHashes().getSha3384()),
+                        StringUtils.trimToNull(request.getHashes().getSha3512()),
+                        StringUtils.trimToNull(request.getHashes().getBlake2b256()),
+                        StringUtils.trimToNull(request.getHashes().getBlake2b384()),
+                        StringUtils.trimToNull(request.getHashes().getBlake2b512()),
+                        StringUtils.trimToNull(request.getHashes().getBlake3()),
+                        StringUtils.trimToNull(request.getHashes().getStreebog256()),
+                        StringUtils.trimToNull(request.getHashes().getStreebog512()))
+                : new ComponentDao.ComponentHashes(
+                        null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+
+        PackageURL purl = null;
+        try {
+            purl = request.getPurl() != null ? new PackageURL(request.getPurl()) : null;
+        } catch (MalformedPackageURLException e) {
+            throw new BadRequestException("Invalid package URL: %s".formatted(request.getPurl()), e);
+        }
+        final PackageURL purlCoordinates = PurlUtil.silentPurlCoordinatesOnly(purl);
+
+        final var component = new Component();
+        component.setGroup(StringUtils.trimToNull(request.getGroup()));
+        component.setName(StringUtils.trimToNull(request.getName()));
+        boolean isInternal = new InternalComponentIdentifier().isInternal(component);
+
+        return new ComponentDao.ComponentUpdate(
+                uuid,
+                StringUtils.trimToNull(request.getName()),
+                StringUtils.trimToNull(request.getDescription()),
+                StringUtils.trimToNull(request.getGroup()),
+                StringUtils.trimToNull(request.getVersion()),
+                request.getClassifier() != null ? request.getClassifier().name() : null,
+                StringUtils.trimToNull(request.getFilename()),
+                StringUtils.trimToNull(request.getExtension()),
+                hashes,
+                StringUtils.trimToNull(request.getCpe()),
+                StringUtils.trimToNull(request.getPublisher()),
+                serializeJson(request.getSupplier()),
+                serializeJson(request.getAuthors()),
+                purl != null ? purl.canonicalize() : null,
+                purlCoordinates != null ? purlCoordinates.canonicalize() : null,
+                StringUtils.trimToNull(request.getSwidTagId()),
+                isInternal,
+                StringUtils.trimToNull(request.getCopyright()),
+                StringUtils.trimToNull(request.getNotes()));
+    }
+
+    private String serializeJson(final Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize component metadata", e);
+        }
     }
 }

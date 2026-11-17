@@ -241,6 +241,8 @@ tags:
 paths:
   /components:
     $ref: "./resources/components/components.yaml"
+  /components/{uuid}:
+    $ref: "./resources/components/component.yaml"
   /extension-points:
     $ref: "./resources/extensions/extension-points.yaml"
   /extension-points/{extension_point_name}/extensions:

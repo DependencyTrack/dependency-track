@@ -45,6 +45,7 @@ import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
+import org.dependencytrack.persistence.ComponentLicenseConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
@@ -71,7 +72,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,7 +84,6 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNullElse;
 import static javax.jdo.FetchPlan.FETCH_SIZE_GREEDY;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
@@ -425,7 +424,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
                     componentIds.add(persistentComponent.getId());
 
-                    licenseRows.addAll(buildComponentLicenseRows(component, persistentComponent.getId(), licenseIds));
+                    licenseRows.addAll(ComponentLicenseConverter.buildComponentLicenseRows(
+                            component, persistentComponent.getId(), licenseIds));
                 }
 
                 useJdbiHandle(
@@ -443,77 +443,6 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                         persistentServicesByIdentity.values());
             });
         }
-    }
-
-    private static List<ComponentDao.ComponentLicenseRow> buildComponentLicenseRows(
-            final Component component, final long persistedId, final Map<String, Long> licenseIds) {
-
-        // LinkedHashMap lends itself to keeping the ordinality intact
-        final Map<String, ComponentDao.ComponentLicenseRow> rowMap = new LinkedHashMap<>();
-        final List<org.cyclonedx.model.License> candidates = component.getLicenseCandidates();
-        final String expression = trimToNull(component.getLicenseExpression());
-
-        if (candidates != null) {
-            for (final org.cyclonedx.model.License candidate : candidates) {
-                String trimmedName = trimToNull(candidate.getName());
-                String trimmedId = trimToNull(candidate.getId());
-
-                final String identifier = isNotBlank(trimmedId) ? trimmedId : trimmedName;
-                if (isBlank(identifier)) {
-                    continue;
-                }
-
-                final Long licenseId = licenseIds.get(identifier);
-
-                final boolean isExpression = expression != null
-                        && (expression.equals(candidate.getId()) || expression.equals(candidate.getName()));
-
-                // De-deuplicate licenseIDs to satisfy COMPONENTLICENSES_ID_IDX constraint
-                String key = licenseId != null ? "resolved:" + licenseId : "unresolved:" + identifier;
-                rowMap.putIfAbsent(
-                        key,
-                        new ComponentDao.ComponentLicenseRow(
-                                null,
-                                persistedId,
-                                licenseId,
-                                licenseId == null
-                                        ? trimmedName != null ? trimmedName : trimToNull(candidate.getId())
-                                        : null,
-                                isExpression ? expression : null,
-                                trimToNull(candidate.getUrl()),
-                                0,
-                                "DECLARED"));
-            }
-        }
-
-        // Per the CycloneDX protos, expressions are sufficient substitutes for a license model object,
-        // thus stored separately and requiring separate retrieval
-        if (expression != null
-                && (candidates == null
-                        || candidates.stream()
-                                .noneMatch(candidate -> expression.equals(candidate.getId())
-                                        || expression.equals(candidate.getName())))) {
-            rowMap.putIfAbsent(
-                    "expression",
-                    new ComponentDao.ComponentLicenseRow(0L, persistedId, null, null, expression, null, 0, "DECLARED"));
-        }
-
-        // Assign ordinalities now that rows are de-duplicated
-        final List<ComponentDao.ComponentLicenseRow> finalRows = new ArrayList<>(rowMap.size());
-        int ordinality = 1;
-        for (ComponentDao.ComponentLicenseRow currentRow : rowMap.values()) {
-            finalRows.add(new ComponentDao.ComponentLicenseRow(
-                    currentRow.id(),
-                    currentRow.componentId(),
-                    currentRow.licenseId(),
-                    currentRow.license(),
-                    currentRow.licenseExpression(),
-                    currentRow.licenseUrl(),
-                    ordinality++,
-                    currentRow.acknowledgement()));
-        }
-
-        return finalRows;
     }
 
     private static Map<String, Long> findLicenseIds(final QueryManager qm, final Collection<Component> components) {

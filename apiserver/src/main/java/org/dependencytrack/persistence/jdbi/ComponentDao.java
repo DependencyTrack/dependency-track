@@ -39,6 +39,7 @@ import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMap;
+import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.customizer.DefineNamedBindings;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -863,4 +864,79 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
         return new Page<>(resultRows, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
+
+    public record ComponentHashes(
+            String md5,
+            String sha1,
+            String sha256,
+            String sha384,
+            String sha512,
+            String sha3256,
+            String sha3384,
+            String sha3512,
+            String blake2b256,
+            String blake2b384,
+            String blake2b512,
+            String blake3,
+            String streeborg256,
+            String streeborg512) {}
+
+    public record ComponentUpdate(
+            UUID uuid,
+            String name,
+            String description,
+            String group,
+            String version,
+            String classifier,
+            String fileName,
+            String extension,
+            ComponentHashes hashes,
+            String cpe,
+            String publisher,
+            String supplier,
+            String author,
+            String purl,
+            String purlCoordinates,
+            String swidTagId,
+            boolean internal,
+            String copyright,
+            String notes) {}
+
+    @SqlQuery("""
+        UPDATE "COMPONENT"
+           SET "NAME" = :name
+             , "DESCRIPTION" = :description
+             , "GROUP" = :group
+             , "VERSION" = :version
+             , "CLASSIFIER" = :classifier
+             , "FILENAME" = :filename
+             , "EXTENSION" = :extension
+             , "PURL" = :purl
+             , "PURLCOORDINATES" = :purlCoordinates
+             , "CPE" = :cpe
+             , "PUBLISHER" = :publisher
+             , "SUPPLIER" = :supplierJson
+             , "AUTHORS" = :authorsJson
+             , "SWIDTAGID" = :swidTagId
+             , "COPYRIGHT" = :copyright
+             , "MD5" = :componentUpdate.hashes.md5
+             , "SHA1" = :componentUpdate.hashes.sha1
+             , "SHA_256" = :componentUpdate.hashes.sha256
+             , "SHA_384" = :componentUpdate.hashes.sha384
+             , "SHA_512" = :componentUpdate.hashes.sha512
+             , "SHA3_256" = :componentUpdate.hashes.sha3256
+             , "SHA3_384" = :componentUpdate.hashes.sha3384
+             , "SHA3_512" = :componentUpdate.hashes.sha3512
+             , "BLAKE2B_256" = :componentUpdate.hashes.blake2b256
+             , "BLAKE2B_384" = :componentUpdate.hashes.blake2b384
+             , "BLAKE2B_512" = :componentUpdate.hashes.blake2b512
+             , "BLAKE3" = :componentUpdate.hashes.blake3
+             , "STREEBOG_256" = :componentUpdate.hashes.streebog256
+             , "STREEBOG_512" = :componentUpdate.hashes.streebog512
+             , "NOTES" = :notes
+             , "INTERNAL" = :internal
+         WHERE "UUID" = :uuid
+     RETURNING "ID"
+        """)
+    long updateComponent(@BindMethods ComponentUpdate componentUpdate);
 }

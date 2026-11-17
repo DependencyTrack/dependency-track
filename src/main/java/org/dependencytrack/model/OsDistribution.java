@@ -21,6 +21,9 @@ package org.dependencytrack.model;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.util.PurlUtil;
 import org.jspecify.annotations.Nullable;
+import us.springett.parsers.cpe.Cpe;
+import us.springett.parsers.cpe.CpeParser;
+import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,22 +42,31 @@ public sealed interface OsDistribution {
     boolean matches(OsDistribution other);
 
     static @Nullable OsDistribution of(@Nullable PackageURL purl) {
-        final String distroQualifier = PurlUtil.getDistroQualifier(purl);
-        if (distroQualifier == null) {
+        if (purl == null) {
             return null;
         }
 
-        if ("apk".equals(purl.getType())) {
-            return AlpineDistribution.of(distroQualifier);
+        final String distroQualifier = PurlUtil.getDistroQualifier(purl);
+        if (distroQualifier != null) {
+            if ("apk".equals(purl.getType())) {
+                return AlpineDistribution.of(distroQualifier);
+            }
+            if ("deb".equals(purl.getType())) {
+                if ("debian".equalsIgnoreCase(purl.getNamespace())) {
+                    return DebianDistribution.of(distroQualifier).orElse(null);
+                }
+                if ("ubuntu".equalsIgnoreCase(purl.getNamespace())) {
+                    return UbuntuDistribution.of(distroQualifier).orElse(null);
+                }
+            }
+            if ("rpm".equals(purl.getType()) && "redhat".equalsIgnoreCase(purl.getNamespace())) {
+                return RedHatDistribution.of(distroQualifier);
+            }
+            return null;
         }
 
-        if ("deb".equals(purl.getType())) {
-            if ("debian".equalsIgnoreCase(purl.getNamespace())) {
-                return DebianDistribution.of(distroQualifier).orElse(null);
-            }
-            if ("ubuntu".equalsIgnoreCase(purl.getNamespace())) {
-                return UbuntuDistribution.of(distroQualifier).orElse(null);
-            }
+        if ("rpm".equals(purl.getType()) && "redhat".equalsIgnoreCase(purl.getNamespace())) {
+            return RedHatDistribution.ofRpmRelease(purl.getVersion());
         }
 
         return null;
@@ -82,6 +94,10 @@ public sealed interface OsDistribution {
                 final String versionOrSeries = suffix.replaceAll(":(LTS|Pro)", "");
                 yield UbuntuDistribution.of(versionOrSeries).orElse(null);
             }
+            // The Red Hat suffix is a CPE 2.2 URI fragment scoping the RPM to a
+            // specific Red Hat product stream, e.g. `rhel_aus:8.4::appstream`.
+            // https://ossf.github.io/osv-schema/#defined-ecosystems
+            case "red hat" -> RedHatDistribution.ofCpe(suffix);
             default -> null;
         };
     }
@@ -249,6 +265,166 @@ public sealed interface OsDistribution {
             }
 
             return Optional.of(new DebianDistribution(version, version));
+        }
+
+    }
+
+    record RedHatDistribution(Product product, String majorVersion) implements OsDistribution {
+
+        public enum Product {
+            RHEL("redhat"),
+            HUMMINGBIRD("hummingbird");
+
+            private final String qualifierPrefix;
+
+            Product(String qualifierPrefix) {
+                this.qualifierPrefix = qualifierPrefix;
+            }
+        }
+
+        private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)(?:\\..*)?$");
+
+        // Finds the `el<N>` Enterprise Linux marker in an RPM release string and
+        // captures the RHEL major. The common form is the dist tag that Red Hat's
+        // `%{?dist}` macro sets, such as `.el8` or `.el9`, where N is the major version
+        // of Enterprise Linux.
+        //
+        // We also match the same `el<N>` token in Red Hat build conventions that
+        // have no formal spec but show up in real RHEL and OSV data:
+        //
+        // * EUS and z-stream releases (`.el8_6`)
+        // * product build suffixes (`.el8sat`)
+        // * the modular release marker (`+el8.7.0+...`)
+        //
+        // Note that only the major version is captured.
+        private static final Pattern EL_MARKER_PATTERN = Pattern.compile("(?:^|[.+])el(\\d+)(?:\\.\\d+)?");
+
+        // Finds the `hum<N>` dist tag of Red Hat Hummingbird, e.g. `2.43-8.7.hum1`.
+        private static final Pattern HUMMINGBIRD_MARKER_PATTERN = Pattern.compile("\\.hum(\\d+)");
+
+        public RedHatDistribution {
+            requireNonNull(product, "product must not be null");
+            requireNonNull(majorVersion, "majorVersion must not be null");
+        }
+
+        @Override
+        public String purlQualifierValue() {
+            return product.qualifierPrefix + "-" + majorVersion;
+        }
+
+        @Override
+        public boolean matches(OsDistribution other) {
+            // NB: Hummingbird is a rolling release, so its version does not identify a stream.
+            return other instanceof RedHatDistribution(final Product otherProduct, final String otherMajorVersion)
+                    && this.product == otherProduct
+                    && (this.product == Product.HUMMINGBIRD || this.majorVersion.equals(otherMajorVersion));
+        }
+
+        public static @Nullable RedHatDistribution of(@Nullable String qualifierValue) {
+            if (qualifierValue == null || qualifierValue.isEmpty()) {
+                return null;
+            }
+
+            // NB: Some generators emit "rhel-<version>" (e.g. Syft),
+            // others "redhat-<version>" (e.g. Trivy).
+            final String qualifierValueLower = qualifierValue.toLowerCase();
+            final String version;
+            if (qualifierValueLower.startsWith("hummingbird-")) {
+                return ofVersion(Product.HUMMINGBIRD, qualifierValue.substring("hummingbird-".length()));
+            } else if (qualifierValueLower.startsWith("rhel-")) {
+                version = qualifierValue.substring("rhel-".length());
+            } else if (qualifierValueLower.startsWith("redhat-")) {
+                version = qualifierValue.substring("redhat-".length());
+            } else {
+                version = qualifierValue;
+            }
+
+            return ofVersion(version);
+        }
+
+        public static @Nullable RedHatDistribution ofVersion(@Nullable String version) {
+            return ofVersion(Product.RHEL, version);
+        }
+
+        private static @Nullable RedHatDistribution ofVersion(Product product, @Nullable String version) {
+            if (version == null || version.isBlank()) {
+                return null;
+            }
+
+            final Matcher matcher = VERSION_PATTERN.matcher(version);
+            if (!matcher.matches()) {
+                return null;
+            }
+
+            return new RedHatDistribution(product, matcher.group(1));
+        }
+
+        public static @Nullable RedHatDistribution ofCpe(@Nullable String cpeSuffix) {
+            if (cpeSuffix == null || cpeSuffix.isEmpty()) {
+                return null;
+            }
+
+            final Cpe cpe;
+            try {
+                cpe = CpeParser.parse("cpe:/a:redhat:" + cpeSuffix);
+            } catch (CpeParsingException e) {
+                return null;
+            }
+
+            // NB: An explicit "el<N>" OS target in the edition is the same disttag
+            // convention used in RPM release strings, so reuse the extractor.
+            // It takes precedence over the product version field.
+            final RedHatDistribution fromEdition = ofRpmRelease(cpe.getEdition());
+            if (fromEdition != null) {
+                return fromEdition;
+            }
+
+            if (isRhelStreamProduct(cpe.getProduct())) {
+                return ofVersion(cpe.getVersion());
+            }
+            if (cpe.getProduct().equals("hummingbird")) {
+                return ofVersion(Product.HUMMINGBIRD, cpe.getVersion());
+            }
+
+            return null;
+        }
+
+        public static @Nullable RedHatDistribution ofRpmRelease(@Nullable String version) {
+            if (version == null || version.isEmpty()) {
+                return null;
+            }
+
+            final Matcher elMatcher = EL_MARKER_PATTERN.matcher(version);
+            if (elMatcher.find()) {
+                return new RedHatDistribution(Product.RHEL, elMatcher.group(1));
+            }
+
+            final Matcher humMatcher = HUMMINGBIRD_MARKER_PATTERN.matcher(version);
+            if (humMatcher.find()) {
+                return new RedHatDistribution(Product.HUMMINGBIRD, humMatcher.group(1));
+            }
+
+            return null;
+        }
+
+        // CPE products whose CPE version field is the RHEL `major(.minor)`. Determined
+        // by sampling the OSV Red Hat advisory data. Products not in this list
+        // (e.g. `satellite`, `openshift`, `rhel_software_collections`) put their own product
+        // version in the version field, so the RHEL major must come from the edition's
+        // `el<N>` target instead. Hardcoding the list risks going out of date,
+        // but new streams are released very rarely.
+        private static boolean isRhelStreamProduct(String product) {
+            return product.startsWith("enterprise_linux")
+                    || product.equals("rhel_aus")
+                    || product.equals("rhel_e4s")
+                    || product.equals("rhel_els")
+                    || product.equals("rhel_eus")
+                    || product.equals("rhel_eus_long_life")
+                    || product.equals("rhel_mission_critical")
+                    || product.equals("rhel_productivity")
+                    || product.equals("rhel_tus")
+                    || product.equals("rhel_virtualization")
+                    || product.startsWith("rhel_extras");
         }
 
     }

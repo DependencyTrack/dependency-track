@@ -50,13 +50,13 @@ class EnisaKevDataSourceTest {
                             "cveID": "CVE-2026-41940",
                             "dateReported": "2026/05/08",
                             "shortDescription": "Auth bypass",
-                            "exploitationType": "ransomware"
+                            "exploitationType": ["ransomware"]
                           },
                           {
                             "cveID": "CVE-2026-1731",
                             "dateReported": "2026/06/04",
                             "shortDescription": "Pre-auth RCE",
-                            "exploitationType": "-"
+                            "exploitationType": ["unknown"]
                           }
                         ]
                         """)));

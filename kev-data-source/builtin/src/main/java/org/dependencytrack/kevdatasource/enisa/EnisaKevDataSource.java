@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.kevdatasource.jsonfeed.AbstractJsonFeedKevDataSource;
-import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -35,7 +34,7 @@ import java.util.List;
 
 /// Consumes ENISA's EU KEV catalog.
 ///
-/// @see [ENISA EU KEV](https://github.com/enisaeu/CNW/tree/main/advisories/eukev)
+/// @see [ENISA EU KEV](https://github.com/enisaeu/CNW/tree/main/eukev)
 /// @since 5.1.0
 final class EnisaKevDataSource extends AbstractJsonFeedKevDataSource {
 
@@ -52,24 +51,14 @@ final class EnisaKevDataSource extends AbstractJsonFeedKevDataSource {
         final var assertions = new ArrayList<KevAssertion>();
         while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
             final JsonNode entryNode = jsonParser.readValueAsTree();
-
-            final KevAssertion assertion = toKevAssertion(entryNode);
-            if (assertion != null) {
-                assertions.add(assertion);
-            }
+            assertions.add(toKevAssertion(entryNode));
         }
 
         return assertions;
     }
 
-    private @Nullable KevAssertion toKevAssertion(JsonNode entryNode) throws IOException {
+    private KevAssertion toKevAssertion(JsonNode entryNode) throws IOException {
         final var entry = objectMapper.treeToValue(entryNode, EnisaKevEntry.class);
-        if (entry.cveId() == null) {
-            // TODO: cveId is nullable per schema, but euvdId is not.
-            //  We don't currently support EUVD identifiers so entries
-            //  without CVE are skipped for now.
-            return null;
-        }
 
         return new KevAssertion(
                 "NVD",

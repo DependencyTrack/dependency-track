@@ -142,6 +142,8 @@ class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     void updateSelfTest() {
+        final String otherToken = new SessionTokenService().createSession(testUser.getId());
+
         ManagedUser user = new ManagedUser();
         user.setUsername(testUser.getUsername());
         user.setFullname("Captain BlackBeard");
@@ -156,6 +158,12 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("Captain BlackBeard", json.getString("fullname"));
         Assertions.assertEquals("blackbeard@example.com", json.getString("email"));
+
+        final Response otherSessionResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + otherToken)
+                .get(Response.class);
+        assertThat(otherSessionResponse.getStatus()).isEqualTo(200);
     }
 
     @Test
@@ -1185,6 +1193,175 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 .header("Authorization", "Bearer " + otherToken)
                 .get(Response.class);
         assertThat(afterResponse.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void updateSelfShouldRevokeOtherSessionsWhenChangingPassword() {
+        final String otherToken = new SessionTokenService().createSession(testUser.getId());
+
+        final var jsonUser = new ManagedUser();
+        jsonUser.setFullname("Test User");
+        jsonUser.setEmail("testuser@example.com");
+        jsonUser.setNewPassword("newPassword");
+        jsonUser.setConfirmPassword("newPassword");
+        final Response response = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .post(Entity.json(jsonUser));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final Response otherSessionResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + otherToken)
+                .get(Response.class);
+        assertThat(otherSessionResponse.getStatus()).isEqualTo(401);
+
+        final Response currentSessionResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .get(Response.class);
+        assertThat(currentSessionResponse.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void updateManagedUserShouldRevokeSessionsOfUserWhenSettingPassword() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_UPDATE);
+        final ManagedUser targetUser = qm.createManagedUser(
+                "blackbeard",
+                "Captain BlackBeard",
+                "blackbeard@example.com",
+                TEST_USER_PASSWORD_HASH,
+                false,
+                false,
+                false);
+        final String targetToken = new SessionTokenService().createSession(targetUser.getId());
+
+        final Response beforeResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + targetToken)
+                .get(Response.class);
+        assertThat(beforeResponse.getStatus()).isEqualTo(200);
+
+        final var jsonUser = new ManagedUser();
+        jsonUser.setUsername("blackbeard");
+        jsonUser.setFullname("Captain BlackBeard");
+        jsonUser.setEmail("blackbeard@example.com");
+        jsonUser.setNewPassword("newPassword");
+        jsonUser.setConfirmPassword("newPassword");
+        final Response response = jersey.target(V1_USER + "/managed")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .post(Entity.json(jsonUser));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final Response afterResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + targetToken)
+                .get(Response.class);
+        assertThat(afterResponse.getStatus()).isEqualTo(401);
+    }
+
+    @Test
+    void updateManagedUserShouldKeepCurrentSessionWhenSettingOwnPassword() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_UPDATE);
+        final String otherToken = new SessionTokenService().createSession(testUser.getId());
+
+        final var jsonUser = new ManagedUser();
+        jsonUser.setUsername(testUser.getUsername());
+        jsonUser.setFullname("Test User");
+        jsonUser.setEmail("testuser@example.com");
+        jsonUser.setNewPassword("newPassword");
+        jsonUser.setConfirmPassword("newPassword");
+        final Response response = jersey.target(V1_USER + "/managed")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .post(Entity.json(jsonUser));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final Response otherSessionResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + otherToken)
+                .get(Response.class);
+        assertThat(otherSessionResponse.getStatus()).isEqualTo(401);
+
+        final Response currentSessionResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .get(Response.class);
+        assertThat(currentSessionResponse.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void updateManagedUserShouldNotKeepCurrentSessionWhenSuspendingSelf() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_UPDATE);
+
+        final var jsonUser = new ManagedUser();
+        jsonUser.setUsername(testUser.getUsername());
+        jsonUser.setFullname("Test User");
+        jsonUser.setEmail("testuser@example.com");
+        jsonUser.setSuspended(true);
+        final Response suspendResponse = jersey.target(V1_USER + "/managed")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .post(Entity.json(jsonUser));
+        assertThat(suspendResponse.getStatus()).isEqualTo(200);
+
+        jsonUser.setSuspended(false);
+        final Response unsuspendResponse = jersey.target(V1_USER + "/managed")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(jsonUser));
+        assertThat(unsuspendResponse.getStatus()).isEqualTo(200);
+
+        final Response afterResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .get(Response.class);
+        assertThat(afterResponse.getStatus()).isEqualTo(401);
+    }
+
+    @Test
+    void updateManagedUserShouldNotRestoreSessionsWhenUnsuspending() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_UPDATE);
+        final ManagedUser targetUser = qm.createManagedUser(
+                "blackbeard",
+                "Captain BlackBeard",
+                "blackbeard@example.com",
+                TEST_USER_PASSWORD_HASH,
+                false,
+                false,
+                false);
+        final String targetToken = new SessionTokenService().createSession(targetUser.getId());
+
+        final Response beforeResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + targetToken)
+                .get(Response.class);
+        assertThat(beforeResponse.getStatus()).isEqualTo(200);
+
+        final var jsonUser = new ManagedUser();
+        jsonUser.setUsername("blackbeard");
+        jsonUser.setFullname("Captain BlackBeard");
+        jsonUser.setEmail("blackbeard@example.com");
+        jsonUser.setSuspended(true);
+        final Response suspendResponse = jersey.target(V1_USER + "/managed")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .post(Entity.json(jsonUser));
+        assertThat(suspendResponse.getStatus()).isEqualTo(200);
+
+        jsonUser.setSuspended(false);
+        final Response unsuspendResponse = jersey.target(V1_USER + "/managed")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .post(Entity.json(jsonUser));
+        assertThat(unsuspendResponse.getStatus()).isEqualTo(200);
+
+        final Response afterResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + targetToken)
+                .get(Response.class);
+        assertThat(afterResponse.getStatus()).isEqualTo(401);
     }
 
     private static long countSessionsOf(long userId) {

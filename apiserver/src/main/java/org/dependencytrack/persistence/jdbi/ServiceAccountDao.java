@@ -91,7 +91,7 @@ public interface ServiceAccountDao extends SqlObject {
         """)
     void create(@Bind String username, @Bind @Nullable String email);
 
-    record UpdatedServiceAccountRow(boolean suspendedChanged, boolean emailChanged) {}
+    record UpdatedServiceAccountRow(long id, boolean suspendedChanged, boolean emailChanged) {}
 
     @SqlUpdate("""
         UPDATE "USER" AS new
@@ -110,7 +110,8 @@ public interface ServiceAccountDao extends SqlObject {
                FOR UPDATE
           ) AS old
          WHERE new."ID" = old."ID"
-        RETURNING new."SUSPENDED" IS DISTINCT FROM old."SUSPENDED" AS suspended_changed
+        RETURNING new."ID" AS id
+                , new."SUSPENDED" IS DISTINCT FROM old."SUSPENDED" AS suspended_changed
                 , new."EMAIL" IS DISTINCT FROM old."EMAIL" AS email_changed
         """)
     @GetGeneratedKeys

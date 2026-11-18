@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.model.ManagedUser;
 import alpine.server.auth.PasswordService;
+import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import org.dependencytrack.JerseyTestExtension;
@@ -34,6 +35,8 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Form;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class UserResourceUnauthenticatedTest extends ResourceTest {
 
@@ -121,6 +124,34 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         Assertions.assertEquals(200, response.getStatus(), 0);
         qm.getPersistenceManager().refresh(testUser);
         Assertions.assertTrue(PasswordService.matches("Password1!".toCharArray(), testUser));
+    }
+
+    @Test
+    void forceChangePasswordShouldRevokeExistingSessions() {
+        final String sessionToken = new SessionTokenService().createSession(testUser.getId());
+
+        final Response beforeResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .get(Response.class);
+        assertThat(beforeResponse.getStatus()).isEqualTo(200);
+
+        final var form = new Form();
+        form.param("username", "testuser");
+        form.param("password", "testuser");
+        form.param("newPassword", "Password1!");
+        form.param("confirmPassword", "Password1!");
+        final Response response = jersey.target(V1_USER + "/forceChangePassword")
+                .request()
+                .accept(MediaType.TEXT_PLAIN)
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final Response afterResponse = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .get(Response.class);
+        assertThat(afterResponse.getStatus()).isEqualTo(401);
     }
 
     @Test

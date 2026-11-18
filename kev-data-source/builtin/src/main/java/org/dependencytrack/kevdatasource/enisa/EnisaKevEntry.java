@@ -21,14 +21,14 @@ package org.dependencytrack.kevdatasource.enisa;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDate;
 import java.util.List;
 
+/// Implemented following: https://github.com/enisaeu/CNW/blob/54794f60753c2f8b31f99583f6639100917d8e55/eukev/schemas/v1/schema.json
 @JsonIgnoreProperties(ignoreUnknown = true)
 record EnisaKevEntry(
-        @JsonProperty("cveID") @Nullable String cveId,
+        @JsonProperty("cveID") String cveId,
         @JsonProperty("euvdID") String euvdId,
 
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")

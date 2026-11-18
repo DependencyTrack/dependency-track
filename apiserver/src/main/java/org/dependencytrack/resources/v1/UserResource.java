@@ -81,8 +81,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static alpine.server.auth.SessionTokenAuthenticationService.getBearerToken;
 import static org.dependencytrack.notification.api.NotificationFactory.createUserCreatedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createUserDeletedNotification;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 /**
  * JAX-RS resources for processing users.
@@ -266,6 +268,10 @@ public class UserResource extends AbstractApiResource {
                                 user.setPassword(String.valueOf(PasswordService.createHash(newPassword.toCharArray())));
                                 user.setForcePasswordChange(false);
                                 qm.updateManagedUser(user);
+                                useJdbiHandle(
+                                        qm,
+                                        handle -> sessionTokenService.deleteSessionsOfUser(
+                                                handle.getConnection(), user.getId(), null));
                                 super.logSecurityEvent(
                                         LOGGER,
                                         SecurityMarkers.SECURITY_AUDIT,
@@ -443,7 +449,7 @@ public class UserResource extends AbstractApiResource {
                         description = "An invalid payload was submitted or the user is not a managed user."),
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
-    public Response updateSelf(ManagedUser jsonUser) {
+    public Response updateSelf(ManagedUser jsonUser, @HeaderParam("Authorization") String authHeader) {
         if (!(getPrincipal() instanceof final UserPrincipal userPrincipal)) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
@@ -494,6 +500,7 @@ public class UserResource extends AbstractApiResource {
                     }
 
                     final String username = userPrincipal.username();
+                    final String currentToken = getBearerToken(authHeader);
                     final ManagedUser user = qm.callInTransaction(() -> {
                         final ManagedUser managedUser = qm.getManagedUser(username);
                         if (managedUser == null) {
@@ -505,6 +512,10 @@ public class UserResource extends AbstractApiResource {
                         if (newPasswordHash != null) {
                             managedUser.setLastPasswordChange(new Date());
                             managedUser.setPassword(newPasswordHash);
+                            useJdbiHandle(
+                                    qm,
+                                    handle -> sessionTokenService.deleteSessionsOfUser(
+                                            handle.getConnection(), managedUser.getId(), currentToken));
                         }
                         return managedUser;
                     });
@@ -721,7 +732,7 @@ public class UserResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "404", description = "The user could not be found")
             })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_UPDATE})
-    public Response updateManagedUser(ManagedUser jsonUser) {
+    public Response updateManagedUser(ManagedUser jsonUser, @HeaderParam("Authorization") String authHeader) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
@@ -736,9 +747,10 @@ public class UserResource extends AbstractApiResource {
                                 .entity("The users email address is missing.")
                                 .build();
                     }
-                    if (StringUtils.isNotBlank(jsonUser.getNewPassword())
+                    final boolean passwordChanged = StringUtils.isNotBlank(jsonUser.getNewPassword())
                             && StringUtils.isNotBlank(jsonUser.getConfirmPassword())
-                            && jsonUser.getNewPassword().equals(jsonUser.getConfirmPassword())) {
+                            && jsonUser.getNewPassword().equals(jsonUser.getConfirmPassword());
+                    if (passwordChanged) {
                         user.setPassword(String.valueOf(PasswordService.createHash(
                                 jsonUser.getNewPassword().toCharArray())));
                     }
@@ -748,6 +760,14 @@ public class UserResource extends AbstractApiResource {
                     user.setNonExpiryPassword(jsonUser.isNonExpiryPassword());
                     user.setSuspended(jsonUser.isSuspended());
                     user = qm.updateManagedUser(user);
+                    if (passwordChanged || user.isSuspended()) {
+                        final long userId = user.getId();
+                        final String exceptToken = user.isSuspended() ? null : getBearerToken(authHeader);
+                        useJdbiHandle(
+                                qm,
+                                handle -> sessionTokenService.deleteSessionsOfUser(
+                                        handle.getConnection(), userId, exceptToken));
+                    }
                     super.logSecurityEvent(
                             LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user updated: " + jsonUser.getUsername());
                     return Response.ok(user).build();
@@ -1084,11 +1104,8 @@ public class UserResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     public Response logout(@HeaderParam("Authorization") String authHeader) {
-        if (getPrincipal() instanceof final UserPrincipal user
-                && authHeader != null
-                && authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
-            final String rawToken = authHeader.substring(7);
-
+        final String rawToken = getBearerToken(authHeader);
+        if (getPrincipal() instanceof final UserPrincipal user && rawToken != null) {
             final boolean deleted = sessionTokenService.deleteSession(rawToken, user.id());
             if (deleted) {
                 LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Logged out successfully");

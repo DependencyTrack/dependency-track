@@ -22,6 +22,7 @@ import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
@@ -102,6 +103,22 @@ public final class SessionTokenService {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to revoke session", e);
+        }
+    }
+
+    /// @since 5.2.2
+    public int deleteSessionsOfUser(Connection connection, long userId, @Nullable String exceptRawToken) {
+        try (final PreparedStatement ps = connection.prepareStatement("""
+            DELETE
+              FROM "USER_SESSION"
+             WHERE "USER_ID" = ?
+               AND "TOKEN_HASH" IS DISTINCT FROM ?
+            """)) {
+            ps.setLong(1, userId);
+            ps.setString(2, exceptRawToken != null ? sha256Hex(exceptRawToken) : null);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to revoke sessions of user %d".formatted(userId), e);
         }
     }
 

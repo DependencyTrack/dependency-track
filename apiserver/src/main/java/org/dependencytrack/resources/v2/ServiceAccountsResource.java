@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v2;
 import alpine.model.ApiKey;
 import alpine.model.ServiceAccount;
 import alpine.server.auth.PermissionRequired;
+import alpine.server.auth.SessionTokenService;
 import com.fasterxml.uuid.Generators;
 import org.dependencytrack.api.v2.ServiceAccountsApi;
 import org.dependencytrack.api.v2.model.CreateServiceAccountApiKeyRequest;
@@ -83,6 +84,8 @@ public final class ServiceAccountsResource extends AbstractApiResource implement
     private static final Duration API_KEY_MAX_LIFETIME =
             Duration.ofDays(ConfigProvider.getConfig().getValue(ConfigKeys.API_KEY_MAX_LIFETIME_DAYS, int.class));
     private static final Duration API_KEY_DEFAULT_LIFETIME = Duration.ofDays(30);
+
+    private final SessionTokenService sessionTokenService = new SessionTokenService();
 
     @Override
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_CREATE})
@@ -156,8 +159,14 @@ public final class ServiceAccountsResource extends AbstractApiResource implement
     public Response updateServiceAccount(String name, UpdateServiceAccountRequest request) {
         final String username = ServiceAccount.usernameOf(name);
 
-        final UpdatedServiceAccountRow updated = inJdbiTransaction(handle ->
-                handle.attach(ServiceAccountDao.class).update(username, request.getEmail(), request.getSuspended()));
+        final UpdatedServiceAccountRow updated = inJdbiTransaction(handle -> {
+            final UpdatedServiceAccountRow row =
+                    handle.attach(ServiceAccountDao.class).update(username, request.getEmail(), request.getSuspended());
+            if (row != null && Boolean.TRUE.equals(request.getSuspended())) {
+                sessionTokenService.deleteSessionsOfUser(handle.getConnection(), row.id(), null);
+            }
+            return row;
+        });
         if (updated == null) {
             throw new NotFoundException();
         }

@@ -25,7 +25,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import java.util.List;
 
-/// Implemented following: https://github.com/enisaeu/CNW/blob/54794f60753c2f8b31f99583f6639100917d8e55/eukev/schemas/v1/schema.json
+/// Implemented following:
+/// https://github.com/enisaeu/CNW/blob/54794f60753c2f8b31f99583f6639100917d8e55/eukev/schemas/v1/schema.json
 @JsonIgnoreProperties(ignoreUnknown = true)
 record EnisaKevEntry(
         @JsonProperty("cveID") String cveId,

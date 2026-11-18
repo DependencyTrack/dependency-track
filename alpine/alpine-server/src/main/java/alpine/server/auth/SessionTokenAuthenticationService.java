@@ -155,16 +155,21 @@ public final class SessionTokenAuthenticationService implements AuthenticationSe
         return portfolioAccessControlEnabled;
     }
 
-    private static @Nullable String getAuthorizationToken(HttpHeaders headers) {
-        final List<String> header = headers.getRequestHeader("Authorization");
-        if (header != null && !header.isEmpty()) {
-            final String bearer = header.getFirst();
-            if (bearer.regionMatches(true, 0, "Bearer ", 0, 7)) {
-                return bearer.substring(7);
-            }
+    public static @Nullable String getBearerToken(@Nullable String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return null;
         }
 
-        return null;
+        return authorizationHeader.substring(7);
+    }
+
+    private static @Nullable String getAuthorizationToken(HttpHeaders headers) {
+        final List<String> header = headers.getRequestHeader("Authorization");
+        if (header == null || header.isEmpty()) {
+            return null;
+        }
+
+        return getBearerToken(header.getFirst());
     }
 
     private record LookupResult(UserPrincipal user, boolean suspended, boolean portfolioAccessControlEnabled) {

@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v2;
 import alpine.model.ApiKey;
 import alpine.model.ServiceAccount;
 import alpine.model.Team;
+import alpine.server.auth.SessionTokenService;
 import com.fasterxml.uuid.Generators;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
@@ -713,6 +714,48 @@ class ServiceAccountsResourceTest extends ResourceTest {
                 .header(X_API_KEY, serviceAccountKey.getKey())
                 .get();
         assertThat(response.getStatus()).isEqualTo(401);
+    }
+
+    @Test
+    void updateServiceAccountShouldNotRestoreSessionsWhenUnsuspending() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_READ, Permissions.ACCESS_MANAGEMENT_UPDATE);
+        createServiceAccount("ci-pipeline");
+        final ServiceAccount serviceAccount = qm.getServiceAccount("svc:ci-pipeline");
+        serviceAccount.setPermissions(List.of(qm.getPermission(Permissions.ACCESS_MANAGEMENT_READ.name())));
+        qm.persist(serviceAccount);
+        final String sessionToken = new SessionTokenService().createSession(serviceAccount.getId());
+
+        final Response beforeResponse = jersey.target("/service-accounts")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .get();
+        assertThat(beforeResponse.getStatus()).isEqualTo(200);
+
+        final Response suspendResponse = jersey.target("/service-accounts/ci-pipeline")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .method("PATCH", Entity.json(/* language=JSON */ """
+                        {
+                          "suspended": true
+                        }
+                        """));
+        assertThat(suspendResponse.getStatus()).isEqualTo(204);
+
+        final Response unsuspendResponse = jersey.target("/service-accounts/ci-pipeline")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .method("PATCH", Entity.json(/* language=JSON */ """
+                        {
+                          "suspended": false
+                        }
+                        """));
+        assertThat(unsuspendResponse.getStatus()).isEqualTo(204);
+
+        final Response afterResponse = jersey.target("/service-accounts")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .get();
+        assertThat(afterResponse.getStatus()).isEqualTo(401);
     }
 
     @Test

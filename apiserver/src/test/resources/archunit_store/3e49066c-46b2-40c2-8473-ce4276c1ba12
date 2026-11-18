@@ -12,7 +12,7 @@ org.dependencytrack.resources.v1.TeamResource.updateTeam(alpine.model.Team) acce
 org.dependencytrack.resources.v1.UserResource.createLdapUser(alpine.model.LdapUser) accepts JDO model class alpine.model.LdapUser as request body
 org.dependencytrack.resources.v1.UserResource.createManagedUser(alpine.model.ManagedUser) accepts JDO model class alpine.model.ManagedUser as request body
 org.dependencytrack.resources.v1.UserResource.createOidcUser(alpine.model.OidcUser) accepts JDO model class alpine.model.OidcUser as request body
-org.dependencytrack.resources.v1.UserResource.updateManagedUser(alpine.model.ManagedUser) accepts JDO model class alpine.model.ManagedUser as request body
-org.dependencytrack.resources.v1.UserResource.updateSelf(alpine.model.ManagedUser) accepts JDO model class alpine.model.ManagedUser as request body
+org.dependencytrack.resources.v1.UserResource.updateManagedUser(alpine.model.ManagedUser, java.lang.String) accepts JDO model class alpine.model.ManagedUser as request body
+org.dependencytrack.resources.v1.UserResource.updateSelf(alpine.model.ManagedUser, java.lang.String) accepts JDO model class alpine.model.ManagedUser as request body
 org.dependencytrack.resources.v1.VulnerabilityResource.createVulnerability(org.dependencytrack.model.Vulnerability) accepts JDO model class org.dependencytrack.model.Vulnerability as request body
 org.dependencytrack.resources.v1.VulnerabilityResource.updateVulnerability(org.dependencytrack.model.Vulnerability) accepts JDO model class org.dependencytrack.model.Vulnerability as request body

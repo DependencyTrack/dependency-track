@@ -35,7 +35,7 @@ import java.util.List;
 
 /// Consumes ENISA's EU KEV catalog.
 ///
-/// @see [ENISA EU KEV](https://github.com/enisaeu/CNW/tree/main/advisories/eukev)
+/// @see [ENISA EU KEV](https://github.com/enisaeu/CNW/tree/main/eukev)
 /// @since 5.1.0
 final class EnisaKevDataSource extends AbstractJsonFeedKevDataSource {
 

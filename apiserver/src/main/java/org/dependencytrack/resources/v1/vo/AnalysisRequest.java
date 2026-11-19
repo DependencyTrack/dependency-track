@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.resources.v1.serializers.TrimmedEmptyStringDeserializer;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -65,10 +66,10 @@ public class AnalysisRequest {
             message = "The comment may only contain printable characters")
     private final String comment;
 
-    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @JsonDeserialize(using = TrimmedEmptyStringDeserializer.class)
     @Pattern(
             regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS,
-            message = "The comment may only contain printable characters")
+            message = "The analysis details may only contain printable characters")
     private final String analysisDetails;
 
     private final AnalysisState analysisState;

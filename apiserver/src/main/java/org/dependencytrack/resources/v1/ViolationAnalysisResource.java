@@ -20,6 +20,8 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.validation.RegexSequence;
 import alpine.common.validation.ValidationTask;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.UserPrincipal;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,12 +33,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.PolicyViolation;
-import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.validation.ValidUuid;
-import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.PolicyViolationDao;
+import org.dependencytrack.persistence.jdbi.ViolationAnalysisDao;
+import org.dependencytrack.persistence.jdbi.ViolationAnalysisDao.AnalysisTrail;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest;
@@ -51,6 +52,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.UUID;
+
+import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
  * JAX-RS resources for processing violation analysis decisions.
@@ -104,26 +111,22 @@ public class ViolationAnalysisResource extends AbstractApiResource {
                 new ValidationTask(RegexSequence.Pattern.UUID, componentUuid, "Component is not a valid UUID"),
                 new ValidationTask(RegexSequence.Pattern.UUID, violationUuid, "Policy violation is not a valid UUID"));
 
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            final var component = qm.getObjectByUuid(Component.class, componentUuid);
-            if (component == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("The component could not be found.")
-                        .build();
-            }
-            requireAccess(qm, component.getProject());
+        return withJdbiHandle(getAlpineRequest(), handle -> {
+            final long componentId = requireComponentAccess(handle, UUID.fromString(componentUuid));
 
-            final var policyViolation = qm.getObjectByUuid(PolicyViolation.class, violationUuid);
-            if (policyViolation == null) {
+            final Long violationId =
+                    handle.attach(PolicyViolationDao.class).getViolationId(componentId, UUID.fromString(violationUuid));
+            if (violationId == null) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("The policy violation could not be found.")
                         .build();
             }
 
-            final ViolationAnalysis analysis = qm.getViolationAnalysis(component, policyViolation);
-            return Response.ok(analysis != null ? ViolationAnalysisResponse.of(analysis) : null)
+            final AnalysisTrail trail =
+                    handle.attach(ViolationAnalysisDao.class).getTrail(componentId, violationId);
+            return Response.ok(trail != null ? ViolationAnalysisResponse.of(trail) : null)
                     .build();
-        }
+        });
     }
 
     @PUT
@@ -157,31 +160,37 @@ public class ViolationAnalysisResource extends AbstractApiResource {
                 validator.validateProperty(request, "analysisState"),
                 validator.validateProperty(request, "comment"));
 
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final var component = qm.getObjectByUuid(Component.class, request.getComponent());
-                if (component == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The component could not be found.")
-                            .build();
-                }
-                requireAccess(qm, component.getProject());
+        final UUID componentUuid = UUID.fromString(request.getComponent());
+        final UUID violationUuid = UUID.fromString(request.getPolicyViolation());
+        final String commenter =
+                switch (requireNonNull(getPrincipal())) {
+                    case UserPrincipal user -> user.username();
+                    case ApiKeyPrincipal apiKey ->
+                        apiKey.teams().isEmpty()
+                                ? apiKey.maskedKey()
+                                : apiKey.teams().getFirst().name();
+                };
 
-                final var violation = qm.getObjectByUuid(PolicyViolation.class, request.getPolicyViolation());
-                if (violation == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The policy violation could not be found.")
-                            .build();
-                }
+        return inJdbiTransaction(getAlpineRequest(), handle -> {
+            final long componentId = requireComponentAccess(handle, componentUuid);
 
-                final long analysisId = qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(component, violation)
-                        .withState(request.getAnalysisState())
-                        .withSuppress(request.isSuppressed())
-                        .withComment(request.getComment()));
-
-                return Response.ok(ViolationAnalysisResponse.of(qm.getObjectById(ViolationAnalysis.class, analysisId)))
+            final Long violationId = handle.attach(PolicyViolationDao.class).getViolationId(componentId, violationUuid);
+            if (violationId == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The policy violation could not be found.")
                         .build();
-            });
-        }
+            }
+
+            final var analysisDao = handle.attach(ViolationAnalysisDao.class);
+            analysisDao.makeAnalysis(new MakeViolationAnalysisCommand(componentId, violationId)
+                    .withState(request.getAnalysisState())
+                    .withSuppress(request.isSuppressed())
+                    .withCommenter(commenter)
+                    .withComment(request.getComment()));
+
+            return Response.ok(ViolationAnalysisResponse.of(
+                            requireNonNull(analysisDao.getTrail(componentId, violationId))))
+                    .build();
+        });
     }
 }

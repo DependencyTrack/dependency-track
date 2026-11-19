@@ -42,6 +42,7 @@ import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
+import org.dependencytrack.persistence.jdbi.ViolationAnalysisDao;
 import org.dependencytrack.proto.internal.workflow.v1.FetchProjectMetricsUpdateCandidatesRes;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.junit.jupiter.api.BeforeEach;
@@ -272,8 +273,9 @@ class UpdatePortfolioMetricsWorkflowTest extends AbstractMetricsUpdateTaskTest {
         qm.createComponent(componentAudited, false);
         final var violationAudited =
                 createPolicyViolation(componentAudited, Policy.ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
-        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentAudited, violationAudited)
-                .withState(ViolationAnalysisState.APPROVED));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(new MakeViolationAnalysisCommand(componentAudited.getId(), violationAudited.getId())
+                        .withState(ViolationAnalysisState.APPROVED)));
 
         // Create a project with a suppressed violation.
         var projectSuppressed = new Project();
@@ -286,9 +288,10 @@ class UpdatePortfolioMetricsWorkflowTest extends AbstractMetricsUpdateTaskTest {
         qm.createComponent(componentSuppressed, false);
         final var violationSuppressed =
                 createPolicyViolation(componentSuppressed, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
-        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentSuppressed, violationSuppressed)
-                .withState(ViolationAnalysisState.REJECTED)
-                .withSuppress(true));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(new MakeViolationAnalysisCommand(componentSuppressed.getId(), violationSuppressed.getId())
+                        .withState(ViolationAnalysisState.REJECTED)
+                        .withSuppress(true)));
 
         runWorkflow();
 

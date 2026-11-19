@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.persistence.command;
 
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.notification.proto.v1.Group;
 
@@ -29,18 +27,18 @@ import java.util.Set;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @param component The component to make the analysis for
- * @param violation The policy violation to make the analysis for
- * @param state     The analysis state to set
- * @param suppress  Whether to suppress the violation
- * @param commenter Name of the principal on which behalf audit trail entries will be created
- * @param comment   The comment to add to the audit trail
- * @param options   Additional options
+ * @param componentId ID of the component to make the analysis for
+ * @param violationId ID of the policy violation to make the analysis for
+ * @param state       The analysis state to set
+ * @param suppress    Whether to suppress the violation
+ * @param commenter   Name of the principal on which behalf audit trail entries will be created
+ * @param comment     The comment to add to the audit trail
+ * @param options     Additional options
  * @since 5.0.0
  */
 public record MakeViolationAnalysisCommand(
-        Component component,
-        PolicyViolation violation,
+        long componentId,
+        long violationId,
         ViolationAnalysisState state,
         Boolean suppress,
         String commenter,
@@ -62,37 +60,35 @@ public record MakeViolationAnalysisCommand(
     }
 
     public MakeViolationAnalysisCommand {
-        requireNonNull(component, "component must not be null");
-        requireNonNull(violation, "violation must not be null");
         requireNonNull(options, "options must not be null");
     }
 
-    public MakeViolationAnalysisCommand(final Component component, final PolicyViolation violation) {
-        this(component, violation, null, null, null, null, Collections.emptySet());
+    public MakeViolationAnalysisCommand(final long componentId, final long violationId) {
+        this(componentId, violationId, null, null, null, null, Collections.emptySet());
     }
 
     public MakeViolationAnalysisCommand withState(final ViolationAnalysisState state) {
         return new MakeViolationAnalysisCommand(
-                this.component, this.violation, state, this.suppress, this.commenter, this.comment, this.options);
+                this.componentId, this.violationId, state, this.suppress, this.commenter, this.comment, this.options);
     }
 
     public MakeViolationAnalysisCommand withSuppress(final Boolean suppress) {
         return new MakeViolationAnalysisCommand(
-                this.component, this.violation, this.state, suppress, this.commenter, this.comment, this.options);
+                this.componentId, this.violationId, this.state, suppress, this.commenter, this.comment, this.options);
     }
 
     public MakeViolationAnalysisCommand withCommenter(final String commenter) {
         return new MakeViolationAnalysisCommand(
-                this.component, this.violation, this.state, this.suppress, commenter, this.comment, this.options);
+                this.componentId, this.violationId, this.state, this.suppress, commenter, this.comment, this.options);
     }
 
     public MakeViolationAnalysisCommand withComment(final String comment) {
         return new MakeViolationAnalysisCommand(
-                this.component, this.violation, this.state, this.suppress, this.commenter, comment, this.options);
+                this.componentId, this.violationId, this.state, this.suppress, this.commenter, comment, this.options);
     }
 
     public MakeViolationAnalysisCommand withOptions(final Set<Option> options) {
         return new MakeViolationAnalysisCommand(
-                this.component, this.violation, this.state, this.suppress, this.commenter, this.comment, options);
+                this.componentId, this.violationId, this.state, this.suppress, this.commenter, this.comment, options);
     }
 }

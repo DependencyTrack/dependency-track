@@ -146,10 +146,11 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         policyViolation.setType(PolicyViolation.Type.OPERATIONAL);
         policyViolation.setTimestamp(new Date());
         qm.persist(policyViolation);
-        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentChild, policyViolation)
-                .withState(ViolationAnalysisState.REJECTED)
-                .withCommenter("someCommenter")
-                .withComment("someComment"));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(new MakeViolationAnalysisCommand(componentChild.getId(), policyViolation.getId())
+                        .withState(ViolationAnalysisState.REJECTED)
+                        .withCommenter("someCommenter")
+                        .withComment("someComment")));
 
         // Create metrics for project and component.
         useJdbiHandle(handle -> {

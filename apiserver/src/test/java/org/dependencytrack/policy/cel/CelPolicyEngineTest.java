@@ -48,6 +48,7 @@ import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
+import org.dependencytrack.persistence.jdbi.ViolationAnalysisDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
@@ -2773,10 +2774,11 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         violationB.setTimestamp(Date.from(Instant.EPOCH));
         violationB.setType(PolicyViolation.Type.OPERATIONAL);
         qm.persist(violationB);
-        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(component, violationB)
-                .withState(ViolationAnalysisState.REJECTED)
-                .withCommenter("commenter")
-                .withComment("comment"));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(new MakeViolationAnalysisCommand(component.getId(), violationB.getId())
+                        .withState(ViolationAnalysisState.REJECTED)
+                        .withCommenter("commenter")
+                        .withComment("comment")));
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(project))

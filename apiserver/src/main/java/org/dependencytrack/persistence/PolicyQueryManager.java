@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.model.auth.ApiKeyPrincipal;
-import alpine.model.auth.UserPrincipal;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.google.errorprone.annotations.CompileTimeConstant;
@@ -31,18 +29,13 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysis;
-import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
-import org.dependencytrack.notification.JdoNotificationEmitter;
-import org.dependencytrack.notification.NotificationModelConverter;
-import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.util.DateUtil;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -51,7 +44,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationAnalysisDecisionChangeNotification;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
@@ -342,118 +334,11 @@ final class PolicyQueryManager extends QueryManager {
      * @param policyViolation the PolicyViolation
      * @return a ViolationAnalysis object, or null if not found
      */
-    @Override
-    public ViolationAnalysis getViolationAnalysis(Component component, PolicyViolation policyViolation) {
+    private ViolationAnalysis getViolationAnalysis(Component component, PolicyViolation policyViolation) {
         final Query<ViolationAnalysis> query =
                 pm.newQuery(ViolationAnalysis.class, "component == :component && policyViolation == :policyViolation");
         query.setRange(0, 1);
         return singleResult(query.execute(component, policyViolation));
-    }
-
-    /**
-     * @since 5.0.0
-     */
-    @Override
-    public long makeViolationAnalysis(final MakeViolationAnalysisCommand command) {
-        assertPersistent(command.component(), "component must be persistent");
-        assertPersistent(command.violation(), "violation must be persistent");
-
-        return callInTransaction(() -> {
-            ViolationAnalysis analysis = getViolationAnalysis(command.component(), command.violation());
-            if (analysis == null) {
-                analysis = new ViolationAnalysis();
-                analysis.setComponent(command.component());
-                analysis.setPolicyViolation(command.violation());
-                analysis.setViolationAnalysisState(ViolationAnalysisState.NOT_SET);
-                analysis.setSuppressed(false);
-                persist(analysis);
-            }
-
-            boolean stateChanged = false;
-            boolean suppressionChanged = false;
-            final var auditTrailComments = new ArrayList<String>();
-
-            if (command.state() != null && command.state() != analysis.getAnalysisState()) {
-                auditTrailComments.add("%s → %s".formatted(analysis.getAnalysisState(), command.state()));
-                analysis.setViolationAnalysisState(command.state());
-                stateChanged = true;
-            }
-            if (command.suppress() != null && command.suppress() != analysis.isSuppressed()) {
-                auditTrailComments.add(command.suppress() ? "Suppressed" : "Unsuppressed");
-                analysis.setSuppressed(command.suppress());
-                suppressionChanged = true;
-            }
-
-            final List<String> comments =
-                    !command.options().contains(MakeViolationAnalysisCommand.Option.OMIT_AUDIT_TRAIL)
-                            ? auditTrailComments
-                            : new ArrayList<>();
-            if (command.comment() != null) {
-                comments.add(command.comment());
-            }
-
-            createViolationAnalysisComments(analysis, command.commenter(), comments);
-
-            if (!command.options().contains(MakeViolationAnalysisCommand.Option.OMIT_NOTIFICATION)
-                    && (stateChanged || suppressionChanged)) {
-                new JdoNotificationEmitter(this)
-                        .emit(createPolicyViolationAnalysisDecisionChangeNotification(
-                                NotificationModelConverter.convert(analysis.getProject()),
-                                NotificationModelConverter.convert(analysis.getComponent()),
-                                NotificationModelConverter.convert(analysis.getPolicyViolation()),
-                                NotificationModelConverter.convert(analysis),
-                                stateChanged,
-                                suppressionChanged));
-            }
-
-            return analysis.getId();
-        });
-    }
-
-    private void createViolationAnalysisComments(
-            final ViolationAnalysis analysis, final String commenter, final List<String> comments) {
-        assertPersistent(analysis, "analysis must be persistent");
-
-        if (comments == null || comments.isEmpty()) {
-            return;
-        }
-
-        final var now = new Date();
-
-        final String commenterToUse;
-        if (commenter == null) {
-            commenterToUse = switch (principal) {
-                case UserPrincipal user -> user.username();
-                case ApiKeyPrincipal apiKey ->
-                    apiKey.teams().isEmpty()
-                            ? apiKey.maskedKey()
-                            : apiKey.teams().getFirst().name();
-                case null -> null;
-            };
-        } else {
-            commenterToUse = commenter;
-        }
-
-        runInTransaction(() -> {
-            final var analysisComments = new ArrayList<ViolationAnalysisComment>(comments.size());
-
-            for (final String comment : comments) {
-                final var analysisComment = new ViolationAnalysisComment();
-                analysisComment.setViolationAnalysis(analysis);
-                analysisComment.setCommenter(commenterToUse);
-                analysisComment.setComment(comment);
-                analysisComment.setTimestamp(now);
-                analysisComments.add(analysisComment);
-            }
-
-            persist(analysisComments);
-
-            if (analysis.getAnalysisComments() != null) {
-                analysis.getAnalysisComments().addAll(analysisComments);
-            } else {
-                analysis.setAnalysisComments(analysisComments);
-            }
-        });
     }
 
     /**

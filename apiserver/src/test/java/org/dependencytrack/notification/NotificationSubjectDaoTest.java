@@ -42,6 +42,7 @@ import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
+import org.dependencytrack.persistence.jdbi.ViolationAnalysisDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -945,9 +946,10 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         violationB.setTimestamp(new Date());
         qm.persist(violationB);
 
-        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(component, violationB)
-                .withState(ViolationAnalysisState.REJECTED)
-                .withSuppress(true));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(new MakeViolationAnalysisCommand(component.getId(), violationB.getId())
+                        .withState(ViolationAnalysisState.REJECTED)
+                        .withSuppress(true)));
 
         final List<PolicyViolationSubject> subjects =
                 withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
@@ -988,8 +990,9 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         violationB.setTimestamp(new Date());
         qm.persist(violationB);
 
-        qm.makeViolationAnalysis(
-                new MakeViolationAnalysisCommand(component, violationB).withState(ViolationAnalysisState.APPROVED));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(new MakeViolationAnalysisCommand(component.getId(), violationB.getId())
+                        .withState(ViolationAnalysisState.APPROVED)));
 
         final List<PolicyViolationSubject> subjects =
                 withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)

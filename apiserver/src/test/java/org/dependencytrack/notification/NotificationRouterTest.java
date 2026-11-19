@@ -30,6 +30,7 @@ import org.dependencytrack.notification.proto.v1.BomConsumedOrProcessedSubject;
 import org.dependencytrack.notification.proto.v1.Group;
 import org.dependencytrack.notification.proto.v1.Level;
 import org.dependencytrack.notification.proto.v1.Notification;
+import org.dependencytrack.notification.proto.v1.PolicyViolationUpdatedSubject;
 import org.dependencytrack.notification.proto.v1.Scope;
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.AfterEach;
@@ -359,6 +360,210 @@ class NotificationRouterTest extends PersistenceCapableTest {
                 assertThat(result.notification()).isEqualTo(notification);
             });
         }
+    }
+
+    @Test
+    void shouldRequireIndependentUpdateSubscription() {
+        final var legacyRule = new NotificationRule();
+        legacyRule.setName("creation-only");
+        legacyRule.setTriggerType(NotificationTriggerType.EVENT);
+        legacyRule.setScope(NotificationScope.PORTFOLIO);
+        legacyRule.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION));
+        legacyRule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        legacyRule.setEnabled(true);
+        qm.persist(legacyRule);
+
+        final Notification updated = TestNotificationFactory.createPolicyViolationUpdatedTestNotification();
+        assertThat(router.route(List.of(updated))).isEmpty();
+
+        final var updateRule = new NotificationRule();
+        updateRule.setName("updates");
+        updateRule.setTriggerType(NotificationTriggerType.EVENT);
+        updateRule.setScope(NotificationScope.PORTFOLIO);
+        updateRule.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION_UPDATED));
+        updateRule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        updateRule.setEnabled(true);
+        updateRule.setFilterExpression("group == Group.GROUP_POLICY_VIOLATION_UPDATED"
+                + " && subject.previous_message == 'CVE-2021-44228'"
+                + " && subject.current_message.contains('CVE-2021-45046')");
+        qm.persist(updateRule);
+
+        final var filteredRule = new NotificationRule();
+        filteredRule.setName("filtered-out");
+        filteredRule.setTriggerType(NotificationTriggerType.EVENT);
+        filteredRule.setScope(NotificationScope.PORTFOLIO);
+        filteredRule.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION_UPDATED));
+        filteredRule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        filteredRule.setEnabled(true);
+        filteredRule.setFilterExpression("subject.current_message == 'unmatched'");
+        qm.persist(filteredRule);
+
+        assertThat(router.route(List.of(updated))).satisfiesExactly(result -> {
+            assertThat(result.ruleNames()).containsOnly("updates");
+            assertThat(result.notification()).isEqualTo(updated);
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldApplyDocumentedOptionalFieldFiltersWithoutMatchingAbsentValues(boolean reviewed) throws Exception {
+        final Notification notification = reviewed
+                ? TestNotificationFactory.createReviewedPolicyViolationUpdatedTestNotification()
+                : TestNotificationFactory.createPolicyViolationUpdatedTestNotification();
+        final var expressions = List.of(
+                "has(subject.current_message) && subject.current_message.contains('CVE-2021-45046')",
+                "has(subject.analysis_state) && subject.analysis_state == 'APPROVED'",
+                "has(subject.suppressed) && subject.suppressed");
+        final var names = List.of("current-message", "approved", "suppressed");
+        for (int index = 0; index < expressions.size(); index++) {
+            final var rule = new NotificationRule();
+            rule.setName(names.get(index));
+            rule.setTriggerType(NotificationTriggerType.EVENT);
+            rule.setScope(NotificationScope.PORTFOLIO);
+            rule.setNotifyOn(Set.of(convert(notification.getGroup())));
+            rule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+            rule.setEnabled(true);
+            rule.setFilterExpression(expressions.get(index));
+            qm.persist(rule);
+        }
+        assertThat(router.route(List.of(notification)))
+                .satisfiesExactly(result -> assertThat(result.ruleNames())
+                        .containsExactlyInAnyOrderElementsOf(reviewed ? names : List.of("current-message")));
+
+        final var absent = notification.getSubject().unpack(PolicyViolationUpdatedSubject.class).toBuilder()
+                .clearCurrentMessage()
+                .clearAnalysisState()
+                .clearSuppressed()
+                .build();
+        assertThat(router.route(List.of(
+                        notification.toBuilder().setSubject(Any.pack(absent)).build())))
+                .isEmpty();
+        if (reviewed) {
+            final var unsuppressed = notification.getSubject().unpack(PolicyViolationUpdatedSubject.class).toBuilder()
+                    .setSuppressed(false)
+                    .build();
+            assertThat(router.route(List.of(notification.toBuilder()
+                            .setSubject(Any.pack(unsuppressed))
+                            .build())))
+                    .satisfiesExactly(result ->
+                            assertThat(result.ruleNames()).containsExactlyInAnyOrder("current-message", "approved"));
+        }
+    }
+
+    @Test
+    void shouldApplyProjectAndTagLimitsToUpdates() throws Exception {
+        final var tag = qm.persist(new Tag("selected"));
+        final var project = new Project();
+        project.setName("selected-project");
+        project.setTags(Set.of(tag));
+        qm.persist(project);
+        final var otherProject = new Project();
+        otherProject.setName("other-project");
+        qm.persist(otherProject);
+
+        final var allowed = new NotificationRule();
+        allowed.setName("allowed");
+        allowed.setTriggerType(NotificationTriggerType.EVENT);
+        allowed.setScope(NotificationScope.PORTFOLIO);
+        allowed.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION_UPDATED));
+        allowed.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        allowed.setEnabled(true);
+        allowed.setProjects(List.of(project));
+        allowed.setTags(Set.of(tag));
+        qm.persist(allowed);
+        final var denied = new NotificationRule();
+        denied.setName("other-project");
+        denied.setTriggerType(NotificationTriggerType.EVENT);
+        denied.setScope(NotificationScope.PORTFOLIO);
+        denied.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION_UPDATED));
+        denied.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        denied.setEnabled(true);
+        denied.setProjects(List.of(otherProject));
+        qm.persist(denied);
+
+        final var builder = TestNotificationFactory.createPolicyViolationUpdatedTestNotification().toBuilder();
+        final var subject = builder.getSubject().unpack(PolicyViolationUpdatedSubject.class).toBuilder()
+                .setProject(convert(project))
+                .build();
+        final Notification updated = builder.setSubject(Any.pack(subject)).build();
+
+        assertThat(router.route(List.of(updated))).satisfiesExactly(result -> {
+            assertThat(result.ruleNames()).containsOnly("allowed");
+        });
+    }
+
+    @Test
+    void shouldRequireExplicitReviewedSubscriptionEvenWhenOrdinaryFilterFailsOpen() {
+        final var ordinary = new NotificationRule();
+        ordinary.setName("ordinary-updates");
+        ordinary.setTriggerType(NotificationTriggerType.EVENT);
+        ordinary.setScope(NotificationScope.PORTFOLIO);
+        ordinary.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION_UPDATED));
+        ordinary.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        ordinary.setEnabled(true);
+        ordinary.setFilterExpression("this is not valid CEL");
+        qm.persist(ordinary);
+        final Notification reviewed = TestNotificationFactory.createReviewedPolicyViolationUpdatedTestNotification();
+        assertThat(router.route(List.of(reviewed))).isEmpty();
+
+        final var optIn = new NotificationRule();
+        optIn.setName("reviewed-opt-in");
+        optIn.setTriggerType(NotificationTriggerType.EVENT);
+        optIn.setScope(NotificationScope.PORTFOLIO);
+        optIn.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION_UPDATED_REVIEWED));
+        optIn.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        optIn.setEnabled(true);
+        optIn.setFilterExpression("group == Group.GROUP_POLICY_VIOLATION_UPDATED_REVIEWED"
+                + " && subject.analysis_state == 'APPROVED' && subject.suppressed"
+                + " && subject.current_message.contains('CVE-2021-45046')");
+        qm.persist(optIn);
+        assertThat(router.route(List.of(reviewed))).satisfiesExactly(result -> {
+            assertThat(result.ruleNames()).containsOnly("reviewed-opt-in");
+            assertThat(result.notification()).isEqualTo(reviewed);
+        });
+        assertThat(router.route(List.of(TestNotificationFactory.createPolicyViolationUpdatedTestNotification())))
+                .satisfiesExactly(result -> assertThat(result.ruleNames()).containsOnly("ordinary-updates"));
+    }
+
+    @Test
+    void shouldApplyProjectAndTagLimitsToReviewedUpdates() throws Exception {
+        final var tag = qm.persist(new Tag("reviewed-selected"));
+        final var project = new Project();
+        project.setName("reviewed-project");
+        project.setTags(Set.of(tag));
+        qm.persist(project);
+        final var other = new Project();
+        other.setName("other-reviewed-project");
+        qm.persist(other);
+        final var allowed = new NotificationRule();
+        allowed.setName("reviewed-project-opt-in");
+        allowed.setTriggerType(NotificationTriggerType.EVENT);
+        allowed.setScope(NotificationScope.PORTFOLIO);
+        allowed.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION_UPDATED_REVIEWED));
+        allowed.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        allowed.setEnabled(true);
+        allowed.setProjects(List.of(project));
+        allowed.setTags(Set.of(tag));
+        qm.persist(allowed);
+        final var denied = new NotificationRule();
+        denied.setName("other-reviewed-project-opt-in");
+        denied.setTriggerType(NotificationTriggerType.EVENT);
+        denied.setScope(NotificationScope.PORTFOLIO);
+        denied.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION_UPDATED_REVIEWED));
+        denied.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        denied.setEnabled(true);
+        denied.setProjects(List.of(other));
+        qm.persist(denied);
+        final var builder = TestNotificationFactory.createReviewedPolicyViolationUpdatedTestNotification().toBuilder();
+        final var subject = builder.getSubject().unpack(PolicyViolationUpdatedSubject.class).toBuilder()
+                .setProject(convert(project))
+                .build();
+        final Notification reviewed = builder.setSubject(Any.pack(subject)).build();
+        assertThat(router.route(List.of(reviewed)))
+                .satisfiesExactly(result -> assertThat(result.ruleNames()).containsOnly("reviewed-project-opt-in"));
+        allowed.setEnabled(false);
+        qm.persist(allowed);
+        assertThat(router.route(List.of(reviewed))).isEmpty();
     }
 
     @Nested

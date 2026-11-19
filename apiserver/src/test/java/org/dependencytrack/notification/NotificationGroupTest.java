@@ -18,8 +18,11 @@
  */
 package org.dependencytrack.notification;
 
+import org.dependencytrack.model.NotificationTriggerType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class NotificationGroupTest {
 
@@ -41,5 +44,24 @@ class NotificationGroupTest {
         Assertions.assertEquals("PROJECT_AUDIT_CHANGE", NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         Assertions.assertEquals("USER_CREATED", NotificationGroup.USER_CREATED.name());
         Assertions.assertEquals("USER_DELETED", NotificationGroup.USER_DELETED.name());
+    }
+
+    @Test
+    void updateGroupShouldBeIndependentlySelectableEvent() {
+        assertThat(NotificationGroup.valueOf("POLICY_VIOLATION_UPDATED"))
+                .isNotEqualTo(NotificationGroup.POLICY_VIOLATION);
+        assertThat(NotificationGroup.POLICY_VIOLATION_UPDATED.getSupportedTriggerType())
+                .isEqualTo(NotificationTriggerType.EVENT);
+        assertThat(NotificationGroup.POLICY_VIOLATION.getSupportedTriggerType())
+                .isEqualTo(NotificationTriggerType.EVENT);
+    }
+
+    @Test
+    void reviewedUpdateGroupShouldRequireItsOwnEventSubscription() {
+        assertThat(NotificationGroup.valueOf("POLICY_VIOLATION_UPDATED_REVIEWED"))
+                .isNotEqualTo(NotificationGroup.POLICY_VIOLATION_UPDATED)
+                .isNotEqualTo(NotificationGroup.POLICY_VIOLATION);
+        assertThat(NotificationGroup.POLICY_VIOLATION_UPDATED_REVIEWED.getSupportedTriggerType())
+                .isEqualTo(NotificationTriggerType.EVENT);
     }
 }

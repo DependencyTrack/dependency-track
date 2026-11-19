@@ -54,6 +54,7 @@ import static org.dependencytrack.notification.api.NotificationFactory.createNew
 import static org.dependencytrack.notification.api.NotificationFactory.createNewVulnerableDependencyNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationAnalysisDecisionChangeNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationNotification;
+import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationUpdatedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createUserCreatedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createUserDeletedNotification;
@@ -74,6 +75,8 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERAB
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABILITY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABLE_DEPENDENCY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_POLICY_VIOLATION;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_POLICY_VIOLATION_UPDATED;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_POLICY_VIOLATION_UPDATED_REVIEWED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_CREATED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_CREATED;
@@ -127,6 +130,13 @@ public final class TestNotificationFactory {
             Map.entry(
                     new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_POLICY_VIOLATION, LEVEL_INFORMATIONAL),
                     TestNotificationFactory::createPolicyViolationTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_POLICY_VIOLATION_UPDATED, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createPolicyViolationUpdatedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(
+                            SCOPE_PORTFOLIO, GROUP_POLICY_VIOLATION_UPDATED_REVIEWED, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createReviewedPolicyViolationUpdatedTestNotification),
             Map.entry(
                     new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_PROJECT_AUDIT_CHANGE, LEVEL_INFORMATIONAL),
                     TestNotificationFactory::createProjectAuditChangeTestNotification),
@@ -225,6 +235,28 @@ public final class TestNotificationFactory {
     public static Notification createPolicyViolationTestNotification() {
         return createPolicyViolationNotification(
                 createProject(), createComponent(), createPolicyViolation(createPolicyCondition(createPolicy())));
+    }
+
+    public static Notification createPolicyViolationUpdatedTestNotification() {
+        return createPolicyViolationUpdatedNotification(
+                createProject(),
+                createComponent(),
+                createPolicyViolation(createPolicyCondition(createPolicy())),
+                "CVE-2021-44228",
+                "CVE-2021-44228, CVE-2021-45046",
+                Timestamps.fromMillis(1149573966666L));
+    }
+
+    public static Notification createReviewedPolicyViolationUpdatedTestNotification() {
+        return createPolicyViolationUpdatedNotification(
+                createProject(),
+                createComponent(),
+                createPolicyViolation(createPolicyCondition(createPolicy())),
+                "CVE-2021-44228",
+                "CVE-2021-44228, CVE-2021-45046",
+                Timestamps.fromMillis(1149573966666L),
+                "APPROVED",
+                true);
     }
 
     public static Notification createProjectAuditChangeTestNotification() {

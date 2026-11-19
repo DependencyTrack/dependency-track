@@ -92,7 +92,7 @@
           "value": "{{ subject.project | summarize | escape(strategy="json") }}"
         }
       ],
-      {% elseif notification.group == "GROUP_POLICY_VIOLATION" %}
+      {% elseif notification.group == "GROUP_POLICY_VIOLATION" or notification.group == "GROUP_POLICY_VIOLATION_UPDATED" or notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" %}
       "facts": [
         {
           "name": "Subject",
@@ -113,7 +113,35 @@
         {
           "name": "Project",
           "value": "{{ subject.project | summarize | escape(strategy="json") }}"
-        }{% if subject.policyViolation.message is not empty %},
+        }{% if notification.group == "GROUP_POLICY_VIOLATION_UPDATED" or notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" %},
+        {
+          "name": "Previous Message",
+          "value": "{{ subject.previousMessage | escape(strategy="json") }}"
+        },
+        {
+          "name": "Current Message",
+          "value": "{{ subject.currentMessage | escape(strategy="json") }}"
+        },
+        {
+          "name": "Changed At",
+          "value": "{{ subject.changedAt | formatTimestamp | escape(strategy="json") }}"
+        },
+        {
+          "name": "Violation UUID",
+          "value": "{{ subject.policyViolation.uuid | escape(strategy="json") }}"
+        }{% if notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" %},
+        {
+          "name": "Analysis State",
+          "value": "{{ subject.analysisState | escape(strategy="json") }}"
+        },
+        {
+          "name": "Suppressed",
+          "value": "{% if subject.hasSuppressed() %}{{ subject.suppressed }}{% else %}not recorded{% endif %}"
+        },
+        {
+          "name": "Review Decision",
+          "value": "Retained"
+        }{% endif %}{% endif %}{% if subject.policyViolation.message is not empty %},
         {
           "name": "Message",
           "value": "{{ subject.policyViolation.message | escape(strategy="json") }}"

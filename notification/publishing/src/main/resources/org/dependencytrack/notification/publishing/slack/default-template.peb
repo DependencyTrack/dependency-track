@@ -325,14 +325,14 @@
 	{% endif %}
   ]
 }
-{% elseif notification.group == "GROUP_POLICY_VIOLATION" %}
+{% elseif notification.group == "GROUP_POLICY_VIOLATION" or notification.group == "GROUP_POLICY_VIOLATION_UPDATED" or notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" %}
 {
   "blocks": [
     {
 	  "type": "header",
 	  "text": {
 	    "type": "plain_text",
-		"text": "Policy Violation"
+		"text": "{% if notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" %}Reviewed Policy Violation Updated{% elseif notification.group == "GROUP_POLICY_VIOLATION_UPDATED" %}Policy Violation Updated{% else %}Policy Violation{% endif %}"
 	  }
 	},
 	{
@@ -350,7 +350,7 @@
 	{
 	  "type": "section",
 	  "text": {
-	    "text": "OWASP Dependency-Track detected a policy violation. Details of the violation follow.",
+	    "text": "{% if notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" %}The message of an approved or suppressed policy violation changed. The review decision is retained.{% elseif notification.group == "GROUP_POLICY_VIOLATION_UPDATED" %}The message of an existing policy violation changed.{% else %}OWASP Dependency-Track detected a policy violation. Details of the violation follow.{% endif %}",
 		"type": "plain_text"
 	  },
 	  "fields": [
@@ -397,7 +397,14 @@
 		  "text": "{{ subject.project.toString | escape(strategy="json") }}"
 		}
 	  ]
-	}{% if subject.policyViolation.message is not empty %},
+	}{% if notification.group == "GROUP_POLICY_VIOLATION_UPDATED" or notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" %},
+    {
+      "type": "section",
+      "text": {
+        "type": "plain_text",
+        "text": "Previous Message: {{ subject.previousMessage | escape(strategy="json") }}\nCurrent Message: {{ subject.currentMessage | escape(strategy="json") }}\nChanged At: {{ subject.changedAt | formatTimestamp | escape(strategy="json") }}\nViolation UUID: {{ subject.policyViolation.uuid | escape(strategy="json") }}{% if notification.group == "GROUP_POLICY_VIOLATION_UPDATED_REVIEWED" %}\nAnalysis State: {{ subject.analysisState | escape(strategy="json") }}\nSuppressed: {% if subject.hasSuppressed() %}{{ subject.suppressed }}{% else %}not recorded{% endif %}\nReview decision retained{% endif %}"
+      }
+    }{% endif %}{% if subject.policyViolation.message is not empty %},
 	{
 	  "type": "section",
 	  "text": {

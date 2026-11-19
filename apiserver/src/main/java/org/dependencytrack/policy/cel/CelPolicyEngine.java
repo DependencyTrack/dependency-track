@@ -51,6 +51,7 @@ import org.dependencytrack.policy.cel.compat.VulnerabilityIdCelPolicyScriptSourc
 import org.dependencytrack.policy.cel.persistence.CelPolicyDao;
 import org.dependencytrack.policy.cel.persistence.CelPolicyDao.ComponentVulnerability;
 import org.dependencytrack.policy.cel.persistence.CelPolicyDao.ComponentWithLicenseId;
+import org.dependencytrack.policy.cel.persistence.CelPolicyDao.MessageChange;
 import org.dependencytrack.proto.policy.v1.Component;
 import org.dependencytrack.proto.policy.v1.License;
 import org.dependencytrack.proto.policy.v1.Project;
@@ -71,7 +72,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationNotification;
+import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationUpdatedNotification;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -268,29 +271,75 @@ public final class CelPolicyEngine {
                     violationsByComponentId);
         }
 
-        final Set<Long> newViolationIds = inJdbiTransaction(
-                handle -> new CelPolicyDao(handle).reconcileViolations(projectId, violationsByComponentId));
-        LOGGER.info("Identified {} new violations", newViolationIds.size());
+        // Persist message transitions and their durable notification outbox records
+        // atomically. A failure must not consume a transition without its event.
+        useJdbiTransaction(handle -> {
+            final var changes = new CelPolicyDao(handle).reconcileViolationChanges(projectId, violationsByComponentId);
+            LOGGER.info(
+                    "Identified {} new and {} updated violations",
+                    changes.createdIds().size(),
+                    changes.updatedById().size());
+            if (changes.createdIds().isEmpty() && changes.updatedById().isEmpty()) {
+                return;
+            }
+            final var notificationSubjectDao = handle.attach(NotificationSubjectDao.class);
+            final var subscribedGroups = notificationSubjectDao.getSubscribedNotificationGroups();
+            final var emitter = new JdbiNotificationEmitter(handle);
 
-        if (!newViolationIds.isEmpty()) {
-            useJdbiTransaction(handle -> {
-                final var notificationSubjectDao = handle.attach(NotificationSubjectDao.class);
+            // Assembling notification subjects is expensive. Skip it for groups that no
+            // enabled rule subscribes to. The emitter would discard those notifications anyway.
+            if (!changes.createdIds().isEmpty()
+                    && subscribedGroups.contains(NotificationGroup.POLICY_VIOLATION.name())) {
+                emitter.emitAll(notificationSubjectDao.getForNewPolicyViolations(changes.createdIds()).stream()
+                        .map(subject -> createPolicyViolationNotification(
+                                subject.getProject(), subject.getComponent(), subject.getPolicyViolation()))
+                        .toList());
+            }
 
-                // Assembling notification subjects is expensive. Skip it for groups that no
-                // enabled rule subscribes to. The emitter would discard those notifications anyway.
-                if (!notificationSubjectDao
-                        .getSubscribedNotificationGroups()
-                        .contains(NotificationGroup.POLICY_VIOLATION.name())) {
-                    return;
-                }
-
-                new JdbiNotificationEmitter(handle)
-                        .emitAll(notificationSubjectDao.getForNewPolicyViolations(newViolationIds).stream()
-                                .map(subject -> createPolicyViolationNotification(
-                                        subject.getProject(), subject.getComponent(), subject.getPolicyViolation()))
+            // Ordinary subscriptions retain the existing approval/suppression
+            // filter. Reviewed changes require their own explicit subscription.
+            final boolean includeActive = subscribedGroups.contains(NotificationGroup.POLICY_VIOLATION_UPDATED.name());
+            final boolean includeReviewed =
+                    subscribedGroups.contains(NotificationGroup.POLICY_VIOLATION_UPDATED_REVIEWED.name());
+            if (!changes.updatedById().isEmpty() && (includeActive || includeReviewed)) {
+                final Map<String, MessageChange> updatedByUuid = changes.updatedById().values().stream()
+                        .collect(Collectors.toMap(change -> change.uuid().toString(), change -> change));
+                emitter.emitAll(
+                        notificationSubjectDao
+                                .getForPolicyViolationUpdates(
+                                        changes.updatedById().keySet(), includeActive, includeReviewed)
+                                .stream()
+                                .map(row -> {
+                                    final var subject = row.subject();
+                                    final MessageChange change = requireNonNull(updatedByUuid.get(
+                                            subject.getPolicyViolation().getUuid()));
+                                    final Timestamp changedAt = Timestamp.newBuilder()
+                                            .setSeconds(change.changedAt().getEpochSecond())
+                                            .setNanos(change.changedAt().getNano())
+                                            .build();
+                                    if (row.isReviewed()) {
+                                        return createPolicyViolationUpdatedNotification(
+                                                subject.getProject(),
+                                                subject.getComponent(),
+                                                subject.getPolicyViolation(),
+                                                change.previousMessage(),
+                                                change.currentMessage(),
+                                                changedAt,
+                                                row.analysisState(),
+                                                row.suppressed());
+                                    }
+                                    // Preserve the ordinary event's original payload shape.
+                                    return createPolicyViolationUpdatedNotification(
+                                            subject.getProject(),
+                                            subject.getComponent(),
+                                            subject.getPolicyViolation(),
+                                            change.previousMessage(),
+                                            change.currentMessage(),
+                                            changedAt);
+                                })
                                 .toList());
-            });
-        }
+            }
+        });
     }
 
     record ConditionScript(PolicyCondition condition, CelPolicyProgram script) {}

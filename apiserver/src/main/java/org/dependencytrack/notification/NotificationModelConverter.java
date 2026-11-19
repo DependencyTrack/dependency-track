@@ -66,6 +66,8 @@ public final class NotificationModelConverter {
             case NEW_VULNERABILITY -> Group.GROUP_NEW_VULNERABILITY;
             case NEW_VULNERABLE_DEPENDENCY -> Group.GROUP_NEW_VULNERABLE_DEPENDENCY;
             case POLICY_VIOLATION -> Group.GROUP_POLICY_VIOLATION;
+            case POLICY_VIOLATION_UPDATED -> Group.GROUP_POLICY_VIOLATION_UPDATED;
+            case POLICY_VIOLATION_UPDATED_REVIEWED -> Group.GROUP_POLICY_VIOLATION_UPDATED_REVIEWED;
             case PROJECT_AUDIT_CHANGE -> Group.GROUP_PROJECT_AUDIT_CHANGE;
             case PROJECT_CREATED -> Group.GROUP_PROJECT_CREATED;
             case REPOSITORY -> Group.GROUP_REPOSITORY;
@@ -93,6 +95,8 @@ public final class NotificationModelConverter {
             case GROUP_NEW_VULNERABILITY -> NotificationGroup.NEW_VULNERABILITY;
             case GROUP_NEW_VULNERABLE_DEPENDENCY -> NotificationGroup.NEW_VULNERABLE_DEPENDENCY;
             case GROUP_POLICY_VIOLATION -> NotificationGroup.POLICY_VIOLATION;
+            case GROUP_POLICY_VIOLATION_UPDATED -> NotificationGroup.POLICY_VIOLATION_UPDATED;
+            case GROUP_POLICY_VIOLATION_UPDATED_REVIEWED -> NotificationGroup.POLICY_VIOLATION_UPDATED_REVIEWED;
             case GROUP_PROJECT_AUDIT_CHANGE -> NotificationGroup.PROJECT_AUDIT_CHANGE;
             case GROUP_PROJECT_CREATED -> NotificationGroup.PROJECT_CREATED;
             case GROUP_REPOSITORY -> NotificationGroup.REPOSITORY;

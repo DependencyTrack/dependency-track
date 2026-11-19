@@ -446,6 +446,73 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
         assertThat(getViolationText(violationId)).isNull();
     }
 
+    @Test
+    public void testReconcileViolationChangesReturnsPreviousAndCurrentMessages() {
+        final var project = new Project();
+        project.setName("projectName");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("componentName");
+        qm.persist(component);
+
+        final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "true",
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var violation = new PolicyViolation();
+        violation.setType(PolicyViolation.Type.OPERATIONAL);
+        violation.setPolicyCondition(condition);
+        violation.setTimestamp(new Date());
+        violation.setText("CVE-2021-44228");
+        final var reported = Map.of(component.getId(), List.of(violation));
+
+        final var first = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolationChanges(project.getId(), reported));
+        assertThat(first.createdIds()).hasSize(1);
+        assertThat(first.updatedById()).isEmpty();
+        final long violationId = first.createdIds().iterator().next();
+
+        final var same = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolationChanges(project.getId(), reported));
+        assertThat(same.createdIds()).isEmpty();
+        assertThat(same.updatedById()).isEmpty();
+
+        violation.setText("CVE-2021-44228,CVE-2021-45046");
+        final var updated = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolationChanges(project.getId(), reported));
+        assertThat(updated.createdIds()).isEmpty();
+        assertThat(updated.updatedById()).containsOnlyKeys(violationId);
+        final var change = updated.updatedById().get(violationId);
+        assertThat(change.uuid()).isNotNull();
+        assertThat(change.previousMessage()).isEqualTo("CVE-2021-44228");
+        assertThat(change.currentMessage()).isEqualTo("CVE-2021-44228,CVE-2021-45046");
+        assertThat(getViolationText(violationId)).isEqualTo(change.currentMessage());
+
+        violation.setText(null);
+        final var cleared = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolationChanges(project.getId(), reported));
+        assertThat(cleared.updatedById()).containsOnlyKeys(violationId);
+        assertThat(cleared.updatedById().get(violationId).previousMessage()).isEqualTo("CVE-2021-44228,CVE-2021-45046");
+        assertThat(cleared.updatedById().get(violationId).currentMessage()).isNull();
+
+        final var stillNull = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolationChanges(project.getId(), reported));
+        assertThat(stillNull.updatedById()).isEmpty();
+
+        violation.setText("CVE-2021-45046");
+        final var restored = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolationChanges(project.getId(), reported));
+        assertThat(restored.updatedById()).containsOnlyKeys(violationId);
+        assertThat(restored.updatedById().get(violationId).previousMessage()).isNull();
+        assertThat(restored.updatedById().get(violationId).currentMessage()).isEqualTo("CVE-2021-45046");
+    }
+
     private static String getViolationText(long violationId) {
         return withJdbiHandle(handle -> handle.createQuery("""
                         SELECT "TEXT" FROM "POLICYVIOLATION" WHERE "ID" = :id

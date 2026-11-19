@@ -32,6 +32,7 @@ import org.dependencytrack.notification.proto.v1.NewVulnerableDependencySubject;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysisDecisionChangeSubject;
 import org.dependencytrack.notification.proto.v1.PolicyViolationSubject;
+import org.dependencytrack.notification.proto.v1.PolicyViolationUpdatedSubject;
 import org.dependencytrack.notification.proto.v1.Project;
 import org.dependencytrack.notification.proto.v1.UserSubject;
 import org.dependencytrack.notification.proto.v1.VexConsumedOrProcessedSubject;
@@ -351,6 +352,7 @@ final class NotificationRouter {
             case NewVulnerabilitySubject it -> it.getProject();
             case NewVulnerableDependencySubject it -> it.getProject();
             case PolicyViolationSubject it -> it.getProject();
+            case PolicyViolationUpdatedSubject it -> it.getProject();
             case PolicyViolationAnalysisDecisionChangeSubject it -> it.getProject();
             case VulnerabilityAnalysisDecisionChangeSubject it -> it.getProject();
             case Project it -> it;
@@ -376,6 +378,8 @@ final class NotificationRouter {
                 case GROUP_NEW_VULNERABLE_DEPENDENCY ->
                     notification.getSubject().unpack(NewVulnerableDependencySubject.class);
                 case GROUP_POLICY_VIOLATION -> notification.getSubject().unpack(PolicyViolationSubject.class);
+                case GROUP_POLICY_VIOLATION_UPDATED, GROUP_POLICY_VIOLATION_UPDATED_REVIEWED ->
+                    notification.getSubject().unpack(PolicyViolationUpdatedSubject.class);
                 case GROUP_PROJECT_AUDIT_CHANGE -> {
                     if (notification.getSubject().is(PolicyViolationAnalysisDecisionChangeSubject.class)) {
                         yield notification.getSubject().unpack(PolicyViolationAnalysisDecisionChangeSubject.class);

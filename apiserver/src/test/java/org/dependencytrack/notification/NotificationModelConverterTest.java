@@ -21,6 +21,7 @@ package org.dependencytrack.notification;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Set;
@@ -29,6 +30,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NotificationModelConverterTest {
+
+    @ParameterizedTest
+    @EnumSource(NotificationGroup.class)
+    void shouldRoundTripEveryNotificationGroup(NotificationGroup group) {
+        assertThat(NotificationModelConverter.convert(NotificationModelConverter.convert(group)))
+                .isEqualTo(group);
+    }
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})

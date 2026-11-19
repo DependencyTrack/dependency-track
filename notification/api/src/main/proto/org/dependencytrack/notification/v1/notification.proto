@@ -66,6 +66,13 @@ enum Group {
   // Scheduled summary of new policy violations across projects.
   GROUP_NEW_POLICY_VIOLATIONS_SUMMARY = 24;
 
+  // The message of an existing policy violation changed.
+  GROUP_POLICY_VIOLATION_UPDATED = 25;
+
+  // The message of an approved or suppressed violation changed.
+  // Subscribing explicitly opts in to updates excluded from the ordinary group.
+  GROUP_POLICY_VIOLATION_UPDATED_REVIEWED = 26;
+
   // Indexing service has been removed as of
   // https://github.com/DependencyTrack/hyades/issues/661
   reserved 5;
@@ -139,6 +146,22 @@ message PolicyViolationSubject {
   Component component = 1;
   Project project = 2;
   PolicyViolation policy_violation = 3;
+}
+
+// Subject for ordinary and explicitly opted-in reviewed violation updates.
+message PolicyViolationUpdatedSubject {
+  Component component = 1;
+  Project project = 2;
+  PolicyViolation policy_violation = 3;
+  // Absent means the previous message was null.
+  optional string previous_message = 4;
+  // Absent means the current message is null.
+  optional string current_message = 5;
+  google.protobuf.Timestamp changed_at = 6;
+  // Review metadata observed in the subject assembly statement snapshot.
+  // Absent means no state or suppression value was recorded, not false.
+  optional string analysis_state = 7;
+  optional bool suppressed = 8;
 }
 
 message VexConsumedOrProcessedSubject {

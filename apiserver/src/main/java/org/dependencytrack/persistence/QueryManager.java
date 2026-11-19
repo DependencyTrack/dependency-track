@@ -52,13 +52,11 @@ import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -520,14 +518,6 @@ public class QueryManager extends AlpineQueryManager {
     public PaginatedResult getPolicyViolations(
             boolean includeSuppressed, boolean showInactive, Map<String, String> filters) {
         return getPolicyQueryManager().getPolicyViolations(includeSuppressed, showInactive, filters);
-    }
-
-    public ViolationAnalysis getViolationAnalysis(Component component, PolicyViolation policyViolation) {
-        return getPolicyQueryManager().getViolationAnalysis(component, policyViolation);
-    }
-
-    public long makeViolationAnalysis(final MakeViolationAnalysisCommand command) {
-        return getPolicyQueryManager().makeViolationAnalysis(command);
     }
 
     public PaginatedResult getLicenseGroups() {

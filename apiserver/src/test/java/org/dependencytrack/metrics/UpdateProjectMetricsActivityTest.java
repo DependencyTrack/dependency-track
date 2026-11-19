@@ -33,6 +33,7 @@ import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
+import org.dependencytrack.persistence.jdbi.ViolationAnalysisDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.junit.jupiter.api.Test;
@@ -325,8 +326,9 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         qm.createComponent(componentAudited, false);
         final var violationAudited =
                 createPolicyViolation(componentAudited, Policy.ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
-        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentAudited, violationAudited)
-                .withState(ViolationAnalysisState.APPROVED));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(new MakeViolationAnalysisCommand(componentAudited.getId(), violationAudited.getId())
+                        .withState(ViolationAnalysisState.APPROVED)));
 
         // Create a component with a suppressed violation.
         var componentSuppressed = new Component();
@@ -335,9 +337,10 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         qm.createComponent(componentSuppressed, false);
         final var violationSuppressed =
                 createPolicyViolation(componentSuppressed, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
-        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentSuppressed, violationSuppressed)
-                .withState(ViolationAnalysisState.REJECTED)
-                .withSuppress(true));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(new MakeViolationAnalysisCommand(componentSuppressed.getId(), violationSuppressed.getId())
+                        .withState(ViolationAnalysisState.REJECTED)
+                        .withSuppress(true)));
 
         // Create "old" metrics data points for all three components.
         // When calculating project metrics, only the latest data point for each component
@@ -475,8 +478,10 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         qm.createComponent(componentViolationAudited, false);
         final var violationAudited = createPolicyViolation(
                 componentViolationAudited, Policy.ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
-        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentViolationAudited, violationAudited)
-                .withState(ViolationAnalysisState.APPROVED));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(
+                        new MakeViolationAnalysisCommand(componentViolationAudited.getId(), violationAudited.getId())
+                                .withState(ViolationAnalysisState.APPROVED)));
 
         final var componentViolationSuppressed = new Component();
         componentViolationSuppressed.setProject(project);
@@ -484,9 +489,11 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         qm.createComponent(componentViolationSuppressed, false);
         final var violationSuppressed = createPolicyViolation(
                 componentViolationSuppressed, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
-        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(componentViolationSuppressed, violationSuppressed)
-                .withState(ViolationAnalysisState.REJECTED)
-                .withSuppress(true));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(new MakeViolationAnalysisCommand(
+                                componentViolationSuppressed.getId(), violationSuppressed.getId())
+                        .withState(ViolationAnalysisState.REJECTED)
+                        .withSuppress(true)));
 
         final List<Component> components = List.of(
                 componentClean,

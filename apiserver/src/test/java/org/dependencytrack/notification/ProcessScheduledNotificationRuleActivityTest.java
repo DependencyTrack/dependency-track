@@ -42,6 +42,7 @@ import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
+import org.dependencytrack.persistence.jdbi.ViolationAnalysisDao;
 import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificationRuleArg;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.junit.jupiter.api.Nested;
@@ -303,8 +304,15 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         pvB_parent.setType(PolicyViolation.Type.SECURITY);
         pvB_parent.setTimestamp(Date.from(afterRuleLastFiredAt));
         qm.persist(pvB_parent);
-        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(
-                parentProjectComponent, pvB_parent, ViolationAnalysisState.APPROVED, true, null, null, Set.of()));
+        useJdbiTransaction(handle -> handle.attach(ViolationAnalysisDao.class)
+                .makeAnalysis(new MakeViolationAnalysisCommand(
+                        parentProjectComponent.getId(),
+                        pvB_parent.getId(),
+                        ViolationAnalysisState.APPROVED,
+                        true,
+                        null,
+                        null,
+                        Set.of())));
 
         // Child project with violations for policyA (BEFORE) and policyB (AFTER).
         final var childProject = new Project();

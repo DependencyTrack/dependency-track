@@ -673,12 +673,23 @@ public interface NotificationSubjectDao extends SqlObject {
     }
 
     default List<PolicyViolationSubject> getForNewPolicyViolations(Collection<Long> violationIds) {
+        return getPolicyViolationSubjects(violationIds, true);
+    }
+
+    /// @since 5.3.0
+    default List<PolicyViolationSubject> getForViolationAnalysisDecisionChanges(Collection<Long> violationIds) {
+        return getPolicyViolationSubjects(violationIds, false);
+    }
+
+    private List<PolicyViolationSubject> getPolicyViolationSubjects(
+            Collection<Long> violationIds, boolean excludeSuppressedOrApproved) {
         if (violationIds.isEmpty()) {
             return List.of();
         }
 
         return getHandle()
-                .createQuery("""
+                .createQuery(/* language=InjectedFreeMarker */ """
+                        <#-- @ftlvariable name="excludeSuppressedOrApproved" type="boolean" -->
                         SELECT pv."UUID" AS "violationUuid"
                              , pv."TYPE" AS "violationType"
                              , pv."TIMESTAMP" AS "violationTimestamp"
@@ -728,9 +739,12 @@ public interface NotificationSubjectDao extends SqlObject {
                             ON p."ID" = pv."PROJECT_ID"
                           LEFT JOIN "VIOLATIONANALYSIS" AS va
                             ON va."POLICYVIOLATION_ID" = pv."ID"
+                        <#if excludeSuppressedOrApproved>
                          WHERE va."SUPPRESSED" IS DISTINCT FROM TRUE
                            AND va."STATE" IS DISTINCT FROM 'APPROVED'
+                        </#if>
                         """)
+                .define("excludeSuppressedOrApproved", excludeSuppressedOrApproved)
                 .bindArray("violationIds", Long.class, violationIds)
                 .map((RowViewMapper<PolicyViolationSubject>) row -> {
                     final Component component = row.getRow(Component.class);

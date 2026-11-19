@@ -21,9 +21,8 @@ package org.dependencytrack.resources.v1.vo;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.dependencytrack.model.ViolationAnalysis;
-import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
+import org.dependencytrack.persistence.jdbi.ViolationAnalysisDao;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -44,12 +43,14 @@ public record ViolationAnalysisResponse(
         @Schema(description = "Whether the policy violation is suppressed", requiredMode = Schema.RequiredMode.REQUIRED)
         boolean isSuppressed) {
 
-    public static ViolationAnalysisResponse of(ViolationAnalysis analysis) {
-        final List<ViolationAnalysisComment> jdoComments = analysis.getAnalysisComments();
-        final List<Comment> comments =
-                jdoComments != null ? jdoComments.stream().map(Comment::of).toList() : List.of();
-
-        return new ViolationAnalysisResponse(analysis.getAnalysisState(), comments, analysis.isSuppressed());
+    public static ViolationAnalysisResponse of(ViolationAnalysisDao.AnalysisTrail trail) {
+        return new ViolationAnalysisResponse(
+                trail.state(),
+                trail.comments().stream()
+                        .map(comment ->
+                                new Comment(Date.from(comment.timestamp()), comment.comment(), comment.commenter()))
+                        .toList(),
+                trail.suppressed());
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -61,10 +62,5 @@ public record ViolationAnalysisResponse(
             String comment,
 
             @Schema(description = "Identifier of the user who wrote the comment") @Nullable
-            String commenter) {
-
-        public static Comment of(ViolationAnalysisComment jdo) {
-            return new Comment(jdo.getTimestamp(), jdo.getComment(), jdo.getCommenter());
-        }
-    }
+            String commenter) {}
 }

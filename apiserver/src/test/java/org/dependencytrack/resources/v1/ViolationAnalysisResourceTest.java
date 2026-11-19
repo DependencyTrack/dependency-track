@@ -196,7 +196,13 @@ class ViolationAnalysisResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThat(getPlainTextBody(response)).contains("component could not be found");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Component could not be found"
+                }
+                """);
     }
 
     @Test
@@ -589,7 +595,13 @@ class ViolationAnalysisResourceTest extends ResourceTest {
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThat(getPlainTextBody(response)).contains("component could not be found");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Component could not be found"
+                }
+                """);
     }
 
     @Test

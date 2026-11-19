@@ -23,7 +23,6 @@ import com.google.protobuf.util.Timestamps;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vex;
-import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.notification.proto.v1.Bom;
 import org.dependencytrack.notification.proto.v1.Component;
 import org.dependencytrack.notification.proto.v1.Group;
@@ -31,7 +30,6 @@ import org.dependencytrack.notification.proto.v1.Level;
 import org.dependencytrack.notification.proto.v1.Policy;
 import org.dependencytrack.notification.proto.v1.PolicyCondition;
 import org.dependencytrack.notification.proto.v1.PolicyViolation;
-import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysis;
 import org.dependencytrack.notification.proto.v1.Project;
 import org.dependencytrack.notification.proto.v1.Scope;
 import org.dependencytrack.notification.proto.v1.UserSubject;
@@ -191,16 +189,6 @@ public final class NotificationModelConverter {
             builder.setMessage(violation.getText());
         }
         return builder.build();
-    }
-
-    public static PolicyViolationAnalysis convert(ViolationAnalysis analysis) {
-        return PolicyViolationAnalysis.newBuilder()
-                .setProject(convert(analysis.getProject()))
-                .setComponent(convert(analysis.getComponent()))
-                .setPolicyViolation(convert(analysis.getPolicyViolation()))
-                .setState(analysis.getAnalysisState().name())
-                .setSuppressed(analysis.isSuppressed())
-                .build();
     }
 
     public static Project convert(org.dependencytrack.model.Project project) {

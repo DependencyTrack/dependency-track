@@ -76,10 +76,11 @@ class ModelConverterTest extends PersistenceCapableTest {
 
         // Before the fix this threw a NullPointerException and aborted the whole export.
         assertThatNoException()
-                .isThrownBy(() -> ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, findings));
+                .isThrownBy(() ->
+                        ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, project, findings));
 
         final List<org.cyclonedx.model.vulnerability.Vulnerability> result =
-                ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, findings);
+                ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, project, findings);
         assertThat(result).isEmpty();
     }
 
@@ -104,7 +105,7 @@ class ModelConverterTest extends PersistenceCapableTest {
                 withJdbiHandle(handle -> handle.attach(FindingDao.class).getFindings(project.getId(), true));
 
         final List<org.cyclonedx.model.vulnerability.Vulnerability> result =
-                ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, findings);
+                ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, project, findings);
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getId()).isEqualTo("INT-001");
     }

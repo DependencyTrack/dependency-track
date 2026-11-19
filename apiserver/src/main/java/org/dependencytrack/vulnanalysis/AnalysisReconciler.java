@@ -23,19 +23,20 @@ import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.FindingKey;
 import org.dependencytrack.model.Severity;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao.Analysis;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao.CreateCommentCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao.UpsertAnalysisCommand;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyRating;
 import org.dependencytrack.util.AnalysisCommentFormatter;
 import org.dependencytrack.util.AnalysisCommentFormatter.AnalysisCommentField;
-import org.dependencytrack.vulnanalysis.AnalysisDao.Analysis;
-import org.dependencytrack.vulnanalysis.AnalysisDao.CreateCommentCommand;
-import org.dependencytrack.vulnanalysis.AnalysisDao.MakeAnalysisCommand;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +76,7 @@ final class AnalysisReconciler {
         this.projectId = projectId;
         this.componentId = componentId;
         this.vulnDbId = vulnDbId;
-        this.vulnPolicyId = existing != null ? existing.vulnPolicyId() : null;
+        this.vulnPolicyId = existing != null ? existing.vulnerabilityPolicyId() : null;
         this.state = Optional.ofNullable(existing).map(Analysis::state).orElse(AnalysisState.NOT_SET);
         this.justification =
                 Optional.ofNullable(existing).map(Analysis::justification).orElse(AnalysisJustification.NOT_SET);
@@ -84,13 +85,17 @@ final class AnalysisReconciler {
         this.suppressed = existing != null && existing.suppressed();
         this.severity = existing != null ? existing.severity() : null;
         this.cvssV2Vector = existing != null ? existing.cvssV2Vector() : null;
-        this.cvssV2Score = existing != null ? existing.cvssV2Score() : null;
+        this.cvssV2Score = existing != null ? toDouble(existing.cvssV2Score()) : null;
         this.cvssV3Vector = existing != null ? existing.cvssV3Vector() : null;
-        this.cvssV3Score = existing != null ? existing.cvssV3Score() : null;
+        this.cvssV3Score = existing != null ? toDouble(existing.cvssV3Score()) : null;
         this.cvssV4Vector = existing != null ? existing.cvssV4Vector() : null;
-        this.cvssV4Score = existing != null ? existing.cvssV4Score() : null;
+        this.cvssV4Score = existing != null ? toDouble(existing.cvssV4Score()) : null;
         this.owaspVector = existing != null ? existing.owaspVector() : null;
-        this.owaspScore = existing != null ? existing.owaspScore() : null;
+        this.owaspScore = existing != null ? toDouble(existing.owaspScore()) : null;
+    }
+
+    private static @Nullable Double toDouble(@Nullable BigDecimal value) {
+        return value != null ? value.doubleValue() : null;
     }
 
     @Nullable
@@ -233,7 +238,7 @@ final class AnalysisReconciler {
                 return null;
             }
 
-            final var command = new MakeAnalysisCommand(
+            final var command = new UpsertAnalysisCommand(
                     this.projectId,
                     this.componentId,
                     this.vulnDbId,
@@ -299,7 +304,7 @@ final class AnalysisReconciler {
             return null;
         }
 
-        final var command = new MakeAnalysisCommand(
+        final var command = new UpsertAnalysisCommand(
                 this.projectId,
                 this.componentId,
                 this.vulnDbId,
@@ -342,7 +347,7 @@ final class AnalysisReconciler {
 
     record Result(
             FindingKey findingKey,
-            MakeAnalysisCommand makeAnalysisCommand,
+            UpsertAnalysisCommand upsertAnalysisCommand,
             String commenter,
             List<String> comments,
             boolean analysisStateChanged,

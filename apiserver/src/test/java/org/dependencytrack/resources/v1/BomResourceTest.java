@@ -65,6 +65,7 @@ import org.dependencytrack.notification.proto.v1.BomValidationFailedSubject;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
@@ -133,6 +134,7 @@ import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
 import static org.dependencytrack.parser.cyclonedx.CycloneDxBomAssert.assertThatBom;
 import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -464,10 +466,11 @@ class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setDirectDependencies("[]");
         qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, "internal");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentWithVulnAndAnalysis, vulnerability)
+        final var command = new MakeAnalysisCommand(componentWithVulnAndAnalysis.getId(), vulnerability.getId())
                 .withState(AnalysisState.RESOLVED)
                 .withResponse(AnalysisResponse.UPDATE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
         componentWithoutVuln.setDirectDependencies("""
@@ -1087,10 +1090,11 @@ class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setDirectDependencies("[]");
         qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, "internal");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentWithVulnAndAnalysis, vulnerability)
+        final var command = new MakeAnalysisCommand(componentWithVulnAndAnalysis.getId(), vulnerability.getId())
                 .withState(AnalysisState.RESOLVED)
                 .withResponse(AnalysisResponse.UPDATE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
         componentWithoutVuln.setDirectDependencies("""
@@ -1293,10 +1297,11 @@ class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setDirectDependencies("[]");
         qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, "internal");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentWithVulnAndAnalysis, vulnerability)
+        final var command = new MakeAnalysisCommand(componentWithVulnAndAnalysis.getId(), vulnerability.getId())
                 .withState(AnalysisState.RESOLVED)
                 .withResponse(AnalysisResponse.UPDATE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
         componentWithoutVuln.setDirectDependencies("""

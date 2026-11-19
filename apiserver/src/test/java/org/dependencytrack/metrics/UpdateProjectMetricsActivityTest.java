@@ -30,6 +30,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
@@ -214,7 +215,9 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         componentAudited.setName("acme-lib-b");
         qm.createComponent(componentAudited, false);
         qm.addVulnerability(vuln, componentAudited, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentAudited, vuln).withState(AnalysisState.NOT_AFFECTED));
+        final var auditedCommand =
+                new MakeAnalysisCommand(componentAudited.getId(), vuln.getId()).withState(AnalysisState.NOT_AFFECTED);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(auditedCommand));
 
         // Create a component with a suppressed vulnerability.
         var componentSuppressed = new Component();
@@ -222,9 +225,10 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         componentSuppressed.setName("acme-lib-c");
         qm.createComponent(componentSuppressed, false);
         qm.addVulnerability(vuln, componentSuppressed, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentSuppressed, vuln)
+        final var suppressedCommand = new MakeAnalysisCommand(componentSuppressed.getId(), vuln.getId())
                 .withState(AnalysisState.FALSE_POSITIVE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(suppressedCommand));
 
         // Create "old" metrics data points for all three components.
         // When calculating project metrics, only the latest data point for each component
@@ -445,16 +449,19 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         componentVulnAudited.setName("acme-lib-vuln-audited");
         qm.createComponent(componentVulnAudited, false);
         qm.addVulnerability(vuln, componentVulnAudited, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentVulnAudited, vuln).withState(AnalysisState.NOT_AFFECTED));
+        final var auditedCommand = new MakeAnalysisCommand(componentVulnAudited.getId(), vuln.getId())
+                .withState(AnalysisState.NOT_AFFECTED);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(auditedCommand));
 
         final var componentVulnSuppressed = new Component();
         componentVulnSuppressed.setProject(project);
         componentVulnSuppressed.setName("acme-lib-vuln-suppressed");
         qm.createComponent(componentVulnSuppressed, false);
         qm.addVulnerability(vuln, componentVulnSuppressed, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentVulnSuppressed, vuln)
+        final var suppressedCommand = new MakeAnalysisCommand(componentVulnSuppressed.getId(), vuln.getId())
                 .withState(AnalysisState.FALSE_POSITIVE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(suppressedCommand));
 
         final var componentViolationUnaudited = new Component();
         componentViolationUnaudited.setProject(project);

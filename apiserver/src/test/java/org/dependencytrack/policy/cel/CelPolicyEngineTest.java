@@ -24,7 +24,6 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.epss.Epss;
 import org.dependencytrack.epss.EpssDao;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
-import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
@@ -45,6 +44,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
@@ -3215,9 +3215,10 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, componentUnsuppressed, "internal");
         qm.addVulnerability(vuln, componentSuppressed, "internal");
 
-        qm.makeAnalysis(new MakeAnalysisCommand(componentSuppressed, vuln)
-                .withState(AnalysisState.FALSE_POSITIVE)
-                .withSuppress(true));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(componentSuppressed.getId(), vuln.getId())
+                        .withState(AnalysisState.FALSE_POSITIVE)
+                        .withSuppress(true)));
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
 
@@ -3260,12 +3261,27 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, componentWithoutOverride, "internal");
         qm.addVulnerability(vuln, componentWithOverride, "internal");
 
-        final var analysis = new Analysis();
-        analysis.setComponent(componentWithOverride);
-        analysis.setVulnerability(vuln);
-        analysis.setAnalysisState(AnalysisState.EXPLOITABLE);
-        analysis.setSeverity(Severity.HIGH);
-        qm.persist(analysis);
+        useJdbiHandle(handle -> handle.createUpdate("""
+                                INSERT INTO "ANALYSIS" (
+                                  "PROJECT_ID"
+                                , "COMPONENT_ID"
+                                , "VULNERABILITY_ID"
+                                , "STATE"
+                                , "SUPPRESSED"
+                                , "SEVERITY"
+                                )
+                                SELECT "PROJECT_ID"
+                                     , "ID"
+                                     , :vulnId
+                                     , 'EXPLOITABLE'
+                                     , FALSE
+                                     , 'HIGH'
+                                  FROM "COMPONENT"
+                                 WHERE "ID" = :componentId
+                                """)
+                .bind("componentId", componentWithOverride.getId())
+                .bind("vulnId", vuln.getId())
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
 
@@ -3324,19 +3340,41 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, componentWithoutOverride, "internal");
         qm.addVulnerability(vuln, componentWithOverride, "internal");
 
-        final var analysis = new Analysis();
-        analysis.setComponent(componentWithOverride);
-        analysis.setVulnerability(vuln);
-        analysis.setAnalysisState(AnalysisState.EXPLOITABLE);
-        analysis.setCvssV2Score(BigDecimal.valueOf(1.0));
-        analysis.setCvssV2Vector("cvssV2VectorOverride");
-        analysis.setCvssV3Score(BigDecimal.valueOf(1.0));
-        analysis.setCvssV3Vector("cvssV3VectorOverride");
-        analysis.setCvssV4Score(BigDecimal.valueOf(1.0));
-        analysis.setCvssV4Vector("cvssV4VectorOverride");
-        analysis.setOwaspScore(BigDecimal.valueOf(1.0));
-        analysis.setOwaspVector("owaspVectorOverride");
-        qm.persist(analysis);
+        useJdbiHandle(handle -> handle.createUpdate("""
+                                INSERT INTO "ANALYSIS" (
+                                  "PROJECT_ID"
+                                , "COMPONENT_ID"
+                                , "VULNERABILITY_ID"
+                                , "STATE"
+                                , "SUPPRESSED"
+                                , "CVSSV2SCORE"
+                                , "CVSSV2VECTOR"
+                                , "CVSSV3SCORE"
+                                , "CVSSV3VECTOR"
+                                , "CVSSV4SCORE"
+                                , "CVSSV4VECTOR"
+                                , "OWASPSCORE"
+                                , "OWASPVECTOR"
+                                )
+                                SELECT "PROJECT_ID"
+                                     , "ID"
+                                     , :vulnId
+                                     , 'EXPLOITABLE'
+                                     , FALSE
+                                     , 1.0
+                                     , 'cvssV2VectorOverride'
+                                     , 1.0
+                                     , 'cvssV3VectorOverride'
+                                     , 1.0
+                                     , 'cvssV4VectorOverride'
+                                     , 1.0
+                                     , 'owaspVectorOverride'
+                                  FROM "COMPONENT"
+                                 WHERE "ID" = :componentId
+                                """)
+                .bind("componentId", componentWithOverride.getId())
+                .bind("vulnId", vuln.getId())
+                .execute());
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
 

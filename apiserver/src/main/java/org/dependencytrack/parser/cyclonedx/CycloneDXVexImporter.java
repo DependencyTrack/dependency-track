@@ -30,6 +30,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertCdxVulnAnalysisJustificationToDtAnalysisJustification;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertCdxVulnAnalysisStateToDtAnalysisState;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class CycloneDXVexImporter {
 
@@ -231,7 +233,15 @@ public class CycloneDXVexImporter {
             final Component component,
             final Vulnerability vuln,
             final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
-        MakeAnalysisCommand command = new MakeAnalysisCommand(component, vuln).withCommenter(COMMENTER);
+        final MakeAnalysisCommand command = convertToMakeAnalysisCommand(component, vuln, cdxVuln);
+        useJdbiHandle(qm, handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
+    }
+
+    private static MakeAnalysisCommand convertToMakeAnalysisCommand(
+            final Component component,
+            final Vulnerability vuln,
+            final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
+        MakeAnalysisCommand command = new MakeAnalysisCommand(component.getId(), vuln.getId()).withCommenter(COMMENTER);
 
         if (cdxVuln.getAnalysis() != null) {
             final AnalysisState state = convertCdxVulnAnalysisStateToDtAnalysisState(
@@ -270,7 +280,7 @@ public class CycloneDXVexImporter {
             command = command.withOwasp(owaspRating.getVector(), score);
         }
 
-        qm.makeAnalysis(command);
+        return command;
     }
 
     private static org.cyclonedx.model.vulnerability.Vulnerability.Rating findOwaspRating(

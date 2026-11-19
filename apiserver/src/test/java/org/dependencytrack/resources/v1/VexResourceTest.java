@@ -42,6 +42,7 @@ import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.support.config.source.memory.MemoryConfigSource;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
@@ -76,6 +77,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_T
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
 import static org.dependencytrack.parser.cyclonedx.CycloneDxBomAssert.assertThatBom;
 import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -155,10 +157,11 @@ public class VexResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setDirectDependencies("[]");
         qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnB, componentWithVulnAndAnalysis, "internal");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentWithVulnAndAnalysis, vulnB)
+        final var command = new MakeAnalysisCommand(componentWithVulnAndAnalysis.getId(), vulnB.getId())
                 .withState(AnalysisState.RESOLVED)
                 .withResponse(AnalysisResponse.UPDATE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
         componentWithoutVuln.setDirectDependencies(/* language=JSON */ """
@@ -587,7 +590,9 @@ public class VexResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.HIGH);
         qm.persist(vuln);
         qm.addVulnerability(vuln, component, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln).withState(AnalysisState.NOT_AFFECTED));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(component.getId(), vuln.getId())
+                        .withState(AnalysisState.NOT_AFFECTED)));
 
         final Response response = jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
                 .request()
@@ -657,16 +662,18 @@ public class VexResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln);
         qm.addVulnerability(vuln, componentAWithVuln, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentAWithVuln, vuln)
+        final var command = new MakeAnalysisCommand(componentAWithVuln.getId(), vuln.getId())
                 .withState(AnalysisState.RESOLVED)
                 .withResponse(AnalysisResponse.UPDATE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         qm.addVulnerability(vuln, componentBWithVuln, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentBWithVuln, vuln)
+        final var command2 = new MakeAnalysisCommand(componentBWithVuln.getId(), vuln.getId())
                 .withState(AnalysisState.RESOLVED)
                 .withResponse(AnalysisResponse.UPDATE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command2));
 
         qm.persist(project);
 
@@ -788,16 +795,18 @@ public class VexResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln);
         qm.addVulnerability(vuln, componentAWithVuln, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentAWithVuln, vuln)
+        final var command = new MakeAnalysisCommand(componentAWithVuln.getId(), vuln.getId())
                 .withState(AnalysisState.IN_TRIAGE)
                 .withResponse(AnalysisResponse.UPDATE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         qm.addVulnerability(vuln, componentBWithVuln, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentBWithVuln, vuln)
+        final var command2 = new MakeAnalysisCommand(componentBWithVuln.getId(), vuln.getId())
                 .withState(AnalysisState.EXPLOITABLE)
                 .withResponse(AnalysisResponse.UPDATE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command2));
 
         qm.persist(project);
 

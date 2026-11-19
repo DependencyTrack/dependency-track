@@ -38,8 +38,6 @@ import org.dependencytrack.dex.testing.WorkflowTestExtension;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -51,6 +49,8 @@ import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao.AnalysisTrail;
 import org.dependencytrack.persistence.jdbi.FindingDao;
 import org.dependencytrack.persistence.jdbi.FindingDao.FindingRow;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
@@ -83,10 +83,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.math.BigDecimal;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -108,6 +108,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERAB
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_VULNERABILITY_RETRACTED;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
@@ -589,19 +590,17 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
-
-        qm.getPersistenceManager().evictAll();
-        assertThat(qm.getAnalysis(component, vuln)).satisfies(analysis -> {
-            assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_AFFECTED);
-            assertThat(analysis.getAnalysisJustification()).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE);
-            assertThat(analysis.getAnalysisResponse()).isEqualTo(AnalysisResponse.WILL_NOT_FIX);
-            assertThat(analysis.getAnalysisDetails()).isEqualTo("Policy details");
-            assertThat(analysis.isSuppressed()).isFalse();
-            assertThat(analysis.getSeverity()).isEqualTo(Severity.LOW);
-            assertThat(analysis.getCvssV3Vector()).isEqualTo("CVSS:3.0/AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:H/A:L");
-            assertThat(analysis.getCvssV3Score()).isEqualByComparingTo("3.7");
-            assertThat(analysis.getAnalysisComments())
-                    .extracting(AnalysisComment::getComment)
+        assertThat(getAnalysis(component, vuln)).satisfies(analysis -> {
+            assertThat(analysis.state()).isEqualTo(AnalysisState.NOT_AFFECTED);
+            assertThat(analysis.justification()).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE);
+            assertThat(analysis.response()).isEqualTo(AnalysisResponse.WILL_NOT_FIX);
+            assertThat(analysis.details()).isEqualTo("Policy details");
+            assertThat(analysis.suppressed()).isFalse();
+            assertThat(analysis.severity()).isEqualTo(Severity.LOW);
+            assertThat(analysis.cvssV3Vector()).isEqualTo("CVSS:3.0/AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:H/A:L");
+            assertThat(analysis.cvssV3Score()).isEqualByComparingTo("3.7");
+            assertThat(analysis.comments())
+                    .extracting(AnalysisTrail.Comment::comment)
                     .containsExactly(
                             "Matched on condition: has(component.name) && project.version != \"\"",
                             "Analysis: NOT_SET → NOT_AFFECTED",
@@ -668,17 +667,15 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
-
-        qm.getPersistenceManager().evictAll();
-        assertThat(qm.getAnalysis(component, vuln)).satisfies(analysis -> {
-            assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.FALSE_POSITIVE);
-            assertThat(analysis.isSuppressed()).isTrue();
-            assertThat(analysis.getSeverity()).isEqualTo(Severity.LOW);
-            assertThat(analysis.getCvssV4Vector())
+        assertThat(getAnalysis(component, vuln)).satisfies(analysis -> {
+            assertThat(analysis.state()).isEqualTo(AnalysisState.FALSE_POSITIVE);
+            assertThat(analysis.suppressed()).isTrue();
+            assertThat(analysis.severity()).isEqualTo(Severity.LOW);
+            assertThat(analysis.cvssV4Vector())
                     .isEqualTo("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
-            assertThat(analysis.getCvssV4Score()).isEqualByComparingTo("0.0");
-            assertThat(analysis.getAnalysisComments())
-                    .extracting(AnalysisComment::getComment)
+            assertThat(analysis.cvssV4Score()).isEqualByComparingTo("0.0");
+            assertThat(analysis.comments())
+                    .extracting(AnalysisTrail.Comment::comment)
                     .containsExactly(
                             "Matched on condition: true",
                             "Analysis: NOT_SET → FALSE_POSITIVE",
@@ -729,14 +726,15 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, component, "internal");
 
         // Pre-create analysis with different values than the policy will set.
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+        final var command = new MakeAnalysisCommand(component.getId(), vuln.getId())
                 .withState(AnalysisState.IN_TRIAGE)
                 .withJustification(AnalysisJustification.NOT_SET)
                 .withResponse(AnalysisResponse.NOT_SET)
                 .withDetails("old details")
                 .withSuppress(false)
                 .withOptions(Set.of(
-                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         final var policyAnalysis = new VulnerabilityPolicyAnalysis();
         policyAnalysis.setState(VulnerabilityPolicyAnalysis.State.NOT_AFFECTED);
@@ -760,19 +758,17 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
-
-        qm.getPersistenceManager().evictAll();
-        assertThat(qm.getAnalysis(component, vuln)).satisfies(analysis -> {
-            assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_AFFECTED);
-            assertThat(analysis.getAnalysisJustification()).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE);
-            assertThat(analysis.getAnalysisResponse()).isEqualTo(AnalysisResponse.WILL_NOT_FIX);
-            assertThat(analysis.getAnalysisDetails()).isEqualTo("new details");
-            assertThat(analysis.isSuppressed()).isTrue();
-            assertThat(analysis.getSeverity()).isEqualTo(Severity.LOW);
-            assertThat(analysis.getCvssV3Vector()).isEqualTo("CVSS:3.0/AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:H/A:L");
-            assertThat(analysis.getCvssV3Score()).isEqualByComparingTo("3.7");
-            assertThat(analysis.getAnalysisComments())
-                    .extracting(AnalysisComment::getComment)
+        assertThat(getAnalysis(component, vuln)).satisfies(analysis -> {
+            assertThat(analysis.state()).isEqualTo(AnalysisState.NOT_AFFECTED);
+            assertThat(analysis.justification()).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE);
+            assertThat(analysis.response()).isEqualTo(AnalysisResponse.WILL_NOT_FIX);
+            assertThat(analysis.details()).isEqualTo("new details");
+            assertThat(analysis.suppressed()).isTrue();
+            assertThat(analysis.severity()).isEqualTo(Severity.LOW);
+            assertThat(analysis.cvssV3Vector()).isEqualTo("CVSS:3.0/AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:H/A:L");
+            assertThat(analysis.cvssV3Score()).isEqualByComparingTo("3.7");
+            assertThat(analysis.comments())
+                    .extracting(AnalysisTrail.Comment::comment)
                     .containsExactly(
                             "Matched on condition: has(component.name)",
                             "Analysis: IN_TRIAGE → NOT_AFFECTED",
@@ -825,11 +821,12 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, component, "internal");
 
         // Pre-create analysis with values that exactly match the policy.
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+        final var command = new MakeAnalysisCommand(component.getId(), vuln.getId())
                 .withState(AnalysisState.NOT_AFFECTED)
                 .withSuppress(false)
                 .withOptions(Set.of(
-                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         final var policyAnalysis = new VulnerabilityPolicyAnalysis();
         policyAnalysis.setState(VulnerabilityPolicyAnalysis.State.NOT_AFFECTED);
@@ -843,11 +840,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
-
-        qm.getPersistenceManager().evictAll();
-        assertThat(qm.getAnalysis(component, vuln)).satisfies(analysis -> {
-            assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_AFFECTED);
-            assertThat(analysis.getAnalysisComments()).isEmpty();
+        assertThat(getAnalysis(component, vuln)).satisfies(analysis -> {
+            assertThat(analysis.state()).isEqualTo(AnalysisState.NOT_AFFECTED);
+            assertThat(analysis.comments()).isEmpty();
         });
     }
 
@@ -911,8 +906,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        qm.getPersistenceManager().evictAll();
-        assertThat(qm.getAnalysis(component, vuln)).isNull();
+        assertThat(getAnalysis(component, vuln)).isNull();
     }
 
     @Test
@@ -948,12 +942,13 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, component, "internal");
 
         // Pre-create analysis with same state/suppressed as policy but different details.
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
+        final var command = new MakeAnalysisCommand(component.getId(), vuln.getId())
                 .withState(AnalysisState.NOT_AFFECTED)
                 .withDetails("old details")
                 .withSuppress(false)
                 .withOptions(Set.of(
-                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         final var policyAnalysis = new VulnerabilityPolicyAnalysis();
         policyAnalysis.setState(VulnerabilityPolicyAnalysis.State.NOT_AFFECTED);
@@ -968,14 +963,12 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .setProjectUuid(project.getUuid().toString())
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
-
-        qm.getPersistenceManager().evictAll();
-        assertThat(qm.getAnalysis(component, vuln)).satisfies(analysis -> {
-            assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_AFFECTED);
-            assertThat(analysis.getAnalysisDetails()).isEqualTo("new details");
-            assertThat(analysis.isSuppressed()).isFalse();
-            assertThat(analysis.getAnalysisComments())
-                    .extracting(AnalysisComment::getComment)
+        assertThat(getAnalysis(component, vuln)).satisfies(analysis -> {
+            assertThat(analysis.state()).isEqualTo(AnalysisState.NOT_AFFECTED);
+            assertThat(analysis.details()).isEqualTo("new details");
+            assertThat(analysis.suppressed()).isFalse();
+            assertThat(analysis.comments())
+                    .extracting(AnalysisTrail.Comment::comment)
                     .containsExactly("Matched on condition: true", "Details: new details");
         });
 
@@ -1031,8 +1024,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        qm.getPersistenceManager().evictAll();
-        assertThat(qm.getAnalysis(component, vuln)).isNull();
+        assertThat(getAnalysis(component, vuln)).isNull();
     }
 
     @Test
@@ -1070,35 +1062,51 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         vulnA.setSeverity(Severity.CRITICAL);
         qm.persist(vulnA);
         qm.addVulnerability(vulnA, component, "internal");
-        final var analysisA = new Analysis();
-        analysisA.setComponent(component);
-        analysisA.setVulnerability(vulnA);
-        analysisA.setAnalysisState(AnalysisState.NOT_AFFECTED);
-        analysisA.setAnalysisJustification(AnalysisJustification.CODE_NOT_REACHABLE);
-        analysisA.setAnalysisResponse(AnalysisResponse.WILL_NOT_FIX);
-        analysisA.setAnalysisDetails("Because I say so.");
-        analysisA.setSeverity(Severity.MEDIUM);
-        analysisA.setCvssV2Vector("oldCvssV2Vector");
-        analysisA.setCvssV2Score(BigDecimal.valueOf(1.1));
-        analysisA.setCvssV3Vector("oldCvssV3Vector");
-        analysisA.setCvssV3Score(BigDecimal.valueOf(2.2));
-        analysisA.setOwaspVector("oldOwaspVector");
-        analysisA.setOwaspScore(BigDecimal.valueOf(3.3));
-        analysisA.setCvssV4Vector("oldCvssV4Vector");
-        analysisA.setCvssV4Score(BigDecimal.valueOf(4.4));
-        analysisA.setSuppressed(true);
-        qm.persist(analysisA);
-        useJdbiHandle(jdbiHandle -> jdbiHandle
-                .createUpdate("""
-                        UPDATE
-                          "ANALYSIS"
-                        SET
-                          "VULNERABILITY_POLICY_ID" = (SELECT "ID" FROM "VULNERABILITY_POLICY" WHERE "NAME" = :vulnPolicyName)
-                        WHERE
-                          "ID" = :analysisId
-                        """)
+        useJdbiHandle(handle -> handle.createUpdate("""
+                                INSERT INTO "ANALYSIS" (
+                                  "PROJECT_ID"
+                                , "COMPONENT_ID"
+                                , "VULNERABILITY_ID"
+                                , "STATE"
+                                , "JUSTIFICATION"
+                                , "RESPONSE"
+                                , "DETAILS"
+                                , "SEVERITY"
+                                , "CVSSV2VECTOR"
+                                , "CVSSV2SCORE"
+                                , "CVSSV3VECTOR"
+                                , "CVSSV3SCORE"
+                                , "OWASPVECTOR"
+                                , "OWASPSCORE"
+                                , "CVSSV4VECTOR"
+                                , "CVSSV4SCORE"
+                                , "SUPPRESSED"
+                                , "VULNERABILITY_POLICY_ID"
+                                )
+                                SELECT "PROJECT_ID"
+                                     , "ID"
+                                     , :vulnId
+                                     , 'NOT_AFFECTED'
+                                     , 'CODE_NOT_REACHABLE'
+                                     , 'WILL_NOT_FIX'
+                                     , 'Because I say so.'
+                                     , 'MEDIUM'
+                                     , 'oldCvssV2Vector'
+                                     , 1.1
+                                     , 'oldCvssV3Vector'
+                                     , 2.2
+                                     , 'oldOwaspVector'
+                                     , 3.3
+                                     , 'oldCvssV4Vector'
+                                     , 4.4
+                                     , TRUE
+                                     , (SELECT "ID" FROM "VULNERABILITY_POLICY" WHERE "NAME" = :vulnPolicyName)
+                                  FROM "COMPONENT"
+                                 WHERE "ID" = :componentId
+                                """)
+                .bind("componentId", component.getId())
+                .bind("vulnId", vulnA.getId())
                 .bind("vulnPolicyName", policy.getName())
-                .bind("analysisId", analysisA.getId())
                 .execute());
 
         // Create another vulnerability with existing analysis that was manually applied.
@@ -1108,11 +1116,12 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         vulnB.setSeverity(Severity.HIGH);
         qm.persist(vulnB);
         qm.addVulnerability(vulnB, component, "internal");
-        final var analysisB = new Analysis();
-        analysisB.setComponent(component);
-        analysisB.setVulnerability(vulnB);
-        analysisB.setAnalysisState(AnalysisState.NOT_AFFECTED);
-        qm.persist(analysisB);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(component.getId(), vulnB.getId())
+                        .withState(AnalysisState.NOT_AFFECTED)
+                        .withOptions(EnumSet.of(
+                                MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL,
+                                MakeAnalysisCommand.Option.OMIT_NOTIFICATION))));
 
         // Ensure that CVE-100 and CVE-200 will still be reported.
         final var vsVulnA = new VulnerableSoftware();
@@ -1142,18 +1151,16 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        qm.getPersistenceManager().evictAll();
-
         // The analysis that was previously applied via policy must have been reverted.
-        assertThat(qm.getAnalysis(component, vulnA)).satisfies(a -> {
-            assertThat(a.getAnalysisState()).isEqualTo(AnalysisState.NOT_SET);
-            assertThat(a.getVulnerabilityPolicyId()).isNull();
-            assertThat(a.isSuppressed()).isFalse();
-            assertThat(a.getAnalysisComments())
-                    .extracting(AnalysisComment::getCommenter)
+        assertThat(getAnalysis(component, vulnA)).satisfies(a -> {
+            assertThat(a.state()).isEqualTo(AnalysisState.NOT_SET);
+            assertThat(getVulnPolicyId(component, vulnA)).isNull();
+            assertThat(a.suppressed()).isFalse();
+            assertThat(a.comments())
+                    .extracting(AnalysisTrail.Comment::commenter)
                     .containsOnly("[Policy{None}]");
-            assertThat(a.getAnalysisComments())
-                    .extracting(AnalysisComment::getComment)
+            assertThat(a.comments())
+                    .extracting(AnalysisTrail.Comment::comment)
                     .containsExactlyInAnyOrder(
                             "No longer covered by any policy",
                             "Analysis: NOT_AFFECTED → NOT_SET",
@@ -1173,10 +1180,10 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         });
 
         // The manually applied analysis must not be touched.
-        assertThat(qm.getAnalysis(component, vulnB)).satisfies(a -> {
-            assertThat(a.getAnalysisState()).isEqualTo(AnalysisState.NOT_AFFECTED);
-            assertThat(a.getVulnerabilityPolicyId()).isNull();
-            assertThat(a.getAnalysisComments()).isEmpty();
+        assertThat(getAnalysis(component, vulnB)).satisfies(a -> {
+            assertThat(a.state()).isEqualTo(AnalysisState.NOT_AFFECTED);
+            assertThat(getVulnPolicyId(component, vulnB)).isNull();
+            assertThat(a.comments()).isEmpty();
         });
     }
 
@@ -1486,5 +1493,23 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         policy.setAnalysis(analysis);
         policy.setRatings(ratings);
         withJdbiHandle(handle -> handle.attach(VulnerabilityPolicyDao.class).create(policy));
+    }
+
+    private static AnalysisTrail getAnalysis(Component component, Vulnerability vuln) {
+        return withJdbiHandle(
+                handle -> handle.attach(FindingAnalysisDao.class).getTrail(component.getId(), vuln.getId()));
+    }
+
+    private static Long getVulnPolicyId(Component component, Vulnerability vuln) {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT "VULNERABILITY_POLICY_ID"
+                          FROM "ANALYSIS"
+                         WHERE "COMPONENT_ID" = :componentId
+                           AND "VULNERABILITY_ID" = :vulnId
+                        """)
+                .bind("componentId", component.getId())
+                .bind("vulnId", vuln.getId())
+                .mapTo(Long.class)
+                .one());
     }
 }

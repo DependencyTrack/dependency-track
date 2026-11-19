@@ -41,6 +41,7 @@ import org.dependencytrack.notification.proto.v1.NewVulnerabilitiesSummarySubjec
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificationRuleArg;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.junit.jupiter.api.Nested;
@@ -61,6 +62,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_POLICY_V
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABILITIES_SUMMARY;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -98,19 +100,20 @@ class ProcessScheduledNotificationRuleActivityTest extends PersistenceCapableTes
         qm.persist(parentProjectComponent);
         qm.addVulnerability(vulnA, parentProjectComponent, "internal", null, null, Date.from(afterRuleLastFiredAt));
         qm.addVulnerability(vulnB, parentProjectComponent, "internal", null, null, Date.from(afterRuleLastFiredAt));
-        qm.makeAnalysis(new MakeAnalysisCommand(
-                parentProjectComponent,
-                vulnB,
-                AnalysisState.FALSE_POSITIVE,
-                null,
-                null,
-                null,
-                true,
-                null,
-                null,
-                null,
-                null,
-                Set.of()));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(
+                        parentProjectComponent.getId(),
+                        vulnB.getId(),
+                        AnalysisState.FALSE_POSITIVE,
+                        null,
+                        null,
+                        null,
+                        true,
+                        null,
+                        null,
+                        null,
+                        null,
+                        Set.of())));
 
         // Child project affected by vulnA (BEFORE) and vulnB (AFTER).
         final var childProject = new Project();

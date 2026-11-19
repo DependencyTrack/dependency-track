@@ -20,6 +20,8 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.validation.RegexSequence;
 import alpine.common.validation.ValidationTask;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.UserPrincipal;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,15 +32,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.validation.ValidUuid;
-import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao.AnalysisTrail;
+import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
@@ -53,6 +52,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.UUID;
+
+import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
  * JAX-RS resources for processing analysis decisions.
@@ -86,11 +91,14 @@ public class AnalysisResource extends AbstractApiResource {
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
                 @ApiResponse(
                         responseCode = "404",
-                        description = "The project, component, or vulnerability could not be found")
+                        description = "The component, vulnerability, or analysis could not be found")
             })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
     public Response retrieveAnalysis(
-            @Parameter(description = "The UUID of the project", schema = @Schema(type = "string", format = "uuid"))
+            @Parameter(
+                            description = "Ignored. The project is inferred from the component.",
+                            deprecated = true,
+                            schema = @Schema(type = "string", format = "uuid"))
                     @QueryParam("project")
                     @ValidUuid
                     String projectUuid,
@@ -116,36 +124,27 @@ public class AnalysisResource extends AbstractApiResource {
                         false), // this is optional
                 new ValidationTask(RegexSequence.Pattern.UUID, componentUuid, "Component is not a valid UUID"),
                 new ValidationTask(RegexSequence.Pattern.UUID, vulnerabilityUuid, "Vulnerability is not a valid UUID"));
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            if (StringUtils.trimToNull(projectUuid) != null) {
-                final Project project = qm.getObjectByUuid(Project.class, projectUuid);
-                if (project == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The project could not be found.")
-                            .build();
-                }
-            }
-            final Component component = qm.getObjectByUuid(Component.class, componentUuid);
-            if (component == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("The component could not be found.")
-                        .build();
-            }
-            requireAccess(qm, component.getProject());
-            final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, vulnerabilityUuid);
-            if (vulnerability == null) {
+        return withJdbiHandle(getAlpineRequest(), handle -> {
+            final UUID parsedComponentUuid = UUID.fromString(componentUuid);
+            final long componentId = requireComponentAccess(handle, parsedComponentUuid);
+
+            final Long vulnDbId = handle.attach(VulnerabilityDao.class).getVulnDbId(UUID.fromString(vulnerabilityUuid));
+            if (vulnDbId == null) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("The vulnerability could not be found.")
                         .build();
             }
-            final Analysis analysis = qm.getAnalysis(component, vulnerability);
-            if (analysis == null) {
+
+            final var analysisDao = handle.attach(FindingAnalysisDao.class);
+            final AnalysisTrail trail = analysisDao.getTrail(componentId, vulnDbId);
+            if (trail == null) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("No analysis exists.")
                         .build();
             }
-            return Response.ok(AnalysisTrailResponse.of(analysis)).build();
-        }
+
+            return Response.ok(AnalysisTrailResponse.of(trail)).build();
+        });
     }
 
     @PUT
@@ -188,35 +187,40 @@ public class AnalysisResource extends AbstractApiResource {
                 validator.validateProperty(request, "analysisResponse"),
                 validator.validateProperty(request, "analysisDetails"),
                 validator.validateProperty(request, "comment"));
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                final var component = qm.getObjectByUuid(Component.class, request.getComponent());
-                if (component == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The component could not be found.")
-                            .build();
-                }
+        final UUID componentUuid = UUID.fromString(request.getComponent());
+        final UUID vulnUuid = UUID.fromString(request.getVulnerability());
+        final String commenter =
+                switch (requireNonNull(getPrincipal())) {
+                    case UserPrincipal user -> user.username();
+                    case ApiKeyPrincipal apiKey ->
+                        apiKey.teams().isEmpty()
+                                ? apiKey.maskedKey()
+                                : apiKey.teams().getFirst().name();
+                };
 
-                requireAccess(qm, component.getProject());
+        return inJdbiTransaction(getAlpineRequest(), handle -> {
+            final long componentId = requireComponentAccess(handle, componentUuid);
 
-                final var vulnerability = qm.getObjectByUuid(Vulnerability.class, request.getVulnerability());
-                if (vulnerability == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("The vulnerability could not be found.")
-                            .build();
-                }
-
-                final long analysisId = qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
-                        .withState(request.getAnalysisState())
-                        .withJustification(request.getAnalysisJustification())
-                        .withResponse(request.getAnalysisResponse())
-                        .withDetails(request.getAnalysisDetails())
-                        .withSuppress(request.isSuppressed())
-                        .withComment(request.getComment()));
-
-                return Response.ok(AnalysisTrailResponse.of(qm.getObjectById(Analysis.class, analysisId)))
+            final Long vulnDbId = handle.attach(VulnerabilityDao.class).getVulnDbId(vulnUuid);
+            if (vulnDbId == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The vulnerability could not be found.")
                         .build();
-            });
-        }
+            }
+
+            handle.attach(FindingAnalysisDao.class)
+                    .makeAnalysis(new MakeAnalysisCommand(componentId, vulnDbId)
+                            .withState(request.getAnalysisState())
+                            .withJustification(request.getAnalysisJustification())
+                            .withResponse(request.getAnalysisResponse())
+                            .withDetails(request.getAnalysisDetails())
+                            .withSuppress(request.isSuppressed())
+                            .withCommenter(commenter)
+                            .withComment(request.getComment()));
+
+            final var analysisDao = handle.attach(FindingAnalysisDao.class);
+            return Response.ok(AnalysisTrailResponse.of(requireNonNull(analysisDao.getTrail(componentId, vulnDbId))))
+                    .build();
+        });
     }
 }

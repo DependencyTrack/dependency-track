@@ -39,6 +39,7 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.dependencytrack.proto.internal.workflow.v1.FetchProjectMetricsUpdateCandidatesRes;
@@ -177,7 +178,9 @@ class UpdatePortfolioMetricsWorkflowTest extends AbstractMetricsUpdateTaskTest {
         componentAudited.setName("acme-lib-b");
         qm.createComponent(componentAudited, false);
         qm.addVulnerability(vuln, componentAudited, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentAudited, vuln).withState(AnalysisState.NOT_AFFECTED));
+        final var auditedCommand =
+                new MakeAnalysisCommand(componentAudited.getId(), vuln.getId()).withState(AnalysisState.NOT_AFFECTED);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(auditedCommand));
 
         // Create a project with a suppressed vulnerability.
         var projectSuppressed = new Project();
@@ -189,9 +192,10 @@ class UpdatePortfolioMetricsWorkflowTest extends AbstractMetricsUpdateTaskTest {
         componentSuppressed.setName("acme-lib-c");
         qm.createComponent(componentSuppressed, false);
         qm.addVulnerability(vuln, componentSuppressed, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(componentSuppressed, vuln)
+        final var suppressedCommand = new MakeAnalysisCommand(componentSuppressed.getId(), vuln.getId())
                 .withState(AnalysisState.FALSE_POSITIVE)
-                .withSuppress(true));
+                .withSuppress(true);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(suppressedCommand));
 
         runWorkflow();
 

@@ -40,7 +40,6 @@ import org.cyclonedx.model.component.evidence.Occurrence;
 import org.cyclonedx.model.license.Expression;
 import org.cyclonedx.model.license.ExpressionDetailed;
 import org.cyclonedx.model.metadata.ToolInformation;
-import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -52,6 +51,7 @@ import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.DataClassification;
 import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.FindingKey;
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
@@ -68,6 +68,7 @@ import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -1138,7 +1139,9 @@ public class ModelConverter {
     }
 
     private static org.cyclonedx.model.vulnerability.Vulnerability convert(
-            Vulnerability vulnerability, Analysis analysis, SortedSet<String> affectedComponentUuids) {
+            Vulnerability vulnerability,
+            FindingAnalysisDao.Analysis analysis,
+            SortedSet<String> affectedComponentUuids) {
         // NB: No bom-ref. It is optional, nothing references a vulnerability entry,
         // and one vulnerability may yield several entries, which historically made the vulnerability
         // UUID a source of duplicate bom-refs. CycloneDX requires every bom-ref to be unique within the BOM.
@@ -1255,21 +1258,19 @@ public class ModelConverter {
 
         if (analysis != null) {
             final var cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
-            if (analysis.getAnalysisResponse() != null) {
+            if (analysis.response() != null) {
                 final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response response =
-                        convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.getAnalysisResponse());
+                        convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.response());
                 if (response != null) {
                     cdxAnalysis.setResponses(new ArrayList<>(List.of(response)));
                 }
             }
-            if (analysis.getAnalysisState() != null) {
-                cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.getAnalysisState()));
+            cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.state()));
+            if (analysis.justification() != null) {
+                cdxAnalysis.setJustification(
+                        convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.justification()));
             }
-            if (analysis.getAnalysisJustification() != null) {
-                cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(
-                        analysis.getAnalysisJustification()));
-            }
-            cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
+            cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.details()));
             cdxVulnerability.setAnalysis(cdxAnalysis);
         }
 
@@ -1507,7 +1508,7 @@ public class ModelConverter {
     }
 
     public static List<org.cyclonedx.model.vulnerability.Vulnerability> generateVulnerabilities(
-            QueryManager qm, CycloneDXExporter.Variant variant, List<Finding> findings) {
+            QueryManager qm, CycloneDXExporter.Variant variant, Project project, List<Finding> findings) {
         if (findings == null) {
             return List.of();
         }
@@ -1519,7 +1520,7 @@ public class ModelConverter {
         //   additional VEX statements MUST be created for the respective subset."
         //
         // Hence, we group by vulnerability and analysis.
-        final var groups = new LinkedHashMap<VulnerabilityGroupKey, VulnerabilityGroup>();
+        final var resolvedFindings = new ArrayList<ResolvedFinding>(findings.size());
         for (final Finding finding : findings) {
             final Component component = qm.getObjectByUuid(
                     Component.class, finding.getComponent().get("uuid").toString());
@@ -1533,9 +1534,20 @@ public class ModelConverter {
                 continue;
             }
 
-            final Analysis analysis = variant.hasCapability(CycloneDXExporter.Capability.EMITS_ANALYSIS)
-                    ? qm.getAnalysis(component, vulnerability)
-                    : null;
+            resolvedFindings.add(new ResolvedFinding(component, vulnerability));
+        }
+
+        final Map<FindingKey, FindingAnalysisDao.Analysis> analysisByFindingKey =
+                variant.hasCapability(CycloneDXExporter.Capability.EMITS_ANALYSIS)
+                        ? getAnalyses(qm, project.getId(), resolvedFindings)
+                        : Map.of();
+
+        final var groups = new LinkedHashMap<VulnerabilityGroupKey, VulnerabilityGroup>();
+        for (final ResolvedFinding resolvedFinding : resolvedFindings) {
+            final Component component = resolvedFinding.component();
+            final Vulnerability vulnerability = resolvedFinding.vulnerability();
+            final FindingAnalysisDao.Analysis analysis =
+                    analysisByFindingKey.get(new FindingKey(component.getId(), vulnerability.getId()));
 
             groups.computeIfAbsent(
                             VulnerabilityGroupKey.of(vulnerability, analysis),
@@ -1549,8 +1561,24 @@ public class ModelConverter {
                 .toList();
     }
 
+    private record ResolvedFinding(Component component, Vulnerability vulnerability) {}
+
+    private static Map<FindingKey, FindingAnalysisDao.Analysis> getAnalyses(
+            QueryManager qm, long projectId, List<ResolvedFinding> resolvedFindings) {
+        final List<FindingKey> findingKeys = resolvedFindings.stream()
+                .map(resolvedFinding -> new FindingKey(
+                        resolvedFinding.component().getId(),
+                        resolvedFinding.vulnerability().getId()))
+                .toList();
+
+        return withJdbiHandle(
+                qm, handle -> handle.attach(FindingAnalysisDao.class).getAnalyses(projectId, findingKeys));
+    }
+
     private record VulnerabilityGroup(
-            Vulnerability vulnerability, Analysis analysis, SortedSet<String> affectedComponentUuids) {}
+            Vulnerability vulnerability,
+            FindingAnalysisDao.Analysis analysis,
+            SortedSet<String> affectedComponentUuids) {}
 
     private record VulnerabilityGroupKey(
             UUID vulnerabilityUuid,
@@ -1560,7 +1588,7 @@ public class ModelConverter {
             AnalysisResponse analysisResponse,
             String analysisDetails) {
 
-        private static VulnerabilityGroupKey of(Vulnerability vulnerability, Analysis analysis) {
+        private static VulnerabilityGroupKey of(Vulnerability vulnerability, FindingAnalysisDao.Analysis analysis) {
             if (analysis == null) {
                 return new VulnerabilityGroupKey(vulnerability.getUuid(), false, null, null, null, null);
             }
@@ -1568,10 +1596,10 @@ public class ModelConverter {
             return new VulnerabilityGroupKey(
                     vulnerability.getUuid(),
                     true,
-                    analysis.getAnalysisState(),
-                    analysis.getAnalysisJustification(),
-                    analysis.getAnalysisResponse(),
-                    StringUtils.trimToNull(analysis.getAnalysisDetails()));
+                    analysis.state(),
+                    analysis.justification(),
+                    analysis.response(),
+                    StringUtils.trimToNull(analysis.details()));
         }
     }
 

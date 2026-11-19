@@ -21,7 +21,6 @@ package org.dependencytrack.notification;
 import com.google.protobuf.util.JsonFormat;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
-import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.NotificationPublisher;
@@ -41,6 +40,7 @@ import org.dependencytrack.notification.proto.v1.PolicyViolationSubject;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.junit.jupiter.api.Test;
@@ -54,6 +54,7 @@ import java.util.Set;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.hamcrest.Matchers.equalTo;
@@ -186,9 +187,10 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnB, component, "internal");
 
         // Suppress vulnB, it should not appear in the query results.
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnB)
-                .withState(AnalysisState.FALSE_POSITIVE)
-                .withSuppress(true));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(component.getId(), vulnB.getId())
+                        .withState(AnalysisState.FALSE_POSITIVE)
+                        .withSuppress(true)));
 
         final List<NewVulnerabilitySubject> subjects = withJdbiHandle(handle -> handle.attach(
                         NotificationSubjectDao.class)
@@ -310,14 +312,31 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        final var analysis = new Analysis();
-        analysis.setComponent(component);
-        analysis.setVulnerability(vuln);
-        analysis.setAnalysisState(AnalysisState.EXPLOITABLE);
-        analysis.setSeverity(Severity.CRITICAL);
-        analysis.setCvssV3Vector("cvssV3VectorOverwrite");
-        analysis.setCvssV3Score(BigDecimal.valueOf(10.0));
-        qm.persist(analysis);
+        useJdbiHandle(handle -> handle.createUpdate("""
+                                INSERT INTO "ANALYSIS" (
+                                  "PROJECT_ID"
+                                , "COMPONENT_ID"
+                                , "VULNERABILITY_ID"
+                                , "STATE"
+                                , "SUPPRESSED"
+                                , "SEVERITY"
+                                , "CVSSV3VECTOR"
+                                , "CVSSV3SCORE"
+                                )
+                                SELECT "PROJECT_ID"
+                                     , "ID"
+                                     , :vulnId
+                                     , 'EXPLOITABLE'
+                                     , FALSE
+                                     , 'CRITICAL'
+                                     , 'cvssV3VectorOverwrite'
+                                     , 10.0
+                                  FROM "COMPONENT"
+                                 WHERE "ID" = :componentId
+                                """)
+                .bind("componentId", component.getId())
+                .bind("vulnId", vuln.getId())
+                .execute());
 
         final List<NewVulnerabilitySubject> subjects =
                 withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
@@ -429,9 +448,10 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnB, component, "internal");
 
         // Suppress vulnB, it should not appear in the query results.
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnB)
-                .withState(AnalysisState.FALSE_POSITIVE)
-                .withSuppress(true));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(component.getId(), vulnB.getId())
+                        .withState(AnalysisState.FALSE_POSITIVE)
+                        .withSuppress(true)));
 
         final List<NewVulnerableDependencySubject> subjects =
                 withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
@@ -537,14 +557,31 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        final var analysis = new Analysis();
-        analysis.setComponent(component);
-        analysis.setVulnerability(vuln);
-        analysis.setAnalysisState(AnalysisState.EXPLOITABLE);
-        analysis.setSeverity(Severity.CRITICAL);
-        analysis.setCvssV3Vector("cvssV3VectorOverwrite");
-        analysis.setCvssV3Score(BigDecimal.valueOf(10.0));
-        qm.persist(analysis);
+        useJdbiHandle(handle -> handle.createUpdate("""
+                                INSERT INTO "ANALYSIS" (
+                                  "PROJECT_ID"
+                                , "COMPONENT_ID"
+                                , "VULNERABILITY_ID"
+                                , "STATE"
+                                , "SUPPRESSED"
+                                , "SEVERITY"
+                                , "CVSSV3VECTOR"
+                                , "CVSSV3SCORE"
+                                )
+                                SELECT "PROJECT_ID"
+                                     , "ID"
+                                     , :vulnId
+                                     , 'EXPLOITABLE'
+                                     , FALSE
+                                     , 'CRITICAL'
+                                     , 'cvssV3VectorOverwrite'
+                                     , 10.0
+                                  FROM "COMPONENT"
+                                 WHERE "ID" = :componentId
+                                """)
+                .bind("componentId", component.getId())
+                .bind("vulnId", vuln.getId())
+                .execute());
 
         final List<NewVulnerableDependencySubject> subjects =
                 withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
@@ -643,17 +680,14 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnA, component, "internal");
 
         // Suppress vulnB, it should not appear in the query results.
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnA).withState(AnalysisState.NOT_AFFECTED));
-
-        var policyAnalysis = qm.getAnalysis(component, vulnA);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(component.getId(), vulnA.getId())
+                        .withState(AnalysisState.NOT_AFFECTED)));
 
         final List<VulnerabilityAnalysisDecisionChangeSubject> subjects =
                 withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
                         .getForProjectAuditChanges(List.of(new GetProjectAuditChangeNotificationSubjectQuery(
-                                component.getId(),
-                                vulnA.getId(),
-                                policyAnalysis.getAnalysisState(),
-                                policyAnalysis.isSuppressed()))));
+                                component.getId(), vulnA.getId(), AnalysisState.NOT_AFFECTED, false))));
 
         assertThat(subjects)
                 .satisfiesExactly(subject -> assertThatJson(JsonFormat.printer().print(subject))

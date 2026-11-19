@@ -35,7 +35,6 @@ import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.epss.Epss;
 import org.dependencytrack.epss.EpssDao;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
-import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
@@ -44,6 +43,7 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
@@ -404,7 +404,8 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v1, c1, "none");
         qm.addVulnerability(v2, c2, "none");
 
-        qm.makeAnalysis(new MakeAnalysisCommand(c1, v1).withState(AnalysisState.FALSE_POSITIVE));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(c1.getId(), v1.getId()).withState(AnalysisState.FALSE_POSITIVE)));
 
         // Should include all findings with or without analysis.
         Response response = jersey.target(
@@ -1126,14 +1127,31 @@ public class FindingResourceTest extends ResourceTest {
         v1.setCvssV3Vector("v-cvssV3-vector");
         qm.addVulnerability(v1, c1, "none");
 
-        var analysis = new Analysis();
-        analysis.setVulnerability(v1);
-        analysis.setComponent(c1);
-        analysis.setAnalysisState(AnalysisState.NOT_AFFECTED);
-        analysis.setCvssV2Score(BigDecimal.valueOf(0.4));
-        analysis.setCvssV2Vector("a-cvssV2-vector");
-        analysis.setSeverity(Severity.HIGH);
-        qm.persist(analysis);
+        useJdbiHandle(handle -> handle.createUpdate("""
+                                INSERT INTO "ANALYSIS" (
+                                  "PROJECT_ID"
+                                , "COMPONENT_ID"
+                                , "VULNERABILITY_ID"
+                                , "STATE"
+                                , "SUPPRESSED"
+                                , "CVSSV2SCORE"
+                                , "CVSSV2VECTOR"
+                                , "SEVERITY"
+                                )
+                                SELECT "PROJECT_ID"
+                                     , "ID"
+                                     , :vulnId
+                                     , 'NOT_AFFECTED'
+                                     , FALSE
+                                     , 0.4
+                                     , 'a-cvssV2-vector'
+                                     , 'HIGH'
+                                  FROM "COMPONENT"
+                                 WHERE "ID" = :componentId
+                                """)
+                .bind("componentId", c1.getId())
+                .bind("vulnId", v1.getId())
+                .execute());
 
         final Response response = jersey.target(
                         V1_FINDING + "/project/" + p1.getUuid().toString())
@@ -1169,13 +1187,30 @@ public class FindingResourceTest extends ResourceTest {
         v1.setCvssV3Vector("v-cvssV3-vector");
         qm.addVulnerability(v1, c1, "none");
 
-        final var analysis = new Analysis();
-        analysis.setVulnerability(v1);
-        analysis.setComponent(c1);
-        analysis.setAnalysisState(AnalysisState.NOT_AFFECTED);
-        analysis.setCvssV3Vector("a-cvssV3-vector"); // Only vector, not score.
-        analysis.setSeverity(Severity.HIGH);
-        qm.persist(analysis);
+        // Only vector, not score.
+        useJdbiHandle(handle -> handle.createUpdate("""
+                                INSERT INTO "ANALYSIS" (
+                                  "PROJECT_ID"
+                                , "COMPONENT_ID"
+                                , "VULNERABILITY_ID"
+                                , "STATE"
+                                , "SUPPRESSED"
+                                , "CVSSV3VECTOR"
+                                , "SEVERITY"
+                                )
+                                SELECT "PROJECT_ID"
+                                     , "ID"
+                                     , :vulnId
+                                     , 'NOT_AFFECTED'
+                                     , FALSE
+                                     , 'a-cvssV3-vector'
+                                     , 'HIGH'
+                                  FROM "COMPONENT"
+                                 WHERE "ID" = :componentId
+                                """)
+                .bind("componentId", c1.getId())
+                .bind("vulnId", v1.getId())
+                .execute());
 
         final Response response = jersey.target(
                         V1_FINDING + "/project/" + p1.getUuid().toString())
@@ -2702,7 +2737,8 @@ public class FindingResourceTest extends ResourceTest {
         final Component component = createComponent(project, "c-suppressed", "1.0");
         final Vulnerability vulnerability = createVulnerability("INT-SUPP", Severity.LOW);
         qm.addVulnerability(vulnerability, component, "none");
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability).withSuppress(true));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(component.getId(), vulnerability.getId()).withSuppress(true)));
 
         assertBoundedMatchesExact(V1_FINDING + "/project/" + project.getUuid(), filters);
     }

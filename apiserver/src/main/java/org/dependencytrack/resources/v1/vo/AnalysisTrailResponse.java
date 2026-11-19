@@ -21,12 +21,11 @@ package org.dependencytrack.resources.v1.vo;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Severity;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -84,27 +83,26 @@ public record AnalysisTrailResponse(
         @Schema(description = "OWASP Risk Rating score assigned by the analysis") @Nullable
         BigDecimal owaspScore) {
 
-    public static AnalysisTrailResponse of(Analysis analysis) {
-        final List<AnalysisComment> jdoComments = analysis.getAnalysisComments();
-        final List<Comment> comments =
-                jdoComments != null ? jdoComments.stream().map(Comment::of).toList() : List.of();
-
+    public static AnalysisTrailResponse of(FindingAnalysisDao.AnalysisTrail trail) {
         return new AnalysisTrailResponse(
-                analysis.getAnalysisState(),
-                analysis.getAnalysisJustification(),
-                analysis.getAnalysisResponse(),
-                analysis.getAnalysisDetails(),
-                comments,
-                analysis.isSuppressed(),
-                analysis.getSeverity(),
-                analysis.getCvssV2Vector(),
-                analysis.getCvssV2Score(),
-                analysis.getCvssV3Vector(),
-                analysis.getCvssV3Score(),
-                analysis.getCvssV4Vector(),
-                analysis.getCvssV4Score(),
-                analysis.getOwaspVector(),
-                analysis.getOwaspScore());
+                trail.state(),
+                trail.justification(),
+                trail.response(),
+                trail.details(),
+                trail.comments().stream()
+                        .map(comment ->
+                                new Comment(Date.from(comment.timestamp()), comment.comment(), comment.commenter()))
+                        .toList(),
+                trail.suppressed(),
+                trail.severity(),
+                trail.cvssV2Vector(),
+                trail.cvssV2Score(),
+                trail.cvssV3Vector(),
+                trail.cvssV3Score(),
+                trail.cvssV4Vector(),
+                trail.cvssV4Score(),
+                trail.owaspVector(),
+                trail.owaspScore());
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -116,10 +114,5 @@ public record AnalysisTrailResponse(
             String comment,
 
             @Schema(description = "Identifier of the user who wrote the comment") @Nullable
-            String commenter) {
-
-        public static Comment of(AnalysisComment jdo) {
-            return new Comment(jdo.getTimestamp(), jdo.getComment(), jdo.getCommenter());
-        }
-    }
+            String commenter) {}
 }

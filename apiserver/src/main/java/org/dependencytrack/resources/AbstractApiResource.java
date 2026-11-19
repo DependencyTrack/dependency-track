@@ -176,23 +176,25 @@ public abstract class AbstractApiResource extends AlpineResource {
      *
      * @param jdbiHandle    The {@link Handle} to use.
      * @param componentUuid {@link UUID} of the component to verify access permission for.
+     * @return The ID of the component.
      * @throws NoSuchElementException       When no component with the given {@link UUID} exists.
      * @throws ProjectAccessDeniedException When the authenticated {@link Principal}
      *                                      does not have access to the given {@link Project}.
      */
-    protected void requireComponentAccess(final Handle jdbiHandle, final UUID componentUuid) {
-        final var dao = jdbiHandle.attach(ComponentDao.class);
-
-        final Boolean isAccessible = dao.isAccessible(componentUuid);
-        if (isAccessible == null) {
+    protected long requireComponentAccess(final Handle jdbiHandle, final UUID componentUuid) {
+        final ComponentDao.AccessibleComponentRow access =
+                jdbiHandle.attach(ComponentDao.class).getComponentAccess(componentUuid);
+        if (access == null) {
             throw new NoSuchElementException("Component could not be found");
-        } else if (!isAccessible) {
+        } else if (!access.isAccessible()) {
             try (var _ = new MdcScope(Map.of(MDC_COMPONENT_UUID, componentUuid.toString()))) {
                 logSecurityEvent(logger, SecurityMarkers.SECURITY_FAILURE, "Unauthorized project access attempt");
             }
 
             throw new ProjectAccessDeniedException("Access to the requested project is forbidden");
         }
+
+        return access.id();
     }
 
     /**

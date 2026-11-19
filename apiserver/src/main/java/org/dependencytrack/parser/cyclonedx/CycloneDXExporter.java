@@ -164,7 +164,7 @@ public class CycloneDXExporter {
         bom.setMetadata(ModelConverter.createMetadata(project, version));
         bom.setComponents(cycloneComponents);
         bom.setServices(cycloneServices);
-        bom.setVulnerabilities(ModelConverter.generateVulnerabilities(qm, variant, findings));
+        bom.setVulnerabilities(ModelConverter.generateVulnerabilities(qm, variant, project, findings));
         if (variant.hasCapability(Capability.EMITS_DEPENDENCY_GRAPH) && cycloneComponents != null) {
             bom.setDependencies(ModelConverter.generateDependencies(project, components));
         }

@@ -38,6 +38,9 @@ import org.dependencytrack.notification.NotificationSubjectDao;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject;
 import org.dependencytrack.parser.dependencytrack.BovModelConverter;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao.Analysis;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao.UpsertAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilitySyncDao;
@@ -49,8 +52,6 @@ import org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg.AnalyzerResult;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowContext;
-import org.dependencytrack.vulnanalysis.AnalysisDao.Analysis;
-import org.dependencytrack.vulnanalysis.AnalysisDao.MakeAnalysisCommand;
 import org.jdbi.v3.core.Handle;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -651,7 +652,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             Map<Long, Map<Long, VulnerabilityPolicy>> policyResults,
             Map<Long, Set<Long>> activeFindings,
             Set<String> subscribedGroups) {
-        final var analysisDao = new AnalysisDao(handle);
+        final var analysisDao = handle.attach(FindingAnalysisDao.class);
         final var reconcileResults = new ArrayList<AnalysisReconciler.Result>();
 
         // Collect finding keys that have applicable policy results.
@@ -665,7 +666,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         // Apply policies to findings that have matching policy results.
         if (!policyFindingKeys.isEmpty()) {
             final Map<FindingKey, Analysis> existingAnalysisByFindingKey =
-                    analysisDao.getForProjectFindings(projectId, policyFindingKeys);
+                    analysisDao.getAnalyses(projectId, policyFindingKeys);
             LOGGER.debug(
                     "Found {} existing analyses for {} finding(s) with policy results",
                     existingAnalysisByFindingKey.size(),
@@ -722,14 +723,14 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         }
 
         // Create or update analyses according to the reconciliation results.
-        final List<MakeAnalysisCommand> makeAnalysisCommands = reconcileResults.stream()
-                .map(AnalysisReconciler.Result::makeAnalysisCommand)
+        final List<UpsertAnalysisCommand> upsertAnalysisCommands = reconcileResults.stream()
+                .map(AnalysisReconciler.Result::upsertAnalysisCommand)
                 .toList();
-        final Map<FindingKey, Long> modifiedAnalysisIdByFindingKey = analysisDao.makeAnalyses(makeAnalysisCommands);
+        final Map<FindingKey, Long> modifiedAnalysisIdByFindingKey = analysisDao.upsertAnalyses(upsertAnalysisCommands);
         LOGGER.debug("Modified {} analysis record(s)", modifiedAnalysisIdByFindingKey.size());
 
         // Populate the audit trail for analyses that have actually changed.
-        final var createCommentCommands = new ArrayList<AnalysisDao.CreateCommentCommand>();
+        final var createCommentCommands = new ArrayList<FindingAnalysisDao.CreateCommentCommand>();
         for (final var reconcileResult : reconcileResults) {
             final Long analysisId = modifiedAnalysisIdByFindingKey.get(reconcileResult.findingKey());
             if (analysisId != null) {
@@ -756,8 +757,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                         .map(result -> new GetProjectAuditChangeNotificationSubjectQuery(
                                 result.findingKey().componentId(),
                                 result.findingKey().vulnDbId(),
-                                result.makeAnalysisCommand().state(),
-                                result.makeAnalysisCommand().suppressed()))
+                                result.upsertAnalysisCommand().state(),
+                                result.upsertAnalysisCommand().suppressed()))
                         .toList();
 
         final var notificationSubjectDao = handle.attach(NotificationSubjectDao.class);

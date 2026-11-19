@@ -23,8 +23,6 @@ import org.cyclonedx.Version;
 import org.cyclonedx.exception.ParseException;
 import org.cyclonedx.parsers.BomParserFactory;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -33,18 +31,22 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao.AnalysisTrail;
 import org.junit.jupiter.api.Test;
 
-import javax.jdo.Query;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class CycloneDXVexImporterTest extends PersistenceCapableTest {
 
@@ -125,12 +127,29 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         vex.setVulnerabilities(audits);
 
         // Act
-        vexImporter.applyVex(qm, vex, project);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
         // Assert
-        final Query<Analysis> query = qm.getPersistenceManager().newQuery(Analysis.class, "project == :project");
-        query.setParameters(project);
-        final List<Analysis> analyses = query.executeList();
+        record AnalyzedFinding(String vulnId, long componentId, long vulnDbId) {}
+        final List<Map.Entry<String, AnalysisTrail>> analyses = withJdbiHandle(handle -> handle
+                .createQuery("""
+                        SELECT v."VULNID"
+                             , a."COMPONENT_ID"
+                             , a."VULNERABILITY_ID"
+                          FROM "ANALYSIS" AS a
+                         INNER JOIN "VULNERABILITY" AS v
+                            ON v."ID" = a."VULNERABILITY_ID"
+                         WHERE a."PROJECT_ID" = :projectId
+                        """)
+                .bind("projectId", project.getId())
+                .map((rs, ctx) -> new AnalyzedFinding(
+                        rs.getString("VULNID"), rs.getLong("COMPONENT_ID"), rs.getLong("VULNERABILITY_ID")))
+                .list()
+                .stream()
+                .map(finding -> Map.entry(
+                        finding.vulnId(),
+                        handle.attach(FindingAnalysisDao.class).getTrail(finding.componentId(), finding.vulnDbId())))
+                .toList());
 
         // The VEX names sources three ways, and none of them matches how
         // Dependency-Track recorded the vulnerability:
@@ -141,42 +160,43 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         //
         // All three resolve, because the vulnerability ID identifies them on its own.
         assertThat(analyses)
-                .filteredOn(analysis -> analysis.getVulnerability().getVulnId().startsWith("CVE-"))
-                .extracting(analysis -> analysis.getVulnerability().getVulnId())
+                .extracting(Map.Entry::getKey)
+                .filteredOn(vulnId -> vulnId.startsWith("CVE-"))
                 .containsExactlyInAnyOrder("CVE-2020-25649", "CVE-2020-25650", "CVE-2020-25651");
 
-        final List<Analysis> sourceAudits = analyses.stream()
-                .filter(analysis -> !analysis.getVulnerability().getVulnId().startsWith("CVE-"))
+        final List<AnalysisTrail> sourceAudits = analyses.stream()
+                .filter(entry -> !entry.getKey().startsWith("CVE-"))
+                .map(Map.Entry::getValue)
                 .toList();
         assertThat(sources.size()).isEqualTo(sourceAudits.size());
         assertThat(sourceAudits).allSatisfy(analysis -> {
-            assertThat(analysis.isSuppressed()).isTrue();
-            assertThat(analysis.getAnalysisComments())
+            assertThat(analysis.suppressed()).isTrue();
+            assertThat(analysis.comments())
                     .satisfiesExactlyInAnyOrder(
                             comment -> {
-                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                                assertThat(comment.getComment())
+                                assertThat(comment.commenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.comment())
                                         .isEqualTo(String.format(
                                                 "Analysis: %s → %s",
                                                 AnalysisState.NOT_SET, AnalysisState.FALSE_POSITIVE));
                             },
                             comment -> {
-                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                                assertThat(comment.getComment()).isEqualTo("Details: Unit test");
+                                assertThat(comment.commenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.comment()).isEqualTo("Details: Unit test");
                             },
                             comment -> {
-                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                                assertThat(comment.getComment())
+                                assertThat(comment.commenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.comment())
                                         .isEqualTo(String.format(
                                                 "Justification: %s → %s",
                                                 AnalysisJustification.NOT_SET,
                                                 AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL));
                             },
                             comment -> {
-                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                                assertThat(comment.getComment()).isEqualTo("Suppressed");
+                                assertThat(comment.commenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.comment()).isEqualTo("Suppressed");
                             });
-            assertThat(analysis.getAnalysisDetails()).isEqualTo("Unit test");
+            assertThat(analysis.details()).isEqualTo("Unit test");
         });
     }
 
@@ -228,12 +248,12 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                 """.getBytes(StandardCharsets.UTF_8);
         final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
 
-        vexImporter.applyVex(qm, vex, project);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
-        final Analysis analysis = qm.getAnalysis(component, vuln);
-        assertThat(analysis.getAnalysisResponse()).isEqualTo(AnalysisResponse.UPDATE);
-        assertThat(analysis.getAnalysisComments())
-                .extracting(AnalysisComment::getComment)
+        final AnalysisTrail analysis = getAnalysis(component, vuln);
+        assertThat(analysis.response()).isEqualTo(AnalysisResponse.UPDATE);
+        assertThat(analysis.comments())
+                .extracting(AnalysisTrail.Comment::comment)
                 .containsExactly("Vendor Response: NOT_SET → UPDATE");
     }
 
@@ -265,9 +285,10 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, componentA, "none");
         qm.addVulnerability(vuln, componentB, "none");
 
-        qm.makeAnalysis(new MakeAnalysisCommand(componentA, vuln)
-                .withState(AnalysisState.NOT_AFFECTED)
-                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(componentA.getId(), vuln.getId())
+                        .withState(AnalysisState.NOT_AFFECTED)
+                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)));
 
         final var exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VEX, qm);
         final var vexOut = new ByteArrayOutputStream();
@@ -278,12 +299,14 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                 vexOut);
         final byte[] vexBytes = vexOut.toByteArray();
 
-        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
 
-        assertThat(qm.getAnalysis(componentA, vuln))
-                .extracting(Analysis::getAnalysisState, Analysis::getAnalysisJustification)
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
+
+        assertThat(getAnalysis(componentA, vuln))
+                .extracting(AnalysisTrail::state, AnalysisTrail::justification)
                 .containsExactly(AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE);
-        assertThat(qm.getAnalysis(componentB, vuln)).isNull();
+        assertThat(getAnalysis(componentB, vuln)).isNull();
     }
 
     @Test
@@ -335,10 +358,11 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                   ]
                 }
                 """.getBytes(StandardCharsets.UTF_8);
-        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
-        assertThat(qm.getAnalysis(component, vuln))
-                .extracting(Analysis::getAnalysisState)
+        assertThat(getAnalysis(component, vuln))
+                .extracting(AnalysisTrail::state)
                 .isEqualTo(AnalysisState.NOT_AFFECTED);
     }
 
@@ -388,10 +412,11 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                   ]
                 }
                 """.getBytes(StandardCharsets.UTF_8);
-        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
-        assertThat(qm.getAnalysis(component, vuln))
-                .extracting(Analysis::getAnalysisState)
+        assertThat(getAnalysis(component, vuln))
+                .extracting(AnalysisTrail::state)
                 .isEqualTo(AnalysisState.NOT_AFFECTED);
     }
 
@@ -442,10 +467,11 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                   ]
                 }
                 """.getBytes(StandardCharsets.UTF_8);
-        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
-        assertThat(qm.getAnalysis(component, vuln))
-                .extracting(Analysis::getAnalysisState)
+        assertThat(getAnalysis(component, vuln))
+                .extracting(AnalysisTrail::state)
                 .isEqualTo(AnalysisState.NOT_AFFECTED);
     }
 
@@ -498,12 +524,13 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                   ]
                 }
                 """.getBytes(StandardCharsets.UTF_8);
-        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
-        assertThat(qm.getAnalysis(component, nvdVuln))
-                .extracting(Analysis::getAnalysisState)
+        assertThat(getAnalysis(component, nvdVuln))
+                .extracting(AnalysisTrail::state)
                 .isEqualTo(AnalysisState.NOT_AFFECTED);
-        assertThat(qm.getAnalysis(component, osvVuln)).isNull();
+        assertThat(getAnalysis(component, osvVuln)).isNull();
     }
 
     @Test
@@ -560,11 +587,12 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                   ]
                 }
                 """.getBytes(StandardCharsets.UTF_8);
-        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
         // Guessing either one would be wrong, so neither is analyzed.
-        assertThat(qm.getAnalysis(component, nvdVuln)).isNull();
-        assertThat(qm.getAnalysis(component, osvVuln)).isNull();
+        assertThat(getAnalysis(component, nvdVuln)).isNull();
+        assertThat(getAnalysis(component, osvVuln)).isNull();
     }
 
     @Test
@@ -613,9 +641,10 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                   ]
                 }
                 """.getBytes(StandardCharsets.UTF_8);
-        vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
-        assertThat(qm.getAnalysis(component, vuln)).isNull();
+        assertThat(getAnalysis(component, vuln)).isNull();
     }
 
     private static final String OWASP_VECTOR =
@@ -665,15 +694,15 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                 """.formatted(OWASP_VECTOR).getBytes(StandardCharsets.UTF_8);
         final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
 
-        vexImporter.applyVex(qm, vex, project);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
-        final Analysis analysis = qm.getAnalysis(component, vuln);
-        assertThat(analysis.getOwaspVector()).isEqualTo(OWASP_VECTOR);
-        assertThat(analysis.getOwaspScore()).isEqualByComparingTo(new BigDecimal("7.5"));
+        final AnalysisTrail analysis = getAnalysis(component, vuln);
+        assertThat(analysis.owaspVector()).isEqualTo(OWASP_VECTOR);
+        assertThat(analysis.owaspScore()).isEqualByComparingTo(new BigDecimal("7.5"));
         // An OWASP rating import must not override the finding severity; it falls back to the vulnerability.
-        assertThat(analysis.getSeverity()).isNull();
-        assertThat(analysis.getAnalysisComments())
-                .extracting(AnalysisComment::getComment)
+        assertThat(analysis.severity()).isNull();
+        assertThat(analysis.comments())
+                .extracting(AnalysisTrail.Comment::comment)
                 .contains("OWASP Vector: (None) → " + OWASP_VECTOR, "OWASP Score: (None) → 7.5");
     }
 
@@ -720,14 +749,14 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                 """.formatted(OWASP_VECTOR).getBytes(StandardCharsets.UTF_8);
         final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
 
-        vexImporter.applyVex(qm, vex, project);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
-        final Analysis analysis = qm.getAnalysis(component, vuln);
+        final AnalysisTrail analysis = getAnalysis(component, vuln);
         assertThat(analysis).isNotNull();
-        assertThat(analysis.getOwaspVector()).isEqualTo(OWASP_VECTOR);
-        assertThat(analysis.getOwaspScore()).isEqualByComparingTo(new BigDecimal("4.2"));
-        assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_SET);
-        assertThat(analysis.isSuppressed()).isFalse();
+        assertThat(analysis.owaspVector()).isEqualTo(OWASP_VECTOR);
+        assertThat(analysis.owaspScore()).isEqualByComparingTo(new BigDecimal("4.2"));
+        assertThat(analysis.state()).isEqualTo(AnalysisState.NOT_SET);
+        assertThat(analysis.suppressed()).isFalse();
     }
 
     @Test
@@ -774,10 +803,15 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                 """.getBytes(StandardCharsets.UTF_8);
         final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
 
-        vexImporter.applyVex(qm, vex, project);
+        qm.runInTransaction(() -> vexImporter.applyVex(qm, vex, project));
 
-        final Analysis analysis = qm.getAnalysis(component, vuln);
-        assertThat(analysis.getOwaspVector()).isNull();
-        assertThat(analysis.getOwaspScore()).isNull();
+        final AnalysisTrail analysis = getAnalysis(component, vuln);
+        assertThat(analysis.owaspVector()).isNull();
+        assertThat(analysis.owaspScore()).isNull();
+    }
+
+    private static AnalysisTrail getAnalysis(Component component, Vulnerability vuln) {
+        return withJdbiHandle(
+                handle -> handle.attach(FindingAnalysisDao.class).getTrail(component.getId(), vuln.getId()));
     }
 }

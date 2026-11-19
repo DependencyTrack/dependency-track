@@ -60,6 +60,8 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao.AnalysisTrail;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao.ProjectPropertyRow;
@@ -113,6 +115,7 @@ import static org.dependencytrack.notification.NotificationTestUtil.getNotificat
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_CREATED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.hamcrest.Matchers.equalTo;
@@ -3702,13 +3705,14 @@ class ProjectResourceTest extends ResourceTest {
 
         qm.addVulnerability(vuln, componentA, "internal");
 
-        final long analysisId = qm.makeAnalysis(new MakeAnalysisCommand(componentA, vuln)
-                .withState(AnalysisState.NOT_AFFECTED)
-                .withJustification(AnalysisJustification.REQUIRES_ENVIRONMENT)
-                .withResponse(AnalysisResponse.WILL_NOT_FIX)
-                .withDetails("details")
-                .withCommenter("commenter")
-                .withComment("comment"));
+        final long analysisId = inJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(componentA.getId(), vuln.getId())
+                        .withState(AnalysisState.NOT_AFFECTED)
+                        .withJustification(AnalysisJustification.REQUIRES_ENVIRONMENT)
+                        .withResponse(AnalysisResponse.WILL_NOT_FIX)
+                        .withDetails("details")
+                        .withCommenter("commenter")
+                        .withComment("comment")));
 
         final VulnPolicyIdentityRow vulnPolicy = withJdbiHandle(handle -> {
             final var policyAnalysis = new VulnerabilityPolicyAnalysis();
@@ -3880,18 +3884,29 @@ class ProjectResourceTest extends ResourceTest {
                                                     row.vulnerability().getId())
                                             .isEqualTo(vuln.getId()));
 
-                            assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
-                                assertThat(clonedAnalysis.getId()).isNotEqualTo(analysisId);
-                                assertThat(clonedAnalysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_AFFECTED);
-                                assertThat(clonedAnalysis.getAnalysisJustification())
+                            final AnalysisTrail clonedAnalysis =
+                                    withJdbiHandle(handle -> handle.attach(FindingAnalysisDao.class)
+                                            .getTrail(clonedComponent.getId(), vuln.getId()));
+                            assertThat(clonedAnalysis).satisfies(analysis -> {
+                                assertThat(analysis.state()).isEqualTo(AnalysisState.NOT_AFFECTED);
+                                assertThat(analysis.justification())
                                         .isEqualTo(AnalysisJustification.REQUIRES_ENVIRONMENT);
-                                assertThat(clonedAnalysis.getAnalysisResponse())
-                                        .isEqualTo(AnalysisResponse.WILL_NOT_FIX);
-                                assertThat(clonedAnalysis.getAnalysisDetails()).isEqualTo("details");
-                                assertThat(clonedAnalysis.isSuppressed()).isFalse();
-                                assertThat(clonedAnalysis.getVulnerabilityPolicyId())
-                                        .isNotNull();
+                                assertThat(analysis.response()).isEqualTo(AnalysisResponse.WILL_NOT_FIX);
+                                assertThat(analysis.details()).isEqualTo("details");
+                                assertThat(analysis.suppressed()).isFalse();
                             });
+
+                            final Long clonedVulnPolicyId = withJdbiHandle(handle -> handle.createQuery("""
+                                            SELECT "VULNERABILITY_POLICY_ID"
+                                              FROM "ANALYSIS"
+                                             WHERE "COMPONENT_ID" = :componentId
+                                               AND "VULNERABILITY_ID" = :vulnId
+                                            """)
+                                    .bind("componentId", clonedComponent.getId())
+                                    .bind("vulnId", vuln.getId())
+                                    .mapTo(Long.class)
+                                    .one());
+                            assertThat(clonedVulnPolicyId).isNotNull();
                         },
                         clonedComponent -> {
                             assertThat(clonedComponent.getUuid()).isNotEqualTo(componentA.getUuid());

@@ -21,8 +21,6 @@ package org.dependencytrack.persistence.command;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.proto.v1.Group;
 
 import java.math.BigDecimal;
@@ -32,8 +30,8 @@ import java.util.Set;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @param component     The component to make the analysis for
- * @param vulnerability The vulnerability to make the analysis for
+ * @param componentId   ID of the component to make the analysis for
+ * @param vulnDbId      Database ID of the vulnerability to make the analysis for
  * @param state         The analysis state to set
  * @param justification The justification to set
  * @param response      The vendor response to set
@@ -47,8 +45,8 @@ import static java.util.Objects.requireNonNull;
  * @since 5.0.0
  */
 public record MakeAnalysisCommand(
-        Component component,
-        Vulnerability vulnerability,
+        long componentId,
+        long vulnDbId,
         AnalysisState state,
         AnalysisJustification justification,
         AnalysisResponse response,
@@ -75,19 +73,17 @@ public record MakeAnalysisCommand(
     }
 
     public MakeAnalysisCommand {
-        requireNonNull(component, "component must not be null");
-        requireNonNull(vulnerability, "vulnerability must not be null");
         requireNonNull(options, "options must not be null");
     }
 
-    public MakeAnalysisCommand(final Component component, final Vulnerability vulnerability) {
-        this(component, vulnerability, null, null, null, null, null, null, null, null, null, Collections.emptySet());
+    public MakeAnalysisCommand(final long componentId, final long vulnDbId) {
+        this(componentId, vulnDbId, null, null, null, null, null, null, null, null, null, Collections.emptySet());
     }
 
     public MakeAnalysisCommand withState(final AnalysisState state) {
         return new MakeAnalysisCommand(
-                this.component,
-                this.vulnerability,
+                this.componentId,
+                this.vulnDbId,
                 state,
                 this.justification,
                 this.response,
@@ -102,8 +98,8 @@ public record MakeAnalysisCommand(
 
     public MakeAnalysisCommand withJustification(final AnalysisJustification justification) {
         return new MakeAnalysisCommand(
-                this.component,
-                this.vulnerability,
+                this.componentId,
+                this.vulnDbId,
                 this.state,
                 justification,
                 this.response,
@@ -118,8 +114,8 @@ public record MakeAnalysisCommand(
 
     public MakeAnalysisCommand withResponse(final AnalysisResponse response) {
         return new MakeAnalysisCommand(
-                this.component,
-                this.vulnerability,
+                this.componentId,
+                this.vulnDbId,
                 this.state,
                 this.justification,
                 response,
@@ -134,8 +130,8 @@ public record MakeAnalysisCommand(
 
     public MakeAnalysisCommand withDetails(final String detail) {
         return new MakeAnalysisCommand(
-                this.component,
-                this.vulnerability,
+                this.componentId,
+                this.vulnDbId,
                 this.state,
                 this.justification,
                 this.response,
@@ -150,8 +146,8 @@ public record MakeAnalysisCommand(
 
     public MakeAnalysisCommand withSuppress(final Boolean suppress) {
         return new MakeAnalysisCommand(
-                this.component,
-                this.vulnerability,
+                this.componentId,
+                this.vulnDbId,
                 this.state,
                 this.justification,
                 this.response,
@@ -166,8 +162,8 @@ public record MakeAnalysisCommand(
 
     public MakeAnalysisCommand withCommenter(final String commenter) {
         return new MakeAnalysisCommand(
-                this.component,
-                this.vulnerability,
+                this.componentId,
+                this.vulnDbId,
                 this.state,
                 this.justification,
                 this.response,
@@ -182,8 +178,8 @@ public record MakeAnalysisCommand(
 
     public MakeAnalysisCommand withComment(final String comment) {
         return new MakeAnalysisCommand(
-                this.component,
-                this.vulnerability,
+                this.componentId,
+                this.vulnDbId,
                 this.state,
                 this.justification,
                 this.response,
@@ -198,8 +194,8 @@ public record MakeAnalysisCommand(
 
     public MakeAnalysisCommand withOwasp(final String owaspVector, final BigDecimal owaspScore) {
         return new MakeAnalysisCommand(
-                this.component,
-                this.vulnerability,
+                this.componentId,
+                this.vulnDbId,
                 this.state,
                 this.justification,
                 this.response,
@@ -214,8 +210,8 @@ public record MakeAnalysisCommand(
 
     public MakeAnalysisCommand withOptions(final Set<Option> options) {
         return new MakeAnalysisCommand(
-                this.component,
-                this.vulnerability,
+                this.componentId,
+                this.vulnDbId,
                 this.state,
                 this.justification,
                 this.response,

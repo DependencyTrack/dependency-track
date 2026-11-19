@@ -34,7 +34,6 @@ import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.exception.InvalidSortFieldException;
-import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentProperty;
@@ -59,7 +58,6 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.jspecify.annotations.NonNull;
@@ -97,7 +95,6 @@ public class QueryManager extends AlpineQueryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryManager.class);
     private ComponentQueryManager componentQueryManager;
-    private AnalysisQueryManager analysisQueryManager;
     private LicenseQueryManager licenseQueryManager;
     private NotificationQueryManager notificationQueryManager;
     private PolicyQueryManager policyQueryManager;
@@ -306,20 +303,6 @@ public class QueryManager extends AlpineQueryManager {
                     : new ServiceComponentQueryManager(getPersistenceManager(), request);
         }
         return serviceComponentQueryManager;
-    }
-
-    /**
-     * Lazy instantiation of AnalysisQueryManager.
-     *
-     * @return a AnalysisQueryManager object
-     */
-    private AnalysisQueryManager getAnalysisQueryManager() {
-        if (analysisQueryManager == null) {
-            analysisQueryManager = (request == null)
-                    ? new AnalysisQueryManager(getPersistenceManager())
-                    : new AnalysisQueryManager(getPersistenceManager(), request);
-        }
-        return analysisQueryManager;
     }
 
     /**
@@ -667,14 +650,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public Set<VulnerabilityKey> getKev(Collection<VulnerabilityKey> keys) {
         return getVulnerabilityQueryManager().getKev(keys);
-    }
-
-    public Analysis getAnalysis(Component component, Vulnerability vulnerability) {
-        return getAnalysisQueryManager().getAnalysis(component, vulnerability);
-    }
-
-    public long makeAnalysis(final MakeAnalysisCommand command) {
-        return getAnalysisQueryManager().makeAnalysis(command);
     }
 
     public PaginatedResult getRepositories() {

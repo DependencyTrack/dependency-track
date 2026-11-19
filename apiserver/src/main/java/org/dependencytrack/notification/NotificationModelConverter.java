@@ -20,7 +20,6 @@ package org.dependencytrack.notification;
 
 import alpine.model.User;
 import com.google.protobuf.util.Timestamps;
-import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vex;
@@ -37,7 +36,6 @@ import org.dependencytrack.notification.proto.v1.Project;
 import org.dependencytrack.notification.proto.v1.Scope;
 import org.dependencytrack.notification.proto.v1.UserSubject;
 import org.dependencytrack.notification.proto.v1.Vulnerability;
-import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysis;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 
 import java.util.Objects;
@@ -328,15 +326,5 @@ public final class NotificationModelConverter {
         }
 
         return builder.build();
-    }
-
-    public static VulnerabilityAnalysis convert(Analysis analysis) {
-        return VulnerabilityAnalysis.newBuilder()
-                .setProject(convert(analysis.getProject()))
-                .setComponent(convert(analysis.getComponent()))
-                .setVulnerability(convert(analysis.getVulnerability()))
-                .setState(analysis.getAnalysisState().name())
-                .setSuppressed(analysis.isSuppressed())
-                .build();
     }
 }

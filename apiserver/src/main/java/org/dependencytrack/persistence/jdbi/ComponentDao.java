@@ -34,6 +34,7 @@ import org.jdbi.v3.core.mapper.reflect.BeanMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMap;
@@ -66,14 +67,19 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             """)
     int deleteComponent(@Bind final UUID componentUuid);
 
+    record AccessibleComponentRow(long id, boolean isAccessible) {}
+
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
-            SELECT ${apiProjectAclCondition}
+            SELECT "ID"
+                 , ${apiProjectAclCondition} AS "isAccessible"
               FROM "COMPONENT"
              WHERE "UUID" = :componentUuid
             """)
     @DefineApiProjectAclCondition(projectIdColumn = "\"PROJECT_ID\"")
-    Boolean isAccessible(@Bind UUID componentUuid);
+    @RegisterConstructorMapper(AccessibleComponentRow.class)
+    @Nullable
+    AccessibleComponentRow getComponentAccess(@Bind UUID componentUuid);
 
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="apiFilterParameter" type="String" -->

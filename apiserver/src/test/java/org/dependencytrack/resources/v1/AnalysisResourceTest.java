@@ -26,7 +26,6 @@ import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -36,6 +35,7 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyAnalysis;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyDao;
@@ -65,7 +65,9 @@ import static org.dependencytrack.notification.NotificationTestUtil.getNotificat
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class AnalysisResourceTest extends ResourceTest {
@@ -93,7 +95,7 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+        final var command = new MakeAnalysisCommand(component.getId(), vulnerability.getId())
                 .withState(AnalysisState.NOT_AFFECTED)
                 .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
                 .withResponse(AnalysisResponse.WILL_NOT_FIX)
@@ -102,7 +104,8 @@ class AnalysisResourceTest extends ResourceTest {
                 .withCommenter("Jane Doe")
                 .withComment("Analysis comment here")
                 .withOptions(EnumSet.of(
-                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", project.getUuid())
@@ -151,21 +154,26 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+        final var command = new MakeAnalysisCommand(component.getId(), vulnerability.getId())
                 .withState(AnalysisState.EXPLOITABLE)
                 .withOwasp("OWASP/K9:M1:O0:Z2/D1:X1:W1:L1/C1:I1:A1:T1/F1:R1:S1:P1/", new BigDecimal("4.5"))
                 .withOptions(EnumSet.of(
-                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION));
+        final long analysisId = inJdbiTransaction(
+                handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
-        final Analysis analysis = qm.getAnalysis(component, vulnerability);
-        analysis.setSeverity(Severity.MEDIUM);
-        analysis.setCvssV2Vector("AV:N/AC:L/Au:N/C:P/I:P/A:P");
-        analysis.setCvssV2Score(new BigDecimal("7.5"));
-        analysis.setCvssV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
-        analysis.setCvssV3Score(new BigDecimal("9.8"));
-        analysis.setCvssV4Vector("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N");
-        analysis.setCvssV4Score(new BigDecimal("9.3"));
-        qm.persist(analysis);
+        useJdbiHandle(handle ->
+                handle.createUpdate("""
+                        UPDATE "ANALYSIS"
+                           SET "SEVERITY" = 'MEDIUM'
+                             , "CVSSV2VECTOR" = 'AV:N/AC:L/Au:N/C:P/I:P/A:P'
+                             , "CVSSV2SCORE" = 7.5
+                             , "CVSSV3VECTOR" = 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'
+                             , "CVSSV3SCORE" = 9.8
+                             , "CVSSV4VECTOR" = 'CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N'
+                             , "CVSSV4SCORE" = 9.3
+                         WHERE "ID" = :analysisId
+                        """).bind("analysisId", analysisId).execute());
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", project.getUuid())
@@ -255,7 +263,7 @@ class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    void retrieveAnalysisWithProjectNotFoundTest() {
+    void retrieveAnalysisShouldIgnoreProjectTest() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
@@ -273,6 +281,10 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
+        final var command =
+                new MakeAnalysisCommand(component.getId(), vulnerability.getId()).withState(AnalysisState.NOT_AFFECTED);
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
+
         final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", UUID.randomUUID())
                 .queryParam("component", component.getUuid())
@@ -280,9 +292,8 @@ class AnalysisResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NOT_FOUND);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThat(getPlainTextBody(response)).isEqualTo("The project could not be found.");
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(parseJsonObject(response).getString("analysisState")).isEqualTo("NOT_AFFECTED");
     }
 
     @Test
@@ -313,7 +324,13 @@ class AnalysisResourceTest extends ResourceTest {
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NOT_FOUND);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThat(getPlainTextBody(response)).isEqualTo("The component could not be found.");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Component could not be found"
+                }
+                """);
     }
 
     @Test
@@ -380,12 +397,13 @@ class AnalysisResourceTest extends ResourceTest {
         vuln.setSource(Vulnerability.Source.INTERNAL);
         qm.persist(vuln);
 
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
-                .withState(AnalysisState.NOT_AFFECTED)
-                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
-                .withResponse(AnalysisResponse.WILL_NOT_FIX)
-                .withDetails("Analysis details here")
-                .withSuppress(true));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(component.getId(), vuln.getId())
+                        .withState(AnalysisState.NOT_AFFECTED)
+                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                        .withResponse(AnalysisResponse.WILL_NOT_FIX)
+                        .withDetails("Analysis details here")
+                        .withSuppress(true)));
 
         final Supplier<Response> responseSupplier = () -> jersey.target(V1_ANALYSIS)
                 .queryParam("component", component.getUuid())
@@ -654,7 +672,7 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+        final var command = new MakeAnalysisCommand(component.getId(), vulnerability.getId())
                 .withState(AnalysisState.NOT_AFFECTED)
                 .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
                 .withResponse(AnalysisResponse.WILL_NOT_FIX)
@@ -663,7 +681,8 @@ class AnalysisResourceTest extends ResourceTest {
                 .withCommenter("Jane Doe")
                 .withComment("Analysis comment here")
                 .withOptions(EnumSet.of(
-                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         final var analysisRequest = new AnalysisRequest(
                 project.getUuid().toString(),
@@ -744,7 +763,7 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+        final var command = new MakeAnalysisCommand(component.getId(), vulnerability.getId())
                 .withState(AnalysisState.NOT_AFFECTED)
                 .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
                 .withResponse(AnalysisResponse.WILL_NOT_FIX)
@@ -753,7 +772,8 @@ class AnalysisResourceTest extends ResourceTest {
                 .withCommenter("Jane Doe")
                 .withComment("Analysis comment here")
                 .withOptions(EnumSet.of(
-                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         final var analysisRequest = new AnalysisRequest(
                 project.getUuid().toString(),
@@ -811,7 +831,7 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+        final var command = new MakeAnalysisCommand(component.getId(), vulnerability.getId())
                 .withState(AnalysisState.NOT_AFFECTED)
                 .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
                 .withResponse(AnalysisResponse.WILL_NOT_FIX)
@@ -820,7 +840,8 @@ class AnalysisResourceTest extends ResourceTest {
                 .withCommenter("Jane Doe")
                 .withComment("Analysis comment here")
                 .withOptions(EnumSet.of(
-                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         final var analysisRequest = new AnalysisRequest(
                 project.getUuid().toString(),
@@ -908,7 +929,13 @@ class AnalysisResourceTest extends ResourceTest {
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NOT_FOUND);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThat(getPlainTextBody(response)).isEqualTo("The component could not be found.");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "Component could not be found"
+                }
+                """);
     }
 
     @Test
@@ -975,10 +1002,11 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability)
+        final var command = new MakeAnalysisCommand(component.getId(), vulnerability.getId())
                 .withState(AnalysisState.IN_TRIAGE)
                 .withOptions(EnumSet.of(
-                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION)));
+                        MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL, MakeAnalysisCommand.Option.OMIT_NOTIFICATION));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
 
         final var analysisRequest = new AnalysisRequest(
                 project.getUuid().toString(),
@@ -1127,9 +1155,10 @@ class AnalysisResourceTest extends ResourceTest {
         qm.persist(vuln);
 
         qm.addVulnerability(vuln, component, "internal");
-        final long analysisId = qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
-                .withState(AnalysisState.NOT_AFFECTED)
-                .withSuppress(true));
+        final long analysisId = inJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(component.getId(), vuln.getId())
+                        .withState(AnalysisState.NOT_AFFECTED)
+                        .withSuppress(true)));
 
         final VulnPolicyIdentityRow vulnPolicy = withJdbiHandle(handle -> {
             final var policyAnalysis = new VulnerabilityPolicyAnalysis();

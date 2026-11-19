@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class ComponentDaoTest extends PersistenceCapableTest {
@@ -90,13 +91,14 @@ public class ComponentDaoTest extends PersistenceCapableTest {
         vuln.setSource(Vulnerability.Source.INTERNAL);
         qm.persist(vuln);
         qm.addVulnerability(vuln, component, "internal");
-        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln)
-                .withState(AnalysisState.NOT_AFFECTED)
-                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
-                .withResponse(AnalysisResponse.WORKAROUND_AVAILABLE)
-                .withDetails("analysisDetails")
-                .withSuppress(false)
-                .withComment("someComment"));
+        useJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                .makeAnalysis(new MakeAnalysisCommand(component.getId(), vuln.getId())
+                        .withState(AnalysisState.NOT_AFFECTED)
+                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                        .withResponse(AnalysisResponse.WORKAROUND_AVAILABLE)
+                        .withDetails("analysisDetails")
+                        .withSuppress(false)
+                        .withComment("someComment")));
 
         // Create a child component to validate that deletion is indeed recursive.
         final var componentChild = new Component();

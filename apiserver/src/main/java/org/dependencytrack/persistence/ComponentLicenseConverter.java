@@ -107,7 +107,9 @@ public class ComponentLicenseConverter {
     }
 
     public static List<ComponentDao.ComponentLicenseRow> buildComponentLicenseRows(
-            final long componentId, final List<UpdateComponentLicenseRequest> licenseRequests) {
+            final long componentId,
+            final List<UpdateComponentLicenseRequest> licenseRequests,
+            final Map<String, Long> licenseIdsByIdentifier) {
         if (licenseRequests == null || licenseRequests.isEmpty()) {
             return List.of();
         }
@@ -127,17 +129,17 @@ public class ComponentLicenseConverter {
                 continue;
             }
 
+            Long licenseId = license != null ? licenseIdsByIdentifier.get(license) : null;
+
             rowsByKey.putIfAbsent(
                     key,
                     new ComponentDao.ComponentLicenseRow(
                             null,
                             componentId,
-                            null,
-                            license,
+                            licenseId,
+                            licenseId == null ? license : null,
                             expression,
-                            request.getLicenseUrl() != null
-                                    ? request.getLicenseUrl().toString()
-                                    : null,
+                            StringUtils.trimToNull(request.getLicenseUrl()),
                             0,
                             request.getAcknowledgement().name()));
         }

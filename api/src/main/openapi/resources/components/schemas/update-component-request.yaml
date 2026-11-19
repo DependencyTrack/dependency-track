@@ -21,7 +21,6 @@ properties:
     maxLength: 255
   description:
     type: string
-    maxLength: 255
   group:
     type: string
     maxLength: 255
@@ -56,8 +55,6 @@ properties:
   swid_tag_id:
     type: string
     maxLength: 255
-  internal:
-    type: boolean
   copyright:
     type: string
     maxLength: 255

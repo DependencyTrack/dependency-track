@@ -32,7 +32,6 @@ import org.dependencytrack.resources.AbstractApiResource;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -72,7 +71,7 @@ public class LicensesResource extends AbstractApiResource implements LicensesApi
                         .resolvedLicense(mapLicense(resolvedLicense))
                         .license(licenseRow.license())
                         .licenseExpression(licenseRow.licenseExpression())
-                        .licenseUrl(licenseRow.licenseUrl() != null ? URI.create(licenseRow.licenseUrl()) : null)
+                        .licenseUrl(licenseRow.licenseUrl())
                         .ordinality(licenseRow.ordinality())
                         .acknowledgement(licenseRow.acknowledgement())
                         .build();

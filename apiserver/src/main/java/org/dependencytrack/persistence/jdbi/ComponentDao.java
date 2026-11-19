@@ -865,6 +865,28 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         return new Page<>(resultRows, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
 
+    default Map<String, Long> getLicenseIdsByIdOrName(List<String> identifiers) {
+        if (identifiers.isEmpty()) {
+            return Map.of();
+        }
+
+        return getHandle()
+                .createQuery("""
+            SELECT "ID", "LICENSEID", "NAME"
+            FROM "LICENSE"
+            WHERE "LICENSEID" = ANY(:identifiers)
+              OR "NAME" = ANY(:identifiers)
+            ORDER BY "LICENSEID", "ID"
+            """)
+                .bindArray("identifiers", String.class, identifiers)
+                .reduceResultSet(new HashMap<>(), (result, rs, ctx) -> {
+                    final long id = rs.getLong("ID");
+                    result.putIfAbsent(rs.getString("LICENSEID"), id);
+                    result.putIfAbsent(rs.getString("NAME"), id);
+                    return result;
+                });
+    }
+
     public record ComponentHashes(
             String md5,
             String sha1,
@@ -878,8 +900,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             String blake2b384,
             String blake2b512,
             String blake3,
-            String streeborg256,
-            String streeborg512) {}
+            String streebog256,
+            String streebog512) {}
 
     public record ComponentUpdate(
             UUID uuid,
@@ -888,19 +910,23 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             String group,
             String version,
             String classifier,
-            String fileName,
+            String filename,
             String extension,
             ComponentHashes hashes,
             String cpe,
             String publisher,
             String supplier,
-            String author,
+            String authors,
             String purl,
             String purlCoordinates,
             String swidTagId,
             boolean internal,
             String copyright,
-            String notes) {}
+            String notes,
+            Long licenseId,
+            String license,
+            String licenseExpression,
+            String licenseUrl) {}
 
     @SqlQuery("""
         UPDATE "COMPONENT"
@@ -915,25 +941,29 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
              , "PURLCOORDINATES" = :purlCoordinates
              , "CPE" = :cpe
              , "PUBLISHER" = :publisher
-             , "SUPPLIER" = :supplierJson
-             , "AUTHORS" = :authorsJson
+             , "SUPPLIER" = :supplier
+             , "AUTHORS" = :authors
              , "SWIDTAGID" = :swidTagId
              , "COPYRIGHT" = :copyright
-             , "MD5" = :componentUpdate.hashes.md5
-             , "SHA1" = :componentUpdate.hashes.sha1
-             , "SHA_256" = :componentUpdate.hashes.sha256
-             , "SHA_384" = :componentUpdate.hashes.sha384
-             , "SHA_512" = :componentUpdate.hashes.sha512
-             , "SHA3_256" = :componentUpdate.hashes.sha3256
-             , "SHA3_384" = :componentUpdate.hashes.sha3384
-             , "SHA3_512" = :componentUpdate.hashes.sha3512
-             , "BLAKE2B_256" = :componentUpdate.hashes.blake2b256
-             , "BLAKE2B_384" = :componentUpdate.hashes.blake2b384
-             , "BLAKE2B_512" = :componentUpdate.hashes.blake2b512
-             , "BLAKE3" = :componentUpdate.hashes.blake3
-             , "STREEBOG_256" = :componentUpdate.hashes.streebog256
-             , "STREEBOG_512" = :componentUpdate.hashes.streebog512
-             , "NOTES" = :notes
+             , "LICENSE_ID" = :licenseId
+             , "LICENSE" = :license
+             , "LICENSE_EXPRESSION" = :licenseExpression
+             , "LICENSE_URL" = :licenseUrl
+             , "MD5" = :hashes.md5
+             , "SHA1" = :hashes.sha1
+             , "SHA_256" = :hashes.sha256
+             , "SHA_384" = :hashes.sha384
+             , "SHA_512" = :hashes.sha512
+             , "SHA3_256" = :hashes.sha3256
+             , "SHA3_384" = :hashes.sha3384
+             , "SHA3_512" = :hashes.sha3512
+             , "BLAKE2B_256" = :hashes.blake2b256
+             , "BLAKE2B_384" = :hashes.blake2b384
+             , "BLAKE2B_512" = :hashes.blake2b512
+             , "BLAKE3" = :hashes.blake3
+             , "STREEBOG_256" = :hashes.streebog256
+             , "STREEBOG_512" = :hashes.streebog512
+             , "TEXT" = :notes
              , "INTERNAL" = :internal
          WHERE "UUID" = :uuid
      RETURNING "ID"

@@ -36,12 +36,6 @@ put:
   responses:
     "200":
       description: Component Updated
-      headers:
-        Location:
-          description: URL of the updated component
-          schema:
-            type: string
-            format: uri
     "400":
       description: Bad Request
       content:

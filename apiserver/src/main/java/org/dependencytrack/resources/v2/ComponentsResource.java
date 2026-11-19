@@ -144,10 +144,20 @@ public class ComponentsResource extends AbstractApiResource implements Component
         return inJdbiTransaction(getAlpineRequest(), handle -> {
             requireComponentAccess(handle, uuid);
             ComponentDao componentDao = handle.attach(ComponentDao.class);
-            final long componentId = componentDao.updateComponent(toComponentUpdate(uuid, request));
+            final long componentId = componentDao.getComponentId(uuid);
 
+            final List<String> licenseIdentifiers = request.getLicenses().stream()
+                    .map(licenseRequest -> StringUtils.trimToNull(licenseRequest.getLicense()))
+                    .filter(identifier -> identifier != null)
+                    .collect(Collectors.toList());
+            final Map<String, Long> licenseIdsByIdentifier = componentDao.getLicenseIdsByIdOrName(licenseIdentifiers);
             final List<ComponentDao.ComponentLicenseRow> licenseRows =
-                    ComponentLicenseConverter.buildComponentLicenseRows(componentId, request.getLicenses());
+                    ComponentLicenseConverter.buildComponentLicenseRows(
+                            componentId, request.getLicenses(), licenseIdsByIdentifier);
+            final ComponentDao.ComponentLicenseRow legacyLicense =
+                    licenseRows.isEmpty() ? null : licenseRows.getFirst();
+
+            componentDao.updateComponent(toComponentUpdate(uuid, request, legacyLicense));
             componentDao.replaceComponentLicenses(List.of(componentId), licenseRows);
 
             LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Component updated: {}", request.getName());
@@ -415,7 +425,8 @@ public class ComponentsResource extends AbstractApiResource implements Component
         return component;
     }
 
-    private ComponentDao.ComponentUpdate toComponentUpdate(UUID uuid, UpdateComponentRequest request) {
+    private ComponentDao.ComponentUpdate toComponentUpdate(
+            UUID uuid, UpdateComponentRequest request, ComponentDao.ComponentLicenseRow legacyLicense) {
 
         ComponentDao.ComponentHashes hashes = request.getHashes() != null
                 ? new ComponentDao.ComponentHashes(
@@ -468,7 +479,11 @@ public class ComponentsResource extends AbstractApiResource implements Component
                 StringUtils.trimToNull(request.getSwidTagId()),
                 isInternal,
                 StringUtils.trimToNull(request.getCopyright()),
-                StringUtils.trimToNull(request.getNotes()));
+                StringUtils.trimToNull(request.getNotes()),
+                legacyLicense != null ? legacyLicense.licenseId() : null,
+                legacyLicense != null ? legacyLicense.license() : null,
+                legacyLicense != null ? legacyLicense.licenseExpression() : null,
+                legacyLicense != null ? legacyLicense.licenseUrl() : null);
     }
 
     private String serializeJson(final Object value) {

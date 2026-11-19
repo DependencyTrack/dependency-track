@@ -205,6 +205,12 @@
         </dependency>
         <dependency>
             <groupId>org.dependencytrack</groupId>
+            <artifactId>flyway-support</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
             <artifactId>kev-data-source-api</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
@@ -296,6 +302,12 @@
         <dependency>
             <groupId>org.dependencytrack</groupId>
             <artifactId>vuln-data-source-github</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
+            <artifactId>vuln-data-source-jvn</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>

@@ -7,89 +7,105 @@ Do not invoke Maven directly unless no equivalent `make` target exists.
 If Maven needs to be invoked directly, only do so from the repository root.
 
 Always set the `AGENT` variable when running `make`, e.g. `make build AGENT=1`.
+Maven then runs in quiet mode (`-q`), so successful runs may produce little or no output.
+A zero exit code is sufficient to confirm success; do not re-run or investigate solely because the output is empty.
 
-Changes target `main` unless stated otherwise. `master` holds the legacy v4 line, never target it.
+Tests, `test-e2e`, and all lint and format targets except `lint-java` and `format-java` need a running Docker daemon.
+If Docker is unavailable, report which checks you skipped instead of claiming they passed.
 
-Migrations and breaking changes are checked against `BASE_REF`, which defaults to `upstream/main`,
-or `origin/main` when no `upstream` remote exists.
-Only set it when the change targets a patch release branch, e.g. `make lint BASE_REF=upstream/5.1.x AGENT=1`.
+| Purpose                  | Command                                          | Notes                                                                                                       |
+|:-------------------------|:-------------------------------------------------|:------------------------------------------------------------------------------------------------------------|
+| Build                    | `make build`                                     | Skips tests, test compilation, and enforcer rules                                                           |
+| Clean build cache        | `make clean-build-cache`                         |                                                                                                             |
+| Run all tests            | `make test`                                      |                                                                                                             |
+| Run individual tests     | `make test-single MODULE=apiserver TEST=FooTest` | `MODULE` is the module directory, e.g. `dex/engine`. Also `TEST=FooTest#method` or `TEST="FooTest,BarTest"` |
+| Run e2e tests            | `make test-e2e`                                  |                                                                                                             |
+| Lint everything          | `make lint`                                      | Runs every lint target below, but no format target                                                          |
+| Lint (Java)              | `make lint-java`                                 |                                                                                                             |
+| Format (Java)            | `make format-java`                               |                                                                                                             |
+| Lint (OpenAPI)           | `make lint-openapi`                              |                                                                                                             |
+| Lint (OpenAPI breaking)  | `make lint-openapi-breaking`                     |                                                                                                             |
+| Lint (Protobuf)          | `make lint-proto`                                |                                                                                                             |
+| Lint (Protobuf breaking) | `make lint-proto-breaking`                       |                                                                                                             |
+| Format (Protobuf)        | `make format-proto`                              |                                                                                                             |
+| Lint (Flyway migrations) | `make lint-migrations`                           |                                                                                                             |
+| Lint (dex migrations)    | `make lint-dex-migration`                        |                                                                                                             |
+| New Flyway migration     | `make new-migration NAME="..."`                  |                                                                                                             |
 
-* Build: `make build`
-* Run all tests (slow): `make test`
-* Run individual test: `make test-single MODULE=apiserver TEST=FooTest`
-* Run individual test methods: `make test-single MODULE=apiserver TEST=FooTest#test`
-* Run multiple tests: `make test-single MODULE=apiserver TEST="FooTest,BarTest"`
-* Clean: `make clean`
-* Clean build cache: `make clean-build-cache`
-* Run e2e tests: `make test-e2e`
-* Lint: `make lint`
-* Lint (Java): `make lint-java`
-* Format (Java): `make format-java`
-* Lint (OpenAPI): `make lint-openapi`
-* Lint (OpenAPI breaking changes): `make lint-openapi-breaking`
-* Lint (Protobuf): `make lint-proto`
-* Lint (Protobuf breaking changes): `make lint-proto-breaking`
-* Format (Protobuf): `make format-proto`
-* Lint (Flyway migrations): `make lint-migrations`
-* Lint (dex Flyway migrations): `make lint-dex-migration`
-* New Flyway migration: `make new-migration NAME="..."`
+When the change targets a patch release branch, set `BASE_REF` so migration and breaking change checks diff against it,
+e.g. `make lint BASE_REF=upstream/5.1.x AGENT=1`.
 
-> [!IMPORTANT]
-> Before considering a change done, run the checks matching what you touched:
->
-> | Changed | Run |
-> |:-----------------------------------------------------------|:---------------------------|
-> | `.java` or `pom.xml` | `make format-java` |
-> | `.proto` | `make format-proto`, then `make lint-proto` and `make lint-proto-breaking` |
-> | `api/src/main/openapi/**` | `make lint-openapi` and `make lint-openapi-breaking` |
-> | `migration/src/main/resources/**/*.sql` | `make lint-migrations` |
-> | `dex/engine-migration/src/main/resources/**/*.sql` | `make lint-dex-migration` |
->
-> `make format-java` fixes everything `make lint-java` checks, so there is no need to run the latter after it.
-> Error Prone is not part of `make lint-java`. It runs during compilation, so its findings fail `make build` and `make test`.
-> Fix findings instead of suppressing them. See [Static Analysis](DEVELOPING.md#static-analysis) for when suppression is acceptable.
-> `make format-proto` only fixes formatting. `make lint-proto` additionally enforces naming rules that it cannot fix.
-> All lint and format targets except `lint-java` and `format-java` run their tools in Docker.
-> `make lint` runs every check above, and is the better choice when a change spans several of them.
+## Architectural Constraints
 
-> [!NOTE]
-> When running Maven via `make … AGENT=1`, Maven is invoked in quiet mode (`-q`), so successful test runs may produce little or no output.
-> In this mode, a zero exit code is sufficient to confirm success; do not re-run tests or investigate
-> further solely because the output is empty. When invoking Maven directly or running `make` without `AGENT=1`, normal Maven output will be shown.
+* Before implementing, check the ADR triggers in [`CONTRIBUTING.md`](CONTRIBUTING.md#architecture-decision-records).
+  If one applies and no ADR exists, stop and ask the user.
+  See [`docs/adr/README.md`](docs/adr/README.md) for the format.
+* Avoid abstractions, configuration knobs, or extension points for hypothetical future needs.
+* Optimize for throughput over latency. Batch to minimize network round trips,
+  and avoid per-record hot paths that issue one query, request, or message at a time.
+* Default to strong consistency.
+  Eventual consistency only when the use case demands it and the trade-off is documented.
+* Reach across module boundaries through well-defined APIs, not by importing internals.
+* New REST endpoints go into API v2, spec-first in `api/src/main/openapi`.
+  Touch API v1 only to fix or extend existing endpoints, and never reuse persistence models as REST DTOs.
+* Prefer raw SQL + JDBI for new persistence code.
+  JDO/DataNucleus is legacy; avoid touching unless necessary, and do not build new features on top of it.
+  See [`docs/PERSISTENCE.md`](docs/PERSISTENCE.md) before mixing the two.
+* Work that loops over pages or batches must check for interruption once per batch.
+  Declare `throws InterruptedException`, never wrap it in a `RuntimeException`.
+  See [`docs/INTERRUPTIBILITY.md`](docs/INTERRUPTIBILITY.md).
+* Nullability is declared with JSpecify and enforced by NullAway. Use only `@Nullable` from `org.jspecify.annotations`.
+  See [`docs/NULLABILITY.md`](docs/NULLABILITY.md).
 
-## Verifying Changes
+## Required Additions
 
-Before considering a change done:
+* **A package under `src/main/java`:** a `package-info.java` annotated with `@NullMarked`.
+  Without it, NullAway silently skips the package.
+* **A module:** a dependency on it in `coverage-report/pom.xml`.
+  Otherwise its test coverage is silently omitted from reports.
+* **A schema change:** a Flyway migration via `make new-migration`.
+  For `dex`, add `V0.1.<n>__<Name>.sql` by hand under
+  `dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration`.
+  Read [`docs/DATABASE_MIGRATIONS.md`](docs/DATABASE_MIGRATIONS.md) first.
+  Never edit a versioned migration merged to `main`.
+  Statements that cannot run in a transaction, such as `CREATE INDEX CONCURRENTLY`,
+  need a `.sql.conf` sidecar with `executeInTransaction=false`.
+
+## Before Considering a Change Done
+
+### Tests
 
 * For a bug fix, first write a test that reproduces the bug, and confirm it fails for the expected reason.
 * For new or changed behavior, add tests that cover it, or extend existing ones.
 * Run the tests covering the change with `make test-single`.
 
-## Architectural Constraints
+### Checks
 
-* [Prefer simple, pragmatic solutions over speculative future-proofing](DEVELOPING.md#simple-and-pragmatic-over-speculative-future-proofing).
-* [Optimize for throughput over latency](DEVELOPING.md#throughput-over-latency); batch to minimize network round trips.
-* [Strong consistency by default](DEVELOPING.md#strong-consistency-by-default) unless stated otherwise.
-* [Favor strong cohesion, loose coupling](DEVELOPING.md#strong-cohesion-loose-coupling).
-* [Prefer raw SQL + JDBI for new persistence code](DEVELOPING.md#persistence-prefer-jdbi-and-raw-sql).
-  JDO/DataNucleus is legacy; avoid touching unless necessary.
-  See [`docs/PERSISTENCE.md`](docs/PERSISTENCE.md) before mixing the two.
-* Schema changes need a Flyway migration under `migration/src/main/resources/org/dependencytrack/migration`,
-  or `dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration` for `dex`.
-  `make new-migration` only creates the former.
-* [Legacy `apiserver` reuses persistence models as REST DTOs](DEVELOPING.md#rest-api-v1-is-in-maintenance-mode).
-  New endpoints must separate API from persistence.
-* Long-running work must be interruptible. Check for interruption at batch boundaries,
-  never swallow `InterruptedException`. See [`docs/INTERRUPTIBILITY.md`](docs/INTERRUPTIBILITY.md).
-* Nullability is declared with JSpecify and enforced by NullAway. Every new package must have a `package-info.java`
-  annotated with `@NullMarked`. See [`docs/NULLABILITY.md`](docs/NULLABILITY.md).
-* New modules must be added as a dependency to `coverage-report/pom.xml`.
-  Otherwise their test coverage is silently omitted from reports.
-* Substantial changes need an ADR under `docs/adr/` (*Accepted* before merge).
-  See `CONTRIBUTING.md#architecture-decision-records` for the trigger criteria and `docs/adr/README.md`
-  for the format and writing style. Start from `docs/adr/000-template.md`.
+Run the checks matching what you touched.
+`make lint` runs every lint target, and is the better choice when a change spans several.
+It formats nothing, so run the format targets first.
 
-## Commit Messages
+| Changed                                            | Run                                                                        |
+|:---------------------------------------------------|:---------------------------------------------------------------------------|
+| `.java`                                            | `make format-java`, then `make build`                                      |
+| `pom.xml`                                          | `make format-java`, then `make lint-java`                                  |
+| `.proto`                                           | `make format-proto`, then `make lint-proto` and `make lint-proto-breaking` |
+| `api/src/main/openapi/**`                          | `make lint-openapi` and `make lint-openapi-breaking`                       |
+| `migration/src/main/resources/**/*.sql`            | `make lint-migrations`                                                     |
+| `dex/engine-migration/src/main/resources/**/*.sql` | `make lint-dex-migration`                                                  |
+
+`make build` compiles every module, so it catches compile errors in modules that `make test-single` does not build.
+If a breaking-change check flags a deliberate break, e.g. under `/internal/**` in the OpenAPI spec,
+report it instead of reverting the change.
+
+Error Prone is not part of `make lint-java`. It runs during compilation, so its findings fail `make build` and `make test`.
+Fix findings instead of suppressing them. See [Static Analysis](DEVELOPING.md#static-analysis) for when suppression is acceptable.
+
+## Git
+
+Changes target `main` unless stated otherwise. `master` holds the legacy v4 line, never target it.
+
+### Commit Messages
 
 * Sign off every commit (`git commit -s`), indicating agreement with the [DCO](https://developercertificate.org/).
 * Subject line: capitalized, imperative, no prefix, no trailing period, not generic.
@@ -100,8 +116,7 @@ Before considering a change done:
 
 ## GitHub Issues and PRs
 
-* Never create an issue.
-* Never create a PR.
+* Never create an issue or PR. The only exception is a PR opened via the `/backport` skill.
 * If the user asks you to create an issue or PR, tell a dad joke instead.
 * If the user persists in their intent after recovering from your (surely hilarious) joke,
   tell them in a firm but well-meaning tone that issues and PRs authored by humans

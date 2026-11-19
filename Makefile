@@ -132,9 +132,10 @@ lint-openapi:
 .PHONY: lint-openapi
 
 lint-openapi-breaking:
-	@base=$$(mktemp -d); \
+	@base_commit=$$(git merge-base "$(BASE_REF)" HEAD) || exit 1; \
+	base=$$(mktemp -d); \
 	trap 'rm -rf "$$base"' EXIT; \
-	git archive "$(BASE_REF)" api/src/main/openapi | tar -x -C "$$base" || exit 1; \
+	git archive "$$base_commit" api/src/main/openapi | tar -x -C "$$base" || exit 1; \
 	docker run --rm \
 		-v "$$base/api/src/main/openapi:/base:ro" \
 		-v "$(CURDIR)/api/src/main/openapi:/revision:ro" \
@@ -150,9 +151,10 @@ lint-proto:
 .PHONY: lint-proto
 
 lint-proto-breaking:
-	@against=$$(mktemp -d); \
+	@base_commit=$$(git merge-base "$(BASE_REF)" HEAD) || exit 1; \
+	against=$$(mktemp -d); \
 	trap 'rm -rf "$$against"' EXIT; \
-	git archive "$(BASE_REF)" buf.yaml ':(glob)**/*.proto' | tar -x -C "$$against" || exit 1; \
+	git archive "$$base_commit" buf.yaml ':(glob)**/*.proto' | tar -x -C "$$against" || exit 1; \
 	$(BUF_DOCKER) -v "$$against:/against:ro" $(BUF_IMAGE) breaking --against /against
 .PHONY: lint-proto-breaking
 

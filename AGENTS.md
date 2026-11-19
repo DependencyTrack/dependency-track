@@ -10,7 +10,7 @@ Always set the `AGENT` variable when running `make`, e.g. `make build AGENT=1`.
 
 Changes target `main` unless stated otherwise. `master` holds the legacy v4 line, never target it.
 
-Migrations are linted by diffing against `BASE_REF`, which defaults to `upstream/main`,
+Migrations and breaking changes are checked against `BASE_REF`, which defaults to `upstream/main`,
 or `origin/main` when no `upstream` remote exists.
 Only set it when the change targets a patch release branch, e.g. `make lint BASE_REF=upstream/5.1.x AGENT=1`.
 
@@ -26,7 +26,9 @@ Only set it when the change targets a patch release branch, e.g. `make lint BASE
 * Lint (Java): `make lint-java`
 * Format (Java): `make format-java`
 * Lint (OpenAPI): `make lint-openapi`
+* Lint (OpenAPI breaking changes): `make lint-openapi-breaking`
 * Lint (Protobuf): `make lint-proto`
+* Lint (Protobuf breaking changes): `make lint-proto-breaking`
 * Format (Protobuf): `make format-proto`
 * Lint (Flyway migrations): `make lint-migrations`
 * Lint (dex Flyway migrations): `make lint-dex-migration`
@@ -38,8 +40,8 @@ Only set it when the change targets a patch release branch, e.g. `make lint BASE
 > | Changed | Run |
 > |:-----------------------------------------------------------|:---------------------------|
 > | `.java` or `pom.xml` | `make format-java` |
-> | `.proto` | `make format-proto`, then `make lint-proto` |
-> | `api/src/main/openapi/**` | `make lint-openapi` |
+> | `.proto` | `make format-proto`, then `make lint-proto` and `make lint-proto-breaking` |
+> | `api/src/main/openapi/**` | `make lint-openapi` and `make lint-openapi-breaking` |
 > | `migration/src/main/resources/**/*.sql` | `make lint-migrations` |
 > | `dex/engine-migration/src/main/resources/**/*.sql` | `make lint-dex-migration` |
 >
@@ -47,13 +49,21 @@ Only set it when the change targets a patch release branch, e.g. `make lint BASE
 > Error Prone is not part of `make lint-java`. It runs during compilation, so its findings fail `make build` and `make test`.
 > Fix findings instead of suppressing them. See [Static Analysis](DEVELOPING.md#static-analysis) for when suppression is acceptable.
 > `make format-proto` only fixes formatting. `make lint-proto` additionally enforces naming rules that it cannot fix.
-> The `lint-openapi` and `lint-migrations` targets run their linters in Docker, while `lint-proto` requires a local `buf`.
+> All lint and format targets except `lint-java` and `format-java` run their tools in Docker.
 > `make lint` runs every check above, and is the better choice when a change spans several of them.
 
 > [!NOTE]
 > When running Maven via `make … AGENT=1`, Maven is invoked in quiet mode (`-q`), so successful test runs may produce little or no output.
 > In this mode, a zero exit code is sufficient to confirm success; do not re-run tests or investigate
 > further solely because the output is empty. When invoking Maven directly or running `make` without `AGENT=1`, normal Maven output will be shown.
+
+## Verifying Changes
+
+Before considering a change done:
+
+* For a bug fix, first write a test that reproduces the bug, and confirm it fails for the expected reason.
+* For new or changed behavior, add tests that cover it, or extend existing ones.
+* Run the tests covering the change with `make test-single`.
 
 ## Architectural Constraints
 

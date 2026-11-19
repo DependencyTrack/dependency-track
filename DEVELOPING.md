@@ -8,8 +8,7 @@
 
 * JDK 25+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
 * Maven 3.9+
-* Docker or Podman (required for [tests](#testing) and [dev mode](#dev-mode))
-* [Buf CLI](https://buf.build/product/cli) for linting and formatting Protobuf
+* Docker or Podman (required for [tests](#testing), [dev mode](#dev-mode), and linting)
 * A Java IDE (IntelliJ recommended)
 
 > [!TIP]

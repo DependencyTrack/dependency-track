@@ -17,9 +17,12 @@
 
 DEFAULT_BASE_REF := $(shell git rev-parse --verify --quiet upstream/main >/dev/null 2>&1 && echo upstream/main || echo origin/main)
 BASE_REF ?= $(DEFAULT_BASE_REF)
+BUF_DOCKER := docker run --rm --user "$(shell id -u):$(shell id -g)" -e BUF_CACHE_DIR=/tmp/buf-cache -v "$(CURDIR):/workspace" -w /workspace
 BUF_FORMAT_FLAGS := --exclude-path support/cyclonedx-proto/src/main/proto/org/cyclonedx/v1_7/cyclonedx.proto
+BUF_IMAGE := bufbuild/buf:1.75.0@sha256:adf82c7170be6629ec81dc907921ac1699407cd11c4f7fd7521b13c74152f849
 MIGRATION_DIR := migration/src/main/resources/org/dependencytrack/migration
 DEX_MIGRATION_DIR := dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration
+OASDIFF_IMAGE := tufin/oasdiff:v1.37.0@sha256:ff02af37a254b5199b9d72e7bba93dae5837a9119d59459168d1398893b47aea
 SPECTRAL_IMAGE := stoplight/spectral:6.16.3@sha256:a07aa4455367b9501b574423b684ab0ef3ee42556089013583318ec015249050
 SQUAWK_IMAGE := ghcr.io/sbdchd/squawk:2.63.0@sha256:e3b8e534994ad714ec3ca1017f7e80ecb8f8a15b161b8c6eb25303eced5da3ab
 
@@ -128,16 +131,36 @@ lint-openapi:
 		src/main/openapi/openapi.yaml
 .PHONY: lint-openapi
 
+lint-openapi-breaking:
+	@base=$$(mktemp -d); \
+	trap 'rm -rf "$$base"' EXIT; \
+	git archive "$(BASE_REF)" api/src/main/openapi | tar -x -C "$$base" || exit 1; \
+	docker run --rm \
+		-v "$$base/api/src/main/openapi:/base:ro" \
+		-v "$(CURDIR)/api/src/main/openapi:/revision:ro" \
+		$(OASDIFF_IMAGE) breaking \
+		--fail-on ERR \
+		/base/openapi.yaml \
+		/revision/openapi.yaml
+.PHONY: lint-openapi-breaking
+
 lint-proto:
-	buf lint
-	buf format --diff --exit-code $(BUF_FORMAT_FLAGS)
+	$(BUF_DOCKER) $(BUF_IMAGE) lint
+	$(BUF_DOCKER) $(BUF_IMAGE) format --diff --exit-code $(BUF_FORMAT_FLAGS)
 .PHONY: lint-proto
 
+lint-proto-breaking:
+	@against=$$(mktemp -d); \
+	trap 'rm -rf "$$against"' EXIT; \
+	git archive "$(BASE_REF)" buf.yaml ':(glob)**/*.proto' | tar -x -C "$$against" || exit 1; \
+	$(BUF_DOCKER) -v "$$against:/against:ro" $(BUF_IMAGE) breaking --against /against
+.PHONY: lint-proto-breaking
+
 format-proto:
-	buf format --write $(BUF_FORMAT_FLAGS)
+	$(BUF_DOCKER) $(BUF_IMAGE) format --write $(BUF_FORMAT_FLAGS)
 .PHONY: format-proto
 
-lint: lint-java lint-migrations lint-dex-migration lint-openapi lint-proto
+lint: lint-java lint-migrations lint-dex-migration lint-openapi lint-openapi-breaking lint-proto lint-proto-breaking
 .PHONY: lint
 
 test:
@@ -145,6 +168,7 @@ test:
 .PHONY: test
 
 test-single:
+	@rm -rf "$(MODULE)/target/surefire-reports"
 	$(MVND) $(MVN_FLAGS) test \
 		$(MVN_NO_BUILDCACHE) \
 		-Dspotless.check.skip \
@@ -152,6 +176,10 @@ test-single:
 		-pl "$(MODULE)" \
 		-am \
 		-Dtest="$(TEST)"
+	@if ! ls "$(MODULE)"/target/surefire-reports/TEST-*.xml >/dev/null 2>&1; then \
+		echo "No tests in $(MODULE) matched TEST=$(TEST)"; \
+		exit 1; \
+	fi
 .PHONY: test-single
 
 new-migration:

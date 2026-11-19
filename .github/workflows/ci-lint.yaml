@@ -74,16 +74,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
           persist-credentials: false
-      - name: Setup buf
-        uses: bufbuild/buf-setup-action@a47c93e0b1648d5651a065437926377d060baa99 # tag=v1.50.0
-        with:
-          github_token: ${{ github.token }}
       - name: Lint Protobuf
-        uses: bufbuild/buf-lint-action@06f9dd823d873146471cfaaf108a993fe00e5325 # tag=v1.1.1
-        with:
-          input: .
-      - name: Check Protobuf Formatting
-        run: buf format --diff --exit-code --exclude-path support/cyclonedx-proto/src/main/proto/org/cyclonedx/v1_7/cyclonedx.proto
+        run: make lint-proto
 
   protobuf-breaking-changes:
     name: Protobuf Breaking Changes
@@ -94,16 +86,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
+          fetch-depth: 2
           persist-credentials: false
-      - name: Setup buf
-        uses: bufbuild/buf-setup-action@a47c93e0b1648d5651a065437926377d060baa99 # tag=v1.50.0
-        with:
-          github_token: ${{ github.token }}
       - name: Detect Breaking Changes
-        uses: bufbuild/buf-breaking-action@c57b3d842a5c3f3b454756ef65305a50a587c5ba # tag=v1.1.4
-        with:
-          input: .
-          against: "https://github.com/${{ github.repository }}.git#branch=${{ github.base_ref }}"
+        run: make lint-proto-breaking BASE_REF=HEAD^1
 
   lint-openapi:
     name: Lint OpenAPI
@@ -146,24 +132,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
-          persist-credentials: false
-      - name: Checkout base ref
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: base
+          fetch-depth: 2
           persist-credentials: false
       - name: Detect Breaking Changes
-        uses: oasdiff/oasdiff-action/breaking@8a211b41745fcecdfa4a86531ffbf08934fb14f6 # tag=v0.1.23
-        with:
-          base: base/api/src/main/openapi/openapi.yaml
-          revision: api/src/main/openapi/openapi.yaml
-          fail-on: ERR
-          # We accept the risk of external references (GHSA-fhj3-7267-7vv5) because:
-          #   * The GITHUB_TOKEN for all lint jobs has zero permissions.
-          #   * All actions/checkout steps set persist-credentials to false.
-          #   * Our multi-file setup requires resolving of external (file) references.
-          allow-external-refs: true
+        run: make lint-openapi-breaking BASE_REF=HEAD^1
 
   lint-gha:
     name: Lint GitHub Actions

@@ -209,6 +209,83 @@ public class ProjectHierarchyMaintenanceTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void shouldMaintainHierarchyOfDescendantsOnProjectUpdate() {
+        final Project newParentProject = qm.callInTransaction(() -> {
+            final var project = new Project();
+            project.setName("acme-app-parent-new");
+            qm.persist(project);
+
+            childProject.setParent(project);
+
+            return project;
+        });
+
+        // + acme-app-parent
+        // + acme-app-parent-new
+        // \-+ acme-app-child
+        //   |-+ acme-app-grandchild-a
+        //   \-+ acme-app-grandchild-b
+        assertThat(getAllProjectHierarchies())
+                .satisfiesExactlyInAnyOrder(
+                        // Self-referential records.
+                        record -> {
+                            assertThat(record.parentProjectId()).isEqualTo(parentProject.getId());
+                            assertThat(record.childProjectId()).isEqualTo(parentProject.getId());
+                            assertThat(record.depth()).isEqualTo(0);
+                        },
+                        record -> {
+                            assertThat(record.parentProjectId()).isEqualTo(newParentProject.getId());
+                            assertThat(record.childProjectId()).isEqualTo(newParentProject.getId());
+                            assertThat(record.depth()).isEqualTo(0);
+                        },
+                        record -> {
+                            assertThat(record.parentProjectId()).isEqualTo(childProject.getId());
+                            assertThat(record.childProjectId()).isEqualTo(childProject.getId());
+                            assertThat(record.depth()).isEqualTo(0);
+                        },
+                        record -> {
+                            assertThat(record.parentProjectId()).isEqualTo(grandChildProjectA.getId());
+                            assertThat(record.childProjectId()).isEqualTo(grandChildProjectA.getId());
+                            assertThat(record.depth()).isEqualTo(0);
+                        },
+                        record -> {
+                            assertThat(record.parentProjectId()).isEqualTo(grandChildProjectB.getId());
+                            assertThat(record.childProjectId()).isEqualTo(grandChildProjectB.getId());
+                            assertThat(record.depth()).isEqualTo(0);
+                        },
+                        // acme-app-parent-new -> acme-app-child
+                        record -> {
+                            assertThat(record.parentProjectId()).isEqualTo(newParentProject.getId());
+                            assertThat(record.childProjectId()).isEqualTo(childProject.getId());
+                            assertThat(record.depth()).isEqualTo(1);
+                        },
+                        // acme-app-child -> acme-app-grandchild-a
+                        record -> {
+                            assertThat(record.parentProjectId()).isEqualTo(childProject.getId());
+                            assertThat(record.childProjectId()).isEqualTo(grandChildProjectA.getId());
+                            assertThat(record.depth()).isEqualTo(1);
+                        },
+                        // acme-app-child -> acme-app-grandchild-b
+                        record -> {
+                            assertThat(record.parentProjectId()).isEqualTo(childProject.getId());
+                            assertThat(record.childProjectId()).isEqualTo(grandChildProjectB.getId());
+                            assertThat(record.depth()).isEqualTo(1);
+                        },
+                        // acme-app-parent-new -> acme-app-grandchild-a
+                        record -> {
+                            assertThat(record.parentProjectId()).isEqualTo(newParentProject.getId());
+                            assertThat(record.childProjectId()).isEqualTo(grandChildProjectA.getId());
+                            assertThat(record.depth()).isEqualTo(2);
+                        },
+                        // acme-app-parent-new -> acme-app-grandchild-b
+                        record -> {
+                            assertThat(record.parentProjectId()).isEqualTo(newParentProject.getId());
+                            assertThat(record.childProjectId()).isEqualTo(grandChildProjectB.getId());
+                            assertThat(record.depth()).isEqualTo(2);
+                        });
+    }
+
+    @Test
     public void shouldMaintainHierarchyOnParentProjectDeletion() {
         withJdbiHandle(handle -> handle.attach(ProjectDao.class).deleteProject(parentProject.getUuid()));
 

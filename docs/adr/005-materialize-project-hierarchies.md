@@ -162,10 +162,12 @@ When a new project gets created, we have to:
 
 When an existing project's parent project changes, we have to:
 
-1. Delete records which reference the updated project as child.
-    * By design this includes self-referential records.
-2. Create a self-referential record with depth `0` for the project.
-3. Create new records pointing from all parents of the project's new parent, to the project.
+1. Delete records which reference the updated project, or any of its descendants, as child,
+   where the parent lies outside the moved subtree.
+    * Records within the moved subtree remain valid, the self-referential ones included,
+      because moving a project does not change the relationships below it.
+2. Create new records pointing from all parents of the project's new parent, to the updated
+   project and to each of its descendants.
 
 #### Project deletion
 

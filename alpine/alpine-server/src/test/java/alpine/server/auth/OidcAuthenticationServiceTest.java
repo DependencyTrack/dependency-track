@@ -497,6 +497,95 @@ public class OidcAuthenticationServiceTest {
     }
 
     @Test
+    public void authenticateShouldFindUserBySubjectIdentifierWhenUsernameHasChanged() throws Exception {
+        try (final var qm = new AlpineQueryManager()) {
+            final var usernameUser = new OidcUser();
+            usernameUser.setUsername("username");
+            usernameUser.setSubjectIdentifier("subject");
+            usernameUser.setEmail("username@example.com");
+            qm.persist(usernameUser);
+        }
+
+        final var profile = new OidcProfile();
+        profile.setSubject("subject");
+        profile.setUsername("changedUsername");
+        profile.setEmail("changed@example.com");
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
+
+        final var authService = new OidcAuthenticationService(defaultConfig(), oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
+
+        final var authenticatedUser = (OidcUser) authService.authenticate();
+        assertThat(authenticatedUser).isNotNull();
+        assertThat(authenticatedUser.getUsername()).isEqualTo("username");
+        assertThat(authenticatedUser.getSubjectIdentifier()).isEqualTo("subject");
+        assertThat(authenticatedUser.getEmail()).isEqualTo("changed@example.com");
+
+        try (final var qm = new AlpineQueryManager()) {
+            assertThat(qm.getOidcUsers()).hasSize(1);
+        }
+    }
+
+    @Test
+    public void authenticateShouldPreferSubjectIdentifierOverUsername() throws Exception {
+        try (final var qm = new AlpineQueryManager()) {
+            final var usernameUser = new OidcUser();
+            usernameUser.setUsername("username");
+            usernameUser.setSubjectIdentifier("subject");
+            usernameUser.setEmail("username@example.com");
+            qm.persist(usernameUser);
+
+            // Not authenticated yet, and has the username the other user got at the identity provider.
+            qm.createOidcUser("changedUsername");
+        }
+
+        final var profile = new OidcProfile();
+        profile.setSubject("subject");
+        profile.setUsername("changedUsername");
+        profile.setEmail("username@example.com");
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
+
+        final var authService = new OidcAuthenticationService(defaultConfig(), oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
+
+        final var authenticatedUser = (OidcUser) authService.authenticate();
+        assertThat(authenticatedUser).isNotNull();
+        assertThat(authenticatedUser.getUsername()).isEqualTo("username");
+
+        try (final var qm = new AlpineQueryManager()) {
+            assertThat(qm.getOidcUser("changedUsername").getSubjectIdentifier()).isNull();
+        }
+    }
+
+    @Test
+    public void authenticateShouldThrowWhenSubjectIdentifierBelongsToMultipleUsers() throws Exception {
+        try (final var qm = new AlpineQueryManager()) {
+            final var usernameUser = new OidcUser();
+            usernameUser.setUsername("username");
+            usernameUser.setSubjectIdentifier("subject");
+            usernameUser.setEmail("username@example.com");
+            qm.persist(usernameUser);
+
+            final var otherUsernameUser = new OidcUser();
+            otherUsernameUser.setUsername("otherUsername");
+            otherUsernameUser.setSubjectIdentifier("subject");
+            otherUsernameUser.setEmail("username@example.com");
+            qm.persist(otherUsernameUser);
+        }
+
+        final var profile = new OidcProfile();
+        profile.setSubject("subject");
+        profile.setUsername("otherUsername");
+        profile.setEmail("username@example.com");
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
+
+        final var authService = new OidcAuthenticationService(defaultConfig(), oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
+
+        Assertions.assertThatExceptionOfType(AlpineAuthenticationException.class)
+                .isThrownBy(authService::authenticate)
+                .satisfies(exception -> assertThat(exception.getCauseType())
+                        .isEqualTo(AlpineAuthenticationException.CauseType.INVALID_CREDENTIALS));
+    }
+
+    @Test
     public void synchronizeTeamsShouldRemoveOutdatedTeamMemberships() throws Exception {
         final Config config = configWith(Map.of(
                 AlpineConfigKeys.OIDC_TEAM_SYNCHRONIZATION, "true",

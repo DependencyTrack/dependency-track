@@ -215,7 +215,8 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
             final var user = new OidcUser();
             user.setUsername(username);
             // Subject identifier and email will be synced when a
-            // user with the given username signs in for the first time
+            // user with the given username signs in for the first time.
+            // From then on the subject identifier identifies the user.
             return pm.makePersistent(user);
         });
     }
@@ -246,6 +247,21 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         final Query<OidcUser> query = pm.newQuery(OidcUser.class, "username == :username");
         query.setParameters(username);
         return executeAndCloseUnique(query);
+    }
+
+    /**
+     * Retrieves the OidcUsers with the specified subject identifier, in ascending order by username.
+     * <p>
+     * A subject identifier normally belongs to one user at most, but nothing enforces that.
+     * @param subjectIdentifier The subject identifier to retrieve users for
+     * @return a list of OidcUser
+     * @since 5.3.0
+     */
+    public List<OidcUser> getOidcUsersBySubjectIdentifier(final String subjectIdentifier) {
+        final Query<OidcUser> query = pm.newQuery(OidcUser.class, "subjectIdentifier == :subjectIdentifier");
+        query.setParameters(subjectIdentifier);
+        query.setOrdering("username asc");
+        return executeAndCloseList(query);
     }
 
     /**

@@ -98,7 +98,7 @@
         <lib.commons-text.version>1.15.0</lib.commons-text.version>
         <lib.ae-security.version>0.160.0</lib.ae-security.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.cyclonedx-java.version>13.4.0</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>13.5.0</lib.cyclonedx-java.version>
         <lib.greenmail.version>2.1.15</lib.greenmail.version>
         <!-- Overrides the version managed by alpine-parent 3.9.0 (2.22.0) to resolve
              GHSA-7hhh-6rmp-j9qf, GHSA-p6pp-m3f8-5c89, GHSA-cxp5-3px4-pw24 and others. -->

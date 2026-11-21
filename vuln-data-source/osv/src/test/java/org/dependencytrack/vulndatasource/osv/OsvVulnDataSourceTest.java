@@ -747,8 +747,8 @@ class OsvVulnDataSourceTest {
     }
 
     @Test
-    void shouldReportRequestUrlWhenFullArchiveDownloadFails(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlEqualTo("/Bioconductor/all.zip")).willReturn(aResponse().withStatus(404)));
+    void shouldReportRequestUrlWhenFullArchiveDownloadFailsWithServerError(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(get(urlEqualTo("/Bioconductor/all.zip")).willReturn(aResponse().withStatus(500)));
 
         try (var dataSource = new OsvVulnDataSource(
                 null,
@@ -761,9 +761,95 @@ class OsvVulnDataSourceTest {
                     .isThrownBy(dataSource::hasNext)
                     .withMessage("""
                             Failed to download advisory archive for ecosystem Bioconductor: \
-                            GET %s/Bioconductor/all.zip responded with status code 404\
+                            GET %s/Bioconductor/all.zip responded with status code 500\
                             """, wmRuntimeInfo.getHttpBaseUrl());
         }
+    }
+
+    @Test
+    void shouldSkipEcosystemWhenFullArchiveReturns404(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlEqualTo("/alpine/all.zip")).willReturn(aResponse().withStatus(404)));
+
+        ByteArrayOutputStream mavenZip = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(mavenZip)) {
+            zos.putNextEntry(new ZipEntry("OSV-maven-1.json"));
+            zos.write(/* language=JSON */ """
+                    {"id":"OSV-maven-1","summary":"test","affected":[],"modified":"2024-01-01T00:00:00Z"}
+                    """.getBytes());
+            zos.closeEntry();
+        }
+        stubFor(get(urlEqualTo("/maven/all.zip"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/zip")
+                        .withBody(mavenZip.toByteArray())));
+
+        ByteArrayOutputStream npmZip = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(npmZip)) {
+            zos.putNextEntry(new ZipEntry("OSV-npm-1.json"));
+            zos.write(/* language=JSON */ """
+                    {"id":"OSV-npm-1","summary":"test","affected":[],"modified":"2024-01-01T00:00:00Z"}
+                    """.getBytes());
+            zos.closeEntry();
+        }
+        stubFor(get(urlEqualTo("/npm/all.zip"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/zip")
+                        .withBody(npmZip.toByteArray())));
+
+        final var ids = new ArrayList<String>();
+        try (var dataSource = new OsvVulnDataSource(
+                null,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("alpine", "maven", "npm"),
+                HttpClient.newHttpClient(),
+                false)) {
+            while (dataSource.hasNext()) {
+                ids.add(dataSource.next().getVulnerabilitiesList().getFirst().getId());
+            }
+        }
+
+        assertThat(ids).containsExactly("OSV-maven-1", "OSV-npm-1");
+        verify(getRequestedFor(urlEqualTo("/alpine/all.zip")));
+        verify(getRequestedFor(urlEqualTo("/maven/all.zip")));
+        verify(getRequestedFor(urlEqualTo("/npm/all.zip")));
+    }
+
+    @Test
+    void shouldNotAdvanceWatermarkForEcosystemThatReturns404(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlEqualTo("/alpine/all.zip")).willReturn(aResponse().withStatus(404)));
+
+        ByteArrayOutputStream mavenZip = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(mavenZip)) {
+            zos.putNextEntry(new ZipEntry("OSV-maven-1.json"));
+            zos.write(/* language=JSON */ """
+                    {"id":"OSV-maven-1","summary":"test","affected":[],"modified":"2024-01-01T00:00:00Z"}
+                    """.getBytes());
+            zos.closeEntry();
+        }
+        stubFor(get(urlEqualTo("/maven/all.zip"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/zip")
+                        .withBody(mavenZip.toByteArray())));
+
+        try (var dataSource = new OsvVulnDataSource(
+                watermarkManagerMock,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("alpine", "maven"),
+                HttpClient.newHttpClient(),
+                false)) {
+            while (dataSource.hasNext()) {
+                dataSource.markProcessed(dataSource.next());
+            }
+            dataSource.close();
+        }
+
+        verify(watermarkManagerMock, never()).maybeAdvance(eq("alpine"), any());
+        verify(watermarkManagerMock).maybeAdvance(eq("maven"), any());
     }
 
     @Test

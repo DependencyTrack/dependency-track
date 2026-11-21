@@ -121,8 +121,6 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                         case null -> null;
                         case "name" -> ListAllProjectsQuery.SortBy.NAME;
                         case "group" -> ListAllProjectsQuery.SortBy.GROUP;
-                        case "version" -> ListAllProjectsQuery.SortBy.VERSION;
-                        case "classifier" -> ListAllProjectsQuery.SortBy.CLASSIFIER;
                         case "last_bom_import" -> ListAllProjectsQuery.SortBy.LAST_BOM_IMPORTED;
                         case "last_inherited_risk_score" -> ListAllProjectsQuery.SortBy.LAST_RISKSCORE;
                         default ->

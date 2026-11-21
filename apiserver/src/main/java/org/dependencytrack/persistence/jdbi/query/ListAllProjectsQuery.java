@@ -50,8 +50,6 @@ public record ListAllProjectsQuery(
     public enum SortBy {
         NAME,
         GROUP,
-        VERSION,
-        CLASSIFIER,
         LAST_BOM_IMPORTED,
         LAST_RISKSCORE
     }
@@ -60,8 +58,6 @@ public record ListAllProjectsQuery(
             long lastId,
             @Nullable String lastName,
             @Nullable String lastGroup,
-            @Nullable String lastVersion,
-            @Nullable String lastClassifier,
             @Nullable Long lastBomImport,
             @Nullable Double lastInheritedRiskScore,
             @Nullable SortBy sortBy,

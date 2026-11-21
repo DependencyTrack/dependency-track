@@ -19,6 +19,7 @@
 package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.kevdatasource.api.KevAssertion;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.jdbi.v3.core.statement.Update;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -28,9 +29,13 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 /// @since 5.1.0
 public interface KevDao extends SqlObject {
@@ -172,6 +177,100 @@ public interface KevDao extends SqlObject {
             """)
     @RegisterConstructorMapper(KevAssertionRow.class)
     List<KevAssertionRow> getAssertions(@Bind String source, @Bind String vulnId);
+
+    default Map<VulnerabilityKey, List<KevAssertionRow>> getAssertions(Collection<VulnerabilityKey> vulnKeys) {
+        if (vulnKeys.isEmpty()) {
+            return Map.of();
+        }
+
+        final var uniqueKeys = new LinkedHashSet<>(vulnKeys);
+        final var vulnSources = new String[uniqueKeys.size()];
+        final var vulnIds = new String[uniqueKeys.size()];
+
+        int i = 0;
+        for (final VulnerabilityKey vulnKey : uniqueKeys) {
+            vulnSources[i] = vulnKey.source().name();
+            vulnIds[i] = vulnKey.vulnId();
+            i++;
+        }
+
+        final var rows = getHandle()
+                .createQuery("""
+                        WITH requested AS (
+                          SELECT t.source AS requested_source
+                               , t.vuln_id AS requested_vuln_id
+                            FROM UNNEST(:vulnSources, :vulnIds) AS t(source, vuln_id)
+                        )
+                        , alias_matches AS (
+                          SELECT requested_source
+                               , requested_vuln_id
+                               , requested_source AS source
+                               , requested_vuln_id AS vuln_id
+                            FROM requested
+                          UNION
+                          SELECT requested.requested_source
+                               , requested.requested_vuln_id
+                               , alias_sibling."SOURCE"
+                               , alias_sibling."VULN_ID"
+                            FROM requested
+                           INNER JOIN "VULNERABILITY_ALIAS" AS alias_self
+                              ON alias_self."SOURCE" = requested.requested_source
+                             AND alias_self."VULN_ID" = requested.requested_vuln_id
+                           INNER JOIN "VULNERABILITY_ALIAS" AS alias_sibling
+                              ON alias_sibling."GROUP_ID" = alias_self."GROUP_ID"
+                        )
+                        SELECT alias_matches.requested_source
+                             , alias_matches.requested_vuln_id
+                             , ka."ASSERTER"
+                             , ka."VULN_SOURCE"
+                             , ka."VULN_ID"
+                             , ka."PUBLISHED_AT"
+                             , ka."REQUIRED_ACTION"
+                             , ka."KNOWN_RANSOMWARE"
+                             , ka."DESCRIPTION"
+                             , ka."CREATED_AT"
+                             , ka."UPDATED_AT"
+                          FROM alias_matches
+                         INNER JOIN "KEV_ASSERTION" AS ka
+                            ON ka."VULN_SOURCE" = alias_matches.source
+                           AND ka."VULN_ID" = alias_matches.vuln_id
+                         ORDER BY alias_matches.requested_source
+                                , alias_matches.requested_vuln_id
+                                , ka."ASSERTER"
+                        """)
+                .bind("vulnSources", vulnSources)
+                .bind("vulnIds", vulnIds)
+                .map((rs, ctx) -> {
+                    final OffsetDateTime publishedAt = rs.getObject("PUBLISHED_AT", OffsetDateTime.class);
+                    final OffsetDateTime createdAt = rs.getObject("CREATED_AT", OffsetDateTime.class);
+                    final OffsetDateTime updatedAt = rs.getObject("UPDATED_AT", OffsetDateTime.class);
+
+                    return Map.entry(
+                            new VulnerabilityKey(
+                                    rs.getString("requested_vuln_id"),
+                                    Vulnerability.Source.valueOf(rs.getString("requested_source"))),
+                            new KevAssertionRow(
+                                    rs.getString("ASSERTER"),
+                                    rs.getString("VULN_SOURCE"),
+                                    rs.getString("VULN_ID"),
+                                    publishedAt != null ? publishedAt.toInstant() : null,
+                                    rs.getString("REQUIRED_ACTION"),
+                                    rs.getObject("KNOWN_RANSOMWARE", Boolean.class),
+                                    rs.getString("DESCRIPTION"),
+                                    createdAt != null ? createdAt.toInstant() : null,
+                                    updatedAt != null ? updatedAt.toInstant() : null));
+                })
+                .list();
+
+        final var assertionsByVulnKey = new LinkedHashMap<VulnerabilityKey, List<KevAssertionRow>>();
+        for (final var row : rows) {
+            assertionsByVulnKey
+                    .computeIfAbsent(row.getKey(), ignored -> new ArrayList<>())
+                    .add(row.getValue());
+        }
+
+        return assertionsByVulnKey;
+    }
 
     record KevAssertionRow(
             String asserter,

@@ -129,9 +129,12 @@ class ModelConverterTest extends PersistenceCapableTest {
 
         withJdbiHandle(handle -> {
             handle.createUpdate("""
-                    INSERT INTO "KEV_ASSERTION" ("ASSERTER", "VULN_SOURCE", "VULN_ID")
-                    VALUES ('cisa-kev', 'NVD', 'CVE-2021-44228')
-                    """).execute();
+            INSERT INTO "KEV_ASSERTION"
+                ("ASSERTER", "VULN_SOURCE", "VULN_ID", "PUBLISHED_AT", "REQUIRED_ACTION")
+            VALUES
+                ('cisa-kev', 'NVD', 'CVE-2021-44228',
+                 '2021-12-10T00:00:00Z', 'Apply the vendor security update')
+            """).execute();
             return null;
         });
 
@@ -140,11 +143,26 @@ class ModelConverterTest extends PersistenceCapableTest {
 
         final List<org.cyclonedx.model.vulnerability.Vulnerability> result =
                 ModelConverter.generateVulnerabilities(qm, CycloneDXExporter.Variant.VEX, project, findings);
+
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getProperties()).satisfiesExactly(prop -> {
-            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:is-kev");
-            assertThat(prop.getValue()).isEqualTo("true");
-        });
+        assertThat(result.getFirst().getProperties())
+                .satisfiesExactly(
+                        prop -> {
+                            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:is-kev");
+                            assertThat(prop.getValue()).isEqualTo("true");
+                        },
+                        prop -> {
+                            assertThat(prop.getName()).isEqualTo("dependency-track:kev_source");
+                            assertThat(prop.getValue()).isEqualTo("cisa-kev");
+                        },
+                        prop -> {
+                            assertThat(prop.getName()).isEqualTo("dependency-track:kev_published");
+                            assertThat(prop.getValue()).isEqualTo("2021-12-10T00:00:00Z");
+                        },
+                        prop -> {
+                            assertThat(prop.getName()).isEqualTo("dependency-track:kev_action");
+                            assertThat(prop.getValue()).isEqualTo("Apply the vendor security update");
+                        });
     }
 
     @Test

@@ -53,6 +53,69 @@ class KevDaoTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldGetAssertionsForMultipleVulnerabilitiesAndAsserters() {
+        kevDao.upsertBatch(
+                "cisa",
+                List.of(new KevAssertion(
+                        "NVD",
+                        "CVE-1",
+                        Instant.parse("2026-01-01T00:00:00Z"),
+                        "action-cisa",
+                        true,
+                        "description-cisa",
+                        JsonNodeFactory.instance.objectNode())));
+        kevDao.upsertBatch(
+                "enisa",
+                List.of(new KevAssertion(
+                        "NVD",
+                        "CVE-1",
+                        Instant.parse("2026-02-01T00:00:00Z"),
+                        "action-enisa",
+                        false,
+                        "description-enisa",
+                        JsonNodeFactory.instance.objectNode())));
+        kevDao.upsertBatch(
+                "cisa",
+                List.of(new KevAssertion(
+                        "NVD", "CVE-2", null, "action-2", null, null, JsonNodeFactory.instance.objectNode())));
+
+        final var result = kevDao.getAssertions(
+                List.of(new VulnerabilityKey("CVE-1", "NVD"), new VulnerabilityKey("CVE-2", "NVD")));
+
+        assertThat(result).containsKeys(new VulnerabilityKey("CVE-1", "NVD"), new VulnerabilityKey("CVE-2", "NVD"));
+        assertThat(result.get(new VulnerabilityKey("CVE-1", "NVD")))
+                .extracting(KevDao.KevAssertionRow::asserter)
+                .containsExactly("cisa", "enisa");
+        assertThat(result.get(new VulnerabilityKey("CVE-1", "NVD")))
+                .extracting(KevDao.KevAssertionRow::requiredAction)
+                .containsExactly("action-cisa", "action-enisa");
+    }
+
+    @Test
+    void shouldGetAssertionsForAliasVulnerability() {
+        final var vulnKey = new VulnerabilityKey("CVE-1", "NVD");
+        final var aliasKey = new VulnerabilityKey("CVE-2", "NVD");
+
+        new VulnerabilityAliasDao(jdbiHandle).syncAssertions("test", vulnKey, java.util.Set.of(aliasKey));
+
+        kevDao.upsertBatch(
+                "cisa",
+                List.of(new KevAssertion(
+                        "NVD", "CVE-2", null, "alias-action", null, null, JsonNodeFactory.instance.objectNode())));
+
+        final var result = kevDao.getAssertions(List.of(vulnKey));
+
+        assertThat(result.get(vulnKey))
+                .extracting(KevDao.KevAssertionRow::requiredAction)
+                .containsExactly("alias-action");
+    }
+
+    @Test
+    void shouldReturnEmptyMapWhenNoVulnerabilityKeysProvided() {
+        assertThat(kevDao.getAssertions(List.of())).isEmpty();
+    }
+
+    @Test
     void shouldReconcileUpdatesAndDeletions() {
         kevDao.upsertBatch(
                 "cisa",

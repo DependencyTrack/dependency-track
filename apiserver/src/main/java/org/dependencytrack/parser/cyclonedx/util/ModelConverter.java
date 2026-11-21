@@ -61,6 +61,7 @@ import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tools;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.parser.spdx.expression.SpdxExpression;
@@ -69,6 +70,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
+import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -1142,7 +1144,8 @@ public class ModelConverter {
             Vulnerability vulnerability,
             FindingAnalysisDao.Analysis analysis,
             SortedSet<String> affectedComponentUuids,
-            boolean kev) {
+            boolean kev,
+            List<KevDao.KevAssertionRow> kevAssertions) {
         // NB: No bom-ref. It is optional, nothing references a vulnerability entry,
         // and one vulnerability may yield several entries, which historically made the vulnerability
         // UUID a source of duplicate bom-refs. CycloneDX requires every bom-ref to be unique within the BOM.
@@ -1274,14 +1277,41 @@ public class ModelConverter {
             cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.details()));
             cdxVulnerability.setAnalysis(cdxAnalysis);
         }
+        final var properties = new ArrayList<Property>();
 
         if (kev) {
             final var kevProperty = new Property();
             kevProperty.setName("dependency-track:vuln:is-kev");
             kevProperty.setValue("true");
-            cdxVulnerability.setProperties(List.of(kevProperty));
+            properties.add(kevProperty);
         }
 
+        for (final var assertion : kevAssertions) {
+            if (assertion.asserter() != null) {
+                final var sourceProperty = new Property();
+                sourceProperty.setName("dependency-track:kev_source");
+                sourceProperty.setValue(assertion.asserter());
+                properties.add(sourceProperty);
+            }
+
+            if (assertion.publishedAt() != null) {
+                final var publishedProperty = new Property();
+                publishedProperty.setName("dependency-track:kev_published");
+                publishedProperty.setValue(assertion.publishedAt().toString());
+                properties.add(publishedProperty);
+            }
+
+            if (assertion.requiredAction() != null) {
+                final var actionProperty = new Property();
+                actionProperty.setName("dependency-track:kev_action");
+                actionProperty.setValue(assertion.requiredAction());
+                properties.add(actionProperty);
+            }
+        }
+
+        if (!properties.isEmpty()) {
+            cdxVulnerability.setProperties(properties);
+        }
         return cdxVulnerability;
     }
 
@@ -1547,6 +1577,18 @@ public class ModelConverter {
                     vulnerability,
                     Boolean.TRUE.equals(finding.getVulnerability().get("isKev"))));
         }
+        final var vulnerabilityKeys = resolvedFindings.stream()
+                .filter(ResolvedFinding::kev)
+                .map(resolvedFinding -> new VulnerabilityKey(
+                        resolvedFinding.vulnerability().getVulnId(),
+                        Vulnerability.Source.valueOf(
+                                resolvedFinding.vulnerability().getSource())))
+                .distinct()
+                .toList();
+
+        final Map<VulnerabilityKey, List<KevDao.KevAssertionRow>> kevAssertionsByVulnKey = vulnerabilityKeys.isEmpty()
+                ? Map.of()
+                : withJdbiHandle(qm, handle -> handle.attach(KevDao.class).getAssertions(vulnerabilityKeys));
 
         final Map<FindingKey, FindingAnalysisDao.Analysis> analysisByFindingKey =
                 variant.hasCapability(CycloneDXExporter.Capability.EMITS_ANALYSIS)
@@ -1560,20 +1602,26 @@ public class ModelConverter {
             final FindingAnalysisDao.Analysis analysis =
                     analysisByFindingKey.get(new FindingKey(component.getId(), vulnerability.getId()));
 
+            final var vulnerabilityKey = new VulnerabilityKey(
+                    vulnerability.getVulnId(), Vulnerability.Source.valueOf(vulnerability.getSource()));
+
+            final var kevAssertions = kevAssertionsByVulnKey.getOrDefault(vulnerabilityKey, List.of());
+
             groups.computeIfAbsent(
                             VulnerabilityGroupKey.of(vulnerability, analysis),
                             ignored -> new VulnerabilityGroup(
-                                    vulnerability,
-                                    analysis,
-                                    new TreeSet<>(),
-                                    resolvedFinding.kev()))
+                                    vulnerability, analysis, new TreeSet<>(), resolvedFinding.kev(), kevAssertions))
                     .affectedComponentUuids()
                     .add(component.getUuid().toString());
         }
 
         return groups.values().stream()
-                .map(group ->
-                        convert(group.vulnerability(), group.analysis(), group.affectedComponentUuids(), group.kev()))
+                .map(group -> convert(
+                        group.vulnerability(),
+                        group.analysis(),
+                        group.affectedComponentUuids(),
+                        group.kev(),
+                        group.kevAssertions()))
                 .toList();
     }
 
@@ -1595,7 +1643,8 @@ public class ModelConverter {
             Vulnerability vulnerability,
             FindingAnalysisDao.Analysis analysis,
             SortedSet<String> affectedComponentUuids,
-            boolean kev) {}
+            boolean kev,
+            List<KevDao.KevAssertionRow> kevAssertions) {}
 
     private record VulnerabilityGroupKey(
             UUID vulnerabilityUuid,

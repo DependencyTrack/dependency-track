@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import io.github.nscuro.versatile.VersionFactory;
+import io.github.nscuro.versatile.version.KnownVersioningSchemes;
 import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
@@ -46,6 +48,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
@@ -54,6 +57,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Gatherers;
 
@@ -234,19 +238,61 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
             throw new UncheckedIOException("Failed to retrieve component report", e);
         }
 
+        final var reportBySubmittedPurl = new HashMap<String, ComponentReport>();
+        final var reportsByExactCoord = new HashMap<String, ComponentReport>();
+        for (final ComponentReport report : batchReports) {
+            if (report.coordinates() != null) {
+                reportsByExactCoord.put(report.coordinates(), report);
+            }
+        }
+
+        final var unmatchedSubmittedPurls = new ArrayList<String>();
+        for (final String purl : purlBatch) {
+            final ComponentReport exactMatch = reportsByExactCoord.get(purl);
+            if (exactMatch != null) {
+                reportBySubmittedPurl.put(purl, exactMatch);
+            } else {
+                unmatchedSubmittedPurls.add(purl);
+            }
+        }
+
+        if (!unmatchedSubmittedPurls.isEmpty()) {
+            for (final String submittedPurl : unmatchedSubmittedPurls) {
+                final PackageURL parsedSubmitted = parsePurlQuietly(submittedPurl);
+                if (parsedSubmitted == null) {
+                    continue;
+                }
+
+                for (final ComponentReport report : batchReports) {
+                    if (report.coordinates() == null) {
+                        continue;
+                    }
+                    final PackageURL parsedReport = parsePurlQuietly(report.coordinates());
+                    if (parsedReport != null && arePurlsEquivalent(parsedSubmitted, parsedReport)) {
+                        reportBySubmittedPurl.put(submittedPurl, report);
+                        LOGGER.debug(
+                                "Correlated OSS Index report coordinates '{}' to submitted PURL '{}'",
+                                report.coordinates(),
+                                submittedPurl);
+                        break;
+                    }
+                }
+            }
+        }
+
         final var reportedVulnsByPurl = new HashMap<String, List<ComponentReportVulnerability>>(batchReports.size());
         final var entriesToCache = new HashMap<String, byte @Nullable []>(purlBatch.size());
 
-        for (final var report : batchReports) {
+        for (final var entry : reportBySubmittedPurl.entrySet()) {
+            final String submittedPurl = entry.getKey();
+            final ComponentReport report = entry.getValue();
+
             if (report.vulnerabilities() != null && !report.vulnerabilities().isEmpty()) {
-                reportedVulnsByPurl.put(report.coordinates(), report.vulnerabilities());
+                reportedVulnsByPurl.put(submittedPurl, report.vulnerabilities());
                 try {
-                    entriesToCache.put(report.coordinates(), objectMapper.writeValueAsBytes(report.vulnerabilities()));
+                    entriesToCache.put(submittedPurl, objectMapper.writeValueAsBytes(report.vulnerabilities()));
                 } catch (IOException e) {
-                    LOGGER.warn(
-                            "Failed to serialize component report for PURL '{}'; Skipping cache",
-                            report.coordinates(),
-                            e);
+                    LOGGER.warn("Failed to serialize component report for PURL '{}'; Skipping cache", submittedPurl, e);
                 }
             }
         }
@@ -259,6 +305,46 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
 
         resultsCache.putMany(entriesToCache);
         return reportedVulnsByPurl;
+    }
+
+    private static @Nullable PackageURL parsePurlQuietly(final String coordinates) {
+        try {
+            return new PackageURL(coordinates);
+        } catch (MalformedPackageURLException e) {
+            return null;
+        }
+    }
+
+    private static boolean arePurlsEquivalent(final PackageURL purl1, final PackageURL purl2) {
+        if (!Objects.equals(purl1.getType(), purl2.getType())
+                || !Objects.equals(purl1.getNamespace(), purl2.getNamespace())
+                || !Objects.equals(purl1.getName(), purl2.getName())) {
+            return false;
+        }
+
+        if (Objects.equals(purl1.getVersion(), purl2.getVersion())) {
+            return true;
+        }
+
+        final String scheme =
+                KnownVersioningSchemes.fromPurlType(purl1.getType()).orElse(null);
+        if (scheme != null && purl1.getVersion() != null && purl2.getVersion() != null) {
+            try {
+                final var v1 = VersionFactory.forScheme(scheme, purl1.getVersion());
+                final var v2 = VersionFactory.forScheme(scheme, purl2.getVersion());
+                return v1.compareTo(v2) == 0;
+            } catch (Exception e) {
+                LOGGER.debug(
+                        "Failed to compare versions '{}' and '{}' for scheme '{}'",
+                        purl1.getVersion(),
+                        purl2.getVersion(),
+                        scheme,
+                        e);
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private List<ComponentReport> getComponentReports(Collection<String> coordinates)

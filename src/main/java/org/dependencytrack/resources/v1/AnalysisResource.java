@@ -147,7 +147,6 @@ public class AnalysisResource extends AlpineResource {
     public Response updateAnalysis(AnalysisRequest request) {
         final Validator validator = getValidator();
         failOnValidationError(
-                validator.validateProperty(request, "project"),
                 validator.validateProperty(request, "component"),
                 validator.validateProperty(request, "vulnerability"),
                 validator.validateProperty(request, "analysisState"),
@@ -158,13 +157,16 @@ public class AnalysisResource extends AlpineResource {
         );
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, request.getProject());
-            if (project == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
-            }
+
             final Component component = qm.getObjectByUuid(Component.class, request.getComponent());
             if (component == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
             }
+
+            if (project != null && component.getProject().getId() != project.getId()){
+                return Response.status(Response.Status.CONFLICT).entity("The component has a different project than the one specified via the project param.").build();
+            }
+
             final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, request.getVulnerability());
             if (vulnerability == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The vulnerability could not be found.").build();

@@ -47,6 +47,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BADGE_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL;
 import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
@@ -131,6 +132,48 @@ public class BadgeResourceTest extends ResourceTest {
     }
 
     @Test
+    public void shouldReturnVulnBadgeForLatestVersionByName() {
+        createConfigProperty(GENERAL_BASE_URL, "https://dtrack.example.com");
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false, false);
+        final Project latest = qm.createProject("Acme Example", null, "2.0.0", null, null, null, null, true, false);
+        final Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example")
+                .request()
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("image/svg+xml");
+        final String body = getPlainTextBody(response);
+        assertThat(isLikelySvg(body)).isTrue();
+        assertThat(body).contains("https://dtrack.example.com/projects/" + latest.getUuid() + "/findings");
+    }
+
+    @Test
+    public void shouldReturn404ForVulnBadgeByNameWhenNoVersionIsLatest() {
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false, false);
+        final Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example")
+                .request()
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    public void shouldReturn404ForVulnBadgeByNameWhenProjectNotFound() {
+        final Response response = jersey.target(V1_BADGE + "/vulns/project/DoesNotExist")
+                .request()
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    public void shouldReturn403ForVulnBadgeByNameWhenDisabled() {
+        useJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).setValue(GENERAL_BADGE_ENABLED, "false"));
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, true, false);
+        final Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example")
+                .request()
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(403);
+    }
+
+    @Test
     public void shouldReturnViolationsBadgeByUuid() {
         final Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false);
         final Response response = jersey.target(V1_BADGE + "/violations/project/" + project.getUuid())
@@ -192,6 +235,48 @@ public class BadgeResourceTest extends ResourceTest {
         useJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).setValue(GENERAL_BADGE_ENABLED, "false"));
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false);
         final Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0")
+                .request()
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(403);
+    }
+
+    @Test
+    public void shouldReturnViolationsBadgeForLatestVersionByName() {
+        createConfigProperty(GENERAL_BASE_URL, "https://dtrack.example.com");
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false, false);
+        final Project latest = qm.createProject("Acme Example", null, "2.0.0", null, null, null, null, true, false);
+        final Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example")
+                .request()
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("image/svg+xml");
+        final String body = getPlainTextBody(response);
+        assertThat(isLikelySvg(body)).isTrue();
+        assertThat(body).contains("https://dtrack.example.com/projects/" + latest.getUuid() + "/policyViolations");
+    }
+
+    @Test
+    public void shouldReturn404ForViolationsBadgeByNameWhenNoVersionIsLatest() {
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, false, false);
+        final Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example")
+                .request()
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    public void shouldReturn404ForViolationsBadgeByNameWhenProjectNotFound() {
+        final Response response = jersey.target(V1_BADGE + "/violations/project/DoesNotExist")
+                .request()
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    public void shouldReturn403ForViolationsBadgeByNameWhenDisabled() {
+        useJdbiHandle(handle -> handle.attach(ConfigPropertyDao.class).setValue(GENERAL_BADGE_ENABLED, "false"));
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, null, true, false);
+        final Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example")
                 .request()
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(403);

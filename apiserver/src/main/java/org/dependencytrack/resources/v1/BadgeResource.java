@@ -58,8 +58,15 @@ public class BadgeResource extends AbstractApiResource {
 
     private static final String SVG_MEDIA_TYPE = "image/svg+xml";
 
+    /**
+     * Restricts UUID path templates to canonical UUIDs, such that name-only paths
+     * are routed to the endpoints resolving the latest version of a project instead.
+     */
+    private static final String UUID_PATTERN =
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+
     @GET
-    @Path("/vulns/project/{uuid}")
+    @Path("/vulns/project/{uuid: " + UUID_PATTERN + "}")
     @Produces(SVG_MEDIA_TYPE)
     @Operation(summary = "Returns current metrics for a specific project")
     @ApiResponses(
@@ -150,7 +157,51 @@ public class BadgeResource extends AbstractApiResource {
     }
 
     @GET
-    @Path("/violations/project/{uuid}")
+    @Path("/vulns/project/{name}")
+    @Produces(SVG_MEDIA_TYPE)
+    @Operation(summary = "Returns current metrics for the latest version of a project")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A badge displaying current vulnerability metrics for a project in SVG format",
+                        content = @Content(schema = @Schema(type = "string"))),
+                @ApiResponse(responseCode = "403", description = "Badges are disabled"),
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The project could not be found, or none of its versions is marked as latest")
+            })
+    @AuthenticationNotRequired
+    public Response getLatestProjectVulnerabilitiesBadge(
+            @Parameter(description = "The name of the project to query on", required = true) @PathParam("name")
+                    String name) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            if (!isBadgeEnabled()) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+            final Project project = qm.getLatestProjectVersion(name);
+            if (project != null) {
+                final ProjectMetrics metrics =
+                        withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project));
+                final var badger = new Badger();
+
+                String linkToProjectVuln = null;
+                final String baseUrl = getBaseUrl();
+                if (baseUrl != null) {
+                    linkToProjectVuln = baseUrl + "/projects/" + project.getUuid() + "/findings";
+                }
+                return Response.ok(badger.generateVulnerabilities(metrics, linkToProjectVuln))
+                        .build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The project could not be found.")
+                        .build();
+            }
+        }
+    }
+
+    @GET
+    @Path("/violations/project/{uuid: " + UUID_PATTERN + "}")
     @Produces(SVG_MEDIA_TYPE)
     @Operation(summary = "Returns a policy violations badge for a specific project")
     @ApiResponses(
@@ -220,6 +271,50 @@ public class BadgeResource extends AbstractApiResource {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
             final Project project = qm.getProject(name, version);
+            if (project != null) {
+                final ProjectMetrics metrics =
+                        withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project));
+                final var badger = new Badger();
+
+                String linkToProjectViolations = null;
+                final String baseUrl = getBaseUrl();
+                if (baseUrl != null) {
+                    linkToProjectViolations = baseUrl + "/projects/" + project.getUuid() + "/policyViolations";
+                }
+                return Response.ok(badger.generateViolations(metrics, linkToProjectViolations))
+                        .build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The project could not be found.")
+                        .build();
+            }
+        }
+    }
+
+    @GET
+    @Path("/violations/project/{name}")
+    @Produces(SVG_MEDIA_TYPE)
+    @Operation(summary = "Returns a policy violations badge for the latest version of a project")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A badge displaying current policy violation metrics of a project in SVG format",
+                        content = @Content(schema = @Schema(type = "string"))),
+                @ApiResponse(responseCode = "403", description = "Badges are disabled"),
+                @ApiResponse(
+                        responseCode = "404",
+                        description = "The project could not be found, or none of its versions is marked as latest")
+            })
+    @AuthenticationNotRequired
+    public Response getLatestProjectPolicyViolationsBadge(
+            @Parameter(description = "The name of the project to query on", required = true) @PathParam("name")
+                    String name) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            if (!isBadgeEnabled()) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+            final Project project = qm.getLatestProjectVersion(name);
             if (project != null) {
                 final ProjectMetrics metrics =
                         withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project));

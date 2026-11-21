@@ -20,10 +20,21 @@ package org.dependencytrack.vulnanalysis.internal;
 
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
+import org.dependencytrack.vulnanalysis.api.VulnAnalyzerRequirement;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class InternalVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnAnalyzer, InternalVulnAnalyzerFactory> {
 
     protected InternalVulnAnalyzerFactoryTest() {
         super(InternalVulnAnalyzerFactory.class);
+    }
+
+    @Test
+    void shouldRequireComponentProperties() {
+        // Without this requirement the apiserver omits component properties,
+        // and the trivy `SrcName` fallback for source package matching gets no data.
+        assertThat(factory.analyzerRequirements()).contains(VulnAnalyzerRequirement.COMPONENT_PROPERTIES);
     }
 }

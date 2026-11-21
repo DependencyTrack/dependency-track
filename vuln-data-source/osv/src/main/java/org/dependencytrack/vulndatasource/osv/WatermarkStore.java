@@ -23,10 +23,14 @@ import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -40,15 +44,19 @@ final class WatermarkStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WatermarkStore.class);
 
+    private static final int WATERMARK_KEY_HASH_LENGTH = 12;
+
+    private final String sourceDataUrl;
     private final KeyValueStore kvStore;
 
-    WatermarkStore(final KeyValueStore kvStore) {
+    WatermarkStore(final String sourceDataUrl, final KeyValueStore kvStore) {
+        this.sourceDataUrl = requireNonNull(sourceDataUrl, "OSV sourceDataUrl must not be null");
         this.kvStore = kvStore;
     }
 
     Map<String, WatermarkRecord> getForEcosystems(final Collection<String> ecosystems) {
         final Map<String, String> ecosystemByKey =
-                ecosystems.stream().collect(Collectors.toMap(WatermarkStore::getKey, Function.identity()));
+                ecosystems.stream().collect(Collectors.toMap(this::getKey, Function.identity()));
 
         final Map<String, KeyValueStore.Entry> kvEntryByKey = kvStore.getMany(ecosystemByKey.keySet());
         if (kvEntryByKey.isEmpty()) {
@@ -92,7 +100,16 @@ final class WatermarkStore {
         };
     }
 
-    private static String getKey(final String ecosystem) {
-        return "watermark/" + ecosystem;
+    private String getKey(final String ecosystem) {
+        return "watermark/" + sha256Hex(sourceDataUrl).substring(0, WATERMARK_KEY_HASH_LENGTH) + "/" + ecosystem;
+    }
+
+    private static String sha256Hex(final String value) {
+        try {
+            final var digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(value.getBytes(StandardCharsets.UTF_8)));
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

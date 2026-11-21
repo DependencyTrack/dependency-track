@@ -21,7 +21,9 @@ package org.dependencytrack.policy.cel;
 import dev.cel.common.CelAbstractSyntaxTree;
 import dev.cel.common.ast.CelExpr;
 import dev.cel.common.navigation.CelNavigableAst;
+import dev.cel.common.types.CelKind;
 import dev.cel.common.types.CelType;
+import dev.cel.common.types.ListType;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
@@ -48,9 +50,19 @@ final class CelPolicyAstAnalyzer {
         CelNavigableAst.fromAst(ast).getRoot().allNodes().forEach(node -> {
             final CelExpr expr = node.expr();
             switch (expr.exprKind().getKind()) {
+                case IDENT -> visitIdent(expr);
                 case SELECT -> visitSelect(expr);
                 case CALL -> visitCall(expr);
                 default -> {}
+            }
+        });
+    }
+
+    private void visitIdent(CelExpr expr) {
+        ast.getType(expr.id()).ifPresent(type -> {
+            final CelType valueType = type instanceof ListType listType ? listType.elemType() : type;
+            if (valueType.kind() == CelKind.STRUCT) {
+                accessedFieldsByType.computeIfAbsent(valueType, _ -> new HashSet<>());
             }
         });
     }

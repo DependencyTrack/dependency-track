@@ -33,8 +33,6 @@ get:
 
     * `name`
     * `group`
-    * `version`
-    * `classifier`
     * `last_bom_import`
     * `last_inherited_risk_score`
 

@@ -861,8 +861,6 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                         switch (effectiveSortBy) {
                             case NAME -> decodedPageToken.lastName();
                             case GROUP -> decodedPageToken.lastGroup();
-                            case VERSION -> decodedPageToken.lastVersion();
-                            case CLASSIFIER -> decodedPageToken.lastClassifier();
                             case LAST_BOM_IMPORTED ->
                                 decodedPageToken.lastBomImport() != null
                                         ? Instant.ofEpochMilli(decodedPageToken.lastBomImport())
@@ -903,12 +901,6 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                         lastRow.id(),
                         effectiveSortBy == ListAllProjectsQuery.SortBy.NAME ? lastRow.name() : null,
                         effectiveSortBy == ListAllProjectsQuery.SortBy.GROUP ? lastRow.group() : null,
-                        effectiveSortBy == ListAllProjectsQuery.SortBy.VERSION ? lastRow.version() : null,
-                        effectiveSortBy == ListAllProjectsQuery.SortBy.CLASSIFIER
-                                ? lastRow.classifier() != null
-                                        ? lastRow.classifier().name()
-                                        : null
-                                : null,
                         effectiveSortBy == ListAllProjectsQuery.SortBy.LAST_BOM_IMPORTED
                                         && lastRow.lastBomImport() != null
                                 ? lastRow.lastBomImport().getTime()

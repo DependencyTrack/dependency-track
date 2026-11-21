@@ -2589,6 +2589,98 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldUseLatestBomImportForBomGenerated() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                project.metadata.bom_generated == timestamp("1970-01-01T00:00:02Z")
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" ("GENERATED", "IMPORTED", "PROJECT_ID", "UUID")
+                        VALUES (:generated1, NOW() - INTERVAL '1 hour', :projectId, GEN_RANDOM_UUID())
+                             , (:generated2, NOW(), :projectId, GEN_RANDOM_UUID())
+                        """)
+                .bind("generated1", new Date(3000))
+                .bind("generated2", new Date(2000))
+                .bind("projectId", project.getId())
+                .execute());
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+    }
+
+    @Test
+    void shouldEvaluateBomMetadataWhenProjectHasNoBomImport() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                !has(project.metadata.bom_generated)
+                  && !project.metadata.tools.components.exists(tool, tool.name == "toolName")
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+    }
+
+    @Test
+    void shouldLoadVulnsWhenOnlyTheirCountIsAccessed() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                size(vulns) > 0
+                """,
+                PolicyViolation.Type.SECURITY);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, component, "internal");
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+    }
+
+    @Test
     void testEvaluateProjectWhenProjectDoesNotExist() throws Exception {
         assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(UUID.randomUUID()));
     }

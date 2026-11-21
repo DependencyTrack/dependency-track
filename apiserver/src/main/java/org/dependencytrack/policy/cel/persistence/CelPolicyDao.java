@@ -703,12 +703,17 @@ public final class CelPolicyDao {
                         SELECT ${fetchColumns?join(", ")}
                           FROM "PROJECT" AS p
                         <#if needsMetadataTools!false>
-                         INNER JOIN "PROJECT_METADATA" AS pm
+                          LEFT JOIN "PROJECT_METADATA" AS pm
                             ON pm."PROJECT_ID" = p."ID"
                         </#if>
                         <#if needsBomGenerated!false>
-                         INNER JOIN "BOM" AS b
-                            ON b."PROJECT_ID" = p."ID"
+                          LEFT JOIN LATERAL (
+                            SELECT "GENERATED"
+                              FROM "BOM"
+                             WHERE "PROJECT_ID" = p."ID"
+                             ORDER BY "ID" DESC
+                             LIMIT 1
+                          ) AS b ON TRUE
                         </#if>
                         <#if needsProperties!false>
                           LEFT JOIN LATERAL (

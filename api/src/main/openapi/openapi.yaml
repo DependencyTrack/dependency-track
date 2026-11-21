@@ -129,9 +129,10 @@ info:
 
     - `POST /api/v1/user/login`
     - `POST /api/v1/user/oidc/login`
+    - `POST /api/v2/saml/token`, after a browser-based login via `GET /api/v2/saml/login`
     - `POST /api/v2/oauth/token`
 
-    API v2 does not yet provide its own login endpoints; users log in
+    Apart from SAML, API v2 does not yet provide its own login endpoints; users log in
     through the v1 endpoints above and then call v2 with the token.
 
     Tokens are valid for 8 hours by default and **cannot be refreshed**.
@@ -217,6 +218,8 @@ tags:
   description: Endpoints related to OAuth 2.0 token issuance
 - name: Projects
   description: Endpoints related to projects
+- name: SAML
+  description: Endpoints related to login via SAML 2.0, and to SAML users and groups
 - name: Secrets
   description: Endpoints related to secrets
 - name: Service Accounts
@@ -263,6 +266,24 @@ paths:
     $ref: "./resources/projects/project-components.yaml"
   /projects/{uuid}/dependency-graph:
     $ref: "./resources/projects/project-dependency-graph.yaml"
+  /saml/metadata:
+    $ref: "./resources/saml/saml-metadata.yaml"
+  /saml/login:
+    $ref: "./resources/saml/saml-login.yaml"
+  /saml/acs:
+    $ref: "./resources/saml/saml-acs.yaml"
+  /saml/token:
+    $ref: "./resources/saml/saml-token.yaml"
+  /saml/groups:
+    $ref: "./resources/saml/saml-groups.yaml"
+  /saml/groups/{uuid}:
+    $ref: "./resources/saml/saml-group.yaml"
+  /saml/groups/{uuid}/teams/{team_uuid}:
+    $ref: "./resources/saml/saml-group-team.yaml"
+  /saml/users:
+    $ref: "./resources/saml/saml-users.yaml"
+  /saml/users/{username}:
+    $ref: "./resources/saml/saml-user.yaml"
   /secrets:
     $ref: "./resources/secrets/secrets.yaml"
   /secrets/{name}:
@@ -329,7 +350,7 @@ components:
       description: |-
         Authentication via opaque server-issued session token.
         Tokens are obtained from `POST /api/v1/user/login`,
-        `POST /api/v1/user/oidc/login`, or `POST /api/v2/oauth/token`.
+        `POST /api/v1/user/oidc/login`, `POST /api/v2/saml/token`, or `POST /api/v2/oauth/token`.
       type: http
       scheme: bearer
       bearerFormat: Opaque

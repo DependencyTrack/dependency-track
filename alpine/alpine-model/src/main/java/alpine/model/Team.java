@@ -194,6 +194,24 @@ public class Team implements Serializable {
         this.users.addAll(oidcUsers);
     }
 
+    /// @since 5.3.0
+    public List<SamlUser> getSamlUsers() {
+        if (users == null) {
+            return null;
+        }
+
+        return users.stream()
+                .filter(user -> user instanceof SamlUser)
+                .map(user -> (SamlUser) user)
+                .toList();
+    }
+
+    /// @since 5.3.0
+    public void setSamlUsers(List<SamlUser> samlUsers) {
+        this.users = Objects.requireNonNullElseGet(this.users, ArrayList::new);
+        this.users.addAll(samlUsers);
+    }
+
     /// @since 5.2.0
     public List<ServiceAccount> getServiceAccounts() {
         if (users == null) {

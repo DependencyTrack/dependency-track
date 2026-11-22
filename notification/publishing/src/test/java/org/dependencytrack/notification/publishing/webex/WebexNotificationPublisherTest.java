@@ -110,7 +110,7 @@ class WebexNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withRequestBody(equalToJson(/* language=JSON */ """
                         {
-                          "markdown" : "**New Vulnerability Identified on Project: [projectName : projectVersion]**\\n**VulnID:** INT-001\\n**Severity:** MEDIUM\\n**Source:** INTERNAL\\n**Component:** componentName : componentVersion\\n**Actions:**\\n[View Vulnerability](https://example.com/vulnerability/?source=INTERNAL&vulnId=INT-001)\\n[View Component](https://example.com/component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6)\\n**Description:** vulnerabilityDescription"
+                          "markdown" : "**New Vulnerability Identified on Project: [projectName : projectVersion]**\\n**VulnID:** INT-001\\n**Severity:** MEDIUM\\n**Source:** INTERNAL\\n**Aliases**: OSV-001 (OSV)\\n**Component:** componentName : componentVersion\\n**Actions:**\\n[View Vulnerability](https://example.com/vulnerability/?source=INTERNAL&vulnId=INT-001)\\n[View Component](https://example.com/component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6)\\n**Description:** vulnerabilityDescription"
                         }
                         """)));
     }

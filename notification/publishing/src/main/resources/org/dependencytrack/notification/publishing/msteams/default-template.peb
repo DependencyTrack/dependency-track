@@ -21,7 +21,11 @@
         {
           "name": "Source",
           "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
-        },
+        }{% if subject.vulnerability.aliasesList is not empty %},
+        {
+          "name": "Aliases",
+          "value": "{% for alias in subject.vulnerability.aliasesList %}{{ alias.id | escape(strategy="json") }} ({{ alias.source | escape(strategy="json") }}){% if not loop.last %}, {% endif %}{% endfor %}"
+        }{% endif %},
         {
           "name": "Component",
           "value": "{{ subject.component | summarize | escape(strategy="json") }}"
@@ -81,7 +85,11 @@
         {
           "name": "Source",
           "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
-        },
+        }{% if subject.vulnerability.aliasesList is not empty %},
+        {
+          "name": "Aliases",
+          "value": "{% for alias in subject.vulnerability.aliasesList %}{{ alias.id | escape(strategy="json") }} ({{ alias.source | escape(strategy="json") }}){% if not loop.last %}, {% endif %}{% endfor %}"
+        }{% endif %},
         {% endif %}
         {
           "name": "Component",

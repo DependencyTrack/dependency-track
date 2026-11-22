@@ -118,7 +118,7 @@ class MattermostNotificationPublisherTest extends AbstractNotificationPublisherT
                         {
                           "username": "Dependency Track",
                           "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
-                          "text": "#### New Vulnerability Identified on Project: [projectName : projectVersion]\\nvulnerabilityDescription\\n**Component**: componentName : componentVersion\\n**Vulnerability**: INT-001, MEDIUM\\n[View Component](https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6) - [View Vulnerability](https://example.com/vulnerabilities/INTERNAL/INT-001)"
+                          "text": "#### New Vulnerability Identified on Project: [projectName : projectVersion]\\nvulnerabilityDescription\\n**Component**: componentName : componentVersion\\n**Vulnerability**: INT-001, MEDIUM\\n**Aliases**: OSV-001 (OSV)\\n[View Component](https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6) - [View Vulnerability](https://example.com/vulnerabilities/INTERNAL/INT-001)"
                         }
                         """)));
     }

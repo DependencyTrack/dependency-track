@@ -384,6 +384,14 @@ class SlackNotificationPublisherTest extends AbstractNotificationPublisherTest {
                                 },
                                 {
                                   "type": "mrkdwn",
+                                  "text": "*Aliases*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "OSV-001 (OSV)"
+                                },
+                                {
+                                  "type": "mrkdwn",
                                   "text": "*Component*"
                                 },
                                 {

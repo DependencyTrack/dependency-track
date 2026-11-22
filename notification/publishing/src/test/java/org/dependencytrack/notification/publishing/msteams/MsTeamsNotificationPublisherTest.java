@@ -228,6 +228,10 @@ class MsTeamsNotificationPublisherTest extends AbstractNotificationPublisherTest
                                   "value": "INTERNAL"
                                 },
                                 {
+                                  "name": "Aliases",
+                                  "value": "OSV-001 (OSV)"
+                                },
+                                {
                                   "name": "Component",
                                   "value": "componentName : componentVersion"
                                 }

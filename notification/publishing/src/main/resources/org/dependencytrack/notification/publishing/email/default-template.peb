@@ -9,6 +9,9 @@ Vulnerability ID:  {{ subject.vulnerability.vulnId }}
 Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
 Severity:          {{ subject.vulnerability.severity }}
 Source:            {{ subject.vulnerability.source }}
+{% if subject.vulnerability.aliasesList is not empty -%}
+Aliases:           {% for alias in subject.vulnerability.aliasesList %}{{ alias.id }} ({{ alias.source }}){% if not loop.last %}, {% endif %}{% endfor %}
+{% endif -%}
 Component:         {{ subject.component | summarize }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
 Project:           {{ subject.project.name }}
@@ -30,6 +33,9 @@ Vulnerability ID:  {{ vulnerability.vulnId }}
 Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ vulnerability.source }}&vulnId={{ vulnerability.vulnId }}
 Severity:          {{ vulnerability.severity }}
 Source:            {{ vulnerability.source }}
+{% if vulnerability.aliasesList is not empty -%}
+  Aliases: {% for alias in vulnerability.aliasesList %}{{ alias.id }} ({{ alias.source }}){% if not loop.last %}, {% endif %}{% endfor %}
+{% endif -%}
 Description:
 {{ vulnerability.description }}
 
@@ -49,6 +55,9 @@ Vulnerability ID:  {{ subject.vulnerability.vulnId }}
 Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
 Severity:          {{ subject.vulnerability.severity }}
 Source:            {{ subject.vulnerability.source }}
+{% if subject.vulnerability.aliasesList is not empty -%}
+Aliases:           {% for alias in subject.vulnerability.aliasesList %}{{ alias.id }} ({{ alias.source }}){% if not loop.last %}, {% endif %}{% endfor %}
+{% endif -%}
 {% endif %}
 Component:         {{ subject.component | summarize }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
@@ -145,6 +154,9 @@ Vulnerability Details:
   + Vulnerability ID:       {{ finding.vulnerability.vulnId }}
     Vulnerability Source:   {{ finding.vulnerability.source }}
     Vulnerability Severity: {{ finding.vulnerability.severity }}
+    {% if finding.vulnerability.aliasesList is not empty -%}
+    Vulnerability Aliases: {% for alias in finding.vulnerability.aliasesList %}{{ alias.id }} ({{ alias.source }}){% if not loop.last %}, {% endif %}{% endfor %}
+    {% endif -%}
     Vulnerability URL:      {{ baseUrl }}/vulnerability/?source={{ finding.vulnerability.source }}&vulnId={{ finding.vulnerability.vulnId }}
     Component:              {{ finding.component | summarize }}
     Component URL:          {{ baseUrl }}/component/?uuid={{ finding.component.uuid }}

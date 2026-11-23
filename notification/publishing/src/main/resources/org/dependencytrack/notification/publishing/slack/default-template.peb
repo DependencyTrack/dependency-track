@@ -50,7 +50,15 @@
 		{
 		  "type": "plain_text",
 		  "text": "{{ subject.vulnerability.source | escape(strategy="json") }}"
+		}{% if subject.vulnerability.aliasesList is not empty %},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Aliases*"
 		},
+		{
+		  "type": "plain_text",
+		  "text": "{% for alias in subject.vulnerability.aliasesList %}{{ alias.id | escape(strategy="json") }} ({{ alias.source | escape(strategy="json") }}){% if not loop.last %}, {% endif %}{% endfor %}"
+		}{% endif %},
 	    {
 		  "type": "mrkdwn",
 		  "text": "*Component*"
@@ -264,7 +272,15 @@
 		{
 		  "type": "plain_text",
 		  "text": "{{ subject.vulnerability.source | escape(strategy="json") }}"
-		}
+		}{% if subject.vulnerability.aliasesList is not empty %},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Aliases*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{% for alias in subject.vulnerability.aliasesList %}{{ alias.id | escape(strategy="json") }} ({{ alias.source | escape(strategy="json") }}){% if not loop.last %}, {% endif %}{% endfor %}"
+		}{% endif %}
 		{% endif %}
 	  ]
 	},

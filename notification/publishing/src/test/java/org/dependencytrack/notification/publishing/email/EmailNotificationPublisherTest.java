@@ -189,6 +189,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 Vulnerability URL: https://example.com/vulnerability/?source=INTERNAL&vulnId=INT-001
                 Severity:          MEDIUM
                 Source:            INTERNAL
+                Aliases:           OSV-001 (OSV)
                 Component:         componentName : componentVersion
                 Component URL:     https://example.com/component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6
                 Project:           projectName
@@ -231,6 +232,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 Vulnerability URL: https://example.com/vulnerability/?source=INTERNAL&vulnId=INT-001
                 Severity:          MEDIUM
                 Source:            INTERNAL
+                Aliases: OSV-001 (OSV)
                 Description:
                 vulnerabilityDescription
 
@@ -280,6 +282,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                   + Vulnerability ID:       INT-001
                     Vulnerability Source:   INTERNAL
                     Vulnerability Severity: MEDIUM
+                    Vulnerability Aliases: OSV-001 (OSV)
                     Vulnerability URL:      https://example.com/vulnerability/?source=INTERNAL&vulnId=INT-001
                     Component:              componentName : componentVersion
                     Component URL:          https://example.com/component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6

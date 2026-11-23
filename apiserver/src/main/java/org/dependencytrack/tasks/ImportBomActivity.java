@@ -34,7 +34,6 @@ import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.BomRetentionPolicy;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentOccurrence;
@@ -48,7 +47,6 @@ import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.BomDao;
 import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
-import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao.OriginalBomFileMetadataRow;
 import org.dependencytrack.pkgmetadata.PackageMetadataResolutionDao;
@@ -101,8 +99,6 @@ import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_ANALYSIS_TRIGGE
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_BOM_UPLOAD_TOKEN;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
 import static org.dependencytrack.filestorage.OriginalBomFileDeletion.scheduleOriginalBomFileDeletion;
-import static org.dependencytrack.model.ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_POLICY;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomConsumedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomProcessedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomProcessingFailedNotification;
@@ -846,25 +842,11 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         }
     }
 
-    private static boolean isLatestOnlyRetentionActive(ConfigPropertyDao configPropertyDao) {
-        if (!configPropertyDao.isEnabled(BOM_ORIGINAL_RETENTION_ENABLED)) {
-            return false;
-        }
-        final String policy = configPropertyDao
-                .getOptionalValue(BOM_ORIGINAL_RETENTION_POLICY)
-                .orElseGet(BOM_ORIGINAL_RETENTION_POLICY::getDefaultPropertyValue);
-        return BomRetentionPolicy.valueOf(policy) == BomRetentionPolicy.LATEST_ONLY;
-    }
-
     private void tryDeleteOlderRetainedBomFiles(long boundaryBomId) {
         final List<OriginalBomFileMetadataRow> clearedFiles;
         try {
-            clearedFiles = inJdbiTransaction(handle -> {
-                if (!isLatestOnlyRetentionActive(handle.attach(ConfigPropertyDao.class))) {
-                    return List.of();
-                }
-                return handle.attach(BomDao.class).clearOlderOriginalFileMetadata(boundaryBomId);
-            });
+            clearedFiles = inJdbiTransaction(
+                    handle -> handle.attach(BomDao.class).clearOlderOriginalFileMetadata(boundaryBomId));
         } catch (RuntimeException e) {
             LOGGER.warn("Failed to clear older retained BOM files; Will retry with the next import", e);
             return;

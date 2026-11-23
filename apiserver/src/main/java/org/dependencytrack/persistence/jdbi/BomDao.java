@@ -24,7 +24,6 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jspecify.annotations.Nullable;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -79,35 +78,4 @@ public interface BomDao {
           """)
     @RegisterConstructorMapper(ProjectDao.OriginalBomFileMetadataRow.class)
     List<ProjectDao.OriginalBomFileMetadataRow> clearOlderOriginalFileMetadata(@Bind long boundaryBomId);
-
-    @SqlQuery("""
-            UPDATE "BOM" AS bom
-               SET "ORIGINAL_FILE_METADATA" = NULL
-              FROM (
-                SELECT expired."ID"
-                     , expired."ORIGINAL_FILE_METADATA"
-                     , "PROJECT"."UUID" AS "PROJECT_UUID"
-                  FROM "BOM" AS expired
-                 INNER JOIN "PROJECT"
-                    ON "PROJECT"."ID" = expired."PROJECT_ID"
-                 WHERE expired."ORIGINAL_FILE_METADATA" IS NOT NULL
-                   AND expired."IMPORTED" <= :cutoff
-                   AND NOT EXISTS (
-                         SELECT 1
-                           FROM "BOM" AS retained
-                          WHERE retained."PROJECT_ID" = expired."PROJECT_ID"
-                            AND retained."IMPORTED" > :cutoff
-                            AND retained."ORIGINAL_FILE_METADATA" = expired."ORIGINAL_FILE_METADATA"
-                       )
-                 ORDER BY expired."ID"
-                 LIMIT :batchSize
-                   FOR UPDATE OF expired
-              ) AS old
-             WHERE bom."ID" = old."ID"
-            RETURNING old."PROJECT_UUID"
-                    , old."ORIGINAL_FILE_METADATA"
-            """)
-    @RegisterConstructorMapper(ProjectDao.OriginalBomFileMetadataRow.class)
-    List<ProjectDao.OriginalBomFileMetadataRow> clearExpiredOriginalFileMetadata(
-            @Bind Instant cutoff, @Bind int batchSize);
 }

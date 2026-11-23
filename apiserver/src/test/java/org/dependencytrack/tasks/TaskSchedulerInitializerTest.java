@@ -70,7 +70,6 @@ class TaskSchedulerInitializerTest {
                         "Package Metadata Resolution",
                         "Portfolio Metrics Update",
                         "Portfolio Vulnerability Analysis",
-                        "Original BOM File Maintenance",
                         "Project Maintenance",
                         "Scheduled Notification Dispatch",
                         "Tag Maintenance",

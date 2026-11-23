@@ -28,7 +28,6 @@ import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.model.BomRetentionPolicy;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
@@ -49,8 +48,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -89,8 +86,6 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.model.ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX;
-import static org.dependencytrack.model.ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.BOM_ORIGINAL_RETENTION_POLICY;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
 import static org.dependencytrack.notification.NotificationTestUtil.getNotificationOutbox;
@@ -143,11 +138,6 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         return buildArg(project, bomFileMetadata, UUID.randomUUID()).toBuilder()
                 .setRetainBomFile(true)
                 .build();
-    }
-
-    private void configureRetention(boolean enabled, BomRetentionPolicy policy) {
-        createConfigProperty(BOM_ORIGINAL_RETENTION_ENABLED, String.valueOf(enabled));
-        createConfigProperty(BOM_ORIGINAL_RETENTION_POLICY, policy.name());
     }
 
     private static List<byte[]> getOriginalFileMetadataOfBoms(Project project) {
@@ -2928,7 +2918,6 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
     @Test
     void shouldClearOlderRetainedBomFilesWithLatestOnlyRetention() throws Exception {
-        configureRetention(true, BomRetentionPolicy.LATEST_ONLY);
         final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
 
         final FileMetadata firstBomFile = storeBomFile("bom-1.xml");
@@ -2940,26 +2929,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         verify(dexEngineMock).createRun(argThat(request -> isDeleteFilesRunFor(request, firstBomFile)));
     }
 
-    @ParameterizedTest
-    @CsvSource({"false, LATEST_ONLY", "true, AGE_BASED"})
-    void shouldKeepOlderRetainedBomFilesWhenLatestOnlyRetentionIsInactive(
-            boolean retentionEnabled, BomRetentionPolicy policy) throws Exception {
-        configureRetention(retentionEnabled, policy);
-        final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
-
-        final FileMetadata firstBomFile = storeBomFile("bom-1.xml");
-        activity.execute(null, buildRetainedArg(project, firstBomFile));
-        final FileMetadata secondBomFile = storeBomFile("bom-1.xml");
-        activity.execute(null, buildRetainedArg(project, secondBomFile));
-
-        assertThat(getOriginalFileMetadataOfBoms(project))
-                .containsExactly(firstBomFile.toByteArray(), secondBomFile.toByteArray());
-        verify(dexEngineMock, never()).createRun(argThat(request -> "delete-files".equals(request.workflowName())));
-    }
-
     @Test
     void shouldKeepOlderRetainedBomFilesWhenImportIsNotRetained() throws Exception {
-        configureRetention(true, BomRetentionPolicy.LATEST_ONLY);
         final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
 
         final FileMetadata firstBomFile = storeBomFile("bom-1.xml");

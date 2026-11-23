@@ -28,7 +28,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -126,68 +125,6 @@ public class BomDaoTest extends PersistenceCapableTest {
 
         assertThat(dao.clearOlderOriginalFileMetadata(boundary)).hasSize(1);
         assertThat(dao.clearOlderOriginalFileMetadata(boundary)).isEmpty();
-    }
-
-    @Test
-    void clearExpiredOriginalFileMetadataShouldOnlyClearFilesImportedAtOrBeforeCutoff() {
-        final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
-        final Project otherProject = qm.createProject("acme-other", null, "1.0", null, null, null, null, false);
-        final Instant cutoff = Instant.parse("2026-01-10T00:00:00Z");
-
-        final long beforeCutoff =
-                persistBomImportedAt(project, fileMetadata("before"), cutoff.minus(Duration.ofDays(1)));
-        final long atCutoff = persistBomImportedAt(project, fileMetadata("at"), cutoff);
-        final long afterCutoff = persistBomImportedAt(project, fileMetadata("after"), cutoff.plusSeconds(1));
-        final long notRetained = persistBomImportedAt(project, null, cutoff.minus(Duration.ofDays(1)));
-        final long otherProjectExpired =
-                persistBomImportedAt(otherProject, fileMetadata("other"), cutoff.minus(Duration.ofDays(1)));
-
-        final List<OriginalBomFileMetadataRow> clearedRows = dao.clearExpiredOriginalFileMetadata(cutoff, 10);
-
-        assertThat(clearedRows)
-                .extracting(OriginalBomFileMetadataRow::serializedFileMetadata)
-                .containsExactlyInAnyOrder(
-                        fileMetadata("before").toByteArray(),
-                        fileMetadata("at").toByteArray(),
-                        fileMetadata("other").toByteArray());
-        assertThat(clearedRows)
-                .extracting(OriginalBomFileMetadataRow::projectUuid)
-                .containsExactlyInAnyOrder(project.getUuid(), project.getUuid(), otherProject.getUuid());
-
-        assertThat(getOriginalFileMetadata(beforeCutoff)).isNull();
-        assertThat(getOriginalFileMetadata(atCutoff)).isNull();
-        assertThat(getOriginalFileMetadata(otherProjectExpired)).isNull();
-        assertThat(getOriginalFileMetadata(notRetained)).isNull();
-        assertThat(getOriginalFileMetadata(afterCutoff))
-                .isEqualTo(fileMetadata("after").toByteArray());
-
-        assertThat(countBoms()).isEqualTo(5);
-    }
-
-    @Test
-    void clearExpiredOriginalFileMetadataShouldClearAtMostBatchSize() {
-        final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
-        final Instant cutoff = Instant.now();
-        persistBomImportedAt(project, fileMetadata("expired-1"), cutoff.minus(Duration.ofDays(3)));
-        persistBomImportedAt(project, fileMetadata("expired-2"), cutoff.minus(Duration.ofDays(2)));
-        persistBomImportedAt(project, fileMetadata("expired-3"), cutoff.minus(Duration.ofDays(1)));
-
-        assertThat(dao.clearExpiredOriginalFileMetadata(cutoff, 2)).hasSize(2);
-        assertThat(dao.clearExpiredOriginalFileMetadata(cutoff, 2)).hasSize(1);
-        assertThat(dao.clearExpiredOriginalFileMetadata(cutoff, 2)).isEmpty();
-    }
-
-    @Test
-    void clearExpiredOriginalFileMetadataShouldKeepFileReferencedByNonExpiredBom() {
-        final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
-        final Instant cutoff = Instant.now();
-        final FileMetadata shared = fileMetadata("shared");
-
-        final long expired = persistBomImportedAt(project, shared, cutoff.minus(Duration.ofDays(1)));
-        persistBomImportedAt(project, shared, cutoff.plusSeconds(60));
-
-        assertThat(dao.clearExpiredOriginalFileMetadata(cutoff, 10)).isEmpty();
-        assertThat(getOriginalFileMetadata(expired)).isEqualTo(shared.toByteArray());
     }
 
     private long persistBom(final Project project, final @Nullable FileMetadata fileMetadata) {

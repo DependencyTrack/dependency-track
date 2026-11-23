@@ -178,30 +178,9 @@ When retention is enabled, a successful import will associate the metadata of
 the existing upload object with the new `BOM` record. The workflow will leave
 that object in FileStorage. It will not write a second copy.
 
-Administrators will choose one of two retention policies. Latest-only is the
-default. It keeps the retained document of the newest import of each project.
+Administrators will choose if they wish to enable the latest-only retention policy. It keeps the retained document of the newest import of each project.
 After a retained import commits, the retained documents of older imports of
-that project are removed. The new import and any later imports are kept.
-Age-based retention keeps retained documents until they reach a configured age.
-The age is measured from the import time in whole 24-hour days. A document that
-reaches the configured age exactly becomes eligible for removal, and the next
-scheduled run removes it. The default is 90 days, and the value must be
-positive. The newest document of a project is also removed once it is old
-enough. The endpoint then returns not found for that project.
-
-The policy settings will be read when cleanup runs, not when the upload is
-accepted. Latest-only cleanup runs after each retained import. Age-based
-cleanup runs as a scheduled maintenance task, daily by default. Disabling
-retention stops new cleanup, but it does not delete existing documents.
-Switching from age-based to latest-only removes the accumulated older documents
-of a project at its next retained import. Retention cleanup keeps BOM records
-and only clears their reference to the stored document.
-
-When retention is disabled, the workflow will continue deleting the upload
-after a successful import. A failed import will delete the upload unless a
-committed `BOM` record references it. If the workflow cannot determine whether
-such a reference exists, it retains the upload. A failure to create the import
-workflow will also trigger a compensating deletion attempt.
+that project are removed. The new import is kept and prior imports are removed.
 
 The existing V1 upload API will remain the upload path. The document retained
 from this path will be the decoded and decompressed BOM document used by the
@@ -232,8 +211,7 @@ transaction clears the references and returns their metadata. Afterwards,
 the same asynchronous file deletion will be scheduled. A failure of
 latest-only cleanup will be logged and will not fail the import. Its
 transaction rolls back, so the next retained import of the project
-tries again. A failed age-based run keeps its references, and the
-next scheduled run tries again.
+tries again.
 
 A missing object during cleanup will be treated as already deleted. Malformed
 metadata and other cleanup failures will be logged for manual follow-up. They
@@ -251,18 +229,12 @@ only receiving a newly constructed export. Large BOM content remains outside
 PostgreSQL and workflow messages.
 
 The database gains one nullable column. Existing rows remain valid. No backfill
-is required. Age-based cleanup filters on the import time without a
-dedicated index. An index can be added if measurements show a need.
+is required.
 
 Each successful opted-in import adds one retained FileStorage object and one
-small metadata value. The retention policies are meant to limit how much of
+small metadata value. The retention policy is meant to limit how much of
 this storage stays in use. With latest-only retention, each project will
-normally store one document. With age-based retention, storage use depends
-on how often the projects receive uploads and on the configured number of
-days. The initial API exposes only the newest retained document for each
-project. Older files retained with age-based retention cannot be retrieved
-by the API yet. Operators must plan storage capacity and retention around this
-behavior.
+normally store one document. The initial API exposes only the newest retained document for each project. Operators must plan storage capacity and retention around this behavior.
 
 Database and FileStorage operations remain non-atomic. A reference can point
 to a missing object. A crash can also leave an object with no database

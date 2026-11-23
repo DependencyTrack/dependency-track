@@ -748,7 +748,7 @@ class OsvVulnDataSourceTest {
 
     @Test
     void shouldReportRequestUrlWhenFullArchiveDownloadFails(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlEqualTo("/Bioconductor/all.zip")).willReturn(aResponse().withStatus(404)));
+        stubFor(get(urlEqualTo("/Bioconductor/all.zip")).willReturn(aResponse().withStatus(500)));
 
         try (var dataSource = new OsvVulnDataSource(
                 null,
@@ -761,9 +761,112 @@ class OsvVulnDataSourceTest {
                     .isThrownBy(dataSource::hasNext)
                     .withMessage("""
                             Failed to download advisory archive for ecosystem Bioconductor: \
-                            GET %s/Bioconductor/all.zip responded with status code 404\
+                            GET %s/Bioconductor/all.zip responded with status code 500\
                             """, wmRuntimeInfo.getHttpBaseUrl());
         }
+    }
+
+    @Test
+    void shouldFailOnCloseWhenFullArchiveIsNotFound(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(get(urlEqualTo("/Bioconductor/all.zip")).willReturn(aResponse().withStatus(404)));
+
+        final var dataSource = new OsvVulnDataSource(
+                null,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("Bioconductor"),
+                HttpClient.newHttpClient(),
+                false);
+
+        assertThat(dataSource.hasNext()).isFalse();
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(dataSource::close)
+                .withMessage("""
+                        Failed to download advisory archive for 1 of 1 ecosystems; \
+                        all other ecosystems were mirrored: \
+                        ecosystem Bioconductor: GET %s/Bioconductor/all.zip responded with status code 404\
+                        """, wmRuntimeInfo.getHttpBaseUrl());
+
+        // The failure must be reported once only.
+        assertThatNoException().isThrownBy(dataSource::close);
+    }
+
+    @Test
+    void shouldMirrorRemainingEcosystemsWhenFullArchiveIsNotFound(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlEqualTo("/alpine/all.zip")).willReturn(aResponse().withStatus(404)));
+        stubArchive("/maven/all.zip", "OSV-maven-1");
+        stubArchive("/npm/all.zip", "OSV-npm-1");
+
+        final var dataSource = new OsvVulnDataSource(
+                null,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("alpine", "maven", "npm"),
+                HttpClient.newHttpClient(),
+                false);
+
+        final var ids = new ArrayList<String>();
+        while (dataSource.hasNext()) {
+            ids.add(dataSource.next().getVulnerabilitiesList().getFirst().getId());
+        }
+
+        assertThat(ids).containsExactly("OSV-maven-1", "OSV-npm-1");
+        verify(getRequestedFor(urlEqualTo("/alpine/all.zip")));
+        verify(getRequestedFor(urlEqualTo("/maven/all.zip")));
+        verify(getRequestedFor(urlEqualTo("/npm/all.zip")));
+
+        // The run must still fail, so that the missing archive does not go unnoticed.
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(dataSource::close)
+                .withMessageContaining("1 of 3 ecosystems")
+                .withMessageContaining("ecosystem alpine: GET")
+                .withMessageContaining("/alpine/all.zip responded with status code 404");
+    }
+
+    @Test
+    void shouldCommitWatermarksOfOtherEcosystemsBeforeFailingOnClose(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
+        stubFor(get(urlEqualTo("/alpine/all.zip")).willReturn(aResponse().withStatus(404)));
+        stubArchive("/maven/all.zip", "OSV-maven-1");
+
+        final var dataSource = new OsvVulnDataSource(
+                watermarkManagerMock,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("alpine", "maven"),
+                HttpClient.newHttpClient(),
+                false);
+
+        while (dataSource.hasNext()) {
+            dataSource.markProcessed(dataSource.next());
+        }
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(dataSource::close);
+
+        verify(watermarkManagerMock, never()).maybeAdvance(eq("alpine"), any());
+        verify(watermarkManagerMock, never()).maybeCommit(List.of("alpine"));
+        verify(watermarkManagerMock).maybeAdvance(eq("maven"), any());
+        verify(watermarkManagerMock).maybeCommit(List.of("maven"));
+        // NB: close() must persist the watermarks before reporting the failure.
+        verify(watermarkManagerMock).maybeCommit(Set.of("maven"));
+    }
+
+    private static void stubArchive(String path, String advisoryId) throws Exception {
+        final var archive = new ByteArrayOutputStream();
+        try (var zos = new ZipOutputStream(archive)) {
+            zos.putNextEntry(new ZipEntry(advisoryId + ".json"));
+            zos.write(/* language=JSON */ """
+                    {"id":"%s","summary":"test","affected":[],"modified":"2024-01-01T00:00:00Z"}
+                    """.formatted(advisoryId).getBytes());
+            zos.closeEntry();
+        }
+
+        stubFor(get(urlEqualTo(path))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/zip")
+                        .withBody(archive.toByteArray())));
     }
 
     @Test

@@ -46,7 +46,9 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -68,6 +70,7 @@ final class OsvVulnDataSource implements VulnDataSource {
     private final String dataUrl;
     private final List<String> ecosystems;
     private final Set<String> successfullyCompletedEcosystems;
+    private final Map<String, String> failureByMissingArchiveEcosystem;
     private final HttpClient httpClient;
     private final ModelConverter modelConverter;
     private @Nullable String currentEcosystem;
@@ -91,6 +94,7 @@ final class OsvVulnDataSource implements VulnDataSource {
         this.ecosystems = List.copyOf(ecosystems);
         this.isAliasSyncEnabled = isAliasSyncEnabled;
         this.successfullyCompletedEcosystems = new HashSet<>();
+        this.failureByMissingArchiveEcosystem = new LinkedHashMap<>();
         this.httpClient = httpClient;
         this.modelConverter = new ModelConverter(objectMapper);
     }
@@ -153,6 +157,13 @@ final class OsvVulnDataSource implements VulnDataSource {
 
     private void completeCurrentEcosystem() {
         final String ecosystem = requireNonNull(currentEcosystem, "currentEcosystem must not be null");
+        if (failureByMissingArchiveEcosystem.containsKey(ecosystem)) {
+            // NB: Nothing was mirrored for this ecosystem, so it must not be reported as completed.
+            // The failure is reported when the data source is closed.
+            closeCurrentEcosystem();
+            return;
+        }
+
         successfullyCompletedEcosystems.add(ecosystem);
         if (watermarkManager != null) {
             watermarkManager.maybeCommit(List.of(ecosystem));
@@ -189,12 +200,34 @@ final class OsvVulnDataSource implements VulnDataSource {
         }
     }
 
+    /**
+     * Persists the watermarks of all ecosystems that were mirrored successfully.
+     * <p>
+     * If the advisory archive of one or more ecosystems could not be found, those ecosystems
+     * were skipped so that the remaining ones could still be mirrored. This is reported here,
+     * after everything else was consumed and persisted, so the mirror run is marked as failed
+     * instead of silently succeeding with incomplete data.
+     *
+     * @throws IllegalStateException When the advisory archive of at least one ecosystem was not found.
+     */
     @Override
     public void close() {
         if (watermarkManager != null) {
             watermarkManager.maybeCommit(successfullyCompletedEcosystems);
         }
         closeCurrentEcosystem();
+
+        if (!failureByMissingArchiveEcosystem.isEmpty()) {
+            final String message =
+                    "Failed to download advisory archive for %d of %d ecosystems; all other ecosystems were mirrored: %s"
+                            .formatted(
+                                    failureByMissingArchiveEcosystem.size(),
+                                    ecosystems.size(),
+                                    String.join("; ", failureByMissingArchiveEcosystem.values()));
+            // NB: Report once only. close() may legitimately be invoked more than once.
+            failureByMissingArchiveEcosystem.clear();
+            throw new IllegalStateException(message);
+        }
     }
 
     private @Nullable Bom readNextItem() {
@@ -261,7 +294,8 @@ final class OsvVulnDataSource implements VulnDataSource {
         return new IncrementalOsvAdvisorySource(httpClient, objectMapper, dataUrl, ecosystem, modifiedAdvisoryIds);
     }
 
-    private ZipOsvAdvisorySource downloadFullArchive(String ecosystem, @Nullable Set<String> modifiedAdvisoryIds) {
+    private @Nullable OsvAdvisorySource downloadFullArchive(
+            String ecosystem, @Nullable Set<String> modifiedAdvisoryIds) {
         LOGGER.info("Downloading all advisories for ecosystem {} from upstream", ecosystem);
 
         final Path tempZipPath;
@@ -286,6 +320,27 @@ final class OsvVulnDataSource implements VulnDataSource {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Interrupted while downloading advisory archive", e);
             }
+            if (response.statusCode() == 404) {
+                // NB: Some ecosystems have no archive upstream, even though they are listed as defined
+                // in the OSV schema. Don't let a single one of them prevent all ecosystems that come after
+                // it from being mirrored. Remember the failure and report it in close(), once everything
+                // else was processed, so that the run still fails and the problem remains visible.
+                LOGGER.warn(
+                        "Advisory archive for ecosystem {} was not found (GET {} responded with status code 404); "
+                                + "Skipping it, and failing the mirror run once all other ecosystems were processed",
+                        ecosystem,
+                        request.uri());
+                failureByMissingArchiveEcosystem.put(
+                        ecosystem,
+                        "ecosystem %s: GET %s responded with status code 404".formatted(ecosystem, request.uri()));
+                try {
+                    Files.deleteIfExists(tempZipPath);
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to delete temporary file {}", tempZipPath, e);
+                }
+                return null;
+            }
+
             if (response.statusCode() != 200) {
                 throw new IllegalStateException(
                         "Failed to download advisory archive for ecosystem %s: GET %s responded with status code %d"

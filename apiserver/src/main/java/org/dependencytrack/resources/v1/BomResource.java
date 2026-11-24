@@ -48,6 +48,7 @@ import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
+import org.dependencytrack.exception.ProjectAccessDeniedException;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.model.BomValidationMode;
@@ -65,6 +66,7 @@ import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.parser.cyclonedx.InvalidBomException;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
@@ -115,6 +117,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -134,6 +137,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_T
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomValidationFailedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
@@ -403,6 +407,11 @@ public class BomResource extends AbstractApiResource {
                       <code>PUT /api/v1/project</code>. The <code>isActive</code> parameter sets the project's active
                       state whenever it is provided, including when the target project already exists, so
                       clients should send it only when they intend to change that state.
+                      When <code>isActiveExclusively</code> is <code>true</code>, the target project version is marked
+                      active and all other active versions of the same project are deactivated. It cannot be combined
+                      with <code>isActive=false</code>, requires access to all other active versions when Portfolio
+                      Access Control is enabled, and fails with <code>409</code> if the target has an inactive ancestor
+                      or another active version has active child projects.
                     </p>
                     <p>
                       The maximum allowed length of the <code>bom</code> value is 20'000'000 characters.
@@ -424,7 +433,7 @@ public class BomResource extends AbstractApiResource {
                                 @Content(
                                         schema = @Schema(implementation = InvalidBomProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "400", description = "The uploaded BOM is invalid"),
+                @ApiResponse(responseCode = "400", description = "The uploaded BOM or request parameters are invalid"),
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(
                         responseCode = "403",
@@ -433,15 +442,55 @@ public class BomResource extends AbstractApiResource {
                                 @Content(
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "404", description = "The project could not be found")
+                @ApiResponse(responseCode = "404", description = "The project could not be found"),
+                @ApiResponse(
+                        responseCode = "409",
+                        description =
+                                "A project with the specified name and version already exists, the target has an inactive ancestor, or another active version has active child projects")
             })
     @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
     public Response uploadBom(@Parameter(required = true) BomSubmitRequest request) {
+        if (request.isActiveExclusively() && Boolean.FALSE.equals(request.isActive())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("isActive cannot be false when isActiveExclusively is true.")
+                    .build();
+        }
         final Validator validator = getValidator();
-        final ProjectInfo projectInfo;
-        if (request.getProject() != null) { // behavior in v3.0.0
+        if (request.getProject() != null) {
             failOnValidationError(
                     validator.validateProperty(request, "project"), validator.validateProperty(request, "bom"));
+        } else {
+            failOnValidationError(
+                    validator.validateProperty(request, "projectName"),
+                    validator.validateProperty(request, "projectVersion"),
+                    validator.validateProperty(request, "bom"));
+        }
+
+        final byte[] bomBytes;
+        try (final var encodedInputStream =
+                        new ByteArrayInputStream(request.getBom().getBytes(StandardCharsets.UTF_8));
+                final var decodedInputStream = Base64.getDecoder().wrap(encodedInputStream);
+                final var byteOrderMarkInputStream = BOMInputStream.builder()
+                        .setInputStream(decodedInputStream)
+                        .get()) {
+            bomBytes = IOUtils.toByteArray(byteOrderMarkInputStream);
+        } catch (IOException e) {
+            LOGGER.error("An unexpected error occurred while decoding uploaded BOM", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
+        if (request.isActiveExclusively()) {
+            preValidateBomForExclusiveActivation(
+                    bomBytes,
+                    request.getProject(),
+                    request.getProjectName(),
+                    request.getProjectVersion(),
+                    request.isAutoCreate(),
+                    request.getProjectTags());
+        }
+
+        final ProjectInfo projectInfo;
+        if (request.getProject() != null) { // behavior in v3.0.0
             try (QueryManager qm = new QueryManager(getAlpineRequest())) {
                 projectInfo = qm.callInTransaction(() -> {
                     final Project project = qm.getObjectByUuid(Project.class, request.getProject());
@@ -456,22 +505,35 @@ public class BomResource extends AbstractApiResource {
                                 .entity("BOM cannot be uploaded to a collection project.")
                                 .build());
                     }
-                    maybeBindTags(qm, project, request.getProjectTags());
-                    if (request.isActive() != null) {
-                        project.setActive(request.isActive());
+                    final String projectName;
+                    if (request.isActiveExclusively()) {
+                        projectName = lockProjectForExclusiveActivation(qm, project.getId(), project.getName());
+                        if (!projectName.equals(project.getName())) {
+                            qm.getPersistenceManager().refresh(project);
+                            if (project.getCollectionLogic() != null) {
+                                throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
+                                        .entity("BOM cannot be uploaded to a collection project.")
+                                        .build());
+                            }
+                        }
+                    } else {
+                        projectName = project.getName();
                     }
-                    return ProjectInfo.of(project);
+                    maybeBindTags(qm, project, request.getProjectTags());
+                    final ProjectInfo info = ProjectInfo.of(project, projectName);
+                    applyActiveState(qm, project, projectName, request.isActive(), request.isActiveExclusively());
+                    return info;
                 });
             }
         } else { // additional behavior added in v3.1.0
-            failOnValidationError(
-                    validator.validateProperty(request, "projectName"),
-                    validator.validateProperty(request, "projectVersion"),
-                    validator.validateProperty(request, "bom"));
             try (final var qm = new QueryManager(getAlpineRequest())) {
                 projectInfo = qm.callInTransaction(() -> {
                     final String trimmedProjectName = StringUtils.trimToNull(request.getProjectName());
                     final String trimmedProjectVersion = StringUtils.trimToNull(request.getProjectVersion());
+
+                    if (request.isActiveExclusively() && trimmedProjectName != null) {
+                        acquireExclusiveActivationLock(qm, trimmedProjectName);
+                    }
 
                     // NB: Bypass portfolio ACL for this lookup since it would otherwise filter out existing
                     // projects that are inaccessible. `autoCreate=true` would then lead to us trying to create
@@ -562,29 +624,14 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, request.getProjectTags());
-                    if (request.isActive() != null) {
-                        project.setActive(request.isActive());
-                    }
-                    return ProjectInfo.of(project);
+                    final ProjectInfo info = ProjectInfo.of(project);
+                    applyActiveState(qm, project, project.getName(), request.isActive(), request.isActiveExclusively());
+                    return info;
                 });
             }
         }
 
-        final byte[] bomBytes;
-        try (final var encodedInputStream =
-                        new ByteArrayInputStream(request.getBom().getBytes(StandardCharsets.UTF_8));
-                final var decodedInputStream = Base64.getDecoder().wrap(encodedInputStream);
-                final var byteOrderMarkInputStream = BOMInputStream.builder()
-                        .setInputStream(decodedInputStream)
-                        .get()) {
-            bomBytes = IOUtils.toByteArray(byteOrderMarkInputStream);
-        } catch (IOException e) {
-            LOGGER.error(
-                    "An unexpected error occurred while decoding BOM uploaded to project: {}", projectInfo.uuid(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        }
-
-        return processUpload(projectInfo, bomBytes);
+        return processUpload(projectInfo, bomBytes, request.isActiveExclusively());
     }
 
     @POST
@@ -619,6 +666,11 @@ public class BomResource extends AbstractApiResource {
                       <code>PUT /api/v1/project</code>. The <code>isActive</code> parameter sets the project's active
                       state whenever it is provided, including when the target project already exists, so
                       clients should send it only when they intend to change that state.
+                      When <code>isActiveExclusively</code> is <code>true</code>, the target project version is marked
+                      active and all other active versions of the same project are deactivated. It cannot be combined
+                      with <code>isActive=false</code>, requires access to all other active versions when Portfolio
+                      Access Control is enabled, and fails with <code>409</code> if the target has an inactive ancestor
+                      or another active version has active child projects.
                     </p>
                     <p>Requires permission <strong>BOM_UPLOAD</strong></p>""",
             operationId = "UploadBom")
@@ -635,7 +687,7 @@ public class BomResource extends AbstractApiResource {
                                 @Content(
                                         schema = @Schema(implementation = InvalidBomProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-                @ApiResponse(responseCode = "400", description = "The uploaded BOM is invalid"),
+                @ApiResponse(responseCode = "400", description = "The uploaded BOM or request parameters are invalid"),
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(
                         responseCode = "403",
@@ -645,6 +697,10 @@ public class BomResource extends AbstractApiResource {
                                         schema = @Schema(implementation = ProblemDetails.class),
                                         mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
                 @ApiResponse(responseCode = "404", description = "The project could not be found"),
+                @ApiResponse(
+                        responseCode = "409",
+                        description =
+                                "A project with the specified name and version already exists, the target has an inactive ancestor, or another active version has active child projects"),
                 @ApiResponse(
                         responseCode = "413",
                         description = "The uploaded document is too large",
@@ -668,12 +724,21 @@ public class BomResource extends AbstractApiResource {
             @FormDataParam("parentUUID") String parentUUID,
             @DefaultValue("false") @FormDataParam("isLatest") boolean isLatest,
             @FormDataParam("isActive") Boolean isActive,
+            @Parameter(description = """
+                    Activate the uploaded project version and deactivate all other active versions \
+                    of the same project. Cannot be combined with isActive=false.""") @DefaultValue("false") @FormDataParam("isActiveExclusively")
+                    boolean isActiveExclusively,
             @Parameter(schema = @Schema(type = "string", format = "binary")) @FormDataParam("bom")
                     final List<FormDataBodyPart> artifactParts) {
         if (artifactParts == null || artifactParts.isEmpty()) {
             throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
                     .entity("No BOM file provided.")
                     .build());
+        }
+        if (isActiveExclusively && Boolean.FALSE.equals(isActive)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("isActive cannot be false when isActiveExclusively is true.")
+                    .build();
         }
 
         final List<Tag> requestTags = (projectTags != null && !projectTags.isBlank())
@@ -684,6 +749,29 @@ public class BomResource extends AbstractApiResource {
                         .toList()
                 : null;
         final List<Team> requestAccessTeams = parseAccessTeams(accessTeamsJson);
+
+        final FormDataBodyPart firstPart = artifactParts.getFirst();
+        final var encoding = firstPart.getHeaders().getFirst("Content-Type");
+
+        final byte[] bomBytes;
+        try (final var inputStream = ((BodyPartEntity) firstPart.getEntity()).getInputStream();
+                final var encodingStream = (switch (encoding) {
+                    case "application/gzip", "application/x-gzip" -> new GZIPInputStream(inputStream);
+                    case "application/zstd", "application/x-zstd" -> new ZstdInputStream(inputStream);
+                    case null, default -> inputStream;
+                });
+                final var byteOrderMarkInputStream =
+                        BOMInputStream.builder().setInputStream(encodingStream).get()) {
+            bomBytes = readUpload(byteOrderMarkInputStream, ConfigKeys.BOM_UPLOAD_MAX_SIZE_BYTES);
+        } catch (IOException e) {
+            LOGGER.error("An unexpected error occurred while reading BOM from upload", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
+        if (isActiveExclusively) {
+            preValidateBomForExclusiveActivation(
+                    bomBytes, projectUuid, projectName, projectVersion, autoCreate, requestTags);
+        }
 
         final ProjectInfo projectInfo;
         if (projectUuid != null) { // behavior in v3.0.0
@@ -701,11 +789,24 @@ public class BomResource extends AbstractApiResource {
                                 .entity("BOM cannot be uploaded to a collection project.")
                                 .build());
                     }
-                    maybeBindTags(qm, project, requestTags);
-                    if (isActive != null) {
-                        project.setActive(isActive);
+                    final String resolvedProjectName;
+                    if (isActiveExclusively) {
+                        resolvedProjectName = lockProjectForExclusiveActivation(qm, project.getId(), project.getName());
+                        if (!resolvedProjectName.equals(project.getName())) {
+                            qm.getPersistenceManager().refresh(project);
+                            if (project.getCollectionLogic() != null) {
+                                throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
+                                        .entity("BOM cannot be uploaded to a collection project.")
+                                        .build());
+                            }
+                        }
+                    } else {
+                        resolvedProjectName = project.getName();
                     }
-                    return ProjectInfo.of(project);
+                    maybeBindTags(qm, project, requestTags);
+                    final ProjectInfo info = ProjectInfo.of(project, resolvedProjectName);
+                    applyActiveState(qm, project, resolvedProjectName, isActive, isActiveExclusively);
+                    return info;
                 });
             }
         } else { // additional behavior added in v3.1.0
@@ -713,6 +814,10 @@ public class BomResource extends AbstractApiResource {
                 projectInfo = qm.callInTransaction(() -> {
                     final String trimmedProjectName = StringUtils.trimToNull(projectName);
                     final String trimmedProjectVersion = StringUtils.trimToNull(projectVersion);
+
+                    if (isActiveExclusively && trimmedProjectName != null) {
+                        acquireExclusiveActivationLock(qm, trimmedProjectName);
+                    }
 
                     // NB: Bypass portfolio ACL for this lookup since it would otherwise filter out existing
                     // projects that are inaccessible. `autoCreate=true` would then lead to us trying to create
@@ -798,41 +903,26 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, requestTags);
-                    if (isActive != null) {
-                        project.setActive(isActive);
-                    }
-                    return ProjectInfo.of(project);
+                    final ProjectInfo info = ProjectInfo.of(project);
+                    applyActiveState(qm, project, project.getName(), isActive, isActiveExclusively);
+                    return info;
                 });
             }
         }
 
-        final FormDataBodyPart firstPart = artifactParts.getFirst();
-        final var encoding = firstPart.getHeaders().getFirst("Content-Type");
-
-        final byte[] bomBytes;
-        try (final var inputStream = ((BodyPartEntity) firstPart.getEntity()).getInputStream();
-                final var encodingStream = (switch (encoding) {
-                    case "application/gzip", "application/x-gzip" -> new GZIPInputStream(inputStream);
-                    case "application/zstd", "application/x-zstd" -> new ZstdInputStream(inputStream);
-                    case null, default -> inputStream;
-                });
-                final var byteOrderMarkInputStream =
-                        BOMInputStream.builder().setInputStream(encodingStream).get()) {
-            bomBytes = readUpload(byteOrderMarkInputStream, ConfigKeys.BOM_UPLOAD_MAX_SIZE_BYTES);
-        } catch (IOException e) {
-            LOGGER.error("An unexpected error occurred while reading BOM from upload", e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        }
-
-        return processUpload(projectInfo, bomBytes);
+        return processUpload(projectInfo, bomBytes, isActiveExclusively);
     }
 
     private record ProjectInfo(UUID uuid, String name, String version, List<String> tagNames) {
 
         static ProjectInfo of(Project project) {
+            return of(project, project.getName());
+        }
+
+        static ProjectInfo of(Project project, String projectName) {
             return new ProjectInfo(
                     project.getUuid(),
-                    project.getName(),
+                    projectName,
                     project.getVersion(),
                     project.getTags() != null
                             ? project.getTags().stream().map(Tag::getName).toList()
@@ -842,8 +932,10 @@ public class BomResource extends AbstractApiResource {
 
     // todo: make option to combine all the bom data so components are reconciled in a single pass.
     // todo: https://github.com/DependencyTrack/dependency-track/issues/130
-    private Response processUpload(ProjectInfo project, byte[] bomBytes) {
-        validateBom(bomBytes, project.tagNames(), project.uuid());
+    private Response processUpload(ProjectInfo project, byte[] bomBytes, boolean alreadyValidated) {
+        if (!alreadyValidated) {
+            validateBom(bomBytes, project.tagNames(), project.uuid());
+        }
 
         final UUID bomUploadToken = Generators.timeBasedEpochRandomGenerator().generate();
 
@@ -920,7 +1012,7 @@ public class BomResource extends AbstractApiResource {
         validateBom(bomBytes, tagNames, project.getUuid());
     }
 
-    private static void validateBom(byte[] bomBytes, List<String> projectTagNames, UUID projectUuid) {
+    private static void validateBom(byte[] bomBytes, List<String> projectTagNames, @Nullable UUID projectUuid) {
         if (!shouldValidate(projectTagNames)) {
             return;
         }
@@ -936,14 +1028,17 @@ public class BomResource extends AbstractApiResource {
                 problemDetails.setErrors(e.getValidationErrors());
             }
 
-            useJdbiTransaction(handle -> {
-                final List<org.dependencytrack.notification.proto.v1.Project> projects =
-                        handle.attach(NotificationSubjectDao.class).getProjects(List.of(projectUuid));
-                if (!projects.isEmpty()) {
-                    new JdbiNotificationEmitter(handle)
-                            .emit(createBomValidationFailedNotification(projects.getFirst(), e.getValidationErrors()));
-                }
-            });
+            if (projectUuid != null) {
+                useJdbiTransaction(handle -> {
+                    final List<org.dependencytrack.notification.proto.v1.Project> projects =
+                            handle.attach(NotificationSubjectDao.class).getProjects(List.of(projectUuid));
+                    if (!projects.isEmpty()) {
+                        new JdbiNotificationEmitter(handle)
+                                .emit(createBomValidationFailedNotification(
+                                        projects.getFirst(), e.getValidationErrors()));
+                    }
+                });
+            }
 
             throw new WebApplicationException(problemDetails.toResponse());
         } catch (RuntimeException e) {
@@ -1114,5 +1209,165 @@ public class BomResource extends AbstractApiResource {
 
         final Set<Tag> resolvedTags = qm.resolveTags(tags);
         qm.bind(project, resolvedTags);
+    }
+
+    private void preValidateBomForExclusiveActivation(
+            byte[] bomBytes,
+            @Nullable String projectUuid,
+            @Nullable String projectName,
+            @Nullable String projectVersion,
+            boolean autoCreate,
+            @Nullable List<Tag> requestTags) {
+        final List<String> effectiveTagNames;
+        final UUID existingProjectUuid;
+
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Project project;
+            if (projectUuid != null) {
+                project = qm.getObjectByUuid(Project.class, projectUuid);
+                if (project == null) {
+                    throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
+                            .entity("The project could not be found.")
+                            .build());
+                }
+                requireAccess(qm, project);
+            } else {
+                final String trimmedProjectName = StringUtils.trimToNull(projectName);
+                final String trimmedProjectVersion = StringUtils.trimToNull(projectVersion);
+                project = ProjectAccess.unrestricted(() -> qm.getProject(trimmedProjectName, trimmedProjectVersion));
+                if (project == null) {
+                    if (!autoCreate) {
+                        throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
+                                .entity("The project could not be found.")
+                                .build());
+                    }
+                    if (!hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+                            && !hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT_CREATE)
+                            && !hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
+                        throw new WebApplicationException(Response.status(Response.Status.UNAUTHORIZED)
+                                .entity("The principal does not have permission to create project.")
+                                .build());
+                    }
+                } else {
+                    requireAccess(qm, project);
+                }
+            }
+
+            if (project != null) {
+                if (project.getCollectionLogic() != null) {
+                    throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
+                            .entity("BOM cannot be uploaded to a collection project.")
+                            .build());
+                }
+                existingProjectUuid = project.getUuid();
+                effectiveTagNames = resolveEffectiveTagNames(project, requestTags);
+            } else {
+                existingProjectUuid = null;
+                effectiveTagNames = extractNormalizedTagNames(requestTags);
+            }
+        }
+
+        validateBom(bomBytes, effectiveTagNames, existingProjectUuid);
+    }
+
+    private List<String> resolveEffectiveTagNames(Project project, @Nullable List<Tag> requestTags) {
+        final List<String> existingTagNames = project.getTags() != null
+                ? project.getTags().stream().map(Tag::getName).toList()
+                : List.of();
+        if (requestTags == null) {
+            return existingTagNames;
+        }
+        if (!hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+                && !hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE)) {
+            return existingTagNames;
+        }
+        return extractNormalizedTagNames(requestTags);
+    }
+
+    private static List<String> extractNormalizedTagNames(@Nullable List<Tag> tags) {
+        if (tags == null) {
+            return List.of();
+        }
+        return tags.stream()
+                .filter(Objects::nonNull)
+                .map(Tag::getName)
+                .map(StringUtils::trimToNull)
+                .filter(Objects::nonNull)
+                .map(tagName -> tagName.toLowerCase(Locale.ROOT))
+                .toList();
+    }
+
+    private static void acquireExclusiveActivationLock(QueryManager qm, String projectName) {
+        useJdbiHandle(qm, handle -> handle.attach(ProjectDao.class).acquireExclusiveActivationLock(projectName));
+    }
+
+    private static String lockProjectForExclusiveActivation(
+            QueryManager qm, long projectId, String initialProjectName) {
+        final String lockedProjectName;
+        try {
+            lockedProjectName = withJdbiHandle(
+                    qm,
+                    handle -> handle.attach(ProjectDao.class)
+                            .lockProjectForExclusiveActivation(projectId, initialProjectName));
+        } catch (IllegalStateException e) {
+            throw new WebApplicationException(
+                    e,
+                    Response.status(Response.Status.CONFLICT)
+                            .entity("The project was concurrently modified. Please retry.")
+                            .build());
+        }
+        if (lockedProjectName == null) {
+            throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
+                    .entity("The project could not be found.")
+                    .build());
+        }
+        return lockedProjectName;
+    }
+
+    private void applyActiveState(
+            QueryManager qm,
+            Project project,
+            String projectName,
+            @Nullable Boolean isActive,
+            boolean isActiveExclusively) {
+        if (!isActiveExclusively) {
+            if (isActive != null) {
+                project.setActive(isActive);
+            }
+            return;
+        }
+
+        final long projectId = project.getId();
+        final UUID projectUuid = project.getUuid();
+        final String projectVersion = project.getVersion();
+
+        useJdbiHandle(qm, handle -> {
+            final var projectDao = handle.attach(ProjectDao.class);
+            final ProjectDao.ExclusiveActivationPreconditions preconditions =
+                    projectDao.checkExclusiveActivationPreconditions(projectName, projectId);
+            if (preconditions.hasInaccessibleSibling()) {
+                try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, projectUuid.toString());
+                        var _ = MDC.putCloseable(MDC_PROJECT_NAME, projectName);
+                        var _ = MDC.putCloseable(MDC_PROJECT_VERSION, String.valueOf(projectVersion))) {
+                    logSecurityEvent(
+                            LOGGER,
+                            SecurityMarkers.SECURITY_FAILURE,
+                            "Unauthorized attempt to deactivate inaccessible project versions");
+                }
+                throw new ProjectAccessDeniedException("Access to other active versions of this project is forbidden");
+            }
+            if (preconditions.hasInactiveAncestor()) {
+                throw new WebApplicationException(Response.status(Response.Status.CONFLICT)
+                        .entity("Project cannot be set to active if an ancestor project is inactive.")
+                        .build());
+            }
+            if (preconditions.hasSiblingWithActiveChildren()) {
+                throw new WebApplicationException(Response.status(Response.Status.CONFLICT)
+                        .entity(
+                                "Other active versions of this project cannot be deactivated because active children are present.")
+                        .build());
+            }
+            projectDao.activateProjectExclusively(projectName, projectId);
+        });
     }
 }

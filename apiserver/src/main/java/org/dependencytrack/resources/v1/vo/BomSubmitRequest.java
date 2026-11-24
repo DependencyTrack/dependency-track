@@ -98,6 +98,11 @@ public final class BomSubmitRequest {
     private final Boolean isActive;
 
     @Schema(description = """
+            Activate the uploaded project version and deactivate all other active versions \
+            of the same project. Cannot be combined with isActive=false.""")
+    private final boolean isActiveExclusively;
+
+    @Schema(description = """
             Teams to grant access to the project when it is created via autoCreate. \
             Either uuid or name of a team must be specified. Only teams which the authenticated \
             principal is a member of can be assigned. Principals with ACCESS_MANAGEMENT \
@@ -124,7 +129,37 @@ public final class BomSubmitRequest {
                 null,
                 isLatest,
                 isActive,
+                false,
                 null,
+                bom);
+    }
+
+    public BomSubmitRequest(
+            String project,
+            String projectName,
+            String projectVersion,
+            List<Tag> projectTags,
+            boolean autoCreate,
+            String parentUUID,
+            String parentName,
+            String parentVersion,
+            boolean isLatest,
+            Boolean isActive,
+            List<Team> accessTeams,
+            String bom) {
+        this(
+                project,
+                projectName,
+                projectVersion,
+                projectTags,
+                autoCreate,
+                parentUUID,
+                parentName,
+                parentVersion,
+                isLatest,
+                isActive,
+                false,
+                accessTeams,
                 bom);
     }
 
@@ -141,6 +176,7 @@ public final class BomSubmitRequest {
             @JsonProperty(value = "isLatest", defaultValue = "false") @JsonAlias("isLatestProjectVersion")
                     boolean isLatest,
             @JsonProperty(value = "isActive") Boolean isActive,
+            @JsonProperty(value = "isActiveExclusively", defaultValue = "false") boolean isActiveExclusively,
             @JsonProperty(value = "accessTeams") List<Team> accessTeams,
             @JsonProperty(value = "bom", required = true) String bom) {
         this.project = project;
@@ -153,6 +189,7 @@ public final class BomSubmitRequest {
         this.parentVersion = parentVersion;
         this.isLatest = isLatest;
         this.isActive = isActive;
+        this.isActiveExclusively = isActiveExclusively;
         this.accessTeams = accessTeams;
         this.bom = bom;
     }
@@ -204,6 +241,11 @@ public final class BomSubmitRequest {
     @JsonProperty("isActive")
     public Boolean isActive() {
         return isActive;
+    }
+
+    @JsonProperty("isActiveExclusively")
+    public boolean isActiveExclusively() {
+        return isActiveExclusively;
     }
 
     public List<Team> getAccessTeams() {

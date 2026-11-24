@@ -51,6 +51,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jspecify.annotations.Nullable;
 import org.postgresql.util.PSQLException;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1237,4 +1238,118 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
              WHERE "UUID" = :uuid
             """)
     void updateLastVulnAnalysis(@Bind UUID uuid);
+
+    record ExclusiveActivationPreconditions(
+            boolean hasInaccessibleSibling, boolean hasSiblingWithActiveChildren, boolean hasInactiveAncestor) {}
+
+    /// Acquires a transaction-scoped advisory lock serializing exclusive activation
+    /// for all versions of the given project name.
+    ///
+    /// Must be called within an active transaction before mutating project rows
+    /// to prevent deadlocks and write-skew anomalies between concurrent uploads.
+    default void acquireExclusiveActivationLock(String projectName) {
+        try {
+            if (getHandle().getConnection().getAutoCommit()) {
+                throw new IllegalStateException("Advisory locks can only be acquired within a transaction");
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to verify transaction state before acquiring advisory lock", e);
+        }
+        getHandle().createQuery("""
+                        SELECT PG_ADVISORY_XACT_LOCK(HASHTEXTEXTENDED('project-active-exclusively|' || :projectName, 0))
+                        """).bind("projectName", projectName).mapToMap().list();
+    }
+
+    @SqlQuery("""
+            SELECT "NAME"
+              FROM "PROJECT"
+             WHERE "ID" = :projectId
+               AND "NAME" = :expectedName
+               FOR UPDATE
+            """)
+    @Nullable
+    String lockProjectNameIfUnchanged(@Bind long projectId, @Bind String expectedName);
+
+    @SqlQuery("""
+            SELECT "NAME"
+              FROM "PROJECT"
+             WHERE "ID" = :projectId
+            """)
+    @Nullable
+    String getProjectName(@Bind long projectId);
+
+    /// Acquires the exclusive activation advisory lock for the project's current name
+    /// and row-locks the target project row, retrying if the project is concurrently renamed
+    /// before the lock is acquired.
+    ///
+    /// Always acquires the advisory lock before taking the row lock (and filters by the
+    /// expected name so no row lock is acquired on mismatch), preventing deadlocks with
+    /// name-based exclusive activations.
+    ///
+    /// @return The verified current project name, or `null` if the project no longer exists.
+    default @Nullable String lockProjectForExclusiveActivation(long projectId, String initialProjectName) {
+        String candidateName = initialProjectName;
+        for (int attempt = 0; attempt < 5; attempt++) {
+            acquireExclusiveActivationLock(candidateName);
+            final String lockedName = lockProjectNameIfUnchanged(projectId, candidateName);
+            if (lockedName != null) {
+                return lockedName;
+            }
+            final String currentName = getProjectName(projectId);
+            if (currentName == null) {
+                return null;
+            }
+            candidateName = currentName;
+        }
+        throw new IllegalStateException(
+                "Project %d was renamed concurrently too many times while acquiring exclusive activation lock"
+                        .formatted(projectId));
+    }
+
+    @SqlQuery(/* language=InjectedFreeMarker */ """
+            <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
+            SELECT COALESCE(BOOL_OR(NOT (${apiProjectAclCondition})), FALSE) AS has_inaccessible_sibling
+                 , COALESCE(BOOL_OR(EXISTS (
+                     SELECT 1
+                       FROM "PROJECT_HIERARCHY" AS ph
+                      INNER JOIN "PROJECT" AS child_project
+                         ON child_project."ID" = ph."CHILD_PROJECT_ID"
+                      WHERE ph."PARENT_PROJECT_ID" = "PROJECT"."ID"
+                        AND ph."DEPTH" > 0
+                        AND (
+                          (child_project."INACTIVE_SINCE" IS NULL AND child_project."NAME" != :projectName)
+                          OR child_project."ID" = :projectId
+                        )
+                   )), FALSE) AS has_sibling_with_active_children
+                 , EXISTS (
+                     SELECT 1
+                       FROM "PROJECT_HIERARCHY" AS ph
+                      INNER JOIN "PROJECT" AS parent_project
+                         ON parent_project."ID" = ph."PARENT_PROJECT_ID"
+                      WHERE ph."CHILD_PROJECT_ID" = :projectId
+                        AND ph."DEPTH" > 0
+                        AND parent_project."INACTIVE_SINCE" IS NOT NULL
+                   ) AS has_inactive_ancestor
+              FROM "PROJECT"
+             WHERE "PROJECT"."NAME" = :projectName
+               AND "PROJECT"."ID" != :projectId
+               AND "PROJECT"."INACTIVE_SINCE" IS NULL
+            """)
+    @RegisterConstructorMapper(ExclusiveActivationPreconditions.class)
+    ExclusiveActivationPreconditions checkExclusiveActivationPreconditions(
+            @Bind String projectName, @Bind long projectId);
+
+    @SqlUpdate("""
+            UPDATE "PROJECT"
+               SET "INACTIVE_SINCE" = CASE
+                     WHEN "ID" = :projectId THEN NULL
+                     ELSE NOW()
+                   END
+             WHERE "NAME" = :projectName
+               AND (
+                 ("ID" = :projectId AND "INACTIVE_SINCE" IS NOT NULL)
+                 OR ("ID" != :projectId AND "INACTIVE_SINCE" IS NULL)
+               )
+            """)
+    int activateProjectExclusively(@Bind String projectName, @Bind long projectId);
 }

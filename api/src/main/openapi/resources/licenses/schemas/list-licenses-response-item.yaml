@@ -28,7 +28,6 @@ properties:
     description: SPDX license expression.
   license_url:
     type: string
-    format: uri
     description: URL associated with the license.
     maxLength: 255
   ordinality:

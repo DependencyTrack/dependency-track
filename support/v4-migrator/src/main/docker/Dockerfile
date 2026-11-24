@@ -19,7 +19,7 @@ ARG COMMIT_SHA=unknown
 ARG APP_VERSION=0.0.0
 ARG APP_DIR=/opt/owasp/dependency-track/
 
-FROM eclipse-temurin:25.0.5_8-jre-alpine@sha256:56f273059de6b13a6b49fe0ded691ed2d0399bbee76156a8f2d385f7524a3d43
+FROM eclipse-temurin:25.0.5.1_2-jre-alpine@sha256:69c2a26e9894016e274c880fa542956d005b3755f84db765145185e87405bd89
 
 ARG COMMIT_SHA
 ARG APP_VERSION

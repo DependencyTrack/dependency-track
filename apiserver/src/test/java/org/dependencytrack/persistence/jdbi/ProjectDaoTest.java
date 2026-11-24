@@ -52,9 +52,15 @@ import org.junit.jupiter.api.Test;
 import javax.jdo.JDOObjectNotFoundException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -597,5 +603,254 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                         tuple(null, "MIT OR Apache-2.0", null, 2L, "DECLARED"));
 
         assertThat(clonedRows).allSatisfy(row -> assertThat(row.componentId()).isEqualTo(clonedComponentId));
+    }
+
+    @Test
+    public void testActivateProjectExclusively() {
+        final Date earlierInactiveDate =
+                Date.from(Instant.now().minus(3, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS));
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, true, false);
+        final Project versionlessActive =
+                qm.createProject("acme-app", null, null, null, null, null, null, false, false);
+        final Project v2Inactive =
+                qm.createProject("acme-app", null, "2.0.0", null, null, null, earlierInactiveDate, false, false);
+        final Project v0Inactive =
+                qm.createProject("acme-app", null, "0.9.0", null, null, null, earlierInactiveDate, false, false);
+        final Project unrelated = qm.createProject("other-app", null, "1.0.0", null, null, null, null, false, false);
+
+        final int updated = projectDao.activateProjectExclusively("acme-app", v2Inactive.getId());
+        // v2 reactivated + v1 and versionless deactivated = 3 rows; v0 already inactive, unrelated untouched.
+        assertThat(updated).isEqualTo(3);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, v2Inactive.getUuid()).isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, versionlessActive.getUuid())
+                        .isActive())
+                .isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, v0Inactive.getUuid()).getInactiveSince())
+                .isEqualTo(earlierInactiveDate);
+        assertThat(qm.getObjectByUuid(Project.class, unrelated.getUuid()).isActive())
+                .isTrue();
+
+        // Verify trigger_project_last_analysis_sync kept PROJECT_LAST_ANALYSIS in sync.
+        final List<Long> activeInLastAnalysis = jdbiHandle
+                .createQuery("""
+                        SELECT "PROJECT_ID"
+                          FROM "PROJECT_LAST_ANALYSIS"
+                         WHERE "PROJECT_ID" = ANY(:ids)
+                        """)
+                .bind("ids", new Long[] {
+                    v1Active.getId(),
+                    versionlessActive.getId(),
+                    v2Inactive.getId(),
+                    v0Inactive.getId(),
+                    unrelated.getId()
+                })
+                .mapTo(Long.class)
+                .list();
+        assertThat(activeInLastAnalysis).containsExactlyInAnyOrder(v2Inactive.getId(), unrelated.getId());
+    }
+
+    @Test
+    public void testConcurrentActivateProjectExclusively() throws Exception {
+        final Project v1 = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false, false);
+        final Project v2 = qm.createProject("acme-app", null, "2.0.0", null, null, null, null, false, false);
+
+        final int iterations = 10;
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            for (int i = 0; i < iterations; i++) {
+                final var startLatch = new CountDownLatch(1);
+                final Future<?> f1 = executor.submit(() -> {
+                    awaitLatch(startLatch);
+                    useJdbiTransaction(handle -> {
+                        final var dao = handle.attach(ProjectDao.class);
+                        dao.acquireExclusiveActivationLock("acme-app");
+                        dao.activateProjectExclusively("acme-app", v1.getId());
+                    });
+                });
+                final Future<?> f2 = executor.submit(() -> {
+                    awaitLatch(startLatch);
+                    useJdbiTransaction(handle -> {
+                        final var dao = handle.attach(ProjectDao.class);
+                        dao.acquireExclusiveActivationLock("acme-app");
+                        dao.activateProjectExclusively("acme-app", v2.getId());
+                    });
+                });
+
+                startLatch.countDown();
+                f1.get(30, TimeUnit.SECONDS);
+                f2.get(30, TimeUnit.SECONDS);
+
+                final int activeCount =
+                        jdbiHandle.createQuery("""
+                                SELECT COUNT(*)
+                                  FROM "PROJECT"
+                                 WHERE "NAME" = 'acme-app'
+                                   AND "INACTIVE_SINCE" IS NULL
+                                """).mapTo(int.class).one();
+                assertThat(activeCount).isEqualTo(1);
+            }
+        }
+    }
+
+    @Test
+    public void testAcquireExclusiveActivationLockRequiresTransaction() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> projectDao.acquireExclusiveActivationLock("acme-app"))
+                .withMessage("Advisory locks can only be acquired within a transaction");
+
+        assertThatNoException()
+                .isThrownBy(() -> useJdbiTransaction(
+                        handle -> handle.attach(ProjectDao.class).acquireExclusiveActivationLock("acme-app")));
+
+        assertThatNoException()
+                .isThrownBy(() -> qm.callInTransaction(() -> {
+                    useJdbiHandle(
+                            qm, handle -> handle.attach(ProjectDao.class).acquireExclusiveActivationLock("acme-app"));
+                    return null;
+                }));
+    }
+
+    @Test
+    public void testAcquireExclusiveActivationLockBlocksConcurrently() throws Exception {
+        final var holderAcquired = new CountDownLatch(1);
+        final var waiterStarted = new CountDownLatch(1);
+        final var waiterAcquired = new CountDownLatch(1);
+        final var releaseHolder = new CountDownLatch(1);
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            final Future<?> holder = executor.submit(() -> useJdbiTransaction(handle -> {
+                handle.attach(ProjectDao.class).acquireExclusiveActivationLock("acme-app-lock-test");
+                holderAcquired.countDown();
+                awaitLatch(releaseHolder);
+            }));
+
+            assertThat(holderAcquired.await(10, TimeUnit.SECONDS)).isTrue();
+
+            final Future<?> waiter = executor.submit(() -> useJdbiTransaction(handle -> {
+                waiterStarted.countDown();
+                handle.attach(ProjectDao.class).acquireExclusiveActivationLock("acme-app-lock-test");
+                waiterAcquired.countDown();
+            }));
+
+            assertThat(waiterStarted.await(10, TimeUnit.SECONDS)).isTrue();
+
+            // Wait deterministically until PostgreSQL reports the second transaction blocked on the advisory lock.
+            final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            boolean waiterBlocked = false;
+            while (System.nanoTime() < deadlineNanos) {
+                final int waitingLocks =
+                        jdbiHandle.createQuery("""
+                                SELECT COUNT(*)
+                                  FROM pg_locks
+                                 WHERE locktype = 'advisory'
+                                   AND NOT granted
+                                """).mapTo(int.class).one();
+                if (waitingLocks > 0) {
+                    waiterBlocked = true;
+                    break;
+                }
+                Thread.onSpinWait();
+            }
+            assertThat(waiterBlocked).isTrue();
+            assertThat(waiterAcquired.getCount()).isEqualTo(1);
+
+            releaseHolder.countDown();
+            holder.get(10, TimeUnit.SECONDS);
+            waiter.get(10, TimeUnit.SECONDS);
+            assertThat(waiterAcquired.await(10, TimeUnit.SECONDS)).isTrue();
+        }
+    }
+
+    @Test
+    public void testLockProjectForExclusiveActivationHandlesConcurrentRename() throws Exception {
+        final Project oldNameActive = qm.createProject("app-old", null, "1.0.0", null, null, null, null, false, false);
+        final Project target = qm.createProject("app-old", null, "2.0.0", null, null, null, new Date(), false, false);
+        final Project newNameActive = qm.createProject("app-new", null, "1.0.0", null, null, null, null, false, false);
+
+        final var renameRowLocked = new CountDownLatch(1);
+        final var commitRename = new CountDownLatch(1);
+        final var lockAttemptStarted = new CountDownLatch(1);
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            final Future<?> renamer = executor.submit(() -> useJdbiTransaction(handle -> {
+                handle.createUpdate("""
+                                UPDATE "PROJECT"
+                                   SET "NAME" = 'app-new'
+                                 WHERE "ID" = :id
+                                """).bind("id", target.getId()).execute();
+                renameRowLocked.countDown();
+                awaitLatch(commitRename);
+            }));
+
+            assertThat(renameRowLocked.await(10, TimeUnit.SECONDS)).isTrue();
+
+            final Future<String> activator = executor.submit(() -> {
+                final String[] resolvedName = new String[1];
+                useJdbiTransaction(handle -> {
+                    final var dao = handle.attach(ProjectDao.class);
+                    lockAttemptStarted.countDown();
+                    // Passes stale initial name "app-old"; must detect the in-flight rename to "app-new",
+                    // re-lock under "app-new" without deadlocking, and deactivate "app-new" siblings only.
+                    resolvedName[0] = dao.lockProjectForExclusiveActivation(target.getId(), "app-old");
+                    assertThat(resolvedName[0]).isEqualTo("app-new");
+                    dao.activateProjectExclusively(resolvedName[0], target.getId());
+                });
+                return resolvedName[0];
+            });
+
+            assertThat(lockAttemptStarted.await(10, TimeUnit.SECONDS)).isTrue();
+
+            // Wait deterministically until activator holds the "app-old" advisory lock and waits on the row lock.
+            final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (System.nanoTime() < deadlineNanos) {
+                final int waitingTxLocks =
+                        jdbiHandle.createQuery("""
+                                SELECT COUNT(*)
+                                  FROM pg_locks
+                                 WHERE locktype = 'transactionid'
+                                   AND NOT granted
+                                """).mapTo(int.class).one();
+                if (waitingTxLocks > 0) {
+                    break;
+                }
+                Thread.onSpinWait();
+            }
+
+            commitRename.countDown();
+            renamer.get(10, TimeUnit.SECONDS);
+            assertThat(activator.get(10, TimeUnit.SECONDS)).isEqualTo("app-new");
+        }
+
+        qm.getPersistenceManager().evictAll();
+        final Project refreshedTarget = qm.getObjectByUuid(Project.class, target.getUuid());
+        assertThat(refreshedTarget.getName()).isEqualTo("app-new");
+        assertThat(refreshedTarget.isActive()).isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, newNameActive.getUuid()).isActive())
+                .isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, oldNameActive.getUuid()).isActive())
+                .isTrue();
+
+        // Non-existent project returns null cleanly.
+        useJdbiTransaction(handle -> {
+            final String missing =
+                    handle.attach(ProjectDao.class).lockProjectForExclusiveActivation(-9999L, "non-existent");
+            assertThat(missing).isNull();
+        });
+    }
+
+    private static void awaitLatch(CountDownLatch latch) {
+        try {
+            if (!latch.await(10, TimeUnit.SECONDS)) {
+                throw new AssertionError("Timed out waiting for start latch");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError(e);
+        }
     }
 }

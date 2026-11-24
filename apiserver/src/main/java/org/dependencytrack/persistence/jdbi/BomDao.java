@@ -43,18 +43,6 @@ public interface BomDao {
     byte @Nullable [] getLatestOriginalFileMetadata(@Bind UUID projectUuid);
 
     @SqlQuery("""
-            SELECT EXISTS(
-                     SELECT 1
-                       FROM "BOM"
-                      INNER JOIN "PROJECT"
-                        ON "PROJECT"."ID" = "BOM"."PROJECT_ID"
-                      WHERE "PROJECT"."UUID" = :projectUuid
-                        AND "BOM"."ORIGINAL_FILE_METADATA" = :fileMetadata
-                 )
-            """)
-    boolean isOriginalFileReferenced(@Bind UUID projectUuid, @Bind byte[] fileMetadata);
-
-    @SqlQuery("""
            UPDATE "BOM" AS bom
               SET "ORIGINAL_FILE_METADATA" = NULL
              FROM (

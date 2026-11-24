@@ -73,8 +73,6 @@ import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.dependencytrack.proto.internal.workflow.v1.ImportVexArg;
 import org.dependencytrack.proto.internal.workflow.v1.InvokeVulnAnalyzerArg;
 import org.dependencytrack.proto.internal.workflow.v1.InvokeVulnAnalyzerRes;
-import org.dependencytrack.proto.internal.workflow.v1.IsOriginalBomFileReferencedArg;
-import org.dependencytrack.proto.internal.workflow.v1.IsOriginalBomFileReferencedRes;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorKevDataSourceArg;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
 import org.dependencytrack.proto.internal.workflow.v1.PrepareVulnAnalysisArg;
@@ -96,7 +94,6 @@ import org.dependencytrack.tasks.ImportBomActivity;
 import org.dependencytrack.tasks.ImportBomWorkflow;
 import org.dependencytrack.tasks.ImportVexActivity;
 import org.dependencytrack.tasks.ImportVexWorkflow;
-import org.dependencytrack.tasks.IsOriginalBomFileReferencedActivity;
 import org.dependencytrack.vulnanalysis.InvokeVulnAnalyzerActivity;
 import org.dependencytrack.vulnanalysis.PrepareVulnAnalysisActivity;
 import org.dependencytrack.vulnanalysis.ReconcileVulnAnalysisResultsActivity;
@@ -249,11 +246,6 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter());
         registerActivity(
                 engine, new ImportVexActivity(fileStorage), protoConverter(ImportVexArg.class), voidConverter());
-        registerActivity(
-                engine,
-                new IsOriginalBomFileReferencedActivity(),
-                protoConverter(IsOriginalBomFileReferencedArg.class),
-                protoConverter(IsOriginalBomFileReferencedRes.class));
         registerActivity(
                 engine,
                 new DeleteFilesActivity(fileStorage),

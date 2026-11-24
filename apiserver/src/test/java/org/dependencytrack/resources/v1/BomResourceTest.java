@@ -1550,7 +1550,7 @@ class BomResourceTest extends ResourceTest {
     }
 
     @ParameterizedTest
-    @CsvSource({", false", "false, false", "true, true", "invalid, false"})
+    @CsvSource({", true", "false, false", "true, true", "invalid, false"})
     void uploadBomSetsOriginalRetentionFlag(String configuredValue, boolean expectedRetention) throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 

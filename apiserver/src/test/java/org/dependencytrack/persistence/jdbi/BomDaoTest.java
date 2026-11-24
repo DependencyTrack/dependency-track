@@ -54,22 +54,6 @@ public class BomDaoTest extends PersistenceCapableTest {
     }
 
     @Test
-    void isOriginalFileReferencedShouldOnlyMatchSameProjectAndFile() {
-        final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
-        final Project otherProject = qm.createProject("acme-other", null, "1.0", null, null, null, null, false);
-        final FileMetadata file = fileMetadata("file");
-        persistBom(project, file);
-
-        assertThat(dao.isOriginalFileReferenced(project.getUuid(), file.toByteArray()))
-                .isTrue();
-        assertThat(dao.isOriginalFileReferenced(otherProject.getUuid(), file.toByteArray()))
-                .isFalse();
-        assertThat(dao.isOriginalFileReferenced(
-                        project.getUuid(), fileMetadata("other").toByteArray()))
-                .isFalse();
-    }
-
-    @Test
     void clearOlderOriginalFileMetadataShouldOnlyClearOlderFilesOfSameProject() {
         final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
         final Project otherProject = qm.createProject("acme-other", null, "1.0", null, null, null, null, false);

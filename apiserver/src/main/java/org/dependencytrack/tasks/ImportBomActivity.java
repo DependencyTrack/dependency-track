@@ -98,7 +98,6 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_ANALYSIS_TRIGGER;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_BOM_UPLOAD_TOKEN;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
-import static org.dependencytrack.filestorage.OriginalBomFileDeletion.scheduleOriginalBomFileDeletion;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomConsumedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomProcessedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomProcessingFailedNotification;
@@ -202,6 +201,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             try (final var qm = new QueryManager()) {
                 dispatchBomProcessingFailedNotification(qm, ctx, e);
             }
+            tryDeleteUncommittedRetainedBomFile(ctx);
             throw new TerminalApplicationFailureException("Failed to consume BOM", e);
         }
 
@@ -225,6 +225,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 try (final var qm = new QueryManager()) {
                     dispatchBomProcessingFailedNotification(qm, ctx, e);
                 }
+                tryDeleteUncommittedRetainedBomFile(ctx);
                 throw new TerminalApplicationFailureException("Failed to process BOM", e);
             }
         }
@@ -235,9 +236,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             dispatchBomProcessedNotification(ctx);
         }
 
-        if (ctx.retainedBomFileMetadata != null) {
-            tryDeleteOlderRetainedBomFiles(bomId);
-        }
+        tryDeleteOlderRetainedBomFiles(bomId);
 
         final var workflowArgBuilder = AnalyzeProjectWorkflowArg.newBuilder()
                 .setProjectUuid(ctx.project.getUuid().toString())
@@ -851,6 +850,26 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             LOGGER.warn("Failed to clear older retained BOM files; Will retry with the next import", e);
             return;
         }
-        scheduleOriginalBomFileDeletion(dexEngine, clearedFiles);
+        for (final OriginalBomFileMetadataRow clearedFile : clearedFiles) {
+            try {
+                fileStorage.delete(FileMetadata.parseFrom(clearedFile.serializedFileMetadata()));
+            } catch (IOException e) {
+                LOGGER.warn("Failed to delete older retained BOM file; Will need manual cleanup", e);
+            }
+        }
+    }
+
+    private void tryDeleteUncommittedRetainedBomFile(ProcessingContext ctx) {
+        if (ctx.retainedBomFileMetadata == null) {
+            return; // Not retained, so the workflow deletes it.
+        }
+        try {
+            fileStorage.delete(ctx.retainedBomFileMetadata);
+        } catch (IOException e) {
+            LOGGER.warn(
+                    "Failed to delete BOM file {}; Will need manual cleanup",
+                    ctx.retainedBomFileMetadata.getLocation(),
+                    e);
+        }
     }
 }

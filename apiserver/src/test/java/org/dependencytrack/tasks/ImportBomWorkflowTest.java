@@ -41,8 +41,6 @@ import org.dependencytrack.persistence.DatabaseSeedingInitTask;
 import org.dependencytrack.persistence.jdbi.BomDao;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
-import org.dependencytrack.proto.internal.workflow.v1.IsOriginalBomFileReferencedArg;
-import org.dependencytrack.proto.internal.workflow.v1.IsOriginalBomFileReferencedRes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -71,7 +69,6 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_PROCESSI
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
 import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.Mockito.mock;
@@ -98,11 +95,6 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
                 voidConverter());
         engine.registerActivity(
                 new DeleteFilesActivity(fileStorage), protoConverter(DeleteFilesArgument.class), voidConverter());
-
-        engine.registerActivity(
-                new IsOriginalBomFileReferencedActivity(),
-                protoConverter(IsOriginalBomFileReferencedArg.class),
-                protoConverter(IsOriginalBomFileReferencedRes.class));
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));
@@ -195,21 +187,6 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
     }
 
     @Test
-    void shouldKeepRetainedFileReferencedByCommittedBomWhenImportFails() throws Exception {
-        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
-        final FileMetadata bomFileMetadata = storeBomFile("bom-invalid.json");
-        persistBomReferencing(project, bomFileMetadata);
-
-        final var runId = startWorkflow(project, bomFileMetadata, true);
-
-        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED, Duration.ofSeconds(60));
-
-        assertThat(countBoms(project)).isEqualTo(1);
-        assertThat(getLatestOriginalFileMetadata(project)).containsExactly(bomFileMetadata.toByteArray());
-        try (final var ignored = fileStorage.get(bomFileMetadata)) {}
-    }
-
-    @Test
     void shouldProcessEmptyBom() throws Exception {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         final var bomFileMetadata = storeBomFile("bom-empty.json");
@@ -280,18 +257,6 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
                 .bind("projectId", project.getId())
                 .mapTo(long.class)
                 .one());
-    }
-
-    private void persistBomReferencing(final Project project, final FileMetadata fileMetadata) {
-        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
-                        INSERT INTO "BOM" (
-                          "PROJECT_ID", "UUID", "BOM_FORMAT", "SPEC_VERSION", "BOM_VERSION", "IMPORTED", "ORIGINAL_FILE_METADATA"
-                        )
-                        VALUES (:projectId, GEN_RANDOM_UUID(), 'CycloneDX', '1.6', 1, NOW(), :originalFileMetadata)
-                        """)
-                .bind("projectId", project.getId())
-                .bind("originalFileMetadata", fileMetadata.toByteArray())
-                .execute());
     }
 
     private static byte[] getLatestOriginalFileMetadata(final Project project) {

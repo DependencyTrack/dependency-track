@@ -138,25 +138,27 @@ points to a missing file.
 3. Every retained import would start a workflow run, even when there is
 nothing to delete.
 
-#### F: Clear references, reuse asynchronous file deletion
+#### F: Clear references, then delete the files
 
-A small database transaction clears the references to the files for deletion,
-and returns their metadata. The existing workflow for asynchronous file
-deletion is used to delete the appropriate file. Follows the same structure
-as project deletion.
+A small database transaction clears the references to the files to delete and
+returns their metadata. After it commits, the files are deleted:
+
+* Latest-only cleanup runs in `ImportBomActivity`, which already executes in an
+  asynchronous Dex worker and usually deletes at most one file. It calls
+  FileStorage directly.
+* Project deletion can affect up to 1000 projects per request and starts in the
+  request thread. It schedules the existing `DeleteFilesWorkflow`, which deletes
+  the files asynchronously with retries.
 
 *Pros*:
 
-1. It reuses existing workflow and deletion procedures, without adding
-overhead.
-2. Follows the existing project deletion pattern that already exists.
+1. It reuses the existing file deletion workflow and activity for bulk deletion.
+2. The import path does not start a workflow run to delete a single file.
 
 *Cons*:
 
-1. If deletion fails after retries, the file stays in storage without a
-reference.
-2. The same happens if the process stops between the commit and scheduling
-the deletion.
+1. If deletion fails, the file stays in storage without a reference.
+2. The same happens if the process stops between the commit and the deletion.
 
 ## Decision
 
@@ -170,17 +172,26 @@ The metadata includes the provider name, location, media type, digest, and any
 additional provider data. Application code will not rebuild a reference from a
 filename or from a subset of these fields.
 
-Original BOM retention will be disabled by default. Whether an upload is retained
-will be decided when it is accepted and carried with its import workflow. It will
-apply only to future uploads and will not backfill existing BOM records.
+Original BOM retention will be enabled by default, and operators can disable
+it. Whether an upload is retained will be decided when it is accepted and
+carried with its import workflow. It will apply only to future uploads and
+will not backfill existing BOM records.
 
 When retention is enabled, a successful import will associate the metadata of
 the existing upload object with the new `BOM` record. The workflow will leave
 that object in FileStorage. It will not write a second copy.
 
-Administrators will choose if they wish to enable the latest-only retention policy. It keeps the retained document of the newest import of each project.
-After a retained import commits, the retained documents of older imports of
-that project are removed. The new import is kept and prior imports are removed.
+Only the document of the newest import of each project is kept. After an
+import commits, the import clears the references of older retained imports of
+that project and deletes their files. This also applies when the new import is
+not retained, so the endpoint never serves a document older than the latest
+import. There is no setting besides enabling retention, and no scheduled
+cleanup task.
+
+If an import fails before it commits, nothing references the upload, so the
+import deletes it. When retention is enabled, the workflow never deletes the
+upload. When retention is disabled, the workflow deletes the upload after the
+import, whether or not the import succeeded.
 
 The existing V1 upload API will remain the upload path. The document retained
 from this path will be the decoded and decompressed BOM document used by the
@@ -206,12 +217,11 @@ will begin only after that transaction commits. It will run asynchronously
 in a Dex workflow with retries, not as part of the thread that handles the
 request.
 
-Retention cleanup will follow the same idea, a small database 
-transaction clears the references and returns their metadata. Afterwards,
-the same asynchronous file deletion will be scheduled. A failure of
-latest-only cleanup will be logged and will not fail the import. Its
-transaction rolls back, so the next retained import of the project
-tries again.
+Retention cleanup follows the same idea. A small database transaction clears
+the references and returns their metadata. After it commits, the import
+deletes the files directly. A failure to clear the references is logged and
+does not fail the import. The transaction rolls back, so the next import of
+the project tries again.
 
 A missing object during cleanup will be treated as already deleted. Malformed
 metadata and other cleanup failures will be logged for manual follow-up. They
@@ -231,10 +241,11 @@ PostgreSQL and workflow messages.
 The database gains one nullable column. Existing rows remain valid. No backfill
 is required.
 
-Each successful opted-in import adds one retained FileStorage object and one
-small metadata value. The retention policy is meant to limit how much of
-this storage stays in use. With latest-only retention, each project will
-normally store one document. The initial API exposes only the newest retained document for each project. Operators must plan storage capacity and retention around this behavior.
+Each successful import removes the document retained by the previous import
+of its project, and a retained import adds its own. Each project therefore
+normally stores at most one document, which is the only document the API
+exposes. Disabling retention removes a project's retained document at its
+next import. Operators must plan storage capacity around this behavior.
 
 Database and FileStorage operations remain non-atomic. A reference can point
 to a missing object. A crash can also leave an object with no database
@@ -242,16 +253,17 @@ reference. The endpoint and cleanup paths must tolerate these states, as
 required by [ADR 004].
 
 Project deletion and retention cleanup will make their database changes final
-before they delete files. A cleanup failure can therefore leave an
-orphaned object without a reference, if the deletion fails after all retries
-or if an import commits while its project is being deleted. The
-deletion statement does not see the new import record, but the database
-still removes that record with the project. This consumes storage but it
-cannot restore or partially restore the deleted project. A future garbage
-collector or provider retention policy may remove such objects.
+before they delete files. A cleanup failure can therefore leave an orphaned
+object without a reference: if a project's files cannot be deleted after all
+retries, if an older retained file cannot be deleted during an import, or if
+an import commits while its project is being deleted. In the last case the
+deletion statement does not see the new import record, but the database still
+removes that record with the project. This consumes storage but it cannot
+restore or partially restore the deleted project. A future garbage collector
+or provider retention policy may remove such objects.
 
-A failed import now checks the database before it deletes its upload. This
-adds one database query to the failure path of retained imports.
+An import that fails with a retryable error before it commits, and runs out
+of retries, leaves its upload in storage without a reference.
 
 Retained documents remain tied to the FileStorage provider that created them.
 Changing providers can make older documents unavailable unless their content

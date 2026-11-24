@@ -150,9 +150,9 @@ public enum ConfigPropertyConstants {
     BOM_ORIGINAL_RETENTION_ENABLED(
             "artifact",
             "bom.original.retention.enabled",
-            "false",
+            "true",
             PropertyType.BOOLEAN,
-            "Flag to enable/disable original BOM documents retention",
+            "Flag to enable/disable retention of the latest original BOM document for each project",
             ConfigPropertyAccessMode.READ_WRITE),
     BOM_VALIDATION_MODE(
             "artifact",

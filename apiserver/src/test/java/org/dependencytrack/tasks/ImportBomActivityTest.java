@@ -24,7 +24,6 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.dex.engine.api.DexEngine;
-import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
@@ -41,7 +40,6 @@ import org.dependencytrack.persistence.DatabaseSeedingInitTask;
 import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
-import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -59,6 +57,7 @@ import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -99,10 +98,7 @@ import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.create
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 class ImportBomActivityTest extends PersistenceCapableTest {
 
@@ -152,12 +148,6 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 .bind("projectUuid", project.getUuid())
                 .mapTo(byte[].class)
                 .list());
-    }
-
-    private static boolean isDeleteFilesRunFor(CreateWorkflowRunRequest<?> request, FileMetadata fileMetadata) {
-        return "delete-files".equals(request.workflowName())
-                && request.argument() instanceof DeleteFilesArgument argument
-                && argument.getFileMetadataList().equals(List.of(fileMetadata));
     }
 
     @Test
@@ -2926,11 +2916,12 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         activity.execute(null, buildRetainedArg(project, secondBomFile));
 
         assertThat(getOriginalFileMetadataOfBoms(project)).containsExactly(null, secondBomFile.toByteArray());
-        verify(dexEngineMock).createRun(argThat(request -> isDeleteFilesRunFor(request, firstBomFile)));
+        assertThatExceptionOfType(NoSuchFileException.class).isThrownBy(() -> fileStorage.get(firstBomFile));
+        try (final var ignored = fileStorage.get(secondBomFile)) {}
     }
 
     @Test
-    void shouldKeepOlderRetainedBomFilesWhenImportIsNotRetained() throws Exception {
+    void shouldClearOlderRetainedBomFilesWhenImportIsNotRetained() throws Exception {
         final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
 
         final FileMetadata firstBomFile = storeBomFile("bom-1.xml");
@@ -2938,8 +2929,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         final FileMetadata secondBomFile = storeBomFile("bom-1.xml");
         activity.execute(null, buildArg(project, secondBomFile, UUID.randomUUID()));
 
-        assertThat(getOriginalFileMetadataOfBoms(project)).containsExactly(firstBomFile.toByteArray(), null);
-        verify(dexEngineMock, never()).createRun(argThat(request -> "delete-files".equals(request.workflowName())));
+        assertThat(getOriginalFileMetadataOfBoms(project)).containsExactly(null, null);
+        assertThatExceptionOfType(NoSuchFileException.class).isThrownBy(() -> fileStorage.get(firstBomFile));
     }
 
     private FileMetadata storeBomFile(final String testFileName) throws Exception {

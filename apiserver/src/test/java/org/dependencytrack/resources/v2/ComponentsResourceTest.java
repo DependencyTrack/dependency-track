@@ -1084,4 +1084,112 @@ public class ComponentsResourceTest extends ResourceTest {
                 .bind("license", "Public Domain")
                 .execute());
     }
+
+    @Test
+    public void updateComponentTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+
+        Project project = qm.createProject("acme", null, null, null, null, null, null, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("old");
+        component.setVersion("1.0");
+        Component persistedComponent = qm.createComponent(component, false);
+
+        final Response response = jersey.target("/components/" + persistedComponent.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "new",
+                          "version": "1.1",
+                          "purl": "pkg:maven/org.acme/abc",
+                          "hashes": {
+                            "sha1": "640ab2bae07bedc4c163f679a746f7ab7fb5d1fa",
+                            "sha3_512": "301bb421c971fbb7ed01dcc3a9976ce53df034022ba982b97d0f27d48c4f03883aabf7c6bc778aa7c383062f6823045a6d41b8a720afbb8a9607690f89fbe1a7",
+                            "blake2b_256": "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d90e0e1f0b1a8a1f0b1a8a1f0",
+                            "streebog_256": "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb"
+                          },
+                          "supplier": {
+                            "name": "supplier",
+                            "contacts": [
+                                {
+                                  "name": "author"
+                                }
+                            ]
+                          },
+                          "licenses": [
+                                {
+                                        "license": "Custom",
+                                        "acknowledgement": "DECLARED"
+                                }
+                          ]
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(getPlainTextBody(response)).isEmpty();
+
+        qm.getPersistenceManager().evictAll();
+        persistedComponent = qm.getAllComponents(project).getFirst();
+        final long persistedId = persistedComponent.getId();
+
+        assertThat(persistedComponent.getName()).isEqualTo("new");
+        assertThat(persistedComponent.getVersion()).isEqualTo("1.1");
+        final List<ComponentDao.ComponentLicenseRow> licenseRows =
+                withJdbiHandle(handle -> handle.attach(ComponentDao.class)
+                        .getLicenseRows(List.of(persistedId))
+                        .get(persistedId));
+
+        assertThat(licenseRows).singleElement().satisfies(row -> {
+            assertThat(row.componentId()).isEqualTo(persistedId);
+            assertThat(row.licenseId()).isNull();
+            assertThat(row.license()).isEqualTo("Custom");
+            assertThat(row.licenseExpression()).isNull();
+            assertThat(row.licenseUrl()).isNull();
+            assertThat(row.ordinality()).isEqualTo(1);
+            assertThat(row.acknowledgement()).isEqualTo("DECLARED");
+        });
+    }
+
+    @Test
+    public void updateComponentTestNoPerms() {
+        Project project = qm.createProject("acme", null, null, null, null, null, null, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("old");
+        component.setVersion("1.0");
+        Component persistedComponent = qm.createComponent(component, false);
+
+        final Response response = jersey.target("/components/" + persistedComponent.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "new",
+                          "version": "1.1",
+                          "purl": "pkg:maven/org.acme/abc",
+                          "hashes": {
+                            "sha1": "640ab2bae07bedc4c163f679a746f7ab7fb5d1fa",
+                            "sha3_512": "301bb421c971fbb7ed01dcc3a9976ce53df034022ba982b97d0f27d48c4f03883aabf7c6bc778aa7c383062f6823045a6d41b8a720afbb8a9607690f89fbe1a7",
+                            "blake2b_256": "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d90e0e1f0b1a8a1f0b1a8a1f0",
+                            "streebog_256": "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb"
+                          },
+                          "supplier": {
+                            "name": "supplier",
+                            "contacts": [
+                                {
+                                  "name": "author"
+                                }
+                            ]
+                          },
+                          "licenses": [
+                                {
+                                        "license": "Custom",
+                                        "acknowledgement": "DECLARED"
+                                }
+                          ]
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(403);
+    }
 }

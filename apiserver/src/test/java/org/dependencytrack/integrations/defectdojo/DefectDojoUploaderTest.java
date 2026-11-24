@@ -29,14 +29,25 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
 import static org.dependencytrack.persistence.jdbi.ConfigPropertyTestUtil.createConfigProperty;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class DefectDojoUploaderTest extends PersistenceCapableTest {
 
@@ -115,5 +126,38 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
         DefectDojoUploader extension = new DefectDojoUploader(httpClient, secretManager);
         extension.setQueryManager(qm);
         Assertions.assertEquals("component_name", extension.getGroupBy(project));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testLookupFailureDoesNotUploadFindings() throws Exception {
+        createConfigProperty(DEFECTDOJO_URL, "http://localhost:12345");
+        createConfigProperty(DEFECTDOJO_API_KEY, "test-token");
+        createConfigProperty(DEFECTDOJO_REIMPORT_ENABLED, "true");
+        Project project = qm.createProject("Lookup failure", null, "1.0", null, null, null, null, false);
+        useJdbiHandle(handle -> handle.attach(ProjectPropertyDao.class)
+                .createProperty(
+                        project.getUuid(),
+                        new ProjectPropertyRow(
+                                DEFECTDOJO_ENABLED.getGroupName(),
+                                "defectdojo.engagementId",
+                                "12345",
+                                IConfigProperty.PropertyType.STRING,
+                                null)));
+        HttpClient failingClient = mock(HttpClient.class);
+        HttpResponse<String> unavailable = mock(HttpResponse.class);
+        when(unavailable.statusCode()).thenReturn(503);
+        when(unavailable.body()).thenReturn("Service unavailable");
+        when(failingClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(unavailable);
+        DefectDojoUploader extension = new DefectDojoUploader(failingClient, secretManager);
+        extension.setQueryManager(qm);
+
+        extension.upload(project, new ByteArrayInputStream("{}".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+
+        verify(failingClient)
+                .send(argThat(request -> request.method().equals("GET")), any(HttpResponse.BodyHandler.class));
+        verify(failingClient, never())
+                .send(argThat(request -> request.method().equals("POST")), any(HttpResponse.BodyHandler.class));
     }
 }

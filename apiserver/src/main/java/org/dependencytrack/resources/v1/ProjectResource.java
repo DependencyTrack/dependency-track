@@ -1079,10 +1079,11 @@ public class ProjectResource extends AbstractApiResource {
                     String uuid) {
         final UUID projectUuid = UUID.fromString(uuid);
 
-        final ProjectDeletionResult deletionResult = inJdbiTransaction(getAlpineRequest(), handle -> {
-            requireProjectAccess(handle, projectUuid);
-            return handle.attach(ProjectDao.class).deleteProjectsWithOriginalBomFiles(Set.of(projectUuid));
-        });
+        final ProjectDeletionResult<ProjectDao.DeletedProjectRow> deletionResult =
+                inJdbiTransaction(getAlpineRequest(), handle -> {
+                    requireProjectAccess(handle, projectUuid);
+                    return handle.attach(ProjectDao.class).deleteProjectsWithOriginalBomFiles(Set.of(projectUuid));
+                });
 
         logDeletedProjects(deletionResult.deletedProjects());
         scheduleOriginalBomFileDeletion(dexEngine, deletionResult.originalBomFiles());
@@ -1105,7 +1106,7 @@ public class ProjectResource extends AbstractApiResource {
             })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE})
     public Response deleteProjects(@Size(min = 1, max = 1000) final Set<UUID> uuids) {
-        final ProjectDeletionResult deletionResult = inJdbiTransaction(
+        final ProjectDeletionResult<ProjectDao.DeletedProjectRow> deletionResult = inJdbiTransaction(
                 getAlpineRequest(),
                 handle -> handle.attach(ProjectDao.class).deleteProjectsWithOriginalBomFiles(uuids));
 

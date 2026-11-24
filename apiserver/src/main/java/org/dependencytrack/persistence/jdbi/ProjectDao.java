@@ -1125,18 +1125,18 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
      *
      * <p>File cleanup must be performed after the deletion transaction commits.</p>
      */
-    default ProjectDeletionResult deleteProjectsWithOriginalBomFiles(final Collection<UUID> projectUuids) {
+    default ProjectDeletionResult<DeletedProjectRow> deleteProjectsWithOriginalBomFiles(
+            final Collection<UUID> projectUuids) {
         final List<DeletedProjectRow> deletedProjects = deleteProjects(projectUuids);
         final List<OriginalBomFileMetadataRow> filesToDelete = deletedProjects.stream()
                 .flatMap(project -> project.originalBomFilesMetadata().stream()
                         .map(metadata -> new OriginalBomFileMetadataRow(project.uuid(), metadata)))
                 .toList();
 
-        return new ProjectDeletionResult(deletedProjects, filesToDelete);
+        return new ProjectDeletionResult<>(deletedProjects, filesToDelete);
     }
 
-    record ProjectDeletionResult(
-            List<DeletedProjectRow> deletedProjects, List<OriginalBomFileMetadataRow> originalBomFiles) {}
+    record ProjectDeletionResult<T>(List<T> deletedProjects, List<OriginalBomFileMetadataRow> originalBomFiles) {}
 
     record OriginalBomFileMetadataRow(
             @ColumnName("PROJECT_UUID") UUID projectUuid,
@@ -1149,24 +1149,24 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @ColumnName("UUID") UUID uuid,
             List<byte[]> originalBomFilesMetadata) {}
 
-    default MaintenanceProjectDeletionResult deleteInactiveProjectsWithOriginalBomFiles(
+    default ProjectDeletionResult<DeletedProject> deleteInactiveProjectsWithOriginalBomFiles(
             final Instant retentionCutOff, final int batchSize) {
         final List<UUID> projectUuids = getInactiveProjectUuidsForDeletion(retentionCutOff, batchSize);
 
         return deleteMaintenanceProjectsWithOriginalBomFiles(projectUuids);
     }
 
-    default MaintenanceProjectDeletionResult deleteExcessProjectVersionsWithOriginalBomFiles(
+    default ProjectDeletionResult<DeletedProject> deleteExcessProjectVersionsWithOriginalBomFiles(
             final int versionCountThreshold, final int batchSize) {
         final List<UUID> projectUuids = getExcessProjectVersionUuidsForDeletion(versionCountThreshold, batchSize);
 
         return deleteMaintenanceProjectsWithOriginalBomFiles(projectUuids);
     }
 
-    private MaintenanceProjectDeletionResult deleteMaintenanceProjectsWithOriginalBomFiles(
+    private ProjectDeletionResult<DeletedProject> deleteMaintenanceProjectsWithOriginalBomFiles(
             final List<UUID> projectUuids) {
         if (projectUuids.isEmpty()) {
-            return new MaintenanceProjectDeletionResult(List.of(), List.of());
+            return new ProjectDeletionResult<>(List.of(), List.of());
         }
 
         final List<DeletedProject> deletedProjects = deleteMaintenanceProjects(projectUuids);
@@ -1175,7 +1175,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                         .map(metadata -> new OriginalBomFileMetadataRow(project.uuid(), metadata)))
                 .toList();
 
-        return new MaintenanceProjectDeletionResult(
+        return new ProjectDeletionResult<>(
                 deletedProjects.stream()
                         .filter(project -> projectUuids.contains(project.uuid()))
                         .toList(),
@@ -1247,9 +1247,6 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             """)
     @RegisterConstructorMapper(DeletedProject.class)
     List<DeletedProject> deleteMaintenanceProjects(@Bind Collection<UUID> projectUuids);
-
-    record MaintenanceProjectDeletionResult(
-            List<DeletedProject> deletedProjects, List<OriginalBomFileMetadataRow> originalBomFiles) {}
 
     record ProjectInfoRow(long id, boolean isCollection) {}
 

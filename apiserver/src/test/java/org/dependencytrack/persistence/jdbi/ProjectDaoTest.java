@@ -547,7 +547,7 @@ public class ProjectDaoTest extends PersistenceCapableTest {
 
         assertThat(higherIdProject.getId()).isGreaterThan(lowerIdProject.getId());
 
-        final ProjectDao.MaintenanceProjectDeletionResult result = inJdbiTransaction(
+        final ProjectDao.ProjectDeletionResult<ProjectDao.DeletedProject> result = inJdbiTransaction(
                 handle -> handle.attach(ProjectDao.class).deleteExcessProjectVersionsWithOriginalBomFiles(1, 25));
 
         assertThat(result.deletedProjects())

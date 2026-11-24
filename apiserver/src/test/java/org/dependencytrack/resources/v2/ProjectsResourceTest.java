@@ -23,6 +23,7 @@ import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.filestorage.api.FileStorage;
+import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.metrics.ProjectMetrics;
 import org.dependencytrack.model.Classifier;
@@ -41,14 +42,20 @@ import org.dependencytrack.pkgmetadata.PackageArtifactMetadataDao;
 import org.dependencytrack.pkgmetadata.PackageMetadata;
 import org.dependencytrack.pkgmetadata.PackageMetadataDao;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.Mockito;
 
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.NoSuchFileException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -60,7 +67,12 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
+import static org.dependencytrack.resources.v2.OpenApiValidationClientResponseFilter.DISABLE_OPENAPI_VALIDATION;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 public class ProjectsResourceTest extends ResourceTest {
 
@@ -73,6 +85,11 @@ public class ProjectsResourceTest extends ResourceTest {
             bind(FILE_STORAGE_MOCK).to(FileStorage.class);
         }
     }));
+
+    @AfterEach
+    void afterEach() {
+        Mockito.reset(FILE_STORAGE_MOCK);
+    }
 
     @Test
     public void listProjectComponents() {
@@ -1831,5 +1848,247 @@ public class ProjectsResourceTest extends ResourceTest {
         qm.createComponent(component, false);
 
         return project;
+    }
+
+    @Test
+    void getProjectOriginalBomShouldReturnNewestRetainedBom() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
+
+        final FileMetadata olderFileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///project-original-bom-older.json")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("older")
+                .build();
+
+        persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.5", olderFileMetadata.toByteArray());
+
+        final byte[] expectedBomBytes = "newest retained BOM".getBytes(StandardCharsets.UTF_8);
+        final FileMetadata expectedFileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///project-original-bom-newest.json")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("newest")
+                .build();
+
+        persistBom(project, Instant.parse("2026-01-02T00:00:00Z"), "1.6", expectedFileMetadata.toByteArray());
+
+        persistBomWithoutMetadata(project, Instant.parse("2026-01-03T00:00:00Z"), "1.6");
+
+        doReturn(new ByteArrayInputStream(expectedBomBytes))
+                .when(FILE_STORAGE_MOCK)
+                .get(expectedFileMetadata);
+
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
+                .request()
+                .property(DISABLE_OPENAPI_VALIDATION, "true")
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getMediaType().toString()).isEqualTo("application/vnd.cyclonedx+json");
+        assertThat(response.getHeaderString("Content-Disposition")).isEqualTo("attachment; filename=\"bom.json\"");
+        assertThat(response.readEntity(byte[].class)).containsExactly(expectedBomBytes);
+
+        verify(FILE_STORAGE_MOCK).get(expectedFileMetadata);
+    }
+
+    @Test
+    void getProjectOriginalBomShouldReturnNotFoundWhenMetadataIsAbsent() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
+
+        persistBomWithoutMetadata(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6");
+
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(404);
+
+        verifyNoInteractions(FILE_STORAGE_MOCK);
+    }
+
+    @Test
+    void getProjectOriginalBomShouldReturnNotFoundWhenFileIsMissing() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
+
+        final FileMetadata fileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///missing-original-bom.json")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("missing")
+                .build();
+
+        persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6", fileMetadata.toByteArray());
+
+        doThrow(new NoSuchFileException(fileMetadata.getLocation()))
+                .when(FILE_STORAGE_MOCK)
+                .get(fileMetadata);
+
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(404);
+
+        verify(FILE_STORAGE_MOCK).get(fileMetadata);
+    }
+
+    @Test
+    void getProjectOriginalBomShouldReturnNotFoundWhenProjectDoesNotExist() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final UUID projectUuid = UUID.randomUUID();
+
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(projectUuid))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(404);
+
+        verifyNoInteractions(FILE_STORAGE_MOCK);
+    }
+
+    @Test
+    void getProjectOriginalBomShouldReturnForbiddenWithoutProjectAccess() {
+        enablePortfolioAccessControl();
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
+
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(403);
+
+        verifyNoInteractions(FILE_STORAGE_MOCK);
+    }
+
+    @Test
+    void getProjectOriginalBomShouldReturnForbiddenWithoutPermission() {
+        initializeWithPermissions();
+
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(UUID.randomUUID()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(403);
+
+        verifyNoInteractions(FILE_STORAGE_MOCK);
+    }
+
+    @Test
+    void getProjectOriginalBomShouldReturnXmlBom() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
+
+        final byte[] expectedBomBytes = "<bom>retained XML BOM</bom>".getBytes(StandardCharsets.UTF_8);
+        final FileMetadata fileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///project-original-bom.xml")
+                .setMediaType("application/vnd.cyclonedx+xml")
+                .setSha256Digest("xml")
+                .build();
+
+        persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6", fileMetadata.toByteArray());
+
+        doReturn(new ByteArrayInputStream(expectedBomBytes))
+                .when(FILE_STORAGE_MOCK)
+                .get(fileMetadata);
+
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
+                .request()
+                .property(DISABLE_OPENAPI_VALIDATION, "true")
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getMediaType().toString()).isEqualTo("application/vnd.cyclonedx+xml");
+        assertThat(response.getHeaderString("Content-Disposition")).isEqualTo("attachment; filename=\"bom.xml\"");
+        assertThat(response.readEntity(byte[].class)).containsExactly(expectedBomBytes);
+
+        verify(FILE_STORAGE_MOCK).get(fileMetadata);
+    }
+
+    @Test
+    void getProjectOriginalBomShouldReturnServerErrorWhenMetadataIsMalformed() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
+
+        persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6", new byte[] {(byte) 0x80});
+
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
+                .request()
+                .property(DISABLE_OPENAPI_VALIDATION, "true")
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(500);
+
+        verifyNoInteractions(FILE_STORAGE_MOCK);
+    }
+
+    @Test
+    void getProjectOriginalBomShouldReturnServerErrorWhenStorageFails() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("Acme Application", null, "1.0", null, null, null, null, false);
+
+        final FileMetadata fileMetadata = FileMetadata.newBuilder()
+                .setProviderName("test")
+                .setLocation("test:///unavailable-original-bom.json")
+                .setMediaType("application/vnd.cyclonedx+json")
+                .setSha256Digest("unavailable")
+                .build();
+
+        persistBom(project, Instant.parse("2026-01-01T00:00:00Z"), "1.6", fileMetadata.toByteArray());
+
+        doThrow(new IOException("Storage unavailable")).when(FILE_STORAGE_MOCK).get(fileMetadata);
+
+        final Response response = jersey.target("/projects/%s/boms/latest/content".formatted(project.getUuid()))
+                .request()
+                .property(DISABLE_OPENAPI_VALIDATION, "true")
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(500);
+
+        verify(FILE_STORAGE_MOCK).get(fileMetadata);
+    }
+
+    private void persistBom(
+            final Project project,
+            final Instant importedAt,
+            final String specVersion,
+            final byte[] originalFileMetadata) {
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        INSERT INTO "BOM" (
+                          "PROJECT_ID", "UUID", "BOM_FORMAT", "SPEC_VERSION", "BOM_VERSION", "IMPORTED", "ORIGINAL_FILE_METADATA"
+                        )
+                        VALUES (:projectId, GEN_RANDOM_UUID(), 'CycloneDX', :specVersion, 1, :imported, :originalFileMetadata)
+                        """)
+                .bind("projectId", project.getId())
+                .bind("specVersion", specVersion)
+                .bind("imported", Date.from(importedAt))
+                .bind("originalFileMetadata", originalFileMetadata)
+                .execute());
+    }
+
+    private void persistBomWithoutMetadata(final Project project, final Instant importedAt, final String specVersion) {
+        persistBom(project, importedAt, specVersion, null);
     }
 }

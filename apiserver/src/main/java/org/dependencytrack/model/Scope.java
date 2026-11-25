@@ -18,6 +18,13 @@
  */
 package org.dependencytrack.model;
 
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
+
+import java.util.Optional;
+
+import static org.dependencytrack.common.ConfigKeys.BOM_DEFAULT_COMPONENT_SCOPE;
+
 /**
  * Enum class for tracking individual components scope.
  * Scope would be deriving from different SBOM provider.
@@ -31,9 +38,13 @@ public enum Scope {
     OPTIONAL,
     EXCLUDED;
 
+    public static Optional<Scope> getDefaultScope(final Config config) {
+        return config.getOptionalValue(BOM_DEFAULT_COMPONENT_SCOPE, Scope.class);
+    }
+
     public static Scope getMappedScope(org.cyclonedx.model.Component.Scope scope) {
         return scope == null
-                ? null
+                ? getDefaultScope(ConfigProvider.getConfig()).orElse(null)
                 : switch (scope) {
                     case REQUIRED -> Scope.REQUIRED;
                     case EXCLUDED -> Scope.EXCLUDED;

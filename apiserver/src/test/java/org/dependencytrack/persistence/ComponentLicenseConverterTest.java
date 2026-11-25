@@ -158,15 +158,15 @@ class ComponentLicenseConverterTest extends PersistenceCapableTest {
 
     @Test
     void shouldCreateComponentLicenseRowsGivenRequestWithResolvedCandidates() {
-        final UpdateComponentLicenseRequest mit = new UpdateComponentLicenseRequest();
-        mit.setLicense("MIT");
-        mit.setLicenseUrl("https://opensource.org/license/mit");
-        mit.setAcknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
+        final UpdateComponentLicenseRequest mit = new UpdateComponentLicenseRequest()
+                .license("MIT")
+                .licenseUrl("https://opensource.org/license/mit")
+                .acknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
 
-        final UpdateComponentLicenseRequest apache = new UpdateComponentLicenseRequest();
-        apache.setLicense("Apache-2.0");
-        apache.setLicenseUrl("https://www.apache.org/licenses/LICENSE-2.0");
-        apache.setAcknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
+        final UpdateComponentLicenseRequest apache = new UpdateComponentLicenseRequest()
+                .license("Apache-2.0")
+                .licenseUrl("https://www.apache.org/licenses/LICENSE-2.0")
+                .acknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
 
         final long componentId = 123L;
         final Map<String, Long> licenseIdsByIdentifier = Map.of("MIT", 101L, "Apache-2.0", 102L);
@@ -198,10 +198,10 @@ class ComponentLicenseConverterTest extends PersistenceCapableTest {
 
     @Test
     void shouldCreateComponentLicenseRowsGivenRequestWithUnresolvedCandidates() {
-        final UpdateComponentLicenseRequest custom = new UpdateComponentLicenseRequest();
-        custom.setLicense("Custom");
-        custom.setLicenseUrl("https://www.custom.org/license");
-        custom.setAcknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
+        final UpdateComponentLicenseRequest custom = new UpdateComponentLicenseRequest()
+                .license("Custom")
+                .licenseUrl("https://www.custom.org/license")
+                .acknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
 
         final long componentId = 123L;
 
@@ -221,9 +221,9 @@ class ComponentLicenseConverterTest extends PersistenceCapableTest {
 
     @Test
     void shouldCreateComponentLicenseRowGivenRequestWithExpression() {
-        final UpdateComponentLicenseRequest expression = new UpdateComponentLicenseRequest();
-        expression.setLicenseExpression("MIT");
-        expression.setAcknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
+        final UpdateComponentLicenseRequest expression = new UpdateComponentLicenseRequest()
+                .licenseExpression("MIT")
+                .acknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
 
         final long componentId = 123L;
 
@@ -243,15 +243,15 @@ class ComponentLicenseConverterTest extends PersistenceCapableTest {
 
     @Test
     void shouldDeduplicateCandidatesGivenRequest() {
-        final UpdateComponentLicenseRequest mit = new UpdateComponentLicenseRequest();
-        mit.setLicense("MIT");
-        mit.setLicenseUrl("https://opensource.org/license/mit");
-        mit.setAcknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
+        final UpdateComponentLicenseRequest mit = new UpdateComponentLicenseRequest()
+                .license("MIT")
+                .licenseUrl("https://opensource.org/license/mit")
+                .acknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
 
-        final UpdateComponentLicenseRequest mit2 = new UpdateComponentLicenseRequest();
-        mit2.setLicense("MIT");
-        mit2.setLicenseUrl("https://opensource.org/license/mit");
-        mit2.setAcknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
+        final UpdateComponentLicenseRequest mit2 = new UpdateComponentLicenseRequest()
+                .license("MIT")
+                .licenseUrl("https://opensource.org/license/mit")
+                .acknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
 
         final long componentId = 123L;
         final Map<String, Long> licenseIdsByIdentifier = Map.of("MIT", 101L);
@@ -275,6 +275,30 @@ class ComponentLicenseConverterTest extends PersistenceCapableTest {
         final List<ComponentDao.ComponentLicenseRow> rows =
                 ComponentLicenseConverter.buildComponentLicenseRows(123L, List.of(), Map.of());
         assertThat(rows).isEmpty();
+    }
+
+    @Test
+    void shouldDeduplicateDifferentIdentifiersResolvingToSameLicense() {
+        final var mit = new UpdateComponentLicenseRequest()
+                .license("MIT")
+                .acknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
+
+        final var mitLicense = new UpdateComponentLicenseRequest()
+                .license("MIT License")
+                .acknowledgement(UpdateComponentLicenseRequest.AcknowledgementEnum.DECLARED);
+
+        final List<ComponentDao.ComponentLicenseRow> rows = ComponentLicenseConverter.buildComponentLicenseRows(
+                123L,
+                List.of(mit, mitLicense),
+                Map.of(
+                        "MIT", 101L,
+                        "MIT License", 101L));
+
+        assertThat(rows).singleElement().satisfies(row -> {
+            assertThat(row.componentId()).isEqualTo(123L);
+            assertThat(row.licenseId()).isEqualTo(101L);
+            assertThat(row.license()).isNull();
+        });
     }
 
     private Component getComponentWithCandidates(License... licenses) {

@@ -119,17 +119,18 @@ public class ComponentLicenseConverter {
         for (final UpdateComponentLicenseRequest request : licenseRequests) {
             final String license = StringUtils.trimToNull(request.getLicense());
             final String expression = StringUtils.trimToNull(request.getLicenseExpression());
+            Long licenseId = license != null && expression == null ? licenseIdsByIdentifier.get(license) : null;
 
             final String key;
             if (expression != null) {
                 key = "expression:" + expression;
+            } else if (licenseId != null) {
+                key = "resolved:" + licenseId;
             } else if (license != null) {
                 key = "license:" + license;
             } else {
                 continue;
             }
-
-            Long licenseId = license != null ? licenseIdsByIdentifier.get(license) : null;
 
             rowsByKey.putIfAbsent(
                     key,

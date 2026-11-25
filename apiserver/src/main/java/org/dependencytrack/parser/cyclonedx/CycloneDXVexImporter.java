@@ -19,6 +19,7 @@
 package org.dependencytrack.parser.cyclonedx;
 
 import org.cyclonedx.model.Bom;
+import org.cyclonedx.model.OrganizationalContact;
 import org.cyclonedx.util.BomLink;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
@@ -51,7 +53,22 @@ public class CycloneDXVexImporter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CycloneDXVexImporter.class);
 
-    private static final String COMMENTER = "CycloneDX VEX";
+    private static final String DEFAULT_COMMENTER = "CycloneDX VEX";
+
+    private final String commenter;
+
+    /// Creates an importer that attributes audit trail entries to `CycloneDX VEX`.
+    public CycloneDXVexImporter() {
+        this(null);
+    }
+
+    /// Creates an importer that attributes audit trail entries to the principal that uploaded the VEX.
+    ///
+    /// @param uploader Name of the principal that uploaded the VEX.
+    ///                 If `null` or blank, entries are attributed to `CycloneDX VEX`.
+    public CycloneDXVexImporter(final @Nullable String uploader) {
+        this.commenter = uploader != null && !uploader.isBlank() ? uploader : DEFAULT_COMMENTER;
+    }
 
     public void applyVex(final QueryManager qm, final Bom bom, final Project project) {
         if (bom.getVulnerabilities() == null || bom.getVulnerabilities().isEmpty()) {
@@ -70,6 +87,7 @@ public class CycloneDXVexImporter {
             return;
         }
 
+        final String documentComment = describeDocument(bom);
         final Map<String, BomRefTarget> targetByBomRef = indexComponents(bom);
         final Map<String, List<Component>> componentsByBomRef = new HashMap<>();
 
@@ -93,7 +111,7 @@ public class CycloneDXVexImporter {
                         vulnerableComponents = qm.getAllVulnerableComponents(project, dtVuln);
                     }
                     for (final Component component : vulnerableComponents) {
-                        updateAnalysis(qm, component, dtVuln, vexVuln);
+                        updateAnalysis(qm, component, dtVuln, vexVuln, documentComment);
                     }
                 } else if (target != null) {
                     final List<Component> components = componentsByBomRef.computeIfAbsent(affectedBomRef, _ -> {
@@ -101,7 +119,7 @@ public class CycloneDXVexImporter {
                         return qm.matchIdentity(project, cid);
                     });
                     for (final Component component : components) {
-                        updateAnalysis(qm, component, dtVuln, vexVuln);
+                        updateAnalysis(qm, component, dtVuln, vexVuln, documentComment);
                     }
                 } else {
                     LOGGER.warn("""
@@ -228,20 +246,55 @@ public class CycloneDXVexImporter {
         }
     }
 
-    private static void updateAnalysis(
+    /// Describes the VEX document for the audit trail, so every analysis it changes can be traced back to it.
+    ///
+    /// Authors are taken from `metadata.authors` as stated in the document; they are not verified.
+    private static String describeDocument(final Bom bom) {
+        final var description = new StringBuilder("Applied CycloneDX VEX document");
+        final String serialNumber = trimToNull(bom.getSerialNumber());
+        if (serialNumber != null) {
+            description.append(' ').append(serialNumber);
+        }
+        description.append(" (version ").append(bom.getVersion()).append(')');
+
+        final List<String> authors = new ArrayList<>();
+        if (bom.getMetadata() != null && bom.getMetadata().getAuthors() != null) {
+            for (final OrganizationalContact author : bom.getMetadata().getAuthors()) {
+                final String name = trimToNull(author.getName());
+                final String email = trimToNull(author.getEmail());
+                if (name != null && email != null) {
+                    authors.add("%s <%s>".formatted(name, email));
+                } else if (name != null || email != null) {
+                    authors.add(name != null ? name : email);
+                }
+            }
+        }
+        if (!authors.isEmpty()) {
+            description.append(". Document authors: ").append(String.join(", ", authors));
+        }
+
+        return description.toString();
+    }
+
+    private void updateAnalysis(
             final QueryManager qm,
             final Component component,
             final Vulnerability vuln,
-            final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
-        final MakeAnalysisCommand command = convertToMakeAnalysisCommand(component, vuln, cdxVuln);
+            final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln,
+            final String documentComment) {
+        final MakeAnalysisCommand command = convertToMakeAnalysisCommand(component, vuln, cdxVuln, documentComment);
         useJdbiHandle(qm, handle -> handle.attach(FindingAnalysisDao.class).makeAnalysis(command));
     }
 
-    private static MakeAnalysisCommand convertToMakeAnalysisCommand(
+    private MakeAnalysisCommand convertToMakeAnalysisCommand(
             final Component component,
             final Vulnerability vuln,
-            final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
-        MakeAnalysisCommand command = new MakeAnalysisCommand(component.getId(), vuln.getId()).withCommenter(COMMENTER);
+            final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln,
+            final String documentComment) {
+        MakeAnalysisCommand command = new MakeAnalysisCommand(component.getId(), vuln.getId())
+                .withCommenter(commenter)
+                .withComment(documentComment)
+                .withOptions(Set.of(MakeAnalysisCommand.Option.OMIT_COMMENT_IF_UNCHANGED));
 
         if (cdxVuln.getAnalysis() != null) {
             final AnalysisState state = convertCdxVulnAnalysisStateToDtAnalysisState(

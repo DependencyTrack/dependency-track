@@ -301,7 +301,9 @@ public interface FindingAnalysisDao extends SqlObject {
         if (command.options().contains(MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL)) {
             comments.clear();
         }
-        if (command.comment() != null) {
+        if (command.comment() != null
+                && !(command.options().contains(MakeAnalysisCommand.Option.OMIT_COMMENT_IF_UNCHANGED)
+                        && updated.equals(current))) {
             comments.add(command.comment());
         }
         if (!comments.isEmpty()) {

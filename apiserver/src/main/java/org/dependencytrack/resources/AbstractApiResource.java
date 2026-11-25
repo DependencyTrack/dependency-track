@@ -19,8 +19,10 @@
 package org.dependencytrack.resources;
 
 import alpine.model.Team;
+import alpine.model.auth.ApiKeyPrincipal;
 import alpine.model.auth.Principal;
 import alpine.model.auth.TeamRef;
+import alpine.model.auth.UserPrincipal;
 import alpine.server.resources.AlpineResource;
 import org.dependencytrack.api.v2.model.TotalCount;
 import org.dependencytrack.api.v2.model.TotalCountType;
@@ -51,6 +53,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static org.dependencytrack.common.MdcKeys.MDC_COMPONENT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
@@ -247,6 +250,23 @@ public abstract class AbstractApiResource extends AlpineResource {
         return projects.stream()
                 .filter(project -> accessibleUuids.contains(project.getUuid()))
                 .toList();
+    }
+
+    /// Returns the name under which audit trail entries are recorded for the authenticated [Principal].
+    ///
+    /// For users, this is the username. For API keys, this is the name of the key's first team,
+    /// or the masked key if it does not belong to any team.
+    ///
+    /// @return The audit trail commenter name of the authenticated [Principal].
+    /// @since 5.3.0
+    protected String getAuditTrailCommenter() {
+        return switch (requireNonNull(getPrincipal())) {
+            case UserPrincipal user -> user.username();
+            case ApiKeyPrincipal apiKey ->
+                apiKey.teams().isEmpty()
+                        ? apiKey.maskedKey()
+                        : apiKey.teams().getFirst().name();
+        };
     }
 
     protected @Nullable TotalCount convertTotalCount(Page.@Nullable TotalCount totalCount) {

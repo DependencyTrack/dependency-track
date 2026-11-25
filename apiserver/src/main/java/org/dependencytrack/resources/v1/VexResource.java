@@ -414,6 +414,7 @@ public class VexResource extends AbstractApiResource {
                             .setProjectVersion(project.getVersion() != null ? project.getVersion() : "")
                             .setVexUploadToken(vexUploadToken.toString())
                             .setVexFileMetadata(vexFileMetadata)
+                            .setUploader(getAuditTrailCommenter())
                             .build()));
 
             try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());

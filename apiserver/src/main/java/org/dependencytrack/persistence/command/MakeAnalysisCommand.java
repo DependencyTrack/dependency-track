@@ -67,6 +67,11 @@ public record MakeAnalysisCommand(
         OMIT_AUDIT_TRAIL,
 
         /**
+         * Do not create a comment entry for {@code comment} if the command did not change the analysis.
+         */
+        OMIT_COMMENT_IF_UNCHANGED,
+
+        /**
          * Do not emit any {@link Group#GROUP_PROJECT_AUDIT_CHANGE} notifications.
          */
         OMIT_NOTIFICATION

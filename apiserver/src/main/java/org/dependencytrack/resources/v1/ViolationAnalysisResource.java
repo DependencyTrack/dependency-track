@@ -20,8 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.validation.RegexSequence;
 import alpine.common.validation.ValidationTask;
-import alpine.model.auth.ApiKeyPrincipal;
-import alpine.model.auth.UserPrincipal;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -162,14 +160,7 @@ public class ViolationAnalysisResource extends AbstractApiResource {
 
         final UUID componentUuid = UUID.fromString(request.getComponent());
         final UUID violationUuid = UUID.fromString(request.getPolicyViolation());
-        final String commenter =
-                switch (requireNonNull(getPrincipal())) {
-                    case UserPrincipal user -> user.username();
-                    case ApiKeyPrincipal apiKey ->
-                        apiKey.teams().isEmpty()
-                                ? apiKey.maskedKey()
-                                : apiKey.teams().getFirst().name();
-                };
+        final String commenter = getAuditTrailCommenter();
 
         return inJdbiTransaction(getAlpineRequest(), handle -> {
             final long componentId = requireComponentAccess(handle, componentUuid);

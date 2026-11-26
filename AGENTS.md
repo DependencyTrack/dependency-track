@@ -56,6 +56,12 @@ e.g. `make lint BASE_REF=upstream/5.1.x AGENT=1`.
   See [`docs/INTERRUPTIBILITY.md`](docs/INTERRUPTIBILITY.md).
 * Nullability is declared with JSpecify and enforced by NullAway. Use only `@Nullable` from `org.jspecify.annotations`.
   See [`docs/NULLABILITY.md`](docs/NULLABILITY.md).
+* Queries and endpoints returning project data must apply portfolio access control.
+  See [`docs/PORTFOLIO_ACCESS_CONTROL.md`](docs/PORTFOLIO_ACCESS_CONTROL.md).
+
+## Code Style
+
+* Follow [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md) for Java and SQL.
 
 ## Required Additions
 
@@ -77,6 +83,7 @@ e.g. `make lint BASE_REF=upstream/5.1.x AGENT=1`.
 
 * For a bug fix, first write a test that reproduces the bug, and confirm it fails for the expected reason.
 * For new or changed behavior, add tests that cover it, or extend existing ones.
+  Follow [`docs/TESTING.md`](docs/TESTING.md).
 * Run the tests covering the change with `make test-single`.
 
 ### Checks
@@ -100,6 +107,21 @@ report it instead of reverting the change.
 
 Error Prone is not part of `make lint-java`. It runs during compilation, so its findings fail `make build` and `make test`.
 Fix findings instead of suppressing them. See [Static Analysis](DEVELOPING.md#static-analysis) for when suppression is acceptable.
+
+### Review
+
+Review the full diff against the base branch before considering the change done.
+Skip this for changes without behavior, e.g. docs, comments, or formatting.
+
+Use the code review skill, command, or agent your user prefers.
+If there is none, use your tool's built-in one.
+Otherwise, use a reviewer with fresh context, such as a subagent or a new session,
+and give it the diff, not your summary of the change.
+
+Give the reviewer this file and the documents it links, as rules on top of whatever it checks by default.
+
+Fix what you find, then re-run the tests and checks.
+Report findings you chose not to fix, with the reason.
 
 ## Git
 

@@ -147,6 +147,8 @@ which IntelliJ offers on first open. Enable it per project under
 
 `make format-java` is the source of truth.
 
+Conventions the formatter can't check are documented in [`docs/CODE_STYLE.md`](./docs/CODE_STYLE.md).
+
 ### Static Analysis
 
 Static analysis happens for every build using [Error Prone](https://errorprone.info/).
@@ -160,6 +162,8 @@ Error Prone's [bug patterns](https://errorprone.info/bugpatterns) documentation 
 and suppression guidance.
 
 ## Testing
+
+See [`docs/TESTING.md`](./docs/TESTING.md) for how we write tests.
 
 Run all tests:
 

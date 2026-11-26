@@ -95,6 +95,17 @@ public final class CelPolicyFieldMappingRegistry {
             new FieldMapping("epss_score", "ep.\"SCORE\""),
             new FieldMapping("epss_percentile", "ep.\"PERCENTILE\""));
 
+    static final List<FieldMapping> HEALTH_FIELDS = List.of(
+            new FieldMapping("scorecard_score", "phm.\"SCORECARD_SCORE\""),
+            new FieldMapping("avg_issue_age_days", "phm.\"AVG_ISSUE_AGE_DAYS\""),
+            new FieldMapping("commit_frequency_weekly", "phm.\"COMMIT_FREQUENCY_WEEKLY\""),
+            new FieldMapping("last_commit", "phm.\"LAST_COMMIT\""),
+            new FieldMapping("dependents", "phm.\"DEPENDENTS\""),
+            new FieldMapping("bus_factor", "phm.\"BUS_FACTOR\""),
+            new FieldMapping("stars", "phm.\"STARS\""),
+            new FieldMapping("forks", "phm.\"FORKS\""),
+            new FieldMapping("is_repo_archived", "phm.\"IS_REPO_ARCHIVED\""));
+
     static final List<FieldMapping> LICENSE_FIELDS = List.of(
             new FieldMapping("uuid", "l.\"UUID\""),
             new FieldMapping("id", "l.\"LICENSEID\""),

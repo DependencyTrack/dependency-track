@@ -114,6 +114,63 @@ message Component {
   }
 }
 
+message HealthMeta {
+  // OpenSSF Scorecard score for the package.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional float scorecard_score = 1;
+
+  // Average age of open issues, in days.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional float avg_issue_age_days = 2;
+
+  // Average commits per week on the repository default branch.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional float commit_frequency_weekly = 3;
+
+  // Time of the most recent commit on the repository default branch.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional google.protobuf.Timestamp last_commit = 4;
+
+  // Number of packages that depend on this package.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional int64 dependents = 5;
+
+  // Estimated number of contributors whose loss would affect the repository.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional int32 bus_factor = 6;
+
+  // GitHub repository stars.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional int64 stars = 7;
+
+  // GitHub repository forks.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional int64 forks = 8;
+
+  // Whether the repository is archived.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional bool is_repo_archived = 9;
+
+  // Individual OpenSSF Scorecard checks. Policies can read the check name and score.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. An empty list means the checks were not loaded.
+  repeated ScorecardCheck scorecard_checks = 10;
+
+  message ScorecardCheck {
+    string name = 1;
+    optional float score = 2;
+  }
+}
+
 message License {
   string uuid = 1;
   string id = 2;

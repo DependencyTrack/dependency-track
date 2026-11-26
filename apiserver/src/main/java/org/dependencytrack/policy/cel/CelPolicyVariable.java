@@ -26,7 +26,8 @@ enum CelPolicyVariable {
     PROJECT("project", CelPolicyTypes.TYPE_PROJECT),
     VULN("vuln", CelPolicyTypes.TYPE_VULNERABILITY),
     VULNS("vulns", CelPolicyTypes.TYPE_VULNERABILITIES),
-    NOW("now", SimpleType.TIMESTAMP);
+    NOW("now", SimpleType.TIMESTAMP),
+    HEALTH("health", CelPolicyTypes.TYPE_HEALTH);
 
     private final String name;
     private final CelType type;

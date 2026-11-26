@@ -54,11 +54,19 @@ import org.dependencytrack.notification.PublishNotificationWorkflow;
 import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.dependencytrack.pkghealth.FetchPackageHealthMetadataCandidatesActivity;
+import org.dependencytrack.pkghealth.ResolvePackageHealthMetadataActivity;
+import org.dependencytrack.pkghealth.ResolvePackageHealthMetadataWorkflow;
+import org.dependencytrack.pkghealth.ScheduleHealthPolicyEvaluationsActivity;
+import org.dependencytrack.pkghealth.analyzer.PackageHealthAnalyzer;
+import org.dependencytrack.pkghealth.client.DepsDevApiClient;
+import org.dependencytrack.pkghealth.client.GitHubApiClientProvider;
 import org.dependencytrack.pkgmetadata.FetchPackageMetadataResolutionCandidatesActivity;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataActivity;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.EvalProjectPoliciesActivity;
+import org.dependencytrack.policy.EvalProjectPoliciesWorkflow;
 import org.dependencytrack.policy.cel.CelPolicyEngine;
 import org.dependencytrack.policy.cel.CelVulnerabilityPolicyEvaluator;
 import org.dependencytrack.policy.vulnerability.SyncVulnPolicyBundleActivity;
@@ -66,6 +74,8 @@ import org.dependencytrack.policy.vulnerability.SyncVulnPolicyBundleWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.dependencytrack.proto.internal.workflow.v1.EvalProjectPoliciesArg;
+import org.dependencytrack.proto.internal.workflow.v1.FetchPackageHealthMetadataCandidatesArg;
+import org.dependencytrack.proto.internal.workflow.v1.FetchPackageHealthMetadataCandidatesRes;
 import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolutionCandidatesArg;
 import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolutionCandidatesRes;
 import org.dependencytrack.proto.internal.workflow.v1.FetchProjectMetricsUpdateCandidatesRes;
@@ -82,8 +92,12 @@ import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificati
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationActivityArg;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg;
+import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageHealthMetadataActivityArg;
+import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageHealthMetadataActivityRes;
+import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageHealthMetadataWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataActivityArg;
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataWorkflowArg;
+import org.dependencytrack.proto.internal.workflow.v1.ScheduleHealthPolicyEvaluationsArg;
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowArg;
@@ -176,6 +190,9 @@ public final class DexEngineInitializer implements ServletContextListener {
                         .getOptionalValue(GENERAL_BASE_URL)
                         .orElse(null))));
 
+        final var packageHealthAnalyzer =
+                new PackageHealthAnalyzer(new DepsDevApiClient(), new GitHubApiClientProvider(secretManager));
+
         final var engineFactory =
                 ServiceLoader.load(DexEngineFactory.class).findFirst().orElseThrow();
         engine = engineFactory.create(engineConfig);
@@ -183,6 +200,11 @@ public final class DexEngineInitializer implements ServletContextListener {
         engine.registerWorkflow(
                 new AnalyzeProjectWorkflow(),
                 protoConverter(AnalyzeProjectWorkflowArg.class),
+                voidConverter(),
+                Duration.ofMinutes(1));
+        engine.registerWorkflow(
+                new EvalProjectPoliciesWorkflow(),
+                protoConverter(EvalProjectPoliciesArg.class),
                 voidConverter(),
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
@@ -214,6 +236,11 @@ public final class DexEngineInitializer implements ServletContextListener {
         engine.registerWorkflow(
                 new ResolvePackageMetadataWorkflow(),
                 protoConverter(ResolvePackageMetadataWorkflowArg.class),
+                voidConverter(),
+                Duration.ofMinutes(1));
+        engine.registerWorkflow(
+                new ResolvePackageHealthMetadataWorkflow(),
+                protoConverter(ResolvePackageHealthMetadataWorkflowArg.class),
                 voidConverter(),
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
@@ -311,6 +338,21 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter());
         registerActivity(
                 engine,
+                new FetchPackageHealthMetadataCandidatesActivity(packageHealthAnalyzer),
+                protoConverter(FetchPackageHealthMetadataCandidatesArg.class),
+                protoConverter(FetchPackageHealthMetadataCandidatesRes.class));
+        registerActivity(
+                engine,
+                new ResolvePackageHealthMetadataActivity(packageHealthAnalyzer),
+                protoConverter(ResolvePackageHealthMetadataActivityArg.class),
+                protoConverter(ResolvePackageHealthMetadataActivityRes.class));
+        registerActivity(
+                engine,
+                new ScheduleHealthPolicyEvaluationsActivity(engine),
+                protoConverter(ScheduleHealthPolicyEvaluationsArg.class),
+                voidConverter());
+        registerActivity(
+                engine,
                 new SyncVulnPolicyBundleActivity(config, HttpClient.INSTANCE),
                 protoConverter(SyncVulnPolicyBundleArg.class),
                 voidConverter());
@@ -329,6 +371,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                         new CreateTaskQueueRequest(TaskType.ACTIVITY, "metrics-updates", 25),
                         new CreateTaskQueueRequest(TaskType.ACTIVITY, "notifications", 25),
                         new CreateTaskQueueRequest(TaskType.ACTIVITY, "package-metadata-resolutions", 25),
+                        new CreateTaskQueueRequest(TaskType.ACTIVITY, "package-health-metadata-resolutions", 25),
                         new CreateTaskQueueRequest(TaskType.ACTIVITY, "policy-evaluations", 25),
                         new CreateTaskQueueRequest(TaskType.ACTIVITY, "vuln-analyses", 25),
                         new CreateTaskQueueRequest(TaskType.ACTIVITY, "vuln-analysis-reconciliations", 25)));

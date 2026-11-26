@@ -20,7 +20,9 @@ package org.dependencytrack.vulndatasource.jvn;
 
 import io.github.nscuro.versatile.Comparator;
 import io.github.nscuro.versatile.Vers;
+import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,6 +46,8 @@ import java.util.regex.Pattern;
  *   <li>{@code "X およびそれ以前"}                     -&gt; &lt;= X</li>
  *   <li>{@code "X"} (bare single version)            -&gt; exact</li>
  *   <li>{@code "すべてのバージョン"}                   -&gt; all-versions range</li>
+ *   <li>Multi-clause lists joined by {@code "、"}, {@code ","}, {@code "および"}, {@code "及び"},
+ *       {@code "または"}, or {@code "又は"}         -&gt; combined {@code vers} range</li>
  * </ul>
  * Texts that fail to parse as-is get one salvage attempt with platform/edition qualifiers
  * stripped ({@code "5.0 (client)"}, {@code "3 (x86-64)"}, {@code "Version 1809 for x64-based
@@ -52,8 +56,9 @@ import java.util.regex.Pattern;
  * them from the version value matches NVD's representation. Only known qualifier vocabulary is
  * stripped, and never from a text that already parsed, so no version value is ever invented.
  * <p>
- * Anything else (discrete lists, unrecognised wording) yields {@link Unparseable} so the
- * caller can degrade to a product-level match rather than guess.
+ * Anything else (unrecognised wording, trailing qualifiers outside the known vocabulary,
+ * contradictory bounds) yields {@link Unparseable} so the caller can degrade to a product-level
+ * match rather than guess.
  *
  * @since 5.1.0
  */
@@ -89,6 +94,20 @@ public final class JvnVersionParser {
     // taken as exact versions rather than stripped.
     private static final Pattern PAREN_BUILD_VERSION =
             Pattern.compile("^\\s*(\\d[\\d.]*\\([0-9A-Za-z.]+\\)[0-9A-Za-z]*)\\s*$");
+
+    // Separates multiple range or version clauses while keeping "X およびそれ以前/以降" intact.
+    private static final Pattern CLAUSE_SEPARATOR =
+            Pattern.compile("(?:\\s*(?:[、,]|および(?!\\s*それ以[前後])|及び|または|又は)\\s*)+");
+
+    private record BoundPattern(Pattern pattern, Comparator comparator) {}
+
+    private static final List<BoundPattern> BOUND_PATTERNS = List.of(
+            new BoundPattern(AND_BEFORE, Comparator.LESS_THAN_OR_EQUAL),
+            new BoundPattern(AND_AFTER, Comparator.GREATER_THAN_OR_EQUAL),
+            new BoundPattern(GTE, Comparator.GREATER_THAN_OR_EQUAL),
+            new BoundPattern(GT, Comparator.GREATER_THAN),
+            new BoundPattern(LT, Comparator.LESS_THAN),
+            new BoundPattern(LTE, Comparator.LESS_THAN_OR_EQUAL));
 
     // JVN spells "all versions" out in Japanese instead of using a range expression.
     private static final Pattern ALL_VERSIONS = Pattern.compile("^(?:すべてのバージョン|全てのバージョン|全バージョン)$");
@@ -181,81 +200,95 @@ public final class JvnVersionParser {
     }
 
     private static Result parseCore(final String text, final String scheme) {
-        final Matcher single = SINGLE.matcher(text);
-        if (single.matches()) {
-            return new ExactVersion(single.group(1));
-        }
-        final Matcher parenBuild = PAREN_BUILD_VERSION.matcher(text);
-        if (parenBuild.matches()) {
-            return new ExactVersion(parenBuild.group(1));
-        }
-
-        String gte = null;
-        String gt = null;
-        String lte = null;
-        String lt = null;
-
-        final Matcher andBefore = AND_BEFORE.matcher(text);
-        if (andBefore.find()) {
-            lte = andBefore.group(1);
-        }
-        final Matcher andAfter = AND_AFTER.matcher(text);
-        if (andAfter.find()) {
-            gte = andAfter.group(1);
-        }
-
-        final Matcher fromTo = FROM_TO.matcher(text);
-        if (fromTo.find()) {
-            gte = fromTo.group(1);
-            lte = fromTo.group(2);
-        }
-
-        if (gte == null) {
-            final Matcher m = GTE.matcher(text);
-            if (m.find()) {
-                gte = m.group(1);
-            }
-        }
-        if (gt == null) {
-            final Matcher m = GT.matcher(text);
-            if (m.find()) {
-                gt = m.group(1);
-            }
-        }
-        if (lt == null) {
-            final Matcher m = LT.matcher(text);
-            if (m.find()) {
-                lt = m.group(1);
-            }
-        }
-        if (lte == null) {
-            final Matcher m = LTE.matcher(text);
-            if (m.find()) {
-                lte = m.group(1);
+        final String[] clauses = CLAUSE_SEPARATOR.split(text, -1);
+        for (final String clause : clauses) {
+            if (clause.isEmpty()) {
+                return new Unparseable("empty clause: " + text);
             }
         }
 
-        if (gte == null && gt == null && lte == null && lt == null) {
-            return new Unparseable("no recognised bound: " + text);
+        if (clauses.length == 1) {
+            final String exact = matchExactVersion(clauses[0]);
+            if (exact != null) {
+                return new ExactVersion(exact);
+            }
         }
 
         try {
             final var builder = Vers.builder(scheme);
-            if (gte != null) {
-                builder.withConstraint(Comparator.GREATER_THAN_OR_EQUAL, gte);
+            for (final String clause : clauses) {
+                if (!parseClause(clause, builder)) {
+                    return new Unparseable("no recognised bound: " + text);
+                }
             }
-            if (gt != null) {
-                builder.withConstraint(Comparator.GREATER_THAN, gt);
-            }
-            if (lte != null) {
-                builder.withConstraint(Comparator.LESS_THAN_OR_EQUAL, lte);
-            }
-            if (lt != null) {
-                builder.withConstraint(Comparator.LESS_THAN, lt);
-            }
-            return new VersionRange(builder.build());
+            return new VersionRange(builder.build().validate());
         } catch (RuntimeException e) {
             return new Unparseable("vers build failed: " + e.getMessage());
         }
+    }
+
+    private static @Nullable String matchExactVersion(final String clause) {
+        final Matcher single = SINGLE.matcher(clause);
+        if (single.matches()) {
+            return single.group(1);
+        }
+        final Matcher parenBuild = PAREN_BUILD_VERSION.matcher(clause);
+        if (parenBuild.matches()) {
+            return parenBuild.group(1);
+        }
+        return null;
+    }
+
+    private static boolean parseClause(final String clause, final Vers.Builder builder) {
+        final String exact = matchExactVersion(clause);
+        if (exact != null && containsDigit(exact)) {
+            builder.withConstraint(Comparator.EQUAL, exact);
+            return true;
+        }
+
+        boolean matchedAny = false;
+        int pos = 0;
+        final int len = clause.length();
+        final Matcher fromToMatcher = FROM_TO.matcher(clause);
+        while (pos < len) {
+            while (pos < len && Character.isWhitespace(clause.charAt(pos))) {
+                pos++;
+            }
+            if (pos >= len) {
+                break;
+            }
+            fromToMatcher.region(pos, len);
+            if (fromToMatcher.lookingAt()) {
+                builder.withConstraint(Comparator.GREATER_THAN_OR_EQUAL, fromToMatcher.group(1));
+                builder.withConstraint(Comparator.LESS_THAN_OR_EQUAL, fromToMatcher.group(2));
+                pos = fromToMatcher.end();
+                matchedAny = true;
+                continue;
+            }
+            boolean matched = false;
+            for (final BoundPattern rule : BOUND_PATTERNS) {
+                final Matcher m = rule.pattern().matcher(clause).region(pos, len);
+                if (m.lookingAt()) {
+                    builder.withConstraint(rule.comparator(), m.group(1));
+                    pos = m.end();
+                    matched = true;
+                    matchedAny = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                return false;
+            }
+        }
+        return matchedAny;
+    }
+
+    private static boolean containsDigit(final String s) {
+        for (int i = 0; i < s.length(); i++) {
+            if (Character.isDigit(s.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

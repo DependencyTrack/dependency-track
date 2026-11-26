@@ -10,6 +10,11 @@ This practice was introduced via [ADR 031].
 * Inside a `@NullMarked` package, every type is non-null by default.
   Mark nullable types with `@Nullable` from `org.jspecify.annotations`.
 * Do not use other nullability annotations (`javax.annotation`, `jakarta.annotation`, JetBrains, etc.).
+* Do not annotate with `@NonNull`. It is the default inside `@NullMarked` packages.
+* Prefer `@Nullable` over `Optional` for method parameters and return types.
+* Check non-null arguments in constructors and record compact constructors with a statically imported
+  `Objects.requireNonNull`, and a message following the `<name> must not be null` pattern:
+  `requireNonNull(uuid, "uuid must not be null");`
 
 ## New package template
 

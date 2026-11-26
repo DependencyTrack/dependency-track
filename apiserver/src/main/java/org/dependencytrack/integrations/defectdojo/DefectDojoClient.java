@@ -59,6 +59,17 @@ public class DefectDojoClient {
             final Boolean verifyFindings,
             final @Nullable String testTitle,
             final @Nullable String groupBy) {
+        uploadDependencyTrackFindings(token, engagementId, findingsJson, verifyFindings, testTitle, groupBy, true);
+    }
+
+    public void uploadDependencyTrackFindings(
+            final String token,
+            final String engagementId,
+            final InputStream findingsJson,
+            final Boolean verifyFindings,
+            final @Nullable String testTitle,
+            final @Nullable String groupBy,
+            final boolean closeOldFindings) {
         LOGGER.debug("Uploading Dependency-Track findings to DefectDojo");
 
         final var multipart = new MultipartBodyPublisher()
@@ -68,7 +79,7 @@ public class DefectDojoClient {
                 .addFormField("verified", Boolean.toString(verifyFindings))
                 .addFormField("active", "true")
                 .addFormField("minimum_severity", "Info")
-                .addFormField("close_old_findings", "true")
+                .addFormField("close_old_findings", Boolean.toString(closeOldFindings))
                 .addFormField("push_to_jira", "false")
                 .addFormField("scan_date", DATE_FORMAT.format(new Date()));
         if (testTitle != null) {

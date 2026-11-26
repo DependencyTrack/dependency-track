@@ -36,6 +36,7 @@ import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.jdbi.ProjectPropertyDao;
@@ -444,6 +445,85 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                 handle -> new CelPolicyDao(handle).reconcileViolations(project.getId(), violationsByComponentId));
         assertThat(clearedIds).isEmpty();
         assertThat(getViolationText(violationId)).isNull();
+    }
+
+    @Test
+    public void testGetApplicablePoliciesWithOnlyLatestProjectVersion() {
+        final var parentProject = new Project();
+        parentProject.setName("acme-parent");
+        qm.persist(parentProject);
+
+        final var oldProject = new Project();
+        oldProject.setName("acme-app");
+        oldProject.setVersion("1.0.0");
+        oldProject.setParent(parentProject);
+        oldProject.setIsLatest(false);
+        qm.persist(oldProject);
+
+        final var latestProject = new Project();
+        latestProject.setName("acme-app");
+        latestProject.setVersion("2.0.0");
+        latestProject.setParent(parentProject);
+        latestProject.setIsLatest(true);
+        qm.persist(latestProject);
+
+        final Tag tagMatch = qm.createTag("match");
+        final Tag tagOther = qm.createTag("other");
+        qm.bind(oldProject, List.of(tagMatch));
+        qm.bind(latestProject, List.of(tagMatch));
+
+        final Policy globalLatestOnly =
+                qm.createPolicy("global-latest-only", Policy.Operator.ANY, Policy.ViolationState.FAIL, true);
+        addDummyCondition(globalLatestOnly);
+
+        final Policy projectLatestOnly =
+                qm.createPolicy("project-latest-only", Policy.Operator.ANY, Policy.ViolationState.FAIL, true);
+        projectLatestOnly.setProjects(List.of(parentProject));
+        projectLatestOnly.setIncludeChildren(true);
+        qm.persist(projectLatestOnly);
+        addDummyCondition(projectLatestOnly);
+
+        final Policy tagLatestOnly =
+                qm.createPolicy("tag-latest-only", Policy.Operator.ANY, Policy.ViolationState.FAIL, true);
+        qm.bind(tagLatestOnly, List.of(tagMatch));
+        addDummyCondition(tagLatestOnly);
+
+        final Policy invertedTagLatestOnly =
+                qm.createPolicy("inverted-tag-latest-only", Policy.Operator.ANY, Policy.ViolationState.FAIL, true);
+        invertedTagLatestOnly.setInvertTagMatch(true);
+        qm.persist(invertedTagLatestOnly);
+        qm.bind(invertedTagLatestOnly, List.of(tagOther));
+        addDummyCondition(invertedTagLatestOnly);
+
+        final Policy globalAllVersions =
+                qm.createPolicy("global-all-versions", Policy.Operator.ANY, Policy.ViolationState.FAIL, false);
+        addDummyCondition(globalAllVersions);
+
+        final List<Policy> oldApplicable =
+                withJdbiHandle(handle -> new CelPolicyDao(handle).getApplicablePolicies(oldProject.getId()));
+        assertThat(oldApplicable)
+                .extracting(Policy::getName, Policy::isOnlyLatestProjectVersion)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("global-all-versions", false));
+
+        final List<Policy> latestApplicable =
+                withJdbiHandle(handle -> new CelPolicyDao(handle).getApplicablePolicies(latestProject.getId()));
+        assertThat(latestApplicable)
+                .extracting(Policy::getName, Policy::isOnlyLatestProjectVersion)
+                .containsExactlyInAnyOrder(
+                        org.assertj.core.groups.Tuple.tuple("global-latest-only", true),
+                        org.assertj.core.groups.Tuple.tuple("project-latest-only", true),
+                        org.assertj.core.groups.Tuple.tuple("tag-latest-only", true),
+                        org.assertj.core.groups.Tuple.tuple("inverted-tag-latest-only", true),
+                        org.assertj.core.groups.Tuple.tuple("global-all-versions", false));
+    }
+
+    private void addDummyCondition(Policy policy) {
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "component.name == \"acme-lib\"",
+                PolicyViolation.Type.OPERATIONAL);
     }
 
     private static String getViolationText(long violationId) {

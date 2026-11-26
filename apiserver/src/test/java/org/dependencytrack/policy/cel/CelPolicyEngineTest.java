@@ -3518,4 +3518,54 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         assertThat(qm.getAllPolicyViolations(projectUntagged)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(projectTagged)).isEmpty();
     }
+
+    @Test
+    void testEvaluateProjectWithPolicyLimitedToLatestProjectVersion() throws Exception {
+        final Policy policy =
+                qm.createPolicy("latest-only-policy", Policy.Operator.ANY, Policy.ViolationState.FAIL, true);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                component.name == "acme-lib"
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var projectV1 = new Project();
+        projectV1.setName("acme-app");
+        projectV1.setVersion("1.0.0");
+        projectV1.setIsLatest(true);
+        qm.persist(projectV1);
+        final var componentV1 = new Component();
+        componentV1.setProject(projectV1);
+        componentV1.setName("acme-lib");
+        qm.persist(componentV1);
+
+        new CelPolicyEngine().evaluateProject(projectV1.getUuid());
+        assertThat(qm.getAllPolicyViolations(projectV1)).hasSize(1);
+
+        final var projectV2 = new Project();
+        projectV2.setName("acme-app");
+        projectV2.setVersion("2.0.0");
+        projectV2.setIsLatest(false);
+        qm.persist(projectV2);
+        final var componentV2 = new Component();
+        componentV2.setProject(projectV2);
+        componentV2.setName("acme-lib");
+        qm.persist(componentV2);
+
+        new CelPolicyEngine().evaluateProject(projectV2.getUuid());
+        assertThat(qm.getAllPolicyViolations(projectV2)).isEmpty();
+
+        projectV1.setIsLatest(false);
+        qm.persist(projectV1);
+        projectV2.setIsLatest(true);
+        qm.persist(projectV2);
+
+        new CelPolicyEngine().evaluateProject(projectV1.getUuid());
+        new CelPolicyEngine().evaluateProject(projectV2.getUuid());
+        assertThat(qm.getAllPolicyViolations(projectV1)).isEmpty();
+        assertThat(qm.getAllPolicyViolations(projectV2)).hasSize(1);
+    }
 }

@@ -460,6 +460,7 @@ public final class CelPolicyDao {
                              , p."NAME" AS policy_name
                              , p."OPERATOR" AS policy_operator
                              , p."VIOLATIONSTATE" AS policy_violation_state
+                             , p."ONLY_LATEST_PROJECT_VERSION" AS policy_only_latest_project_version
                              , pc."ID" AS condition_id
                              , pc."UUID" AS condition_uuid
                              , pc."OPERATOR" AS condition_operator
@@ -469,7 +470,16 @@ public final class CelPolicyDao {
                           FROM "POLICY" AS p
                          INNER JOIN "POLICYCONDITION" AS pc
                             ON pc."POLICY_ID" = p."ID"
-                         WHERE p."ID" IN (
+                         WHERE (
+                                 NOT p."ONLY_LATEST_PROJECT_VERSION"
+                                 OR EXISTS (
+                                   SELECT 1
+                                     FROM "PROJECT"
+                                    WHERE "ID" = :projectId
+                                      AND "IS_LATEST"
+                                 )
+                               )
+                           AND p."ID" IN (
                            -- "Global" policies without restrictions.
                            SELECT p2."ID"
                              FROM "POLICY" AS p2
@@ -525,6 +535,7 @@ public final class CelPolicyDao {
                         policy.setName(rs.getString("policy_name"));
                         policy.setOperator(Policy.Operator.valueOf(rs.getString("policy_operator")));
                         policy.setViolationState(Policy.ViolationState.valueOf(rs.getString("policy_violation_state")));
+                        policy.setOnlyLatestProjectVersion(rs.getBoolean("policy_only_latest_project_version"));
                         policy.setPolicyConditions(new ArrayList<>());
                         accumulator.put(policyId, policy);
                     }

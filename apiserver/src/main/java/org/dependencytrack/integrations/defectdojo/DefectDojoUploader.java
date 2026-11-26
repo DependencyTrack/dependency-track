@@ -153,8 +153,9 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                 final String testId = client.getDojoTestId(engagementId, testsIds, testTitle);
                 LOGGER.debug("Found existing test Id: {}", testId);
                 if (testId.equals("")) {
+                    // Initial import in reimport mode must not close findings of other tests in the engagement.
                     client.uploadDependencyTrackFindings(
-                            apiKeyValue, engagementId, payload, verifyFindings, testTitle, groupBy);
+                            apiKeyValue, engagementId, payload, verifyFindings, testTitle, groupBy, false);
                 } else {
                     client.reimportDependencyTrackFindings(
                             apiKeyValue,

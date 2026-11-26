@@ -144,6 +144,20 @@ class JvnVersionParserTest {
         assertInstanceOf(Unparseable.class, JvnVersionParser.parse(input, "generic"));
     }
 
+    @ParameterizedTest
+    @CsvSource(
+            delimiter = ';',
+            value = {
+                "1.0.0 から 1.2.5 および 2.0.0 から 2.1.3",
+                "8.0.0から8.0.6、8.4.0から8.4.2（8系）",
+                "1.0.0 以上 1.2.5 未満 および 2.0.0 以上 2.1.3 未満",
+                "1.0.0 から 1.2.5、2.0.0",
+                "1.0.0 未満 および 2.0.0 未満",
+            })
+    void degradesOnMultiClauseExpressions(final String input) {
+        assertInstanceOf(Unparseable.class, JvnVersionParser.parse(input, "generic"));
+    }
+
     @Test
     void degradesOnNull() {
         assertInstanceOf(Unparseable.class, JvnVersionParser.parse(null, "generic"));

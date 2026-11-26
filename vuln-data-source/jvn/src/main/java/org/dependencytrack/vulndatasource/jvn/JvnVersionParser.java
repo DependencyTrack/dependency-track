@@ -180,6 +180,21 @@ public final class JvnVersionParser {
         return LEADING_QUALIFIER_WORDS.matcher(current).replaceFirst("").trim();
     }
 
+    private record BoundMatch(boolean matched, boolean duplicate, String value, String remaining) {}
+
+    private static BoundMatch matchUnique(final Pattern pattern, final String remaining) {
+        final Matcher m = pattern.matcher(remaining);
+        if (!m.find()) {
+            return new BoundMatch(false, false, "", remaining);
+        }
+        final String value = m.group(1);
+        final String updated = remaining.substring(0, m.start()) + " " + remaining.substring(m.end());
+        if (m.find()) {
+            return new BoundMatch(true, true, "", remaining);
+        }
+        return new BoundMatch(true, false, value != null ? value : "", updated);
+    }
+
     private static Result parseCore(final String text, final String scheme) {
         final Matcher single = SINGLE.matcher(text);
         if (single.matches()) {
@@ -194,49 +209,77 @@ public final class JvnVersionParser {
         String gt = null;
         String lte = null;
         String lt = null;
+        String remaining = text;
 
-        final Matcher andBefore = AND_BEFORE.matcher(text);
-        if (andBefore.find()) {
-            lte = andBefore.group(1);
+        final BoundMatch andBefore = matchUnique(AND_BEFORE, remaining);
+        if (andBefore.matched()) {
+            if (andBefore.duplicate()) {
+                return new Unparseable("multiple bounds: " + text);
+            }
+            lte = andBefore.value();
+            remaining = andBefore.remaining();
         }
-        final Matcher andAfter = AND_AFTER.matcher(text);
-        if (andAfter.find()) {
-            gte = andAfter.group(1);
+        final BoundMatch andAfter = matchUnique(AND_AFTER, remaining);
+        if (andAfter.matched()) {
+            if (andAfter.duplicate()) {
+                return new Unparseable("multiple bounds: " + text);
+            }
+            gte = andAfter.value();
+            remaining = andAfter.remaining();
         }
 
-        final Matcher fromTo = FROM_TO.matcher(text);
+        final Matcher fromTo = FROM_TO.matcher(remaining);
         if (fromTo.find()) {
+            if (gte != null || lte != null) {
+                return new Unparseable("conflicting bounds: " + text);
+            }
             gte = fromTo.group(1);
             lte = fromTo.group(2);
+            final String updated = remaining.substring(0, fromTo.start()) + " " + remaining.substring(fromTo.end());
+            if (fromTo.find()) {
+                return new Unparseable("multiple bounds: " + text);
+            }
+            remaining = updated;
         }
 
-        if (gte == null) {
-            final Matcher m = GTE.matcher(text);
-            if (m.find()) {
-                gte = m.group(1);
+        final BoundMatch gteMatch = matchUnique(GTE, remaining);
+        if (gteMatch.matched()) {
+            if (gteMatch.duplicate() || gte != null || gt != null) {
+                return new Unparseable("multiple or conflicting lower bounds: " + text);
             }
+            gte = gteMatch.value();
+            remaining = gteMatch.remaining();
         }
-        if (gt == null) {
-            final Matcher m = GT.matcher(text);
-            if (m.find()) {
-                gt = m.group(1);
+        final BoundMatch gtMatch = matchUnique(GT, remaining);
+        if (gtMatch.matched()) {
+            if (gtMatch.duplicate() || gte != null) {
+                return new Unparseable("multiple or conflicting lower bounds: " + text);
             }
+            gt = gtMatch.value();
+            remaining = gtMatch.remaining();
         }
-        if (lt == null) {
-            final Matcher m = LT.matcher(text);
-            if (m.find()) {
-                lt = m.group(1);
+        final BoundMatch ltMatch = matchUnique(LT, remaining);
+        if (ltMatch.matched()) {
+            if (ltMatch.duplicate() || lte != null) {
+                return new Unparseable("multiple or conflicting upper bounds: " + text);
             }
+            lt = ltMatch.value();
+            remaining = ltMatch.remaining();
         }
-        if (lte == null) {
-            final Matcher m = LTE.matcher(text);
-            if (m.find()) {
-                lte = m.group(1);
+        final BoundMatch lteMatch = matchUnique(LTE, remaining);
+        if (lteMatch.matched()) {
+            if (lteMatch.duplicate() || lte != null || lt != null) {
+                return new Unparseable("multiple or conflicting upper bounds: " + text);
             }
+            lte = lteMatch.value();
+            remaining = lteMatch.remaining();
         }
 
         if (gte == null && gt == null && lte == null && lt == null) {
             return new Unparseable("no recognised bound: " + text);
+        }
+        if (!remaining.trim().isEmpty()) {
+            return new Unparseable("unparsed remainder: " + text);
         }
 
         try {

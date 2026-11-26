@@ -103,6 +103,8 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -3594,5 +3596,1050 @@ class BomResourceTest extends ResourceTest {
                     }
                     """.formatted(bomBytes.length - 1));
         }
+    }
+
+    @ParameterizedTest
+    @MethodSource("uploadBomIsActiveExclusivelyDisabledParameters")
+    void uploadBomIsActiveExclusivelyDisabledPreservesOtherVersionsTest(Boolean isActiveExclusively) throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Project existingActive = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, true, false);
+        final Project unrelated = qm.createProject("other-app", null, "1.0.0", null, null, null, null, false, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final String extraField =
+                isActiveExclusively != null ? "\"isActiveExclusively\": %s,".formatted(isActiveExclusively) : "";
+
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "2.0.0",
+                          "autoCreate": true,
+                          %s
+                          "bom": "%s"
+                        }
+                        """.formatted(extraField, bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        final Project created = qm.getProject("acme-app", "2.0.0");
+        final Project refreshedExisting = qm.getObjectByUuid(Project.class, existingActive.getUuid());
+        final Project refreshedUnrelated = qm.getObjectByUuid(Project.class, unrelated.getUuid());
+
+        assertThat(created).isNotNull();
+        assertThat(created.isActive()).isTrue();
+        assertThat(refreshedExisting.isActive()).isTrue();
+        assertThat(refreshedUnrelated.isActive()).isTrue();
+    }
+
+    private static Stream<Boolean> uploadBomIsActiveExclusivelyDisabledParameters() {
+        return Stream.of(null, false);
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyDeactivatesAllOtherVersionsRegardlessOfIsLatestTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Date earlierInactiveDate =
+                Date.from(Instant.now().minus(5, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS));
+        final Project v1Latest = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, true, false);
+        final Project v2Active = qm.createProject("acme-app", null, "2.0.0", null, null, null, null, false, false);
+        final Project v0Inactive =
+                qm.createProject("acme-app", null, "0.9.0", null, null, null, earlierInactiveDate, false, false);
+        final Project unrelated = qm.createProject("other-app", null, "1.0.0", null, null, null, null, true, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "3.0.0",
+                          "autoCreate": true,
+                          "isLatest": false,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        final Project v3 = qm.getProject("acme-app", "3.0.0");
+        final Project refreshedV1 = qm.getObjectByUuid(Project.class, v1Latest.getUuid());
+        final Project refreshedV2 = qm.getObjectByUuid(Project.class, v2Active.getUuid());
+        final Project refreshedV0 = qm.getObjectByUuid(Project.class, v0Inactive.getUuid());
+        final Project refreshedUnrelated = qm.getObjectByUuid(Project.class, unrelated.getUuid());
+
+        assertThat(v3).isNotNull();
+        assertThat(v3.isActive()).isTrue();
+        assertThat(v3.isLatest()).isFalse();
+
+        assertThat(refreshedV1.isActive()).isFalse();
+        assertThat(refreshedV1.getInactiveSince()).isNotNull();
+        assertThat(refreshedV1.isLatest()).isTrue();
+
+        assertThat(refreshedV2.isActive()).isFalse();
+        assertThat(refreshedV2.getInactiveSince()).isNotNull();
+
+        assertThat(refreshedV0.isActive()).isFalse();
+        assertThat(refreshedV0.getInactiveSince()).isEqualTo(earlierInactiveDate);
+
+        assertThat(refreshedUnrelated.isActive()).isTrue();
+        assertThat(refreshedUnrelated.isLatest()).isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyWithIsLatestTrueTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Project v1Latest = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, true, false);
+        final Project v2Active = qm.createProject("acme-app", null, "2.0.0", null, null, null, null, false, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "3.0.0",
+                          "autoCreate": true,
+                          "isLatest": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        final Project v3 = qm.getProject("acme-app", "3.0.0");
+        final Project refreshedV1 = qm.getObjectByUuid(Project.class, v1Latest.getUuid());
+        final Project refreshedV2 = qm.getObjectByUuid(Project.class, v2Active.getUuid());
+
+        assertThat(v3).isNotNull();
+        assertThat(v3.isActive()).isTrue();
+        assertThat(v3.isLatest()).isTrue();
+        assertThat(refreshedV1.isActive()).isFalse();
+        assertThat(refreshedV1.isLatest()).isFalse();
+        assertThat(refreshedV2.isActive()).isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyWithNoExistingVersionsTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "brand-new-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        final Project created = qm.getProject("brand-new-app", "1.0.0");
+        assertThat(created).isNotNull();
+        assertThat(created.isActive()).isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyReactivatesExistingProjectByUuidAndIsIdempotentOnRepeatTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        final Project v1Inactive =
+                qm.createProject("acme-app", null, "1.0.0", null, null, null, new Date(), false, false);
+        final Project v2Active = qm.createProject("acme-app", null, "2.0.0", null, null, null, null, false, false);
+        final Project unrelated = qm.createProject("other-app", null, "1.0.0", null, null, null, null, false, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final String payload = /* language=JSON */ """
+                {
+                  "project": "%s",
+                  "isActiveExclusively": true,
+                  "bom": "%s"
+                }
+                """.formatted(v1Inactive.getUuid(), bomString);
+
+        final Response firstResponse =
+                jersey.target(V1_BOM).request().header(X_API_KEY, apiKey).put(Entity.json(payload));
+        assertThat(firstResponse.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        final Project v1AfterFirst = qm.getObjectByUuid(Project.class, v1Inactive.getUuid());
+        final Project v2AfterFirst = qm.getObjectByUuid(Project.class, v2Active.getUuid());
+        assertThat(v1AfterFirst.isActive()).isTrue();
+        assertThat(v2AfterFirst.isActive()).isFalse();
+        final Date v2DeactivatedAt = v2AfterFirst.getInactiveSince();
+        assertThat(v2DeactivatedAt).isNotNull();
+
+        // Repeated upload should be idempotent and preserve v2's original inactiveSince timestamp.
+        final Response secondResponse =
+                jersey.target(V1_BOM).request().header(X_API_KEY, apiKey).put(Entity.json(payload));
+        assertThat(secondResponse.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        final Project v1AfterSecond = qm.getObjectByUuid(Project.class, v1Inactive.getUuid());
+        final Project v2AfterSecond = qm.getObjectByUuid(Project.class, v2Active.getUuid());
+        final Project unrelatedAfter = qm.getObjectByUuid(Project.class, unrelated.getUuid());
+        assertThat(v1AfterSecond.isActive()).isTrue();
+        assertThat(v2AfterSecond.isActive()).isFalse();
+        assertThat(v2AfterSecond.getInactiveSince()).isEqualTo(v2DeactivatedAt);
+        assertThat(unrelatedAfter.isActive()).isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyReactivatesExistingProjectByNameAndVersionTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        final Project v1Inactive =
+                qm.createProject("acme-app", null, "1.0.0", null, null, null, new Date(), false, false);
+        final Project v2Active = qm.createProject("acme-app", null, "2.0.0", null, null, null, null, false, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, v1Inactive.getUuid()).isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v2Active.getUuid()).isActive())
+                .isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyMultipartTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, true, false);
+        final Project unrelated = qm.createProject("other-app", null, "1.0.0", null, null, null, null, false, false);
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+
+        // Auto-create v2.0.0 with isActiveExclusively=true via multipart POST.
+        final var createMultiPart = new FormDataMultiPart()
+                .field(
+                        "bom",
+                        resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8),
+                        MediaType.APPLICATION_XML_TYPE)
+                .field("projectName", "acme-app")
+                .field("projectVersion", "2.0.0")
+                .field("autoCreate", "true")
+                .field("isActiveExclusively", "true");
+
+        final Response createResponse = client.target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(createMultiPart, createMultiPart.getMediaType()));
+        assertThat(createResponse.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        final Project v2 = qm.getProject("acme-app", "2.0.0");
+        assertThat(v2).isNotNull();
+        assertThat(v2.isActive()).isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, unrelated.getUuid()).isActive())
+                .isTrue();
+
+        // Reactivate v1.0.0 by project UUID via multipart POST with isActiveExclusively=true.
+        final var uuidMultiPart = new FormDataMultiPart()
+                .field(
+                        "bom",
+                        resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8),
+                        MediaType.APPLICATION_XML_TYPE)
+                .field("project", v1Active.getUuid().toString())
+                .field("isActiveExclusively", "true");
+
+        final Response uuidResponse = client.target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(uuidMultiPart, uuidMultiPart.getMediaType()));
+        assertThat(uuidResponse.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v2.getUuid()).isActive()).isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, unrelated.getUuid()).isActive())
+                .isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveFalseWithIsActiveExclusivelyTrueRejectedTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false, false);
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+
+        // PUT /v1/bom
+        final Response putResponse = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "2.0.0",
+                          "autoCreate": true,
+                          "isActive": false,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(putResponse.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(putResponse))
+                .isEqualTo("isActive cannot be false when isActiveExclusively is true.");
+
+        // POST /v1/bom
+        final var multiPart = new FormDataMultiPart()
+                .field(
+                        "bom",
+                        resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8),
+                        MediaType.APPLICATION_XML_TYPE)
+                .field("projectName", "acme-app")
+                .field("projectVersion", "2.0.0")
+                .field("autoCreate", "true")
+                .field("isActive", "false")
+                .field("isActiveExclusively", "true");
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+        final Response postResponse = client.target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(postResponse.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(postResponse))
+                .isEqualTo("isActive cannot be false when isActiveExclusively is true.");
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getProject("acme-app", "2.0.0")).isNull();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyWithAclAccessibleSiblingsTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        enablePortfolioAccessControl();
+
+        final var accessibleActive = new Project();
+        accessibleActive.setName("acme-app");
+        accessibleActive.setVersion("1.0.0");
+        accessibleActive.setAccessTeams(Set.of(team));
+        qm.persist(accessibleActive);
+
+        // An already-inactive sibling that is NOT accessible should not block exclusive activation.
+        final var inaccessibleInactive = new Project();
+        inaccessibleInactive.setName("acme-app");
+        inaccessibleInactive.setVersion("0.9.0");
+        inaccessibleInactive.setInactiveSince(new Date());
+        qm.persist(inaccessibleInactive);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "2.0.0",
+                          "autoCreate": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getProject("acme-app", "2.0.0").isActive()).isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, accessibleActive.getUuid()).isActive())
+                .isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, inaccessibleInactive.getUuid())
+                        .isActive())
+                .isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyWithAclInaccessibleActiveSiblingRollsBackTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        enablePortfolioAccessControl();
+
+        final var accessibleLatest = new Project();
+        accessibleLatest.setName("acme-app");
+        accessibleLatest.setVersion("1.0.0");
+        accessibleLatest.setIsLatest(true);
+        accessibleLatest.setAccessTeams(Set.of(team));
+        qm.persist(accessibleLatest);
+
+        final var inaccessibleActive = new Project();
+        inaccessibleActive.setName("acme-app");
+        inaccessibleActive.setVersion("1.5.0");
+        qm.persist(inaccessibleActive);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "2.0.0",
+                          "autoCreate": true,
+                          "isLatest": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 403,
+                  "title": "Project access denied",
+                  "detail": "Access to other active versions of this project is forbidden"
+                }
+                """);
+
+        // Entire transaction must have rolled back: v2.0.0 not created, v1.0.0 still latest & active, v1.5.0 still
+        // active.
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getProject("acme-app", "2.0.0")).isNull();
+        final Project refreshedAccessible = qm.getObjectByUuid(Project.class, accessibleLatest.getUuid());
+        final Project refreshedInaccessible = qm.getObjectByUuid(Project.class, inaccessibleActive.getUuid());
+        assertThat(refreshedAccessible.isActive()).isTrue();
+        assertThat(refreshedAccessible.isLatest()).isTrue();
+        assertThat(refreshedInaccessible.isActive()).isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyWithAclBypassPermissionTest() throws Exception {
+        initializeWithPermissions(
+                Permissions.BOM_UPLOAD,
+                Permissions.PROJECT_CREATION_UPLOAD,
+                Permissions.PORTFOLIO_ACCESS_CONTROL_BYPASS);
+        enablePortfolioAccessControl();
+
+        final var otherTeamActive = new Project();
+        otherTeamActive.setName("acme-app");
+        otherTeamActive.setVersion("1.0.0");
+        qm.persist(otherTeamActive);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "2.0.0",
+                          "autoCreate": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getProject("acme-app", "2.0.0").isActive()).isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, otherTeamActive.getUuid()).isActive())
+                .isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyFailsWithConflictWhenActiveSiblingHasActiveChildTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false, false);
+        qm.createProject("child-app", null, "1.0.0", null, v1Active, null, null, false, false);
+        final Project v2Active = qm.createProject("acme-app", null, "2.0.0", null, null, null, null, false, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "3.0.0",
+                          "autoCreate": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(409);
+        assertThat(getPlainTextBody(response))
+                .isEqualTo(
+                        "Other active versions of this project cannot be deactivated because active children are present.");
+
+        // Transaction must have rolled back completely.
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getProject("acme-app", "3.0.0")).isNull();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v2Active.getUuid()).isActive())
+                .isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelySucceedsWhenSiblingHasOnlyInactiveChildTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false, false);
+        qm.createProject("child-app", null, "1.0.0", null, v1Active, null, new Date(), false, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "2.0.0",
+                          "autoCreate": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getProject("acme-app", "2.0.0").isActive()).isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyFailsWithConflictWhenAutoCreatedUnderActiveSiblingParentTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "2.0.0",
+                          "parentUUID": "%s",
+                          "autoCreate": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(v1Active.getUuid(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(409);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getProject("acme-app", "2.0.0")).isNull();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelySucceedsWhenParentAndChildAreBothDeactivatedSiblingsTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false, false);
+        final Project v2ChildActive =
+                qm.createProject("acme-app", null, "2.0.0", null, v1Active, null, null, false, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "3.0.0",
+                          "autoCreate": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getProject("acme-app", "3.0.0").isActive()).isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, v2ChildActive.getUuid()).isActive())
+                .isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyInvalidPutBomDoesNotDeactivateSiblingsTest() throws Exception {
+        createCatchAllNotificationRule(qm, NotificationScope.PORTFOLIO);
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false, false);
+        final Project v2Inactive =
+                qm.createProject("acme-app", null, "2.0.0", null, null, null, new Date(), false, false);
+
+        final String invalidBom =
+                Base64.getEncoder().encodeToString(/* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.2",
+                  "components": [
+                    {
+                      "type": "invalid",
+                      "name": "foo"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8));
+
+        // 1. Existing target project: rejected with 400, BOM_VALIDATION_FAILED emitted, sibling remains active.
+        final Response existingResponse = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(v2Inactive.getUuid(), invalidBom)));
+        assertThat(existingResponse.getStatus()).isEqualTo(400);
+        assertThat(existingResponse.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
+            assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_VALIDATION_FAILED);
+        });
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v2Inactive.getUuid()).isActive())
+                .isFalse();
+
+        // 2. autoCreate target project: rejected with 400, project not created, sibling remains active.
+        final Response autoCreateResponse = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "3.0.0",
+                          "autoCreate": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(invalidBom)));
+        assertThat(autoCreateResponse.getStatus()).isEqualTo(400);
+        assertThat(autoCreateResponse.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getProject("acme-app", "3.0.0")).isNull();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyInvalidPostBomDoesNotDeactivateSiblingsTest() throws Exception {
+        createCatchAllNotificationRule(qm, NotificationScope.PORTFOLIO);
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false, false);
+        final Project v2Inactive =
+                qm.createProject("acme-app", null, "2.0.0", null, null, null, new Date(), false, false);
+
+        final byte[] invalidBomBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.2",
+                  "components": [
+                    {
+                      "type": "invalid",
+                      "name": "foo"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        final var multiPart = new FormDataMultiPart()
+                .field("project", v2Inactive.getUuid().toString())
+                .field("isActiveExclusively", "true")
+                .field("bom", invalidBomBytes, MediaType.APPLICATION_JSON_TYPE);
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+        final Response response = client.target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThat(getNotificationOutbox()).satisfiesExactly(notification -> {
+            assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_VALIDATION_FAILED);
+        });
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v2Inactive.getUuid()).isActive())
+                .isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyOversizedPostBomDoesNotDeactivateSiblingsTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false, false);
+        final Project v2Inactive =
+                qm.createProject("acme-app", null, "2.0.0", null, null, null, new Date(), false, false);
+
+        final byte[] bomBytes = resourceToByteArray("/unit/bom-1.xml");
+        final var encodedBomStream = new ByteArrayOutputStream();
+        try (final var encoder = new ZstdOutputStream(encodedBomStream)) {
+            encoder.write(bomBytes);
+        }
+
+        MemoryConfigSource.setProperty(ConfigKeys.BOM_UPLOAD_MAX_SIZE_BYTES, String.valueOf(bomBytes.length - 1));
+
+        final var multiPart = new FormDataMultiPart()
+                .field("project", v2Inactive.getUuid().toString())
+                .field("isActiveExclusively", "true")
+                .field("bom", encodedBomStream.toByteArray(), new MediaType("application", "zstd"));
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response;
+        try {
+            response = client.target(jersey.target(V1_BOM).getUri())
+                    .request()
+                    .header(X_API_KEY, apiKey)
+                    .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        } finally {
+            MemoryConfigSource.removeProperty(ConfigKeys.BOM_UPLOAD_MAX_SIZE_BYTES);
+        }
+
+        assertThat(response.getStatus()).isEqualTo(413);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v2Inactive.getUuid()).isActive())
+                .isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyFailsWithConflictWhenParentIsInactiveTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        final Project parentInactive =
+                qm.createProject("parent-app", null, "1.0.0", null, null, null, null, false, false);
+        final Project childInactive =
+                qm.createProject("child-app", null, "2.0.0", null, parentInactive, null, new Date(), false, false);
+        parentInactive.setActive(false);
+        qm.persist(parentInactive);
+        final Project childActiveSibling =
+                qm.createProject("child-app", null, "1.0.0", null, null, null, null, false, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(childInactive.getUuid(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(409);
+        assertThat(getPlainTextBody(response))
+                .isEqualTo("Project cannot be set to active if an ancestor project is inactive.");
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, parentInactive.getUuid()).isActive())
+                .isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, childInactive.getUuid()).isActive())
+                .isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, childActiveSibling.getUuid())
+                        .isActive())
+                .isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyFailsWithConflictWhenGrandparentIsInactiveTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        final Project grandparent =
+                qm.createProject("grandparent-app", null, "1.0.0", null, null, null, null, false, false);
+        final Project parent =
+                qm.createProject("parent-app", null, "1.0.0", null, grandparent, null, null, false, false);
+        final Project grandchildInactive =
+                qm.createProject("grandchild-app", null, "2.0.0", null, parent, null, new Date(), false, false);
+        final Project grandchildActiveSibling =
+                qm.createProject("grandchild-app", null, "1.0.0", null, null, null, null, false, false);
+
+        // Mark only the grandparent inactive (parent remains active) to verify transitive ancestor check (depth > 1).
+        useJdbiTransaction(handle ->
+                handle.createUpdate("""
+                        UPDATE "PROJECT"
+                           SET "INACTIVE_SINCE" = NOW()
+                         WHERE "ID" = :id
+                        """).bind("id", grandparent.getId()).execute());
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response conflictResponse = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(grandchildInactive.getUuid(), bomString)));
+        assertThat(conflictResponse.getStatus()).isEqualTo(409);
+        assertThat(getPlainTextBody(conflictResponse))
+                .isEqualTo("Project cannot be set to active if an ancestor project is inactive.");
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, grandchildInactive.getUuid())
+                        .isActive())
+                .isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, grandchildActiveSibling.getUuid())
+                        .isActive())
+                .isTrue();
+
+        // Once the grandparent is active again, exclusive activation succeeds.
+        useJdbiTransaction(handle ->
+                handle.createUpdate("""
+                        UPDATE "PROJECT"
+                           SET "INACTIVE_SINCE" = NULL
+                         WHERE "ID" = :id
+                        """).bind("id", grandparent.getId()).execute());
+
+        final Response okResponse = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(grandchildInactive.getUuid(), bomString)));
+        assertThat(okResponse.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, grandchildInactive.getUuid())
+                        .isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, grandchildActiveSibling.getUuid())
+                        .isActive())
+                .isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyWithAclByUuidTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+        enablePortfolioAccessControl();
+
+        final var inaccessibleActive = new Project();
+        inaccessibleActive.setName("acme-app");
+        inaccessibleActive.setVersion("1.0.0");
+        qm.persist(inaccessibleActive);
+
+        final var accessibleInactive = new Project();
+        accessibleInactive.setName("acme-app");
+        accessibleInactive.setVersion("2.0.0");
+        accessibleInactive.setInactiveSince(new Date());
+        accessibleInactive.setAccessTeams(Set.of(team));
+        qm.persist(accessibleInactive);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response putResponse = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(accessibleInactive.getUuid(), bomString)));
+        assertThat(putResponse.getStatus()).isEqualTo(403);
+
+        final var multiPart = new FormDataMultiPart()
+                .field("project", accessibleInactive.getUuid().toString())
+                .field("isActiveExclusively", "true")
+                .field("bom", resourceToByteArray("/unit/bom-1.xml"), MediaType.APPLICATION_XML_TYPE);
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+        final Response postResponse = client.target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(postResponse.getStatus()).isEqualTo(403);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, inaccessibleActive.getUuid())
+                        .isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, accessibleInactive.getUuid())
+                        .isActive())
+                .isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyWithAclUserPrincipalTest() throws Exception {
+        enablePortfolioAccessControl();
+
+        final ManagedUser testUser = qm.createManagedUser("bom-user", TEST_USER_PASSWORD_HASH);
+        testUser.setPermissions(List.of(qm.createPermission(Permissions.BOM_UPLOAD.name(), null)));
+        qm.addUserToTeam(testUser, super.team);
+        final String sessionToken = new SessionTokenService().createSession(testUser.getId());
+
+        final var inaccessibleActive = new Project();
+        inaccessibleActive.setName("acme-app");
+        inaccessibleActive.setVersion("1.0.0");
+        qm.persist(inaccessibleActive);
+
+        final var accessibleInactive = new Project();
+        accessibleInactive.setName("acme-app");
+        accessibleInactive.setVersion("2.0.0");
+        accessibleInactive.setInactiveSince(new Date());
+        accessibleInactive.setAccessTeams(Set.of(super.team));
+        qm.persist(accessibleInactive);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Supplier<Response> uploadRequest = () -> jersey.target(V1_BOM)
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(accessibleInactive.getUuid(), bomString)));
+
+        final Response forbiddenResponse = uploadRequest.get();
+        assertThat(forbiddenResponse.getStatus()).isEqualTo(403);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, inaccessibleActive.getUuid())
+                        .isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, accessibleInactive.getUuid())
+                        .isActive())
+                .isFalse();
+
+        // Grant the user's team access to the sibling; exclusive activation must now succeed.
+        final Project siblingToGrant = qm.getObjectByUuid(Project.class, inaccessibleActive.getUuid());
+        siblingToGrant.addAccessTeam(super.team);
+        qm.persist(siblingToGrant);
+
+        final Response okResponse = uploadRequest.get();
+        assertThat(okResponse.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, accessibleInactive.getUuid())
+                        .isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, inaccessibleActive.getUuid())
+                        .isActive())
+                .isFalse();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyFailsWithConflictWhenActiveSiblingHasNestedActiveDescendantTest()
+            throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final Project v1Active = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false, false);
+        final Project v1ChildSameName =
+                qm.createProject("acme-app", null, "1.1.0", null, v1Active, null, null, false, false);
+        final Project nestedLeafActive =
+                qm.createProject("leaf-app", null, "1.0.0", null, v1ChildSameName, null, null, false, false);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "2.0.0",
+                          "autoCreate": true,
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(409);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getProject("acme-app", "2.0.0")).isNull();
+        assertThat(qm.getObjectByUuid(Project.class, v1Active.getUuid()).isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, v1ChildSameName.getUuid()).isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, nestedLeafActive.getUuid()).isActive())
+                .isTrue();
+    }
+
+    @Test
+    void uploadBomIsActiveExclusivelyByUuidAfterRenameUsesCurrentProjectNameTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        final Project oldNameSibling = qm.createProject("app-old", null, "1.0.0", null, null, null, null, false, false);
+        final Project target = qm.createProject("app-old", null, "2.0.0", null, null, null, new Date(), false, false);
+        final Project newNameSibling = qm.createProject("app-new", null, "1.0.0", null, null, null, null, false, false);
+
+        // Rename target out-of-band before uploading by UUID.
+        useJdbiTransaction(
+                handle -> handle.createUpdate("""
+                        UPDATE "PROJECT"
+                           SET "NAME" = 'app-new'
+                         WHERE "ID" = :id
+                        """).bind("id", target.getId()).execute());
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "isActiveExclusively": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(target.getUuid(), bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getObjectByUuid(Project.class, target.getUuid()).isActive())
+                .isTrue();
+        assertThat(qm.getObjectByUuid(Project.class, newNameSibling.getUuid()).isActive())
+                .isFalse();
+        assertThat(qm.getObjectByUuid(Project.class, oldNameSibling.getUuid()).isActive())
+                .isTrue();
     }
 }

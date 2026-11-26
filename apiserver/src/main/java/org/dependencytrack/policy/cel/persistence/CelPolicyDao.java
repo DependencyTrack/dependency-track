@@ -469,7 +469,16 @@ public final class CelPolicyDao {
                           FROM "POLICY" AS p
                          INNER JOIN "POLICYCONDITION" AS pc
                             ON pc."POLICY_ID" = p."ID"
-                         WHERE p."ID" IN (
+                         WHERE (
+                                 NOT p."ONLY_LATEST_PROJECT_VERSION"
+                                 OR EXISTS (
+                                   SELECT 1
+                                     FROM "PROJECT"
+                                    WHERE "ID" = :projectId
+                                      AND "IS_LATEST"
+                                 )
+                               )
+                           AND p."ID" IN (
                            -- "Global" policies without restrictions.
                            SELECT p2."ID"
                              FROM "POLICY" AS p2

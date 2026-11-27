@@ -45,6 +45,14 @@ class JvnVersionParserTest {
                 "0.9.5 およびそれ以前      ; vers:generic/<=0.9.5",
                 "5.0 以前                ; vers:generic/<=5.0",
                 "1.2.3 以上              ; vers:generic/>=1.2.3",
+                "1.0.0 から 1.2.5 および 2.0.0 から 2.1.3 ; vers:generic/>=1.0.0|<=1.2.5|>=2.0.0|<=2.1.3",
+                "8.0.0から8.0.6、8.4.0から8.4.2 ; vers:generic/>=8.0.0|<=8.0.6|>=8.4.0|<=8.4.2",
+                "0.15.0 以上 0.15.2 未満、0.14.0 以上 0.14.6 未満 ; vers:generic/>=0.14.0|<0.14.6|>=0.15.0|<0.15.2",
+                "0.9.5 およびそれ以前、2.0.0 以上 2.1.0 未満 ; vers:generic/<=0.9.5|>=2.0.0|<2.1.0",
+                "1.0.0 未満 または 2.0.0 以上 ; vers:generic/<1.0.0|>=2.0.0",
+                "1.0.0 から 1.2.5、および 2.0.0 から 2.1.3 ; vers:generic/>=1.0.0|<=1.2.5|>=2.0.0|<=2.1.3",
+                "1.0.0 から 1.2.5 および 2.0.0 ; vers:generic/>=1.0.0|<=1.2.5|2.0.0",
+                "1.0.0、2.0.0 ; vers:generic/1.0.0|2.0.0",
             })
     void parsesRanges(final String input, final String expectedVers) {
         final Result result = JvnVersionParser.parse(input, "generic");
@@ -111,6 +119,14 @@ class JvnVersionParserTest {
         assertEquals("vers:generic/>=10.5.x|<=10.5.8", range.vers().toString());
     }
 
+    @Test
+    void salvagesQualifiedMultiRange() {
+        final Result result = JvnVersionParser.parse("1.0.0 から 1.2.5 および 2.0.0 から 2.1.3 (x64)", "generic");
+        final VersionRange range = assertInstanceOf(VersionRange.class, result);
+        assertEquals(
+                "vers:generic/>=1.0.0|<=1.2.5|>=2.0.0|<=2.1.3", range.vers().toString());
+    }
+
     @ParameterizedTest
     @CsvSource(
             delimiter = ';',
@@ -139,6 +155,14 @@ class JvnVersionParserTest {
                 // must stay untouched rather than be guessed at.
                 "2017 version 15.9 (includes 15.0 - 15.8)",
                 "10.01 (SD-UX version B.10.10)",
+                "8.0.0から8.0.6、8.4.0から8.4.2（8系）",
+                "1.0.0 以上 (includes 0.9.0)",
+                "1.0.0 から 1.2.5、",
+                "1.0.0 から 1.2.5 および foo",
+                "1.0.0 から 1.2.5 および 1.1.0 から 2.0.0",
+                "1.0.0 から 2.0.0 未満",
+                "1.0.0 未満 2.0.0",
+                "foo 1.0.0 以上",
             })
     void degradesOnQualifierOnlyOrNonQualifierParens(final String input) {
         assertInstanceOf(Unparseable.class, JvnVersionParser.parse(input, "generic"));

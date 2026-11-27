@@ -84,13 +84,13 @@ public final class ImportVexActivity implements Activity<ImportVexArg, Void> {
                 throw new TerminalApplicationFailureException(e);
             }
 
-            process(UUID.fromString(arg.getProjectUuid()), vexBytes);
+            process(UUID.fromString(arg.getProjectUuid()), vexBytes, arg.hasUploader() ? arg.getUploader() : null);
         }
 
         return null;
     }
 
-    private void process(UUID projectUuid, byte[] vexBytes) {
+    private void process(UUID projectUuid, byte[] vexBytes, @Nullable String uploader) {
         try (final QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             if (project == null) {
@@ -114,7 +114,7 @@ public final class ImportVexActivity implements Activity<ImportVexArg, Void> {
             vex.setVexVersion(bom.getVersion());
             vex.setSerialNumber(bom.getSerialNumber());
 
-            final CycloneDXVexImporter vexImporter = new CycloneDXVexImporter();
+            final var vexImporter = new CycloneDXVexImporter(uploader);
             qm.runInTransaction(() -> vexImporter.applyVex(qm, bom, project));
             LOGGER.info("Completed processing of CycloneDX VEX");
 

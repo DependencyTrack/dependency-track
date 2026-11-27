@@ -19,6 +19,8 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.model.IConfigProperty;
+import alpine.model.ManagedUser;
+import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import com.fasterxml.jackson.core.StreamReadConstraints;
@@ -43,6 +45,7 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
+import org.dependencytrack.proto.internal.workflow.v1.ImportVexArg;
 import org.dependencytrack.support.config.source.memory.MemoryConfigSource;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
@@ -56,6 +59,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 
 import jakarta.ws.rs.client.ClientBuilder;
@@ -82,6 +86,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 
 public class VexResourceTest extends ResourceTest {
 
@@ -1154,5 +1159,81 @@ public class VexResourceTest extends ResourceTest {
                   "detail": "The uploaded document exceeds the maximum size of %d bytes"
                 }
                 """.formatted(vexBytes.length - 1));
+    }
+
+    @Test
+    void shouldPassApiKeyTeamAsUploaderToImport() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final String encodedVex = Base64.getEncoder().encodeToString(/* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1
+                }
+                """.getBytes());
+
+        final Response response = jersey.target(V1_VEX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "vex": "%s"
+                        }
+                        """.formatted(project.getUuid(), encodedVex)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(captureImportVexArg().getUploader()).isEqualTo("Test Users");
+    }
+
+    @Test
+    void shouldPassUsernameAsUploaderToImport() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        final String sessionToken = new SessionTokenService().createSession(testUser.getId());
+        qm.addUserToTeam(testUser, team);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var multiPart = new FormDataMultiPart()
+                .field("project", project.getUuid().toString())
+                .field(
+                        "vex",
+                        /* language=JSON */ """
+                        {
+                          "bomFormat": "CycloneDX",
+                          "specVersion": "1.5",
+                          "version": 1
+                        }
+                        """.getBytes(StandardCharsets.UTF_8),
+                        MediaType.APPLICATION_JSON_TYPE);
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig().register(MultiPartFeature.class).connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client.target(jersey.target(V1_VEX).getUri())
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        assertThat(captureImportVexArg().getUploader()).isEqualTo("testuser");
+    }
+
+    private ImportVexArg captureImportVexArg() {
+        final ArgumentCaptor<CreateWorkflowRunRequest<?>> requestCaptor = ArgumentCaptor.captor();
+        verify(DEX_ENGINE_MOCK).createRun(requestCaptor.capture());
+        assertThat(requestCaptor.getValue().argument()).isInstanceOf(ImportVexArg.class);
+        return (ImportVexArg) requestCaptor.getValue().argument();
     }
 }

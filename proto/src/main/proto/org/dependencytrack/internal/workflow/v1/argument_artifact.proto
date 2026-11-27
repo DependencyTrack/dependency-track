@@ -39,4 +39,5 @@ message ImportVexArg {
   string project_version = 3;
   string vex_upload_token = 4;
   org.dependencytrack.filestorage.v1.FileMetadata vex_file_metadata = 5;
+  optional string uploader = 6;
 }

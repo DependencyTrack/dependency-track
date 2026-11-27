@@ -21,6 +21,9 @@ package org.dependencytrack.parser.cyclonedx;
 import org.apache.commons.io.IOUtils;
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.ParseException;
+import org.cyclonedx.model.Bom;
+import org.cyclonedx.model.Metadata;
+import org.cyclonedx.model.OrganizationalContact;
 import org.cyclonedx.parsers.BomParserFactory;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AnalysisJustification;
@@ -195,6 +198,10 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
                             comment -> {
                                 assertThat(comment.commenter()).isEqualTo("CycloneDX VEX");
                                 assertThat(comment.comment()).isEqualTo("Suppressed");
+                            },
+                            comment -> {
+                                assertThat(comment.commenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.comment()).startsWith("Applied CycloneDX VEX document");
                             });
             assertThat(analysis.details()).isEqualTo("Unit test");
         });
@@ -254,7 +261,8 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         assertThat(analysis.response()).isEqualTo(AnalysisResponse.UPDATE);
         assertThat(analysis.comments())
                 .extracting(AnalysisTrail.Comment::comment)
-                .containsExactly("Vendor Response: NOT_SET → UPDATE");
+                .containsExactlyInAnyOrder(
+                        "Vendor Response: NOT_SET → UPDATE", "Applied CycloneDX VEX document (version 1)");
     }
 
     @Test
@@ -809,6 +817,196 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         assertThat(analysis.owaspVector()).isNull();
         assertThat(analysis.owaspScore()).isNull();
     }
+
+    @Test
+    void shouldAttributeAuditTrailToUploaderAndDescribeDocument() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(component));
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, "none");
+
+        final var vex = BomParserFactory.createParser(VEX_WITH_AUTHORS).parse(VEX_WITH_AUTHORS);
+
+        qm.runInTransaction(() -> new CycloneDXVexImporter("jdoe").applyVex(qm, vex, project));
+
+        final AnalysisTrail analysis = getAnalysis(component, vuln);
+        assertThat(analysis.state()).isEqualTo(AnalysisState.NOT_AFFECTED);
+        assertThat(analysis.comments())
+                .allSatisfy(comment -> assertThat(comment.commenter()).isEqualTo("jdoe"));
+        assertThat(analysis.comments())
+                .extracting(AnalysisTrail.Comment::comment)
+                .containsExactlyInAnyOrder(
+                        "Analysis: NOT_SET → NOT_AFFECTED",
+                        "Justification: NOT_SET → CODE_NOT_REACHABLE",
+                        "Details: Not reachable",
+                        "Suppressed",
+                        """
+                        Applied CycloneDX VEX document urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79 (version 3). \
+                        Document authors: Jane Doe <jane@example.com>, Bob, ci@example.com""");
+    }
+
+    @Test
+    void shouldNotRepeatDocumentCommentWhenVexDoesNotChangeAnalysis() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(component));
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, "none");
+
+        final var vex = BomParserFactory.createParser(VEX_WITH_AUTHORS).parse(VEX_WITH_AUTHORS);
+        final var importer = new CycloneDXVexImporter("jdoe");
+
+        qm.runInTransaction(() -> importer.applyVex(qm, vex, project));
+        qm.runInTransaction(() -> importer.applyVex(qm, vex, project));
+
+        assertThat(getAnalysis(component, vuln).comments())
+                .extracting(AnalysisTrail.Comment::comment)
+                .filteredOn(comment -> comment.startsWith("Applied CycloneDX VEX document"))
+                .hasSize(1);
+    }
+
+    @Test
+    void shouldAttributeAuditTrailToDefaultCommenterWhenUploaderIsBlank() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(component));
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, "none");
+
+        final var vex = BomParserFactory.createParser(VEX_WITH_AUTHORS).parse(VEX_WITH_AUTHORS);
+
+        qm.runInTransaction(() -> new CycloneDXVexImporter(" ").applyVex(qm, vex, project));
+
+        assertThat(getAnalysis(component, vuln).comments())
+                .isNotEmpty()
+                .allSatisfy(comment -> assertThat(comment.commenter()).isEqualTo("CycloneDX VEX"));
+    }
+
+    @Test
+    void shouldDescribeMostMentionedAuthorsAndCountTheOthers() {
+        final Bom bom = bomWithAuthors(
+                author("Alice", null),
+                author("Bob", "bob@example.com"),
+                author(null, "carol@example.com"),
+                author("Bob", "bob@example.com"),
+                author("Dave", null),
+                author(null, "carol@example.com"),
+                author("Bob", "bob@example.com"),
+                author("Erin", null));
+
+        assertThat(CycloneDXVexImporter.describeDocument(bom)).isEqualTo("""
+                Applied CycloneDX VEX document urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79 (version 3). \
+                Document authors: Bob <bob@example.com>, carol@example.com, Alice and 2 others""");
+    }
+
+    @Test
+    void shouldNameFewerAuthorsWhenDescriptionWouldExceedMaxLength() {
+        final String longName = "A".repeat(120);
+        final Bom bom = bomWithAuthors(
+                author(longName, null), author("B".repeat(120), null), author("Carol", null), author("Dave", null));
+
+        assertThat(CycloneDXVexImporter.describeDocument(bom))
+                .hasSizeLessThanOrEqualTo(255)
+                .endsWith("Document authors: " + longName + " and 3 others");
+    }
+
+    @Test
+    void shouldTruncateDescriptionWhenSingleAuthorExceedsMaxLength() {
+        final Bom bom = bomWithAuthors(author("A".repeat(300), null));
+
+        assertThat(CycloneDXVexImporter.describeDocument(bom)).hasSize(255).endsWith("...");
+    }
+
+    private static Bom bomWithAuthors(final OrganizationalContact... authors) {
+        final var metadata = new Metadata();
+        metadata.setAuthors(List.of(authors));
+
+        final var bom = new Bom();
+        bom.setSerialNumber("urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79");
+        bom.setVersion(3);
+        bom.setMetadata(metadata);
+        return bom;
+    }
+
+    private static OrganizationalContact author(final String name, final String email) {
+        final var author = new OrganizationalContact();
+        author.setName(name);
+        author.setEmail(email);
+        return author;
+    }
+
+    private static final byte[] VEX_WITH_AUTHORS = /* language=JSON */ """
+            {
+              "bomFormat": "CycloneDX",
+              "specVersion": "1.5",
+              "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+              "version": 3,
+              "metadata": {
+                "authors": [
+                  { "name": "Jane Doe", "email": "jane@example.com" },
+                  { "name": "Bob" },
+                  { "email": "ci@example.com" }
+                ],
+                "component": {
+                  "type": "application",
+                  "bom-ref": "project",
+                  "name": "acme-app"
+                }
+              },
+              "vulnerabilities": [
+                {
+                  "id": "CVE-2099-0001",
+                  "source": { "name": "NVD" },
+                  "analysis": {
+                    "state": "not_affected",
+                    "justification": "code_not_reachable",
+                    "detail": "Not reachable"
+                  },
+                  "affects": [{ "ref": "project" }]
+                }
+              ]
+            }
+            """.getBytes(StandardCharsets.UTF_8);
 
     private static AnalysisTrail getAnalysis(Component component, Vulnerability vuln) {
         return withJdbiHandle(

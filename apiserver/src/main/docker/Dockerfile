@@ -24,7 +24,7 @@ ARG DATA_DIR=/data/
 ARG UID=1000
 ARG GID=1000
 
-FROM eclipse-temurin:25.0.5_8-jdk-alpine@sha256:c7c3d0bdf7f2bbc5a05a6712ed334d198360105634ea9adf76fca94f381b1e3f AS jre-build
+FROM eclipse-temurin:25.0.5.1_2-jdk-alpine@sha256:22edbb1021420ae6e248519d1af07577742314d67d4c60fcbb2e285b7e47fa78 AS jre-build
 
 WORKDIR /work
 
@@ -45,9 +45,7 @@ ARG GID
 
 ENV TZ=Etc/UTC \
     # JVM Options that are passed at runtime by default
-    # -XX:-UseBASE64Intrinsics mitigates CVE-2026-114938 and is no longer needed once on a JDK with the fix.
-    # See https://github.com/adoptium/adoptium-support/issues/1576
-    JAVA_OPTIONS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxGCPauseMillis=250 -XX:G1PeriodicGCInterval=300000 -XX:MaxRAMPercentage=80.0 -XX:+ExitOnOutOfMemoryError -XX:-UseBASE64Intrinsics" \
+    JAVA_OPTIONS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxGCPauseMillis=250 -XX:G1PeriodicGCInterval=300000 -XX:MaxRAMPercentage=80.0 -XX:+ExitOnOutOfMemoryError" \
     # JVM Options that can be passed at runtime, while maintaining also those set in JAVA_OPTIONS.
     # e.g. EXTRA_JAVA_OPTIONS="-Dlogback.configurationFile=logback-json.xml"
     EXTRA_JAVA_OPTIONS="" \
@@ -76,6 +74,8 @@ RUN mkdir -p ${APP_DIR}lib-external ${DATA_DIR} \
     && adduser -S -D -G dtrack -H -h ${DATA_DIR} -g "dtrack user" -s /bin/false -u ${UID} dtrack \
     && chown -R dtrack:0 ${DATA_DIR} \
     && chmod -R g=u ${DATA_DIR} \
+    # Pull in security fixes released after the base image was built
+    && apk upgrade --no-cache \
     && apk add --no-cache gcompat tini
 
 WORKDIR ${APP_DIR}

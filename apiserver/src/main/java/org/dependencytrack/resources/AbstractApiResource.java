@@ -252,14 +252,8 @@ public abstract class AbstractApiResource extends AlpineResource {
                 .toList();
     }
 
-    /// Returns the name under which audit trail entries are recorded for the authenticated [Principal].
-    ///
-    /// For users, this is the username. For API keys, this is the name of the key's first team,
-    /// or the masked key if it does not belong to any team.
-    ///
-    /// @return The audit trail commenter name of the authenticated [Principal].
     /// @since 5.3.0
-    protected String getAuditTrailCommenter() {
+    protected String getPrincipalName() {
         return switch (requireNonNull(getPrincipal())) {
             case UserPrincipal user -> user.username();
             case ApiKeyPrincipal apiKey ->

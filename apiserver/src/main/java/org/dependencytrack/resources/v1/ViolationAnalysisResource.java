@@ -160,7 +160,7 @@ public class ViolationAnalysisResource extends AbstractApiResource {
 
         final UUID componentUuid = UUID.fromString(request.getComponent());
         final UUID violationUuid = UUID.fromString(request.getPolicyViolation());
-        final String commenter = getAuditTrailCommenter();
+        final String commenter = getPrincipalName();
 
         return inJdbiTransaction(getAlpineRequest(), handle -> {
             final long componentId = requireComponentAccess(handle, componentUuid);

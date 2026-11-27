@@ -187,7 +187,7 @@ public class AnalysisResource extends AbstractApiResource {
                 validator.validateProperty(request, "comment"));
         final UUID componentUuid = UUID.fromString(request.getComponent());
         final UUID vulnUuid = UUID.fromString(request.getVulnerability());
-        final String commenter = getAuditTrailCommenter();
+        final String commenter = getPrincipalName();
 
         return inJdbiTransaction(getAlpineRequest(), handle -> {
             final long componentId = requireComponentAccess(handle, componentUuid);

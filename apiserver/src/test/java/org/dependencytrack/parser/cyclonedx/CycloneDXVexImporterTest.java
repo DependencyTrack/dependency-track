@@ -21,6 +21,9 @@ package org.dependencytrack.parser.cyclonedx;
 import org.apache.commons.io.IOUtils;
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.ParseException;
+import org.cyclonedx.model.Bom;
+import org.cyclonedx.model.Metadata;
+import org.cyclonedx.model.OrganizationalContact;
 import org.cyclonedx.parsers.BomParserFactory;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AnalysisJustification;
@@ -917,6 +920,59 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         assertThat(getAnalysis(component, vuln).comments())
                 .isNotEmpty()
                 .allSatisfy(comment -> assertThat(comment.commenter()).isEqualTo("CycloneDX VEX"));
+    }
+
+    @Test
+    void shouldDescribeMostMentionedAuthorsAndCountTheOthers() {
+        final Bom bom = bomWithAuthors(
+                author("Alice", null),
+                author("Bob", "bob@example.com"),
+                author(null, "carol@example.com"),
+                author("Bob", "bob@example.com"),
+                author("Dave", null),
+                author(null, "carol@example.com"),
+                author("Bob", "bob@example.com"),
+                author("Erin", null));
+
+        assertThat(CycloneDXVexImporter.describeDocument(bom)).isEqualTo("""
+                Applied CycloneDX VEX document urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79 (version 3). \
+                Document authors: Bob <bob@example.com>, carol@example.com, Alice and 2 others""");
+    }
+
+    @Test
+    void shouldNameFewerAuthorsWhenDescriptionWouldExceedMaxLength() {
+        final String longName = "A".repeat(120);
+        final Bom bom = bomWithAuthors(
+                author(longName, null), author("B".repeat(120), null), author("Carol", null), author("Dave", null));
+
+        assertThat(CycloneDXVexImporter.describeDocument(bom))
+                .hasSizeLessThanOrEqualTo(255)
+                .endsWith("Document authors: " + longName + " and 3 others");
+    }
+
+    @Test
+    void shouldTruncateDescriptionWhenSingleAuthorExceedsMaxLength() {
+        final Bom bom = bomWithAuthors(author("A".repeat(300), null));
+
+        assertThat(CycloneDXVexImporter.describeDocument(bom)).hasSize(255).endsWith("...");
+    }
+
+    private static Bom bomWithAuthors(final OrganizationalContact... authors) {
+        final var metadata = new Metadata();
+        metadata.setAuthors(List.of(authors));
+
+        final var bom = new Bom();
+        bom.setSerialNumber("urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79");
+        bom.setVersion(3);
+        bom.setMetadata(metadata);
+        return bom;
+    }
+
+    private static OrganizationalContact author(final String name, final String email) {
+        final var author = new OrganizationalContact();
+        author.setName(name);
+        author.setEmail(email);
+        return author;
     }
 
     private static final byte[] VEX_WITH_AUTHORS = /* language=JSON */ """

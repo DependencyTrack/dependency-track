@@ -39,10 +39,12 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.apache.commons.lang3.StringUtils.abbreviate;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertCdxVulnAnalysisJustificationToDtAnalysisJustification;
@@ -54,6 +56,8 @@ public class CycloneDXVexImporter {
     private static final Logger LOGGER = LoggerFactory.getLogger(CycloneDXVexImporter.class);
 
     private static final String DEFAULT_COMMENTER = "CycloneDX VEX";
+    private static final int MAX_DESCRIBED_AUTHORS = 3;
+    private static final int MAX_DOCUMENT_DESCRIPTION_LENGTH = 255;
 
     private final String commenter;
 
@@ -249,7 +253,9 @@ public class CycloneDXVexImporter {
     /// Describes the VEX document for the audit trail, so every analysis it changes can be traced back to it.
     ///
     /// Authors are taken from `metadata.authors` as stated in the document; they are not verified.
-    private static String describeDocument(final Bom bom) {
+    /// At most [#MAX_DESCRIBED_AUTHORS] authors are named, those listed most often first,
+    /// and the description never exceeds [#MAX_DOCUMENT_DESCRIPTION_LENGTH] characters.
+    static String describeDocument(final Bom bom) {
         final var description = new StringBuilder("Applied CycloneDX VEX document");
         final String serialNumber = trimToNull(bom.getSerialNumber());
         if (serialNumber != null) {
@@ -257,23 +263,57 @@ public class CycloneDXVexImporter {
         }
         description.append(" (version ").append(bom.getVersion()).append(')');
 
-        final List<String> authors = new ArrayList<>();
-        if (bom.getMetadata() != null && bom.getMetadata().getAuthors() != null) {
-            for (final OrganizationalContact author : bom.getMetadata().getAuthors()) {
-                final String name = trimToNull(author.getName());
-                final String email = trimToNull(author.getEmail());
-                if (name != null && email != null) {
-                    authors.add("%s <%s>".formatted(name, email));
-                } else if (name != null || email != null) {
-                    authors.add(name != null ? name : email);
-                }
-            }
-        }
+        final List<String> authors = rankAuthors(bom);
         if (!authors.isEmpty()) {
-            description.append(". Document authors: ").append(String.join(", ", authors));
+            description.append(". Document authors: ");
+
+            int described = 0;
+            for (final String author : authors.subList(0, Math.min(authors.size(), MAX_DESCRIBED_AUTHORS))) {
+                final String separator = described == 0 ? "" : ", ";
+                final String othersAfterAuthor = describeOthers(authors.size() - described - 1);
+                if (described > 0
+                        && description.length() + separator.length() + author.length() + othersAfterAuthor.length()
+                                > MAX_DOCUMENT_DESCRIPTION_LENGTH) {
+                    break;
+                }
+                description.append(separator).append(author);
+                described++;
+            }
+            description.append(describeOthers(authors.size() - described));
         }
 
-        return description.toString();
+        return abbreviate(description.toString(), MAX_DOCUMENT_DESCRIPTION_LENGTH);
+    }
+
+    private static List<String> rankAuthors(final Bom bom) {
+        if (bom.getMetadata() == null || bom.getMetadata().getAuthors() == null) {
+            return List.of();
+        }
+
+        final var mentionsByAuthor = new LinkedHashMap<String, Integer>();
+        for (final OrganizationalContact author : bom.getMetadata().getAuthors()) {
+            final String name = trimToNull(author.getName());
+            final String email = trimToNull(author.getEmail());
+            if (name != null && email != null) {
+                mentionsByAuthor.merge("%s <%s>".formatted(name, email), 1, Integer::sum);
+            } else if (name != null || email != null) {
+                mentionsByAuthor.merge(name != null ? name : email, 1, Integer::sum);
+            }
+        }
+
+        // The sort is stable, so authors mentioned equally often keep the order of the document.
+        return mentionsByAuthor.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .toList();
+    }
+
+    private static String describeOthers(final int count) {
+        return switch (count) {
+            case 0 -> "";
+            case 1 -> " and 1 other";
+            default -> " and %d others".formatted(count);
+        };
     }
 
     private void updateAnalysis(

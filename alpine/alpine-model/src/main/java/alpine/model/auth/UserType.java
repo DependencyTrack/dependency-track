@@ -23,5 +23,6 @@ public enum UserType {
     MANAGED,
     LDAP,
     OIDC,
+    SAML,
     SERVICE
 }

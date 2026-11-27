@@ -45,9 +45,7 @@ ARG GID
 
 ENV TZ=Etc/UTC \
     # JVM Options that are passed at runtime by default
-    # -XX:-UseBASE64Intrinsics mitigates CVE-2026-114938 and is no longer needed once on a JDK with the fix.
-    # See https://github.com/adoptium/adoptium-support/issues/1576
-    JAVA_OPTIONS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxGCPauseMillis=250 -XX:G1PeriodicGCInterval=300000 -XX:MaxRAMPercentage=80.0 -XX:+ExitOnOutOfMemoryError -XX:-UseBASE64Intrinsics" \
+    JAVA_OPTIONS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxGCPauseMillis=250 -XX:G1PeriodicGCInterval=300000 -XX:MaxRAMPercentage=80.0 -XX:+ExitOnOutOfMemoryError" \
     # JVM Options that can be passed at runtime, while maintaining also those set in JAVA_OPTIONS.
     # e.g. EXTRA_JAVA_OPTIONS="-Dlogback.configurationFile=logback-json.xml"
     EXTRA_JAVA_OPTIONS="" \

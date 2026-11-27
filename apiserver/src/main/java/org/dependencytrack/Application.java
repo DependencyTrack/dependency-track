@@ -53,6 +53,7 @@ import org.dependencytrack.filestorage.FileStorageBinder;
 import org.dependencytrack.filestorage.FileStorageInitializer;
 import org.dependencytrack.init.InitTaskExecutor;
 import org.dependencytrack.init.InitTasksHealthCheck;
+import org.dependencytrack.model.Scope;
 import org.dependencytrack.notification.DefaultNotificationPublisherInitializer;
 import org.dependencytrack.notification.NotificationSubsystemInitializer;
 import org.dependencytrack.observability.LoggingConfiguration;
@@ -116,6 +117,8 @@ public final class Application {
                 config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_TIMESTAMP, String.class));
 
         LegacyConfigPropertyValidator.validate(config);
+        Scope.getDefaultScope(config)
+                .ifPresent(scope -> LOGGER.info("Default component scope for BOM imports: {}", scope));
 
         var contextPath = "/";
         var host = "0.0.0.0";

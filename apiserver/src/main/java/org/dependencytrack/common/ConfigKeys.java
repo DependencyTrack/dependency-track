@@ -25,6 +25,8 @@ public final class ConfigKeys {
 
     public static final String API_KEY_MAX_LIFETIME_DAYS = "dt.api-key.max-lifetime-days";
 
+    public static final String BOM_DEFAULT_COMPONENT_SCOPE = "dt.bom.default-component-scope";
+
     public static final String BOM_UPLOAD_MAX_SIZE_BYTES = "dt.bom-upload.max-size-bytes";
 
     public static final String DEV_SERVICES_ENABLED = "dt.dev-services.enabled";

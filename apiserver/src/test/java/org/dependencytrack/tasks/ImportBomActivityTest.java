@@ -21,12 +21,14 @@ package org.dependencytrack.tasks;
 import alpine.model.IConfigProperty.PropertyType;
 import com.google.errorprone.annotations.CompileTimeConstant;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
+import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
@@ -35,14 +37,20 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetadata;
+import org.dependencytrack.model.Scope;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.proto.v1.BomProcessingFailedSubject;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.persistence.DatabaseSeedingInitTask;
+import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
+import org.dependencytrack.persistence.jdbi.FindingAnalysisDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
+import org.dependencytrack.support.config.source.memory.MemoryConfigSource;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
@@ -534,6 +542,96 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                 .as("re-import of an unchanged BOM must not update project metadata")
                 .hasSize(1)
                 .isEqualTo(metadataRowVersionsBefore);
+    }
+
+    @Test
+    void shouldPreserveComponentAndAuditWhenReimportOmitsDefaultScope() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final String bom = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "components": [
+                    {
+                      "bom-ref": "a",
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0",
+                      "purl": "pkg:maven/com.acme/acme-lib@1.0.0"%s
+                    }
+                  ]
+                }
+                """;
+
+        MemoryConfigSource.setProperty(ConfigKeys.BOM_DEFAULT_COMPONENT_SCOPE, "REQUIRED");
+        try {
+            final byte[] explicitScopeBom =
+                    bom.formatted(", \"scope\": \"required\"").getBytes(StandardCharsets.UTF_8);
+            activity.execute(null, buildArg(project, storeBomFile(explicitScopeBom), UUID.randomUUID()));
+            assertBomProcessedNotification();
+
+            final List<Component> components = qm.getAllComponents(project);
+            assertThat(components).hasSize(1);
+            final Component component = components.getFirst();
+            assertThat(component.getScope()).isEqualTo(Scope.REQUIRED);
+            final UUID componentUuid = component.getUuid();
+            final long componentId = component.getId();
+
+            final var vuln = new Vulnerability();
+            vuln.setVulnId("INT-001");
+            vuln.setSource(Vulnerability.Source.INTERNAL);
+            vuln.setSeverity(Severity.HIGH);
+            qm.persist(vuln);
+            qm.addVulnerability(vuln, component, "internal");
+
+            final long analysisId = inJdbiTransaction(handle -> handle.attach(FindingAnalysisDao.class)
+                    .makeAnalysis(new MakeAnalysisCommand(componentId, vuln.getId())
+                            .withState(AnalysisState.NOT_AFFECTED)
+                            .withSuppress(true)
+                            .withCommenter("Jane Doe")
+                            .withComment("Historical audit comment")));
+
+            final List<String> auditBefore = getAuditRows(analysisId);
+            assertThat(auditBefore).hasSizeGreaterThan(1);
+            assertThat(auditBefore).anyMatch(row -> row.contains("Historical audit comment"));
+
+            truncateNotificationOutbox();
+            final byte[] omittedScopeBom = bom.formatted("").getBytes(StandardCharsets.UTF_8);
+            activity.execute(null, buildArg(project, storeBomFile(omittedScopeBom), UUID.randomUUID()));
+            assertBomProcessedNotification();
+
+            final List<UUID> componentUuids = withJdbiHandle(handle -> handle.createQuery("""
+                            SELECT "UUID" FROM "COMPONENT"
+                             WHERE "PROJECT_ID" = :projectId
+                               AND "SCOPE" = 'REQUIRED'
+                            """)
+                    .bind("projectId", project.getId())
+                    .mapTo(UUID.class)
+                    .list());
+            assertThat(componentUuids).containsExactly(componentUuid);
+            assertThat(getRowVersions("COMPONENT", project.getId())).hasSize(1);
+            assertThat(getAuditRows(analysisId)).containsExactlyElementsOf(auditBefore);
+        } finally {
+            MemoryConfigSource.removeProperty(ConfigKeys.BOM_DEFAULT_COMPONENT_SCOPE);
+        }
+    }
+
+    private static List<String> getAuditRows(final long analysisId) {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT to_jsonb(a)::text AS row
+                          FROM "ANALYSIS" a WHERE a."ID" = :analysisId
+                        UNION ALL
+                        SELECT to_jsonb(c)::text AS row
+                          FROM "ANALYSISCOMMENT" c WHERE c."ANALYSIS_ID" = :analysisId
+                        ORDER BY row
+                        """)
+                .bind("analysisId", analysisId)
+                .mapTo(String.class)
+                .list());
     }
 
     @Test

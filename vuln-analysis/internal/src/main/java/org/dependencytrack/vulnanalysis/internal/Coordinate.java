@@ -52,7 +52,7 @@ sealed interface Coordinate {
     }
 
     static Set<Coordinate> of(CandidateComponent component) {
-        final var coordinates = new HashSet<Coordinate>(2);
+        final var coordinates = new HashSet<Coordinate>(3);
 
         final Cpe cpe = component.parsedCpe();
         if (cpe != null) {
@@ -66,6 +66,12 @@ sealed interface Coordinate {
         if (purl != null) {
             coordinates.add(
                     new Coordinate.PurlCoordinate(purl.getType(), purl.getNamespace(), normalizedPackageName(purl)));
+        }
+
+        final PackageURL sourcePurl = component.parsedSourcePurl();
+        if (sourcePurl != null) {
+            coordinates.add(new Coordinate.PurlCoordinate(
+                    sourcePurl.getType(), sourcePurl.getNamespace(), sourcePurl.getName()));
         }
 
         return coordinates;

@@ -401,7 +401,14 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
     public LdapUser getLdapUser(final String username) {
         final Query<LdapUser> query = pm.newQuery(LdapUser.class, "username == :username");
         query.setParameters(username);
-        return executeAndCloseUnique(query);
+        final LdapUser user = executeAndCloseUnique(query);
+        if (user != null) {
+            return user;
+        }
+        final Query<LdapUser> caseInsensitiveQuery = pm.newQuery(LdapUser.class,
+                "username.toLowerCase() == :username");
+        caseInsensitiveQuery.setParameters(username.toLowerCase(Locale.ROOT));
+        return executeAndCloseUnique(caseInsensitiveQuery);
     }
 
     /**

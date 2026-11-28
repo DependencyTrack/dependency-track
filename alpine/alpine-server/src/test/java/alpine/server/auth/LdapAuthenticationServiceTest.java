@@ -69,6 +69,37 @@ class LdapAuthenticationServiceTest {
     }
 
     @Test
+    void shouldReuseProvisionedUserWhenLoginCasingChanges() throws Exception {
+        final var provisioned = new LdapAuthenticationService(defaultConfig(), ADMIN_USERNAME, ADMIN_PASSWORD)
+                .authenticate();
+        final var authenticated = new LdapAuthenticationService(defaultConfig(), "AdMiN", ADMIN_PASSWORD)
+                .authenticate();
+
+        assertThat(authenticated.getId()).isEqualTo(provisioned.getId());
+        assertThat(authenticated.getUsername()).isEqualTo(ADMIN_USERNAME);
+        try (final var qm = new AlpineQueryManager()) {
+            assertThat(qm.getLdapUsers()).hasSize(1);
+        }
+    }
+
+    @Test
+    void shouldFindLegacyMixedCaseAccountWithoutRenamingIt() throws Exception {
+        try (final var qm = new AlpineQueryManager()) {
+            final var existing = new LdapUser();
+            existing.setUsername("AdMiN");
+            existing.setDN(ADMIN_DN);
+            qm.persist(existing);
+        }
+
+        final var authenticated = new LdapAuthenticationService(defaultConfig(), ADMIN_USERNAME, ADMIN_PASSWORD)
+                .authenticate();
+        assertThat(authenticated.getUsername()).isEqualTo("AdMiN");
+        try (final var qm = new AlpineQueryManager()) {
+            assertThat(qm.getLdapUsers()).hasSize(1);
+        }
+    }
+
+    @Test
     void shouldReturnExistingLdapUserWhenAlreadyProvisioned() throws Exception {
         try (final var qm = new AlpineQueryManager()) {
             final var existing = new LdapUser();

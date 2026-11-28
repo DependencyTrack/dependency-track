@@ -256,22 +256,6 @@ To remove reused (or otherwise stale) dev services containers, e.g. to start fro
 make apiserver-dev-remove-containers
 ```
 
-## DataNucleus Bytecode Enhancement
-
-Classes annotated with `@PersistenceCapable` must be
-[enhanced](https://www.datanucleus.org/products/accessplatform/jdo/enhancer.html)
-post-compilation. Maven handles this automatically, but IDEs run their own builds
-and may skip the enhancement step.
-
-If you see `NucleusUserException: Found Meta-Data for class ... but this class is either not enhanced`
-when running tests from your IDE, run:
-
-```shell
-make datanucleus-enhance
-```
-
-Then re-run the test. Ensure your IDE is not cleaning the `target` directory before execution.
-
 ## Database Migrations
 
 See [`docs/DATABASE_MIGRATIONS.md`](./docs/DATABASE_MIGRATIONS.md).

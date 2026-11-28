@@ -30,6 +30,14 @@
 
     <name>Alpine :: Server</name>
 
+    <properties>
+        <unitTestExtraArgLine>
+            "-Djava.util.logging.config.file=${project.basedir}/src/test/resources/logging.properties"
+            "-javaagent:${org.mockito:mockito-core:jar}"
+            "-javaagent:${org.datanucleus:datanucleus-core:jar}=-api=JDO,alpine.model"
+        </unitTestExtraArgLine>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.dependencytrack</groupId>
@@ -243,19 +251,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <java.util.logging.config.file>${project.basedir}/src/test/resources/logging.properties</java.util.logging.config.file>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>

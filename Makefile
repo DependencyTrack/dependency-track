@@ -70,14 +70,6 @@ build-v4-migrator-image: build
 		support/v4-migrator
 .PHONY: build-v4-migrator-image
 
-datanucleus-enhance:
-	$(MVND) $(MVN_FLAGS) \
-		-Pquick \
-		-Dresolve.skip \
-		-pl alpine/alpine-model,apiserver \
-		process-classes
-.PHONY: datanucleus-enhance
-
 install:
 	$(MVND) $(MVN_FLAGS) -Pquick install
 .PHONY: install

@@ -30,6 +30,13 @@
 
     <name>Alpine :: Infra</name>
 
+    <properties>
+        <unitTestExtraArgLine>
+            "-javaagent:${org.mockito:mockito-core:jar}"
+            "-javaagent:${org.datanucleus:datanucleus-core:jar}=-api=JDO,alpine.model"
+        </unitTestExtraArgLine>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.dependencytrack</groupId>

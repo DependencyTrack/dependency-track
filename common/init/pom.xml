@@ -29,6 +29,7 @@
     <name>Common :: Init</name>
     <properties>
         <project.parentBaseDir>${project.basedir}/../..</project.parentBaseDir>
+        <unitTestExtraArgLine>"-javaagent:${org.mockito:mockito-core:jar}" -Xshare:off</unitTestExtraArgLine>
     </properties>
     <dependencies>
         <dependency>

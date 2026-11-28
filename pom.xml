@@ -189,6 +189,8 @@
         <unitTestForkCount>1</unitTestForkCount>
         <!-- Log level to use for unit tests -->
         <unitTestLogLevel>WARN</unitTestLogLevel>
+        <!-- Extra JVM flags for unit tests -->
+        <unitTestExtraArgLine/>
         <!-- Default SCM Properties -->
         <scm.connection>scm:git:git@github.com:DependencyTrack/dependency-track.git</scm.connection>
         <scm.developer.connection>scm:git:git@github.com:DependencyTrack/dependency-track.git</scm.developer.connection>
@@ -804,7 +806,8 @@
                         <argLine>@{argLine}
                             -Xmx512m
                             --add-opens java.base/java.util=ALL-UNNAMED
-                            --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+                            --add-opens java.base/java.lang=ALL-UNNAMED
+                            ${unitTestExtraArgLine}</argLine>
                         <reuseForks>true</reuseForks>
                         <forkCount>${unitTestForkCount}</forkCount>
                         <!-- Avoid failing the whole multi-module build when a -Dtest pattern targets
@@ -892,6 +895,17 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>

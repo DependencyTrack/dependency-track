@@ -42,6 +42,13 @@
         <cyclonedx-cli.path>cyclonedx</cyclonedx-cli.path>
         <services.bom.merge.skip>true</services.bom.merge.skip>
         <unitTestForkCount>0.5C</unitTestForkCount>
+        <unitTestExtraArgLine>"-Djava.util.logging.config.file=${project.basedir}/src/test/resources/logging.properties"
+            --add-opens java.base/java.net=ALL-UNNAMED
+            --add-opens java.base/java.util.concurrent=ALL-UNNAMED
+            "-javaagent:${org.mockito:mockito-core:jar}"
+            "-javaagent:${org.datanucleus:datanucleus-core:jar}=-api=JDO,alpine.model,org.dependencytrack.model"
+            -Xshare:off
+            -Djdk.http.auth.tunneling.disabledSchemes=</unitTestExtraArgLine>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -559,18 +566,8 @@
                 <configuration>
                     <!-- Do not fail the build if -Dtest specifies tests that don't match any classes -->
                     <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-                    <argLine>@{argLine}
-                        -Xmx512m
-                        --add-opens java.base/java.net=ALL-UNNAMED
-                        --add-opens java.base/java.lang=ALL-UNNAMED
-                        --add-opens java.base/java.util=ALL-UNNAMED
-                        --add-opens java.base/java.util.concurrent=ALL-UNNAMED
-                        -javaagent:${settings.localRepository}/org/mockito/mockito-core/${lib.mockito.version}/mockito-core-${lib.mockito.version}.jar
-                        -Xshare:off
-                        -Djdk.http.auth.tunneling.disabledSchemes=</argLine>
                     <systemPropertyVariables>
                         <unitTestLogLevel>${unitTestLogLevel}</unitTestLogLevel>
-                        <java.util.logging.config.file>${project.basedir}/src/test/resources/logging.properties</java.util.logging.config.file>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

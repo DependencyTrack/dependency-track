@@ -29,6 +29,7 @@
     <name>Support :: DataNucleus Plugin :: Test</name>
     <properties>
         <project.parentBaseDir>${project.basedir}/../../..</project.parentBaseDir>
+        <unitTestExtraArgLine>"-javaagent:${org.datanucleus:datanucleus-core:jar}=-api=JDO,org.dependencytrack.support.datanucleus.test"</unitTestExtraArgLine>
     </properties>
     <dependencies>
         <dependency>

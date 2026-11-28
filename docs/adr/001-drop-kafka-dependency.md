@@ -209,4 +209,4 @@ TODO: Update with final decision.
 [Synadia]: https://www.synadia.com/
 [ValKey]: https://valkey.io/
 [Vert.x]: https://vertx.io/
-[workflow state tracking]: ../design/workflow-state-tracking.md
+[workflow state tracking]: https://github.com/DependencyTrack/hyades/blob/0.7.0-alpha.3/docs/architecture/design/archive/workflow-state-tracking.md

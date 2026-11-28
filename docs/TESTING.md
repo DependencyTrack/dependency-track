@@ -72,3 +72,25 @@ When using Awaitility:
   Needing a mock is often a sign that the code under test is hard to test. Consider changing the code first.
 * Use WireMock for HTTP boundaries, and Testcontainers for PostgreSQL and other infrastructure,
   instead of mocking the client.
+
+## Architecture Rules
+
+* Architecture rules are [ArchUnit](https://www.archunit.org/) tests in `apiserver` named `*ArchitectureTest`.
+  `make test-architecture` runs them.
+* Write a rule when a constraint is structural, such as which classes may call, extend, annotate,
+  or depend on what, and a violation could pass review unnoticed.
+  Security boundaries like outbound HTTP are the typical case.
+* Prefer a rule over a line in [`AGENTS.md`](../AGENTS.md) or [`DEVELOPING.md`](../DEVELOPING.md).
+  A rule fails the build, prose only helps when someone reads it.
+* Explain the rule in `.because(...)`. The failure message is the only documentation a violator sees.
+* A rule that analyzes `packages = "org.dependencytrack"` must see other modules' classes, too.
+  Keep `DoNotIncludeJars` out of its `importOptions`: Maven resolves sibling modules as jars in the `verify` phase,
+  so with it, rules would skip every module but `apiserver` in `make test` and CI.
+* For a constraint the code already violates, wrap the rule in `FreezingArchRule.freeze(...)`.
+  It records existing violations under [`apiserver/src/test/resources/archunit_store`](../apiserver/src/test/resources/archunit_store)
+  and fails only on new ones.
+  [`archunit.properties`](../apiserver/src/test/resources/archunit.properties) locks the store,
+  so adding a frozen rule, or fixing one of its recorded violations,
+  fails until you run `make test-architecture UPDATE_STORE=1` once and commit the store changes.
+  The store keys rules by description, so changing a frozen rule's description, `.because(...)` included,
+  also needs that run, plus removing the old entry from `stored.rules` and its violation file.

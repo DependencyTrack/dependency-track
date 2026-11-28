@@ -22,17 +22,11 @@ on:
       - 'main'            # Main branch
       - 'feature-**'      # Feature branch
       - '[0-9]+.[0-9]+.x' # Release branches
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
   pull_request:
     branches:
       - 'main'            # Main branch
       - 'feature-**'      # Feature branch
       - '[0-9]+.[0-9]+.x' # Release branches
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -64,6 +58,18 @@ jobs:
             maven-repository-
       - name: Lint
         run: make lint-java
+
+  lint-docs:
+    name: Lint Docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check links
+        run: make lint-docs
 
   lint-protobuf:
     name: Lint Protobuf

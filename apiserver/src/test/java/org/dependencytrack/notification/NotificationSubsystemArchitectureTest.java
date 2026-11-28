@@ -19,7 +19,6 @@
 package org.dependencytrack.notification;
 
 import alpine.persistence.AbstractAlpineQueryManager;
-import com.tngtech.archunit.core.importer.ImportOption.DoNotIncludeJars;
 import com.tngtech.archunit.core.importer.ImportOption.DoNotIncludeTests;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -32,12 +31,7 @@ import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nam
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
-@AnalyzeClasses(
-        packages = "org.dependencytrack",
-        importOptions = {
-            DoNotIncludeJars.class,
-            DoNotIncludeTests.class,
-        })
+@AnalyzeClasses(packages = "org.dependencytrack", importOptions = DoNotIncludeTests.class)
 class NotificationSubsystemArchitectureTest {
 
     @ArchTest

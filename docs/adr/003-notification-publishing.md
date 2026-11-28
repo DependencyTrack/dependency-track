@@ -101,7 +101,7 @@ and backups. Potent compression (e.g. using `zstd`) will most definitely be nece
 Postgres itself will compress large values, too, but using a less effective algorithm (`pglz`).
 
 > Starting with Postgres v14, the default compression algorithm for [TOAST]-ed tables can be changed to `lz4`.
-> This should be added to our [database operations guide](../../operations/database.md).
+> This should be added to our [database operations guide](https://github.com/DependencyTrack/hyades/blob/0.7.0-alpha.3/docs/operations/database.md).
 > `lz4` [performs noticeably better](https://www.timescale.com/blog/optimizing-postgresql-performance-compression-pglz-vs-lz4)
 > than `pglz`.
 

@@ -48,6 +48,10 @@ as it evolves and to avoid steering changes in directions we are actively moving
 For substantial changes, see also the [Architecture Decision Record](./CONTRIBUTING.md#architecture-decision-records)
 process in `CONTRIBUTING.md`.
 
+> [!NOTE]
+> [`AGENTS.md`](./AGENTS.md) mirrors these constraints for coding agents.
+> Keep both in sync to prevent drift.
+
 ### REST API v1 is in maintenance mode
 
 New endpoints must be added to API v2, which lives in the [`api`](./api) module and follows
@@ -98,6 +102,10 @@ See [`docs/INTERRUPTIBILITY.md`](./docs/INTERRUPTIBILITY.md).
 
 See [`docs/NULLABILITY.md`](./docs/NULLABILITY.md).
 
+### Project-scoped data must apply portfolio access control
+
+See [`docs/PORTFOLIO_ACCESS_CONTROL.md`](./docs/PORTFOLIO_ACCESS_CONTROL.md).
+
 ## Building
 
 Build the project:
@@ -109,6 +117,13 @@ make build
 > [!TIP]
 > (Re-) building the entire project via `make build` is cheap due to [build caching](#build-cache).
 > You generally don't need to build modules selectively.
+
+`make build` skips test compilation.
+To also compile tests, e.g. after changing a method that tests in other modules use:
+
+```shell
+make build-tests
+```
 
 The resulting JAR is placed in `./apiserver/target` as `dependency-track-apiserver.jar`.
 It ships with an embedded Jetty server, there's no need to deploy it in an application
@@ -161,6 +176,16 @@ possible scope and consider including a comment as to *why* the check is wrong i
 Error Prone's [bug patterns](https://errorprone.info/bugpatterns) documentation includes details
 and suppression guidance.
 
+### Markdown Links
+
+[lychee](https://github.com/lycheeverse/lychee) checks relative links and anchors in Markdown files:
+
+```shell
+make lint-docs
+```
+
+Link the first mention per section of a tracked file or directory, so the check catches renames.
+
 ## Testing
 
 See [`docs/TESTING.md`](./docs/TESTING.md) for how we write tests.
@@ -193,6 +218,12 @@ Run e2e tests:
 
 ```shell
 make test-e2e
+```
+
+Run the [architecture rules](./docs/TESTING.md#architecture-rules):
+
+```shell
+make test-architecture
 ```
 
 ## Dev Mode

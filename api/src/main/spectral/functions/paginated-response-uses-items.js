@@ -19,7 +19,10 @@
 'use strict';
 
 export default (schema) => {
-    const properties = schema.properties || {};
+    // Spectral resolves $refs but does not merge allOf, which is how list responses extend paginated-response.yaml.
+    const parts = [schema, ...(schema.allOf || [])];
+    const properties = Object.assign({}, ...parts.map(part => part.properties || {}));
+    const required = parts.flatMap(part => part.required || []);
 
     if (!('next_page_token' in properties)) {
         return;
@@ -29,6 +32,14 @@ export default (schema) => {
         return [
             {
                 message: 'Paginated response must have an "items" property of type "array"',
+            },
+        ];
+    }
+
+    if (!required.includes('items')) {
+        return [
+            {
+                message: 'Paginated response must declare "items" as required',
             },
         ];
     }

@@ -375,6 +375,36 @@ class ModelConverterTest {
     }
 
     @Test
+    void shouldSplitSwiftPackageNameIntoNamespaceAndName() throws IOException {
+        var securityAdvisory = MAPPER.readValue(/* language=JSON */ """
+                {
+                  "ghsaId": "GHSA-r3rc-9hpw-54v9",
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "vulnerableVersionRange": "< 2.29.1",
+                          "package": {
+                            "ecosystem": "SWIFT",
+                            "name": "github.com/apple/swift-nio"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
+
+        Bom bom = ModelConverter.convert(securityAdvisory, true);
+
+        assertThatJson(JsonFormat.printer().print(bom))
+                .inPath("$.components[0].purl")
+                .isEqualTo(/* language=JSON */ """
+                        "pkg:swift/github.com/apple/swift-nio"
+                        """);
+    }
+
+    @Test
     void shouldEmitBothCvssV3AndCvssV4RatingsWhenBothPresent() throws IOException {
         var securityAdvisory =
                 MAPPER.readValue(getClass().getResourceAsStream("/advisory-04.json"), SecurityAdvisory.class);

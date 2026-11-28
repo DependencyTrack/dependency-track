@@ -344,7 +344,8 @@ final class ModelConverter {
         } else if ((PackageURL.StandardTypes.COMPOSER.equals(purlType)
                         || PackageURL.StandardTypes.GOLANG.equals(purlType)
                         || PackageURL.StandardTypes.NPM.equals(purlType)
-                        || PackageURL.StandardTypes.GENERIC.equals(purlType))
+                        || PackageURL.StandardTypes.GENERIC.equals(purlType)
+                        || "swift".equals(purlType))
                 && pkg.getName().contains("/")) {
             final String[] nameParts = pkg.getName().split("/");
             final String namespace = String.join("/", Arrays.copyOfRange(nameParts, 0, nameParts.length - 1));

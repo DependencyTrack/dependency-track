@@ -39,6 +39,7 @@ import org.dependencytrack.metrics.DependencyMetrics;
 import org.dependencytrack.metrics.MetricsDao;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.ComponentDao.ListedComponent;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao;
 import org.dependencytrack.persistence.jdbi.DependencyGraphDao.ProjectGraphNode;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
@@ -205,6 +206,7 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                         case "name" -> ListProjectComponentsQuery.SortBy.NAME;
                         case "group" -> ListProjectComponentsQuery.SortBy.GROUP;
                         case "last_inherited_risk_score" -> ListProjectComponentsQuery.SortBy.LAST_RISKSCORE;
+                        case "scorecard_score" -> ListProjectComponentsQuery.SortBy.SCORECARD_SCORE;
                         case "package_artifact_metadata.published_at" -> ListProjectComponentsQuery.SortBy.PUBLISHED_AT;
                         default ->
                             throw new InvalidSortFieldException(
@@ -213,10 +215,11 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                                             "name",
                                             "group",
                                             "last_inherited_risk_score",
+                                            "scorecard_score",
                                             "package_artifact_metadata.published_at"));
                     };
 
-            final Page<Component> componentsPage = handle.attach(ComponentDao.class)
+            final Page<ListedComponent> componentsPage = handle.attach(ComponentDao.class)
                     .listProjectComponents(new ListProjectComponentsQuery(
                             projectId,
                             onlyOutdated,
@@ -228,21 +231,24 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                             sortByEnum,
                             mapSortDirection(sortDirection)));
 
+            final List<ListedComponent> components = componentsPage.items();
+
             var metricsByComponentId = Map.<Long, DependencyMetrics>of();
             var pkgMetaByPackagePurl = Map.<String, PackageMetadata>of();
             var pkgArtifactMetaByPurl = Map.<String, PackageArtifactMetadata>of();
 
-            if (!componentsPage.items().isEmpty()) {
+            if (!components.isEmpty()) {
                 if (expandMetrics) {
-                    final Set<Long> componentIds = componentsPage.items().stream()
-                            .map(Component::getId)
+                    final Set<Long> componentIds = components.stream()
+                            .map(row -> row.component().getId())
                             .collect(Collectors.toSet());
                     metricsByComponentId =
                             handle.attach(MetricsDao.class).getMostRecentDependencyMetrics(componentIds).stream()
                                     .collect(Collectors.toMap(DependencyMetrics::getComponentId, Function.identity()));
                 }
                 if (expandPkgMeta) {
-                    final Set<String> packagePurls = componentsPage.items().stream()
+                    final Set<String> packagePurls = components.stream()
+                            .map(ListedComponent::component)
                             .filter(component -> component.getPurl() != null)
                             .map(component -> PurlUtil.purlPackageOnly(component.getPurl()))
                             .collect(Collectors.toSet());
@@ -251,7 +257,8 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                                     .collect(Collectors.toMap(pm -> pm.purl().canonicalize(), Function.identity()));
                 }
                 if (expandPkgArtifactMeta) {
-                    final Set<String> versionedPurls = componentsPage.items().stream()
+                    final Set<String> versionedPurls = components.stream()
+                            .map(ListedComponent::component)
                             .filter(component -> component.getPurl() != null)
                             .map(component -> component.getPurl().canonicalize())
                             .collect(Collectors.toSet());
@@ -261,9 +268,9 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                 }
             }
 
-            final var responseItems = new ArrayList<ListProjectComponentsResponseItem>(
-                    componentsPage.items().size());
-            for (final Component componentRow : componentsPage.items()) {
+            final var responseItems = new ArrayList<ListProjectComponentsResponseItem>(components.size());
+            for (final ListedComponent listedComponent : components) {
+                final Component componentRow = listedComponent.component();
                 final String purlStr =
                         componentRow.getPurl() != null ? componentRow.getPurl().canonicalize() : null;
                 final String packagePurlStr =
@@ -283,6 +290,7 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                         .group(componentRow.getGroup())
                         .internal(componentRow.isInternal())
                         .lastInheritedRiskScore(componentRow.getLastInheritedRiskScore())
+                        .scorecardScore(listedComponent.scorecardScore())
                         .license(componentRow.getLicense())
                         .licenseExpression(componentRow.getLicenseExpression())
                         .licenseUrl(componentRow.getLicenseUrl())

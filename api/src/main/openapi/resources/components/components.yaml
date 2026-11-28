@@ -67,6 +67,10 @@ get:
     * `name`
     * `group`
     * `last_inherited_risk_score`
+    * `scorecard_score`
+
+    Components without a scorecard score are treated as worse than any scored component:
+    they come first when sorting by `scorecard_score` ascending, and last when sorting descending.
 
     ### Expandable fields
 

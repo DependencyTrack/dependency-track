@@ -25,7 +25,6 @@ import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.domain.JavaParameterizedType;
 import com.tngtech.archunit.core.domain.JavaType;
-import com.tngtech.archunit.core.importer.ImportOption.DoNotIncludeJars;
 import com.tngtech.archunit.core.importer.ImportOption.DoNotIncludeTests;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -44,9 +43,7 @@ import java.util.Set;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
-@AnalyzeClasses(
-        packages = "org.dependencytrack",
-        importOptions = {DoNotIncludeTests.class, DoNotIncludeJars.class})
+@AnalyzeClasses(packages = "org.dependencytrack", importOptions = DoNotIncludeTests.class)
 class DaoArchitectureTest {
 
     private static final Set<String> WRAPPER_TYPES = Set.of(

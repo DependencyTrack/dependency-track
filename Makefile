@@ -22,6 +22,7 @@ BUF_FORMAT_FLAGS := --exclude-path support/cyclonedx-proto/src/main/proto/org/cy
 BUF_IMAGE := bufbuild/buf:1.75.0@sha256:adf82c7170be6629ec81dc907921ac1699407cd11c4f7fd7521b13c74152f849
 MIGRATION_DIR := migration/src/main/resources/org/dependencytrack/migration
 DEX_MIGRATION_DIR := dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration
+LYCHEE_IMAGE := lycheeverse/lychee:0.24.2@sha256:e2d19e57cf6ab037026f20b8e449a1f30d9d7f81eef4194763aab2eab20bd28d
 OASDIFF_IMAGE := tufin/oasdiff:v1.37.0@sha256:ff02af37a254b5199b9d72e7bba93dae5837a9119d59459168d1398893b47aea
 SPECTRAL_IMAGE := stoplight/spectral:6.16.3@sha256:a07aa4455367b9501b574423b684ab0ef3ee42556089013583318ec015249050
 SQUAWK_IMAGE := ghcr.io/sbdchd/squawk:2.63.0@sha256:e3b8e534994ad714ec3ca1017f7e80ecb8f8a15b161b8c6eb25303eced5da3ab
@@ -46,6 +47,10 @@ endif
 build:
 	$(MVND) $(MVN_FLAGS) -Pquick package
 .PHONY: build
+
+build-tests:
+	$(MVND) $(MVN_FLAGS) -DskipTests -Denforcer.skip -Dspotless.check.skip -Dcyclonedx.skip package
+.PHONY: build-tests
 
 build-dist:
 	$(MVND) $(MVN_FLAGS) -Pdist,quick package
@@ -111,6 +116,13 @@ lint-migrations:
 		lint $$changed
 .PHONY: lint-migrations
 
+lint-docs:
+	git ls-files -z --cached --others --exclude-standard '*.md' \
+		| xargs -0 sh -c 'for f; do [ -e "$$f" ] && printf "%s\0" "$$f"; done' sh \
+		| xargs -0 docker run --rm -v "$(CURDIR):/work:ro" -w /work $(LYCHEE_IMAGE) \
+			--offline --include-fragments --no-progress
+.PHONY: lint-docs
+
 lint-dex-migration:
 	@$(MAKE) lint-migrations MIGRATION_DIR="$(DEX_MIGRATION_DIR)"
 .PHONY: lint-dex-migration
@@ -162,7 +174,7 @@ format-proto:
 	$(BUF_DOCKER) $(BUF_IMAGE) format --write $(BUF_FORMAT_FLAGS)
 .PHONY: format-proto
 
-lint: lint-java lint-migrations lint-dex-migration lint-openapi lint-openapi-breaking lint-proto lint-proto-breaking
+lint: lint-java lint-docs lint-migrations lint-dex-migration lint-openapi lint-openapi-breaking lint-proto lint-proto-breaking
 .PHONY: lint
 
 test:
@@ -183,6 +195,11 @@ test-single:
 		exit 1; \
 	fi
 .PHONY: test-single
+
+test-architecture:
+	@$(MAKE) test-single MODULE=apiserver TEST='*ArchitectureTest' \
+		MVN_FLAGS='$(MVN_FLAGS) $(if $(UPDATE_STORE),-Darchunit.freeze.store.default.allowStoreUpdate=true)'
+.PHONY: test-architecture
 
 new-migration:
 	@if [ -z "$(NAME)" ]; then \

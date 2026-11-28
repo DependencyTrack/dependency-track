@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Usage: backport.sh <PR-number> [target-branch] [--any-base]
 # Exit codes: 0 all commits applied, 1 error, 2 needs a user decision, 3 a cherry-pick stopped.
+# After changing this script, run backport-test.sh (throwaway repos, fake gh), then shellcheck on both scripts.
 set -euo pipefail
 
 die() { echo "error: $*" >&2; exit 1; }
@@ -91,7 +92,15 @@ checks() {
          $1 != m { out(); m = $1; t = $2; next }
          { t = t "," $2 }
          END { out() }'
-  echo "make build AGENT=1"
+  # Older patch branches predate the build-tests target.
+  if grep -q '^build-tests:' "$wt/Makefile" 2>/dev/null; then
+    echo "make build-tests AGENT=1"
+  else
+    echo "make build AGENT=1"
+  fi
+  if grep -q '\.java$' <<< "$paths" && grep -q '^test-architecture:' "$wt/Makefile" 2>/dev/null; then
+    echo "make test-architecture AGENT=1"
+  fi
 }
 
 push_hint() {

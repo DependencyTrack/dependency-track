@@ -68,5 +68,20 @@
                 </goalsList>
             </goalsLists>
         </runAlways>
+        <reconcile logAllProperties="false">
+            <plugins>
+                <plugin artifactId="maven-compiler-plugin" goal="testCompile">
+                    <reconciles>
+                        <reconcile propertyName="skip" skipValue="true"/>
+                    </reconciles>
+                </plugin>
+                <plugin artifactId="maven-surefire-plugin" goal="test">
+                    <reconciles>
+                        <reconcile propertyName="skip" skipValue="true"/>
+                        <reconcile propertyName="skipTests" skipValue="true"/>
+                    </reconciles>
+                </plugin>
+            </plugins>
+        </reconcile>
     </executionControl>
 </cache>

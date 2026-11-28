@@ -20,6 +20,7 @@ package org.dependencytrack.resources;
 
 import alpine.server.auth.AuthenticationNotRequired;
 import alpine.server.auth.PermissionRequired;
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.importer.ImportOption.DoNotIncludeJars;
@@ -60,6 +61,7 @@ class ResourceAuthorizationArchitectureTest {
             "LicenseResource.getLicenseListing",
             "LicenseResource.getLicenses",
             "RepositoryResource.getRepositoryMetaComponent",
+            "SystemCapabilitiesResource.getSystemCapabilities",
             "TeamResource.availableTeams",
             "TeamResource.getSelf",
             "UserResource.getSelf",
@@ -67,10 +69,14 @@ class ResourceAuthorizationArchitectureTest {
             "UserResource.logout",
             "UserResource.updateSelf");
 
+    // API v2 resources inherit their JAX-RS annotations from interfaces generated from the OpenAPI spec.
+    private static final DescribedPredicate<JavaMethod> RESOURCE_METHODS = describe(
+            "are JAX-RS resource methods",
+            method -> method.isMetaAnnotatedWith(HttpMethod.class) || implementsResourceMethod(method));
+
     @ArchTest
     static final ArchRule resourceMethodsMustDeclarePermissions = methods()
-            .that()
-            .areMetaAnnotatedWith(HttpMethod.class)
+            .that(RESOURCE_METHODS)
             .should(new ArchCondition<>("be annotated with @PermissionRequired or @AuthenticationNotRequired") {
                 @Override
                 public void check(final JavaMethod method, final ConditionEvents events) {
@@ -87,7 +93,12 @@ class ResourceAuthorizationArchitectureTest {
                                         """.formatted(method.getFullName())));
                     }
                 }
-            });
+            })
+            .because("""
+                            Without @PermissionRequired, any authenticated caller can invoke the endpoint. \
+                            Declaring the permission, or @AuthenticationNotRequired for public endpoints, \
+                            makes that choice explicit. Endpoints that intentionally require only \
+                            authentication belong in PERMISSION_ANNOTATION_ALLOWLIST.""");
 
     @ArchTest
     static final ArchRule resourceClassesMustExtendAbstractApiResource = classes()
@@ -104,4 +115,12 @@ class ResourceAuthorizationArchitectureTest {
             .because("""
                             Resource classes must extend AbstractApiResource to have access \
                             to helper methods for project access control enforcement.""");
+
+    private static boolean implementsResourceMethod(final JavaMethod method) {
+        return method.getOwner().getAllRawInterfaces().stream()
+                .flatMap(iface -> iface.getMethods().stream())
+                .anyMatch(ifaceMethod -> ifaceMethod.getName().equals(method.getName())
+                        && ifaceMethod.getRawParameterTypes().equals(method.getRawParameterTypes())
+                        && ifaceMethod.isMetaAnnotatedWith(HttpMethod.class));
+    }
 }

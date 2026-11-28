@@ -364,6 +364,36 @@ EOF
   [ "$(grep '^make ' <<< "$out")" = "$expected" ] || fail "checks"
 }
 
+test_prints_build_tests_when_target_makefile_defines_it() {
+  git checkout -q 5.0.x
+  commit Makefile "$(printf 'build-tests:\n\ttrue\n')" "Add build-tests target" >/dev/null
+  git push -q upstream 5.0.x
+  git checkout -q -b feature main
+  commit b.txt change "Change b" >/dev/null
+  pr_fixture MERGED main "$(merge_pr feature)"
+
+  run 1 5.0.x
+
+  [ "$rc" = 0 ] || fail "exit code"
+  [ "$(grep '^make ' <<< "$out")" = "make build-tests AGENT=1" ] || fail "checks"
+}
+
+test_prints_test_architecture_for_java_changes() {
+  git checkout -q 5.0.x
+  commit Makefile "$(printf 'build-tests:\n\ttrue\ntest-architecture:\n\ttrue\n')" "Add targets" >/dev/null
+  git push -q upstream 5.0.x
+  git checkout -q -b feature main
+  commit apiserver/src/main/java/org/foo/Foo.java "class Foo {}" "Add Foo" >/dev/null
+  pr_fixture MERGED main "$(merge_pr feature)"
+
+  run 1 5.0.x
+
+  [ "$rc" = 0 ] || fail "exit code"
+  local expected
+  expected=$(printf '%s\n' "make build-tests AGENT=1" "make test-architecture AGENT=1")
+  [ "$(grep '^make ' <<< "$out")" = "$expected" ] || fail "checks"
+}
+
 test_nothing_to_push_when_all_already_backported() {
   local squash
   squash=$(commit b.txt one "Add b (#1)")

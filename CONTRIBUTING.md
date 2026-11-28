@@ -57,7 +57,7 @@ remove all references that may leak internals of your organization.
 
 ## Reporting Vulnerabilities
 
-Please refer to our security policy in [`SECURITY.md`](./SECURITY.md) for how to responsibly disclose vulnerabilities to us.
+Please refer to our security policy in [`SECURITY.md`](https://github.com/DependencyTrack/dependency-track/security/policy) for how to responsibly disclose vulnerabilities to us.
 
 ## Improving Documentation
 

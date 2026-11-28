@@ -29,6 +29,7 @@
     <name>Vulnerability Data Source :: OSV</name>
     <properties>
         <project.parentBaseDir>${project.basedir}/../..</project.parentBaseDir>
+        <unitTestExtraArgLine>"-javaagent:${org.mockito:mockito-core:jar}" -Xshare:off</unitTestExtraArgLine>
     </properties>
     <dependencies>
         <dependency>

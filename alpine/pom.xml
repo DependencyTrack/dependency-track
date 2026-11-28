@@ -143,10 +143,10 @@
                         -Xmx256m
                         -XX:-TieredCompilation
                         -XX:TieredStopAtLevel=1
-                        -javaagent:${settings.localRepository}/org/mockito/mockito-core/${lib.mockito.version}/mockito-core-${lib.mockito.version}.jar
                         -Xshare:off
                         --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.lang=ALL-UNNAMED
+                        ${unitTestExtraArgLine}
                     </argLine>
                 </configuration>
             </plugin>
